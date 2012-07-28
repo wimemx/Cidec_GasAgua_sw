@@ -7,6 +7,7 @@ class Pais(models.Model):
         return self.pais_name
     class Meta:
         verbose_name_plural = "Paises"
+
 class Estado(models.Model):
 
     estado_name = models.CharField(max_length=128)
@@ -34,7 +35,7 @@ class Calle(models.Model):
 class Region(models.Model):
 
     region_name = models.CharField(max_length=128)
-    region_description = models.CharField(max_length=256)
+    region_description = models.CharField(max_length=256, blank=True, null=True)
     date = models.DateField()
     def __unicode__(self):
         return self.region_name
