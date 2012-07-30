@@ -23,6 +23,9 @@ class SectoralType(models.Model):
 
     def __unicode__(self):
         return self.sectorial_type_name
+    @staticmethod
+    def autocomplete_search_fields():
+        return "id__iexact", "sectorial_type_name__icontains"
 
 class Cluster(models.Model):
     """ Catalogo de Clusters
@@ -41,6 +44,9 @@ class Cluster(models.Model):
 
     def __unicode__(self):
         return self.cluster_name + " - " + self.sectoral_type.sectorial_type_name
+    @staticmethod
+    def autocomplete_search_fields():
+        return "id__iexact", "cluster_name_name__icontains"
 
 class Company(models.Model):
     """ Almacena la informacion de perfil de una empresa"""
@@ -131,22 +137,22 @@ class Building(models.Model):
     Una empresa puede estar operando en diferentes espacios fisicos.
 
     """
-    building_registered = models.DateTimeField(default=datetime.datetime.now())
-    building_status = models.IntegerField(choices=STATUS, default=1)
-    building_name = models.CharField(max_length=128)
-    building_description = models.TextField(max_length=256, null=True, blank=True)
-    building_formatted_address = models.TextField(max_length=256)
+    building_registered = models.DateTimeField("Registrado:", default=datetime.datetime.now())
+    building_status = models.IntegerField("Estatus:", choices=STATUS, default=1)
+    building_name = models.CharField("Nombre:", max_length=128)
+    building_description = models.TextField("Descripcion", max_length=256, null=True, blank=True)
+    building_formatted_address = models.TextField("Direccion:", max_length=256)
     pais = models.ForeignKey(Pais, on_delete=models.PROTECT)
     estado = models.ForeignKey(Estado, on_delete=models.PROTECT)
     municipio = models.ForeignKey(Municipio, on_delete=models.PROTECT)
     colonia = models.ForeignKey(Colonia, on_delete=models.PROTECT)
     calle = models.ForeignKey(Calle, on_delete=models.PROTECT)
     region = models.ForeignKey(Region, on_delete=models.PROTECT)
-    building_external_number = models.CharField(max_length=10)
-    building_internal_number = models.CharField(max_length=10, null=True, blank=True)
-    building_code_zone = models.CharField(max_length=5)
-    building_long_address = models.DecimalField(max_digits=10, decimal_places=6)
-    building_lat_address = models.DecimalField(max_digits=10, decimal_places=6)
+    building_external_number = models.CharField("No. Exterior", max_length=10)
+    building_internal_number = models.CharField("No. Interior", max_length=10, null=True, blank=True)
+    building_code_zone = models.CharField("C.P.:", max_length=5)
+    building_long_address = models.DecimalField("Longitud", max_digits=10, decimal_places=6)
+    building_lat_address = models.DecimalField("Latitud", max_digits=10, decimal_places=6)
     #electric_rate
     mts2_built = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
 
@@ -360,32 +366,33 @@ class ElectricData(models.Model):
     """
     profile_powermeter = models.ForeignKey(ProfilePowermeter, on_delete=models.PROTECT)
     medition_date = models.DateTimeField(default=datetime.datetime.now())
-    electric_parameter1 = models.IntegerField()
-    electric_parameter2 = models.IntegerField()
-    electric_parameter3 = models.IntegerField()
-    electric_parameter4 = models.IntegerField()
-    electric_parameter5 = models.IntegerField()
-    electric_parameter6 = models.IntegerField()
-    electric_parameter7 = models.IntegerField()
-    electric_parameter8 = models.IntegerField()
-    electric_parameter9 = models.IntegerField()
-    electric_parameter10 = models.IntegerField()
-    electric_parameter12 = models.IntegerField()
-    electric_parameter13 = models.IntegerField()
-    electric_parameter14 = models.IntegerField()
-    electric_parameter15 = models.IntegerField()
-    electric_parameter16 = models.IntegerField()
-    electric_parameter17 = models.IntegerField()
-    electric_parameter18 = models.IntegerField()
-    electric_parameter19 = models.IntegerField()
-    electric_parameter20 = models.IntegerField()
-    electric_parameter21 = models.IntegerField()
-    electric_parameter22 = models.IntegerField()
-    electric_parameter23 = models.IntegerField()
-    electric_parameter24 = models.IntegerField()
-    electric_parameter25 = models.IntegerField()
-    electric_parameter26 = models.IntegerField()
-    electric_parameter27 = models.IntegerField()
+    V1 = models.DecimalField(max_digits=12, decimal_places=6)
+    V2 = models.DecimalField(max_digits=12, decimal_places=6)
+    V3 = models.DecimalField(max_digits=12, decimal_places=6)
+    I1 = models.DecimalField(max_digits=12, decimal_places=6)
+    I2 = models.DecimalField(max_digits=12, decimal_places=6)
+    I3 = models.DecimalField(max_digits=12, decimal_places=6)
+    KW1 = models.DecimalField(max_digits=12, decimal_places=6)
+    KW2 = models.DecimalField(max_digits=12, decimal_places=6)
+    KW3 = models.DecimalField(max_digits=12, decimal_places=6)
+    PF1 = models.DecimalField(max_digits=12, decimal_places=6)
+    PF2 = models.DecimalField(max_digits=12, decimal_places=6)
+    PF3 = models.DecimalField(max_digits=12, decimal_places=6)
+    KVAR1 = models.DecimalField(max_digits=12, decimal_places=6)
+    KVAR2 = models.DecimalField(max_digits=12, decimal_places=6)
+    KVAR3 = models.DecimalField(max_digits=12, decimal_places=6)
+    KVA1 = models.DecimalField(max_digits=12, decimal_places=6)
+    KVA2 = models.DecimalField(max_digits=12, decimal_places=6)
+    KVA3 = models.DecimalField(max_digits=12, decimal_places=6)
+    KWH = models.DecimalField(max_digits=12, decimal_places=6)
+    KVARH = models.DecimalField(max_digits=12, decimal_places=6)
+    KVAH = models.DecimalField(max_digits=12, decimal_places=6)
+    VL1 = models.DecimalField(max_digits=12, decimal_places=6, null=True, blank=True)
+    VL2 = models.DecimalField(max_digits=12, decimal_places=6, null=True, blank=True)
+    VL3 = models.DecimalField(max_digits=12, decimal_places=6, null=True, blank=True)
+    KWH_MAX = models.DecimalField(max_digits=12, decimal_places=6, null=True, blank=True)
+    KVARH_MAX = models.DecimalField(max_digits=12, decimal_places=6, null=True, blank=True)
+    KVAH_MAX = models.DecimalField(max_digits=12, decimal_places=6, null=True, blank=True)
     def __unicode__(self):
         return self.profile_powermeter.powermeter.powermeter_anotation + \
                " " + str(self.medition_date)

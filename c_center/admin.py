@@ -113,8 +113,14 @@ admin.site.register(c_center.models.BuildingAttributes)
 
 class BuildingAdmin(admin.ModelAdmin):
     list_display = ['building_name', 'building_formatted_address', 'building_status', 'pais', 'estado', 'municipio']
-    list_filter = ['building_status','pais','estado','municipio']
+    list_filter = ['pais', 'estado', 'municipio', 'building_status']
     actions = ["make_active","make_inactive","mark_deleted"]
+    # define the raw_id_fields
+    raw_id_fields = ('pais', 'estado', 'municipio', 'colonia', 'calle', 'region')
+    # define the related_lookup_fields
+    autocomplete_lookup_fields = {
+        'fk': ['pais', 'estado', 'municipio', 'colonia', 'calle', 'region'],
+    }
 
     def make_active(self, request, queryset):
         rows_updated=queryset.update(building_status=1)
@@ -144,14 +150,169 @@ class BuildingAdmin(admin.ModelAdmin):
     mark_deleted.short_description = "Marcar edificios como eliminados(ocultos)"
 admin.site.register(c_center.models.Building, BuildingAdmin)
 
-admin.site.register(c_center.models.BuildingAttributesForBuilding)
-admin.site.register(c_center.models.Powermeter)
-admin.site.register(c_center.models.ElectricDeviceType)
-admin.site.register(c_center.models.PartOfBuildingType)
-admin.site.register(c_center.models.BuildingType)
-admin.site.register(c_center.models.BuildingTypeForBuilding)
-admin.site.register(c_center.models.PartOfBuilding)
-admin.site.register(c_center.models.HierarchyOfPart)
-admin.site.register(c_center.models.CompanyBuilding)
-admin.site.register(c_center.models.BuilAttrsForPartOfBuil)
-admin.site.register(c_center.models.ConsumerUnit)
+class BuildingAttributesForBuildingAdmin(admin.ModelAdmin):
+    list_filter = ['building_attributes', 'building']
+admin.site.register(c_center.models.BuildingAttributesForBuilding, BuildingAttributesForBuildingAdmin)
+admin.site.register(c_center.models.PowermeterModel)
+
+class PowermeterAdmin(admin.ModelAdmin):
+    list_filter = ['powermeter_model']
+admin.site.register(c_center.models.Powermeter, PowermeterAdmin)
+
+class ProfilePowermeterAdmin(admin.ModelAdmin):
+    list_filter = ['profile_powermeter_status']
+    actions = ["make_active", "make_inactive", "mark_deleted"]
+
+    def make_active(self, request, queryset):
+        rows_updated=queryset.update(sectoral_type_status=1)
+        if rows_updated == 1:
+            message_bit = "El perfil fue marcado como activo"
+        else:
+            message_bit = "Los perfiles fueron marcados como activos"
+        self.message_user(request, message_bit)
+    make_active.short_description = "Marcar perfiles como activos"
+
+    def make_inactive(self, request, queryset):
+        rows_updated=queryset.update(sectoral_type_status=0)
+        if rows_updated == 1:
+            message_bit = "El perfil ha sido desactivado"
+        else:
+            message_bit = "Los %s perfiles fueron marcados como desactivados" % rows_updated
+        self.message_user(request, message_bit)
+    make_inactive.short_description = "Marcar perfiles como inactivos"
+
+    def mark_deleted(self, request, queryset):
+        rows_updated=queryset.update(sectoral_type_status=2)
+        if rows_updated == 1:
+            message_bit = "El perfil ha sido marcado como eliminado(oculto)"
+        else:
+            message_bit = "Los %s perfiles fueron marcados como eliminados(ocultos)" % rows_updated
+        self.message_user(request, message_bit)
+    mark_deleted.short_description = "Marcar perfiles como eliminados(ocultos)"
+
+admin.site.register(c_center.models.ProfilePowermeter, ProfilePowermeterAdmin)
+
+class ElectricDeviceTypeAdmin(admin.ModelAdmin):
+    list_filter = ['electric_device_type_status']
+    actions = ["make_active", "make_inactive", "mark_deleted"]
+
+    def make_active(self, request, queryset):
+        rows_updated=queryset.update(sectoral_type_status=1)
+        if rows_updated == 1:
+            message_bit = "El dispositivo o sistema fue marcado como activo"
+        else:
+            message_bit = "Los dispositivos o sistemas fueron marcados como activos"
+        self.message_user(request, message_bit)
+    make_active.short_description = "Marcar dispositivos o sistemas como activos"
+
+    def make_inactive(self, request, queryset):
+        rows_updated=queryset.update(sectoral_type_status=0)
+        if rows_updated == 1:
+            message_bit = "El dispositivo o sistema ha sido desactivado"
+        else:
+            message_bit = "Los %s dispositivos o sistemas fueron marcados como desactivados" % rows_updated
+        self.message_user(request, message_bit)
+    make_inactive.short_description = "Marcar dispositivos o sistemas como inactivos"
+
+    def mark_deleted(self, request, queryset):
+        rows_updated=queryset.update(sectoral_type_status=2)
+        if rows_updated == 1:
+            message_bit = "El dispositivo o sistema ha sido marcado como eliminado(oculto)"
+        else:
+            message_bit = "Los %s dispositivos o sistemas fueron marcados como eliminados(ocultos)" % rows_updated
+        self.message_user(request, message_bit)
+    mark_deleted.short_description = "Marcar dispositivos o sistemas como eliminados(ocultos)"
+
+admin.site.register(c_center.models.ElectricDeviceType, ElectricDeviceTypeAdmin)
+
+class PartOfBuildingTypeAdmin(admin.ModelAdmin):
+    list_filter = ['part_of_building_type_status']
+    actions = ["make_active", "make_inactive", "mark_deleted"]
+
+    def make_active(self, request, queryset):
+        rows_updated=queryset.update(sectoral_type_status=1)
+        if rows_updated == 1:
+            message_bit = "la parte fue marcada como activa"
+        else:
+            message_bit = "Las partes fueron marcados como activas"
+        self.message_user(request, message_bit)
+    make_active.short_description = "Marcar partes como activas"
+
+    def make_inactive(self, request, queryset):
+        rows_updated=queryset.update(sectoral_type_status=0)
+        if rows_updated == 1:
+            message_bit = "La parte ha sido desactivado"
+        else:
+            message_bit = "Las %s partes fueron marcadas como desactivadas" % rows_updated
+        self.message_user(request, message_bit)
+    make_inactive.short_description = "Marcar partes como inactivas"
+
+    def mark_deleted(self, request, queryset):
+        rows_updated=queryset.update(sectoral_type_status=2)
+        if rows_updated == 1:
+            message_bit = "La parte ha sido marcada como eliminada(oculta)"
+        else:
+            message_bit = "Las %s partes fueron marcadas como eliminadas(ocultas)" % rows_updated
+        self.message_user(request, message_bit)
+    mark_deleted.short_description = "Marcar partes como eliminadas(ocultas)"
+admin.site.register(c_center.models.PartOfBuildingType, PartOfBuildingTypeAdmin)
+
+class BuildingTypeAdmin(admin.ModelAdmin):
+    list_filter = ['building_type_status']
+    actions = ["make_active", "make_inactive", "mark_deleted"]
+
+    def make_active(self, request, queryset):
+        rows_updated=queryset.update(sectoral_type_status=1)
+        if rows_updated == 1:
+            message_bit = "El tipo fue marcado como activo"
+        else:
+            message_bit = "Los tipos fueron marcados como activos"
+        self.message_user(request, message_bit)
+    make_active.short_description = "Marcar tipos como activos"
+
+    def make_inactive(self, request, queryset):
+        rows_updated=queryset.update(sectoral_type_status=0)
+        if rows_updated == 1:
+            message_bit = "El tipo ha sido desactivado"
+        else:
+            message_bit = "Los %s tipos fueron marcados como desactivados" % rows_updated
+        self.message_user(request, message_bit)
+    make_inactive.short_description = "Marcar tipos como inactivos"
+
+    def mark_deleted(self, request, queryset):
+        rows_updated=queryset.update(sectoral_type_status=2)
+        if rows_updated == 1:
+            message_bit = "El tipo ha sido marcado como eliminado(oculto)"
+        else:
+            message_bit = "Los %s tipos fueron marcados como eliminados(ocultos)" % rows_updated
+        self.message_user(request, message_bit)
+    mark_deleted.short_description = "Marcar tipos como eliminados(ocultos)"
+admin.site.register(c_center.models.BuildingType, BuildingTypeAdmin)
+
+class BuildingTypeForBuildingAdmin(admin.ModelAdmin):
+    list_filter = ['building_type', 'building']
+admin.site.register(c_center.models.BuildingTypeForBuilding, BuildingTypeForBuildingAdmin)
+
+class PartOfBuildingAdmin(admin.ModelAdmin):
+    list_filter = ['part_of_building_type', 'building']
+admin.site.register(c_center.models.PartOfBuilding, PartOfBuildingAdmin)
+
+class HierarchyOfPartAdmin(admin.ModelAdmin):
+    list_filter = ['part_of_building_composite', 'part_of_building_leaf']
+admin.site.register(c_center.models.HierarchyOfPart, HierarchyOfPartAdmin)
+
+class CompanyBuildingAdmin(admin.ModelAdmin):
+    list_filter = ['company']
+admin.site.register(c_center.models.CompanyBuilding, CompanyBuildingAdmin)
+
+class BuilAttrsForPartOfBuilAdmin(admin.ModelAdmin):
+    list_filter = ['part_of_building', 'part_of_building']
+admin.site.register(c_center.models.BuilAttrsForPartOfBuil, BuilAttrsForPartOfBuilAdmin)
+
+class ConsumerUnitAdmin(admin.ModelAdmin):
+    list_filter = ['building', 'part_of_building']
+admin.site.register(c_center.models.ConsumerUnit, ConsumerUnitAdmin)
+
+class ElectricDataAdmin(admin.ModelAdmin):
+    list_filter = ['profile_powermeter']
+admin.site.register(c_center.models.ElectricData, ElectricDataAdmin)

@@ -5,6 +5,9 @@ class Pais(models.Model):
     pais_name = models.CharField(max_length=128)
     def __unicode__(self):
         return self.pais_name
+    @staticmethod
+    def autocomplete_search_fields():
+        return "id__iexact", "pais_name__icontains"
     class Meta:
         verbose_name_plural = "Paises"
 
@@ -13,24 +16,36 @@ class Estado(models.Model):
     estado_name = models.CharField(max_length=128)
     def __unicode__(self):
         return self.estado_name
+    @staticmethod
+    def autocomplete_search_fields():
+        return "id__iexact", "estado_name__icontains"
 
 class Municipio(models.Model):
 
     municipio_name = models.CharField(max_length=128)
     def __unicode__(self):
         return self.municipio_name
+    @staticmethod
+    def autocomplete_search_fields():
+        return "id__iexact", "municipio_name__icontains"
 
 class Colonia(models.Model):
 
     colonia_name = models.CharField(max_length=128)
     def __unicode__(self):
         return self.colonia_name
+    @staticmethod
+    def autocomplete_search_fields():
+        return "id__iexact", "colonia_name__icontains"
 
 class Calle(models.Model):
 
     calle_name = models.CharField(max_length=128)
     def __unicode__(self):
         return self.calle_name
+    @staticmethod
+    def autocomplete_search_fields():
+        return "id__iexact", "calle_name__icontains"
 
 class Region(models.Model):
 
@@ -39,6 +54,9 @@ class Region(models.Model):
     date = models.DateField()
     def __unicode__(self):
         return self.region_name
+    @staticmethod
+    def autocomplete_search_fields():
+        return "id__iexact", "region_name__icontains"
 
 class PaisEstado(models.Model):
 
