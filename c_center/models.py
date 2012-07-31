@@ -192,7 +192,7 @@ class Powermeter(models.Model):
 
     """
     powermeter_model = models.ForeignKey(PowermeterModel, on_delete=models.PROTECT)
-    powermeter_anotation = models.TextField(max_length=256, null=True, blank=True)
+    powermeter_anotation = models.CharField(max_length=256)
     powermeter_installation_date = models.DateField(default=datetime.datetime.now())
 
     def __unicode__(self):
@@ -352,7 +352,6 @@ class ConsumerUnit(models.Model):
 
     def __unicode__(self):
         return self.building.building_name + " - " +\
-               self.part_of_building.part_of_building_name + " - " +\
                self.electric_device_type.electric_device_type_name + " - " +\
                self.profile_powermeter.powermeter.powermeter_anotation
     class Meta:

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>{% block titulo%}{% endblock %}</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/theme.css">
+    {% block externalcss %}{% endblock %}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <!-- Loading JS Files this way is not recommended! Merge them but keep their order -->
+    <!-- some basic functions -->
+    <script src="{{ STATIC_URL }}js/functions.js"></script>
+    <!-- all Third Party Plugins -->
+    {% block externaljs %}{% endblock %}
+</head>
+<body>
+<header>
+
+</header>
+<div class="min_width">
+    {% block contenido %}{% endblock %}
+</div>
+<footer>
+
+</footer>
+</body>
+</html>

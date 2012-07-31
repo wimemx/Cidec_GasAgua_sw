@@ -6,8 +6,8 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     # Examples:
-    # url(r'^$', 'cidec_sw.views.home', name='home'),
-    # url(r'^cidec_sw/', include('cidec_sw.foo.urls')),
+    url(r'^$', 'cidec_sw.views.main', name='home'),
+    url(r'^main/', 'cidec_sw.views.index'),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),

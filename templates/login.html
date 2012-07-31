@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Inicio de Sesión</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/theme.css">
+</head>
+<body>
+<div class="min_width">
+    {{ error }}
+    <form action="." method="post">
+        {% csrf_token %}
+        <label>
+            Nombre de usuario
+            <input type="text" name="username" id="username"/>
+        </label>
+        <label>
+            Password
+            <input type="password" name="password" id="password"/>
+        </label>
+        <a href="/forgot_password">&iquest;Olvidaste la contrase&ntilde;a?</a>
+        <button type="submit" name="login" id="login">Login</button>
+
+    </form>
+</div>
+<footer>
+
+</footer>
+</body>
+</html>
