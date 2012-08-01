@@ -4,22 +4,31 @@
 <head>
     <title>Inicio de Sesión</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <link rel="stylesheet" href="{{ STATIC_URL }}css/theme.css">
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <link rel="stylesheet" href="/static/css/login.css">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/js/external/labels.js"></script>
 </head>
 <body>
-<div class="min_width">
-    {{ error }}
+<div id="login_div">
+    <span>{% autoescape off %}{{ error }}{% endautoescape %}</span>
+    <div id="title">
+        <h1>AUDITEM</h1>
+    </div>
     <form action="." method="post">
         {% csrf_token %}
-        <label>
-            Nombre de usuario
-            <input type="text" name="username" id="username"/>
+        <label class="input">
+            <span>Nombre de Usuario</span>
+            <input type="text" name="username" id="username" />
         </label>
-        <label>
-            Password
+        <label class="input">
+            <span>Password</span>
             <input type="password" name="password" id="password"/>
         </label>
+        <div class="vacio">&nbsp;</div>
         <a href="/forgot_password">&iquest;Olvidaste la contrase&ntilde;a?</a>
+
         <button type="submit" name="login" id="login">Login</button>
 
     </form>

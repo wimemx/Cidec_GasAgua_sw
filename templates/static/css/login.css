@@ -1,0 +1,29 @@
+h1{
+    font-size: 60px;
+    text-align: center;
+    margin-top: 16%;
+}
+#login_div {
+    width: 530px;
+    height: 370px;
+    background-color: #567;
+
+    position:absolute;
+    left: 50%;
+    top: 50%;
+    margin-left: -265px;
+    margin-top: -185px;
+}
+#login{
+    display: block;
+    margin: 1em auto;
+    width: 87px;
+    height: 24px;
+}
+label{
+    width: 173px;
+    margin: 1em auto;
+}
+form{
+    text-align: center;
+}

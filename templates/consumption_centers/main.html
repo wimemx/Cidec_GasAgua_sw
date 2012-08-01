@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block titulo %}Reportes{% endblock %}
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/consumption_centers/main.css">
+{% endblock %}
+{% block externaljs %}
+{% endblock %}
+{% block document_ready %}
+    $(".desp").click(function(){
+        $(this).next().slideToggle();
+    });
+{% endblock %}
+{% block contenido %}
+<div id="contenido_interno">
+    <p>Amet in hac lacus ut habitasse! Massa pulvinar, sit phasellus augue velit, velit sit integer odio odio et, porttitor, pulvinar velit, mid! Scelerisque dictumst aliquet in? Lectus est eu mauris porttitor ultricies elementum turpis a mauris platea a mauris lorem amet nisi enim in? Dolor egestas non natoque, hac ac urna scelerisque, urna augue? Elementum, turpis in elementum augue scelerisque.</p>
+
+    <p>Lacus aliquet, sit. A placerat elementum nunc vut aenean! Velit integer adipiscing. Ac amet in tristique integer urna placerat! Proin in risus tincidunt! Duis dis odio massa placerat enim! Porta mid hac proin turpis! Nec, facilisis risus, adipiscing duis massa ultrices sociis magna adipiscing dis cursus cras! Non elementum, placerat enim pulvinar? Magnis. Magnis? Ridiculus vel dolor, hac tincidunt.</p>
+
+    <p>Elit montes risus nascetur lorem! Porttitor facilisis phasellus integer ut non, nisi amet dolor scelerisque! Nec dictumst urna etiam magnis tristique! Elementum magna! Ac porta ut diam mid placerat porta pulvinar augue ut augue montes, duis scelerisque! Risus ut, est cursus lacus et integer! Ultrices! Pellentesque augue, aenean, porttitor rhoncus! Sed risus montes habitasse tempor etiam porta phasellus elementum.</p>
+</div>
+{% endblock %}

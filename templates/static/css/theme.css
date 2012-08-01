@@ -6,7 +6,12 @@
    v2.0 | 20110126
    License: none (public domain)
 */
-
+html, body{
+    min-height: 100% !important;
+    height: 100%;
+    width: 100%;
+    min-width: 100% !important;
+}
 html, body, div, span, applet, object, iframe,
 h1, h2, h3, h4, h5, h6, p, blockquote, pre,
 a, abbr, acronym, address, big, cite, code,
@@ -103,13 +108,60 @@ a:hover{
 .g11{width:89.667%;}
 .g12{width:98.0%;}
 
-#wrapper{
-    width: 1024px;
+/*----Jquery Labels----*/
+.input {
+    background: white;
+    display: block;
+    clear: both;
+}
+.input span {
+    position: absolute;
+    padding: 5px;
+    margin-left: 3px;
+    color: #999;
+}
+.input input, .input textarea, .input select {
+    position: relative;
+    margin: 0;
+    border-width: 1px;
+    padding: 6px;
+    background: transparent;
+    font: inherit;
+}
+/* Hack to remove Safari's extra padding. Remove if you don't care about pixel-perfection. */
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+    .input input, .input textarea, .input select { padding: 4px; }
+}
+
+
+#content{
+    min-width: 870px;
     min-height: 800px;
     margin: 0 auto;
     display: block;
+    float: left;
+    background: #666;
 }
-
-#main_content{
-    padding-bottom: 4em;
+header{
+    width: 100%;
+    height: 40px;
+    background: #999999;
+    position: absolute;
+}
+#header-container{
+    padding: 10px;
+    min-width: 1024px;
+    margin: 0 auto;
+    height: 100%;
+}
+#user_menu li{
+    display: inline-block;
+}
+#sidebar{
+    width: 154px;
+    background: #ccc;
+    height: 100%;
+}
+#sidebar_content{
+    margin-top: 50px;
 }

@@ -100,6 +100,8 @@ def parse_csv(request):
 
 def main(request):
     error = username = password = ''
+    if request.user.is_authenticated():
+        return HttpResponseRedirect("/main/")
     if request.method == "POST":
         username = request.POST['username']
         password = request.POST['password']
@@ -108,13 +110,15 @@ def main(request):
             if user.is_active:
                 return HttpResponseRedirect("/main/")
             else:
-                error = "Your account has been disabled!"
+                error = "Tu cuenta ha sido desactivada, por favor ponete en contacto con tu administrador!"
         else:
-            error = "Your username and password were incorrect."
+            error = "Tu nombre de usuario o contrase&ntilde;a son incorrectos."
     variables = dict(username=username, password=password, error=error)
     variables_template = RequestContext(request,variables)
     return render_to_response("login.html", variables_template)
 
 
 def index(request):
-    return HttpResponse(":)")
+    variables={}
+    variables_template = RequestContext(request,variables)
+    return render_to_response("consumption_centers/main.html", variables_template)
