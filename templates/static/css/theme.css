@@ -180,6 +180,7 @@ header{
     -moz-box-shadow: 0 1px 3px black;
 }
 #main_logo{
+    margin-left: 28px;
     width: 280px;
     height: 31px;
     background: url(images/imgs_icns/auditem_topbar.png) no-repeat;
@@ -206,7 +207,7 @@ header{
 }
 
 #user_menu{
-    margin-right: 130px;
+    margin-right: 38px;
 }
 #user_menu li, #user_menu li a{
     display: inline-block;
@@ -219,15 +220,15 @@ header{
 }
 #notificaciones a{ background: url(images/imgs_icns/notifications_icon_topbar.png) no-repeat;}
 #notification_number{
-    background: #e44f1b;
+    background: #f6531a;
     border: solid 2px #ffffff;
     position: absolute;
     width: 16px;
     height: 16px;
     line-height: 16px;
     text-align: center;
-    top: -8px;
-    left: -23px;
+    top: -9px;
+    left: -10px;
     border-radius: 8px;
     -webkit-border-radius: 8px;
     -moz-border-radius: 8px;
