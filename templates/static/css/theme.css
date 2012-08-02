@@ -168,9 +168,6 @@ body{
 #content{
     min-width: 870px;
     width: 100%;
-    margin: 0 auto;
-
-    background: #666;
 }
 header{
     position: absolute;
