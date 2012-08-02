@@ -5,16 +5,23 @@
     <title>{% block titulo%}{% endblock %}</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <link rel="stylesheet" href="/static/css/theme.css">
+    <link rel="stylesheet" href="/static/js/external/jqueryUniform/css/uniform.default.css" type="text/css" media="screen" charset="utf-8" />
     {% block externalcss %}{% endblock %}
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="http://jquery-ui.googlecode.com/svn/tags/latest/ui/jquery.effects.core.js"></script>
+    <script src="http://jquery-ui.googlecode.com/svn/tags/latest/ui/jquery.effects.slide.js"></script>
+    <script src="http://cdn.jquerytools.org/1.2.7/full/jquery.tools.min.js"></script>
     <!-- Loading JS Files this way is not recommended! Merge them but keep their order -->
     <!-- some basic functions -->
     <script src="/static/js/functions.js"></script>
-    <script type="text/javascript" src="/static/js/external/labels.js"></script>
+
     <!-- all Third Party Plugins -->
+    <script type="text/javascript" src="/static/js/external/labels.js"></script>
+    <script type="text/javascript" src="/static/js/external/jqueryUniform/jquery.uniform.min.js"></script>
     {% block externaljs %}{% endblock %}
     <script type="text/javascript">
         $(document).ready(function(){
+            $("#user_menu li a[title]").tooltip({effect: 'slide'}).dynamic({ bottom: { direction: 'down', bounce: true } });;
             {% block document_ready %}{% endblock %}
         });
     </script>
@@ -26,13 +33,13 @@
             <ul id="user_menu" class="fr">
                 {% include "user_menu.html" %}
             </ul>
-            <div id="main_logo" class="fl">AUDITEM</div>
+            <div id="main_logo" class="fl"></div>
         </div>
     </header>
-    <table>
+    <table id="table_container">
         <tbody>
             <tr>
-                <td id="navbar">{% include "sidebar.html" %}</td>
+                <td id="sidebar">{% include "sidebar.html" %}</td>
                 <td id="nav_toggle">
                 </td>
                 <td id="content">
@@ -41,6 +48,5 @@
             </tr>
         </tbody>
     </table>
-
 </body>
 </html>

@@ -1,0 +1,46 @@
+#company_profile_pic{
+    max-width: 154px;
+    max-height: 154px;
+    display: block;
+    margin: 30px auto 10px auto;
+}
+#empresa{
+    cursor: pointer;
+    background: url(../images/imgs_icns/arrow_down_sm_white.png) 100% 50% no-repeat;
+    display: block;
+    width: 115px;
+    margin: 10px auto;
+    font-size: 12px;
+}
+#sidebar_content{
+    color: #fff;
+}
+.sidebar_option{
+    padding-left: 11px;
+    line-height: 40px;
+    display: block;
+    height: 41px;
+    background: url(../images/bgs/sidebar_separator.png) no-repeat 0 100%;
+    font-size: 14px !important;
+}
+.sidebar_option span{
+    height: 100%;
+    padding-left: 38px;
+    background: url(../images/imgs_icns/electric_icon.png) no-repeat 0 50%;
+    display: block;
+}
+.sidebar_option.first{
+    background: url(../images/bgs/sidebar_first.png) repeat-x;
+}
+.sidebarsub_op{
+    margin-top: 5px;
+}
+.sidebarsub_op li{
+    display: block;
+    color: #fff;
+    margin-left: 25%;
+    height: 20px;
+}
+.sidebarsub_op li a{
+    color: #fff;
+}

@@ -1,6 +1,7 @@
 /*---------------------------------------------*/
 /*------general look and feel-------*/
 /*---------------------------------------------*/
+@import url(http://fonts.googleapis.com/css?family=Droid+Sans:400,700);
 /*-----Reset CSS-----*/
 /* http://meyerweb.com/eric/tools/css/reset/
    v2.0 | 20110126
@@ -30,11 +31,13 @@ time, mark, audio, video {
     border: 0;
     font-size: 12px;
     vertical-align: baseline;
-    font-family: helvetica,serif;
+    font-family: 'Droid Sans', Helvetica, sans-serif;
     text-decoration: none;
 }
 input, select{
     font-family: helvetica, serif;
+    height: 25px;
+    padding: 10px 3px;
 }
 /* HTML5 display-role reset for older browsers */
 article, aside, details, figcaption, figure,
@@ -110,15 +113,19 @@ a:hover{
 
 /*----Jquery Labels----*/
 .input {
-    background: white;
+    background: url(images/bgs/input_inner_shadow.png) repeat-x;
     display: block;
     clear: both;
+    border-radius: 3px;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    text-align: left
 }
 .input span {
     position: absolute;
-    padding: 5px;
+    padding: 11px 0;
     margin-left: 3px;
-    color: #999;
+    color: #909090;
 }
 .input input, .input textarea, .input select {
     position: relative;
@@ -127,41 +134,170 @@ a:hover{
     padding: 6px;
     background: transparent;
     font: inherit;
+    border-radius: 3px;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    width: 158px;
 }
 /* Hack to remove Safari's extra padding. Remove if you don't care about pixel-perfection. */
 @media screen and (-webkit-min-device-pixel-ratio:0) {
     .input input, .input textarea, .input select { padding: 4px; }
 }
+body{
+    background: #f3f3f3;
+    background-image: url(images/bgs/gray_steel.png); /* fallback */
+    background-image: url(images/bgs/gray_steel.png), -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#333333)); /* Saf4+, Chrome */
+    background-image: url(images/bgs/gray_steel.png), -webkit-linear-gradient(top, #ffffff, #333333); /* Chrome 10+, Saf5.1+ */
+    background-image: url(images/bgs/gray_steel.png),    -moz-linear-gradient(top, #ffffff, #333333); /* FF3.6+ */
+    background-image: url(images/bgs/gray_steel.png),     -ms-linear-gradient(top, #ffffff, #333333); /* IE10 */
+    background-image: url(images/bgs/gray_steel.png),      -o-linear-gradient(top, #ffffff, #333333); /* Opera 11.10+ */
+    background-image: url(images/bgs/gray_steel.png),         linear-gradient(top, #ffffff, #333333); /* W3C */
+}
 
+#table_container{
+    margin-top: 59px;
+    height: 100%;
+}
+#table_container tr{
+    height: 100%;
+}
+#table_container td{
+    vertical-align: top;
+}
 
 #content{
     min-width: 870px;
-    min-height: 800px;
+    width: 100%;
     margin: 0 auto;
-    display: block;
-    float: left;
+
     background: #666;
 }
 header{
-    width: 100%;
-    height: 40px;
-    background: #999999;
     position: absolute;
+    top: 0;
+    width: 100%;
+    height: 59px;
+    background: url(images/bgs/top_bar_bg.png) repeat-x;
+    box-shadow: 0 1px 3px black;
+    -webkit-box-shadow: 0 1px 3px black;
+    -moz-box-shadow: 0 1px 3px black;
 }
+#main_logo{
+    width: 280px;
+    height: 31px;
+    background: url(images/imgs_icns/auditem_topbar.png) no-repeat;
+}
+/* tooltip styling. by default the element to be styled is .tooltip  */
+.tooltip {
+    display:none;
+    background:transparent url(images/bgs/black_arrow.png) no-repeat;
+    font-size:12px;
+    height:45px;
+    width:129px;
+    padding-top:25px;
+    color:#eee;
+    text-align: center;
+}
+.tooltip.bottom {
+    background:url(images/bgs/black_arrow_bottom.png) no-repeat;
+
+    height:55px;
+}
+
+.tooltip.bottom {
+    background:url(images/bgs/black_arrow_bottom.png) no-repeat;
+}
+
+#user_menu{
+    margin-right: 130px;
+}
+#user_menu li, #user_menu li a{
+    display: inline-block;
+    width: 34px;
+    height: 27px;
+    position: relative;
+}
+#user_menu li{
+    margin-top: 7px;
+}
+#notificaciones a{ background: url(images/imgs_icns/notifications_icon_topbar.png) no-repeat;}
+#notification_number{
+    background: #e44f1b;
+    border: solid 2px #ffffff;
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+    text-align: center;
+    top: -8px;
+    left: -23px;
+    border-radius: 8px;
+    -webkit-border-radius: 8px;
+    -moz-border-radius: 8px;
+}
+#notification_number span{
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 13px;
+
+}
+#perfil a{ background: url(images/imgs_icns/profile_icon_topbar.png) no-repeat;}
+#configuracion a{ background: url(images/imgs_icns/settings_icon_topbar.png) no-repeat;}
+#salir a{ background: url(images/imgs_icns/exit_icon_topbar.png) no-repeat;}
 #header-container{
     padding: 10px;
     min-width: 1024px;
     margin: 0 auto;
     height: 100%;
 }
-#user_menu li{
-    display: inline-block;
-}
 #sidebar{
     width: 154px;
-    background: #ccc;
+    min-width:  154px;
     height: 100%;
+    background: url(images/bgs/side_bar_bg.png) repeat-y;
+}
+#sidebar.collapsed_nav{
+    min-width: 0 !important;
+}
+#nav_toggle{
+    width: 5px;
+    min-width: 5px;
+    background-color: transparent;
+}
+#nav_toggle:hover{
+    cursor:w-resize;
+}
+#nav_toggle.closed:hover{
+    cursor:e-resize;
 }
 #sidebar_content{
-    margin-top: 50px;
+
+}
+button{
+    height: 29px;
+}
+.aqua_btn{
+    background: url(images/bgs/aqua_button.png) repeat-x;
+    border: solid 1px #78939a;
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    box-shadow: 0 0 4px #999;
+}
+.aqua_btn:active{
+    background: #c7d9dd;
+}
+/*------Notification Bars------*/
+.notif_error{
+    background: url(images/bgs/notif_error.png) repeat-x;
+    height: 31px;
+    line-height: 31px;
+    text-align: center;
+    color: #fff;
+    font-weight: 700;
+    display: block;
+
 }

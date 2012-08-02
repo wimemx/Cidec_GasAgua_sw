@@ -9,6 +9,26 @@
     $(".desp").click(function(){
         $(this).next().slideToggle();
     });
+    $("#nav_toggle").click(function(){
+        if($("#sidebar").hasClass("collapsed_nav")){
+            console.log("abre");
+            $("#sidebar_content").show('slide', {direction: 'right'}, 100);
+            $("#sidebar").animate({width: 'toggle',}, 500, function(){console.log("quito la clase");
+                $(this).removeClass("collapsed_nav");
+            });
+
+        }else{//lo voy a cerrar
+            console.log("cierro");
+            $("#sidebar").addClass("collapsed_nav");
+            $("#sidebar_content").hide('slide', {direction: 'left'}, 100);
+            $("#sidebar").animate({width: 'toggle',}, 500);
+
+        }
+        $("#nav_toggle").toggleClass("closed");
+        //$("#sidebar").toggleClass("collapsed_nav").animate({width: 'toggle',}, 500);
+
+
+    });
 {% endblock %}
 {% block contenido %}
 <div id="contenido_interno">

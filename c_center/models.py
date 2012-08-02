@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 from django.db import models
 import datetime
 from location.models import Pais, Estado, Municipio, Colonia, Calle, Region
+from electric_rates.models import ElectricRates
 
 STATUS = (
     (1,'Activo'),
@@ -16,10 +18,10 @@ class SectoralType(models.Model):
     Por ejemplo: industrial, comercial y de infraestructura y construccion.
 
     """
-    sectorial_type_name = models.CharField(max_length="80")
-    sectoral_type_description = models.TextField(max_length=256, null=True, blank=True)
-    sectoral_type_status = models.IntegerField(choices=STATUS, default=1)
-    sectoral_type_sequence = models.IntegerField(null=True, blank=True)
+    sectorial_type_name = models.CharField("Nombre de Sector", max_length="80")
+    sectoral_type_description = models.TextField(u"Descripción", max_length=256, null=True, blank=True)
+    sectoral_type_status = models.IntegerField("Estatus", choices=STATUS, default=1)
+    sectoral_type_sequence = models.IntegerField("Secuencia", null=True, blank=True)
 
     def __unicode__(self):
         return self.sectorial_type_name
@@ -153,7 +155,7 @@ class Building(models.Model):
     building_code_zone = models.CharField("C.P.:", max_length=5)
     building_long_address = models.DecimalField("Longitud", max_digits=10, decimal_places=6)
     building_lat_address = models.DecimalField("Latitud", max_digits=10, decimal_places=6)
-    #electric_rate
+    electric_rate = models.ForeignKey(ElectricRates, on_delete=models.PROTECT, verbose_name=u"Tarifa Eléctrica")
     mts2_built = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
 
     def __unicode__(self):
