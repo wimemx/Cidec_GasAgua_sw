@@ -58,34 +58,34 @@ def parse_csv(request):
                 I1 = item['I1'],
                 I2 = item['I2'],
                 I3 = item['I3'],
-                KW1 = item['KW1'],
-                KW2 = item['KW2'],
-                KW3 = item['KW3'],
-                PF1 = item['PF1'],
-                PF2 = item['PF2'],
-                PF3 = item['PF3'],
-                KVAR1 = item['KVAR1'],
-                KVAR2 = item['KVAR2'],
-                KVAR3 = item['KVAR3'],
-                KVA1 = item['KVA1'],
-                KVA2 = item['KVA2'],
-                KVA3 = item['KVA3'],
-                KWH = kwh,
-                KVARH = kvarh,
-                KVAH = kvah
+                kWL1 = item['KW1'],
+                kWL2 = item['KW2'],
+                kWL3 = item['KW3'],
+                PFL1 = item['PF1'],
+                PFL2 = item['PF2'],
+                PFL3 = item['PF3'],
+                kvarL1 = item['KVAR1'],
+                kvarL2 = item['KVAR2'],
+                kvarL3 = item['KVAR3'],
+                kVAL1 = item['KVA1'],
+                kVAL2 = item['KVA2'],
+                kVAL3 = item['KVA3'],
+                kWhIMPORT = kwh,
+                kvarhNET = kvarh,
+                #KVAH = kvah
             )
             if 'VL1' in item:
-                elec_data.VL1=item['VL1']
+                elec_data.V1THD=item['VL1']
             if 'VL2' in item:
-                elec_data.VL2=item['VL2']
+                elec_data.V2THD=item['VL2']
             if 'VL3' in item:
-                elec_data.VL3=item['VL3']
-            if 'KWH_MAX' in item:
-                elec_data.KWH_MAX=item['KWH_MAX']
-            if 'KVARH_MAX' in item:
-                elec_data.KVARH_MAX=item['KVARH_MAX']
-            if 'KVAH_MAX' in item:
-                elec_data.KVARH_MAX=item['KVAH_MAX']
+                elec_data.V3THD=item['VL3']
+            #if 'KWH_MAX' in item:
+            #    elec_data.KWH_MAX=item['KWH_MAX']
+            #if 'KVARH_MAX' in item:
+            #    elec_data.KVARH_MAX=item['KVARH_MAX']
+            #if 'KVAH_MAX' in item:
+            #    elec_data.KVARH_MAX=item['KVAH_MAX']
             elec_data.save()
 
 

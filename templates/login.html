@@ -18,7 +18,7 @@
     </script>
 </head>
 <body>
-<span class="notif_error">{% autoescape off %}{{ error }}{% endautoescape %}</span>
+{% if error %}<span class="notif_error">{% autoescape off %}{{ error }}{% endautoescape %}</span>{% endif %}
 <div id="login_div">
 
     <div id="title">

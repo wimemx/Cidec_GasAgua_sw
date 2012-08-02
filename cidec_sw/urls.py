@@ -8,6 +8,7 @@ urlpatterns = patterns('',
     # Examples:
     url(r'^$', 'cidec_sw.views.main', name='home'),
     url(r'^main/', 'cidec_sw.views.index'),
+    url(r'^parse/', 'cidec_sw.views.parse_csv'),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     #url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
