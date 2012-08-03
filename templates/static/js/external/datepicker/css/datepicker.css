@@ -1,10 +1,9 @@
 div.datepicker {
-	position: relative;
+	position: relative !important;
 	font-family: Arial, Helvetica, sans-serif;
-	font-size: 12px;
+	font-size: 10px !important;
 	width: 196px;
 	height: 147px;
-	position: absolute;
 	cursor: default;
 	top: 0;
 	left: 0;
@@ -12,11 +11,22 @@ div.datepicker {
 }
 .datepickerContainer {
     padding: 10px;
-    border: solid 1px #bdbdbd;
-	background: #f5f5f5;
-	position: absolute;
 	top: 10px;
 	left: 10px;
+}
+.datepickerContainer td, .datepickerContainer th{
+    vertical-align: middle;
+
+    font-size: 10px !important;
+}
+.datepickerContainer td, .datepickerContainer th,.datepickerContainer a, .datepickerContainer span, .datepickerContainer th span{
+    font-size: 10px !important;
+    text-align: center;
+}
+.calendar_cont{
+    border: solid 1px #CCC;
+    padding: 5px;
+    border-radius: 5px;
 }
 .datepickerBorderT {
 	position: absolute;
@@ -113,6 +123,9 @@ div.datepicker tbody th {
 div.datepicker tbody a {
 	display: block;
 }
+.datepickerDays tr:first-child a{
+    margin-top: 4px;
+}
 .datepickerDays a {
 	width: 20px;
 	line-height: 16px;
@@ -167,6 +180,10 @@ div.datepicker tbody th {
 	float: left;
 	width: 20px;
 }
+
+table.datepickerViewDays thead tr:first-child{
+    border-bottom: solid 1px #ccc;
+}
 table.datepickerViewDays tbody.datepickerMonths,
 table.datepickerViewDays tbody.datepickerYears {
 	display: none;
@@ -180,6 +197,11 @@ table.datepickerViewYears tbody.datepickerDays,
 table.datepickerViewYears tbody.datepickerMonths,
 table.datepickerViewYears tr.datepickerDoW {
 	display: none;
+
+}
+.datepickerDoW th span{
+    display: block !important;
+    margin: 7px auto 0 auto;
 }
 td.datepickerDisabled a,
 td.datepickerDisabled.datepickerNotInMonth a{

@@ -161,6 +161,7 @@
 					date = new Date(options.current);
 					date.addMonths(-currentCal + i);
 					tblCal = cal.find('table').eq(i+1);
+
 					switch (tblCal[0].className) {
 						case 'datepickerViewDays':
 							dow = formatDate(date, 'B, Y');
@@ -232,8 +233,10 @@
 						data: options.locale.monthsShort,
 						className: 'datepickerMonths'
 					};
+
 					html = tmpl(tpl.months.join(''), data) + html;
-					tblCal.append(html);
+
+                    tblCal.append(html);
 				}
 			},
 			parseDate = function (date, format) {
@@ -444,8 +447,10 @@
 				var cal = $('#' + options.id);
 				if (!options.extraHeight) {
 					var divs = $(el).find('div');
-					options.extraHeight = divs.get(0).offsetHeight + divs.get(1).offsetHeight;
-					options.extraWidth = divs.get(2).offsetWidth + divs.get(3).offsetWidth;
+                    if (divs.get(0) && divs.get(2))
+					    options.extraHeight = divs.get(0).offsetHeight + divs.get(1).offsetHeight;
+                    if(divs.get(2) && divs.get(3))
+					    options.extraWidth = divs.get(2).offsetWidth + divs.get(3).offsetWidth;
 				}
 				var tbl = cal.find('table:first').get(0);
 				var width = tbl.offsetWidth;

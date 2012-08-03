@@ -6,8 +6,38 @@
 {% endblock %}
 {% block externaljs %}
     <script type="text/javascript" src="/static/js/external/datepicker/js/datepicker.js"></script>
+    <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+        //----------------------CHARTS----------------------------
+        google.load('visualization', '1', {packages: ['annotatedtimeline']});
+        function drawVisualization() {
+            var data = new google.visualization.DataTable();
+            data.addColumn('date', 'Date');
+            data.addColumn('number', 'Sold Pencils');
+            data.addColumn('string', 'title1');
+            data.addColumn('string', 'text1');
+            data.addColumn('number', 'Sold Pens');
+            data.addColumn('string', 'title2');
+            data.addColumn('string', 'text2');
+            data.addRows([
+                [new Date(2008, 1 ,1), 30000, null, null, 40645, null, null],
+                [new Date(2008, 1 ,2), 14045, null, null, 20374, null, null],
+                [new Date(2008, 1 ,3), 55022, null, null, 50766, null, null],
+                [new Date(2008, 1 ,4), 75284, null, null, 14334, 'Out of Stock', 'Ran out of stock on pens at 4pm'],
+                [new Date(2008, 1 ,5), 41476, 'Bought Pens', 'Bought 200k pens', 66467, null, null],
+                [new Date(2008, 1 ,6), 33322, null, null, 39463, null, null]
+            ]);
+
+            var annotatedtimeline = new google.visualization.AnnotatedTimeLine(
+                    document.getElementById('visualization'));
+            annotatedtimeline.draw(data, {'displayAnnotations': true});
+        }
+
+        google.setOnLoadCallback(drawVisualization);
+    </script>
 {% endblock %}
 {% block document_ready %}
+    $("select, input, input:checkbox, input:radio, input:file").uniform();
     $(".desp").click(function(){
         $(this).next().slideToggle();
     });
@@ -31,22 +61,27 @@
     var now4 = new Date()
     $('#widgetCalendar').DatePicker({
         flat: true,
-        format: 'd B, Y',
+        format: 'd/m/Y',
         date: [new Date(now3), new Date(now4)],
-        calendars: 3,
+        calendars: 2,
         mode: 'range',
         starts: 1,
         onChange: function(formated) {
-            $('#widgetField span').get(0).innerHTML = formated.join(' &divide; ');
+            console.log(formated);
+            $('#widgetField span').get(0).innerHTML = formated.join(' &ndash; ');
+            $('#range1_init').val(formated[0]);
+            $('#range1_end').val(formated[1]);
         }
     });
     var state = false;
-    $('#widgetField>a').bind('click', function(){
-        $('#widgetCalendar').stop().animate({height: state ? 0 : $('#widgetCalendar div.datepicker').get(0).offsetHeight}, 500);
-        state = !state;
-        return false;
+    $('#widgetField').click(function(){
+        $('#datepicker').slideToggle();
     });
-    $('#widgetCalendar div.datepicker').css('position', 'absolute');
+    $("#date_ranges .aqua_btn").click(function(e){
+        e.preventDefault();
+        $('#datepicker').slideUp();
+        //ajax methods to reload the graphs
+    });
 {% endblock %}
 {% block contenido %}
 <div id="bread_crumbs">
@@ -57,20 +92,68 @@
 
 </div>
 <div id="contenido_interno">
-    <h2>Reporte de Perfil de Carga</h2>
-    <div id="widget">
+    <h2 id="titulo_reporte">Reporte de Perfil de Carga</h2>
+
+    <div id="datepicker_component">
         <div id="widgetField">
-            <span>- &divide; -</span>
-            <a href="#">Select date range</a>
+            <span>Fecha Inicio &ndash; Fecha Fin</span>
+            <a href="#">&nbsp;</a>
         </div>
-        <div id="widgetCalendar">
+
+        <div id="datepicker">
+            <div id="widgetCalendar">
+
+            </div>
+            <div id="date_ranges">
+                <span>Selecciona un periodo</span>
+                <div>
+                    <label>Desde</label>
+                    <input type="text" name="range1_init" id="range1_init">
+                </div>
+                <span>&ndash;</span>
+                <div>
+                    <label>Hasta</label>
+                    <input type="text" name="range1_end" id="range1_end">
+                </div>
+                <span><input type="checkbox" id="prev_dates">Comparar con fechas previas</span>
+                <div>
+                    <label>Desde</label>
+                    <input type="text" name="range2_init" id="range2_init">
+                </div>
+                <span>&ndash;</span>
+                <div>
+                    <label>Hasta</label>
+                    <input type="text" name="range2_end" id="range2_end">
+                </div>
+                <a href="#" class="aqua_btn">Aplicar</a>
+            </div>
         </div>
     </div>
 
-    <p>Amet in hac lacus ut habitasse! Massa pulvinar, sit phasellus augue velit, velit sit integer odio odio et, porttitor, pulvinar velit, mid! Scelerisque dictumst aliquet in? Lectus est eu mauris porttitor ultricies elementum turpis a mauris platea a mauris lorem amet nisi enim in? Dolor egestas non natoque, hac ac urna scelerisque, urna augue? Elementum, turpis in elementum augue scelerisque.</p>
+    <div class="divider" id="divider_top">&nbsp;</div>
 
-    <p>Lacus aliquet, sit. A placerat elementum nunc vut aenean! Velit integer adipiscing. Ac amet in tristique integer urna placerat! Proin in risus tincidunt! Duis dis odio massa placerat enim! Porta mid hac proin turpis! Nec, facilisis risus, adipiscing duis massa ultrices sociis magna adipiscing dis cursus cras! Non elementum, placerat enim pulvinar? Magnis. Magnis? Ridiculus vel dolor, hac tincidunt.</p>
+    <div id="types_graphs">
+        <ul>
+            <li class="active"><a href="#">Potencia Activa(KW)</a></li>
+            <li><a href="#">Potencia Reactiva(KVar)</a></li>
+            <li><a href="#">Factor de Potencia(PF)</a></li>
+            <li><a href="#">Perfil de Carga</a></li>
+        </ul>
+    </div>
 
-    <p>Elit montes risus nascetur lorem! Porttitor facilisis phasellus integer ut non, nisi amet dolor scelerisque! Nec dictumst urna etiam magnis tristique! Elementum magna! Ac porta ut diam mid placerat porta pulvinar augue ut augue montes, duis scelerisque! Risus ut, est cursus lacus et integer! Ultrices! Pellentesque augue, aenean, porttitor rhoncus! Sed risus montes habitasse tempor etiam porta phasellus elementum.</p>
+    <div id="compare">
+        <span>Comparar:</span>
+        <span class="compared">Sears Galer&iacute;as Quer&eacute;taro</span>
+        <span class="vs_tag">VS</span>
+        <select><option>Selecciona</option></select>
+    </div>
+    <ul>
+        <li><a href="#">Hora</a></li>
+        <li><a href="#">D&iacute;a</a></li>
+        <li class="active"><a href="#">Semana</a></li>
+        <li><a href="#">Mes</a></li>
+    </ul>
+    <div id="visualization" style="width: 800px; height: 400px;"></div>
+
 </div>
 {% endblock %}
