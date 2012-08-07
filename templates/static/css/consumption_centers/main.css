@@ -57,7 +57,7 @@ h2{
     color: #fff;
 }
 #contenido_interno{
-
+    width: 96%;
     min-height: 800px;
     margin-top: 10px;
     border: solid 1px #9ebfc7;
@@ -109,7 +109,7 @@ h2{
 }
 #widgetField{
     text-align: center;
-    width: 281px;
+    width: 320px;
     height: 26px;
     float: right;
     line-height: 26px;
@@ -126,9 +126,10 @@ h2{
     display: inline-block;
 }
 #datepicker{
+    z-index: 2;
     padding: 11px 3px 0 3px;
     width: 592px;
-    left: -318px;
+    left: -279px;
     top: 27px;
     position: absolute;
     border: solid 1px #BDBDBD;
@@ -138,10 +139,13 @@ h2{
     background: whiteSmoke;
     display: none;
 }
-#widgetCalendar{
+#widgetCalendar,#widgetCalendar2{
     float: left;
     width: 392px;
     height: 170px;
+}
+#widgetCalendar2{
+    display: none;
 }
 #divider_top.divider{
     margin-top: 40px;
@@ -181,4 +185,73 @@ h2{
 }
 #types_graphs ul li a:hover{
     text-decoration: none;
+}
+#compare span{
+    color: #636363;
+}
+#compare span.compared{
+    font-weight: 700;
+    margin: 0 5px;
+}
+#compare span.vs_tag{
+    color: #920d50;
+    font-weight: 700;
+}
+#compare_interval li a{
+    color: #636363;
+    font-weight: 700;
+}
+#compare_interval li a:hover{
+    text-decoration: none;
+}
+#compare_interval li{
+    float: left;
+    border: solid 1px #bdbdbf;
+    height: 23px;
+    background: url(../images/bgs/date_interval_selector_bg.png) repeat-x;
+    line-height: 23px;
+    width: 65px;
+    text-align: center;
+    margin: 0;
+}
+#compare_interval li:hover{
+    border: solid 1px #9ebfc7;
+    box-shadow: 0 0 2px 1px #9EBFC7;
+    background: url(../images/bgs/date_interval_selected_bg.png) repeat-x;
+}
+#compare_interval li.active{
+    border: solid 1px #9ebfc7;
+    box-shadow: 0 0 2px 1px #9EBFC7;
+    background: url(../images/bgs/date_interval_selected_bg.png) repeat-x;
+}
+#compare_interval li:first-child{
+    -webkit-border-top-left-radius: 3px;
+    -webkit-border-bottom-left-radius: 3px;
+    -moz-border-radius-topleft: 3px;
+    -moz-border-radius-bottomleft: 3px;
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+}
+#compare_interval li:last-child{
+    -webkit-border-top-right-radius: 3px;
+    -webkit-border-bottom-right-radius: 3px;
+    -moz-border-radius-topright: 3px;
+    -moz-border-radius-bottomright: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+#dashboard{
+    clear: both;
+    width: 100%;
+}
+#control{
+    width: 90%;
+    height: 55px;
+    display: block;
+    margin: 10px auto;
+}
+#chart{
+    width: 100%;
+    height: 300px;
+    margin-top: 20px;
 }

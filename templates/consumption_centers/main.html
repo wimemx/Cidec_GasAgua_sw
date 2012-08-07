@@ -8,30 +8,88 @@
     <script type="text/javascript" src="/static/js/external/datepicker/js/datepicker.js"></script>
     <script type="text/javascript" src="http://www.google.com/jsapi"></script>
     <script type="text/javascript">
+        google.load('visualization', '1.1', {packages: ['corechart', 'controls']});
+    </script>
+    <script type="text/javascript">
         //----------------------CHARTS----------------------------
-        google.load('visualization', '1', {packages: ['annotatedtimeline']});
         function drawVisualization() {
+            var dashboard = new google.visualization.Dashboard(
+                    document.getElementById('dashboard'));
+
+            var control = new google.visualization.ControlWrapper({
+                'controlType': 'ChartRangeFilter',
+                'containerId': 'control',
+                'options': {
+                    // Filter by the date axis.
+                    'filterColumnIndex': 0,
+                    'ui': {
+                        'chartType': 'LineChart',
+                        'chartOptions': {
+                            'chartArea': {'width': '90%'},
+                            'hAxis': {'baselineColor': 'none'}
+                        },
+                        // Display a single series that shows the closing value of the stock.
+                        // Thus, this view has two columns: the date (axis) and the stock value (line series).
+                        'chartView': {
+                            'columns': [0, 3]
+                        },
+                        // 1 day in milliseconds = 24 * 60 * 60 * 1000 = 86,400,000
+                        'minRangeSize': 86400000
+                    }
+                },
+                // Initial range: 2012-02-09 to 2012-03-20.
+                'state': {'range': {'start': new Date(2012, 1, 9), 'end': new Date(2012, 2, 20)}}
+            });
+
+            var chart = new google.visualization.ChartWrapper({
+                'chartType': 'LineChart',
+                'containerId': 'chart',
+                'options': {
+                    // Use the same chart area width as the control for axis alignment.
+                    'chartArea': {'height': '80%', 'width': '100%'},
+                    'hAxis': {'slantedText': false},
+                    'vAxis': {'viewWindow': {'min': 0, 'max': 2000}},
+                    'legend': {'position': 'none'}
+                },
+                'colors': ['#ccc','#000','blue','red'],
+                // Convert the first column from 'date' to 'string'.
+                'view': {
+                    'columns': [
+                        {
+                            'calc': function(dataTable, rowIndex) {
+                                return dataTable.getFormattedValue(rowIndex, 0);
+                            },
+                            'type': 'string'
+                        }, 1, 2, 3, 4]
+                }
+            });
+
             var data = new google.visualization.DataTable();
             data.addColumn('date', 'Date');
-            data.addColumn('number', 'Sold Pencils');
-            data.addColumn('string', 'title1');
-            data.addColumn('string', 'text1');
-            data.addColumn('number', 'Sold Pens');
-            data.addColumn('string', 'title2');
-            data.addColumn('string', 'text2');
-            data.addRows([
-                [new Date(2008, 1 ,1), 30000, null, null, 40645, null, null],
-                [new Date(2008, 1 ,2), 14045, null, null, 20374, null, null],
-                [new Date(2008, 1 ,3), 55022, null, null, 50766, null, null],
-                [new Date(2008, 1 ,4), 75284, null, null, 14334, 'Out of Stock', 'Ran out of stock on pens at 4pm'],
-                [new Date(2008, 1 ,5), 41476, 'Bought Pens', 'Bought 200k pens', 66467, null, null],
-                [new Date(2008, 1 ,6), 33322, null, null, 39463, null, null]
-            ]);
+            data.addColumn('number', 'Stock low');
+            data.addColumn('number', 'Stock open');
+            data.addColumn('number', 'Stock close');
+            data.addColumn('number', 'Stock high');
 
-            var annotatedtimeline = new google.visualization.AnnotatedTimeLine(
-                    document.getElementById('visualization'));
-            annotatedtimeline.draw(data, {'displayAnnotations': true});
+            // Create random stock values, just like it works in reality.
+            var open, close = 300;
+            var low, high;
+            for (var day = 1; day < 121; ++day) {
+                var change = (Math.sin(day / 2.5 + Math.PI) + Math.sin(day / 3) - Math.cos(day * 0.7)) * 150;
+                change = change >= 0 ? change + 10 : change - 10;
+                open = close;
+                close = Math.max(50, open + change);
+                low = Math.min(open, close) - (Math.cos(day * 1.7) + 1) * 15;
+                low = Math.max(0, low);
+                high = Math.max(open, close) + (Math.cos(day * 1.3) + 1) * 15;
+                var date = new Date(2012, 0 ,day);
+                data.addRow([date, Math.round(low), Math.round(open), Math.round(close), Math.round(high)]);
+            }
+
+            dashboard.bind(control, chart);
+            dashboard.draw(data);
         }
+
 
         google.setOnLoadCallback(drawVisualization);
     </script>
@@ -43,14 +101,17 @@
     });
     $("#nav_toggle").click(function(){
         if($("#sidebar").hasClass("collapsed_nav")){
-            $("#sidebar_content").show('slide', {direction: 'right'}, 100);
+
             $("#sidebar").animate({width: 'toggle',}, 500, function(){console.log("quito la clase");
                 $(this).removeClass("collapsed_nav");
             });
+            $("#sidebar_content").show('slide', {direction: 'right'}, 100);
+            $("footer").show('slide', {direction: 'right'}, 100);
 
         }else{
             $("#sidebar").addClass("collapsed_nav");
             $("#sidebar_content").hide('slide', {direction: 'left'}, 100);
+            $("footer").hide('slide', {direction: 'left'}, 100);
             $("#sidebar").animate({width: 'toggle',}, 500);
         }
         $("#nav_toggle").toggleClass("closed");
@@ -59,6 +120,7 @@
     var now3 = new Date();
     now3.addDays(-4);
     var now4 = new Date()
+    var mul_date = false;
     $('#widgetCalendar').DatePicker({
         flat: true,
         format: 'd/m/Y',
@@ -67,10 +129,33 @@
         mode: 'range',
         starts: 1,
         onChange: function(formated) {
-            console.log(formated);
-            $('#widgetField span').get(0).innerHTML = formated.join(' &ndash; ');
             $('#range1_init').val(formated[0]);
             $('#range1_end').val(formated[1]);
+    console.log(mul_date);
+            if(!mul_date){
+                $('#widgetField span').css('font-size','16px');
+                $('#widgetField span').get(0).innerHTML = formated.join(' &ndash; ');
+            }else{
+                $('#widgetField span').get(0).innerHTML = $('#range1_init').val() + " &ndash; " + $('#range1_end').val() + " contra: " + $('#range2_init').val() + " &ndash; " + $('#range2_end').val();
+            }
+        }
+    });
+    $('#widgetCalendar').DatePickerClear();
+    $('#widgetCalendar2').DatePickerClear();
+    $('#widgetCalendar2').DatePicker({
+        flat: true,
+        format: 'd/m/Y',
+        date: [new Date(now3), new Date(now4)],
+        calendars: 2,
+        mode: 'range',
+        starts: 1,
+        onChange: function(formated) {
+            $('#range2_init').val(formated[0]);
+            $('#range2_end').val(formated[1]);
+            $('#widgetField span').get(0).innerHTML = $('#range1_init').val() + " &ndash; " + $('#range1_end').val();
+            $('#widgetField span').get(0).innerHTML = $('#widgetField span').html() + " contra: " + $('#range2_init').val() + " &ndash; " + $('#range2_end').val();
+            $('#widgetField span').css('font-size','11px');
+
         }
     });
     var state = false;
@@ -81,6 +166,20 @@
         e.preventDefault();
         $('#datepicker').slideUp();
         //ajax methods to reload the graphs
+    });
+    $("#prev_dates").click(function(){
+        if($("#widgetCalendar2").is(":visible")){
+            mul_date=false;
+            $('#range2_init').val("");
+            $('#range2_end').val("");
+            $('#widgetField span').html($('#widgetField span').html().split(" contra: ")[0]);
+            $('#widgetCalendar2').DatePickerClear();
+        }else{
+            mul_date=true;
+        }
+        $("#widgetCalendar2").slideToggle();
+
+        console.log(mul_date);
     });
 {% endblock %}
 {% block contenido %}
@@ -127,6 +226,9 @@
                 </div>
                 <a href="#" class="aqua_btn">Aplicar</a>
             </div>
+            <div id="widgetCalendar2">
+
+            </div>
         </div>
     </div>
 
@@ -134,26 +236,31 @@
 
     <div id="types_graphs">
         <ul>
-            <li class="active"><a href="#">Potencia Activa(KW)</a></li>
-            <li><a href="#">Potencia Reactiva(KVar)</a></li>
-            <li><a href="#">Factor de Potencia(PF)</a></li>
+            <li class="active"><a href="#">Potencia Activa (KW)</a></li>
+            <li><a href="#">Potencia Reactiva (KVar)</a></li>
+            <li><a href="#">Factor de Potencia (PF)</a></li>
             <li><a href="#">Perfil de Carga</a></li>
         </ul>
     </div>
-
-    <div id="compare">
-        <span>Comparar:</span>
-        <span class="compared">Sears Galer&iacute;as Quer&eacute;taro</span>
-        <span class="vs_tag">VS</span>
-        <select><option>Selecciona</option></select>
+    <div id="graphs_container">
+        <div id="compare" class="fl">
+            <span>Comparar:</span>
+            <span class="compared">Sears Galer&iacute;as Quer&eacute;taro</span>
+            <span class="vs_tag">VS</span>
+            <select><option>Selecciona</option></select>
+        </div>
+        <ul id="compare_interval" class="fr">
+            <li><a href="#">Hora</a></li>
+            <li><a href="#">D&iacute;a</a></li>
+            <li class="active"><a href="#">Semana</a></li>
+            <li><a href="#">Mes</a></li>
+        </ul>
+        <div id="dashboard" class="fl">
+            <div id="chart"></div>
+            <div id="control"></div>
+        </div>
     </div>
-    <ul>
-        <li><a href="#">Hora</a></li>
-        <li><a href="#">D&iacute;a</a></li>
-        <li class="active"><a href="#">Semana</a></li>
-        <li><a href="#">Mes</a></li>
-    </ul>
-    <div id="visualization" style="width: 800px; height: 400px;"></div>
+
 
 </div>
 {% endblock %}

@@ -342,3 +342,13 @@ a.aqua_btn:hover{
     color: #424242;
     font-size: 12px;
 }
+footer{
+    margin-top: 10px;
+}
+footer span{
+    display: block;
+    text-align: center;
+    color: #d0d0d0;
+    font-size: 11px;
+    line-height: 170%;
+}
