@@ -5,33 +5,12 @@
     margin: 30px auto 10px auto;
 }
 #empresa{
-    line-height: 125%;
     cursor: pointer;
     background: url(../images/imgs_icns/arrow_down_sm_white.png) 100% 50% no-repeat;
     display: block;
     width: 115px;
     margin: 10px auto;
     font-size: 12px;
-    border: none;
-    color: white;
-}
-#company_list{
-    border: solid 1px #666;
-    left: 18px;
-    position: absolute;
-    background: #505e68;
-    width: 200px;
-    display: none;
-}
-
-#company_list li{
-    cursor: pointer;
-    padding: 3px 10px;
-}
-#company_list li:hover{
-    font-weight: 700;
-    background-color: #fff;
-    color: #505e68;
 }
 #sidebar_content{
     color: #fff;
@@ -78,6 +57,7 @@ h2{
     color: #fff;
 }
 #contenido_interno{
+    overflow: auto;
     width: 96%;
     min-height: 800px;
     margin-top: 10px;
@@ -160,13 +140,10 @@ h2{
     background: whiteSmoke;
     display: none;
 }
-#widgetCalendar,#widgetCalendar2{
+#widgetCalendar{
     float: left;
     width: 392px;
     height: 170px;
-}
-#widgetCalendar2{
-    display: none;
 }
 #divider_top.divider{
     margin-top: 40px;
@@ -196,7 +173,6 @@ h2{
     background: #E4E4E4;
     height: 27px;
     margin-top: 4px;
-    cursor: pointer;
 }
 #types_graphs ul li:hover{
     background: #fff;
@@ -208,72 +184,181 @@ h2{
 #types_graphs ul li a:hover{
     text-decoration: none;
 }
-#compare span{
-    color: #636363;
+#left_col, #right_col{
+    display:block;
+    min-height: 10px;
 }
-#compare span.compared{
+#left_col{
+    width: 40%;
+    padding-right: 5px;
+    min-width: 399px;
+}
+#right_col{
+    width: 59%;
+    padding-left: 5px;
+    min-width: 589px;
+}
+h3{
+    color: #8f0b4d;
+    font-size: 18px;
     font-weight: 700;
-    margin: 0 5px;
 }
-#compare span.vs_tag{
-    color: #920d50;
+h4{
+    color: #697a8a;
     font-weight: 700;
+    font-size: 20px;
+
 }
-#compare_interval li{
-    color: #636363;
+#sumary{
+    margin-top: 15px;
+}
+#sumary span{
+    width: 49%;
     font-weight: 700;
-    cursor: pointer;
+    color: #878787;
+    display: inline-block;
+    line-height: 160%;
 }
-#compare_interval li{
-    float: left;
-    border: solid 1px #bdbdbf;
-    height: 23px;
-    background: url(../images/bgs/date_interval_selector_bg.png) repeat-x;
-    line-height: 23px;
-    width: 65px;
-    text-align: center;
-    margin: 0;
+#sumary span.r{
+    text-align: right;
+    font-size: 15px;
 }
-#compare_interval li:hover{
-    border: solid 1px #9ebfc7;
-    box-shadow: 0 0 2px 1px #9EBFC7;
-    background: url(../images/bgs/date_interval_selected_bg.png) repeat-x;
+#sumary span.l{
+    text-align: left;
+    font-size: 13px;
 }
-#compare_interval li.active{
-    border: solid 1px #9ebfc7;
-    box-shadow: 0 0 2px 1px #9EBFC7;
-    background: url(../images/bgs/date_interval_selected_bg.png) repeat-x;
+#sumary span.total{
+    font-size: 25px !important;
 }
-#compare_interval li:first-child{
-    -webkit-border-top-left-radius: 3px;
-    -webkit-border-bottom-left-radius: 3px;
-    -moz-border-radius-topleft: 3px;
-    -moz-border-radius-bottomleft: 3px;
-    border-top-left-radius: 3px;
-    border-bottom-left-radius: 3px;
-}
-#compare_interval li:last-child{
-    -webkit-border-top-right-radius: 3px;
-    -webkit-border-bottom-right-radius: 3px;
-    -moz-border-radius-topright: 3px;
-    -moz-border-radius-bottomright: 3px;
-    border-top-right-radius: 3px;
-    border-bottom-right-radius: 3px;
-}
-#dashboard{
-    clear: both;
+.inner_col table{
     width: 100%;
+    border: solid 1px #9ebfc7;
+    border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
 }
-#control{
-    width: 90%;
-    height: 55px;
+.inner_col tr{
+    line-height: 220%;
+}
+.inner_col tr:nth-child(2n+1){
+    background-color: #fff;
+}
+.inner_col tr:nth-child(2n+2){
+    background-color: #f6f9fa;
+}
+#history_graph{
+    border: solid 1px #9ebfc7;
+    border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    background: #fff;
+}
+#graph_title{
     display: block;
-    margin: 10px auto;
-}
-#chart{
     width: 100%;
-    height: 300px;
+    text-align: center;
+    line-height: 35px;
+    -webkit-border-top-left-radius: 5px;
+    -webkit-border-top-right-radius: 5px;
+    -moz-border-radius-topleft: 5px;
+    -moz-border-radius-topright: 5px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+}
+.inner_col th, #graph_title{
+    font-weight: 700;
+    font-size: 13px;
+    color: #878787;
+    background-image: linear-gradient(bottom, rgb(240,245,247) 9%, rgb(255,255,255) 78%);
+    background-image: -o-linear-gradient(bottom, rgb(240,245,247) 9%, rgb(255,255,255) 78%);
+    background-image: -moz-linear-gradient(bottom, rgb(240,245,247) 9%, rgb(255,255,255) 78%);
+    background-image: -webkit-linear-gradient(bottom, rgb(240,245,247) 9%, rgb(255,255,255) 78%);
+    background-image: -ms-linear-gradient(bottom, rgb(240,245,247) 9%, rgb(255,255,255) 78%);
+    background-image: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(0.09, rgb(240,245,247)),
+        color-stop(0.78, rgb(255,255,255))
+    );
+    height: 35px;
+    vertical-align: middle;
+}
+#function_period, #rates{
     margin-top: 20px;
+}
+#function_period .h82{
+    width: 82%;
+    border-right: solid 1px #9ebfc7;
+}
+#function_period .h18{
+    width: 18%;
+}
+#function_period td:nth-child(2n+2){
+    text-align: center;
+    font-size: 15px;
+    font-weight: 700;
+    color: #878787;
+}
+#function_period td:nth-child(2n+1){
+    font-size: 13px;
+    color: #444;
+    border-right: solid 1px #9ebfc7;
+    padding-left: 5px;
+}
+#rates th{
+    border-right: solid 1px #9ebfc7;
+}
+#rates td{
+    text-align: center;
+    font-size: 15px;
+    font-weight: 700;
+    color: #878787;
+    border-right: solid 1px #9ebfc7;
+}
+#rates td:nth-child(1){
+    text-align: left;
+    font-size: 13px;
+    font-weight: 400;
+    color: #444;
+    padding-left: 5px;
+}
+#notes{
+    text-align: center;
+    margin-bottom: 10px;
+}
+#notes span{
+    font-size: 13px;
+    color: #878787;
+    line-height: 200%;
+}
+#notes span:nth-child(2n+1){
+    font-weight: bold;
+    margin-left: 5px;
+}
+#visualization{
+    width: 100%;
+    height: 325px;
+    text-align: center;
+}
+
+#sumary_month{
+    margin-top: 8px;
+}
+#sumary_month td{
+    text-align: center;
+    font-size: 15px;
+    color: #878787;
+    font-weight: 700;
+}
+#sumary_month td:nth-child(1){
+    padding-left: 5px;
+    text-align: left;
+    font-weight: 400;
+    font-size: 13px;
+}
+#sumary_month td:nth-child(3),#sumary_month th:nth-child(3){
+    border-right: solid 1px #9ebfc7;
 }
 .period_tag{
     float: left;
@@ -282,14 +367,4 @@ h2{
     margin-right: 5px;
     font-size: 13px;
     color: #878787;
-}
-#graph_container{
-    width: 100%;
-    overflow: auto;
-}
-iframe{
-    width: 100%;
-}
-#chart rect{
-    fill-opacity: .3;
 }

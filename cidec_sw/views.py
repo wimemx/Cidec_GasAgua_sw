@@ -5,14 +5,14 @@ import csv
 
 #related third party imports
 import datetime
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse, HttpResponseRedirect
 
 #local application/library specific imports
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from c_center.models import ProfilePowermeter, Powermeter, ElectricData
-
+from c_center.views import main_page
 
 def parse_csv(request):
 
@@ -98,7 +98,7 @@ def parse_csv(request):
 
     return HttpResponse(html)
 
-def main(request):
+def _login(request):
     error = username = password = ''
     if request.user.is_authenticated():
         return HttpResponseRedirect("/main/")
@@ -108,6 +108,7 @@ def main(request):
         user = authenticate(username=username, password=password)
         if user is not None:
             if user.is_active:
+                login(request, user)
                 return HttpResponseRedirect("/main/")
             else:
                 error = "Tu cuenta ha sido desactivada, por favor ponete en contacto con tu administrador!"
@@ -119,6 +120,10 @@ def main(request):
 
 
 def index(request):
-    variables={}
-    variables_template = RequestContext(request,variables)
-    return render_to_response("consumption_centers/main.html", variables_template)
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    return main_page(request)
+
+def logout_page(request):
+    logout(request)
+    return HttpResponseRedirect('/')

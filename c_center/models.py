@@ -28,6 +28,8 @@ class SectoralType(models.Model):
     @staticmethod
     def autocomplete_search_fields():
         return "id__iexact", "sectorial_type_name__icontains"
+    class Meta:
+        ordering = ['sectoral_type_sequence', 'sectorial_type_name']
 
 class Cluster(models.Model):
     """ Catalogo de Clusters
@@ -109,6 +111,8 @@ class BuildingAttributesType(models.Model):
 
     def __unicode__(self):
         return self.building_attributes_type_name
+    class Meta:
+        ordering = ['building_attributes_type_sequence', 'building_attributes_type_name']
 
 class BuildingAttributes(models.Model):
     """ Atributos de Edificios
@@ -129,6 +133,8 @@ class BuildingAttributes(models.Model):
 
     def __unicode__(self):
         return self.building_attributes_name
+    class Meta:
+        ordering = ['building_attributes_sequence', 'building_attributes_name']
 
 
 class Building(models.Model):
@@ -230,6 +236,8 @@ class ElectricDeviceType(models.Model):
 
     def __unicode__(self):
         return self.electric_device_type_name
+    class Meta:
+        ordering = ['electric_device_type_sequence', 'electric_device_type_name']
 
 class PartOfBuildingType(models.Model):
     """ Espacios en edificios
@@ -246,6 +254,8 @@ class PartOfBuildingType(models.Model):
 
     def __unicode__(self):
         return self.part_of_building_type_name
+    class Meta:
+        ordering = ['part_of_building_type_sequence', 'part_of_building_type_name']
 
 class BuildingType(models.Model):
     """ Tipos de Edificios
@@ -263,6 +273,8 @@ class BuildingType(models.Model):
 
     def __unicode__(self):
         return self.building_type_name
+    class Meta:
+        ordering = ['building_type_sequence', 'building_type_name']
 
 class BuildingTypeForBuilding(models.Model):
     """ Asociacion entre buildings y sus tipos

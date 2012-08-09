@@ -16,7 +16,7 @@ h1{
     margin-left: -265px;
     margin-top: -185px;
 }
-#login{
+button{
     display: block;
     margin: 1em auto;
     width: 127px;
@@ -28,3 +28,12 @@ label{
 form{
     text-align: center;
 }
+p{
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 200%;
+    color: #636363;
+    margin-top: 15px;
+}
+

@@ -1,7 +1,15 @@
-<div id="sidebar_content">
+<div id="sidebar_content" xmlns="http://www.w3.org/1999/html">
     <img id="company_profile_pic" src="/static/css/images/imgs_icns/company_placeholder.png" alt="logotipo"/>
-    <span id="empresa">Sears Galerias QRO </span>
-
+    <span id="empresa">
+        algo
+    </span>
+    <ul id="company_list">
+        {% for cntx in datacontext %}
+            <li>
+                {{cntx.building.building_name}}
+            </li>
+        {% endfor %}
+    </ul>
     <span class="sidebar_option first">
         <span>Panel de Control</span>
     </span>
@@ -10,8 +18,8 @@
         <span>Reportes</span>
     </span>
     <ul class="sidebarsub_op">
-        <li><a href="#">Reporte 1</a></li>
-        <li><a href="#">Reporte 2</a></li>
+        <li><a href="/">Perfil de Carga</a></li>
+        <li><a href="/reportes/cfe/">Recibo CFE</a></li>
         <li><a href="#">Reporte 3</a></li>
         <li><a href="#">Reporte 4</a></li>
     </ul>

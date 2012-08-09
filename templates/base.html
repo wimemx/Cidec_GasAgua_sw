@@ -26,6 +26,7 @@
                 this.setDate(this.getDate() + n);
                 this.tempDate = this.getDate();
             };
+            $("select, input, input:checkbox, input:radio, input:file").uniform();
             {% block document_ready %}{% endblock %}
             $("#user_menu li a[title]").tooltip({effect: 'slide'}).dynamic({ bottom: { direction: 'down', bounce: true } });
         });

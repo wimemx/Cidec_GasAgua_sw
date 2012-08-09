@@ -11,98 +11,26 @@
         google.load('visualization', '1.1', {packages: ['corechart', 'controls']});
     </script>
     <script type="text/javascript">
-        //----------------------CHARTS----------------------------
-        function drawVisualization() {
-            var dashboard = new google.visualization.Dashboard(
-                    document.getElementById('dashboard'));
 
-            var control = new google.visualization.ControlWrapper({
-                'controlType': 'ChartRangeFilter',
-                'containerId': 'control',
-                'options': {
-                    // Filter by the date axis.
-                    'filterColumnIndex': 0,
-                    'ui': {
-                        'chartType': 'LineChart',
-                        'chartOptions': {
-                            'chartArea': {'width': '90%'},
-                            'hAxis': {'baselineColor': 'none'}
-                        },
-                        // Display a single series that shows the closing value of the stock.
-                        // Thus, this view has two columns: the date (axis) and the stock value (line series).
-                        'chartView': {
-                            'columns': [0, 3]
-                        },
-                        // 1 day in milliseconds = 24 * 60 * 60 * 1000 = 86,400,000
-                        'minRangeSize': 86400000
-                    }
-                },
-                // Initial range: 2012-02-09 to 2012-03-20.
-                'state': {'range': {'start': new Date(2012, 1, 9), 'end': new Date(2012, 2, 20)}}
-            });
-
-            var chart = new google.visualization.ChartWrapper({
-                'chartType': 'LineChart',
-                'containerId': 'chart',
-                'options': {
-                    // Use the same chart area width as the control for axis alignment.
-                    'chartArea': {'height': '80%', 'width': '100%'},
-                    'hAxis': {'slantedText': false},
-                    'vAxis': {'viewWindow': {'min': 0, 'max': 2000}},
-                    'legend': {'position': 'none'}
-                },
-                'colors': ['#ccc','#000','blue','red'],
-                // Convert the first column from 'date' to 'string'.
-                'view': {
-                    'columns': [
-                        {
-                            'calc': function(dataTable, rowIndex) {
-                                return dataTable.getFormattedValue(rowIndex, 0);
-                            },
-                            'type': 'string'
-                        }, 1, 2, 3, 4]
-                }
-            });
-
-            var data = new google.visualization.DataTable();
-            data.addColumn('date', 'Date');
-            data.addColumn('number', 'Stock low');
-            data.addColumn('number', 'Stock open');
-            data.addColumn('number', 'Stock close');
-            data.addColumn('number', 'Stock high');
-
-            // Create random stock values, just like it works in reality.
-            var open, close = 300;
-            var low, high;
-            for (var day = 1; day < 121; ++day) {
-                var change = (Math.sin(day / 2.5 + Math.PI) + Math.sin(day / 3) - Math.cos(day * 0.7)) * 150;
-                change = change >= 0 ? change + 10 : change - 10;
-                open = close;
-                close = Math.max(50, open + change);
-                low = Math.min(open, close) - (Math.cos(day * 1.7) + 1) * 15;
-                low = Math.max(0, low);
-                high = Math.max(open, close) + (Math.cos(day * 1.3) + 1) * 15;
-                var date = new Date(2012, 0 ,day);
-                data.addRow([date, Math.round(low), Math.round(open), Math.round(close), Math.round(high)]);
-            }
-
-            dashboard.bind(control, chart);
-            dashboard.draw(data);
-        }
-
-
-        google.setOnLoadCallback(drawVisualization);
+    function graphsReload(){
+        /* Takes the date in the range inputs and reloads the graph data */
+    }
+    function refresh_iframe_height(){
+        // regresca el height del iframe para ajustarse a su conte
+        setTimeout("parent.document.getElementById('graphFrame').height = document['body'].offsetHeight;", 1000);
+    }
     </script>
 {% endblock %}
 {% block document_ready %}
-    $("select, input, input:checkbox, input:radio, input:file").uniform();
+
     $(".desp").click(function(){
         $(this).next().slideToggle();
     });
     $("#nav_toggle").click(function(){
+        //maneja el evento de colapsar o mostrar la barra de navegacion
         if($("#sidebar").hasClass("collapsed_nav")){
 
-            $("#sidebar").animate({width: 'toggle',}, 500, function(){console.log("quito la clase");
+            $("#sidebar").animate({width: 'toggle',}, 500, function(){
                 $(this).removeClass("collapsed_nav");
             });
             $("#sidebar_content").show('slide', {direction: 'right'}, 100);
@@ -158,16 +86,19 @@
 
         }
     });
+    $('#widgetCalendar2').DatePickerClear();
     var state = false;
     $('#widgetField').click(function(){
         $('#datepicker').slideToggle();
     });
     $("#date_ranges .aqua_btn").click(function(e){
+        //aplicar el(los) rangos de fecha seleccionados
         e.preventDefault();
         $('#datepicker').slideUp();
-        //ajax methods to reload the graphs
+        graphsReload();
     });
     $("#prev_dates").click(function(){
+        //maneja la visibilidad del calendario del rango adicional
         if($("#widgetCalendar2").is(":visible")){
             mul_date=false;
             $('#range2_init').val("");
@@ -178,8 +109,66 @@
             mul_date=true;
         }
         $("#widgetCalendar2").slideToggle();
+    });
 
-        console.log(mul_date);
+    $("#types_graphs ul li").each(function(){
+        // Carga el iframe de la grafica correspondiente,
+        $(this).click(function(){
+            $("#types_graphs ul li").each(function(){$(this).removeClass("active");});
+            var graphFrame =document.createElement("IFRAME");
+            graphFrame.id = "graphFrame";
+            switch($(this).attr("id")){
+                case "kw":
+                    graphFrame.src = "/reportes/potencia_activa/";
+                    break;
+                case "kvar":
+                    graphFrame.src = "/reportes/potencia_reactiva/";
+                    break;
+                case "pf":
+                    graphFrame.src = "/reportes/factor_potencia/";
+                    break;
+                case "profile":
+                    graphFrame.src = "/reportes/perfil_carga/";
+                    break;
+            }
+            $("#graph_container").html(graphFrame);
+            //cambia la clase de la pestania
+            $(this).addClass("active");
+            //cambia el height del iframe de a cuerdo al contenido
+            refresh_iframe_height();
+        });
+    });
+    $("#compare_to").change(function(){
+        //agrega y refresca los datos para ser comparados contra otra entidad
+        var src=$("#graphFrame").attr("src").split('?')
+        var iframesrc = src[0] + '?';
+        console.log(src[1] != undefined);
+        if (src[1] != undefined){
+            iframesrc += src[1] + '&';
+        }
+        iframesrc += "compare_to=" + $(this).val();
+        $(this).parent().before('<span class="compared">'+$("#compare_to option:selected").text()
+                        +'</span><span class="vs_tag">VS</span>');
+        var graphFrame =document.createElement("IFRAME");
+        graphFrame.id = "graphFrame";
+        graphFrame.src = iframesrc;
+        $("#graph_container").html(graphFrame);
+        refresh_iframe_height();
+    });
+
+
+    refresh_iframe_height();
+    //custom select for sidebar
+
+    $("#empresa").click(function(){
+        $("#company_list").slideToggle();
+    });
+    $("#company_list li").click(function(){
+        texto=$(this).text().replace(/^\s*|\s*$/g,'');;
+        texto=texto.substring(0,17)+"...";
+        $("#empresa").text(texto);
+        $("#company_list").slideUp();
+        //reload with the selected company data
     });
 {% endblock %}
 {% block contenido %}
@@ -194,6 +183,7 @@
     <h2 id="titulo_reporte">Reporte de Perfil de Carga</h2>
 
     <div id="datepicker_component">
+        <span class="period_tag">Periodo</span>
         <div id="widgetField">
             <span>Fecha Inicio &ndash; Fecha Fin</span>
             <a href="#">&nbsp;</a>
@@ -236,10 +226,10 @@
 
     <div id="types_graphs">
         <ul>
-            <li class="active"><a href="#">Potencia Activa (KW)</a></li>
-            <li><a href="#">Potencia Reactiva (KVar)</a></li>
-            <li><a href="#">Factor de Potencia (PF)</a></li>
-            <li><a href="#">Perfil de Carga</a></li>
+            <li id="kw" class="active">Potencia Activa (KW)</li>
+            <li id="kvar">Potencia Reactiva (KVar)</li>
+            <li id="pf">Factor de Potencia (PF)</li>
+            <li id="profile">Perfil de Carga</li>
         </ul>
     </div>
     <div id="graphs_container">
@@ -247,18 +237,19 @@
             <span>Comparar:</span>
             <span class="compared">Sears Galer&iacute;as Quer&eacute;taro</span>
             <span class="vs_tag">VS</span>
-            <select><option>Selecciona</option></select>
+            <select id="compare_to">
+                <option>Selecciona</option>
+                <option value="1">Sanborns Galer&iacute;as Quer&eacute;taro</option>
+                <option value="2">Sanborns Plaza del Parque Quer&eacute;taro</option>
+            </select>
         </div>
-        <ul id="compare_interval" class="fr">
-            <li><a href="#">Hora</a></li>
-            <li><a href="#">D&iacute;a</a></li>
-            <li class="active"><a href="#">Semana</a></li>
-            <li><a href="#">Mes</a></li>
-        </ul>
-        <div id="dashboard" class="fl">
-            <div id="chart"></div>
-            <div id="control"></div>
+
+        <div id="graph_container">
+            {% if type == "graphs" %}
+                <iframe src="/reportes/potencia_activa/" id="graphFrame"></iframe>
+            {% endif %}
         </div>
+
     </div>
 
 

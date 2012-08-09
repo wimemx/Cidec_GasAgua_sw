@@ -117,4 +117,4 @@ class DataContextPermission(models.Model):
 
     def __unicode__(self):
         return self.user_role.user.username + " - " + \
-               self.part_of_building.building.building_name
+               self.building.building_name

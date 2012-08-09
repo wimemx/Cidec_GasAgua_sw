@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+{% block titulo %}Reportes{% endblock %}
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/consumption_centers/cfe_bill.css">
+    <link rel="stylesheet" href="/static/js/external/datepicker/css/datepicker.css" type="text/css" />
+{% endblock %}
+{% block externaljs %}
+    <script type="text/javascript" src="/static/js/external/datepicker/js/datepicker.js"></script>
+    <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+        google.load('visualization', '1', {packages: ['corechart']});
+    </script>
+    <script type="text/javascript">
+        function drawVisualization() {
+            // Create and populate the data table.
+            var data = google.visualization.arrayToDataTable([
+                ['Mes', 'Base', 'Media', 'Punta'],
+                ['MAR',  1336060,   1374066,       1304797],
+                ['ABR',  1338156,   1228875,       1151983],
+                ['MAY',  1476579,   1363414,      1256441],
+                ['JUN',  1200652,   1440478,       1336060],
+                ['JUL',  1168113,   1237079,      1207029],
+                ['AGO',  1401067,   1207327,      1284795],
+                ['SEP',  1336060,   1374066,       1304797],
+                ['OCT',  1338156,   1228875,       1151983],
+                ['NOV',  1476579,   1363414,      1256441],
+                ['DIC',  1200652,   1440478,       1336060]
+            ]);
+
+            // Create and draw the visualization.
+            new google.visualization.ColumnChart(document.getElementById('visualization')).
+                    draw(data,
+                    {
+                        width:570, height:325,}
+            );
+        }
+
+
+        google.setOnLoadCallback(drawVisualization);
+    </script>
+{% endblock %}
+{% block document_ready %}
+    $("select, input, input:checkbox, input:radio, input:file").uniform();
+    $(".desp").click(function(){
+        $(this).next().slideToggle();
+    });
+    $("#nav_toggle").click(function(){
+        if($("#sidebar").hasClass("collapsed_nav")){
+
+            $("#sidebar").animate({width: 'toggle',}, 500, function(){console.log("quito la clase");
+                $(this).removeClass("collapsed_nav");
+            });
+            $("#sidebar_content").show('slide', {direction: 'right'}, 100);
+            $("footer").show('slide', {direction: 'right'}, 100);
+
+        }else{
+            $("#sidebar").addClass("collapsed_nav");
+            $("#sidebar_content").hide('slide', {direction: 'left'}, 100);
+            $("footer").hide('slide', {direction: 'left'}, 100);
+            $("#sidebar").animate({width: 'toggle',}, 500);
+        }
+        $("#nav_toggle").toggleClass("closed");
+    });
+
+    var now3 = new Date();
+    now3.addDays(-60);
+    var now4 = new Date();
+    $('#widgetCalendar').DatePicker({
+        flat: true,
+        format: 'd/m/Y',
+        date: [new Date(now3), new Date(now4)],
+        calendars: 2,
+        mode: 'range',
+        starts: 1,
+        onChange: function(formated) {
+            $('#range1_init').val(formated[0]);
+            $('#range1_end').val(formated[1]);
+            $('#widgetField span').get(0).innerHTML = formated.join(' &ndash; ');
+        }
+    });
+
+
+    var state = false;
+    $('#widgetField').click(function(){
+        $('#datepicker').slideToggle();
+    });
+    $("#date_ranges .aqua_btn").click(function(e){
+        e.preventDefault();
+        $('#datepicker').slideUp();
+        graphsReload();
+    });
+
+{% endblock %}
+{% block contenido %}
+<div id="bread_crumbs">
+    <ul>
+        <li><a href="/main/">Inicio</a></li>
+        <li><a href="/main/">Reportes</a></li>
+    </ul>
+
+</div>
+<div id="contenido_interno">
+    <h2 id="titulo_reporte">Reporte de CFE</h2>
+
+    <div class="divider" id="divider_top">&nbsp;</div>
+
+    <div id="types_graphs">
+        <ul>
+            <li class="active"><a href="#">Reporte CFE</a></li>
+        </ul>
+    </div>
+    <div id="data_container">
+        <h3>Sears Galerias Quer&eacute;taro</h3>
+        <div id="datepicker_component">
+            <span class="period_tag">Periodo</span>
+            <div id="widgetField">
+                <span>Fecha Inicio &ndash; Fecha Fin</span>
+                <a href="#">&nbsp;</a>
+            </div>
+
+            <div id="datepicker">
+                <div id="widgetCalendar">
+
+                </div>
+                <div id="date_ranges">
+                    <span>Selecciona un periodo</span>
+                    <div>
+                        <label>Desde</label>
+                        <input type="text" name="range1_init" id="range1_init">
+                    </div>
+                    <span>&ndash;</span>
+                    <div>
+                        <label>Hasta</label>
+                        <input type="text" name="range1_end" id="range1_end">
+                    </div>
+                    <a href="#" class="aqua_btn">Aplicar</a>
+                </div>
+            </div>
+        </div>
+        <div class="vacio"></div>
+        <h4>Estado de Cuenta</h4>
+        <div id="left_col" class="fl inner_col">
+
+            <div id="sumary">
+                <span class="l">Energ&iacute;a</span>
+                <span class="r">$1,333.00</span>
+                <span class="l">Demanda Facturable</span>
+                <span class="r">$1,333.00</span>
+                <span class="l">Bonificaci&oacute;n Factor de Potencia</span>
+                <span class="r">$1,333.00</span>
+                <span class="l">IVA 16%</span>
+                <span class="r">$1,333.00</span>
+                <span class="l">Facturaci&oacute;n del Periodo</span>
+                <span class="r">$1,333.00</span>
+                <span class="l">Adeudo Anterior</span>
+                <span class="r">$1,333.00</span>
+                <span class="l">Total</span>
+                <span class="r total">$1,333.00</span>
+            </div>
+            <table id="function_period">
+                <thead>
+                    <tr>
+                        <th class="h82">Funci&oacute;n y Periodo</th>
+                        <th class="h18">Totales</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>kWh Base</td>
+                        <td>999</td>
+                    </tr>
+                    <tr>
+                        <td>kWh Intermedia</td>
+                        <td>999</td>
+                    </tr>
+                    <tr>
+                        <td>kWh Punta</td>
+                        <td>999</td>
+                    </tr>
+                    <tr>
+                        <td>kWh Semipunta</td>
+                        <td>999</td>
+                    </tr>
+                    <tr>
+                        <td>kW Base</td>
+                        <td>999</td>
+                    </tr>
+                    <tr>
+                        <td>kW Intermedia</td>
+                        <td>999</td>
+                    </tr>
+                    <tr>
+                        <td>kW Punta</td>
+                        <td>11999</td>
+                    </tr>
+                    <tr>
+                        <td>kW Semipunta</td>
+                        <td>999</td>
+                    </tr>
+                    <tr>
+                        <td>kVArh</td>
+                        <td>999</td>
+                    </tr>
+                    <tr>
+                        <td>Factor de potencia %</td>
+                        <td>99.99</td>
+                    </tr>
+                </tbody>
+            </table>
+            <table id="rates">
+                <thead>
+                    <tr>
+                        <th>Diferencia</th>
+                        <th>Totales</th>
+                        <th>Precios Unitarios</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Energ&iacute;a en base kWh</td>
+                        <td>999</td>
+                        <td>1.98736736</td>
+                    </tr>
+                    <tr>
+                        <td>Energ&iacute;a en intermedia kWh</td>
+                        <td>999</td>
+                        <td>1.98736736</td>
+                    </tr>
+                    <tr>
+                        <td>Energ&iacute;a en punta kWh</td>
+                        <td>999</td>
+                        <td>1.98736736</td>
+                    </tr>
+                    <tr>
+                        <td>Energ&iacute;a en semipunta kWh</td>
+                        <td>999</td>
+                        <td>1.98736736</td>
+                    </tr>
+                    <tr>
+                        <td>Demanda facturable kW</td>
+                        <td>999</td>
+                        <td>178.2300</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="right_col" class="fl inner_col">
+            <div id="notes">
+                <span>Tarifa:</span><span>HM</span>
+                <span>Carga conectada kW:</span><span>150</span>
+                <span>Demanda contratada kW:</span><span>134</span>
+                <span>Multiplicador:</span><span>240</span>
+            </div>
+            <div id="history_graph">
+                <span id="graph_title">Datos Hist&oacute;ricos</span>
+                <div id="visualization"></div>
+            </div>
+            <table id="sumary_month">
+                <thead>
+                    <tr>
+                        <th>Mes</th>
+                        <th>Demanda M&aacute;xima</th>
+                        <th>Consumo Total (KWh)</th>
+                        <th>F.P. %</th>
+                        <th>F.C. %</th>
+                        <th>Precio Medio</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>ABR 2011</td>
+                        <td>88</td>
+                        <td>2,213</td>
+                        <td>80%</td>
+                        <td>70%</td>
+                        <td>5,230</td>
+                    </tr>
+                    <tr>
+                        <td>MAY 2011</td>
+                        <td>88</td>
+                        <td>2,213</td>
+                        <td>80%</td>
+                        <td>70%</td>
+                        <td>5,230</td>
+                    </tr>
+                    <tr>
+                        <td>JUN 2011</td>
+                        <td>88</td>
+                        <td>2,213</td>
+                        <td>80%</td>
+                        <td>70%</td>
+                        <td>5,230</td>
+                    </tr>
+                    <tr>
+                        <td>JUL 2011</td>
+                        <td>88</td>
+                        <td>2,213</td>
+                        <td>80%</td>
+                        <td>70%</td>
+                        <td>5,230</td>
+                    </tr>
+                    <tr>
+                        <td>AGO 2011</td>
+                        <td>88</td>
+                        <td>2,213</td>
+                        <td>80%</td>
+                        <td>70%</td>
+                        <td>5,230</td>
+                    </tr>
+                    <tr>
+                        <td>SEP 2011</td>
+                        <td>88</td>
+                        <td>2,213</td>
+                        <td>80%</td>
+                        <td>70%</td>
+                        <td>5,230</td>
+                    </tr>
+                    <tr>
+                        <td>OCT 2011</td>
+                        <td>88</td>
+                        <td>2,213</td>
+                        <td>80%</td>
+                        <td>70%</td>
+                        <td>5,230</td>
+                    </tr>
+                    <tr>
+                        <td>NOV 2011</td>
+                        <td>88</td>
+                        <td>2,213</td>
+                        <td>80%</td>
+                        <td>70%</td>
+                        <td>5,230</td>
+                    </tr>
+                    <tr>
+                        <td>DIC 2011</td>
+                        <td>88</td>
+                        <td>2,213</td>
+                        <td>80%</td>
+                        <td>70%</td>
+                        <td>5,230</td>
+                    </tr>
+                    <tr>
+                        <td>ENE 2012</td>
+                        <td>88</td>
+                        <td>2,213</td>
+                        <td>80%</td>
+                        <td>70%</td>
+                        <td>5,230</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+
+    </div>
+
+
+</div>
+{% endblock %}

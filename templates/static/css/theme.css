@@ -352,3 +352,6 @@ footer span{
     font-size: 11px;
     line-height: 170%;
 }
+.selector span{
+    visibility: visible !important;
+}

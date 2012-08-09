@@ -1,0 +1,138 @@
+/*---------------------------------------------*/
+/*------general look and feel-------*/
+/*---------------------------------------------*/
+@import url(http://fonts.googleapis.com/css?family=Droid+Sans:400,700);
+/*-----Reset CSS-----*/
+/* http://meyerweb.com/eric/tools/css/reset/
+   v2.0 | 20110126
+   License: none (public domain)
+*/
+html, body{
+    min-height: 100% !important;
+    height: 100%;
+    width: 100%;
+    min-width: 100% !important;
+}
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 12px;
+    vertical-align: baseline;
+    font-family: 'Droid Sans', Helvetica, sans-serif;
+    text-decoration: none;
+}
+input, select{
+    font-family: helvetica, serif;
+    height: 25px;
+
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+    display: block;
+}
+.hidden{
+    display: none;
+}
+.vacio{
+    display: block;
+    width: 100%;
+    height: 1px;
+    line-height: 1px;
+    clear: both;
+}
+body {
+    line-height: 1;
+    /*background-image: url("../images/general/body_back.png");*/
+}
+ol, ul {
+    list-style: none;
+}
+
+/*--..General..--*/
+.fl{ float:left !important; }
+.fr{ float:right !important; }
+
+#compare_interval2{
+    margin-top: 20px;
+}
+#compare_interval li, #compare_interval2 li{
+    color: #636363;
+    font-weight: 700;
+    cursor: pointer;
+}
+#compare_interval li, #compare_interval2 li{
+    float: left;
+    border: solid 1px #bdbdbf;
+    height: 23px;
+    background: url(../images/bgs/date_interval_selector_bg.png) repeat-x;
+    line-height: 23px;
+    width: 65px;
+    text-align: center;
+    margin: 0;
+}
+#compare_interval li:hover, #compare_interval2 li:hover{
+    border: solid 1px #9ebfc7;
+    box-shadow: 0 0 2px 1px #9EBFC7;
+    background: url(../images/bgs/date_interval_selected_bg.png) repeat-x;
+}
+#compare_interval li.active, #compare_interval2 li.active{
+    border: solid 1px #9ebfc7;
+    box-shadow: 0 0 2px 1px #9EBFC7;
+    background: url(../images/bgs/date_interval_selected_bg.png) repeat-x;
+}
+#compare_interval li:first-child, #compare_interval2 li:first-child{
+    -webkit-border-top-left-radius: 3px;
+    -webkit-border-bottom-left-radius: 3px;
+    -moz-border-radius-topleft: 3px;
+    -moz-border-radius-bottomleft: 3px;
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+}
+#compare_interval li:last-child, #compare_interval2 li:last-child{
+    -webkit-border-top-right-radius: 3px;
+    -webkit-border-bottom-right-radius: 3px;
+    -moz-border-radius-topright: 3px;
+    -moz-border-radius-bottomright: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+#dashboard, #dashboard2{
+    clear: both;
+    width: 100%;
+}
+#control, #control2{
+    width: 90%;
+    height: 55px;
+    display: block;
+    margin: 10px auto;
+}
+#chart, #chart2{
+    width: 100%;
+    height: 300px;
+    margin-top: 20px;
+}
+.period_tag{
+    float: left;
+    line-height: 30px;
+    font-weight: 700;
+    margin-right: 5px;
+    font-size: 13px;
+    color: #878787;
+}
+#chart rect{
+    fill-opacity: .3;
+}
