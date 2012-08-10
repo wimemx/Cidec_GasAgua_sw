@@ -21,8 +21,15 @@
         var f2_end=encodeURIComponent($("#range2_end").val());
         if(f1_init!=''){
             var url=$("#graphFrame").attr("src").replace('#','').split("?");
+            console.log("url.length",url.length);
             if (url.length > 1){
-                url=url[0]+"?"+url[1]+"&";
+                var hash = url[1];
+                hash=hash.replace(/&{0,1}f1_init=\d{1,2}(\-|\/|\.|(%2F))\d{1,2}\1\d{4}&{0,1}/,'');
+                hash=hash.replace(/&{0,1}f1_end=\d{1,2}(\-|\/|\.|(%2F))\d{1,2}\1\d{4}&{0,1}/,'');
+                hash=hash.replace(/&{0,1}f2_init=\d{1,2}(\-|\/|\.|(%2F))\d{1,2}\1\d{4}&{0,1}/,'');
+                hash=hash.replace(/&{0,1}f2_end=\d{1,2}(\-|\/|\.|(%2F))\d{1,2}\1\d{4}&{0,1}/,'');
+                url=url[0]+"?"+hash+"&";
+
             }else{
                 url=url[0]+"?";
             }
@@ -40,7 +47,7 @@
                     url+="&f2_end="+encodeURIComponent(new Date());
                 }
             }
-            console.log(url);
+            console.log("url=", url);
             makeIframe(url);
         }
 
@@ -258,22 +265,22 @@
                 <span>Selecciona un periodo</span>
                 <div>
                     <label for="range1_init">Desde</label>
-                    <input type="text" name="range1_init" id="range1_init">
+                    <input type="text" name="range1_init" id="range1_init" readonly="readonly"/>
                 </div>
                 <span>&ndash;</span>
                 <div>
                     <label for="range1_end">Hasta</label>
-                    <input type="text" name="range1_end" id="range1_end">
+                    <input type="text" name="range1_end" id="range1_end" readonly="readonly"/>
                 </div>
                 <label id="compare_prev_date"><input type="checkbox" id="prev_dates">Comparar con fechas previas</label>
                 <div>
                     <label for="range2_init">Desde</label>
-                    <input type="text" name="range2_init" id="range2_init">
+                    <input type="text" name="range2_init" id="range2_init" readonly="readonly"/>
                 </div>
                 <span>&ndash;</span>
                 <div>
                     <label for="range2_end">Hasta</label>
-                    <input type="text" name="range2_end" id="range2_end">
+                    <input type="text" name="range2_end" id="range2_end" readonly="readonly"/>
                 </div>
                 <a href="#" class="aqua_btn">Aplicar</a>
             </div>
