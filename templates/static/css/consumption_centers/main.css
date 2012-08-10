@@ -102,7 +102,7 @@ h2{
     width: 200px;
     color: #666;
 }
-#date_ranges span{
+#date_ranges label#compare_prev_date{
     font-weight: 700;
     display: inline-block;
 

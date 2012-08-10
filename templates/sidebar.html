@@ -1,11 +1,12 @@
 <div id="sidebar_content" xmlns="http://www.w3.org/1999/html">
     <img id="company_profile_pic" src="/static/css/images/imgs_icns/company_placeholder.png" alt="logotipo"/>
     <span id="empresa">
-        algo
+        {{empresa.building_name|slice:"17" }}
+        {% if empresa.building_name|length > 17 %}...{% endif %}
     </span>
     <ul id="company_list">
         {% for cntx in datacontext %}
-            <li>
+            <li rel="{{ cntx.building.pk }}">
                 {{cntx.building.building_name}}
             </li>
         {% endfor %}

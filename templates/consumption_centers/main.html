@@ -14,14 +14,55 @@
 
     function graphsReload(){
         /* Takes the date in the range inputs and reloads the graph data */
+
+        var f1_init=encodeURIComponent($("#range1_init").val());
+        var f1_end=encodeURIComponent($("#range1_end").val());
+        var f2_init=encodeURIComponent($("#range2_init").val());
+        var f2_end=encodeURIComponent($("#range2_end").val());
+        if(f1_init!=''){
+            var url=$("#graphFrame").attr("src").replace('#','').split("?");
+            if (url.length > 1){
+                url=url[0]+"?"+url[1]+"&";
+            }else{
+                url=url[0]+"?";
+            }
+            url+="f1_init="+f1_init;
+            if(f1_end!=''){
+                url+="&f1_end="+f1_end;
+            }else{
+                url+="&f1_end="+encodeURIComponent(new Date().format("dd/mm/yyyy"));
+            }
+            if(f2_init!=''){
+                url+="&f2_init="+f2_init;
+                if(f2_end!=''){
+                    url+="&f2_end="+f2_end;
+                }else{
+                    url+="&f2_end="+encodeURIComponent(new Date());
+                }
+            }
+            console.log(url);
+            makeIframe(url);
+        }
+
     }
     function refresh_iframe_height(){
         // regresca el height del iframe para ajustarse a su conte
         setTimeout("parent.document.getElementById('graphFrame').height = document['body'].offsetHeight;", 1000);
     }
+    function makeIframe(src){
+        var graphFrame =document.createElement("IFRAME");
+        graphFrame.id = "graphFrame";
+        graphFrame.src = src;
+        $("#graph_container").html(graphFrame);
+        setTimeout("parent.document.getElementById('graphFrame').height = document['body'].offsetHeight;", 1000);
+    }
     </script>
 {% endblock %}
 {% block document_ready %}
+
+    var url=window.location.href;
+    window.history.replaceState(url,"Reporte el&eacute;ctrico", url);
+
 
     $(".desp").click(function(){
         $(this).next().slideToggle();
@@ -30,7 +71,7 @@
         //maneja el evento de colapsar o mostrar la barra de navegacion
         if($("#sidebar").hasClass("collapsed_nav")){
 
-            $("#sidebar").animate({width: 'toggle',}, 500, function(){
+            $("#sidebar").animate({width: 'toggle'}, 500, function(){
                 $(this).removeClass("collapsed_nav");
             });
             $("#sidebar_content").show('slide', {direction: 'right'}, 100);
@@ -40,14 +81,14 @@
             $("#sidebar").addClass("collapsed_nav");
             $("#sidebar_content").hide('slide', {direction: 'left'}, 100);
             $("footer").hide('slide', {direction: 'left'}, 100);
-            $("#sidebar").animate({width: 'toggle',}, 500);
+            $("#sidebar").animate({width: 'toggle'}, 500);
         }
         $("#nav_toggle").toggleClass("closed");
     });
 
     var now3 = new Date();
     now3.addDays(-4);
-    var now4 = new Date()
+    var now4 = new Date();
     var mul_date = false;
     $('#widgetCalendar').DatePicker({
         flat: true,
@@ -115,62 +156,82 @@
         // Carga el iframe de la grafica correspondiente,
         $(this).click(function(){
             $("#types_graphs ul li").each(function(){$(this).removeClass("active");});
-            var graphFrame =document.createElement("IFRAME");
-            graphFrame.id = "graphFrame";
+            var src;
             switch($(this).attr("id")){
                 case "kw":
-                    graphFrame.src = "/reportes/potencia_activa/";
+                    src = "/reportes/potencia_activa/";
                     break;
                 case "kvar":
-                    graphFrame.src = "/reportes/potencia_reactiva/";
+                    src = "/reportes/potencia_reactiva/";
                     break;
                 case "pf":
-                    graphFrame.src = "/reportes/factor_potencia/";
+                    src = "/reportes/factor_potencia/";
                     break;
                 case "profile":
-                    graphFrame.src = "/reportes/perfil_carga/";
+                    src = "/reportes/perfil_carga/";
                     break;
             }
-            $("#graph_container").html(graphFrame);
+
+            src+="?"+$("#graphFrame").attr("src").split('?')[1];
+            makeIframe(src);
             //cambia la clase de la pestania
             $(this).addClass("active");
-            //cambia el height del iframe de a cuerdo al contenido
-            refresh_iframe_height();
+
         });
     });
     $("#compare_to").change(function(){
         //agrega y refresca los datos para ser comparados contra otra entidad
-        var src=$("#graphFrame").attr("src").split('?')
-        var iframesrc = src[0] + '?';
-        console.log(src[1] != undefined);
-        if (src[1] != undefined){
-            iframesrc += src[1] + '&';
+        var compared_companies=$("#evaluated_companies").val().split(",");
+        if($(this).val()!=0 && compared_companies.length < 4){
+
+            var bandera = true;
+            for(var comp=0; comp < compared_companies.length; comp++){
+                //check if the entitie is compared with self, or some entity already added
+                if(compared_companies[comp] == $(this).val()) bandera = false;
+            }
+            if(bandera){
+                var src=$("#graphFrame").attr("src").split('?');
+                var iframesrc = src[0] + '?';
+
+                if (src[1] != undefined){
+                    iframesrc += src[1] + '&';
+                }
+                iframesrc += "compare_to"+$(this).val()+"=" + $(this).val();
+                $(this).parent().before('<span class="compared">'+$("#compare_to option:selected").text()
+                                    +'</span><span class="vs_tag">VS</span>');
+                src = iframesrc;
+                makeIframe(src);
+                $("#evaluated_companies").val($("#evaluated_companies").val()+","+$(this).val());
+            }
         }
-        iframesrc += "compare_to=" + $(this).val();
-        $(this).parent().before('<span class="compared">'+$("#compare_to option:selected").text()
-                        +'</span><span class="vs_tag">VS</span>');
-        var graphFrame =document.createElement("IFRAME");
-        graphFrame.id = "graphFrame";
-        graphFrame.src = iframesrc;
-        $("#graph_container").html(graphFrame);
-        refresh_iframe_height();
     });
 
-
     refresh_iframe_height();
-    //custom select for sidebar
 
+    //custom select for sidebar
     $("#empresa").click(function(){
         $("#company_list").slideToggle();
     });
     $("#company_list li").click(function(){
-        texto=$(this).text().replace(/^\s*|\s*$/g,'');;
-        texto=texto.substring(0,17)+"...";
-        $("#empresa").text(texto);
+        var texto=$(this).text().replace(/^\s*|\s*$/g,'');
+        var texto1=texto.substring(0,17)+"...";
+        $("#empresa").text(texto1);
         $("#company_list").slideUp();
         //reload with the selected company data
+        $("#evaluated_companies").val($(this).attr("rel")+",");
+        $(".compared").remove();
+        $(".vs_tag").remove();
+        $("#compare_to").parent().before('<span class="compared">'+
+            texto+
+            '</span>'+
+            '<span class="vs_tag">VS</span>'
+        );
+        $.ajax("/reportes/set_default_building/"+$(this).attr("rel"));
+        var src=$("#graphFrame").attr("src").split('?')[0];
+        makeIframe(src);
     });
-{% endblock %}
+
+    {% endblock %}
 {% block contenido %}
 <div id="bread_crumbs">
     <ul>
@@ -196,22 +257,22 @@
             <div id="date_ranges">
                 <span>Selecciona un periodo</span>
                 <div>
-                    <label>Desde</label>
+                    <label for="range1_init">Desde</label>
                     <input type="text" name="range1_init" id="range1_init">
                 </div>
                 <span>&ndash;</span>
                 <div>
-                    <label>Hasta</label>
+                    <label for="range1_end">Hasta</label>
                     <input type="text" name="range1_end" id="range1_end">
                 </div>
-                <span><input type="checkbox" id="prev_dates">Comparar con fechas previas</span>
+                <label id="compare_prev_date"><input type="checkbox" id="prev_dates">Comparar con fechas previas</label>
                 <div>
-                    <label>Desde</label>
+                    <label for="range2_init">Desde</label>
                     <input type="text" name="range2_init" id="range2_init">
                 </div>
                 <span>&ndash;</span>
                 <div>
-                    <label>Hasta</label>
+                    <label for="range2_end">Hasta</label>
                     <input type="text" name="range2_end" id="range2_end">
                 </div>
                 <a href="#" class="aqua_btn">Aplicar</a>
@@ -234,13 +295,17 @@
     </div>
     <div id="graphs_container">
         <div id="compare" class="fl">
+            <input id="evaluated_companies" type="hidden" value="{{ empresa.pk }},"/>
             <span>Comparar:</span>
-            <span class="compared">Sears Galer&iacute;as Quer&eacute;taro</span>
+            <span class="compared">{{ empresa.building_name }}</span>
             <span class="vs_tag">VS</span>
             <select id="compare_to">
-                <option>Selecciona</option>
-                <option value="1">Sanborns Galer&iacute;as Quer&eacute;taro</option>
-                <option value="2">Sanborns Plaza del Parque Quer&eacute;taro</option>
+                <option value="0">Selecciona</option>
+                {% for cntx in datacontext %}
+                    <option value="{{ cntx.building.pk }}">
+                        {{cntx.building.building_name}}
+                    </option>
+                {% endfor %}
             </select>
         </div>
 

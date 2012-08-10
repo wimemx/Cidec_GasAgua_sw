@@ -6,4 +6,5 @@ urlpatterns = patterns('',
     url(r'^potencia_reactiva/', 'c_center.views.potencia_reactiva'),
     url(r'^factor_potencia/', 'c_center.views.factor_potencia'),
     url(r'^perfil_carga/', 'c_center.views.perfil_carga'),
+    url(r'^set_default_building/(?P<id_building>\d+)/', 'c_center.views.set_default_building'),
 )
