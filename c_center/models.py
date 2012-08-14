@@ -188,7 +188,6 @@ class PowermeterModel(models.Model):
     """
     powermeter_brand = models.CharField(max_length=128)
     powermeter_model = models.CharField(max_length=128)
-    powermeter_serie = models.CharField(max_length=128)
 
     def __unicode__(self):
         return self.powermeter_brand + " " + self.powermeter_model
@@ -202,6 +201,8 @@ class Powermeter(models.Model):
     powermeter_model = models.ForeignKey(PowermeterModel, on_delete=models.PROTECT)
     powermeter_anotation = models.CharField(max_length=256)
     powermeter_installation_date = models.DateField(default=datetime.datetime.now())
+    powermeter_serial = models.CharField(max_length=128)
+    status = models.IntegerField("Estatus", choices=STATUS, default=1)
 
     def __unicode__(self):
         return self.powermeter_anotation
@@ -377,7 +378,8 @@ class ElectricData(models.Model):
     Almacena los datos historicos de las mediciones electricas de un medidor segun su id interno
 
     """
-    profile_powermeter = models.ForeignKey(ProfilePowermeter, on_delete=models.PROTECT)
+    profile_powermeter = models.ForeignKey(ProfilePowermeter, on_delete=models.PROTECT, null=True, blank=True)
+    powermeter_serial = models.CharField(max_length=128)
     medition_date = models.DateTimeField(default=datetime.datetime.now())
     V1 = models.DecimalField(max_digits=12, decimal_places=6, null=True, blank=True)
     V2 = models.DecimalField(max_digits=12, decimal_places=6, null=True, blank=True)
@@ -422,3 +424,26 @@ class ElectricData(models.Model):
     def __unicode__(self):
         return self.profile_powermeter.powermeter.powermeter_anotation + \
                " " + str(self.medition_date)
+
+class IndustrialEquipment(models.Model):
+    """
+
+    Almacena los equipos industriales (computadoras a las que se conectan los medidores electricos)
+
+    """
+    indistrial_equipment_identifier = models.CharField(max_length=128)
+    description = models.TextField(max_length=256, null=True, blank=True)
+
+class PowermeterForIndustrialEquipment(models.Model):
+    """
+
+    Asocia los medidores instalados con un perfil para su manejo interno en el sistema
+
+    """
+    powermeter = models.ForeignKey(Powermeter, on_delete=models.PROTECT)
+    industrial_equipment = models.ForeignKey(IndustrialEquipment, on_delete=models.PROTECT)
+    def __unicode__(self):
+        return self.powermeter.powermeter_anotation + " - " + \
+               self.industrial_equipment.indistrial_equipment_identifier
+    class Meta:
+        unique_together = ('powermeter', 'industrial_equipment')

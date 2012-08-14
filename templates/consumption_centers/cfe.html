@@ -11,6 +11,26 @@
         google.load('visualization', '1', {packages: ['corechart']});
     </script>
     <script type="text/javascript">
+        function graphsReload(){
+            /* Takes the date in the range inputs and reloads the graph data */
+
+            var f1_init = encodeURIComponent($("#range1_init").val());
+            var f1_end = encodeURIComponent($("#range1_end").val());
+            var f2_init = encodeURIComponent($("#range2_init").val());
+            var f2_end = encodeURIComponent($("#range2_end").val());
+            if(f1_init != ''){
+                var url = "/reportes/cfe/?";
+                url += "f1_init=" + f1_init;
+                if(f1_end != ''){
+                    url += "&f1_end="+f1_end;
+                }else{
+                    url += "&f1_end=" + encodeURIComponent(new Date().format("dd/mm/yyyy"));
+                }
+
+                window.location.href = url;
+            }
+
+        }
         function drawVisualization() {
             // Create and populate the data table.
             var data = google.visualization.arrayToDataTable([
@@ -78,6 +98,7 @@
             $('#widgetField span').get(0).innerHTML = formated.join(' &ndash; ');
         }
     });
+    $('#widgetCalendar').DatePickerClear();
 
 
     var state = false;
@@ -90,6 +111,21 @@
         graphsReload();
     });
 
+
+    //custom select for sidebar
+    $("#empresa").click(function(){
+        $("#company_list").slideToggle();
+    });
+    $("#company_list li").click(function(){
+        var texto=$(this).text().replace(/^\s*|\s*$/g,'');
+        var texto1=texto.substring(0,17)+"...";
+        $("#empresa").text(texto1);
+        $("#company_list").slideUp();
+        //reload with the selected company data
+        window.location.href="/reportes/set_default_building/"+$(this).attr("rel")+"/?referer=cfe";
+
+
+    });
 {% endblock %}
 {% block contenido %}
 <div id="bread_crumbs">
@@ -110,7 +146,8 @@
         </ul>
     </div>
     <div id="data_container">
-        <h3>Sears Galerias Quer&eacute;taro</h3>
+        <h3>{{ empresa.building_name }}</h3>
+        <input type="hidden" name="empresa_act" id="empresa_act" value="{{ empresa.pk }}"/>
         <div id="datepicker_component">
             <span class="period_tag">Periodo</span>
             <div id="widgetField">

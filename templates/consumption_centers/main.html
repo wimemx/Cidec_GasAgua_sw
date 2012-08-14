@@ -15,39 +15,39 @@
     function graphsReload(){
         /* Takes the date in the range inputs and reloads the graph data */
 
-        var f1_init=encodeURIComponent($("#range1_init").val());
-        var f1_end=encodeURIComponent($("#range1_end").val());
-        var f2_init=encodeURIComponent($("#range2_init").val());
-        var f2_end=encodeURIComponent($("#range2_end").val());
+        var f1_init = encodeURIComponent($("#range1_init").val());
+        var f1_end = encodeURIComponent($("#range1_end").val());
+        var f2_init = encodeURIComponent($("#range2_init").val());
+        var f2_end = encodeURIComponent($("#range2_end").val());
         if(f1_init!=''){
-            var url=$("#graphFrame").attr("src").replace('#','').split("?");
-            console.log("url.length",url.length);
+            var url = $("#graphFrame").attr("src").replace('#','').split("?");
+
             if (url.length > 1){
                 var hash = url[1];
-                hash=hash.replace(/&{0,1}f1_init=\d{1,2}(\-|\/|\.|(%2F))\d{1,2}\1\d{4}&{0,1}/,'');
-                hash=hash.replace(/&{0,1}f1_end=\d{1,2}(\-|\/|\.|(%2F))\d{1,2}\1\d{4}&{0,1}/,'');
-                hash=hash.replace(/&{0,1}f2_init=\d{1,2}(\-|\/|\.|(%2F))\d{1,2}\1\d{4}&{0,1}/,'');
-                hash=hash.replace(/&{0,1}f2_end=\d{1,2}(\-|\/|\.|(%2F))\d{1,2}\1\d{4}&{0,1}/,'');
-                url=url[0]+"?"+hash+"&";
+                hash = hash.replace(/&{0,1}f1_init=\d{1,2}(\-|\/|\.|(%2F))\d{1,2}\1\d{4}&{0,1}/, '');
+                hash = hash.replace(/&{0,1}f1_end=\d{1,2}(\-|\/|\.|(%2F))\d{1,2}\1\d{4}&{0,1}/, '');
+                hash = hash.replace(/&{0,1}f2_init=\d{1,2}(\-|\/|\.|(%2F))\d{1,2}\1\d{4}&{0,1}/, '');
+                hash = hash.replace(/&{0,1}f2_end=\d{1,2}(\-|\/|\.|(%2F))\d{1,2}\1\d{4}&{0,1}/, '');
+                url = url[0] + "?" + hash + "&";
 
             }else{
-                url=url[0]+"?";
+                url = url[0] + "?";
             }
-            url+="f1_init="+f1_init;
-            if(f1_end!=''){
-                url+="&f1_end="+f1_end;
+            url += "f1_init=" + f1_init;
+            if(f1_end != ''){
+                url += "&f1_end=" + f1_end;
             }else{
-                url+="&f1_end="+encodeURIComponent(new Date().format("dd/mm/yyyy"));
+                url += "&f1_end=" + encodeURIComponent(new Date().format("dd/mm/yyyy"));
             }
-            if(f2_init!=''){
-                url+="&f2_init="+f2_init;
-                if(f2_end!=''){
-                    url+="&f2_end="+f2_end;
+            if(f2_init != ''){
+                url += "&f2_init=" + f2_init;
+                if(f2_end != ''){
+                    url += "&f2_end=" + f2_end;
                 }else{
-                    url+="&f2_end="+encodeURIComponent(new Date());
+                    url += "&f2_end=" + encodeURIComponent(new Date());
                 }
             }
-            console.log("url=", url);
+
             makeIframe(url);
         }
 
@@ -57,7 +57,7 @@
         setTimeout("parent.document.getElementById('graphFrame').height = document['body'].offsetHeight;", 1000);
     }
     function makeIframe(src){
-        var graphFrame =document.createElement("IFRAME");
+        var graphFrame = document.createElement("IFRAME");
         graphFrame.id = "graphFrame";
         graphFrame.src = src;
         $("#graph_container").html(graphFrame);
@@ -67,7 +67,7 @@
 {% endblock %}
 {% block document_ready %}
 
-    var url=window.location.href;
+    var url = window.location.href;
     window.history.replaceState(url,"Reporte el&eacute;ctrico", url);
 
 
@@ -148,13 +148,13 @@
     $("#prev_dates").click(function(){
         //maneja la visibilidad del calendario del rango adicional
         if($("#widgetCalendar2").is(":visible")){
-            mul_date=false;
+            mul_date = false;
             $('#range2_init').val("");
             $('#range2_end').val("");
             $('#widgetField span').html($('#widgetField span').html().split(" contra: ")[0]);
             $('#widgetCalendar2').DatePickerClear();
         }else{
-            mul_date=true;
+            mul_date = true;
         }
         $("#widgetCalendar2").slideToggle();
     });
@@ -179,7 +179,7 @@
                     break;
             }
 
-            src+="?"+$("#graphFrame").attr("src").split('?')[1];
+            src += "?" + $("#graphFrame").attr("src").split('?')[1];
             makeIframe(src);
             //cambia la clase de la pestania
             $(this).addClass("active");
@@ -192,7 +192,7 @@
         if($(this).val()!=0 && compared_companies.length < 4){
 
             var bandera = true;
-            for(var comp=0; comp < compared_companies.length; comp++){
+            for(var comp = 0; comp < compared_companies.length; comp++){
                 //check if the entitie is compared with self, or some entity already added
                 if(compared_companies[comp] == $(this).val()) bandera = false;
             }
@@ -203,12 +203,12 @@
                 if (src[1] != undefined){
                     iframesrc += src[1] + '&';
                 }
-                iframesrc += "compare_to"+$(this).val()+"=" + $(this).val();
-                $(this).parent().before('<span class="compared">'+$("#compare_to option:selected").text()
-                                    +'</span><span class="vs_tag">VS</span>');
+                iframesrc += "compare_to" + $(this).val() + "=" + $(this).val();
+                $(this).parent().before('<span class="compared">' + $("#compare_to option:selected").text()
+                                    + '</span><span class="vs_tag">VS</span>');
                 src = iframesrc;
                 makeIframe(src);
-                $("#evaluated_companies").val($("#evaluated_companies").val()+","+$(this).val());
+                $("#evaluated_companies").val($("#evaluated_companies").val() + "," + $(this).val());
             }
         }
     });
@@ -221,20 +221,20 @@
     });
     $("#company_list li").click(function(){
         var texto=$(this).text().replace(/^\s*|\s*$/g,'');
-        var texto1=texto.substring(0,17)+"...";
+        var texto1 = texto.substring(0,17) + "...";
         $("#empresa").text(texto1);
         $("#company_list").slideUp();
         //reload with the selected company data
-        $("#evaluated_companies").val($(this).attr("rel")+",");
+        $("#evaluated_companies").val($(this).attr("rel") + ",");
         $(".compared").remove();
         $(".vs_tag").remove();
         $("#compare_to").parent().before('<span class="compared">'+
-            texto+
-            '</span>'+
+            texto +
+            '</span>' +
             '<span class="vs_tag">VS</span>'
         );
-        $.ajax("/reportes/set_default_building/"+$(this).attr("rel"));
-        var src=$("#graphFrame").attr("src").split('?')[0];
+        $.ajax("/reportes/set_default_building/" + $(this).attr("rel"));
+        var src = $("#graphFrame").attr("src").split('?')[0];
         makeIframe(src);
     });
 

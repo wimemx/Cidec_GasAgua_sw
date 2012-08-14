@@ -5,12 +5,33 @@
     margin: 30px auto 10px auto;
 }
 #empresa{
+    line-height: 125%;
     cursor: pointer;
     background: url(../images/imgs_icns/arrow_down_sm_white.png) 100% 50% no-repeat;
     display: block;
     width: 115px;
     margin: 10px auto;
     font-size: 12px;
+    border: none;
+    color: white;
+}
+#company_list{
+    border: solid 1px #666;
+    left: 18px;
+    position: absolute;
+    background: #505e68;
+    width: 200px;
+    display: none;
+}
+
+#company_list li{
+    cursor: pointer;
+    padding: 3px 10px;
+}
+#company_list li:hover{
+    font-weight: 700;
+    background-color: #fff;
+    color: #505e68;
 }
 #sidebar_content{
     color: #fff;
