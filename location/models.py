@@ -50,7 +50,7 @@ class Calle(models.Model):
 class Region(models.Model):
 
     region_name = models.CharField(max_length=128)
-    region_description = models.CharField(max_length=256, blank=True, null=True)
+    region_description = models.TextField(blank=True, null=True)
     date = models.DateField()
     def __unicode__(self):
         return self.region_name
@@ -98,6 +98,7 @@ class ColoniaCalle(models.Model):
 class RegionEstado(models.Model):
     region = models.ForeignKey(Region, on_delete=models.PROTECT)
     estado = models.ForeignKey(Estado, on_delete=models.PROTECT)
+    municipio = models.ForeignKey(Municipio, on_delete=models.PROTECT, blank=True, null=True)
     def __unicode__(self):
         return self.region.region_name + " - " + self.estado.estado_name
 

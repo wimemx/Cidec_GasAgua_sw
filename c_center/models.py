@@ -415,6 +415,7 @@ class ElectricData(models.Model):
     kWhIMPORT = models.DecimalField(max_digits=12, decimal_places=6, null=True, blank=True)
     kWhEXPORT = models.DecimalField(max_digits=12, decimal_places=6, null=True, blank=True)
     kvarhNET = models.DecimalField(max_digits=12, decimal_places=6, null=True, blank=True)
+    kvarhIMPORT = models.DecimalField(max_digits=12, decimal_places=6, null=True, blank=True)
     V1THD = models.DecimalField(max_digits=12, decimal_places=6, null=True, blank=True)
     V2THD = models.DecimalField(max_digits=12, decimal_places=6, null=True, blank=True)
     V3THD = models.DecimalField(max_digits=12, decimal_places=6, null=True, blank=True)

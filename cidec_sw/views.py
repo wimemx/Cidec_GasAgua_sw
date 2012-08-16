@@ -1,5 +1,4 @@
 #standard library imports
-from decimal import Decimal
 import os
 import csv
 
@@ -11,7 +10,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 #local application/library specific imports
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
-from c_center.models import ProfilePowermeter, Powermeter, ElectricData
+from c_center.models import ProfilePowermeter, ElectricData
 from c_center.views import main_page
 
 def parse_csv(request):
@@ -22,6 +21,8 @@ def parse_csv(request):
     os.fchdir(dir_fd)
     html=''
     for file in files:
+        if file == '.DS_Store':
+            continue
         data = csv.reader(open(file))
         # Read the column names from the first line of the file
         fields = data.next()
@@ -33,24 +34,12 @@ def parse_csv(request):
             for (name, value) in items:
                 item[name] = value.strip()
 
-            if "MWh" in item:
-                kwh = Decimal(item['MWh']) * 1000
-            else:
-                kwh = item['KWH']
 
-            if "Mvarh" in item:
-                kvarh = Decimal(item['Mvarh']) * 1000
-            else:
-                kvarh = item['KVARH']
+            powerp = ProfilePowermeter.objects.order_by('?')
 
-            if "MVAh" in item:
-                kvah = Decimal(item['MVAh']) * 1000
-            else:
-                kvah = item['KVAH']
-
-            powerp = ProfilePowermeter.objects.get(powermeter=Powermeter.objects.get(powermeter_anotation=item['Estacion']), profile_powermeter_status=1)
             elec_data = ElectricData(
-                profile_powermeter = powerp,
+                profile_powermeter = powerp[0],
+                powermeter_serial = item['powermeter_serial'],
                 medition_date = datetime.datetime.now(),
                 V1 = item['V1'],
                 V2 = item['V2'],
@@ -58,34 +47,43 @@ def parse_csv(request):
                 I1 = item['I1'],
                 I2 = item['I2'],
                 I3 = item['I3'],
-                kWL1 = item['KW1'],
-                kWL2 = item['KW2'],
-                kWL3 = item['KW3'],
-                PFL1 = item['PF1'],
-                PFL2 = item['PF2'],
-                PFL3 = item['PF3'],
-                kvarL1 = item['KVAR1'],
-                kvarL2 = item['KVAR2'],
-                kvarL3 = item['KVAR3'],
-                kVAL1 = item['KVA1'],
-                kVAL2 = item['KVA2'],
-                kVAL3 = item['KVA3'],
-                kWhIMPORT = kwh,
-                kvarhNET = kvarh,
-                #KVAH = kvah
+                kWL1 = item['kWL1'],
+                kWL2 = item['kWL2'],
+                kWL3 = item['kWL3'],
+                kvarL1 = item['kvarL1'],
+                kvarL2 = item['kvarL2'],
+                kvarL3 = item['kvarL3'],
+                kVAL1 = item['kVAL1'],
+                kVAL2 = item['kVAL2'],
+                kVAL3 = item['kVAL3'],
+                PFL1 = item['PFL1'],
+                PFL2 = item['PFL2'],
+                PFL3 = item['PFL3'],
+                kW = item['kW'],
+                kvar = item['kvar'],
+                kVA = item['kVA'],
+                PF = item['PF'],
+                In = item['In'],
+                FREQ = item['FREQ'],
+                kWIMPSDMAX = item['kWIMPSDMAX'],
+                kWIMPACCDMD = item['kWIMPACCDMD'],
+                kVASDMAX = item['kVASDMAX'],
+                kVAACCDMD = item['kVAACCDMD'],
+                I1DMDMAX = item['I1DMDMAX'],
+                I2DMDMAX = item['I2DMDMAX'],
+                I3DMDMAX = item['I3DMDMAX'],
+                kWhIMPORT = item['kWhIMPORT'],
+                kWhEXPORT = item['kWhEXPORT'],
+                kvarhNET = item['kvarhNET'],
+                kvarhIMPORT = item['kvarhIMPORT'],
+                V1THD = item['V1THD'],
+                V2THD = item['V2THD'],
+                V3THD = item['V3THD'],
+                I1THD = item['I1THD'],
+                I2THD = item['I2THD'],
+                I3THD = item['I3THD']
             )
-            if 'VL1' in item:
-                elec_data.V1THD=item['VL1']
-            if 'VL2' in item:
-                elec_data.V2THD=item['VL2']
-            if 'VL3' in item:
-                elec_data.V3THD=item['VL3']
-            #if 'KWH_MAX' in item:
-            #    elec_data.KWH_MAX=item['KWH_MAX']
-            #if 'KVARH_MAX' in item:
-            #    elec_data.KVARH_MAX=item['KVARH_MAX']
-            #if 'KVAH_MAX' in item:
-            #    elec_data.KVARH_MAX=item['KVAH_MAX']
+
             elec_data.save()
 
 

@@ -37,7 +37,7 @@ class Groupdays(models.Model):
 
 class Holydays(models.Model):
     """Almacena un listado de los dias festivos oficiales"""
-    day = models.IntegerField("dia")
+    day = models.CharField("dia", max_length=64)
     month = models.IntegerField("mes")
     description = models.CharField(u"Descripción", max_length=128, blank=True, null=True)
 
@@ -69,6 +69,7 @@ class ElectricRatesDetail(models.Model):
     KWHEC = models.DecimalField(u"Cargo por kilowatt - hora de energía consumida", max_digits=12, decimal_places=6)
     date_init = models.DateField("Fecha de Inicio")
     date_end = models.DateField("Fecha de Fin")
+    region = models.ForeignKey(Region, on_delete=models.PROTECT)
 
     def __unicode__(self):
         return "Cuota aplicable a la tarifa " + self.electric_rate.electric_rate_name + \
