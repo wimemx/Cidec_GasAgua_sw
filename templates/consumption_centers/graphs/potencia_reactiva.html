@@ -47,7 +47,7 @@
                     // Use the same chart area width as the control for axis alignment.
                     'chartArea': {'height': '80%', 'width': '100%'},
                     'hAxis': {'slantedText': false},
-                    'vAxis': {'viewWindow': {'min': 0, 'max': 45000}},
+                    'vAxis': {'viewWindow': {'min': -4500, 'max': 4500}, textPosition: 'in'},
                     'legend': {'position': 'none'}
                 },
                 'colors': ['#ccc','#000'],
@@ -70,7 +70,11 @@
             // Create random stock values, just like it works in reality.
             var open, close = 300;
             var low;
-            for (var day = 1; day < 121; ++day) {
+
+            {% for kvar in main_interval_kvar %}
+                data.addRow([new Date({{ kvar.date|date:"Y,m,d,g"}}), {{ kvar.kvar }}]);
+            {% endfor %}
+            /*for (var day = 1; day < 121; ++day) {
                 for(var hour=0; hour < 24; hour++){
                     var change = (Math.sin(day / 2.5 + Math.PI) + Math.sin(day / 3) - Math.cos(day * 0.7)) * 150;
                     change = change >= 0 ? change + 10 : change - 10;
@@ -81,7 +85,7 @@
                     var date = new Date(2012, 0 ,day, hour);
                     data.addRow([date, Math.round(low)]);
                 }
-            }
+            }*/
 
             dashboard.bind(control, chart);
             dashboard.draw(data);

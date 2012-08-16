@@ -6229,8 +6229,8 @@ CREATE TABLE  `cidec_db`.`electric_rates_electricratesdetail` (
   PRIMARY KEY (`id`),
   KEY `electric_rates_electricratesdetail_e5cc7b3b` (`electric_rate_id`),
   KEY `electric_rates_electricratesdetail_f6a8b032` (`region_id`),
-  CONSTRAINT `region_id_refs_id_1d2c526f6dcc0647` FOREIGN KEY (`region_id`) REFERENCES `location_region` (`id`),
-  CONSTRAINT `electric_rate_id_refs_id_2a6f6fea32a2596a` FOREIGN KEY (`electric_rate_id`) REFERENCES `electric_rates_electricrates` (`id`)
+  CONSTRAINT `electric_rate_id_refs_id_2a6f6fea32a2596a` FOREIGN KEY (`electric_rate_id`) REFERENCES `electric_rates_electricrates` (`id`),
+  CONSTRAINT `region_id_refs_id_1d2c526f6dcc0647` FOREIGN KEY (`region_id`) REFERENCES `location_region` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=65 DEFAULT CHARSET=latin1;
 
 --
@@ -6940,7 +6940,7 @@ CREATE TABLE  `cidec_db`.`location_region` (
   `region_description` longtext,
   `date` date NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=latin1;
 
 --
 -- Dumping data for table `cidec_db`.`location_region`
@@ -6975,8 +6975,8 @@ CREATE TABLE  `cidec_db`.`location_regionestado` (
   KEY `location_regionestado_f6a8b032` (`region_id`),
   KEY `location_regionestado_c3dd818c` (`estado_id`),
   KEY `location_regionestado_f3143aaa` (`municipio_id`),
-  CONSTRAINT `municipio_id_refs_id_5a39d37243ce7321` FOREIGN KEY (`municipio_id`) REFERENCES `location_municipio` (`id`),
   CONSTRAINT `estado_id_refs_id_485a12a1` FOREIGN KEY (`estado_id`) REFERENCES `location_estado` (`id`),
+  CONSTRAINT `municipio_id_refs_id_5a39d37243ce7321` FOREIGN KEY (`municipio_id`) REFERENCES `location_municipio` (`id`),
   CONSTRAINT `region_id_refs_id_27bf5f95` FOREIGN KEY (`region_id`) REFERENCES `location_region` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=latin1;
 

@@ -15,18 +15,18 @@
 
 
 --
--- Create schema cidec_db
+-- Create schema satest_cidec
 --
 
-CREATE DATABASE IF NOT EXISTS cidec_db;
-USE cidec_db;
+CREATE DATABASE IF NOT EXISTS satest_cidec;
+USE satest_cidec;
 
 --
--- Definition of table `cidec_db`.`auth_group`
+-- Definition of table `satest_cidec`.`auth_group`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`auth_group`;
-CREATE TABLE  `cidec_db`.`auth_group` (
+DROP TABLE IF EXISTS `satest_cidec`.`auth_group`;
+CREATE TABLE  `satest_cidec`.`auth_group` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(80) NOT NULL,
   PRIMARY KEY (`id`),
@@ -34,7 +34,7 @@ CREATE TABLE  `cidec_db`.`auth_group` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`auth_group`
+-- Dumping data for table `satest_cidec`.`auth_group`
 --
 
 /*!40000 ALTER TABLE `auth_group` DISABLE KEYS */;
@@ -44,11 +44,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`auth_group_permissions`
+-- Definition of table `satest_cidec`.`auth_group_permissions`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`auth_group_permissions`;
-CREATE TABLE  `cidec_db`.`auth_group_permissions` (
+DROP TABLE IF EXISTS `satest_cidec`.`auth_group_permissions`;
+CREATE TABLE  `satest_cidec`.`auth_group_permissions` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `group_id` int(11) NOT NULL,
   `permission_id` int(11) NOT NULL,
@@ -61,7 +61,7 @@ CREATE TABLE  `cidec_db`.`auth_group_permissions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`auth_group_permissions`
+-- Dumping data for table `satest_cidec`.`auth_group_permissions`
 --
 
 /*!40000 ALTER TABLE `auth_group_permissions` DISABLE KEYS */;
@@ -71,11 +71,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`auth_permission`
+-- Definition of table `satest_cidec`.`auth_permission`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`auth_permission`;
-CREATE TABLE  `cidec_db`.`auth_permission` (
+DROP TABLE IF EXISTS `satest_cidec`.`auth_permission`;
+CREATE TABLE  `satest_cidec`.`auth_permission` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL,
   `content_type_id` int(11) NOT NULL,
@@ -87,12 +87,12 @@ CREATE TABLE  `cidec_db`.`auth_permission` (
 ) ENGINE=InnoDB AUTO_INCREMENT=172 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`auth_permission`
+-- Dumping data for table `satest_cidec`.`auth_permission`
 --
 
 /*!40000 ALTER TABLE `auth_permission` DISABLE KEYS */;
 LOCK TABLES `auth_permission` WRITE;
-INSERT INTO `cidec_db`.`auth_permission` VALUES  (1,'Can add permission',1,'add_permission'),
+INSERT INTO `satest_cidec`.`auth_permission` VALUES  (1,'Can add permission',1,'add_permission'),
  (2,'Can change permission',1,'change_permission'),
  (3,'Can delete permission',1,'delete_permission'),
  (4,'Can add group',2,'add_group'),
@@ -268,11 +268,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`auth_user`
+-- Definition of table `satest_cidec`.`auth_user`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`auth_user`;
-CREATE TABLE  `cidec_db`.`auth_user` (
+DROP TABLE IF EXISTS `satest_cidec`.`auth_user`;
+CREATE TABLE  `satest_cidec`.`auth_user` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `username` varchar(30) NOT NULL,
   `first_name` varchar(30) NOT NULL,
@@ -289,23 +289,23 @@ CREATE TABLE  `cidec_db`.`auth_user` (
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`auth_user`
+-- Dumping data for table `satest_cidec`.`auth_user`
 --
 
 /*!40000 ALTER TABLE `auth_user` DISABLE KEYS */;
 LOCK TABLES `auth_user` WRITE;
-INSERT INTO `cidec_db`.`auth_user` VALUES  (1,'wime','','','hector@wime.com.mx','pbkdf2_sha256$10000$3kQcv86bUPCW$azln5ZJ14IARL9SIV39kkH1fYYG9QagphpSCS8lIHQE=',1,1,1,'2012-08-09 17:53:43','2012-07-27 18:20:57'),
+INSERT INTO `satest_cidec`.`auth_user` VALUES  (1,'wime','','','hector@wime.com.mx','pbkdf2_sha256$10000$3kQcv86bUPCW$azln5ZJ14IARL9SIV39kkH1fYYG9QagphpSCS8lIHQE=',1,1,1,'2012-08-09 17:53:43','2012-07-27 18:20:57'),
  (2,'Hector','Héctor','Vela','hector@wime.com.mx','pbkdf2_sha256$10000$W1XdQqFPSFR0$hGgfBL8h5zsPsscANm5NZiOR/nSJhQ/lCezVgM8ww4w=',1,1,1,'2012-08-09 18:41:08','2012-08-07 17:56:55');
 UNLOCK TABLES;
 /*!40000 ALTER TABLE `auth_user` ENABLE KEYS */;
 
 
 --
--- Definition of table `cidec_db`.`auth_user_groups`
+-- Definition of table `satest_cidec`.`auth_user_groups`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`auth_user_groups`;
-CREATE TABLE  `cidec_db`.`auth_user_groups` (
+DROP TABLE IF EXISTS `satest_cidec`.`auth_user_groups`;
+CREATE TABLE  `satest_cidec`.`auth_user_groups` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,
   `group_id` int(11) NOT NULL,
@@ -318,7 +318,7 @@ CREATE TABLE  `cidec_db`.`auth_user_groups` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`auth_user_groups`
+-- Dumping data for table `satest_cidec`.`auth_user_groups`
 --
 
 /*!40000 ALTER TABLE `auth_user_groups` DISABLE KEYS */;
@@ -328,11 +328,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`auth_user_user_permissions`
+-- Definition of table `satest_cidec`.`auth_user_user_permissions`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`auth_user_user_permissions`;
-CREATE TABLE  `cidec_db`.`auth_user_user_permissions` (
+DROP TABLE IF EXISTS `satest_cidec`.`auth_user_user_permissions`;
+CREATE TABLE  `satest_cidec`.`auth_user_user_permissions` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,
   `permission_id` int(11) NOT NULL,
@@ -345,7 +345,7 @@ CREATE TABLE  `cidec_db`.`auth_user_user_permissions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`auth_user_user_permissions`
+-- Dumping data for table `satest_cidec`.`auth_user_user_permissions`
 --
 
 /*!40000 ALTER TABLE `auth_user_user_permissions` DISABLE KEYS */;
@@ -355,11 +355,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`c_center_builattrsforpartofbuil`
+-- Definition of table `satest_cidec`.`c_center_builattrsforpartofbuil`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`c_center_builattrsforpartofbuil`;
-CREATE TABLE  `cidec_db`.`c_center_builattrsforpartofbuil` (
+DROP TABLE IF EXISTS `satest_cidec`.`c_center_builattrsforpartofbuil`;
+CREATE TABLE  `satest_cidec`.`c_center_builattrsforpartofbuil` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `part_of_building_id` int(11) NOT NULL,
   `building_attributes_id` int(11) NOT NULL,
@@ -372,7 +372,7 @@ CREATE TABLE  `cidec_db`.`c_center_builattrsforpartofbuil` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`c_center_builattrsforpartofbuil`
+-- Dumping data for table `satest_cidec`.`c_center_builattrsforpartofbuil`
 --
 
 /*!40000 ALTER TABLE `c_center_builattrsforpartofbuil` DISABLE KEYS */;
@@ -382,11 +382,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`c_center_building`
+-- Definition of table `satest_cidec`.`c_center_building`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`c_center_building`;
-CREATE TABLE  `cidec_db`.`c_center_building` (
+DROP TABLE IF EXISTS `satest_cidec`.`c_center_building`;
+CREATE TABLE  `satest_cidec`.`c_center_building` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `building_registered` datetime NOT NULL,
   `building_status` int(11) NOT NULL,
@@ -424,12 +424,12 @@ CREATE TABLE  `cidec_db`.`c_center_building` (
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`c_center_building`
+-- Dumping data for table `satest_cidec`.`c_center_building`
 --
 
 /*!40000 ALTER TABLE `c_center_building` DISABLE KEYS */;
 LOCK TABLES `c_center_building` WRITE;
-INSERT INTO `cidec_db`.`c_center_building` VALUES  (1,'2012-07-27 23:47:00',1,'Sanborns Constituyentes','','Avenida constituyentes #1000',1,1,1,1,1,1,'1000','','76000','120.123210','120.123210',NULL,1),
+INSERT INTO `satest_cidec`.`c_center_building` VALUES  (1,'2012-07-27 23:47:00',1,'Sanborns Constituyentes','','Avenida constituyentes #1000',1,1,1,1,1,1,'1000','','76000','120.123210','120.123210',NULL,1),
  (2,'2012-08-09 15:32:50',1,'Sears Galerías Querétaro','','Av. 5 de Febrero No. 99 Colonia Los Virreyes',1,1,1,2,2,1,'99','','76000','23.634501','-102.552700',NULL,1),
  (3,'2012-08-09 15:32:50',1,'Sanborns Galerías Querétaro','','5 de febrero #99, colonia Los Virreyes, Querétaro, Querétaro',1,1,1,2,2,1,'99','','76000','23.634501','-102.552700',NULL,1);
 UNLOCK TABLES;
@@ -437,11 +437,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`c_center_buildingattributes`
+-- Definition of table `satest_cidec`.`c_center_buildingattributes`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`c_center_buildingattributes`;
-CREATE TABLE  `cidec_db`.`c_center_buildingattributes` (
+DROP TABLE IF EXISTS `satest_cidec`.`c_center_buildingattributes`;
+CREATE TABLE  `satest_cidec`.`c_center_buildingattributes` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `building_attributes_type_id` int(11) NOT NULL,
   `building_attributes_name` varchar(128) NOT NULL,
@@ -455,7 +455,7 @@ CREATE TABLE  `cidec_db`.`c_center_buildingattributes` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`c_center_buildingattributes`
+-- Dumping data for table `satest_cidec`.`c_center_buildingattributes`
 --
 
 /*!40000 ALTER TABLE `c_center_buildingattributes` DISABLE KEYS */;
@@ -465,11 +465,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`c_center_buildingattributesforbuilding`
+-- Definition of table `satest_cidec`.`c_center_buildingattributesforbuilding`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`c_center_buildingattributesforbuilding`;
-CREATE TABLE  `cidec_db`.`c_center_buildingattributesforbuilding` (
+DROP TABLE IF EXISTS `satest_cidec`.`c_center_buildingattributesforbuilding`;
+CREATE TABLE  `satest_cidec`.`c_center_buildingattributesforbuilding` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `building_id` int(11) NOT NULL,
   `building_attributes_id` int(11) NOT NULL,
@@ -483,7 +483,7 @@ CREATE TABLE  `cidec_db`.`c_center_buildingattributesforbuilding` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`c_center_buildingattributesforbuilding`
+-- Dumping data for table `satest_cidec`.`c_center_buildingattributesforbuilding`
 --
 
 /*!40000 ALTER TABLE `c_center_buildingattributesforbuilding` DISABLE KEYS */;
@@ -493,11 +493,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`c_center_buildingattributestype`
+-- Definition of table `satest_cidec`.`c_center_buildingattributestype`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`c_center_buildingattributestype`;
-CREATE TABLE  `cidec_db`.`c_center_buildingattributestype` (
+DROP TABLE IF EXISTS `satest_cidec`.`c_center_buildingattributestype`;
+CREATE TABLE  `satest_cidec`.`c_center_buildingattributestype` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `building_attributes_type_name` varchar(128) NOT NULL,
   `building_attributes_type_description` longtext,
@@ -506,7 +506,7 @@ CREATE TABLE  `cidec_db`.`c_center_buildingattributestype` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`c_center_buildingattributestype`
+-- Dumping data for table `satest_cidec`.`c_center_buildingattributestype`
 --
 
 /*!40000 ALTER TABLE `c_center_buildingattributestype` DISABLE KEYS */;
@@ -516,11 +516,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`c_center_buildingtype`
+-- Definition of table `satest_cidec`.`c_center_buildingtype`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`c_center_buildingtype`;
-CREATE TABLE  `cidec_db`.`c_center_buildingtype` (
+DROP TABLE IF EXISTS `satest_cidec`.`c_center_buildingtype`;
+CREATE TABLE  `satest_cidec`.`c_center_buildingtype` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `building_type_name` longtext NOT NULL,
   `building_type_description` longtext,
@@ -530,7 +530,7 @@ CREATE TABLE  `cidec_db`.`c_center_buildingtype` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`c_center_buildingtype`
+-- Dumping data for table `satest_cidec`.`c_center_buildingtype`
 --
 
 /*!40000 ALTER TABLE `c_center_buildingtype` DISABLE KEYS */;
@@ -540,11 +540,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`c_center_buildingtypeforbuilding`
+-- Definition of table `satest_cidec`.`c_center_buildingtypeforbuilding`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`c_center_buildingtypeforbuilding`;
-CREATE TABLE  `cidec_db`.`c_center_buildingtypeforbuilding` (
+DROP TABLE IF EXISTS `satest_cidec`.`c_center_buildingtypeforbuilding`;
+CREATE TABLE  `satest_cidec`.`c_center_buildingtypeforbuilding` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `building_id` int(11) NOT NULL,
   `building_type_id` int(11) NOT NULL,
@@ -558,7 +558,7 @@ CREATE TABLE  `cidec_db`.`c_center_buildingtypeforbuilding` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`c_center_buildingtypeforbuilding`
+-- Dumping data for table `satest_cidec`.`c_center_buildingtypeforbuilding`
 --
 
 /*!40000 ALTER TABLE `c_center_buildingtypeforbuilding` DISABLE KEYS */;
@@ -568,11 +568,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`c_center_cluster`
+-- Definition of table `satest_cidec`.`c_center_cluster`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`c_center_cluster`;
-CREATE TABLE  `cidec_db`.`c_center_cluster` (
+DROP TABLE IF EXISTS `satest_cidec`.`c_center_cluster`;
+CREATE TABLE  `satest_cidec`.`c_center_cluster` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `sectoral_type_id` int(11) NOT NULL,
   `cluster_registered` datetime NOT NULL,
@@ -585,22 +585,22 @@ CREATE TABLE  `cidec_db`.`c_center_cluster` (
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`c_center_cluster`
+-- Dumping data for table `satest_cidec`.`c_center_cluster`
 --
 
 /*!40000 ALTER TABLE `c_center_cluster` DISABLE KEYS */;
 LOCK TABLES `c_center_cluster` WRITE;
-INSERT INTO `cidec_db`.`c_center_cluster` VALUES  (1,2,'2012-07-27 23:33:31',1,'grupo sanborns','');
+INSERT INTO `satest_cidec`.`c_center_cluster` VALUES  (1,2,'2012-07-27 23:33:31',1,'grupo sanborns','');
 UNLOCK TABLES;
 /*!40000 ALTER TABLE `c_center_cluster` ENABLE KEYS */;
 
 
 --
--- Definition of table `cidec_db`.`c_center_clustercompany`
+-- Definition of table `satest_cidec`.`c_center_clustercompany`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`c_center_clustercompany`;
-CREATE TABLE  `cidec_db`.`c_center_clustercompany` (
+DROP TABLE IF EXISTS `satest_cidec`.`c_center_clustercompany`;
+CREATE TABLE  `satest_cidec`.`c_center_clustercompany` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `cluster_id` int(11) NOT NULL,
   `company_id` int(11) NOT NULL,
@@ -613,7 +613,7 @@ CREATE TABLE  `cidec_db`.`c_center_clustercompany` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`c_center_clustercompany`
+-- Dumping data for table `satest_cidec`.`c_center_clustercompany`
 --
 
 /*!40000 ALTER TABLE `c_center_clustercompany` DISABLE KEYS */;
@@ -623,11 +623,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`c_center_company`
+-- Definition of table `satest_cidec`.`c_center_company`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`c_center_company`;
-CREATE TABLE  `cidec_db`.`c_center_company` (
+DROP TABLE IF EXISTS `satest_cidec`.`c_center_company`;
+CREATE TABLE  `satest_cidec`.`c_center_company` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `sectoral_type_id` int(11) NOT NULL,
   `company_registered` datetime NOT NULL,
@@ -640,23 +640,23 @@ CREATE TABLE  `cidec_db`.`c_center_company` (
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`c_center_company`
+-- Dumping data for table `satest_cidec`.`c_center_company`
 --
 
 /*!40000 ALTER TABLE `c_center_company` DISABLE KEYS */;
 LOCK TABLES `c_center_company` WRITE;
-INSERT INTO `cidec_db`.`c_center_company` VALUES  (1,2,'2012-07-27 23:39:07',1,'Sanborns',''),
+INSERT INTO `satest_cidec`.`c_center_company` VALUES  (1,2,'2012-07-27 23:39:07',1,'Sanborns',''),
  (2,2,'2012-08-09 15:32:50',1,'Sears','tienda departamental');
 UNLOCK TABLES;
 /*!40000 ALTER TABLE `c_center_company` ENABLE KEYS */;
 
 
 --
--- Definition of table `cidec_db`.`c_center_companybuilding`
+-- Definition of table `satest_cidec`.`c_center_companybuilding`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`c_center_companybuilding`;
-CREATE TABLE  `cidec_db`.`c_center_companybuilding` (
+DROP TABLE IF EXISTS `satest_cidec`.`c_center_companybuilding`;
+CREATE TABLE  `satest_cidec`.`c_center_companybuilding` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `company_id` int(11) NOT NULL,
   `building_id` int(11) NOT NULL,
@@ -669,23 +669,23 @@ CREATE TABLE  `cidec_db`.`c_center_companybuilding` (
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`c_center_companybuilding`
+-- Dumping data for table `satest_cidec`.`c_center_companybuilding`
 --
 
 /*!40000 ALTER TABLE `c_center_companybuilding` DISABLE KEYS */;
 LOCK TABLES `c_center_companybuilding` WRITE;
-INSERT INTO `cidec_db`.`c_center_companybuilding` VALUES  (1,1,1),
+INSERT INTO `satest_cidec`.`c_center_companybuilding` VALUES  (1,1,1),
  (2,1,3);
 UNLOCK TABLES;
 /*!40000 ALTER TABLE `c_center_companybuilding` ENABLE KEYS */;
 
 
 --
--- Definition of table `cidec_db`.`c_center_configurationtemplatecompany`
+-- Definition of table `satest_cidec`.`c_center_configurationtemplatecompany`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`c_center_configurationtemplatecompany`;
-CREATE TABLE  `cidec_db`.`c_center_configurationtemplatecompany` (
+DROP TABLE IF EXISTS `satest_cidec`.`c_center_configurationtemplatecompany`;
+CREATE TABLE  `satest_cidec`.`c_center_configurationtemplatecompany` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `company_id` int(11) NOT NULL,
   `logo` varchar(200) DEFAULT NULL,
@@ -703,7 +703,7 @@ CREATE TABLE  `cidec_db`.`c_center_configurationtemplatecompany` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`c_center_configurationtemplatecompany`
+-- Dumping data for table `satest_cidec`.`c_center_configurationtemplatecompany`
 --
 
 /*!40000 ALTER TABLE `c_center_configurationtemplatecompany` DISABLE KEYS */;
@@ -713,11 +713,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`c_center_consumerunit`
+-- Definition of table `satest_cidec`.`c_center_consumerunit`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`c_center_consumerunit`;
-CREATE TABLE  `cidec_db`.`c_center_consumerunit` (
+DROP TABLE IF EXISTS `satest_cidec`.`c_center_consumerunit`;
+CREATE TABLE  `satest_cidec`.`c_center_consumerunit` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `building_id` int(11) NOT NULL,
   `part_of_building_id` int(11) DEFAULT NULL,
@@ -736,12 +736,12 @@ CREATE TABLE  `cidec_db`.`c_center_consumerunit` (
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`c_center_consumerunit`
+-- Dumping data for table `satest_cidec`.`c_center_consumerunit`
 --
 
 /*!40000 ALTER TABLE `c_center_consumerunit` DISABLE KEYS */;
 LOCK TABLES `c_center_consumerunit` WRITE;
-INSERT INTO `cidec_db`.`c_center_consumerunit` VALUES  (3,1,NULL,2,1),
+INSERT INTO `satest_cidec`.`c_center_consumerunit` VALUES  (3,1,NULL,2,1),
  (4,1,NULL,3,2),
  (5,1,NULL,4,3);
 UNLOCK TABLES;
@@ -749,11 +749,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`c_center_electricdata`
+-- Definition of table `satest_cidec`.`c_center_electricdata`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`c_center_electricdata`;
-CREATE TABLE  `cidec_db`.`c_center_electricdata` (
+DROP TABLE IF EXISTS `satest_cidec`.`c_center_electricdata`;
+CREATE TABLE  `satest_cidec`.`c_center_electricdata` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `profile_powermeter_id` int(11),
   `medition_date` datetime NOT NULL,
@@ -805,12 +805,12 @@ CREATE TABLE  `cidec_db`.`c_center_electricdata` (
 ) ENGINE=InnoDB AUTO_INCREMENT=5679 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`c_center_electricdata`
+-- Dumping data for table `satest_cidec`.`c_center_electricdata`
 --
 
 /*!40000 ALTER TABLE `c_center_electricdata` DISABLE KEYS */;
 LOCK TABLES `c_center_electricdata` WRITE;
-INSERT INTO `cidec_db`.`c_center_electricdata` VALUES  (4287,1,'2012-08-02 18:44:44','121.000000','121.000000','121.000000','4.300000','4.310000','4.350000','0.003000','0.000000','-0.002000','-0.516000','-0.517000','-0.521000','0.516000','0.517000','0.521000','-0.010000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'0.001000',NULL,'74.263000','1.600000','1.600000','1.600000',NULL,NULL,NULL,'_'),
+INSERT INTO `satest_cidec`.`c_center_electricdata` VALUES  (4287,1,'2012-08-02 18:44:44','121.000000','121.000000','121.000000','4.300000','4.310000','4.350000','0.003000','0.000000','-0.002000','-0.516000','-0.517000','-0.521000','0.516000','0.517000','0.521000','-0.010000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'0.001000',NULL,'74.263000','1.600000','1.600000','1.600000',NULL,NULL,NULL,'_'),
  (4288,1,'2012-08-02 18:44:44','122.000000','122.000000','122.000000','4.410000','4.460000','4.430000','-0.004000','-0.003000','0.001000','-0.532000','-0.538000','-0.534000','0.532000','0.538000','0.534000','0.010000','0.010000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'-0.005000',NULL,'74.263000','1.600000','1.600000','1.600000',NULL,NULL,NULL,'_'),
  (4289,1,'2012-08-02 18:44:44','121.000000','121.000000','121.000000','4.340000','4.400000','4.410000','0.000000','0.000000','0.002000','-0.522000','-0.529000','-0.531000','0.522000','0.529000','0.531000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'0.002000',NULL,'74.262000','1.600000','1.600000','1.600000',NULL,NULL,NULL,'_'),
  (4290,1,'2012-08-02 18:44:44','120.000000','120.000000','120.000000','4.280000','4.260000','4.280000','0.004000','0.003000','0.001000','-0.511000','-0.507000','-0.512000','0.511000','0.507000','0.512000','-0.010000','-0.010000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'0.009000',NULL,'74.262000','1.600000','1.600000','1.500000',NULL,NULL,NULL,'_'),
@@ -977,7 +977,7 @@ INSERT INTO `cidec_db`.`c_center_electricdata` VALUES  (4287,1,'2012-08-02 18:44
  (4451,1,'2012-08-02 18:44:46','129.000000','129.000000','129.000000','4.670000','4.630000','4.580000','-0.003000','0.001000','0.005000','-0.593000','-0.590000','-0.585000','0.593000','0.590000','0.585000','0.010000','0.000000','-0.010000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'0.003000',NULL,'74.240000','1.700000','1.700000','1.700000',NULL,NULL,NULL,'_'),
  (4452,1,'2012-08-02 18:44:46','129.000000','129.000000','129.000000','4.570000','4.590000','4.620000','0.005000','0.004000','0.002000','-0.585000','-0.588000','-0.592000','0.585000','0.588000','0.592000','-0.010000','-0.010000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'0.011000',NULL,'74.240000','1.900000','1.900000','1.900000',NULL,NULL,NULL,'_'),
  (4453,1,'2012-08-02 18:44:46','129.000000','129.000000','129.000000','4.660000','4.700000','4.720000','0.000000','-0.004000','-0.003000','-0.597000','-0.600000','-0.601000','0.597000','0.600000','0.601000','0.000000','0.010000','0.010000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'-0.007000',NULL,'74.240000','1.800000','1.700000','1.700000',NULL,NULL,NULL,'_');
-INSERT INTO `cidec_db`.`c_center_electricdata` VALUES  (4454,1,'2012-08-02 18:44:46','129.000000','129.000000','129.000000','4.670000','4.710000','4.700000','-0.002000','-0.004000','-0.002000','-0.595000','-0.600000','-0.598000','0.595000','0.600000','0.598000','0.000000','0.010000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'-0.008000',NULL,'74.239000','2.100000','2.100000','2.100000',NULL,NULL,NULL,'_'),
+INSERT INTO `satest_cidec`.`c_center_electricdata` VALUES  (4454,1,'2012-08-02 18:44:46','129.000000','129.000000','129.000000','4.670000','4.710000','4.700000','-0.002000','-0.004000','-0.002000','-0.595000','-0.600000','-0.598000','0.595000','0.600000','0.598000','0.000000','0.010000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'-0.008000',NULL,'74.239000','2.100000','2.100000','2.100000',NULL,NULL,NULL,'_'),
  (4455,1,'2012-08-02 18:44:46','130.000000','130.000000','130.000000','4.720000','4.720000','4.680000','-0.003000','-0.002000','0.001000','-0.603000','-0.603000','-0.598000','0.603000','0.603000','0.598000','0.010000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'-0.004000',NULL,'74.239000','2.100000','2.200000','2.100000',NULL,NULL,NULL,'_'),
  (4456,1,'2012-08-02 18:44:46','129.000000','129.000000','129.000000','4.690000','4.630000','4.580000','-0.001000','0.003000','0.005000','-0.599000','-0.592000','-0.586000','0.599000','0.592000','0.586000','0.000000','-0.010000','-0.010000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'0.007000',NULL,'74.239000','2.000000','2.000000','2.000000',NULL,NULL,NULL,'_'),
  (4457,1,'2012-08-02 18:44:46','128.000000','128.000000','128.000000','4.630000','4.570000','4.560000','0.002000','0.005000','0.006000','-0.589000','-0.583000','-0.582000','0.589000','0.583000','0.582000','0.000000','-0.010000','-0.010000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'0.013000',NULL,'74.239000','1.800000','1.800000','1.800000',NULL,NULL,NULL,'_'),
@@ -1144,7 +1144,7 @@ INSERT INTO `cidec_db`.`c_center_electricdata` VALUES  (4454,1,'2012-08-02 18:44
  (4618,1,'2012-08-02 18:44:48','130.000000','130.000000','130.000000','4.770000','4.730000','4.660000','-0.004000','0.000000','0.004000','-0.608000','-0.604000','-0.598000','0.608000','0.604000','0.598000','0.010000','0.000000','-0.010000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'0.000000',NULL,'74.215000','2.400000','2.400000','2.500000',NULL,NULL,NULL,'_'),
  (4619,1,'2012-08-02 18:44:48','129.000000','129.000000','129.000000','4.650000','4.710000','4.750000','0.001000','-0.003000','-0.004000','-0.593000','-0.599000','-0.603000','0.593000','0.599000','0.603000','0.000000','0.010000','0.010000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'-0.007000',NULL,'74.215000','2.100000','2.100000','2.100000',NULL,NULL,NULL,'_'),
  (4620,1,'2012-08-02 18:44:48','130.000000','130.000000','130.000000','4.580000','4.600000','4.640000','0.006000','0.005000','0.004000','-0.587000','-0.589000','-0.593000','0.587000','0.589000','0.593000','-0.010000','-0.010000','-0.010000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'0.015000',NULL,'74.215000','2.200000','2.200000','2.200000',NULL,NULL,NULL,'_');
-INSERT INTO `cidec_db`.`c_center_electricdata` VALUES  (4621,1,'2012-08-02 18:44:48','130.000000','130.000000','130.000000','4.680000','4.720000','4.770000','0.002000','-0.001000','-0.003000','-0.601000','-0.605000','-0.609000','0.601000','0.605000','0.609000','0.000000','0.000000','0.010000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'-0.002000',NULL,'74.215000','2.600000','2.600000','2.600000',NULL,NULL,NULL,'_'),
+INSERT INTO `satest_cidec`.`c_center_electricdata` VALUES  (4621,1,'2012-08-02 18:44:48','130.000000','130.000000','130.000000','4.680000','4.720000','4.770000','0.002000','-0.001000','-0.003000','-0.601000','-0.605000','-0.609000','0.601000','0.605000','0.609000','0.000000','0.000000','0.010000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'-0.002000',NULL,'74.215000','2.600000','2.600000','2.600000',NULL,NULL,NULL,'_'),
  (4622,1,'2012-08-02 18:44:48','130.000000','130.000000','130.000000','4.650000','4.630000','4.630000','0.003000','0.005000','0.006000','-0.594000','-0.592000','-0.592000','0.594000','0.592000','0.592000','-0.010000','-0.010000','-0.010000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'0.015000',NULL,'74.215000','2.700000','2.700000','2.700000',NULL,NULL,NULL,'_'),
  (4623,1,'2012-08-02 18:44:48','130.000000','130.000000','130.000000','4.690000','4.740000','4.790000','0.002000','-0.002000','-0.004000','-0.600000','-0.605000','-0.609000','0.600000','0.605000','0.609000','0.000000','0.000000','0.010000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'-0.004000',NULL,'74.215000','2.700000','2.700000','2.700000',NULL,NULL,NULL,'_'),
  (4624,1,'2012-08-02 18:44:48','129.000000','129.000000','129.000000','4.740000','4.730000','4.670000','-0.004000','-0.003000','0.000000','-0.600000','-0.600000','-0.594000','0.600000','0.600000','0.594000','0.010000','0.010000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'-0.007000',NULL,'74.215000','2.400000','2.400000','2.400000',NULL,NULL,NULL,'_'),
@@ -1311,7 +1311,7 @@ INSERT INTO `cidec_db`.`c_center_electricdata` VALUES  (4621,1,'2012-08-02 18:44
  (4785,1,'2012-08-02 18:44:50','135.000000','135.000000','135.000000','5.030000','4.970000','4.930000','0.000000','0.002000','0.003000','-0.651000','-0.644000','-0.640000','0.651000','0.644000','0.640000','0.000000','0.000000','-0.010000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'0.006000',NULL,'74.189000','5.200000','5.300000','5.200000',NULL,NULL,NULL,'_'),
  (4786,1,'2012-08-02 18:44:50','135.000000','135.000000','135.000000','5.070000','5.040000','4.980000','-0.001000','0.002000','0.004000','-0.658000','-0.655000','-0.648000','0.658000','0.655000','0.648000','0.000000','0.000000','-0.010000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'0.005000',NULL,'74.189000','5.200000','5.200000','5.200000',NULL,NULL,NULL,'_'),
  (4787,1,'2012-08-02 18:44:50','135.000000','135.000000','135.000000','4.930000','4.960000','4.990000','0.002000','0.001000','0.000000','-0.642000','-0.646000','-0.648000','0.642000','0.646000','0.648000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'0.003000',NULL,'74.189000','5.200000','5.200000','5.200000',NULL,NULL,NULL,'_');
-INSERT INTO `cidec_db`.`c_center_electricdata` VALUES  (4788,1,'2012-08-02 18:44:50','134.000000','134.000000','134.000000','4.930000','4.930000','4.950000','0.003000','0.004000','0.004000','-0.640000','-0.641000','-0.643000','0.640000','0.641000','0.643000','0.000000','-0.010000','-0.010000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'0.011000',NULL,'74.189000','5.200000','5.200000','5.200000',NULL,NULL,NULL,'_'),
+INSERT INTO `satest_cidec`.`c_center_electricdata` VALUES  (4788,1,'2012-08-02 18:44:50','134.000000','134.000000','134.000000','4.930000','4.930000','4.950000','0.003000','0.004000','0.004000','-0.640000','-0.641000','-0.643000','0.640000','0.641000','0.643000','0.000000','-0.010000','-0.010000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'0.011000',NULL,'74.189000','5.200000','5.200000','5.200000',NULL,NULL,NULL,'_'),
  (4789,1,'2012-08-02 18:44:50','134.000000','134.000000','134.000000','4.950000','4.990000','5.010000','0.000000','-0.001000','0.001000','-0.641000','-0.644000','-0.647000','0.641000','0.644000','0.647000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'0.000000',NULL,'74.189000','4.900000','4.900000','4.900000',NULL,NULL,NULL,'_'),
  (4790,1,'2012-08-02 18:44:50','135.000000','135.000000','135.000000','4.970000','5.000000','5.010000','0.001000','0.000000','-0.001000','-0.648000','-0.651000','-0.651000','0.648000','0.651000','0.651000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'0.000000',NULL,'74.188000','4.800000','4.800000','4.800000',NULL,NULL,NULL,'_'),
  (4791,1,'2012-08-02 18:44:50','133.000000','133.000000','133.000000','4.860000','4.910000','4.930000','0.000000','0.000000','0.000000','-0.629000','-0.635000','-0.638000','0.629000','0.635000','0.638000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'0.000000',NULL,'74.188000','4.300000','4.300000','4.300000',NULL,NULL,NULL,'_'),
@@ -1478,7 +1478,7 @@ INSERT INTO `cidec_db`.`c_center_electricdata` VALUES  (4788,1,'2012-08-02 18:44
  (4952,1,'2012-08-02 18:44:52','135.000000','135.000000','135.000000','5.000000','5.030000','5.060000','0.004000','0.002000','0.001000','-0.641000','-0.648000','-0.652000','0.641000','0.648000','0.652000','-0.010000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'0.007000',NULL,'74.163000','5.800000','5.800000','5.800000',NULL,NULL,NULL,'_'),
  (4953,1,'2012-08-02 18:44:52','136.000000','136.000000','136.000000','5.120000','5.070000','5.070000','0.001000','0.004000','0.006000','-0.658000','-0.652000','-0.652000','0.658000','0.652000','0.652000','0.000000','-0.010000','-0.010000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'0.010000',NULL,'74.162000','6.100000','6.100000','6.100000',NULL,NULL,NULL,'_'),
  (4954,1,'2012-08-02 18:44:52','135.000000','135.000000','135.000000','5.030000','5.060000','5.100000','0.005000','0.005000','0.003000','-0.645000','-0.649000','-0.655000','0.645000','0.649000','0.655000','-0.010000','-0.010000','-0.010000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'0.013000',NULL,'74.162000','6.000000','6.000000','6.000000',NULL,NULL,NULL,'_');
-INSERT INTO `cidec_db`.`c_center_electricdata` VALUES  (4955,1,'2012-08-02 18:44:52','135.000000','135.000000','135.000000','5.050000','5.000000','5.010000','0.002000','0.003000','0.003000','-0.647000','-0.642000','-0.643000','0.647000','0.642000','0.643000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'0.007000',NULL,'74.162000','5.900000','5.900000','5.900000',NULL,NULL,NULL,'_'),
+INSERT INTO `satest_cidec`.`c_center_electricdata` VALUES  (4955,1,'2012-08-02 18:44:52','135.000000','135.000000','135.000000','5.050000','5.000000','5.010000','0.002000','0.003000','0.003000','-0.647000','-0.642000','-0.643000','0.647000','0.642000','0.643000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'0.007000',NULL,'74.162000','5.900000','5.900000','5.900000',NULL,NULL,NULL,'_'),
  (4956,1,'2012-08-02 18:44:52','135.000000','135.000000','135.000000','5.090000','5.090000','5.080000','-0.001000','-0.002000','0.000000','-0.656000','-0.655000','-0.653000','0.656000','0.655000','0.653000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'-0.003000',NULL,'74.162000','5.700000','5.700000','5.700000',NULL,NULL,NULL,'_'),
  (4957,1,'2012-08-02 18:44:52','134.000000','134.000000','134.000000','4.950000','4.980000','5.010000','0.002000','0.000000','-0.001000','-0.637000','-0.642000','-0.645000','0.637000','0.642000','0.645000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'0.000000',NULL,'74.162000','5.200000','5.300000','5.200000',NULL,NULL,NULL,'_'),
  (4958,1,'2012-08-02 18:44:52','134.000000','134.000000','134.000000','5.000000','5.030000','5.030000','-0.001000','0.000000','0.002000','-0.646000','-0.648000','-0.648000','0.646000','0.648000','0.648000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'0.000000',NULL,'74.162000','5.300000','5.300000','5.300000',NULL,NULL,NULL,'_'),
@@ -1645,7 +1645,7 @@ INSERT INTO `cidec_db`.`c_center_electricdata` VALUES  (4955,1,'2012-08-02 18:44
  (5119,2,'2012-08-02 18:44:53','135.000000','135.000000','135.000000','335.300000','334.700000','334.100000','0.080000','-0.006000','-0.017000','-45.390000','-45.320000','-45.240000','45.394000','45.323000','45.235000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1198.000000',NULL,'-1464.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
  (5120,2,'2012-08-02 18:44:53','136.000000','136.000000','135.000000','331.700000','333.700000','334.800000','0.131000','0.162000','0.185000','-44.940000','-45.220000','-45.330000','44.938000','45.218000','45.333000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1198.000000',NULL,'-1476.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
  (5121,2,'2012-08-02 18:44:53','135.000000','135.000000','135.000000','334.300000','333.700000','333.000000','0.084000','0.019000','0.006000','-45.230000','-45.150000','-45.010000','45.232000','45.150000','45.014000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1198.000000',NULL,'-1487.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_');
-INSERT INTO `cidec_db`.`c_center_electricdata` VALUES  (5122,2,'2012-08-02 18:44:53','135.000000','135.000000','135.000000','331.800000','332.200000','333.600000','0.162000','0.109000','0.104000','-44.800000','-44.850000','-45.010000','44.797000','44.850000','45.006000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1198.000000',NULL,'-1498.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
+INSERT INTO `satest_cidec`.`c_center_electricdata` VALUES  (5122,2,'2012-08-02 18:44:53','135.000000','135.000000','135.000000','331.800000','332.200000','333.600000','0.162000','0.109000','0.104000','-44.800000','-44.850000','-45.010000','44.797000','44.850000','45.006000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1198.000000',NULL,'-1498.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
  (5123,2,'2012-08-02 18:44:53','136.000000','136.000000','136.000000','333.600000','335.400000','336.300000','0.169000','0.165000','0.143000','-45.230000','-45.480000','-45.610000','45.230000','45.476000','45.605000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1198.000000',NULL,'-1510.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
  (5124,2,'2012-08-02 18:44:53','136.000000','136.000000','136.000000','336.300000','337.400000','337.100000','0.107000','0.095000','0.078000','-45.610000','-45.780000','-45.710000','45.607000','45.782000','45.714000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1198.000000',NULL,'-1521.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
  (5125,2,'2012-08-02 18:44:53','136.000000','136.000000','136.000000','337.800000','337.400000','337.100000','-0.071000','-0.042000','0.089000','-45.970000','-45.920000','-45.870000','45.974000','45.922000','45.872000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1198.000000',NULL,'-1533.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
@@ -1812,7 +1812,7 @@ INSERT INTO `cidec_db`.`c_center_electricdata` VALUES  (5122,2,'2012-08-02 18:44
  (5286,2,'2012-08-02 18:44:55','134.000000','134.000000','134.000000','330.400000','329.400000','327.600000','0.066000','0.020000','-0.023000','-44.240000','-44.100000','-43.830000','44.242000','44.100000','43.834000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1201.000000',NULL,'-3253.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
  (5287,2,'2012-08-02 18:44:55','134.000000','134.000000','134.000000','330.900000','329.700000','327.900000','0.074000','-0.036000','-0.103000','-44.340000','-44.180000','-43.910000','44.338000','44.183000','43.911000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1201.000000',NULL,'-3264.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
  (5288,2,'2012-08-02 18:44:55','134.000000','134.000000','134.000000','329.900000','332.000000','331.700000','0.063000','-0.005000','-0.047000','-44.240000','-44.530000','-44.490000','44.237000','44.526000','44.486000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1201.000000',NULL,'-3275.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_');
-INSERT INTO `cidec_db`.`c_center_electricdata` VALUES  (5289,2,'2012-08-02 18:44:55','134.000000','134.000000','134.000000','329.200000','328.400000','329.300000','0.091000','0.193000','0.182000','-44.180000','-44.070000','-44.200000','44.178000','44.075000','44.196000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1201.000000',NULL,'-3286.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
+INSERT INTO `satest_cidec`.`c_center_electricdata` VALUES  (5289,2,'2012-08-02 18:44:55','134.000000','134.000000','134.000000','329.200000','328.400000','329.300000','0.091000','0.193000','0.182000','-44.180000','-44.070000','-44.200000','44.178000','44.075000','44.196000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1201.000000',NULL,'-3286.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
  (5290,2,'2012-08-02 18:44:55','135.000000','135.000000','135.000000','331.700000','333.300000','334.400000','0.094000','0.069000','0.072000','-44.740000','-44.970000','-45.110000','44.742000','44.967000','45.114000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1201.000000',NULL,'-3297.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
  (5291,2,'2012-08-02 18:44:55','134.000000','134.000000','134.000000','333.900000','333.800000','332.200000','0.001000','-0.009000','0.005000','-44.880000','-44.860000','-44.650000','44.880000','44.861000','44.653000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1201.000000',NULL,'-3308.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
  (5292,2,'2012-08-02 18:44:55','134.000000','134.000000','134.000000','327.300000','329.600000','331.500000','0.119000','0.135000','0.126000','-43.890000','-44.200000','-44.450000','43.894000','44.198000','44.453000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1201.000000',NULL,'-3320.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
@@ -1979,7 +1979,7 @@ INSERT INTO `cidec_db`.`c_center_electricdata` VALUES  (5289,2,'2012-08-02 18:44
  (5453,2,'2012-08-02 18:44:57','136.000000','136.000000','136.000000','345.000000','344.400000','344.700000','0.249000','0.059000','-0.091000','-46.880000','-46.800000','-46.840000','46.881000','46.802000','46.838000','-0.010000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1205.000000',NULL,'-5182.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
  (5454,2,'2012-08-02 18:44:57','137.000000','137.000000','137.000000','350.300000','349.700000','348.900000','0.229000','0.124000','0.032000','-47.840000','-47.770000','-47.650000','47.844000','47.774000','47.654000','-0.010000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1205.000000',NULL,'-5194.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
  (5455,2,'2012-08-02 18:44:57','138.000000','138.000000','138.000000','355.500000','355.200000','353.000000','0.306000','0.278000','0.118000','-48.880000','-48.830000','-48.530000','48.881000','48.835000','48.534000','-0.010000','-0.010000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1205.000000',NULL,'-5206.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_');
-INSERT INTO `cidec_db`.`c_center_electricdata` VALUES  (5456,2,'2012-08-02 18:44:57','138.000000','138.000000','138.000000','356.200000','357.200000','355.700000','0.324000','0.310000','0.161000','-48.980000','-49.110000','-48.910000','48.978000','49.112000','48.907000','-0.010000','-0.010000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1205.000000',NULL,'-5218.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
+INSERT INTO `satest_cidec`.`c_center_electricdata` VALUES  (5456,2,'2012-08-02 18:44:57','138.000000','138.000000','138.000000','356.200000','357.200000','355.700000','0.324000','0.310000','0.161000','-48.980000','-49.110000','-48.910000','48.978000','49.112000','48.907000','-0.010000','-0.010000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1205.000000',NULL,'-5218.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
  (5457,2,'2012-08-02 18:44:57','137.000000','137.000000','137.000000','348.700000','348.700000','350.400000','-0.148000','0.091000','0.259000','-47.800000','-47.800000','-48.000000','47.801000','47.802000','48.000000','0.000000','0.000000','-0.010000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1205.000000',NULL,'-5230.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
  (5458,2,'2012-08-02 18:44:57','137.000000','137.000000','137.000000','353.200000','354.100000','353.100000','0.189000','0.268000','0.242000','-48.530000','-48.650000','-48.510000','48.528000','48.654000','48.510000','0.000000','-0.010000','-0.010000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1205.000000',NULL,'-5242.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
  (5459,2,'2012-08-02 18:44:57','137.000000','137.000000','137.000000','348.200000','348.800000','352.200000','-0.205000','-0.272000','-0.067000','-47.670000','-47.750000','-48.190000','47.667000','47.746000','48.185000','0.000000','0.010000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1205.000000',NULL,'-5254.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
@@ -2146,7 +2146,7 @@ INSERT INTO `cidec_db`.`c_center_electricdata` VALUES  (5456,2,'2012-08-02 18:44
  (5620,2,'2012-08-02 18:44:58','136.000000','136.000000','136.000000','341.200000','341.900000','341.500000','0.099000','0.061000','0.021000','-46.330000','-46.430000','-46.370000','46.329000','46.428000','46.371000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1209.000000',NULL,'-7147.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
  (5621,2,'2012-08-02 18:44:58','136.000000','136.000000','136.000000','338.400000','337.500000','338.900000','0.070000','0.068000','0.079000','-45.920000','-45.790000','-45.990000','45.923000','45.792000','45.990000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1209.000000',NULL,'-7159.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
  (5622,2,'2012-08-02 18:44:58','136.000000','136.000000','136.000000','342.100000','341.800000','340.800000','0.190000','0.149000','0.028000','-46.560000','-46.520000','-46.340000','46.557000','46.518000','46.344000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1209.000000',NULL,'-7170.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_');
-INSERT INTO `cidec_db`.`c_center_electricdata` VALUES  (5623,2,'2012-08-02 18:44:58','136.000000','136.000000','136.000000','339.600000','341.400000','342.200000','0.041000','0.030000','0.081000','-46.220000','-46.460000','-46.570000','46.218000','46.458000','46.568000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1209.000000',NULL,'-7182.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
+INSERT INTO `satest_cidec`.`c_center_electricdata` VALUES  (5623,2,'2012-08-02 18:44:58','136.000000','136.000000','136.000000','339.600000','341.400000','342.200000','0.041000','0.030000','0.081000','-46.220000','-46.460000','-46.570000','46.218000','46.458000','46.568000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1209.000000',NULL,'-7182.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
  (5624,2,'2012-08-02 18:44:58','136.000000','136.000000','136.000000','341.400000','341.100000','340.700000','0.101000','0.023000','-0.062000','-46.360000','-46.320000','-46.230000','46.355000','46.317000','46.233000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1209.000000',NULL,'-7193.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
  (5625,2,'2012-08-02 18:44:58','136.000000','136.000000','136.000000','340.500000','339.700000','338.500000','-0.045000','0.032000','0.044000','-46.270000','-46.160000','-46.000000','46.270000','46.158000','45.998000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1209.000000',NULL,'-7205.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
  (5626,2,'2012-08-02 18:44:58','136.000000','136.000000','136.000000','342.500000','343.300000','343.000000','0.156000','0.188000','0.137000','-46.640000','-46.750000','-46.690000','46.644000','46.754000','46.685000','0.000000','0.000000','0.000000',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'1209.000000',NULL,'-7217.000000',NULL,NULL,NULL,NULL,NULL,NULL,'_'),
@@ -2207,11 +2207,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`c_center_electricdevicetype`
+-- Definition of table `satest_cidec`.`c_center_electricdevicetype`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`c_center_electricdevicetype`;
-CREATE TABLE  `cidec_db`.`c_center_electricdevicetype` (
+DROP TABLE IF EXISTS `satest_cidec`.`c_center_electricdevicetype`;
+CREATE TABLE  `satest_cidec`.`c_center_electricdevicetype` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `electric_device_type_name` longtext NOT NULL,
   `electric_device_type_description` longtext,
@@ -2221,12 +2221,12 @@ CREATE TABLE  `cidec_db`.`c_center_electricdevicetype` (
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`c_center_electricdevicetype`
+-- Dumping data for table `satest_cidec`.`c_center_electricdevicetype`
 --
 
 /*!40000 ALTER TABLE `c_center_electricdevicetype` DISABLE KEYS */;
 LOCK TABLES `c_center_electricdevicetype` WRITE;
-INSERT INTO `cidec_db`.`c_center_electricdevicetype` VALUES  (1,'Total','Mide el consumo total del edificio',1,NULL),
+INSERT INTO `satest_cidec`.`c_center_electricdevicetype` VALUES  (1,'Total','Mide el consumo total del edificio',1,NULL),
  (2,'Sistema de Aire Acondicionado','',1,NULL),
  (3,'Sistema de iluminación','',1,NULL),
  (4,'Perfumería','',1,NULL);
@@ -2235,11 +2235,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`c_center_hierarchyofpart`
+-- Definition of table `satest_cidec`.`c_center_hierarchyofpart`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`c_center_hierarchyofpart`;
-CREATE TABLE  `cidec_db`.`c_center_hierarchyofpart` (
+DROP TABLE IF EXISTS `satest_cidec`.`c_center_hierarchyofpart`;
+CREATE TABLE  `satest_cidec`.`c_center_hierarchyofpart` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `part_of_building_composite_id` int(11) NOT NULL,
   `part_of_building_leaf_id` int(11) NOT NULL,
@@ -2251,7 +2251,7 @@ CREATE TABLE  `cidec_db`.`c_center_hierarchyofpart` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`c_center_hierarchyofpart`
+-- Dumping data for table `satest_cidec`.`c_center_hierarchyofpart`
 --
 
 /*!40000 ALTER TABLE `c_center_hierarchyofpart` DISABLE KEYS */;
@@ -2261,11 +2261,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`c_center_industrialequipment`
+-- Definition of table `satest_cidec`.`c_center_industrialequipment`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`c_center_industrialequipment`;
-CREATE TABLE  `cidec_db`.`c_center_industrialequipment` (
+DROP TABLE IF EXISTS `satest_cidec`.`c_center_industrialequipment`;
+CREATE TABLE  `satest_cidec`.`c_center_industrialequipment` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `indistrial_equipment_identifier` varchar(128) NOT NULL,
   `description` longtext,
@@ -2273,7 +2273,7 @@ CREATE TABLE  `cidec_db`.`c_center_industrialequipment` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`c_center_industrialequipment`
+-- Dumping data for table `satest_cidec`.`c_center_industrialequipment`
 --
 
 /*!40000 ALTER TABLE `c_center_industrialequipment` DISABLE KEYS */;
@@ -2283,11 +2283,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`c_center_partofbuilding`
+-- Definition of table `satest_cidec`.`c_center_partofbuilding`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`c_center_partofbuilding`;
-CREATE TABLE  `cidec_db`.`c_center_partofbuilding` (
+DROP TABLE IF EXISTS `satest_cidec`.`c_center_partofbuilding`;
+CREATE TABLE  `satest_cidec`.`c_center_partofbuilding` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `building_id` int(11) NOT NULL,
   `part_of_building_type_id` int(11) DEFAULT NULL,
@@ -2302,7 +2302,7 @@ CREATE TABLE  `cidec_db`.`c_center_partofbuilding` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`c_center_partofbuilding`
+-- Dumping data for table `satest_cidec`.`c_center_partofbuilding`
 --
 
 /*!40000 ALTER TABLE `c_center_partofbuilding` DISABLE KEYS */;
@@ -2312,11 +2312,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`c_center_partofbuildingtype`
+-- Definition of table `satest_cidec`.`c_center_partofbuildingtype`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`c_center_partofbuildingtype`;
-CREATE TABLE  `cidec_db`.`c_center_partofbuildingtype` (
+DROP TABLE IF EXISTS `satest_cidec`.`c_center_partofbuildingtype`;
+CREATE TABLE  `satest_cidec`.`c_center_partofbuildingtype` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `part_of_building_type_name` longtext NOT NULL,
   `part_of_building_type_description` longtext,
@@ -2326,7 +2326,7 @@ CREATE TABLE  `cidec_db`.`c_center_partofbuildingtype` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`c_center_partofbuildingtype`
+-- Dumping data for table `satest_cidec`.`c_center_partofbuildingtype`
 --
 
 /*!40000 ALTER TABLE `c_center_partofbuildingtype` DISABLE KEYS */;
@@ -2336,11 +2336,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`c_center_powermeter`
+-- Definition of table `satest_cidec`.`c_center_powermeter`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`c_center_powermeter`;
-CREATE TABLE  `cidec_db`.`c_center_powermeter` (
+DROP TABLE IF EXISTS `satest_cidec`.`c_center_powermeter`;
+CREATE TABLE  `satest_cidec`.`c_center_powermeter` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `powermeter_model_id` int(11) NOT NULL,
   `powermeter_anotation` varchar(256) NOT NULL DEFAULT '',
@@ -2353,12 +2353,12 @@ CREATE TABLE  `cidec_db`.`c_center_powermeter` (
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`c_center_powermeter`
+-- Dumping data for table `satest_cidec`.`c_center_powermeter`
 --
 
 /*!40000 ALTER TABLE `c_center_powermeter` DISABLE KEYS */;
 LOCK TABLES `c_center_powermeter` WRITE;
-INSERT INTO `cidec_db`.`c_center_powermeter` VALUES  (1,1,'Practicante-PC/10.68.164.106','2012-07-30','0',1),
+INSERT INTO `satest_cidec`.`c_center_powermeter` VALUES  (1,1,'Practicante-PC/10.68.164.106','2012-07-30','0',1),
  (2,1,'GBRFFG1/10.68.164.106','2012-07-30','0',1),
  (3,1,'GBRFFG1/127.0.0.1','2012-07-30','0',1);
 UNLOCK TABLES;
@@ -2366,11 +2366,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`c_center_powermeterforindustrialequipment`
+-- Definition of table `satest_cidec`.`c_center_powermeterforindustrialequipment`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`c_center_powermeterforindustrialequipment`;
-CREATE TABLE  `cidec_db`.`c_center_powermeterforindustrialequipment` (
+DROP TABLE IF EXISTS `satest_cidec`.`c_center_powermeterforindustrialequipment`;
+CREATE TABLE  `satest_cidec`.`c_center_powermeterforindustrialequipment` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `powermeter_id` int(11) NOT NULL,
   `industrial_equipment_id` int(11) NOT NULL,
@@ -2383,7 +2383,7 @@ CREATE TABLE  `cidec_db`.`c_center_powermeterforindustrialequipment` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`c_center_powermeterforindustrialequipment`
+-- Dumping data for table `satest_cidec`.`c_center_powermeterforindustrialequipment`
 --
 
 /*!40000 ALTER TABLE `c_center_powermeterforindustrialequipment` DISABLE KEYS */;
@@ -2393,11 +2393,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`c_center_powermetermodel`
+-- Definition of table `satest_cidec`.`c_center_powermetermodel`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`c_center_powermetermodel`;
-CREATE TABLE  `cidec_db`.`c_center_powermetermodel` (
+DROP TABLE IF EXISTS `satest_cidec`.`c_center_powermetermodel`;
+CREATE TABLE  `satest_cidec`.`c_center_powermetermodel` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `powermeter_brand` varchar(128) NOT NULL,
   `powermeter_model` varchar(128) NOT NULL,
@@ -2405,22 +2405,22 @@ CREATE TABLE  `cidec_db`.`c_center_powermetermodel` (
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`c_center_powermetermodel`
+-- Dumping data for table `satest_cidec`.`c_center_powermetermodel`
 --
 
 /*!40000 ALTER TABLE `c_center_powermetermodel` DISABLE KEYS */;
 LOCK TABLES `c_center_powermetermodel` WRITE;
-INSERT INTO `cidec_db`.`c_center_powermetermodel` VALUES  (1,'Satec','PM130 PLUS');
+INSERT INTO `satest_cidec`.`c_center_powermetermodel` VALUES  (1,'Satec','PM130 PLUS');
 UNLOCK TABLES;
 /*!40000 ALTER TABLE `c_center_powermetermodel` ENABLE KEYS */;
 
 
 --
--- Definition of table `cidec_db`.`c_center_profilepowermeter`
+-- Definition of table `satest_cidec`.`c_center_profilepowermeter`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`c_center_profilepowermeter`;
-CREATE TABLE  `cidec_db`.`c_center_profilepowermeter` (
+DROP TABLE IF EXISTS `satest_cidec`.`c_center_profilepowermeter`;
+CREATE TABLE  `satest_cidec`.`c_center_profilepowermeter` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `powermeter_id` int(11) NOT NULL,
   `profile_powermeter_status` int(11) NOT NULL,
@@ -2430,12 +2430,12 @@ CREATE TABLE  `cidec_db`.`c_center_profilepowermeter` (
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`c_center_profilepowermeter`
+-- Dumping data for table `satest_cidec`.`c_center_profilepowermeter`
 --
 
 /*!40000 ALTER TABLE `c_center_profilepowermeter` DISABLE KEYS */;
 LOCK TABLES `c_center_profilepowermeter` WRITE;
-INSERT INTO `cidec_db`.`c_center_profilepowermeter` VALUES  (1,1,1),
+INSERT INTO `satest_cidec`.`c_center_profilepowermeter` VALUES  (1,1,1),
  (2,2,1),
  (3,3,1);
 UNLOCK TABLES;
@@ -2443,11 +2443,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`c_center_sectoraltype`
+-- Definition of table `satest_cidec`.`c_center_sectoraltype`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`c_center_sectoraltype`;
-CREATE TABLE  `cidec_db`.`c_center_sectoraltype` (
+DROP TABLE IF EXISTS `satest_cidec`.`c_center_sectoraltype`;
+CREATE TABLE  `satest_cidec`.`c_center_sectoraltype` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `sectorial_type_name` varchar(80) NOT NULL,
   `sectoral_type_description` longtext,
@@ -2457,23 +2457,23 @@ CREATE TABLE  `cidec_db`.`c_center_sectoraltype` (
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`c_center_sectoraltype`
+-- Dumping data for table `satest_cidec`.`c_center_sectoraltype`
 --
 
 /*!40000 ALTER TABLE `c_center_sectoraltype` DISABLE KEYS */;
 LOCK TABLES `c_center_sectoraltype` WRITE;
-INSERT INTO `cidec_db`.`c_center_sectoraltype` VALUES  (1,'Servicios','',2,NULL),
+INSERT INTO `satest_cidec`.`c_center_sectoraltype` VALUES  (1,'Servicios','',2,NULL),
  (2,'Comercial','',1,NULL);
 UNLOCK TABLES;
 /*!40000 ALTER TABLE `c_center_sectoraltype` ENABLE KEYS */;
 
 
 --
--- Definition of table `cidec_db`.`django_admin_log`
+-- Definition of table `satest_cidec`.`django_admin_log`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`django_admin_log`;
-CREATE TABLE  `cidec_db`.`django_admin_log` (
+DROP TABLE IF EXISTS `satest_cidec`.`django_admin_log`;
+CREATE TABLE  `satest_cidec`.`django_admin_log` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `action_time` datetime NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -2490,12 +2490,12 @@ CREATE TABLE  `cidec_db`.`django_admin_log` (
 ) ENGINE=InnoDB AUTO_INCREMENT=2955 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`django_admin_log`
+-- Dumping data for table `satest_cidec`.`django_admin_log`
 --
 
 /*!40000 ALTER TABLE `django_admin_log` DISABLE KEYS */;
 LOCK TABLES `django_admin_log` WRITE;
-INSERT INTO `cidec_db`.`django_admin_log` VALUES  (1,'2012-07-27 22:56:07',1,19,'1','Servicios',1,''),
+INSERT INTO `satest_cidec`.`django_admin_log` VALUES  (1,'2012-07-27 22:56:07',1,19,'1','Servicios',1,''),
  (2,'2012-07-27 23:33:56',1,20,'1','grupo sanborns - Servicios',1,''),
  (3,'2012-07-27 23:43:53',1,21,'1','Sanborns - Servicios',1,''),
  (4,'2012-07-28 00:01:40',1,8,'1','México',1,''),
@@ -3126,7 +3126,7 @@ INSERT INTO `cidec_db`.`django_admin_log` VALUES  (1,'2012-07-27 22:56:07',1,19,
  (629,'2012-07-30 22:00:03',1,40,'603','Practicante-PC/10.68.164.106 2012-07-30 21:51:08+00:00',3,''),
  (630,'2012-07-30 22:00:03',1,40,'604','Practicante-PC/10.68.164.106 2012-07-30 21:51:08+00:00',3,''),
  (631,'2012-07-30 22:00:03',1,40,'605','Practicante-PC/10.68.164.106 2012-07-30 21:51:08+00:00',3,'');
-INSERT INTO `cidec_db`.`django_admin_log` VALUES  (632,'2012-07-30 22:00:03',1,40,'606','Practicante-PC/10.68.164.106 2012-07-30 21:51:08+00:00',3,''),
+INSERT INTO `satest_cidec`.`django_admin_log` VALUES  (632,'2012-07-30 22:00:03',1,40,'606','Practicante-PC/10.68.164.106 2012-07-30 21:51:08+00:00',3,''),
  (633,'2012-07-30 22:00:03',1,40,'607','Practicante-PC/10.68.164.106 2012-07-30 21:51:08+00:00',3,''),
  (634,'2012-07-30 22:00:03',1,40,'608','Practicante-PC/10.68.164.106 2012-07-30 21:51:08+00:00',3,''),
  (635,'2012-07-30 22:00:03',1,40,'609','Practicante-PC/10.68.164.106 2012-07-30 21:51:08+00:00',3,''),
@@ -3744,7 +3744,7 @@ INSERT INTO `cidec_db`.`django_admin_log` VALUES  (632,'2012-07-30 22:00:03',1,4
  (1247,'2012-07-30 22:01:07',1,40,'1221','Practicante-PC/10.68.164.106 2012-07-30 22:00:27+00:00',3,''),
  (1248,'2012-07-30 22:01:07',1,40,'1222','Practicante-PC/10.68.164.106 2012-07-30 22:00:27+00:00',3,''),
  (1249,'2012-07-30 22:01:07',1,40,'1223','Practicante-PC/10.68.164.106 2012-07-30 22:00:27+00:00',3,'');
-INSERT INTO `cidec_db`.`django_admin_log` VALUES  (1250,'2012-07-30 22:01:07',1,40,'1224','Practicante-PC/10.68.164.106 2012-07-30 22:00:27+00:00',3,''),
+INSERT INTO `satest_cidec`.`django_admin_log` VALUES  (1250,'2012-07-30 22:01:07',1,40,'1224','Practicante-PC/10.68.164.106 2012-07-30 22:00:27+00:00',3,''),
  (1251,'2012-07-30 22:01:07',1,40,'1225','Practicante-PC/10.68.164.106 2012-07-30 22:00:27+00:00',3,''),
  (1252,'2012-07-30 22:01:07',1,40,'1226','Practicante-PC/10.68.164.106 2012-07-30 22:00:27+00:00',3,''),
  (1253,'2012-07-30 22:01:07',1,40,'1227','Practicante-PC/10.68.164.106 2012-07-30 22:00:27+00:00',3,''),
@@ -4355,7 +4355,7 @@ INSERT INTO `cidec_db`.`django_admin_log` VALUES  (1250,'2012-07-30 22:01:07',1,
  (1858,'2012-07-30 22:05:00',1,40,'1832','Practicante-PC/10.68.164.106 2012-07-30 22:01:48+00:00',3,''),
  (1859,'2012-07-30 22:05:00',1,40,'1833','Practicante-PC/10.68.164.106 2012-07-30 22:01:48+00:00',3,''),
  (1860,'2012-07-30 22:05:00',1,40,'1834','Practicante-PC/10.68.164.106 2012-07-30 22:01:48+00:00',3,'');
-INSERT INTO `cidec_db`.`django_admin_log` VALUES  (1861,'2012-07-30 22:05:00',1,40,'1835','Practicante-PC/10.68.164.106 2012-07-30 22:01:48+00:00',3,''),
+INSERT INTO `satest_cidec`.`django_admin_log` VALUES  (1861,'2012-07-30 22:05:00',1,40,'1835','Practicante-PC/10.68.164.106 2012-07-30 22:01:48+00:00',3,''),
  (1862,'2012-07-30 22:05:00',1,40,'1836','Practicante-PC/10.68.164.106 2012-07-30 22:01:48+00:00',3,''),
  (1863,'2012-07-30 22:05:00',1,40,'1837','Practicante-PC/10.68.164.106 2012-07-30 22:01:48+00:00',3,''),
  (1864,'2012-07-30 22:05:00',1,40,'1838','Practicante-PC/10.68.164.106 2012-07-30 22:01:48+00:00',3,''),
@@ -4966,7 +4966,7 @@ INSERT INTO `cidec_db`.`django_admin_log` VALUES  (1861,'2012-07-30 22:05:00',1,
  (2469,'2012-07-30 22:07:45',1,40,'2442','Practicante-PC/10.68.164.106 2012-07-30 22:05:39+00:00',3,''),
  (2470,'2012-07-30 22:07:45',1,40,'2443','Practicante-PC/10.68.164.106 2012-07-30 22:05:39+00:00',3,''),
  (2471,'2012-07-30 22:07:45',1,40,'2444','Practicante-PC/10.68.164.106 2012-07-30 22:05:39+00:00',3,'');
-INSERT INTO `cidec_db`.`django_admin_log` VALUES  (2472,'2012-07-30 22:07:45',1,40,'2445','Practicante-PC/10.68.164.106 2012-07-30 22:05:39+00:00',3,''),
+INSERT INTO `satest_cidec`.`django_admin_log` VALUES  (2472,'2012-07-30 22:07:45',1,40,'2445','Practicante-PC/10.68.164.106 2012-07-30 22:05:39+00:00',3,''),
  (2473,'2012-07-30 22:07:45',1,40,'2446','Practicante-PC/10.68.164.106 2012-07-30 22:05:39+00:00',3,''),
  (2474,'2012-07-30 22:07:45',1,40,'2447','Practicante-PC/10.68.164.106 2012-07-30 22:05:39+00:00',3,''),
  (2475,'2012-07-30 22:07:45',1,40,'2448','Practicante-PC/10.68.164.106 2012-07-30 22:05:39+00:00',3,''),
@@ -5454,11 +5454,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`django_content_type`
+-- Definition of table `satest_cidec`.`django_content_type`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`django_content_type`;
-CREATE TABLE  `cidec_db`.`django_content_type` (
+DROP TABLE IF EXISTS `satest_cidec`.`django_content_type`;
+CREATE TABLE  `satest_cidec`.`django_content_type` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
   `app_label` varchar(100) NOT NULL,
@@ -5468,12 +5468,12 @@ CREATE TABLE  `cidec_db`.`django_content_type` (
 ) ENGINE=InnoDB AUTO_INCREMENT=58 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`django_content_type`
+-- Dumping data for table `satest_cidec`.`django_content_type`
 --
 
 /*!40000 ALTER TABLE `django_content_type` DISABLE KEYS */;
 LOCK TABLES `django_content_type` WRITE;
-INSERT INTO `cidec_db`.`django_content_type` VALUES  (1,'permission','auth','permission'),
+INSERT INTO `satest_cidec`.`django_content_type` VALUES  (1,'permission','auth','permission'),
  (2,'group','auth','group'),
  (3,'user','auth','user'),
  (4,'content type','contenttypes','contenttype'),
@@ -5535,11 +5535,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`django_session`
+-- Definition of table `satest_cidec`.`django_session`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`django_session`;
-CREATE TABLE  `cidec_db`.`django_session` (
+DROP TABLE IF EXISTS `satest_cidec`.`django_session`;
+CREATE TABLE  `satest_cidec`.`django_session` (
   `session_key` varchar(40) NOT NULL,
   `session_data` longtext NOT NULL,
   `expire_date` datetime NOT NULL,
@@ -5548,12 +5548,12 @@ CREATE TABLE  `cidec_db`.`django_session` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`django_session`
+-- Dumping data for table `satest_cidec`.`django_session`
 --
 
 /*!40000 ALTER TABLE `django_session` DISABLE KEYS */;
 LOCK TABLES `django_session` WRITE;
-INSERT INTO `cidec_db`.`django_session` VALUES  ('4a5f20ade1abc958bca1972fa88c0031','M2FjZDk5YmIxYjZhMTc1NTkyNzk3ZTY5ODk0OTQ1ODJlMTM0ODhhNjqAAn1xAS4=\n','2012-08-15 18:41:47'),
+INSERT INTO `satest_cidec`.`django_session` VALUES  ('4a5f20ade1abc958bca1972fa88c0031','M2FjZDk5YmIxYjZhMTc1NTkyNzk3ZTY5ODk0OTQ1ODJlMTM0ODhhNjqAAn1xAS4=\n','2012-08-15 18:41:47'),
  ('63088d03763e2a1aeb4b428023dcf2ed','ODZhZjQ0NDI5MjZiMTc4ZGJiNGYyMjIxZjY1ZTI2ZjkyYTJjOWEzNDqAAn1xAShVEl9hdXRoX3Vz\nZXJfYmFja2VuZHECVSlkamFuZ28uY29udHJpYi5hdXRoLmJhY2tlbmRzLk1vZGVsQmFja2VuZHED\nVQ1fYXV0aF91c2VyX2lkcQSKAQF1Lg==\n','2012-08-23 16:02:04'),
  ('b443efd973187d930b68fa8a673b3e0c','ZjRiYzYxZDVlYjM1ZDIyMWE4ZTcyZGQwZDE4YWM0YWExMTAwYThkMDqAAn1xAVUKdGVzdGNvb2tp\nZXECVQZ3b3JrZWRxA3Mu\n','2012-08-10 18:29:16'),
  ('d796f545de7eaf24ccf782f4862ce8c2','NjU5ODQ3Nzk2NWFmODEzYWU0OGJiOWZiN2FjNGNkNWI2YTc2ODk4MDqAAn1xAShVDW1haW5fYnVp\nbGRpbmdjZGphbmdvLmRiLm1vZGVscy5iYXNlCm1vZGVsX3VucGlja2xlCnECY2NfY2VudGVyLm1v\nZGVscwpCdWlsZGluZwpxA11jZGphbmdvLmRiLm1vZGVscy5iYXNlCnNpbXBsZV9jbGFzc19mYWN0\nb3J5CnEEh1JxBX1xBihVGGJ1aWxkaW5nX2ludGVybmFsX251bWJlcnEHWAAAAABVGGJ1aWxkaW5n\nX2V4dGVybmFsX251bWJlcnEIWAQAAAAxMDAwVQllc3RhZG9faWRxCYoBAVUJcmVnaW9uX2lkcQqK\nAQFVGmJ1aWxkaW5nX2Zvcm1hdHRlZF9hZGRyZXNzcQtYHAAAAEF2ZW5pZGEgY29uc3RpdHV5ZW50\nZXMgIzEwMDBVCm10czJfYnVpbHRxDE5VE2J1aWxkaW5nX3JlZ2lzdGVyZWRxDWNkYXRldGltZQpk\nYXRldGltZQpxDlUKB9wHGxcvAAAAAGNkamFuZ28udXRpbHMudGltZXpvbmUKVVRDCnEPKVJxEIZS\ncRFVD2J1aWxkaW5nX3N0YXR1c3ESigEBVQhjYWxsZV9pZHETigEBVQZfc3RhdGVxFGNkamFuZ28u\nZGIubW9kZWxzLmJhc2UKTW9kZWxTdGF0ZQpxFSmBcRZ9cRcoVQZhZGRpbmdxGIlVAmRicRlVB2Rl\nZmF1bHRxGnViVQxtdW5pY2lwaW9faWRxG4oBAVUHcGFpc19pZHEcigEBVQpjb2xvbmlhX2lkcR2K\nAQFVFGJ1aWxkaW5nX2xhdF9hZGRyZXNzcR5jZGVjaW1hbApEZWNpbWFsCnEfVQoxMjAuMTIzMjEw\nhVJxIFUQZWxlY3RyaWNfcmF0ZV9pZHEhigEBVRRidWlsZGluZ19kZXNjcmlwdGlvbnEiWAAAAABV\nFWJ1aWxkaW5nX2xvbmdfYWRkcmVzc3EjaB9VCjEyMC4xMjMyMTCFUnEkVRJidWlsZGluZ19jb2Rl\nX3pvbmVxJVgFAAAANzYwMDBVAmlkcSaKAQFVDWJ1aWxkaW5nX25hbWVxJ1gXAAAAU2FuYm9ybnMg\nQ29uc3RpdHV5ZW50ZXN1YlUSX2F1dGhfdXNlcl9iYWNrZW5kVSlkamFuZ28uY29udHJpYi5hdXRo\nLmJhY2tlbmRzLk1vZGVsQmFja2VuZFUNX2F1dGhfdXNlcl9pZIoBAnUu\n','2012-08-27 18:46:07');
@@ -5562,11 +5562,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`django_site`
+-- Definition of table `satest_cidec`.`django_site`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`django_site`;
-CREATE TABLE  `cidec_db`.`django_site` (
+DROP TABLE IF EXISTS `satest_cidec`.`django_site`;
+CREATE TABLE  `satest_cidec`.`django_site` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `domain` varchar(100) NOT NULL,
   `name` varchar(50) NOT NULL,
@@ -5574,22 +5574,22 @@ CREATE TABLE  `cidec_db`.`django_site` (
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`django_site`
+-- Dumping data for table `satest_cidec`.`django_site`
 --
 
 /*!40000 ALTER TABLE `django_site` DISABLE KEYS */;
 LOCK TABLES `django_site` WRITE;
-INSERT INTO `cidec_db`.`django_site` VALUES  (1,'example.com','example.com');
+INSERT INTO `satest_cidec`.`django_site` VALUES  (1,'example.com','example.com');
 UNLOCK TABLES;
 /*!40000 ALTER TABLE `django_site` ENABLE KEYS */;
 
 
 --
--- Definition of table `cidec_db`.`electric_rates_dateintervals`
+-- Definition of table `satest_cidec`.`electric_rates_dateintervals`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`electric_rates_dateintervals`;
-CREATE TABLE  `cidec_db`.`electric_rates_dateintervals` (
+DROP TABLE IF EXISTS `satest_cidec`.`electric_rates_dateintervals`;
+CREATE TABLE  `satest_cidec`.`electric_rates_dateintervals` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `interval_identifier` varchar(128) NOT NULL,
   `date_init` date NOT NULL,
@@ -5598,7 +5598,7 @@ CREATE TABLE  `cidec_db`.`electric_rates_dateintervals` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`electric_rates_dateintervals`
+-- Dumping data for table `satest_cidec`.`electric_rates_dateintervals`
 --
 
 /*!40000 ALTER TABLE `electric_rates_dateintervals` DISABLE KEYS */;
@@ -5608,11 +5608,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`electric_rates_electricrates`
+-- Definition of table `satest_cidec`.`electric_rates_electricrates`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`electric_rates_electricrates`;
-CREATE TABLE  `cidec_db`.`electric_rates_electricrates` (
+DROP TABLE IF EXISTS `satest_cidec`.`electric_rates_electricrates`;
+CREATE TABLE  `satest_cidec`.`electric_rates_electricrates` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `electric_rate_name` varchar(128) NOT NULL,
   `description` varchar(256) NOT NULL,
@@ -5620,22 +5620,22 @@ CREATE TABLE  `cidec_db`.`electric_rates_electricrates` (
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`electric_rates_electricrates`
+-- Dumping data for table `satest_cidec`.`electric_rates_electricrates`
 --
 
 /*!40000 ALTER TABLE `electric_rates_electricrates` DISABLE KEYS */;
 LOCK TABLES `electric_rates_electricrates` WRITE;
-INSERT INTO `cidec_db`.`electric_rates_electricrates` VALUES  (1,'H-M','Esta tarifa se aplicará a los servicios que destinen la energía a cualquier uso, suministrados en media tensión, con una demanda de 100 kilowatts o más');
+INSERT INTO `satest_cidec`.`electric_rates_electricrates` VALUES  (1,'H-M','Esta tarifa se aplicará a los servicios que destinen la energía a cualquier uso, suministrados en media tensión, con una demanda de 100 kilowatts o más');
 UNLOCK TABLES;
 /*!40000 ALTER TABLE `electric_rates_electricrates` ENABLE KEYS */;
 
 
 --
--- Definition of table `cidec_db`.`electric_rates_electricratesdetail`
+-- Definition of table `satest_cidec`.`electric_rates_electricratesdetail`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`electric_rates_electricratesdetail`;
-CREATE TABLE  `cidec_db`.`electric_rates_electricratesdetail` (
+DROP TABLE IF EXISTS `satest_cidec`.`electric_rates_electricratesdetail`;
+CREATE TABLE  `satest_cidec`.`electric_rates_electricratesdetail` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `electric_rate_id` int(11) NOT NULL,
   `KDF` decimal(12,6) NOT NULL,
@@ -5654,7 +5654,7 @@ CREATE TABLE  `cidec_db`.`electric_rates_electricratesdetail` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`electric_rates_electricratesdetail`
+-- Dumping data for table `satest_cidec`.`electric_rates_electricratesdetail`
 --
 
 /*!40000 ALTER TABLE `electric_rates_electricratesdetail` DISABLE KEYS */;
@@ -5664,11 +5664,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`electric_rates_electricratesperiods`
+-- Definition of table `satest_cidec`.`electric_rates_electricratesperiods`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`electric_rates_electricratesperiods`;
-CREATE TABLE  `cidec_db`.`electric_rates_electricratesperiods` (
+DROP TABLE IF EXISTS `satest_cidec`.`electric_rates_electricratesperiods`;
+CREATE TABLE  `satest_cidec`.`electric_rates_electricratesperiods` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `electric_rate_id` int(11) NOT NULL,
   `region_id` int(11) DEFAULT NULL,
@@ -5689,7 +5689,7 @@ CREATE TABLE  `cidec_db`.`electric_rates_electricratesperiods` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`electric_rates_electricratesperiods`
+-- Dumping data for table `satest_cidec`.`electric_rates_electricratesperiods`
 --
 
 /*!40000 ALTER TABLE `electric_rates_electricratesperiods` DISABLE KEYS */;
@@ -5699,11 +5699,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`electric_rates_groupdays`
+-- Definition of table `satest_cidec`.`electric_rates_groupdays`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`electric_rates_groupdays`;
-CREATE TABLE  `cidec_db`.`electric_rates_groupdays` (
+DROP TABLE IF EXISTS `satest_cidec`.`electric_rates_groupdays`;
+CREATE TABLE  `satest_cidec`.`electric_rates_groupdays` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `groupdays_identifier` varchar(128) NOT NULL,
   `monday` tinyint(1) NOT NULL DEFAULT '0',
@@ -5718,7 +5718,7 @@ CREATE TABLE  `cidec_db`.`electric_rates_groupdays` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`electric_rates_groupdays`
+-- Dumping data for table `satest_cidec`.`electric_rates_groupdays`
 --
 
 /*!40000 ALTER TABLE `electric_rates_groupdays` DISABLE KEYS */;
@@ -5728,11 +5728,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`electric_rates_holydays`
+-- Definition of table `satest_cidec`.`electric_rates_holydays`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`electric_rates_holydays`;
-CREATE TABLE  `cidec_db`.`electric_rates_holydays` (
+DROP TABLE IF EXISTS `satest_cidec`.`electric_rates_holydays`;
+CREATE TABLE  `satest_cidec`.`electric_rates_holydays` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `day` int(11) NOT NULL,
   `month` int(11) NOT NULL,
@@ -5741,7 +5741,7 @@ CREATE TABLE  `cidec_db`.`electric_rates_holydays` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`electric_rates_holydays`
+-- Dumping data for table `satest_cidec`.`electric_rates_holydays`
 --
 
 /*!40000 ALTER TABLE `electric_rates_holydays` DISABLE KEYS */;
@@ -5751,57 +5751,57 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`location_calle`
+-- Definition of table `satest_cidec`.`location_calle`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`location_calle`;
-CREATE TABLE  `cidec_db`.`location_calle` (
+DROP TABLE IF EXISTS `satest_cidec`.`location_calle`;
+CREATE TABLE  `satest_cidec`.`location_calle` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `calle_name` varchar(128) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`location_calle`
+-- Dumping data for table `satest_cidec`.`location_calle`
 --
 
 /*!40000 ALTER TABLE `location_calle` DISABLE KEYS */;
 LOCK TABLES `location_calle` WRITE;
-INSERT INTO `cidec_db`.`location_calle` VALUES  (1,'Avenida Constituyentes'),
+INSERT INTO `satest_cidec`.`location_calle` VALUES  (1,'Avenida Constituyentes'),
  (2,'5 de Febrero');
 UNLOCK TABLES;
 /*!40000 ALTER TABLE `location_calle` ENABLE KEYS */;
 
 
 --
--- Definition of table `cidec_db`.`location_colonia`
+-- Definition of table `satest_cidec`.`location_colonia`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`location_colonia`;
-CREATE TABLE  `cidec_db`.`location_colonia` (
+DROP TABLE IF EXISTS `satest_cidec`.`location_colonia`;
+CREATE TABLE  `satest_cidec`.`location_colonia` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `colonia_name` varchar(128) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`location_colonia`
+-- Dumping data for table `satest_cidec`.`location_colonia`
 --
 
 /*!40000 ALTER TABLE `location_colonia` DISABLE KEYS */;
 LOCK TABLES `location_colonia` WRITE;
-INSERT INTO `cidec_db`.`location_colonia` VALUES  (1,'Arquitos'),
+INSERT INTO `satest_cidec`.`location_colonia` VALUES  (1,'Arquitos'),
  (2,'Los Virreyes');
 UNLOCK TABLES;
 /*!40000 ALTER TABLE `location_colonia` ENABLE KEYS */;
 
 
 --
--- Definition of table `cidec_db`.`location_coloniacalle`
+-- Definition of table `satest_cidec`.`location_coloniacalle`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`location_coloniacalle`;
-CREATE TABLE  `cidec_db`.`location_coloniacalle` (
+DROP TABLE IF EXISTS `satest_cidec`.`location_coloniacalle`;
+CREATE TABLE  `satest_cidec`.`location_coloniacalle` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `colonia_id` int(11) NOT NULL,
   `calle_id` int(11) NOT NULL,
@@ -5814,7 +5814,7 @@ CREATE TABLE  `cidec_db`.`location_coloniacalle` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`location_coloniacalle`
+-- Dumping data for table `satest_cidec`.`location_coloniacalle`
 --
 
 /*!40000 ALTER TABLE `location_coloniacalle` DISABLE KEYS */;
@@ -5824,34 +5824,34 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`location_estado`
+-- Definition of table `satest_cidec`.`location_estado`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`location_estado`;
-CREATE TABLE  `cidec_db`.`location_estado` (
+DROP TABLE IF EXISTS `satest_cidec`.`location_estado`;
+CREATE TABLE  `satest_cidec`.`location_estado` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `estado_name` varchar(128) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`location_estado`
+-- Dumping data for table `satest_cidec`.`location_estado`
 --
 
 /*!40000 ALTER TABLE `location_estado` DISABLE KEYS */;
 LOCK TABLES `location_estado` WRITE;
-INSERT INTO `cidec_db`.`location_estado` VALUES  (1,'Querétaro'),
+INSERT INTO `satest_cidec`.`location_estado` VALUES  (1,'Querétaro'),
  (2,'Durango');
 UNLOCK TABLES;
 /*!40000 ALTER TABLE `location_estado` ENABLE KEYS */;
 
 
 --
--- Definition of table `cidec_db`.`location_estadomunicipio`
+-- Definition of table `satest_cidec`.`location_estadomunicipio`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`location_estadomunicipio`;
-CREATE TABLE  `cidec_db`.`location_estadomunicipio` (
+DROP TABLE IF EXISTS `satest_cidec`.`location_estadomunicipio`;
+CREATE TABLE  `satest_cidec`.`location_estadomunicipio` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `estado_id` int(11) NOT NULL,
   `municipio_id` int(11) NOT NULL,
@@ -5864,44 +5864,44 @@ CREATE TABLE  `cidec_db`.`location_estadomunicipio` (
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`location_estadomunicipio`
+-- Dumping data for table `satest_cidec`.`location_estadomunicipio`
 --
 
 /*!40000 ALTER TABLE `location_estadomunicipio` DISABLE KEYS */;
 LOCK TABLES `location_estadomunicipio` WRITE;
-INSERT INTO `cidec_db`.`location_estadomunicipio` VALUES  (1,1,1);
+INSERT INTO `satest_cidec`.`location_estadomunicipio` VALUES  (1,1,1);
 UNLOCK TABLES;
 /*!40000 ALTER TABLE `location_estadomunicipio` ENABLE KEYS */;
 
 
 --
--- Definition of table `cidec_db`.`location_municipio`
+-- Definition of table `satest_cidec`.`location_municipio`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`location_municipio`;
-CREATE TABLE  `cidec_db`.`location_municipio` (
+DROP TABLE IF EXISTS `satest_cidec`.`location_municipio`;
+CREATE TABLE  `satest_cidec`.`location_municipio` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `municipio_name` varchar(128) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`location_municipio`
+-- Dumping data for table `satest_cidec`.`location_municipio`
 --
 
 /*!40000 ALTER TABLE `location_municipio` DISABLE KEYS */;
 LOCK TABLES `location_municipio` WRITE;
-INSERT INTO `cidec_db`.`location_municipio` VALUES  (1,'Querétaro');
+INSERT INTO `satest_cidec`.`location_municipio` VALUES  (1,'Querétaro');
 UNLOCK TABLES;
 /*!40000 ALTER TABLE `location_municipio` ENABLE KEYS */;
 
 
 --
--- Definition of table `cidec_db`.`location_municipiocolonia`
+-- Definition of table `satest_cidec`.`location_municipiocolonia`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`location_municipiocolonia`;
-CREATE TABLE  `cidec_db`.`location_municipiocolonia` (
+DROP TABLE IF EXISTS `satest_cidec`.`location_municipiocolonia`;
+CREATE TABLE  `satest_cidec`.`location_municipiocolonia` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `municipio_id` int(11) NOT NULL,
   `colonia_id` int(11) NOT NULL,
@@ -5914,44 +5914,44 @@ CREATE TABLE  `cidec_db`.`location_municipiocolonia` (
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`location_municipiocolonia`
+-- Dumping data for table `satest_cidec`.`location_municipiocolonia`
 --
 
 /*!40000 ALTER TABLE `location_municipiocolonia` DISABLE KEYS */;
 LOCK TABLES `location_municipiocolonia` WRITE;
-INSERT INTO `cidec_db`.`location_municipiocolonia` VALUES  (1,1,1);
+INSERT INTO `satest_cidec`.`location_municipiocolonia` VALUES  (1,1,1);
 UNLOCK TABLES;
 /*!40000 ALTER TABLE `location_municipiocolonia` ENABLE KEYS */;
 
 
 --
--- Definition of table `cidec_db`.`location_pais`
+-- Definition of table `satest_cidec`.`location_pais`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`location_pais`;
-CREATE TABLE  `cidec_db`.`location_pais` (
+DROP TABLE IF EXISTS `satest_cidec`.`location_pais`;
+CREATE TABLE  `satest_cidec`.`location_pais` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `pais_name` varchar(128) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`location_pais`
+-- Dumping data for table `satest_cidec`.`location_pais`
 --
 
 /*!40000 ALTER TABLE `location_pais` DISABLE KEYS */;
 LOCK TABLES `location_pais` WRITE;
-INSERT INTO `cidec_db`.`location_pais` VALUES  (1,'México');
+INSERT INTO `satest_cidec`.`location_pais` VALUES  (1,'México');
 UNLOCK TABLES;
 /*!40000 ALTER TABLE `location_pais` ENABLE KEYS */;
 
 
 --
--- Definition of table `cidec_db`.`location_paisestado`
+-- Definition of table `satest_cidec`.`location_paisestado`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`location_paisestado`;
-CREATE TABLE  `cidec_db`.`location_paisestado` (
+DROP TABLE IF EXISTS `satest_cidec`.`location_paisestado`;
+CREATE TABLE  `satest_cidec`.`location_paisestado` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `pais_id` int(11) NOT NULL,
   `estado_id` int(11) NOT NULL,
@@ -5964,22 +5964,22 @@ CREATE TABLE  `cidec_db`.`location_paisestado` (
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`location_paisestado`
+-- Dumping data for table `satest_cidec`.`location_paisestado`
 --
 
 /*!40000 ALTER TABLE `location_paisestado` DISABLE KEYS */;
 LOCK TABLES `location_paisestado` WRITE;
-INSERT INTO `cidec_db`.`location_paisestado` VALUES  (1,1,1);
+INSERT INTO `satest_cidec`.`location_paisestado` VALUES  (1,1,1);
 UNLOCK TABLES;
 /*!40000 ALTER TABLE `location_paisestado` ENABLE KEYS */;
 
 
 --
--- Definition of table `cidec_db`.`location_region`
+-- Definition of table `satest_cidec`.`location_region`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`location_region`;
-CREATE TABLE  `cidec_db`.`location_region` (
+DROP TABLE IF EXISTS `satest_cidec`.`location_region`;
+CREATE TABLE  `satest_cidec`.`location_region` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `region_name` varchar(128) NOT NULL,
   `region_description` varchar(256) NOT NULL,
@@ -5988,22 +5988,22 @@ CREATE TABLE  `cidec_db`.`location_region` (
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`location_region`
+-- Dumping data for table `satest_cidec`.`location_region`
 --
 
 /*!40000 ALTER TABLE `location_region` DISABLE KEYS */;
 LOCK TABLES `location_region` WRITE;
-INSERT INTO `cidec_db`.`location_region` VALUES  (1,'Bajío','Bajío','2012-07-27');
+INSERT INTO `satest_cidec`.`location_region` VALUES  (1,'Bajío','Bajío','2012-07-27');
 UNLOCK TABLES;
 /*!40000 ALTER TABLE `location_region` ENABLE KEYS */;
 
 
 --
--- Definition of table `cidec_db`.`location_regionestado`
+-- Definition of table `satest_cidec`.`location_regionestado`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`location_regionestado`;
-CREATE TABLE  `cidec_db`.`location_regionestado` (
+DROP TABLE IF EXISTS `satest_cidec`.`location_regionestado`;
+CREATE TABLE  `satest_cidec`.`location_regionestado` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `region_id` int(11) NOT NULL,
   `estado_id` int(11) NOT NULL,
@@ -6016,7 +6016,7 @@ CREATE TABLE  `cidec_db`.`location_regionestado` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`location_regionestado`
+-- Dumping data for table `satest_cidec`.`location_regionestado`
 --
 
 /*!40000 ALTER TABLE `location_regionestado` DISABLE KEYS */;
@@ -6026,11 +6026,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`rbac_datacontextpermission`
+-- Definition of table `satest_cidec`.`rbac_datacontextpermission`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`rbac_datacontextpermission`;
-CREATE TABLE  `cidec_db`.`rbac_datacontextpermission` (
+DROP TABLE IF EXISTS `satest_cidec`.`rbac_datacontextpermission`;
+CREATE TABLE  `satest_cidec`.`rbac_datacontextpermission` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user_role_id` int(11) NOT NULL,
   `cluster_id` int(11) NOT NULL,
@@ -6051,23 +6051,23 @@ CREATE TABLE  `cidec_db`.`rbac_datacontextpermission` (
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`rbac_datacontextpermission`
+-- Dumping data for table `satest_cidec`.`rbac_datacontextpermission`
 --
 
 /*!40000 ALTER TABLE `rbac_datacontextpermission` DISABLE KEYS */;
 LOCK TABLES `rbac_datacontextpermission` WRITE;
-INSERT INTO `cidec_db`.`rbac_datacontextpermission` VALUES  (3,1,1,1,1,NULL),
+INSERT INTO `satest_cidec`.`rbac_datacontextpermission` VALUES  (3,1,1,1,1,NULL),
  (4,1,1,1,3,NULL);
 UNLOCK TABLES;
 /*!40000 ALTER TABLE `rbac_datacontextpermission` ENABLE KEYS */;
 
 
 --
--- Definition of table `cidec_db`.`rbac_extendeduser`
+-- Definition of table `satest_cidec`.`rbac_extendeduser`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`rbac_extendeduser`;
-CREATE TABLE  `cidec_db`.`rbac_extendeduser` (
+DROP TABLE IF EXISTS `satest_cidec`.`rbac_extendeduser`;
+CREATE TABLE  `satest_cidec`.`rbac_extendeduser` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,
   `user_activation_key` varchar(128) NOT NULL,
@@ -6078,22 +6078,22 @@ CREATE TABLE  `cidec_db`.`rbac_extendeduser` (
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`rbac_extendeduser`
+-- Dumping data for table `satest_cidec`.`rbac_extendeduser`
 --
 
 /*!40000 ALTER TABLE `rbac_extendeduser` DISABLE KEYS */;
 LOCK TABLES `rbac_extendeduser` WRITE;
-INSERT INTO `cidec_db`.`rbac_extendeduser` VALUES  (1,2,'123WQE454W6432QW312','2012-08-07 17:59:00');
+INSERT INTO `satest_cidec`.`rbac_extendeduser` VALUES  (1,2,'123WQE454W6432QW312','2012-08-07 17:59:00');
 UNLOCK TABLES;
 /*!40000 ALTER TABLE `rbac_extendeduser` ENABLE KEYS */;
 
 
 --
--- Definition of table `cidec_db`.`rbac_object`
+-- Definition of table `satest_cidec`.`rbac_object`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`rbac_object`;
-CREATE TABLE  `cidec_db`.`rbac_object` (
+DROP TABLE IF EXISTS `satest_cidec`.`rbac_object`;
+CREATE TABLE  `satest_cidec`.`rbac_object` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `object_name` varchar(128) NOT NULL,
   `object_description` longtext,
@@ -6102,23 +6102,23 @@ CREATE TABLE  `cidec_db`.`rbac_object` (
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`rbac_object`
+-- Dumping data for table `satest_cidec`.`rbac_object`
 --
 
 /*!40000 ALTER TABLE `rbac_object` DISABLE KEYS */;
 LOCK TABLES `rbac_object` WRITE;
-INSERT INTO `cidec_db`.`rbac_object` VALUES  (1,'Graphs','graficas de los reportes que componen el perfil de carga','/main/'),
+INSERT INTO `satest_cidec`.`rbac_object` VALUES  (1,'Graphs','graficas de los reportes que componen el perfil de carga','/main/'),
  (2,'CFE bill','','/reportes/cfe/');
 UNLOCK TABLES;
 /*!40000 ALTER TABLE `rbac_object` ENABLE KEYS */;
 
 
 --
--- Definition of table `cidec_db`.`rbac_operation`
+-- Definition of table `satest_cidec`.`rbac_operation`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`rbac_operation`;
-CREATE TABLE  `cidec_db`.`rbac_operation` (
+DROP TABLE IF EXISTS `satest_cidec`.`rbac_operation`;
+CREATE TABLE  `satest_cidec`.`rbac_operation` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `operation_name` varchar(128) NOT NULL,
   `operation_description` longtext,
@@ -6126,12 +6126,12 @@ CREATE TABLE  `cidec_db`.`rbac_operation` (
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`rbac_operation`
+-- Dumping data for table `satest_cidec`.`rbac_operation`
 --
 
 /*!40000 ALTER TABLE `rbac_operation` DISABLE KEYS */;
 LOCK TABLES `rbac_operation` WRITE;
-INSERT INTO `cidec_db`.`rbac_operation` VALUES  (1,'view','permiso de solo lectura'),
+INSERT INTO `satest_cidec`.`rbac_operation` VALUES  (1,'view','permiso de solo lectura'),
  (2,'create','solo creación de nuevos registros'),
  (3,'delete','eliminado de registros'),
  (4,'update','actualización de registros existentes');
@@ -6140,11 +6140,11 @@ UNLOCK TABLES;
 
 
 --
--- Definition of table `cidec_db`.`rbac_permissionasigment`
+-- Definition of table `satest_cidec`.`rbac_permissionasigment`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`rbac_permissionasigment`;
-CREATE TABLE  `cidec_db`.`rbac_permissionasigment` (
+DROP TABLE IF EXISTS `satest_cidec`.`rbac_permissionasigment`;
+CREATE TABLE  `satest_cidec`.`rbac_permissionasigment` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `role_id` int(11) NOT NULL,
   `operation_id` int(11) NOT NULL,
@@ -6159,23 +6159,23 @@ CREATE TABLE  `cidec_db`.`rbac_permissionasigment` (
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`rbac_permissionasigment`
+-- Dumping data for table `satest_cidec`.`rbac_permissionasigment`
 --
 
 /*!40000 ALTER TABLE `rbac_permissionasigment` DISABLE KEYS */;
 LOCK TABLES `rbac_permissionasigment` WRITE;
-INSERT INTO `cidec_db`.`rbac_permissionasigment` VALUES  (1,1,1,1),
+INSERT INTO `satest_cidec`.`rbac_permissionasigment` VALUES  (1,1,1,1),
  (2,1,1,2);
 UNLOCK TABLES;
 /*!40000 ALTER TABLE `rbac_permissionasigment` ENABLE KEYS */;
 
 
 --
--- Definition of table `cidec_db`.`rbac_role`
+-- Definition of table `satest_cidec`.`rbac_role`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`rbac_role`;
-CREATE TABLE  `cidec_db`.`rbac_role` (
+DROP TABLE IF EXISTS `satest_cidec`.`rbac_role`;
+CREATE TABLE  `satest_cidec`.`rbac_role` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `role_name` varchar(128) NOT NULL,
   `role_description` longtext,
@@ -6184,22 +6184,22 @@ CREATE TABLE  `cidec_db`.`rbac_role` (
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`rbac_role`
+-- Dumping data for table `satest_cidec`.`rbac_role`
 --
 
 /*!40000 ALTER TABLE `rbac_role` DISABLE KEYS */;
 LOCK TABLES `rbac_role` WRITE;
-INSERT INTO `cidec_db`.`rbac_role` VALUES  (1,'Supervisor','','medium');
+INSERT INTO `satest_cidec`.`rbac_role` VALUES  (1,'Supervisor','','medium');
 UNLOCK TABLES;
 /*!40000 ALTER TABLE `rbac_role` ENABLE KEYS */;
 
 
 --
--- Definition of table `cidec_db`.`rbac_userprofile`
+-- Definition of table `satest_cidec`.`rbac_userprofile`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`rbac_userprofile`;
-CREATE TABLE  `cidec_db`.`rbac_userprofile` (
+DROP TABLE IF EXISTS `satest_cidec`.`rbac_userprofile`;
+CREATE TABLE  `satest_cidec`.`rbac_userprofile` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,
   `user_profile_surname_mother` varchar(80) DEFAULT NULL,
@@ -6218,22 +6218,22 @@ CREATE TABLE  `cidec_db`.`rbac_userprofile` (
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`rbac_userprofile`
+-- Dumping data for table `satest_cidec`.`rbac_userprofile`
 --
 
 /*!40000 ALTER TABLE `rbac_userprofile` DISABLE KEYS */;
 LOCK TABLES `rbac_userprofile` WRITE;
-INSERT INTO `cidec_db`.`rbac_userprofile` VALUES  (1,2,'Santos','2012-11-18','M','','524423291742','524423291742','524423291742','','hector@wime.com.mx','524423291742');
+INSERT INTO `satest_cidec`.`rbac_userprofile` VALUES  (1,2,'Santos','2012-11-18','M','','524423291742','524423291742','524423291742','','hector@wime.com.mx','524423291742');
 UNLOCK TABLES;
 /*!40000 ALTER TABLE `rbac_userprofile` ENABLE KEYS */;
 
 
 --
--- Definition of table `cidec_db`.`rbac_userrole`
+-- Definition of table `satest_cidec`.`rbac_userrole`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`rbac_userrole`;
-CREATE TABLE  `cidec_db`.`rbac_userrole` (
+DROP TABLE IF EXISTS `satest_cidec`.`rbac_userrole`;
+CREATE TABLE  `satest_cidec`.`rbac_userrole` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,
   `role_id` int(11) NOT NULL,
@@ -6246,22 +6246,22 @@ CREATE TABLE  `cidec_db`.`rbac_userrole` (
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`rbac_userrole`
+-- Dumping data for table `satest_cidec`.`rbac_userrole`
 --
 
 /*!40000 ALTER TABLE `rbac_userrole` DISABLE KEYS */;
 LOCK TABLES `rbac_userrole` WRITE;
-INSERT INTO `cidec_db`.`rbac_userrole` VALUES  (1,2,1);
+INSERT INTO `satest_cidec`.`rbac_userrole` VALUES  (1,2,1);
 UNLOCK TABLES;
 /*!40000 ALTER TABLE `rbac_userrole` ENABLE KEYS */;
 
 
 --
--- Definition of table `cidec_db`.`south_migrationhistory`
+-- Definition of table `satest_cidec`.`south_migrationhistory`
 --
 
-DROP TABLE IF EXISTS `cidec_db`.`south_migrationhistory`;
-CREATE TABLE  `cidec_db`.`south_migrationhistory` (
+DROP TABLE IF EXISTS `satest_cidec`.`south_migrationhistory`;
+CREATE TABLE  `satest_cidec`.`south_migrationhistory` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `app_name` varchar(255) NOT NULL,
   `migration` varchar(255) NOT NULL,
@@ -6270,12 +6270,12 @@ CREATE TABLE  `cidec_db`.`south_migrationhistory` (
 ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=latin1;
 
 --
--- Dumping data for table `cidec_db`.`south_migrationhistory`
+-- Dumping data for table `satest_cidec`.`south_migrationhistory`
 --
 
 /*!40000 ALTER TABLE `south_migrationhistory` DISABLE KEYS */;
 LOCK TABLES `south_migrationhistory` WRITE;
-INSERT INTO `cidec_db`.`south_migrationhistory` VALUES  (1,'location','0001_initial','2012-07-27 23:27:44'),
+INSERT INTO `satest_cidec`.`south_migrationhistory` VALUES  (1,'location','0001_initial','2012-07-27 23:27:44'),
  (2,'c_center','0001_initial','2012-07-27 23:27:58'),
  (3,'rbac','0001_initial','2012-07-27 23:28:04'),
  (6,'electric_rates','0001_initial','2012-08-01 23:21:52'),
