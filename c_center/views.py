@@ -189,13 +189,12 @@ def perfil_carga(request):
                     template_vars['compare_interval2_kvar'] = get_KVar(building_compare, f2_init, f2_end)
                     template_vars['compare_interval2_kw'] = get_KW(building_compare, f2_init, f2_end)
     template_vars['main_interval_pf'] = get_PF(request.session['main_building'], f1_init, f1_end)
-    template_vars['main_interval_kvar_kw'] = zip(get_KVar(request.session['main_building'], f1_init, f1_end),
-        get_KW(request.session['main_building'], f1_init, f1_end))
+    template_vars['main_interval_kvar_kw'] = get_power_profile(request.session['main_building'], f1_init, f1_end)
 
     if f2_init:
         template_vars['main_interval2_pf'] = get_PF(request.session['main_building'], f2_init, f2_end)
-        template_vars['main_interval2_kvar'] = get_KVar(request.session['main_building'], f2_init, f2_end)
-        template_vars['main_interval2_kw'] = get_KW(request.session['main_building'], f2_init, f2_end)
+        template_vars['main_interval_kvar_kw2'] = get_power_profile(request.session['main_building'], f2_init, f2_end)
+
     template_vars_template = RequestContext(request, template_vars)
     return render_to_response("consumption_centers/graphs/perfil_carga.html", template_vars_template)
 
@@ -275,3 +274,13 @@ def get_PF(building, datetime_from, datetime_to):
     for medition in meditions:
         pf.append(dict(pf=medition.PF, date=medition.medition_date))
     return pf
+
+def get_power_profile(building, datetime_from, datetime_to):
+    """ gets the data from the active and reactive energy for a building in a time window"""
+    meditions = get_medition_in_time(building, datetime_from, datetime_to)
+    kvar=[]
+    kw=[]
+    for medition in meditions:
+        kw.append(dict(kw=medition.kW, date=medition.medition_date))
+        kvar.append(dict(kvar=medition.kvar, date=medition.medition_date))
+    return zip(kvar,kw)
