@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 # Create your views here.
 
+from django.template import RequestContext
 from django.http import *
+from django.shortcuts import render_to_response
 from math import *
 from decimal import *
 
@@ -9,6 +11,7 @@ import collections
 import datetime
 from time import strftime
 
+from dateutil.relativedelta import *
 from calendar import monthrange
 
 
@@ -22,8 +25,26 @@ def demandafacturable(kwbase, kwintermedio, kwpunta, region, tarifa, fecha):
     factores_reduccion = ElectricRatesDetail.objects.filter(electric_rate = tarifa).filter(region_id = region).filter(date_init__lte = datetime.date(fecha.year, fecha.month, fecha.day)).filter(date_end__gte = datetime.date(fecha.year, fecha.month, fecha.day))
     fri = factores_reduccion[0].FRI
     frb = factores_reduccion[0].FRB
-    print fri
-    print frb
+
+    primermax = kwintermedio - kwpunta
+    if primermax < 0:
+        primermax = 0
+
+    segundomax = kwbase-max(kwintermedio, kwpunta)
+    if segundomax < 0:
+        segundomax = 0
+
+    df = kwpunta + fri * primermax + frb * segundomax
+
+    return int(ceil(df))
+
+def demandafacturable_tarifa(kwbase, kwintermedio, kwpunta, tarifa):
+    df = 0
+
+    #Se obtienen los Factores de Reduccion en base a la zona, la tarifa y la fecha
+    factores_reduccion = ElectricRatesDetail.objects.get(id = tarifa)
+    fri = factores_reduccion.FRI
+    frb = factores_reduccion.FRB
 
     primermax = kwintermedio - kwpunta
     if primermax < 0:
@@ -51,12 +72,36 @@ def costoenergia(kwbase, kwintermedio, kwpunta, region, tarifa, fecha):
 
     return costo_energia
 
+def costoenergia_tarifa(kwbase, kwintermedio, kwpunta, tarifa_id):
+    costo_energia = 0
+
+    #Se obtienen las tarifas para cada kw
+    tarifas = ElectricRatesDetail.objects.get(id = tarifa_id)
+
+    tarifa_kwbase = tarifas.KWHB
+    tarifa_kwintermedio = tarifas.KWHI
+    tarifa_kwpunta = tarifas.KWHP
+
+    costo_energia = kwbase*tarifa_kwbase + kwintermedio*tarifa_kwintermedio + kwpunta*tarifa_kwpunta
+
+    return costo_energia
+
+
 def costodemandafacturable(demandaf, region, tarifa, fecha):
     precio = 0
 
     #Se obtiene el precio de la demanda
     tarifas = ElectricRatesDetail.objects.filter(electric_rate = tarifa).filter(region_id = region).filter(date_init__lte = datetime.date(fecha.year, fecha.month, fecha.day)).filter(date_end__gte = datetime.date(fecha.year, fecha.month, fecha.day))
     tarifa_demanda = tarifas[0].KDF
+
+    return (demandaf * tarifa_demanda)
+
+def costodemandafacturable_tarifa(demandaf, tarifa_id):
+    precio = 0
+
+    #Se obtiene el precio de la demanda
+    tarifas = ElectricRatesDetail.objects.get(id = tarifa_id)
+    tarifa_demanda = tarifas.KDF
 
     return (demandaf * tarifa_demanda)
 
@@ -94,7 +139,10 @@ def obtenerTotal(c_subtotal, iva):
     return float(c_subtotal)*float(iva)
 
 def factorpotencia(kwh, kvarh):
-    return (kwh/Decimal(pow((pow(kwh,2)+pow(kvarh,2)),.5)))*100
+    fp = 0
+    if kwh != 0 and kvarh != 0:
+        fp =  (kwh/Decimal(pow((pow(kwh,2)+pow(kvarh,2)),.5)))*100
+    return fp
 
 def obtenerDemanda(arr_kw):
     demanda_maxima = 0
@@ -183,9 +231,11 @@ def obtenerFestivos(year):
 
 def obtenerCatalogoGrupos():
     """
+
     Se regresa un catálogo que indica a qué grupo pertenece cada día de la semana.
+
     """
-    group_days_bd = Groupdays.objects.all()
+    group_days_bd = Groupdays.objects.all();
     group_days = {}
 
     if group_days_bd:
@@ -241,274 +291,405 @@ def obtenerTipoPeriodo(fecha, region, tarifa, catalogo_grupos):
 
     return electric_type[0].period_type
 
+def obtenerKWTarifa(pr_powermeter, tarifa_id, region, tipo_tarifa):
+    """
+    Recibe el medidor.
+    tarifa_id = Identificar de las tarifas de un mes
+    tipo_tarifa = Tarifa que tiene contratada (HM, OM...)
+
+    """
+    tarifaObj = ElectricRatesDetail.objects.get(id = tarifa_id)
+
+    fecha_inicio = str(tarifaObj.date_init) + " 00:00:00"
+    fecha_fin = str(tarifaObj.date_end) + " 23:59:59"
+    lecturasObj = ElectricData.objects.filter(profile_powermeter = pr_powermeter, medition_date__range=(fecha_inicio, fecha_fin)).order_by('medition_date')
+
+    catalogo_grupos = obtenerCatalogoGrupos();
+
+    demanda_base = []
+    demanda_intermedio = []
+    demanda_punta = []
+
+    valores_periodo = {}
+
+    if lecturasObj:
+        for lectura in lecturasObj:
+            tipo_periodo = obtenerTipoPeriodo(lectura.medition_date, region, tipo_tarifa,catalogo_grupos)
+            if tipo_periodo == 'base':
+                demanda_base.append(lectura.kW)
+            elif tipo_periodo == 'intermedio':
+                demanda_intermedio.append(lectura.kW)
+            elif tipo_periodo == 'punta':
+                demanda_punta.append(lectura.kW)
+
+        valores_periodo['base'] = obtenerDemanda(demanda_base)
+        valores_periodo['intermedio'] = obtenerDemanda(demanda_intermedio)
+        valores_periodo['punta'] = obtenerDemanda(demanda_punta)
+    else:
+        valores_periodo['base'] = 0
+        valores_periodo['intermedio'] = 0
+        valores_periodo['punta'] = 0
+
+    return valores_periodo
+
+
+
+def obtenerKWhNetosTarifa(pr_powermeter, tarifa_id):
+    tarifaObj = ElectricRatesDetail.objects.get(id = tarifa_id)
+    fecha_inicio = str(tarifaObj.date_init) + " 00:00:00"
+    fecha_fin = str(tarifaObj.date_end) + " 23:59:59"
+
+    kwh_netos = 0
+    lecturasObj = ElectricData.objects.filter(profile_powermeter = pr_powermeter, medition_date__range=(fecha_inicio, fecha_fin)).order_by('medition_date')
+    if lecturasObj:
+        total_lecturas = len(lecturasObj)
+        kwh_inicial = lecturasObj[0].kWhIMPORT
+        kwh_final = lecturasObj[total_lecturas-1].kWhIMPORT
+        kwh_netos = kwh_final - kwh_inicial
+
+    return kwh_netos
+
+def obtenerKWhTarifa(pr_powermeter, tarifa_id, region, tarifa_hm):
+    """
+    Recibe el medidor.
+    tarifa_id = Identificar de las tarifas de un mes
+    tipo_tarifa = Tarifa que tiene contratada (HM, OM...)
+
+    """
+    tarifaObj = ElectricRatesDetail.objects.get(id = tarifa_id)
+
+    fecha_inicio = str(tarifaObj.date_init) + " 00:00:00"
+    fecha_fin = str(tarifaObj.date_end) + " 23:59:59"
+    lecturasObj = ElectricData.objects.filter(profile_powermeter = pr_powermeter, medition_date__range=(fecha_inicio, fecha_fin)).order_by('medition_date')
+
+    catalogo_grupos = obtenerCatalogoGrupos();
+
+    kwh_base = []
+    kwh_intermedio = []
+    kwh_punta = []
+
+    valores_kwh = {}
+    valores_kwh['base'] = 0
+    valores_kwh['intermedio'] = 0
+    valores_kwh['punta'] = 0
+
+    tipo_tarifa_global = None
+    kwh_primero = None
+    kwh_ultimo = None
+
+    if lecturasObj:
+        for lectura in lecturasObj:
+            tipo_tarifa_actual = obtenerTipoPeriodo(lectura.medition_date, region, tarifa_hm, catalogo_grupos)
+
+            if not tipo_tarifa_global:
+                tipo_tarifa_global = tipo_tarifa_actual
+
+            #Primer Lectura
+            if not kwh_primero:
+                kwh_primero = lectura.kWhIMPORT
+            kwh_ultimo = lectura.kWhIMPORT
+
+            if tipo_tarifa_global != tipo_tarifa_actual:
+                kwh_netos = kwh_ultimo - kwh_primero
+
+                if tipo_tarifa_global == 'base':
+                    kwh_base.append(kwh_netos)
+                    valores_kwh['base'] += kwh_netos
+                elif tipo_tarifa_global == 'intermedio':
+                    kwh_intermedio.append(kwh_netos)
+                    valores_kwh['intermedio'] += kwh_netos
+                elif tipo_tarifa_global == 'punta':
+                    kwh_punta.append(kwh_netos)
+                    valores_kwh['punta'] += kwh_netos
+
+                kwh_primero = kwh_ultimo
+                tipo_tarifa_global = tipo_tarifa_actual
+
+
+        kwh_netos = kwh_ultimo - kwh_primero
+
+        if tipo_tarifa_global == 'base':
+            kwh_base.append(kwh_netos)
+            valores_kwh['base'] += kwh_netos
+        elif tipo_tarifa_global == 'intermedio':
+            kwh_intermedio.append(kwh_netos)
+            valores_kwh['intermedio'] += kwh_netos
+        elif tipo_tarifa_global == 'punta':
+            kwh_punta.append(kwh_netos)
+            valores_kwh['punta'] += kwh_netos
+    else:
+        valores_kwh['base'] = 0
+        valores_kwh['intermedio'] = 0
+        valores_kwh['punta'] = 0
+
+    return valores_kwh
+
+
+def obtenerKVARHTarifa(pr_powermeter, tarifa_id):
+    tarifaObj = ElectricRatesDetail.objects.get(id = tarifa_id)
+    fecha_inicio = str(tarifaObj.date_init) + " 00:00:00"
+    fecha_fin = str(tarifaObj.date_end) + " 23:59:59"
+
+    kvarh_netos = 0
+    lecturasObj = ElectricData.objects.filter(profile_powermeter = pr_powermeter, medition_date__range=(fecha_inicio, fecha_fin)).order_by('medition_date')
+    if lecturasObj:
+        total_lecturas = len(lecturasObj)
+        kvarh_inicial = lecturasObj[0].kvarhNET
+        kvarh_final = lecturasObj[total_lecturas-1].kvarhNET
+        kvarh_netos = kvarh_final - kvarh_inicial
+
+    return kvarh_netos
+
+def obtenerFPTarifa(pr_powermeter, tarifa_id):
+    kvarh = obtenerKVARHTarifa(pr_powermeter, tarifa_id)
+    kwh = obtenerKWhNetosTarifa(pr_powermeter, tarifa_id)
+    return factorpotencia(kwh, kvarh)
+
+def obtenerDemandaMaximaTarifa(pr_powermeter, tarifa_id):
+    arr_kw = []
+
+    tarifaObj = ElectricRatesDetail.objects.get(id = tarifa_id)
+    fecha_inicio = str(tarifaObj.date_init) + " 00:00:00"
+    fecha_fin = str(tarifaObj.date_end) + " 23:59:59"
+
+    lecturasObj = ElectricData.objects.filter(profile_powermeter = pr_powermeter, medition_date__range=(fecha_inicio, fecha_fin)).order_by('medition_date')
+
+    for lectura in lecturasObj:
+        arr_kw.append(lectura.kW)
+
+    return obtenerDemanda(arr_kw)
+
+def obtenerFactorCargaTarifa(pr_powermeter, tarifa_id):
+    factor_carga = 0
+
+    tarifaObj = ElectricRatesDetail.objects.get(id = tarifa_id)
+    m_range = monthrange(tarifaObj.date_init.year, tarifaObj.date_init.month)
+    num_dias = m_range[1]
+    num_horas = 24 * num_dias
+    demanda_maxima = obtenerDemandaMaximaTarifa(pr_powermeter, tarifa_id)
+    energia_consumida = obtenerKWhNetosTarifa(pr_powermeter, tarifa_id)
+
+    if demanda_maxima != 0 and energia_consumida != 0:
+        factor_carga = (energia_consumida / (demanda_maxima * num_horas)) * 100
+
+    return factor_carga
+
+def obtenerCostoPromedioKWH(tarifa_id):
+    costo = 0
+    tarifaObj = ElectricRatesDetail.objects.get(id = tarifa_id)
+    costo = (tarifaObj.KWHB + tarifaObj.KWHI + tarifaObj.KWHP)/Decimal(3.0)
+    return costo
+
+
+def obtenerHistorico(pr_powermeter, tarifa_id, region, num_meses, tipo_tarifa):
+
+    arr_historico = []
+
+    tarifaObj = ElectricRatesDetail.objects.get(id = tarifa_id)
+    fecha_fin = tarifaObj.date_init
+    fecha_inicio = fecha_fin+relativedelta(months=-num_meses)
+
+    tarifasPeriodo = ElectricRatesDetail.objects.filter(region = region).filter(date_init__range=(fecha_inicio, fecha_fin)).order_by('date_init')
+    for tarifaPer in tarifasPeriodo:
+        dict_periodo = {}
+        dict_periodo["fecha"] = tarifaPer.date_init
+        dict_kw = obtenerKWTarifa(pr_powermeter, tarifaPer.id, region, tipo_tarifa)
+        dict_periodo["kw_base"] = dict_kw['base']
+        dict_periodo["kw_intermedio"] = dict_kw['intermedio']
+        dict_periodo["kw_punta"] = dict_kw['punta']
+        dict_periodo["demanda_maxima"] = obtenerDemandaMaximaTarifa(pr_powermeter, tarifaPer.id)
+        dict_periodo["total_kwh"] = obtenerKWhNetosTarifa(pr_powermeter, tarifaPer.id)
+        dict_periodo["kvarh"] =  obtenerKVARHTarifa(pr_powermeter, tarifaPer.id)
+        dict_periodo["factor_potencia"] = factorpotencia(dict_periodo["total_kwh"], obtenerKVARHTarifa(pr_powermeter, tarifaPer.id))
+        dict_periodo["factor_carga"] = obtenerFactorCargaTarifa(pr_powermeter, tarifaPer.id)
+        dict_periodo["costo_promedio"] = obtenerCostoPromedioKWH(tarifaPer.id)
+
+        arr_historico.append(dict_periodo)
+
+    return arr_historico
+
 
 def tarifaHM(pr_powermeter, start_date, end_date, region):
     readings = ElectricData.objects.filter(profile_powermeter = pr_powermeter, medition_date__range=(start_date, end_date)).order_by('medition_date')
 
-    catalogo_grupos = obtenerCatalogoGrupos()
+    catalogo_grupos = obtenerCatalogoGrupos();
 
     tarifa = 1
     tarifas_id = []
-
-    tipo_tarifa_g = None
-    tarifa_g = None
-    kwh_primero = None
-    kwh_ultimo = None
-
-    kwh_base_arr = []
-    kwh_intermedio_arr = []
-    kwh_punta_arr = []
-
     relacion_tarifa_lectura = collections.defaultdict(dict)
-    relacion_tarifa_kwh_periodo = {}
 
     if readings:
         for reading in readings:
             l_tar_co = ElectricRatesDetail.objects.filter(electric_rate = tarifa).filter(region_id = region).filter(date_init__lte = datetime.date(reading.medition_date.year,reading.medition_date.month,reading.medition_date.day)).filter(date_end__gte = datetime.date(reading.medition_date.year,reading.medition_date.month,reading.medition_date.day))
 
+            """
+               Se guarda una relación: Tarifa - Lectura - Tipo de Tarifa
+               Ej: Tarifa Junio - Lectura No. 6789 - Intermedio
 
-            #Se guarda una relación: Tarifa - Lectura - Tipo de Tarifa
-            #Ej: Tarifa Junio - Lectura No. 6789 - Intermedio
-
+            """
             relacion_tarifa_lectura[l_tar_co[0].id][reading.id] = obtenerTipoPeriodo(reading.medition_date, region, tarifa,catalogo_grupos)
 
-
-            #    Un lapso dado puede abarcar varios meses, los cuales tendran diferentes tarifas.
-            #    Para realizar los calculos, es necesario identificar los kwh de cada periodo: base, intermedio y punta,
-            #    de cada mes/tarifa.
-            #    Para cada mes/tarifa se obtienen todos los periodos base, intermedio y punta en base a las lecturas.
-            #    Para cada periodo (base, intermedio, punta) se obtienen todas las lecturas de kwh.
-            #    Se obtienen los kwh netos de ese periodo restando la ultima lectura del periodo, con la primer lectura.
-
-            tipo_tarifa_actual = obtenerTipoPeriodo(reading.medition_date, region, tarifa,catalogo_grupos)
             tarifa_actual = l_tar_co[0].id
-
-            if not kwh_primero:
-                kwh_primero = reading.kWhIMPORT
-            kwh_ultimo = reading.kWhIMPORT
+            if tarifa_actual not in tarifas_id:
+                tarifas_id.append(tarifa_actual)
 
 
-            if not tipo_tarifa_g:
-                tipo_tarifa_g = tipo_tarifa_actual
+    #Variables que contienen toda la informacion del recibo de CFE
+    demanda_facturable_total = 0
+    factor_potencia_total = 0
+    costo_energia_total = 0
+    costo_demanda_facturable = 0
+    costo_factor_potencia = 0
+    subtotal_final = 0
+    iva_total = 0
+    total_final = 0
+    kw_totales = 0
+    kw_base_totales = 0
+    kw_intermedio_totales = 0
+    kw_punta_totales = 0
+    kwh_totales = 0
+    kwh_base_totales = 0
+    kwh_intermedio_totales = 0
+    kwh_punta_totales = 0
+    kvarh_totales = 0
 
-            if not tarifa_g:
-                tarifa_g = tarifa_actual
+    tarifa_kwh_base = 0
+    tarifa_kwh_intermedio = 0
+    tarifa_kwh_punta = 0
 
-            #Cambia la tarifa
-            if tarifa_g != tarifa_actual:
-                tarifas_id.append(tarifa_g)
+    numero_tarifas = len(tarifas_id)
+    ultima_tarifa = tarifas_id[numero_tarifas-1]
 
-                kwh_netos = kwh_ultimo - kwh_primero
+    for tarifa_id in tarifas_id:
 
+        tarifasObj = ElectricRatesDetail.objects.get(id = tarifa_id)
+        #Obtiene las tarifas del mes
+        tarifa_kwh_base += tarifasObj.KWHB
+        tarifa_kwh_intermedio += tarifasObj.KWHI
+        tarifa_kwh_punta += tarifasObj.KWHP
 
-                if tipo_tarifa_g == 'base':
-                    kwh_base_arr.append(kwh_netos)
-                elif tipo_tarifa_g == 'intermedio':
-                    kwh_intermedio_arr.append(kwh_netos)
-                elif tipo_tarifa_g == 'punta':
-                    kwh_punta_arr.append(kwh_netos)
+        #KW
+        dict_kw = obtenerKWTarifa(pr_powermeter, tarifa_id, region, 1)
 
-                kwh_netos = None
-                kwh_primero = kwh_ultimo
-                kwh_ultimo = None
+        kw_base_t = dict_kw['base']
+        kw_base_totales += kw_base_t
+        kw_intermedio_t = dict_kw['intermedio']
+        kw_intermedio_totales += kw_intermedio_t
+        kw_punta_t = dict_kw['punta']
+        kw_punta_totales += kw_punta_t
 
-                if not kwh_primero:
-                    kwh_primero = reading.kWhIMPORT
-                kwh_ultimo = reading.kWhIMPORT
+        kw_totales += kw_base_t + kw_intermedio_t + kw_punta_t
 
-                relacion_tarifa_kwh_periodo[tarifa_g,'base'] = kwh_base_arr
-                relacion_tarifa_kwh_periodo[tarifa_g,'intermedio'] = kwh_intermedio_arr
-                relacion_tarifa_kwh_periodo[tarifa_g,'punta'] = kwh_punta_arr
+        #Kwh
+        dict_kwh = obtenerKWhTarifa(pr_powermeter, tarifa_id, region, 1)
+        kwh_base_t = dict_kwh['base']
+        kwh_base_totales += kwh_base_t
+        kwh_intermedio_t = dict_kwh['intermedio']
+        kwh_intermedio_totales += kwh_intermedio_t
+        kwh_punta_t = dict_kwh['punta']
+        kwh_punta_totales += kwh_punta_t
 
-                #Se reinician los arreglos
-                kwh_base_arr = []
-                kwh_intermedio_arr = []
-                kwh_punta_arr = []
+        #Demanda Facturable
+        df_t = demandafacturable_tarifa(kw_base_t, kw_intermedio_t, kw_punta_t, tarifa_id)
+        demanda_facturable_total += df_t
 
-                #La nueva tarifa global es la tarifa actual
-                tarifa_g = tarifa_actual
+        #KVARH
+        kvarh_t = obtenerKVARHTarifa(pr_powermeter,tarifa_id)
+        kvarh_totales += kvarh_t
 
-                #El nuevo tipo de tarifa global es el tipo de tarifa actual
-                tipo_tarifa_g = tipo_tarifa_actual
+        #KWh
+        kwh_t = obtenerKWhNetosTarifa(pr_powermeter,tarifa_id)
+        kwh_totales += kwh_t
 
-            #Cambia únicamente el tipo de tarifa
-            if tipo_tarifa_g != tipo_tarifa_actual:
+        #Factor de Potencia
+        fp = factorpotencia(kwh_t, kvarh_t)
+        factor_potencia_total += fp
 
-                kwh_netos = kwh_ultimo - kwh_primero
-
-                if tipo_tarifa_g == 'base':
-                    kwh_base_arr.append(kwh_netos)
-                elif tipo_tarifa_g == 'intermedio':
-                    kwh_intermedio_arr.append(kwh_netos)
-                elif tipo_tarifa_g == 'punta':
-                    kwh_punta_arr.append(kwh_netos)
-
-                kwh_netos = None
-                kwh_primero = kwh_ultimo
-
-                tipo_tarifa_g = tipo_tarifa_actual
-
-        kwh_netos = kwh_ultimo - kwh_primero
-
-        if tipo_tarifa_g == 'base':
-            kwh_base_arr.append(kwh_netos)
-        elif tipo_tarifa_g == 'intermedio':
-            kwh_intermedio_arr.append(kwh_netos)
-        elif tipo_tarifa_g == 'punta':
-            kwh_punta_arr.append(kwh_netos)
-
-        relacion_tarifa_kwh_periodo[tarifa_g,'base'] = kwh_base_arr
-        relacion_tarifa_kwh_periodo[tarifa_g,'intermedio'] = kwh_intermedio_arr
-        relacion_tarifa_kwh_periodo[tarifa_g,'punta'] = kwh_punta_arr
-        tarifas_id.append(tarifa_g)
-
-
-        #Variables que contienen toda la informacion del recibo de CFE
-        demanda_facturable_total = 0
-        factor_potencia_total = 0
-        costo_energia_total = 0
-        costo_demanda_facturable = 0
-        costo_factor_potencia = 0
-        subtotal_final = 0
-        iva_total = 0
-        total_final = 0
-        kw_totales = 0
-        kw_base_totales = 0
-        kw_intermedio_totales = 0
-        kw_punta_totales = 0
-        kwh_totales = 0
-        kwh_base_totales = 0
-        kwh_intermedio_totales = 0
-        kwh_punta_totales = 0
-
-        #Variables que contienen las tarifas de kwh base, kwh intermedio, kwh punta
-        tarifa_kwh_base = 0
-        tarifa_kwh_intermedio = 0
-        tarifa_kwh_punta = 0
+        #Costo Energía
+        c_energia = costoenergia_tarifa(kwh_base_t, kwh_intermedio_t, kwh_punta_t,tarifa_id)
+        costo_energia_total += c_energia
 
 
-        numero_tarifas = len(tarifas_id)
-        for tarifa_id in tarifas_id:
+        #Costo Demanda Facturable
+        c_df_t = costodemandafacturable_tarifa(df_t, tarifa_id)
+        costo_demanda_facturable += c_df_t
 
-            tarifasObj = ElectricRatesDetail.objects.get(id = tarifa_id)
-            #Obtiene las tarifas del mes
-            tarifa_kwh_base += tarifasObj.KWHB
-            tarifa_kwh_intermedio += tarifasObj.KWHI
-            tarifa_kwh_punta += tarifasObj.KWHP
+        #Costo Factor Potencia
+        c_factorpotencia = costofactorpotencia(fp, c_energia, c_df_t)
+        costo_factor_potencia += c_factorpotencia
 
-            kwarh = 96
-            kw_base = []
-            kw_intermedio = []
-            kw_punta = []
+        #Subtotal
+        c_subtotal = obtenerSubtotal(c_energia, c_df_t, c_factorpotencia)
+        subtotal_final += c_subtotal
 
-            kwh_base = 0
-            arr_kwh_base = relacion_tarifa_kwh_periodo[tarifa_id,'base']
-            for kwh_b in arr_kwh_base:
-                kwh_base += kwh_b
+        #Total
+        c_total = obtenerTotal(c_subtotal,16)
+        total_final += c_total
+        """"
+        print "KW Base:", kw_base_t
+        print "KW Intermedio:", kw_intermedio_t
+        print "KW Punta:", kw_punta_t
+        print "KWh Base:", kwh_base_t
+        print "KWh Intermedio:", kwh_intermedio_t
+        print "KWh Punta:", kwh_punta_t
+        print "KWH TOtales", kwh_t
+        print "Demanda Facturable:", df_t
+        print "KARH", kvarh_t
+        print "Factor Potencia:", fp
+        print "Costo de Energia:", c_energia
+        print "Costo de Demanda Facturable:", c_df_t
+        print "Costo de Factor Potencia:", c_factorpotencia
+        print "Subtotal", c_subtotal
+        print "Iva", obtenerIva(c_subtotal, 16)
+        print "Total", c_total
 
-            #Kwh_ Base Totales del Periodo
-            kwh_base_totales += kwh_base
-
-            kwh_intermedio = 0
-            arr_kwh_intermedio = relacion_tarifa_kwh_periodo[tarifa_id,'intermedio']
-            for kwh_i in arr_kwh_intermedio:
-                kwh_intermedio += kwh_i
-
-            #Kwh_ Intermedio Totales del Periodo
-            kwh_intermedio_totales += kwh_intermedio
-
-            kwh_punta = 0
-            arr_kwh_punta = relacion_tarifa_kwh_periodo[tarifa_id,'punta']
-            for kwh_p in arr_kwh_punta:
-                kwh_punta += kwh_p
-
-            #kWh_ Punta Totales del Periodo
-            kwh_punta_totales += kwh_punta
-
-            #kWh totales
-            kwh_totales_tarifa = kwh_base + kwh_intermedio + kwh_punta
-
-            #kWh totales de un periodo dado.
-            kwh_totales += kwh_totales_tarifa
-
-            for lectura_id in relacion_tarifa_lectura[tarifa_id]:
-                #Se obtiene la lectura
-                lct = ElectricData.objects.get(id=lectura_id)
-
-                if relacion_tarifa_lectura[tarifa_id][lectura_id] == 'base':
-                    kw_base.append(lct.kW)
-                elif relacion_tarifa_lectura[tarifa_id][lectura_id] == 'intermedio':
-                    kw_intermedio.append(lct.kW)
-                elif relacion_tarifa_lectura[tarifa_id][lectura_id] == 'punta':
-                    kw_punta.append(lct.kW)
+        print "========Termina una tarifa========"
+        """
 
 
-            #Se obtienen las demandas máximas de base, intermedio y punta
-            demanda_kw_base = obtenerDemanda(kw_base)
-            demanda_kw_intermedio = obtenerDemanda(kw_intermedio)
-            demanda_kw_punta = obtenerDemanda(kw_punta)
-
-            kw_base_totales += demanda_kw_base
-            kw_intermedio_totales += demanda_kw_intermedio
-            kw_punta_totales += demanda_kw_punta
-
-            d_facturable = demandafacturable(demanda_kw_base,demanda_kw_intermedio,demanda_kw_punta,region,tarifa, lct.medition_date)
-            demanda_facturable_total += d_facturable
-
-            c_energia = costoenergia(kwh_base, kwh_intermedio, kwh_punta, region, tarifa, lct.medition_date)
-            costo_energia_total += c_energia
-
-            c_dfacturable = costodemandafacturable(d_facturable, region, tarifa, lct.medition_date)
-            costo_demanda_facturable += c_dfacturable
-
-            fp = factorpotencia(kwh_totales_tarifa, kwarh)
-            factor_potencia_total += fp
-
-            c_factorpotencia = costofactorpotencia(fp, c_energia, c_dfacturable)
-            costo_factor_potencia += c_factorpotencia
-
-            c_subtotal = obtenerSubtotal(c_energia, c_dfacturable, c_factorpotencia)
-            subtotal_final += c_subtotal
-
-            c_total = obtenerTotal(c_subtotal,16)
-            total_final += c_total
-
-            """
-            print "KW Base:", demanda_kw_base
-            print "KW Intermedio:", demanda_kw_intermedio
-            print "KW Punta:", demanda_kw_punta
-            print "KWh Base:", kwh_base
-            print "KWh Intermedio:", kwh_intermedio
-            print "KWh Punta:", kwh_punta
-            print "Demanda Facturable:", d_facturable
-            print "Factor Potencia:", fp
-            print "Costo de Energia:", c_energia
-            print "Costo de Demanda Facturable, c_dfacturable
-            print "Costo de Factor Potencia:", c_factorpotencia
-            print "Subtotal", c_subtotal
-            print "Iva", obtenerIva(c_subtotal, 16)
-            print "Total", c_total
-            print "Termina una tarifa"
-
-            """
-
-        diccionario_final_cfe = {'costo_energia': costo_energia_total,
-                                 'costo_dfacturable': costo_demanda_facturable,
-                                 'costo_fpotencia': costo_factor_potencia,
-                                 'subtotal': subtotal_final,
-                                 'iva': obtenerIva(subtotal_final, 16),
-                                 'total': total_final,
-                                 'kw_base': kw_base_totales,
-                                 'kw_intermedio': kw_intermedio_totales,
-                                 'kw_punta': kw_punta_totales,
-                                 'kwh_totales': kwh_totales,
-                                 'kwh_base': kwh_base_totales,
-                                 'kwh_intermedio': kwh_intermedio_totales,
-                                 'kwh_punta': kwh_punta_totales,
-                                 'demanda_facturable': demanda_facturable_total,
-                                 'factor_potencia': factor_potencia_total / numero_tarifas,
-                                 'tarifa_kwhb': tarifa_kwh_base / numero_tarifas,
-                                 'tarifa_kwhi': tarifa_kwh_intermedio / numero_tarifas,
-                                 'tarifa_kwhp': tarifa_kwh_punta / numero_tarifas}
+    diccionario_final_cfe = {}
+    diccionario_final_cfe['costo_energia'] = costo_energia_total
+    diccionario_final_cfe['costo_dfacturable'] = costo_demanda_facturable
+    diccionario_final_cfe['costo_fpotencia'] = costo_factor_potencia
+    diccionario_final_cfe['subtotal'] = subtotal_final
+    diccionario_final_cfe['iva'] = obtenerIva(subtotal_final, 16)
+    diccionario_final_cfe['total'] = total_final
+    diccionario_final_cfe['kw_base'] = kw_base_totales
+    diccionario_final_cfe['kw_intermedio'] = kw_intermedio_totales
+    diccionario_final_cfe['kw_punta'] = kw_punta_totales
+    diccionario_final_cfe['kwh_totales'] = kwh_totales
+    diccionario_final_cfe['kvarh_totales'] = kvarh_totales
+    diccionario_final_cfe['kwh_base'] = kwh_base_totales
+    diccionario_final_cfe['kwh_intermedio'] = kwh_intermedio_totales
+    diccionario_final_cfe['kwh_punta'] = kwh_punta_totales
+    diccionario_final_cfe['demanda_facturable'] = demanda_facturable_total
+    diccionario_final_cfe['factor_potencia'] = factor_potencia_total/numero_tarifas
+    diccionario_final_cfe['tarifa_kwhb'] = tarifa_kwh_base/numero_tarifas
+    diccionario_final_cfe['tarifa_kwhi'] = tarifa_kwh_intermedio/numero_tarifas
+    diccionario_final_cfe['tarifa_kwhp'] = tarifa_kwh_punta/numero_tarifas
+    diccionario_final_cfe['ultima_tarifa'] = ultima_tarifa
 
     return diccionario_final_cfe
+
+
+
+
+
+def recibocfe(request):
+
+    #Obtiene los registros de un medidor en un determinado periodo de tiempo
+    pr_powermeter = 2
+    region = 2
+    tipo_tarifa = 1
+    start_date = '2012-01-01 00:00:00'
+    end_date = '2012-07-31 23:59:59'
+
+    print tarifaHM(pr_powermeter, start_date, end_date, region)
+    print "========================================================="
+    print "========================================================="
+    print tarifaHM__(pr_powermeter, start_date, end_date, region)
+    print obtenerHistorico(pr_powermeter,9,region,7, tipo_tarifa)
+
+
+    variables = RequestContext(request, vars)
+    return render_to_response('consumption_centers/cfe.html', variables)
