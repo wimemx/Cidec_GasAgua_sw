@@ -1,6 +1,10 @@
 #standard library imports
 import os
 import csv
+from itertools import cycle
+from random import uniform, randrange
+from datetime import timedelta
+from decimal import Decimal
 
 #related third party imports
 import datetime
@@ -125,3 +129,84 @@ def index(request):
 def logout_page(request):
     logout(request)
     return HttpResponseRedirect('/')
+
+def changedate(key):
+    """
+    sets all the data in intervals of 3 hours
+    """
+    data = ElectricData.objects.filter(profile_powermeter__pk=key)
+    initial_date = datetime.datetime(2012,01,01,00,00)
+    for dato in data:
+        initial_date += timedelta(hours=3)
+        dato.medition_date = initial_date
+        dato.save()
+        print dato.medition_date
+
+def dummy_data_generator_2000():
+    """
+    Generates dummy electric meditions
+    """
+    for item in ['1', '2', '3']:
+        i=0
+        initial_date = datetime.datetime(2012,01,01,00,00)
+        profile = ProfilePowermeter.objects.get(pk=int(item))
+        kwh=Decimal(900090)
+        kvarh_net=Decimal(388.6)
+        for item in cycle(['1.8','2']):
+            i += 1
+            initial_date += timedelta(minutes=5)
+            kwh += Decimal(randrange(0, 100010))
+            kvarh_net += Decimal(uniform(0, 12.1))
+            elec_data = ElectricData(
+                profile_powermeter = profile,
+                powermeter_serial = "9304404",
+                medition_date = initial_date,
+                V1 = round(Decimal(uniform(127.5, 128.9)),6),
+                V2 = round(Decimal(uniform(127.5, 128.9)),6),
+                V3 = round(Decimal(uniform(127.5, 128.9)),6),
+                I1 = round(Decimal(uniform(1.168, 1.219)),6),
+                I2 = round(Decimal(uniform(1.168, 1.219)),6),
+                I3 = round(Decimal(uniform(1.168, 1.219)),6),
+                kWL1 = round(Decimal(uniform(83.8, 87.5)),6),
+                kWL2 = round(Decimal(uniform(83.8, 87.5)),6),
+                kWL3 = round(Decimal(uniform(83.8, 87.5)),6),
+                kvarL1 = round(Decimal(uniform(-129.6, -125.3)),6),
+                kvarL2 = round(Decimal(uniform(-129.6, -125.3)),6),
+                kvarL3 = round(Decimal(uniform(-129.6, -125.3)),6),
+                kVAL1 = round(Decimal(uniform(150.6, 155.03)),6),
+                kVAL2 = round(Decimal(uniform(150.6, 155.03)),6),
+                kVAL3 = round(Decimal(uniform(150.6, 155.03)),6),
+                PFL1 = round(Decimal(uniform(-.5549, 1)),6),
+                PFL2 = round(Decimal(uniform(-.5549, 1)),6),
+                PFL3 = round(Decimal(uniform(-.5549, 1)),6),
+                kW = round(Decimal(uniform(251.5, 258.7)),6),
+                kvar = round(Decimal(uniform(-388.8, -376.7)),6),
+                kVA = round(Decimal(uniform(453.08, 466.3)),6),
+                PF = round(Decimal(uniform(-.5549, 1)),6),
+                In = round(Decimal(uniform(3.51, 3.65)),6),
+                FREQ = round(Decimal(uniform(59.97, 59.99)),6),
+                kWIMPSDMAX = round(Decimal(0.043204),6),
+                kWIMPACCDMD = round(Decimal(uniform(1.16, 2.1)),6),
+                kVASDMAX = round(Decimal(.129613),6),
+                kVAACCDMD = round(Decimal(uniform(2.11, 3.7)),6),
+                I1DMDMAX = round(Decimal(.000200),6),
+                I2DMDMAX = round(Decimal(.000200),6),
+                I3DMDMAX = round(Decimal(.000200),6),
+                kWhIMPORT = round(kwh,6),
+                kWhEXPORT = Decimal(0),
+                kvarhNET = round(kvarh_net,6),
+                kvarhIMPORT = round(kvarh_net,6),
+                V1THD = Decimal(item),
+                V2THD = Decimal(item),
+                V3THD = Decimal(item),
+                I1THD = Decimal(142.3),
+                I2THD = Decimal(142.3),
+                I3THD = Decimal(142.3)
+            )
+            elec_data.save()
+            print i, " - ", elec_data
+            if i >= 65512:
+                break
+
+def dummy_volts():
+    return

@@ -311,6 +311,9 @@ admin.site.register(c_center.models.BuilAttrsForPartOfBuil, BuilAttrsForPartOfBu
 
 class ConsumerUnitAdmin(admin.ModelAdmin):
     list_filter = ['building', 'part_of_building']
+    search_fields = ['profile_powermeter__powermeter__powermeter_serial',
+                     'profile_powermeter__powermeter__powermeter_anotation',
+                     'building__building_name']
 admin.site.register(c_center.models.ConsumerUnit, ConsumerUnitAdmin)
 
 class ElectricDataAdmin(admin.ModelAdmin):

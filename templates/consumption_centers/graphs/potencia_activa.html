@@ -37,7 +37,7 @@
                     }
                 },
                 // Initial range: 2012-02-09 to 2012-03-20.
-                'state': {'range': {'start': new Date(2012, 1, 9), 'end': new Date(2012, 2, 20)}}
+                'state': {'range': {'start': new Date({{ fi|date:"Y,m,d" }}), 'end': new Date({{ ff|date:"Y,m,d" }})}}
             });
 
             chart = new google.visualization.ChartWrapper({
@@ -47,7 +47,7 @@
                     // Use the same chart area width as the control for axis alignment.
                     'chartArea': {'height': '80%', 'width': '100%'},
                     'hAxis': {'slantedText': false},
-                    'vAxis': {'viewWindow': {'min': -4500, 'max': 4500}, textPosition: 'in'},
+                    'vAxis': {'viewWindow': {'min': 230, 'max': 275}, textPosition: 'in'},
                     'legend': {'position': 'none'}
                 },
                 'colors': ['#ccc','#000'],
@@ -71,21 +71,8 @@
             var open, close = 300;
             var low;
             {% for kw in main_interval_kw %}
-                data.addRow([new Date({{ kw.date|date:"Y,m,d,g"}}), {{ kw.kw }}]);
+                data.addRow([new Date({{ kw.date|date:"Y,m,d,G,i"}}), {{ kw.kw }}]);
             {% endfor %}
-            /*
-            for (var day = 1; day < 121; ++day) {
-                for(var hour=0; hour < 24; hour++){
-                    var change = (Math.sin(day / 2.5 + Math.PI) + Math.sin(day / 3) - Math.cos(day * 0.7)) * 150;
-                    change = change >= 0 ? change + 10 : change - 10;
-                    open = close;
-                    close = Math.max(50, open + change);
-                    low = Math.min(open, close) - (Math.cos(day * 1.7) + 1) * 15;
-                    low = Math.max(0, low);
-                    var date = new Date(2012, 0 ,day, hour);
-                    data.addRow([date, Math.round(low)]);
-                }
-            }*/
 
             dashboard.bind(control, chart);
             dashboard.draw(data);
@@ -95,15 +82,18 @@
         google.setOnLoadCallback(drawVisualization);
 
         function changeRange(interval) {
-            var start_date = new Date(2012, 1, 9);
-            var end_date = start_date;
+
+
+
+            var start_date = new Date({{ fi|date:"Y,m,d" }});
+            var end_date = new Date({{ ff|date:"Y,m,d" }});
 
             var hour = start_date.getHours();
 
 
             switch (interval){
                 case 'hour' :
-                    end_date = new Date(2012, 1, 9, hour+2);
+                    end_date = new Date({{ fi|date:"Y,m,d,G" }}+2);
                     break;
                 case 'day' :
                     end_date.setDate(start_date.getDate()+1);
@@ -118,7 +108,7 @@
             // 'slider' is the ControlWrapper instance describing the range slider.
             control.setState({
                 'range': {
-                    'start':new Date(2012, 1, 9, hour),
+                    'start':new Date({{ fi|date:"Y,m,d" }}),
                     'end': end_date
                 }
             });

@@ -1,5 +1,5 @@
 #standard library imports
-from datetime import date, datetime
+from datetime import date
 from dateutil.relativedelta import relativedelta
 import time
 #related third party imports
@@ -103,7 +103,7 @@ def potencia_activa(request):
                 if f2_init:
                     template_vars['compare_interval2_kw'] = get_KW(building_compare, f2_init, f2_end)
 
-    template_vars['main_interval_kw']=get_KW(request.session['main_building'], f1_init, f1_end)
+    template_vars['main_interval_kw'], template_vars['fi'], template_vars['ff']=get_KW(request.session['main_building'], f1_init, f1_end)
     if f2_init:
         template_vars['main_interval2_kw'] = get_KW(request.session['main_building'], f2_init, f2_end)
 
@@ -219,19 +219,6 @@ def recibocfe(request):
     variables = RequestContext(request, vars)
     return render_to_response('consumption_centers/cfe.html', variables)
 
-def changedate(key):
-    """
-    sets all the data in intervals of 3 hours
-    """
-
-    data = ElectricData.objects.filter(profile_powermeter__pk=key)
-    initial_date = datetime.datetime(2012,01,01,00,00)
-    for dato in data:
-        initial_date += timedelta(hours=3)
-        dato.medition_date = initial_date
-        dato.save()
-        print dato.medition_date
-
 def get_medition_in_time(building, datetime_from, datetime_to):
     """ Gets the meditions registered in a time window
 
@@ -245,7 +232,7 @@ def get_medition_in_time(building, datetime_from, datetime_to):
     consumer_unit = ConsumerUnit.objects.get(building=building)
     profile_powermeter = ProfilePowermeter.objects.get(pk=consumer_unit.profile_powermeter.pk)
     meditions = ElectricData.objects.filter(profile_powermeter=profile_powermeter,
-        medition_date__gte=datetime_from,medition_date__lte=datetime_to)
+        medition_date__gte=datetime_from,medition_date__lte=datetime_to).order_by("medition_date")
     print "medition lenght", len(meditions)
     return meditions
 
@@ -253,10 +240,14 @@ def get_KW(building, datetime_from, datetime_to):
     """ Gets the KW data in a given interval"""
     meditions = get_medition_in_time(building, datetime_from, datetime_to)
     kw=[]
+    fi = None
+    ff = None
     for medition in meditions:
-        kw.append(dict(kw=medition.kW, date=medition.medition_date))
-
-    return kw
+        if not fi:
+            fi=medition.medition_date-relativedelta( months = +1 )
+        kw.append(dict(kw=medition.kW, date=medition.medition_date-relativedelta( months = +1 )))
+    ff = meditions[len(meditions)-1].medition_date-relativedelta( months = +1 )
+    return kw, fi, ff
 
 def get_KVar(building, datetime_from, datetime_to):
     """ Gets the KW data in a given interval"""
