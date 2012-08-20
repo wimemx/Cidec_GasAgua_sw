@@ -1,18 +1,21 @@
 #standard library imports
 from datetime import date
 from dateutil.relativedelta import relativedelta
+import re
 import time
 #related third party imports
 
 #local application/library specific imports
-from django.shortcuts import render_to_response
-from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render_to_response, get_object_or_404
+from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.template.context import RequestContext
 
-from c_center.calculations import *
-from c_center.models import Building, ElectricData
+from c_center.models import Building, ElectricData, ProfilePowermeter
 from rbac.models import Operation, DataContextPermission
 from rbac.rbac_functions import  has_permission
+from c_center.calculations import tarifaHM
+from c_center.models import ConsumerUnit
+import simplejson
 
 
 VIEW = Operation.objects.get(operation_name="view")
@@ -26,7 +29,7 @@ def get_intervals_1(get):
     by default we get the data from the last 3 months
 
     """
-    f1_init = date.today() - relativedelta( months = +3 )
+    f1_init = date.today() - relativedelta( months = +1 )
     f1_end = date.today()
 
     if "f1_init" in get:
@@ -102,13 +105,54 @@ def potencia_activa(request):
                 template_vars['compare_interval_kw'] = get_KW(building_compare, f1_init, f1_end)
                 if f2_init:
                     template_vars['compare_interval2_kw'] = get_KW(building_compare, f2_init, f2_end)
-
     template_vars['main_interval_kw'], template_vars['fi'], template_vars['ff']=get_KW(request.session['main_building'], f1_init, f1_end)
     if f2_init:
         template_vars['main_interval2_kw'] = get_KW(request.session['main_building'], f2_init, f2_end)
 
     template_vars_template = RequestContext(request, template_vars)
     return render_to_response("consumption_centers/graphs/potencia_activa.html", template_vars_template)
+
+def potencia_activa_test(request):
+    template_vars = {"type":"kw"}
+
+    #second interval, None by default
+    f2_init = None
+    f2_end = None
+
+    f1_init, f1_end = get_intervals_1(request.GET)
+
+    if request.GET:
+
+        if "f2_init" in request.GET:
+            f2_init, f2_end = get_intervals_2(request.GET)
+        for key in request.GET:
+            if re.search('^compare_to\d+', key):
+                # "compare", request.session['main_building'], "with building", key
+                building_compare = Building.objects.get(pk=int(key))
+                template_vars['compare_interval_kw'] = get_KW(building_compare, f1_init, f1_end)
+                if f2_init:
+                    template_vars['compare_interval2_kw'] = get_KW(building_compare, f2_init, f2_end)
+    template_vars['building']=request.session['main_building'].pk
+    template_vars['fi'], template_vars['ff'] = f1_init, f1_end
+    #template_vars['main_interval_kw'], \
+    #template_vars['fi'], \
+    #template_vars['ff'] = get_KW(request.session['main_building'], f1_init, f1_end)
+
+    if f2_init:
+        template_vars['main_interval2_kw'] = get_KW(request.session['main_building'], f2_init, f2_end)
+
+    template_vars_template = RequestContext(request, template_vars)
+    return render_to_response("consumption_centers/graphs/test_graph.html", template_vars_template)
+
+def get_kw_data(request):
+    if 'building' in request.GET:
+        building = get_object_or_404(Building, pk=int(request.GET['building']))
+        f1_init, f1_end = get_intervals_1(request.GET)
+        data=get_KW_json(request.session['main_building'], f1_init, f1_end)
+        return HttpResponse(content=data,content_type="application/json")
+    else:
+        raise Http404
+
 
 def potencia_reactiva(request):
     template_vars = {"type":"kvar"}
@@ -203,7 +247,7 @@ def set_default_building(request, id_building):
     if 'referer' in request.GET:
         if request.GET['referer'] == "cfe":
             return HttpResponseRedirect("/reportes/cfe/")
-    return HttpResponse(content='', content_type=None, status=200)
+    return HttpResponse(status=200)
 
 def recibocfe(request):
 
@@ -244,10 +288,19 @@ def get_KW(building, datetime_from, datetime_to):
     ff = None
     for medition in meditions:
         if not fi:
-            fi=medition.medition_date-relativedelta( months = +1 )
-        kw.append(dict(kw=medition.kW, date=medition.medition_date-relativedelta( months = +1 )))
-    ff = meditions[len(meditions)-1].medition_date-relativedelta( months = +1 )
+            fi=medition.medition_date
+        kw.append(dict(kw=medition.kW, date=medition.medition_date))
+    ff = meditions[len(meditions)-1].medition_date
     return kw, fi, ff
+
+def get_KW_json(building, datetime_from, datetime_to):
+    """ Gets the KW data in a given interval"""
+    meditions = get_medition_in_time(building, datetime_from, datetime_to)
+    kw=[]
+    for medition in meditions:
+        kw.append(dict(kw=str(medition.kW), date=int(time.mktime(medition.medition_date.timetuple()))))
+
+    return simplejson.dumps(kw)
 
 def get_KVar(building, datetime_from, datetime_to):
     """ Gets the KW data in a given interval"""
