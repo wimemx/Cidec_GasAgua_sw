@@ -311,6 +311,7 @@ def get_KVar(building, datetime_from, datetime_to):
 
     return kvar
 
+
 def get_PF(building, datetime_from, datetime_to):
     """ Gets the KW data in a given interval"""
     meditions = get_medition_in_time(building, datetime_from, datetime_to)
