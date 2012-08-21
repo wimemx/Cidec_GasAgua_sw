@@ -1,5 +1,5 @@
 #standard library imports
-from datetime import date
+from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
 import re
 import time
@@ -72,14 +72,12 @@ def cfe_bill(request):
             request.session['main_building'] = datacontext[0].building
         powermeter = ConsumerUnit.objects.get(building=datacontext[0].building)
 
-        start_date = '2012-01-01 00:00:00'
-        end_date = '2012-07-31 23:59:59'
-        if 'f1_init' in request.GET:
-            start_date = request.GET['f1_init']
-            end_date = request.GET['f1_end']
-
-        print tarifaHM(powermeter.profile_powermeter, start_date, end_date, datacontext[0].building.region)
-        template_vars={"type":"cfe", "datacontext":datacontext, 'empresa':request.session['main_building']}
+        start_date, end_date = get_intervals_1(request.GET)
+        t_hm=tarifaHM(powermeter.profile_powermeter,
+            start_date, end_date, datacontext[0].building.region)
+        template_vars={"type":"cfe", "datacontext":datacontext,
+                       'empresa':request.session['main_building'],
+                       'tarifaHM': t_hm}
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/cfe.html", template_vars_template)
     else:
@@ -148,7 +146,7 @@ def get_kw_data(request):
     if 'building' in request.GET:
         building = get_object_or_404(Building, pk=int(request.GET['building']))
         f1_init, f1_end = get_intervals_1(request.GET)
-        data=get_KW_json(request.session['main_building'], f1_init, f1_end)
+        data=get_KW_json(building, f1_init, f1_end)
         return HttpResponse(content=data,content_type="application/json")
     else:
         raise Http404
@@ -252,13 +250,12 @@ def set_default_building(request, id_building):
 def recibocfe(request):
 
     #Obtiene los registros de un medidor en un determinado periodo de tiempo
-    pr_powermeter = 2
-    region = 2
-    start_date = '2012-01-01 00:00:00'
-    end_date = '2012-07-31 23:59:59'
-
-    print tarifaHM(pr_powermeter, start_date, end_date, region)
-
+    start_date, end_date = get_intervals_1(request.GET)
+    consumer_unit = ConsumerUnit.objects.get(building=request.session['main_building'])
+    pr_powermeter = ProfilePowermeter.objects.get(pk=consumer_unit.profile_powermeter.pk)
+    region = request.session['main_building'].region
+    print start_date, end_date
+    vars=dict(tarifa=tarifaHM(pr_powermeter, start_date, end_date, region))
 
     variables = RequestContext(request, vars)
     return render_to_response('consumption_centers/cfe.html', variables)
@@ -276,7 +273,7 @@ def get_medition_in_time(building, datetime_from, datetime_to):
     consumer_unit = ConsumerUnit.objects.get(building=building)
     profile_powermeter = ProfilePowermeter.objects.get(pk=consumer_unit.profile_powermeter.pk)
     meditions = ElectricData.objects.filter(profile_powermeter=profile_powermeter,
-        medition_date__gte=datetime_from,medition_date__lte=datetime_to).order_by("medition_date")
+        medition_date__gte=datetime_from,medition_date__lte=datetime_to+timedelta(days=1)).order_by("medition_date")
     print "medition lenght", len(meditions)
     return meditions
 
@@ -285,7 +282,6 @@ def get_KW(building, datetime_from, datetime_to):
     meditions = get_medition_in_time(building, datetime_from, datetime_to)
     kw=[]
     fi = None
-    ff = None
     for medition in meditions:
         if not fi:
             fi=medition.medition_date
@@ -298,7 +294,7 @@ def get_KW_json(building, datetime_from, datetime_to):
     meditions = get_medition_in_time(building, datetime_from, datetime_to)
     kw=[]
     for medition in meditions:
-        kw.append(dict(kw=str(medition.kW), date=int(time.mktime(medition.medition_date.timetuple()))))
+        kw.append(dict(pk=medition.pk, kw=str(medition.kW), date=int(time.mktime(medition.medition_date.timetuple()))))
 
     return simplejson.dumps(kw)
 

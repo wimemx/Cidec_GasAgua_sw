@@ -24,31 +24,28 @@
 
             //Date("October 13, 1975 11:13:00")
             var start_date = new Date("{{ fi|date:"F d, Y" }}");
-            var end_date = new Date("{{ ff|date:"F d, Y" }}");
-
+            var end_date=new Date("{{ fi|date:"F d, Y" }}");
+            console.log("{{ fi|date:"F d, Y" }}");
             switch (interval){
                 case 'hour' :
-                    end_date=start_date;
-                    end_date.addHours(2);
+                    start_date.addHours(5);
+                    end_date.addHours(7);
                     break;
                 case 'day' :
-                    end_date=start_date;
                     end_date.addDays(1);
                     break;
                 case 'week' :
-                    end_date=start_date;
                     end_date.addDays(7);
                     break;
                 case 'month' :
-                    end_date=start_date;
                     end_date.addDays(30);
                     break;
             }
             // 'slider' is the ControlWrapper instance describing the range slider.
-
+            console.log(start_date,end_date);
             control.setState({
                 'range': {
-                    'start':new Date("{{ fi|date:"F d, Y" }}"),
+                    'start':start_date,
                     'end': end_date
                 }
             });
@@ -146,7 +143,7 @@
                         for(var x=0; x < datos.length; x++) {
                             var e = datos[x];
                             var fecha=new Date();
-                            fecha.setTime((e.date*1000) - (fecha.getTimezoneOffset() * 50000));
+                            fecha.setTime((e.date*1000) - 3600000);//numero de milisegundos en una hora
                             data.addRow([fecha , parseFloat(e.kw)]);
                         }
                         dashboard.bind(control, chart);

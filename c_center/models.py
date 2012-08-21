@@ -2,7 +2,7 @@
 from django.db import models
 import datetime
 from location.models import Pais, Estado, Municipio, Colonia, Calle, Region
-from electric_rates.models import ElectricRates
+from electric_rates.models import ElectricRates, ElectricRatesPeriods
 
 STATUS = (
     (1,'Activo'),
@@ -425,6 +425,14 @@ class ElectricData(models.Model):
     def __unicode__(self):
         return self.profile_powermeter.powermeter.powermeter_anotation + \
                " " + str(self.medition_date)
+
+class ElectricRateForElectricData(models.Model):
+    electric_rates_periods = models.ForeignKey(ElectricRatesPeriods, on_delete=models.PROTECT)
+    electric_data = models.ForeignKey(ElectricData, on_delete=models.PROTECT)
+    identifier = models.CharField(max_length=128)
+
+    class META:
+        unique_together=('electric_rates_periods','electric_data')
 
 class IndustrialEquipment(models.Model):
     """
