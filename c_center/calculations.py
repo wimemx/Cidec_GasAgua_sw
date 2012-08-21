@@ -595,7 +595,7 @@ def tarifaHM(pr_powermeter, start_date, end_date, region):
                     tarifa,catalogo_grupos)
                 if relacion_tarifa_lectura[l_tar_co[0].id][reading.id] == 'base':
                     demanda_base.append(reading.kW)
-                    reading.tipo
+                    #reading.tipo
                 elif relacion_tarifa_lectura[l_tar_co[0].id][reading.id] == 'intermedio':
                     demanda_intermedio.append(reading.kW)
                 elif relacion_tarifa_lectura[l_tar_co[0].id][reading.id] == 'punta':
