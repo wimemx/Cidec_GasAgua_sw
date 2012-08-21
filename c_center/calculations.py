@@ -314,7 +314,7 @@ def obtenerTipoPeriodo(fecha, region, tarifa, catalogo_grupos):
 
     electric_type = ElectricRatesPeriods.objects.filter(region = region).filter(electric_rate = tarifa).filter(date_interval__in = horario_ver_inv).filter(groupdays = grupo_id).filter(time_init__lte = datetime.time(fecha.hour,fecha.minute)).filter(time_end__gte = datetime.time(fecha.hour,fecha.minute))
 
-    return electric_type[0].period_type
+    return electric_type[0]
 
 def obtenerKWTarifa(pr_powermeter, tarifa_id, region, tipo_tarifa, lectura, catalogo_grupos):
     """
@@ -745,3 +745,31 @@ def recibocfe(request):
 
     variables = RequestContext(request, vars)
     return render_to_response('consumption_centers/cfe.html', variables)
+
+
+def data_tagging(key):
+    readings=ElectricData.objects.filter(profile_powermeter__pk=key).order_by('medition_date')
+    consumer_unit = ConsumerUnit.objects.get(profile_powermeter__pk=key)
+    region = consumer_unit.building.region
+    catalogo_grupos = obtenerCatalogoGrupos()
+    tarifa = ElectricRates.objects.get(pk=1)
+    identifier = 0
+    tarifa_act = None
+    for reading in readings:
+
+        relacion_tarifa_lectura = obtenerTipoPeriodo(reading.medition_date, region,
+            tarifa,catalogo_grupos)
+
+        if not tarifa_act:
+            tarifa_act = relacion_tarifa_lectura
+
+        if tarifa_act !=  relacion_tarifa_lectura:
+            #si hay un cambio en la tarifa
+            identifier+=1
+            tarifa_act = relacion_tarifa_lectura
+        print str(identifier), relacion_tarifa_lectura.period_type
+        ElectricRateForElectricData(
+            electric_rates_periods = relacion_tarifa_lectura,
+            electric_data = reading,
+            identifier = str(hex(identifier))
+        ).save()
