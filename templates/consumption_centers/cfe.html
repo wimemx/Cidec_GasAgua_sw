@@ -2,10 +2,10 @@
 {% block titulo %}Reportes{% endblock %}
 {% block externalcss %}
     <link rel="stylesheet" href="/static/css/consumption_centers/cfe_bill.css">
-    <link rel="stylesheet" href="/static/js/external/datepicker/css/datepicker.css" type="text/css" />
+    <link rel="stylesheet" href="/static/date_picker/css/datepicker.css" type="text/css" />
 {% endblock %}
 {% block externaljs %}
-    <script type="text/javascript" src="/static/js/external/datepicker/js/datepicker.js"></script>
+    <script type="text/javascript" src="/static/date_picker/js/datepicker.js"></script>
     <script type="text/javascript" src="http://www.google.com/jsapi"></script>
     <script type="text/javascript">
         google.load('visualization', '1', {packages: ['corechart']});
@@ -23,7 +23,7 @@
                 if(f1_end != ''){
                     url += "&f1_end="+f1_end;
                 }else{
-                    url += "&f1_end=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
+                    url += "&f1_end=" + encodeURIComponent(new Date().format("dd-mm-yyyy"));
                 }
 
                 window.location.href = url;
@@ -172,17 +172,17 @@
 
             <div id="sumary">
                 <span class="l">Energ&iacute;a</span>
-                <span class="r">${{ tarifaHM.costo_energia }}</span>
+                <span class="r">${{ tarifaHM.costo_energia|floatformat:2 }}</span>
                 <span class="l">Demanda Facturable</span>
-                <span class="r">{{ tarifaHM.costo_dfacturable }}</span>
+                <span class="r">{{ tarifaHM.costo_dfacturable|floatformat:2 }}</span>
                 <span class="l">Bonificaci&oacute;n Factor de Potencia</span>
-                <span class="r">${{ tarifaHM.costo_fpotencia }}</span>
+                <span class="r">${{ tarifaHM.costo_fpotencia|floatformat:2 }}</span>
                 <span class="l">Sub Total</span>
-                <span class="r">${{ tarifaHM.subtotal }}</span>
+                <span class="r">${{ tarifaHM.subtotal|floatformat:2 }}</span>
                 <span class="l">IVA 16%</span>
-                <span class="r">${{ tarifaHM.iva }}</span>
+                <span class="r">${{ tarifaHM.iva|floatformat:2 }}</span>
                 <span class="l">Total</span>
-                <span class="r total">${{ tarifaHM.total }}</span>
+                <span class="r total">${{ tarifaHM.total|floatformat:2 }}</span>
             </div>
             <table id="function_period">
                 <thead>
@@ -223,7 +223,7 @@
                     </tr>
                     <tr>
                         <td>Factor de potencia %</td>
-                        <td>{{ tarifaHM.factor_potencia }}</td>
+                        <td>{{ tarifaHM.factor_potencia|floatformat:2 }}%</td>
                     </tr>
                 </tbody>
             </table>
@@ -239,25 +239,25 @@
                     <tr>
                         <td>Energ&iacute;a en base kWh</td>
                         <td>{{ tarifaHM.kwh_base }}</td>
-                        <td>{{ tarifaHM.tarifa_kwhb }}</td>
+                        <td>${{ tarifaHM.tarifa_kwhb|floatformat:2 }}</td>
 
                     </tr>
                     <tr>
                         <td>Energ&iacute;a en intermedia kWh</td>
                         <td>{{ tarifaHM.kwh_intermedio }}</td>
-                        <td>{{ tarifaHM.tarifa_kwhi }}</td>
+                        <td>${{ tarifaHM.tarifa_kwhi|floatformat:2 }}</td>
 
                     </tr>
                     <tr>
                         <td>Energ&iacute;a en punta kWh</td>
                         <td>{{ tarifaHM.kwh_punta }}</td>
-                        <td>{{ tarifaHM.tarifa_kwhp }}</td>
+                        <td>${{ tarifaHM.tarifa_kwhp|floatformat:2 }}</td>
 
                     </tr>
                     <tr>
                         <td>Demanda facturable kW</td>
                         <td>{{ tarifaHM.demanda_facturable }}</td>
-                        <td>{{ tarifaHM.tarifa_df }}</td>
+                        <td>${{ tarifaHM.tarifa_df|floatformat:2 }}</td>
 
                     </tr>
                 </tbody>
@@ -290,10 +290,10 @@
                         <tr>
                             <td>{{ hist.fecha }}</td>
                             <td>{{ hist.demanda_maxima }}</td>
-                            <td>{{ hist.total_kwh }}</td>
+                            <td>{{ hist.total_kwh|floatformat:2 }}</td>
                             <td>{{ hist.factor_potencia }}%</td>
                             <td>{{ hist.factor_carga }}%</td>
-                            <td>{{ hist.costo_promedio }}</td>
+                            <td>{{ hist.costo_promedio|floatformat:2 }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>

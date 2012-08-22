@@ -11,7 +11,6 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.template.context import RequestContext
 
 from c_center.models import Building, ElectricData, ProfilePowermeter
-from electric_rates.models import ElectricRatesDetail
 from rbac.models import Operation, DataContextPermission
 from rbac.rbac_functions import  has_permission
 from c_center.calculations import tarifaHM_total, obtenerHistorico
@@ -53,12 +52,14 @@ def get_intervals_fecha(get):
     f1_end = datetime.today()
     f1_end = str(f1_end.year)+"-"+str(f1_end.month)+"-"+str(f1_end.day)+" 23:59:59"
 
-    #TODO a partir del get, obtener el formato de la fecha
-    #if "f1_init" in get:
-    #    f1_init = time.strptime(get['f1_init'], "%d/%m/%Y")
-    #    f1_init = datetime(f1_init.tm_year, f1_init.tm_mon, f1_init.tm_mday)
-    #    f1_end = time.strptime(get['f1_end'], "%d/%m/%Y")
-    #    f1_end = datetime(f1_end.tm_year, f1_end.tm_mon, f1_end.tm_mday)
+
+    if "f1_init" in get:
+        f1_init = get['f1_init']
+        f1_init=str.split(str(f1_init),"/")
+        f1_init = str(f1_init[2])+"-"+str(f1_init[1])+"-"+str(f1_init[0])+" 00:00:00"
+        f1_end = get['f1_end']
+        f1_end = str.split(str(f1_end),"/")
+        f1_end = str(f1_end[2])+"-"+str(f1_end[1])+"-"+str(f1_end[0])+" 23:59:59"
     return f1_init, f1_end
 
 
@@ -92,7 +93,6 @@ def cfe_bill(request):
         if not request.session['main_building']:
             #sets the default building
             request.session['main_building'] = datacontext[0].building
-        f1_init, f1_end = get_intervals_1(request.GET)
         powermeter = ConsumerUnit.objects.get(building=request.session['main_building'])
         profile_pm = powermeter.profile_powermeter
         powermeter = powermeter.profile_powermeter.powermeter

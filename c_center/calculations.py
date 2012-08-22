@@ -125,12 +125,13 @@ def costodemandafacturable_total(demandaf, tarifa_demanda):
 
 def fpbonificacionrecargo(fp):
     fp_valor = 0
-
-    if fp < 90:
-        fp_valor = Decimal(str(3.0/5.0))*((Decimal(str(90.0))/fp)- 1)*100
-    else:
-        fp_valor = Decimal(str(1.0/4.0))*(1 -(Decimal(str(90.0))/fp))*100
-
+    try:
+        if fp < 90:
+            fp_valor = Decimal(str(3.0/5.0))*((Decimal(str(90.0))/fp)- 1)*100
+        else:
+            fp_valor = Decimal(str(1.0/4.0))*(1 -(Decimal(str(90.0))/fp))*100
+    except DivisionByZero:
+        return 0
     return float(fp_valor)
 
 def costofactorpotencia(fp, costo_energia, costo_df):
