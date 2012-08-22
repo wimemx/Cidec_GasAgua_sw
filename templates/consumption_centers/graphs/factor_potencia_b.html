@@ -1,0 +1,188 @@
+<html>
+<head>
+
+    <link rel="stylesheet" href="/static/css/consumption_centers/graphs.css"/>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+    <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+        google.load('visualization', '1.1', {packages: ['corechart', 'controls']});
+    </script>
+    <script type="text/javascript">
+        Date.prototype.addDays = function (n) {
+            this.setDate(this.getDate() + n);
+            this.tempDate = this.getDate();
+        };
+        Date.prototype.addHours= function(h){
+            this.setHours(this.getHours()+h);
+            return this;
+        };
+
+        function changeRange(interval) {
+
+
+            //Date("October 13, 1975 11:13:00")
+            var start_date = new Date("{{ fi|date:"F d, Y" }}");
+            var end_date=new Date("{{ fi|date:"F d, Y" }}");
+            console.log("{{ fi|date:"F d, Y" }}");
+            switch (interval){
+                case 'hour' :
+                    start_date.addHours(5);
+                    end_date.addHours(7);
+                    break;
+                case 'day' :
+                    end_date.addDays(1);
+                    break;
+                case 'week' :
+                    end_date.addDays(7);
+                    break;
+                case 'month' :
+                    end_date.addDays(30);
+                    break;
+            }
+            // 'slider' is the ControlWrapper instance describing the range slider.
+            console.log(start_date,end_date);
+            control.setState({
+                'range': {
+                    'start':start_date,
+                    'end': end_date
+                }
+            });
+            control.draw();
+        }
+
+        var fi=encodeURIComponent("{{ fi|date:"d/m/Y" }}");
+        var ff=encodeURIComponent("{{ ff|date:"d/m/Y" }}");
+        var buildings_json = eval("{{ buildings }}");
+        var buildings_number = buildings_json.length;
+        var buildings_str = "";
+        for (var building_index = 0; building_index < buildings_number; building_index++) {
+            buildings_str += "building" + building_index + "=" + buildings_json[building_index] + "&";
+        }
+
+        var url = "/reportes/factor_potencia_data_b/?"+buildings_str+"f1_init="+fi+"&f1_end="+ff;
+        var chartView = {
+            'columns': [0, buildings_number]
+        };
+
+        var view_columns = [
+            {
+                'calc': function(dataTable, rowIndex) {
+                    return dataTable.getFormattedValue(rowIndex, 0);
+                },
+                'type': 'string'
+            }];
+        for (var column_index = 1; column_index <= buildings_number; column_index++) {
+            view_columns.push(column_index);
+        }
+
+        var chart, control;
+        var data = new google.visualization.DataTable();
+        $(document).ready(function(){
+            $("#compare_interval li").each(function(){
+                //cambia el intervalo visible de las graficas y cambia el estilo segun la opcion seleccionada
+                $(this).click(function(){
+                    changeRange($(this).attr('id'));
+                    $("#compare_interval li").each(function(){
+                        $(this).removeClass("active");
+                    });
+                    $(this).addClass("active");
+                });
+            });
+
+            $.ajax({
+                url: url,
+                type: "GET",
+                dataType: 'json',
+                async: 'true',
+                success: function(datos){
+                    //----------------------CHARTS----------------------------
+
+                    function drawVisualization() {
+                        var dashboard = new google.visualization.Dashboard(
+                                document.getElementById('dashboard'));
+
+                        control = new google.visualization.ControlWrapper({
+                            'controlType': 'ChartRangeFilter',
+                            'containerId': 'control',
+                            'options': {
+                                // Filter by the date axis.
+                                'filterColumnIndex': 0,
+                                'ui': {
+                                    'chartType': 'LineChart',
+                                    'chartOptions': {
+                                        'chartArea': {'width': '90%'},
+                                        'hAxis': {'baselineColor': 'none'}
+                                    },
+                                    // Display a single series that shows the closing value of the stock.
+                                    // Thus, this view has two columns: the date (axis) and the stock value (line series).
+                                    'chartView': chartView,
+                                    // 1 day in milliseconds = 24 * 60 * 60 * 1000 = 86,400,000
+                                    'minRangeSize': 3600000
+                                }
+                            },
+                            // Initial range: 2012-02-09 to 2012-03-20.
+                            'state': {'range': {'start': new Date("{{ fi|date:"F d, Y" }}"), 'end': new Date("{{ ff|date:"F d, Y" }}")}}
+                        });
+
+                        chart = new google.visualization.ChartWrapper({
+                            'chartType': 'LineChart',
+                            'containerId': 'chart',
+                            'options': {
+                                // Use the same chart area width as the control for axis alignment.
+                                'chartArea': {'height': '80%', 'width': '100%'},
+                                'hAxis': {'slantedText': false},
+                                'vAxis': {'viewWindow': {'min': -1, 'max': 1}, textPosition: 'in'},
+                                'legend': {'position': 'none'}
+                            },
+                            'colors': ['#ccc','#000'],
+                            // Convert the first column from 'date' to 'string'.
+                            'view': {
+                                'columns': view_columns
+                            }
+                        });
+
+
+                        data.addColumn('datetime', 'Date');
+                    {% for building_name in building_names %}
+                        data.addColumn('number', 'Factor Potencia - {{ building_name.building_name }}');
+                    {% endfor %}
+
+                        for(var x=0; x < datos.length; x++) {
+                            var e = datos[x];
+                            var fecha=new Date();
+                            fecha.setTime((e.date*1000) - 3600000);//numero de milisegundos en una hora
+                            var rowArray = new Array();
+                            rowArray.push(fecha);
+                            for (var medition_index = 0; medition_index < e.meditions.length; medition_index++) {
+                                rowArray.push(parseFloat(e.meditions[medition_index]));
+                            }
+
+                            data.addRow(rowArray);
+                        }
+
+                        dashboard.bind(control, chart);
+                        dashboard.draw(data);
+                    }
+                    drawVisualization();
+                }
+            });
+        });
+
+    </script>
+</head>
+
+<body>
+<ul id="compare_interval" class="fr">
+    <li id="hour">Hora</li>
+    <li id="day">D&iacute;a</li>
+    <li id="week" class="active">Semana</li>
+    <li id="month">Mes</li>
+</ul>
+<div id="dashboard" class="fl">
+    <div id="chart">
+        <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
+    </div>
+    <div id="control"></div>
+</div>
+</body>
+</html>
