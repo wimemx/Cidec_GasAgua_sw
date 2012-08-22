@@ -16,15 +16,14 @@
 
             var f1_init = encodeURIComponent($("#range1_init").val());
             var f1_end = encodeURIComponent($("#range1_end").val());
-            var f2_init = encodeURIComponent($("#range2_init").val());
-            var f2_end = encodeURIComponent($("#range2_end").val());
+
             if(f1_init != ''){
                 var url = "/reportes/cfe/?";
                 url += "f1_init=" + f1_init;
                 if(f1_end != ''){
                     url += "&f1_end="+f1_end;
                 }else{
-                    url += "&f1_end=" + encodeURIComponent(new Date().format("dd/mm/yyyy"));
+                    url += "&f1_end=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
                 }
 
                 window.location.href = url;
