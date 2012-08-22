@@ -11,6 +11,7 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.template.context import RequestContext
 
 from c_center.models import Building, ElectricData, ProfilePowermeter
+from electric_rates.models import ElectricRatesDetail
 from rbac.models import Operation, DataContextPermission
 from rbac.rbac_functions import  has_permission
 from c_center.calculations import tarifaHM_total, obtenerHistorico
