@@ -13,7 +13,7 @@ from django.template.context import RequestContext
 from c_center.models import Building, ElectricData, ProfilePowermeter
 from rbac.models import Operation, DataContextPermission
 from rbac.rbac_functions import  has_permission
-from c_center.calculations import tarifaHM
+from c_center.calculations import tarifaHM_total, obtenerHistorico
 from c_center.models import ConsumerUnit
 import json as simplejson
 
@@ -39,6 +39,27 @@ def get_intervals_1(get):
         f1_end = datetime(f1_end.tm_year, f1_end.tm_mon, f1_end.tm_mday)
 
     return f1_init,f1_end
+
+def get_intervals_fecha(get):
+
+    """ get the interval for the graphs
+
+        by default we get the data from the last 3 months
+
+        """
+    f1_init = datetime.today() - relativedelta( months = +1 )
+    f1_init = str(f1_init.year)+"-"+str(f1_init.month)+"-"+str(f1_init.day)+" 00:00:00"
+    f1_end = datetime.today()
+    f1_end = str(f1_end.year)+"-"+str(f1_end.month)+"-"+str(f1_end.day)+" 23:59:59"
+
+    #TODO a partir del get, obtener el formato de la fecha
+    #if "f1_init" in get:
+    #    f1_init = time.strptime(get['f1_init'], "%d/%m/%Y")
+    #    f1_init = datetime(f1_init.tm_year, f1_init.tm_mon, f1_init.tm_mday)
+    #    f1_end = time.strptime(get['f1_end'], "%d/%m/%Y")
+    #    f1_end = datetime(f1_end.tm_year, f1_end.tm_mon, f1_end.tm_mday)
+    return f1_init, f1_end
+
 
 def get_intervals_2(get):
     """ gets the second date interval """
@@ -70,14 +91,21 @@ def cfe_bill(request):
         if not request.session['main_building']:
             #sets the default building
             request.session['main_building'] = datacontext[0].building
-        powermeter = ConsumerUnit.objects.get(building=datacontext[0].building)
+        f1_init, f1_end = get_intervals_1(request.GET)
+        powermeter = ConsumerUnit.objects.get(building=request.session['main_building'])
+        profile_pm = powermeter.profile_powermeter
+        powermeter = powermeter.profile_powermeter.powermeter
+        start_date, end_date = get_intervals_fecha(request.GET)
 
-        start_date, end_date = get_intervals_1(request.GET)
-        t_hm=tarifaHM(powermeter.profile_powermeter,
-            start_date, end_date, datacontext[0].building.region)
+        t_hm=tarifaHM_total(powermeter, start_date, end_date, request.session['main_building'].region, request.session['main_building'].electric_rate)
+
+        arr_historico=obtenerHistorico(profile_pm, t_hm['ultima_tarifa'],request.session['main_building'].region, 3, request.session['main_building'].electric_rate)
+
         template_vars={"type":"cfe", "datacontext":datacontext,
                        'empresa':request.session['main_building'],
-                       'tarifaHM': t_hm}
+                       'tarifaHM': t_hm,
+                       'historico': arr_historico}
+        print template_vars
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/cfe.html", template_vars_template)
     else:
@@ -488,8 +516,8 @@ def recibocfe(request):
     pr_powermeter = ProfilePowermeter.objects.get(pk=consumer_unit.profile_powermeter.pk)
     region = request.session['main_building'].region
 
-    vars=dict(tarifa=tarifaHM(pr_powermeter, start_date, end_date, region))
-
+    vars=dict(tarifa=tarifaHM_total(pr_powermeter, start_date, end_date, region, request.session['main_building'].electric_rate))
+    print vars
     variables = RequestContext(request, vars)
     return render_to_response('consumption_centers/cfe.html', variables)
 

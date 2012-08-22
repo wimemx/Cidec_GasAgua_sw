@@ -2,10 +2,10 @@
 {% block titulo %}Reportes{% endblock %}
 {% block externalcss %}
     <link rel="stylesheet" href="/static/css/consumption_centers/cfe_bill.css">
-    <link rel="stylesheet" href="/static/js/external/datepicker/css/datepicker.css" type="text/css" />
+    <link rel="stylesheet" href="/static/date_picker/css/datepicker.css" type="text/css" />
 {% endblock %}
 {% block externaljs %}
-    <script type="text/javascript" src="/static/js/external/datepicker/js/datepicker.js"></script>
+    <script type="text/javascript" src="/static/date_picker/js/datepicker.js"></script>
     <script type="text/javascript" src="http://www.google.com/jsapi"></script>
     <script type="text/javascript">
         google.load('visualization', '1', {packages: ['corechart']});
@@ -16,15 +16,14 @@
 
             var f1_init = encodeURIComponent($("#range1_init").val());
             var f1_end = encodeURIComponent($("#range1_end").val());
-            var f2_init = encodeURIComponent($("#range2_init").val());
-            var f2_end = encodeURIComponent($("#range2_end").val());
+
             if(f1_init != ''){
                 var url = "/reportes/cfe/?";
                 url += "f1_init=" + f1_init;
                 if(f1_end != ''){
                     url += "&f1_end="+f1_end;
                 }else{
-                    url += "&f1_end=" + encodeURIComponent(new Date().format("dd/mm/yyyy"));
+                    url += "&f1_end=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
                 }
 
                 window.location.href = url;
@@ -35,16 +34,9 @@
             // Create and populate the data table.
             var data = google.visualization.arrayToDataTable([
                 ['Mes', 'Base', 'Media', 'Punta'],
-                ['MAR',  1336060,   1374066,       1304797],
-                ['ABR',  1338156,   1228875,       1151983],
-                ['MAY',  1476579,   1363414,      1256441],
-                ['JUN',  1200652,   1440478,       1336060],
-                ['JUL',  1168113,   1237079,      1207029],
-                ['AGO',  1401067,   1207327,      1284795],
-                ['SEP',  1336060,   1374066,       1304797],
-                ['OCT',  1338156,   1228875,       1151983],
-                ['NOV',  1476579,   1363414,      1256441],
-                ['DIC',  1200652,   1440478,       1336060]
+                {% for hist in  historico%}
+                    ['{{ hist.fecha|date:"m/Y" }}', {{ hist.kw_base }}, {{ hist.kw_intermedio }}, {{ hist.kw_punta }}],
+                {% endfor %}
             ]);
 
             // Create and draw the visualization.
@@ -180,19 +172,17 @@
 
             <div id="sumary">
                 <span class="l">Energ&iacute;a</span>
-                <span class="r">$1,333.00</span>
+                <span class="r">${{ tarifaHM.costo_energia|floatformat:2 }}</span>
                 <span class="l">Demanda Facturable</span>
-                <span class="r">$1,333.00</span>
+                <span class="r">{{ tarifaHM.costo_dfacturable|floatformat:2 }}</span>
                 <span class="l">Bonificaci&oacute;n Factor de Potencia</span>
-                <span class="r">$1,333.00</span>
+                <span class="r">${{ tarifaHM.costo_fpotencia|floatformat:2 }}</span>
+                <span class="l">Sub Total</span>
+                <span class="r">${{ tarifaHM.subtotal|floatformat:2 }}</span>
                 <span class="l">IVA 16%</span>
-                <span class="r">$1,333.00</span>
-                <span class="l">Facturaci&oacute;n del Periodo</span>
-                <span class="r">$1,333.00</span>
-                <span class="l">Adeudo Anterior</span>
-                <span class="r">$1,333.00</span>
+                <span class="r">${{ tarifaHM.iva|floatformat:2 }}</span>
                 <span class="l">Total</span>
-                <span class="r total">$1,333.00</span>
+                <span class="r total">${{ tarifaHM.total|floatformat:2 }}</span>
             </div>
             <table id="function_period">
                 <thead>
@@ -204,43 +194,36 @@
                 <tbody>
                     <tr>
                         <td>kWh Base</td>
-                        <td>999</td>
+                        <td>{{ tarifaHM.kwh_base }}</td>
                     </tr>
                     <tr>
                         <td>kWh Intermedia</td>
-                        <td>999</td>
+                        <td>{{ tarifaHM.kwh_intermedio }}</td>
                     </tr>
                     <tr>
                         <td>kWh Punta</td>
-                        <td>999</td>
+                        <td>{{ tarifaHM.kwh_punta }}</td>
                     </tr>
-                    <tr>
-                        <td>kWh Semipunta</td>
-                        <td>999</td>
-                    </tr>
+
                     <tr>
                         <td>kW Base</td>
-                        <td>999</td>
+                        <td>{{ tarifaHM.kw_base }}</td>
                     </tr>
                     <tr>
                         <td>kW Intermedia</td>
-                        <td>999</td>
+                        <td>{{ tarifaHM.kw_intermedio }}</td>
                     </tr>
                     <tr>
                         <td>kW Punta</td>
-                        <td>11999</td>
-                    </tr>
-                    <tr>
-                        <td>kW Semipunta</td>
-                        <td>999</td>
+                        <td>{{ tarifaHM.kw_punta }}</td>
                     </tr>
                     <tr>
                         <td>kVArh</td>
-                        <td>999</td>
+                        <td>{{ tarifaHM.kvarh_totales }}</td>
                     </tr>
                     <tr>
                         <td>Factor de potencia %</td>
-                        <td>99.99</td>
+                        <td>{{ tarifaHM.factor_potencia|floatformat:2 }}%</td>
                     </tr>
                 </tbody>
             </table>
@@ -255,28 +238,27 @@
                 <tbody>
                     <tr>
                         <td>Energ&iacute;a en base kWh</td>
-                        <td>999</td>
-                        <td>1.98736736</td>
+                        <td>{{ tarifaHM.kwh_base }}</td>
+                        <td>${{ tarifaHM.tarifa_kwhb|floatformat:2 }}</td>
+
                     </tr>
                     <tr>
                         <td>Energ&iacute;a en intermedia kWh</td>
-                        <td>999</td>
-                        <td>1.98736736</td>
+                        <td>{{ tarifaHM.kwh_intermedio }}</td>
+                        <td>${{ tarifaHM.tarifa_kwhi|floatformat:2 }}</td>
+
                     </tr>
                     <tr>
                         <td>Energ&iacute;a en punta kWh</td>
-                        <td>999</td>
-                        <td>1.98736736</td>
-                    </tr>
-                    <tr>
-                        <td>Energ&iacute;a en semipunta kWh</td>
-                        <td>999</td>
-                        <td>1.98736736</td>
+                        <td>{{ tarifaHM.kwh_punta }}</td>
+                        <td>${{ tarifaHM.tarifa_kwhp|floatformat:2 }}</td>
+
                     </tr>
                     <tr>
                         <td>Demanda facturable kW</td>
-                        <td>999</td>
-                        <td>178.2300</td>
+                        <td>{{ tarifaHM.demanda_facturable }}</td>
+                        <td>${{ tarifaHM.tarifa_df|floatformat:2 }}</td>
+
                     </tr>
                 </tbody>
             </table>
@@ -304,86 +286,16 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>ABR 2011</td>
-                        <td>88</td>
-                        <td>2,213</td>
-                        <td>80%</td>
-                        <td>70%</td>
-                        <td>5,230</td>
-                    </tr>
-                    <tr>
-                        <td>MAY 2011</td>
-                        <td>88</td>
-                        <td>2,213</td>
-                        <td>80%</td>
-                        <td>70%</td>
-                        <td>5,230</td>
-                    </tr>
-                    <tr>
-                        <td>JUN 2011</td>
-                        <td>88</td>
-                        <td>2,213</td>
-                        <td>80%</td>
-                        <td>70%</td>
-                        <td>5,230</td>
-                    </tr>
-                    <tr>
-                        <td>JUL 2011</td>
-                        <td>88</td>
-                        <td>2,213</td>
-                        <td>80%</td>
-                        <td>70%</td>
-                        <td>5,230</td>
-                    </tr>
-                    <tr>
-                        <td>AGO 2011</td>
-                        <td>88</td>
-                        <td>2,213</td>
-                        <td>80%</td>
-                        <td>70%</td>
-                        <td>5,230</td>
-                    </tr>
-                    <tr>
-                        <td>SEP 2011</td>
-                        <td>88</td>
-                        <td>2,213</td>
-                        <td>80%</td>
-                        <td>70%</td>
-                        <td>5,230</td>
-                    </tr>
-                    <tr>
-                        <td>OCT 2011</td>
-                        <td>88</td>
-                        <td>2,213</td>
-                        <td>80%</td>
-                        <td>70%</td>
-                        <td>5,230</td>
-                    </tr>
-                    <tr>
-                        <td>NOV 2011</td>
-                        <td>88</td>
-                        <td>2,213</td>
-                        <td>80%</td>
-                        <td>70%</td>
-                        <td>5,230</td>
-                    </tr>
-                    <tr>
-                        <td>DIC 2011</td>
-                        <td>88</td>
-                        <td>2,213</td>
-                        <td>80%</td>
-                        <td>70%</td>
-                        <td>5,230</td>
-                    </tr>
-                    <tr>
-                        <td>ENE 2012</td>
-                        <td>88</td>
-                        <td>2,213</td>
-                        <td>80%</td>
-                        <td>70%</td>
-                        <td>5,230</td>
-                    </tr>
+                    {% for hist in  historico%}
+                        <tr>
+                            <td>{{ hist.fecha }}</td>
+                            <td>{{ hist.demanda_maxima|floatformat:2 }}</td>
+                            <td>{{ hist.total_kwh|floatformat:2 }}</td>
+                            <td>{{ hist.factor_potencia|floatformat:2 }}%</td>
+                            <td>{{ hist.factor_carga|floatformat:2 }}%</td>
+                            <td>{{ hist.costo_promedio|floatformat:2 }}</td>
+                        </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
