@@ -18,27 +18,26 @@
         };
 
         function changeRange(interval) {
+            var start_date, end_date;
 
-
-            //Date("October 13, 1975 11:13:00")
-            var start_date = new Date("{{ fi|date:"F d, Y" }}");
-            var end_date=new Date("{{ fi|date:"F d, Y" }}");
-            console.log("{{ fi|date:"F d, Y" }}");
-            switch (interval){
-                case 'hour' :
-                    start_date.addHours(5);
-                    end_date.addHours(7);
-                    break;
-                case 'day' :
-                    end_date.addDays(1);
-                    break;
-                case 'week' :
-                    end_date.addDays(7);
-                    break;
-                case 'month' :
-                    end_date.addDays(30);
-                    break;
-            }
+                //Date("October 13, 1975 11:13:00")
+                start_date = new Date("{{ fi|date:"F d, Y" }}");
+                end_date=  new Date("{{ fi|date:"F d, Y" }}");
+                switch (interval){
+                    case 'hour' :
+                        start_date.addHours(5);
+                        end_date.addHours(7);
+                        break;
+                    case 'day' :
+                        end_date.addDays(1);
+                        break;
+                    case 'week' :
+                        end_date.addDays(7);
+                        break;
+                    case 'month' :
+                        end_date.addDays(30);
+                        break;
+                }
             // 'slider' is the ControlWrapper instance describing the range slider.
             console.log(start_date,end_date);
             control.setState({
@@ -50,9 +49,17 @@
             control.draw();
         }
 
-        var fi=encodeURIComponent("{{ fi|date:"d/m/Y" }}");
-        var ff=encodeURIComponent("{{ ff|date:"d/m/Y" }}");
-        var url="/reportes/potencia_activa_data/?building={{ building }}&f1_init="+fi+"&f1_end="+ff;
+        var fi = encodeURIComponent("{{ fi|date:"d/m/Y" }}");
+        var ff = encodeURIComponent("{{ ff|date:"d/m/Y" }}");
+        {% if fi2 %}
+            var fi2 = encodeURIComponent("{{ fi2|date:"d/m/Y" }}");
+            var ff2 = encodeURIComponent("{{ ff2|date:"d/m/Y" }}");
+            var url = "/reportes/potencia_activa_data/?building={{ building }}&f1_init=" + fi
+                    + "&f1_end=" + ff + "&f2_init=" + fi2 + "&f2_end=" + ff2;
+        {% else %}
+            var url="/reportes/potencia_activa_data/?building={{ building }}&f1_init="+fi+"&f1_end="+ff;
+        {% endif %}
+
 
         var chart, control;
         var data = new google.visualization.DataTable();
@@ -78,6 +85,30 @@
                 dataType: 'json',
                 async: 'true',
                 success: function(datos){
+                    var controlChartViewColumns;
+                    var chartViewColumns;
+                    var start_date_g = new Date("{{ fi|date:"F d, Y" }}");
+                    var end_date_g = new Date("{{ ff|date:"F d, Y" }}");
+                    if(datos[0].kw1 != undefined){
+                        controlChartViewColumns=[0,1,2]
+                        chartViewColumns=[
+                            {
+                                'calc': function(dataTable, rowIndex) {
+                                    return dataTable.getFormattedValue(rowIndex, 0);
+                                },
+                                'type': 'string'
+                            }, 1,2];
+                    }else{
+                        controlChartViewColumns=[0,1];
+                        chartViewColumns=[
+                            {
+                                'calc': function(dataTable, rowIndex) {
+                                    return dataTable.getFormattedValue(rowIndex, 0);
+                                },
+                                'type': 'string'
+                            }, 1];
+                    }
+
                     //----------------------CHARTS----------------------------
 
                     function drawVisualization() {
@@ -99,14 +130,14 @@
                                     // Display a single series that shows the closing value of the stock.
                                     // Thus, this view has two columns: the date (axis) and the stock value (line series).
                                     'chartView': {
-                                        'columns': [0, 1]
+                                        'columns': controlChartViewColumns
                                     },
                                     // 1 day in milliseconds = 24 * 60 * 60 * 1000 = 86,400,000
                                     'minRangeSize': 3600000
                                 }
                             },
                             // Initial range: 2012-02-09 to 2012-03-20.
-                            'state': {'range': {'start': new Date("{{ fi|date:"F d, Y" }}"), 'end': new Date("{{ ff|date:"F d, Y" }}")}}
+                            'state': {'range': {'start': start_date_g , 'end': end_date_g}}
                         });
 
                         chart = new google.visualization.ChartWrapper({
@@ -116,31 +147,41 @@
                                 // Use the same chart area width as the control for axis alignment.
                                 'chartArea': {'height': '80%', 'width': '100%'},
                                 'hAxis': {'slantedText': false},
-                                'vAxis': {'viewWindow': {'min': 70, 'max': 720}, textPosition: 'in'},
-                                'legend': {'position': 'none'}
+                                'vAxis': {'viewWindow': {'min': 90, 'max': 260}, textPosition: 'in'},
+                                'legend': {position: 'top', textStyle: {color: '#1E90FF', fontSize: 16}}
                             },
                             'colors': ['#ccc','#000'],
                             // Convert the first column from 'date' to 'string'.
                             'view': {
-                                'columns': [
-                                    {
-                                        'calc': function(dataTable, rowIndex) {
-                                            return dataTable.getFormattedValue(rowIndex, 0);
-                                        },
-                                        'type': 'string'
-                                    }, 1]
+                                'columns': chartViewColumns
                             }
                         });
 
 
-                        data.addColumn('datetime', 'Date');
-                        data.addColumn('number', 'Potencia Activa');
-                        for(var x=0; x < datos.length; x++) {
-                            var e = datos[x];
-                            var fecha=new Date();
-                            fecha.setTime((e.date*1000) - 3600000);//numero de milisegundos en una hora
-                            data.addRow([fecha , parseFloat(e.kw)]);
+                        if(datos[0].kw1 != undefined){
+                            data.addColumn('datetime', 'Intervalo de Tiempo (5 minutos)');
+                            data.addColumn('number', 'Potencia Activa 1 (kW) - {{ fi|date:"d/m/Y" }} al {{ ff|date:"d/m/Y" }}');
+
+                            data.addColumn('number', 'Potencia Activa 2 (kW) - {{ fi2|date:"d/m/Y" }} al {{ ff2|date:"d/m/Y" }}');
+
+                            for(var x=0; x < datos.length; x++) {
+                                var e = datos[x];
+                                var fecha1=new Date();
+                                fecha1.setTime((e.time1*1000) - 3600000);//numero de milisegundos en una hora
+                                data.addRow([fecha1, parseFloat(e.kw1), parseFloat(e.kw2)]);
+                            }
+                        }else{
+                            data.addColumn('datetime', 'Date');
+                            data.addColumn('number', 'Potencia Activa (kW)');
+                            for(var x=0; x < datos.length; x++) {
+                                var e = datos[x];
+                                var fecha=new Date();
+                                fecha.setTime((e.date*1000) - 3600000);//numero de milisegundos en una hora
+                                data.addRow([fecha, parseFloat(e.kw)]);
+                            }
                         }
+
+
                         dashboard.bind(control, chart);
                         dashboard.draw(data);
                     }
