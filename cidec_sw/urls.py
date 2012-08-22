@@ -11,6 +11,7 @@ urlpatterns = patterns('',
     url(r'^main/', 'cidec_sw.views.index'),
     url(r'^parse/', 'cidec_sw.views.parse_csv'),
     url(r'^reportes/', include(c_center_urls)),
+    url(r'^prueba_cfe/', 'c_center.calculations.recibocfe'),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     #url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
