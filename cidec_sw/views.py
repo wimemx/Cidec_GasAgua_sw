@@ -134,13 +134,16 @@ def changedate(key):
     """
     sets all the data in intervals of 3 hours
     """
-    data = ElectricData.objects.filter(profile_powermeter__pk=key)
-    initial_date = datetime.datetime(2012,01,01,00,00)
+    data = ElectricData.objects.filter(profile_powermeter__pk=key).order_by("-medition_date")
+    initial_date = ElectricData.objects.filter(profile_powermeter__pk=3).order_by("-medition_date")[:1]
+    initial_date = initial_date[0].medition_date
+    print "initial_date", initial_date
     for dato in data:
-        initial_date += timedelta(hours=3)
+        print "antes", dato.medition_date
+        initial_date -= timedelta(minutes=5)
         dato.medition_date = initial_date
         dato.save()
-        print dato.medition_date
+        print "despues", dato.medition_date
 
 def dummy_data_generator_2000():
     """
