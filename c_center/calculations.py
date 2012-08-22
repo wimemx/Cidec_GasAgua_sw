@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Create your views here.
-
+from django.views.decorators.csrf import csrf_exempt
 from django.template import RequestContext
 from django.http import *
 from django.shortcuts import render_to_response
@@ -747,13 +747,13 @@ def recibocfe(request):
     return render_to_response('consumption_centers/cfe.html', variables)
 
 
-def data_tagging(key):
-    readings=ElectricData.objects.filter(profile_powermeter__pk=key).order_by('medition_date')
-    consumer_unit = ConsumerUnit.objects.get(profile_powermeter__pk=key)
-    region = consumer_unit.building.region
+def data_tagging():
+
     catalogo_grupos = obtenerCatalogoGrupos()
     tarifa = ElectricRates.objects.get(pk=1)
+    region = Region.objects.get(pk=7)
     identifier = 0
+    readings=ElectricData.objects.all().order_by('medition_date')
     tarifa_act = None
     for reading in readings:
 
@@ -773,3 +773,41 @@ def data_tagging(key):
             electric_data = reading,
             identifier = str(hex(identifier))
         ).save()
+
+@csrf_exempt
+def tag_reading(request):
+    if request.method == 'POST':
+        #Obtiene el Id de la medicion
+        reading_id = request.REQUEST.get("id_reading", "")
+        if reading_id:
+            tag = None
+            readingObj = ElectricData.objects.get(id=int(reading_id))
+            catalogo_grupos = obtenerCatalogoGrupos()
+            #Obtiene las ultimas lecturas de ese medidor
+            last_reading = ElectricRateForElectricData.objects.filter(electric_data__profile_powermeter = readingObj.profile_powermeter).order_by("-electric_data__medition_date")
+
+            #Obtiene el periodo de la lectura actual
+            reading_period_type = obtenerTipoPeriodo(readingObj.medition_date, last_reading[0].electric_rates_periods.region, last_reading[0].electric_rates_periods.electric_rate, catalogo_grupos)
+
+            #Obtiene el periodo de la ultima lectura de ese medidor
+            last_reading_type = last_reading[0].electric_rates_periods.period_type
+
+            if reading_period_type.period_type == last_reading_type:
+                tag = last_reading[0].identifier
+            else:
+                #Crea el nuevo tag
+                tag = last_reading[0].identifier
+                tag = hex(int(tag, 16) + int(1))
+
+            #Guarda el registro etiquetado
+            newTaggedReading = ElectricRateForElectricData(
+                electric_rates_periods = reading_period_type,
+                electric_data = readingObj,
+                identifier = tag
+            )
+            newTaggedReading.save()
+            return HttpResponse(200)
+        else:
+            raise Http404
+    else:
+        raise Http404
