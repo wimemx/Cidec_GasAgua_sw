@@ -182,7 +182,7 @@ def obtenerDemanda(arr_kw):
             print "IndexError"
             demanda_maxima = 0
         except TypeError:
-            print "TypeError"
+            print "TypeError obtenerDemanda"
             demanda_maxima = 0
 
     return demanda_maxima
@@ -766,7 +766,7 @@ def obtenerDemanda_kw(lecturas_kw):
             print "IndexError"
             demanda_maxima = 0
         except TypeError:
-            print "TypeError"
+            print "TypeError obtenerDemanda_kw"
             demanda_maxima = 0
     return int(ceil(demanda_maxima))
 

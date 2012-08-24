@@ -39,10 +39,10 @@
                         break;
                 }
             // 'slider' is the ControlWrapper instance describing the range slider.
-            console.log(start_date,end_date);
+
             control.setState({
                 'range': {
-                    'start':start_date,
+                    'start':new Date("{{ fi|date:"F d, Y" }}"),
                     'end': end_date
                 }
             });
@@ -160,19 +160,49 @@
 
                         if(datos[0].kw1 != undefined){
                             data.addColumn('datetime', 'Intervalo de Tiempo (5 minutos)');
-                            data.addColumn('number', 'Potencia Activa 1 (kW) - {{ fi|date:"d/m/Y" }} al {{ ff|date:"d/m/Y" }}');
+                            data.addColumn('number', 'Potencia Activa 1');
+                            data.addColumn('number', 'Potencia Activa 2');
 
-                            data.addColumn('number', 'Potencia Activa 2 (kW) - {{ fi2|date:"d/m/Y" }} al {{ ff2|date:"d/m/Y" }}');
-
+                            var max=0;
+                            var min=1000;
+                            var rowsArray = new Array();
                             for(var x=0; x < datos.length; x++) {
                                 var e = datos[x];
                                 var fecha1=new Date();
                                 fecha1.setTime((e.time1*1000) - 3600000);//numero de milisegundos en una hora
-                                data.addRow([fecha1, parseFloat(e.kw1), parseFloat(e.kw2)]);
+                                var fecha2=new Date();
+                                fecha2.setTime((e.time2*1000) - 3600000);//numero de milisegundos en una hora
+                                var label1, label2;
+                                label1=e.kw1 + "kW - " + fecha1.getDay() + "/" + fecha1.getMonth() + "/" + fecha1.getYear();
+                                label2=e.kw2 + "kW - " + fecha2.getDay() + "/" + fecha2.getMonth() + "/" + fecha2.getYear();
+                                var rowArray = [fecha1, {v: parseFloat(e.kw1), f: label1}, {v: parseFloat(e.kw2), f: label2}];
+
+                                rowsArray.push(rowArray);
+
+                                //data.addRow([fecha1, parseFloat(e.kw1), String(x), parseFloat(e.kw2), String(x)]);
+                                if(parseFloat(e.kw1) > max){
+                                    max= e.kw1;
+                                }else{
+                                    if(parseFloat(e.kw2) > max){
+                                        max= e.kw2
+                                    }
+                                }
+                                if(parseFloat(e.kw1) < min){
+                                    min = e.kw1;
+                                }else{
+                                    if(parseFloat(e.kw2) < min){
+                                        min = e.kw2
+                                    }
+                                }
+
                             }
+                            data.addRows(rowsArray);
+                            chart.setOption("vAxis.viewWindow.max",parseFloat(max));
+                            chart.setOption("vAxis.viewWindow.min",parseFloat(min));
                         }else{
                             data.addColumn('datetime', 'Date');
                             data.addColumn('number', 'Potencia Activa (kW)');
+
                             for(var x=0; x < datos.length; x++) {
                                 var e = datos[x];
                                 var fecha=new Date();

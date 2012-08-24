@@ -106,7 +106,6 @@ def cfe_bill(request):
                        'empresa':request.session['main_building'],
                        'tarifaHM': t_hm,
                        'historico': arr_historico}
-        print template_vars
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/cfe.html", template_vars_template)
     else:
@@ -201,7 +200,7 @@ def get_kw_data(request):
                     cont+=1
                     kw2 = 0 if cont > len1 else meditions1[cont-1].kW
                     date= 0 if cont > len1 else int(time.mktime(meditions1[cont-1].medition_date.timetuple()))
-                    compared_meditions.append(dict(time1=str(date), kw1=str(kw2), kw2=str(medition.kW), time2=str(medition.medition_date), cont=str(cont)))
+                    compared_meditions.append(dict(time1=str(date), kw1=str(kw2), kw2=str(medition.kW), time2=str(time.mktime(medition.medition_date.timetuple())), cont=str(cont)))
                     print medition.kW, kw2
 
             return HttpResponse(content=simplejson.dumps(compared_meditions), content_type="application/json")

@@ -40,10 +40,10 @@
                     break;
             }
             // 'slider' is the ControlWrapper instance describing the range slider.
-            console.log(start_date,end_date);
+
             control.setState({
                 'range': {
-                    'start':start_date,
+                    'start': new Date("{{ fi|date:"F d, Y" }}"),
                     'end': end_date
                 }
             });
@@ -146,19 +146,31 @@
                         {% for building_name in building_names %}
                             data.addColumn('number', 'Potencia Activa - {{ building_name.building_name }}');
                         {% endfor %}
-
+                        var max = 0;
+                        var min = 1000;
                         for(var x=0; x < datos.length; x++) {
                             var e = datos[x];
                             var fecha=new Date();
                             fecha.setTime((e.date*1000) - 3600000);//numero de milisegundos en una hora
                             var rowArray = new Array();
                             rowArray.push(fecha);
-                            for (var medition_index = 0; medition_index < e.meditions.length; medition_index++) {
-                                rowArray.push(parseFloat(e.meditions[medition_index]));
-                            }
 
+                            var dat_kw;
+                            for (var medition_index = 0; medition_index < e.meditions.length; medition_index++) {
+                                dat_kw=parseFloat(e.meditions[medition_index]);
+                                rowArray.push(dat_kw);
+                                if(dat_kw > max){
+                                    max = dat_kw;
+                                }
+                                if(dat_kw < min){
+                                    min = dat_kw;
+                                }
+                            }
                             data.addRow(rowArray);
                         }
+
+                        chart.setOption("vAxis.viewWindow.max", max);
+                        chart.setOption("vAxis.viewWindow.min", min);
                         dashboard.bind(control, chart);
                         dashboard.draw(data);
                     }
