@@ -177,6 +177,12 @@
                 case "profile":
                     src = "/reportes/perfil_carga/";
                     break;
+                case "kwh":
+                    src = "/reportes/graficas?graph=kwh";
+                    break;
+                case "kvarh":
+                    src = "/reportes/graficas?graph=kvarh";
+                    break;
             }
 
             src += "?" + $("#graphFrame").attr("src").split('?')[1];
@@ -298,6 +304,8 @@
             <li id="kvar">Potencia Reactiva (KVar)</li>
             <li id="pf">Factor de Potencia (PF)</li>
             <li id="profile">Perfil de Carga</li>
+            <li id="kwh">kW Hora</li>
+            <li id="kvarh">kVAR Hora</li>
         </ul>
     </div>
     <div id="graphs_container">
@@ -317,9 +325,7 @@
         </div>
 
         <div id="graph_container">
-            {% if type == "graphs" %}
-                <iframe src="/reportes/potencia_activa/" id="graphFrame"></iframe>
-            {% endif %}
+
         </div>
 
     </div>

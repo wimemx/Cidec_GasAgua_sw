@@ -1,6 +1,9 @@
 from django.conf.urls import patterns, url
 
 urlpatterns = patterns('',
+    url(r'^graficas/', 'c_center.views.graficas'),
+    url(r'^grafica_datos/', 'c_center.views.grafica_datos'),
+
     url(r'^medition_rate/', 'c_center.calculations.tag_reading'),
     url(r'^cfe/', 'c_center.views.cfe_bill'),
     #url(r'^potencia_activa/', 'c_center.views.potencia_activa'),

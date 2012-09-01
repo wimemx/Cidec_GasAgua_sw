@@ -123,29 +123,23 @@ def potencia_activa(request):
     if request.GET:
 
         if "f2_init" in request.GET:
+            #comparacion con un intervalo
             template_vars['fi'], template_vars['ff'] = f1_init, f1_end
             template_vars['fi2'], template_vars['ff2'] = get_intervals_2(request.GET)
             template_vars['building']=request.session['main_building'].pk
             template_vars_template = RequestContext(request, template_vars)
             return render_to_response("consumption_centers/graphs/potencia_activa.html", template_vars_template)
         else:
-            buildings = []
-            buildings.append(request.session['main_building'].pk)
+            #graficas de un edificio
+            buildings = [request.session['main_building'].pk]
             template_vars['building_names'] = []
             template_vars['building_names'].append(get_object_or_404(Building, pk = request.session['main_building'].pk))
 
-            #second interval, None by default
-            f2_init = None
-            f2_end = None
-
             f1_init, f1_end = get_intervals_1(request.GET)
-            print request.method
             if request.method == "GET":
-                if "f2_init" in request.GET:
-                    f2_init, f2_end = get_intervals_2(request.GET)
-
                 for key in request.GET:
                     if re.search('^compare_to\d+', key):
+                        #graficas comparativas de 2 o mas edificios
                         buildings.append(int(request.GET[key]))
                         template_vars['building_names'].append(get_object_or_404(Building, pk = int(request.GET[key])))
 
@@ -157,9 +151,89 @@ def potencia_activa(request):
     else:
         return HttpResponse(content="", content_type="text/html")
 
+
+def graficas(request):
+    template_vars = {'fi': get_intervals_1(request.GET)[0], 'ff': get_intervals_1(request.GET)[1]}
+
+    #second interval, None by default
+
+    if request.GET:
+        if "graph" not in request.GET:
+            raise Http404
+        else:
+            template_vars['tipo']=request.GET["graph"]
+            buildings = [request.session['main_building'].pk]
+
+            if "f2_init" in request.GET:
+                #comparacion con un intervalo
+                template_vars['fi2'], template_vars['ff2'] = get_intervals_2(request.GET)
+            else:
+                #graficas de un edificio
+
+                template_vars['building_names'] = []
+                template_vars['building_names'].append(get_object_or_404(Building, pk = request.session['main_building'].pk))
+
+                if request.method == "GET":
+                    for key in request.GET:
+                        if re.search('^compare_to\d+', key):
+                            #graficas comparativas de 2 o mas edificios
+                            buildings.append(int(request.GET[key]))
+                            template_vars['building_names'].append(get_object_or_404(Building, pk = int(request.GET[key])))
+
+            template_vars['buildings'] = simplejson.dumps(buildings)
+
+            template_vars_template = RequestContext(request, template_vars)
+            return render_to_response("consumption_centers/graphs/test_graph.html", template_vars_template)
+    else:
+        return HttpResponse(content="Wrong", content_type="text/html")
+
+def grafica_datos(request):
+    f1_init, f1_end = get_intervals_1(request.GET)
+    buildings = []
+    for key in request.GET:
+        if re.search('^building\d+', key):
+            building = get_object_or_404(Building, pk=int(request.GET[key]))
+            buildings.append(building)
+
+    if len(buildings) > 0:
+        data=get_KW_json_b(buildings, f1_init, f1_end)
+        return HttpResponse(content=data,content_type="application/json")
+    else:
+        raise Http404
+
 def get_kw_data_boris(request):
     f1_init, f1_end = get_intervals_1(request.GET)
     buildings = []
+    if "f2_init" in request.GET:
+        f2_init, f2_end = get_intervals_2(request.GET)
+        #esto comparando con otro intervalo de tiempo
+        #tengo que sacar los datos de los dos intervalos y homologar las fechas
+        #como intervalos regulares de tiempo
+        building = Building.objects.get(pk=int(request.GET["building0"]))
+        meditions1 = get_medition_in_time(building, f1_init, f1_end)
+        meditions2 = get_medition_in_time(building, f2_init, f2_end)
+        len1=len(meditions1)
+        len2=len(meditions2)
+        cont=0
+        compared_meditions=[]
+
+        if len1 > len2:
+            for medition in meditions1:
+                cont+=1
+                kw2 = 0 if cont > len2 else meditions2[cont-1].kW
+                date2= 0 if cont > len2 else int(time.mktime(meditions2[cont-1].medition_date.timetuple()))
+                compared_meditions.append(dict(time1=int(time.mktime(medition.medition_date.timetuple())), kw1=str(medition.kW), time2=date2, kw2=str(kw2), cont=str(cont)))#date=int(time.mktime(medition.medition_date.timetuple()))
+                print medition.kW, kw2
+        else:
+            for medition in meditions2:
+                cont+=1
+                kw2 = 0 if cont > len1 else meditions1[cont-1].kW
+                date= 0 if cont > len1 else int(time.mktime(meditions1[cont-1].medition_date.timetuple()))
+                compared_meditions.append(dict(time1=str(date), kw1=str(kw2), kw2=str(medition.kW), time2=str(time.mktime(medition.medition_date.timetuple())), cont=str(cont)))
+                print medition.kW, kw2
+
+        return HttpResponse(content=simplejson.dumps(compared_meditions), content_type="application/json")
+
     for key in request.GET:
         if re.search('^building\d+', key):
             building = get_object_or_404(Building, pk=int(request.GET[key]))
