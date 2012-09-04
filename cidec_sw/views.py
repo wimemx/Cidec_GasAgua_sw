@@ -5,6 +5,7 @@ from itertools import cycle
 from random import uniform, randrange
 from datetime import timedelta
 from decimal import Decimal
+import pytz #for timezone support
 
 #related third party imports
 import datetime
@@ -16,6 +17,15 @@ from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from c_center.models import ProfilePowermeter, ElectricData
 from c_center.views import main_page
+
+from django.shortcuts import redirect, render
+
+def set_timezone(request):
+    if request.method == 'POST':
+        request.session['django_timezone'] = pytz.timezone(request.POST['timezone'])
+        return redirect('/')
+    else:
+        return render(request, 'set_timezone.html', {'timezones': pytz.common_timezones})
 
 def parse_csv(request):
 

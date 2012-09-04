@@ -14,10 +14,10 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'satest_cidec',                      # Or path to database file if using sqlite3.
-        'USER': 'satest_cidec',                      # Not used with sqlite3.
-        'PASSWORD': '5MnT)HXnm_pT',                  # Not used with sqlite3.
-        'HOST': 'auditem.mx',                      # Set to empty string for localhost. Not used with sqlite3.
+        'NAME': 'audiwime_db',                      # Or path to database file if using sqlite3.
+        'USER': 'audiwime_user',                      # Not used with sqlite3.
+        'PASSWORD': 'A8d32e08.',#'5MnT)HXnm_pT',                  # Not used with sqlite3.
+        'HOST': 'audiwime.wimelabs.com',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     }
 }
@@ -39,7 +39,7 @@ DATABASES = {
 # timezone as the operating system.
 # If running in a Windows environment this must be set to the same as your
 # system time zone.
-TIME_ZONE = 'America/Chicago'
+TIME_ZONE = 'America/Mexico_City'
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
@@ -109,6 +109,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'cidec_sw.middleware.timezones.TimezoneMiddleware'
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )

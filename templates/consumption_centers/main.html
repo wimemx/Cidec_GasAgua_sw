@@ -184,8 +184,8 @@
                     src = "/reportes/graficas?graph=kvarh";
                     break;
             }
-
-            src += "?" + $("#graphFrame").attr("src").split('?')[1];
+            if($("#graphFrame").attr("src").split('?')[1] != undefined)
+                src += "&" + $("#graphFrame").attr("src").split('?')[1];
             makeIframe(src);
             //cambia la clase de la pestania
             $(this).addClass("active");
@@ -325,7 +325,7 @@
         </div>
 
         <div id="graph_container">
-
+            <iframe src="/reportes/potencia_activa/" id="graphFrame"></iframe>
         </div>
 
     </div>

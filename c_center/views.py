@@ -3,12 +3,14 @@ from datetime import  timedelta, datetime
 from dateutil.relativedelta import relativedelta
 import re
 import time
+import pdb
 #related third party imports
 
 #local application/library specific imports
 from django.shortcuts import render_to_response, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.template.context import RequestContext
+from django.utils import timezone
 
 from c_center.models import Building, ElectricData, ProfilePowermeter
 from rbac.models import Operation, DataContextPermission
@@ -605,12 +607,16 @@ def get_medition_in_time(building, datetime_from, datetime_to):
     Right now we are assuming that there is only a powermeter(and one consumer unit) per building
 
     """
+    pdb.set_trace()
     consumer_unit = ConsumerUnit.objects.get(building=building)
     profile_powermeter = ProfilePowermeter.objects.get(pk=consumer_unit.profile_powermeter.pk)
-    date_gte = datetime_from-timedelta(hours=5)
-    date_lte = datetime_to+timedelta(days=1)-timedelta(hours=5)
+    date_gte = datetime_from.replace(tzinfo=timezone.get_current_timezone())
+    date_lte = datetime_to.replace(tzinfo=timezone.get_current_timezone())
+    #date_gte = datetime_from-timedelta(hours=5)
+    #date_lte = datetime_to+timedelta(days=1)-timedelta(hours=5)
     meditions = ElectricData.objects.filter(profile_powermeter=profile_powermeter,
-        medition_date__gte=date_gte,medition_date__lte=date_lte).order_by("medition_date")
+        medition_date__range=(datetime.combine(date_gte, datetime.time.min), datetime.combine(date_lte, datetime.time.max))).order_by("medition_date")
+    print profile_powermeter.pk, date_gte, date_lte
     return meditions
 
 def get_KW(building, datetime_from, datetime_to):
@@ -636,6 +642,7 @@ def get_KW_json(building, datetime_from, datetime_to):
 
 def get_KW_json_b(buildings, datetime_from, datetime_to):
     #pdb.set_trace()
+
     meditions_json = []
     buildings_number = len(buildings)
     if buildings_number < 1:
@@ -643,10 +650,10 @@ def get_KW_json_b(buildings, datetime_from, datetime_to):
 
     buildings_meditions = []
     for building in buildings:
-        print "Building"
         buildings_meditions.append(get_medition_in_time(building, datetime_from, datetime_to))
 
     meditions_number = len(buildings_meditions[0])
+
     for medition_index in range(0, meditions_number):
         current_medition = None
         meditions_kw = []
