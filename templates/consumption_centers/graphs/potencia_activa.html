@@ -8,113 +8,61 @@
         google.load('visualization', '1.1', {packages: ['corechart', 'controls']});
     </script>
     <script type="text/javascript">
-
-        //----------------------CHARTS----------------------------
-        var chart, control;
-        function drawVisualization() {
-            var dashboard = new google.visualization.Dashboard(
-                    document.getElementById('dashboard'));
-
-            control = new google.visualization.ControlWrapper({
-                'controlType': 'ChartRangeFilter',
-                'containerId': 'control',
-                'options': {
-                    // Filter by the date axis.
-                    'filterColumnIndex': 0,
-                    'ui': {
-                        'chartType': 'LineChart',
-                        'chartOptions': {
-                            'chartArea': {'width': '90%'},
-                            'hAxis': {'baselineColor': 'none'}
-                        },
-                        // Display a single series that shows the closing value of the stock.
-                        // Thus, this view has two columns: the date (axis) and the stock value (line series).
-                        'chartView': {
-                            'columns': [0, 1]
-                        },
-                        // 1 day in milliseconds = 24 * 60 * 60 * 1000 = 86,400,000
-                        'minRangeSize': 3600000
-                    }
-                },
-                // Initial range: 2012-02-09 to 2012-03-20.
-                'state': {'range': {'start': new Date({{ fi|date:"Y,m,d" }}), 'end': new Date({{ ff|date:"Y,m,d" }})}}
-            });
-
-            chart = new google.visualization.ChartWrapper({
-                'chartType': 'LineChart',
-                'containerId': 'chart',
-                'options': {
-                    // Use the same chart area width as the control for axis alignment.
-                    'chartArea': {'height': '80%', 'width': '100%'},
-                    'hAxis': {'slantedText': false},
-                    'vAxis': {'viewWindow': {'min': 230, 'max': 275}, textPosition: 'in'},
-                    'legend': {'position': 'none'}
-                },
-                'colors': ['#ccc','#000'],
-                // Convert the first column from 'date' to 'string'.
-                'view': {
-                    'columns': [
-                        {
-                            'calc': function(dataTable, rowIndex) {
-                                return dataTable.getFormattedValue(rowIndex, 0);
-                            },
-                            'type': 'string'
-                        }, 1]
-                }
-            });
-
-            var data = new google.visualization.DataTable();
-            data.addColumn('datetime', 'Date');
-            data.addColumn('number', 'Potencia Activa');
-
-            // Create random stock values, just like it works in reality.
-            var open, close = 300;
-            var low;
-            {% for kw in main_interval_kw %}
-                data.addRow([new Date({{ kw.date|date:"Y,m,d,G,i"}}), {{ kw.kw }}]);
-            {% endfor %}
-
-            dashboard.bind(control, chart);
-            dashboard.draw(data);
-        }
-
-
-        google.setOnLoadCallback(drawVisualization);
+        Date.prototype.addDays = function (n) {
+            this.setDate(this.getDate() + n);
+            this.tempDate = this.getDate();
+        };
+        Date.prototype.addHours= function(h){
+            this.setHours(this.getHours()+h);
+            return this;
+        };
 
         function changeRange(interval) {
+            var start_date, end_date;
 
-
-
-            var start_date = new Date({{ fi|date:"Y,m,d" }});
-            var end_date = new Date({{ ff|date:"Y,m,d" }});
-
-            var hour = start_date.getHours();
-
-
-            switch (interval){
-                case 'hour' :
-                    end_date = new Date({{ fi|date:"Y,m,d,G" }}+2);
-                    break;
-                case 'day' :
-                    end_date.setDate(start_date.getDate()+1);
-                    break;
-                case 'week' :
-                    end_date.setDate(start_date.getDate()+7);
-                    break;
-                case 'month' :
-                    end_date.setDate(start_date.getDate()+30);
-                    break;
-            }
+                //Date("October 13, 1975 11:13:00")
+                start_date = new Date("{{ fi|date:"F d, Y" }}");
+                end_date=  new Date("{{ fi|date:"F d, Y" }}");
+                switch (interval){
+                    case 'hour' :
+                        start_date.addHours(5);
+                        end_date.addHours(7);
+                        break;
+                    case 'day' :
+                        end_date.addDays(1);
+                        break;
+                    case 'week' :
+                        end_date.addDays(7);
+                        break;
+                    case 'month' :
+                        end_date.addDays(30);
+                        break;
+                }
             // 'slider' is the ControlWrapper instance describing the range slider.
+
             control.setState({
                 'range': {
-                    'start':new Date({{ fi|date:"Y,m,d" }}),
+                    'start':new Date("{{ fi|date:"F d, Y" }}"),
                     'end': end_date
                 }
             });
             control.draw();
         }
 
+        var fi = encodeURIComponent("{{ fi|date:"d/m/Y" }}");
+        var ff = encodeURIComponent("{{ ff|date:"d/m/Y" }}");
+        {% if fi2 %}
+            var fi2 = encodeURIComponent("{{ fi2|date:"d/m/Y" }}");
+            var ff2 = encodeURIComponent("{{ ff2|date:"d/m/Y" }}");
+            var url = "/reportes/potencia_activa_data/?building={{ building }}&f1_init=" + fi
+                    + "&f1_end=" + ff + "&f2_init=" + fi2 + "&f2_end=" + ff2;
+        {% else %}
+            var url="/reportes/potencia_activa_data/?building={{ building }}&f1_init="+fi+"&f1_end="+ff;
+        {% endif %}
+
+
+        var chart, control;
+        var data = new google.visualization.DataTable();
         $(document).ready(function(){
             $("#compare_interval li").each(function(){
                 //cambia el intervalo visible de las graficas y cambia el estilo segun la opcion seleccionada
@@ -126,20 +74,167 @@
                     $(this).addClass("active");
                 });
             });
+
+
+
+
+
+            $.ajax({
+                url: url,
+                type: "GET",
+                dataType: 'json',
+                async: 'true',
+                success: function(datos){
+                    var controlChartViewColumns;
+                    var chartViewColumns;
+                    var start_date_g = new Date("{{ fi|date:"F d, Y" }}");
+                    var end_date_g = new Date("{{ ff|date:"F d, Y" }}");
+                    if(datos[0].kw1 != undefined){
+                        controlChartViewColumns=[0,1,2]
+                        chartViewColumns=[
+                            {
+                                'calc': function(dataTable, rowIndex) {
+                                    return dataTable.getFormattedValue(rowIndex, 0);
+                                },
+                                'type': 'string'
+                            }, 1,2];
+                    }else{
+                        controlChartViewColumns=[0,1];
+                        chartViewColumns=[
+                            {
+                                'calc': function(dataTable, rowIndex) {
+                                    return dataTable.getFormattedValue(rowIndex, 0);
+                                },
+                                'type': 'string'
+                            }, 1];
+                    }
+
+                    //----------------------CHARTS----------------------------
+
+                    function drawVisualization() {
+                        var dashboard = new google.visualization.Dashboard(
+                                document.getElementById('dashboard'));
+
+                        control = new google.visualization.ControlWrapper({
+                            'controlType': 'ChartRangeFilter',
+                            'containerId': 'control',
+                            'options': {
+                                // Filter by the date axis.
+                                'filterColumnIndex': 0,
+                                'ui': {
+                                    'chartType': 'LineChart',
+                                    'chartOptions': {
+                                        'chartArea': {'width': '90%'},
+                                        'hAxis': {'baselineColor': 'none'}
+                                    },
+                                    // Display a single series that shows the closing value of the stock.
+                                    // Thus, this view has two columns: the date (axis) and the stock value (line series).
+                                    'chartView': {
+                                        'columns': controlChartViewColumns
+                                    },
+                                    // 1 day in milliseconds = 24 * 60 * 60 * 1000 = 86,400,000
+                                    'minRangeSize': 3600000
+                                }
+                            },
+                            // Initial range: 2012-02-09 to 2012-03-20.
+                            'state': {'range': {'start': start_date_g , 'end': end_date_g}}
+                        });
+
+                        chart = new google.visualization.ChartWrapper({
+                            'chartType': 'LineChart',
+                            'containerId': 'chart',
+                            'options': {
+                                // Use the same chart area width as the control for axis alignment.
+                                'chartArea': {'height': '80%', 'width': '100%'},
+                                'hAxis': {'slantedText': false},
+                                'vAxis': {'viewWindow': {'min': 90, 'max': 260}, textPosition: 'in'},
+                                'legend': {position: 'top', textStyle: {color: '#1E90FF', fontSize: 16}}
+                            },
+                            'colors': ['#ccc','#000'],
+                            // Convert the first column from 'date' to 'string'.
+                            'view': {
+                                'columns': chartViewColumns
+                            }
+                        });
+
+
+                        if(datos[0].kw1 != undefined){
+                            data.addColumn('datetime', 'Intervalo de Tiempo (5 minutos)');
+                            data.addColumn('number', 'Potencia Activa 1');
+                            data.addColumn('number', 'Potencia Activa 2');
+
+                            var max=0;
+                            var min=1000;
+                            var rowsArray = new Array();
+                            for(var x=0; x < datos.length; x++) {
+                                var e = datos[x];
+                                var fecha1=new Date();
+                                fecha1.setTime((e.time1*1000) - 3600000);//numero de milisegundos en una hora
+                                var fecha2=new Date();
+                                fecha2.setTime((e.time2*1000) - 3600000);//numero de milisegundos en una hora
+                                var label1, label2;
+                                label1=e.kw1 + "kW - " + fecha1.getDay() + "/" + fecha1.getMonth() + "/" + fecha1.getYear();
+                                label2=e.kw2 + "kW - " + fecha2.getDay() + "/" + fecha2.getMonth() + "/" + fecha2.getYear();
+                                var rowArray = [fecha1, {v: parseFloat(e.kw1), f: label1}, {v: parseFloat(e.kw2), f: label2}];
+
+                                rowsArray.push(rowArray);
+
+                                //data.addRow([fecha1, parseFloat(e.kw1), String(x), parseFloat(e.kw2), String(x)]);
+                                if(parseFloat(e.kw1) > max){
+                                    max= e.kw1;
+                                }else{
+                                    if(parseFloat(e.kw2) > max){
+                                        max= e.kw2
+                                    }
+                                }
+                                if(parseFloat(e.kw1) < min){
+                                    min = e.kw1;
+                                }else{
+                                    if(parseFloat(e.kw2) < min){
+                                        min = e.kw2
+                                    }
+                                }
+
+                            }
+                            data.addRows(rowsArray);
+                            chart.setOption("vAxis.viewWindow.max",parseFloat(max));
+                            chart.setOption("vAxis.viewWindow.min",parseFloat(min));
+                        }else{
+                            data.addColumn('datetime', 'Date');
+                            data.addColumn('number', 'Potencia Activa (kW)');
+
+                            for(var x=0; x < datos.length; x++) {
+                                var e = datos[x];
+                                var fecha=new Date();
+                                fecha.setTime((e.date*1000) - 3600000);//numero de milisegundos en una hora
+                                data.addRow([fecha, parseFloat(e.kw)]);
+                            }
+                        }
+
+
+                        dashboard.bind(control, chart);
+                        dashboard.draw(data);
+                    }
+                    drawVisualization();
+                }
+            });
         });
+
     </script>
 </head>
 
 <body>
-    <ul id="compare_interval" class="fr">
-        <li id="hour">Hora</li>
-        <li id="day">D&iacute;a</li>
-        <li id="week" class="active">Semana</li>
-        <li id="month">Mes</li>
-    </ul>
-    <div id="dashboard" class="fl">
-        <div id="chart"></div>
-        <div id="control"></div>
+<ul id="compare_interval" class="fr">
+    <li id="hour">Hora</li>
+    <li id="day">D&iacute;a</li>
+    <li id="week" class="active">Semana</li>
+    <li id="month">Mes</li>
+</ul>
+<div id="dashboard" class="fl">
+    <div id="chart">
+        <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
     </div>
+    <div id="control"></div>
+</div>
 </body>
 </html>

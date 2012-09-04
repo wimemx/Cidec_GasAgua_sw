@@ -1,179 +1,212 @@
 <html>
 <head>
 
-    <link rel="stylesheet" href="/static/css/consumption_centers/graphs.css"/>
-    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
-    <script type="text/javascript" src="http://www.google.com/jsapi"></script>
-    <script type="text/javascript">
-        google.load('visualization', '1.1', {packages: ['corechart', 'controls']});
-    </script>
-    <script type="text/javascript">
-        Date.prototype.addDays = function (n) {
-            this.setDate(this.getDate() + n);
-            this.tempDate = this.getDate();
-        };
-        Date.prototype.addHours= function(h){
-            this.setHours(this.getHours()+h);
-            return this;
-        };
+<link rel="stylesheet" href="/static/css/consumption_centers/graphs.css"/>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+<script type="text/javascript" src="http://www.google.com/jsapi"></script>
+<script type="text/javascript">
+    google.load('visualization', '1.1', {packages: ['corechart', 'controls']});
+</script>
+<script type="text/javascript">
+Date.prototype.addDays = function (n) {
+    this.setDate(this.getDate() + n);
+    this.tempDate = this.getDate();
+};
+Date.prototype.addHours= function(h){
+    this.setHours(this.getHours()+h);
+    return this;
+};
 
+function changeRange(interval) {
+    var start_date, end_date;
 
+    //Date("October 13, 1975 11:13:00")
+    start_date = new Date("{{ fi|date:"F d, Y" }}");
+    end_date=  new Date("{{ fi|date:"F d, Y" }}");
+    switch (interval){
+        case 'hour' :
+            start_date.addHours(5);
+            end_date.addHours(7);
+            break;
+        case 'day' :
+            end_date.addDays(1);
+            break;
+        case 'week' :
+            end_date.addDays(7);
+            break;
+        case 'month' :
+            end_date.addDays(30);
+            break;
+    }
+    // 'slider' is the ControlWrapper instance describing the range slider.
 
-        function changeRange(interval) {
-
-
-            //Date("October 13, 1975 11:13:00")
-            var start_date = new Date("{{ fi|date:"F d, Y" }}");
-            var end_date = new Date("{{ ff|date:"F d, Y" }}");
-
-            switch (interval){
-                case 'hour' :
-                    end_date=start_date;
-                    end_date.addHours(2);
-                    break;
-                case 'day' :
-                    end_date=start_date;
-                    end_date.addDays(1);
-                    break;
-                case 'week' :
-                    end_date=start_date;
-                    end_date.addDays(7);
-                    break;
-                case 'month' :
-                    end_date=start_date;
-                    end_date.addDays(30);
-                    break;
-            }
-            // 'slider' is the ControlWrapper instance describing the range slider.
-
-            control.setState({
-                'range': {
-                    'start':new Date("{{ fi|date:"F d, Y" }}"),
-                    'end': end_date
-                }
-            });
-            control.draw();
+    control.setState({
+        'range': {
+            'start':new Date("{{ fi|date:"F d, Y" }}"),
+            'end': end_date
         }
+    });
+    control.draw();
+}
+
+var fi = encodeURIComponent("{{ fi|date:"d/m/Y" }}");
+var ff = encodeURIComponent("{{ ff|date:"d/m/Y" }}");
+var buildings_json = eval("{{ buildings }}");
+var buildings_number = buildings_json.length;
+var buildings_str = "";
+for (var building_index = 0; building_index < buildings_number; building_index++) {
+    buildings_str += "building" + building_index + "=" + buildings_json[building_index] + "&";
+}
+var url = "/reportes/grafica_datos/?graph={{ tipo }}&"+buildings_str+"f1_init="+fi+"&f1_end="+ff;
+{% if fi2 %}
+    var fi2 = encodeURIComponent("{{ fi2|date:"d/m/Y" }}");
+    var ff2 = encodeURIComponent("{{ ff2|date:"d/m/Y" }}");
+    url+= "&f2_init=" + fi2 + "&f2_end=" + ff2;
+{% endif %}
 
 
-
-
-        var fi=encodeURIComponent("{{ fi|date:"d/m/Y" }}");
-        var ff=encodeURIComponent("{{ ff|date:"d/m/Y" }}");
-        var url="/reportes/potencia_activa_data/?building={{ building }}&f1_init="+fi+"&f1_end="+ff;
-
-        var chart, control;
-        var data = new google.visualization.DataTable();
-        $(document).ready(function(){
+var chart, control;
+var data = new google.visualization.DataTable();
+$(document).ready(function(){
+    $("#compare_interval li").each(function(){
+        //cambia el intervalo visible de las graficas y cambia el estilo segun la opcion seleccionada
+        $(this).click(function(){
+            changeRange($(this).attr('id'));
             $("#compare_interval li").each(function(){
-                //cambia el intervalo visible de las graficas y cambia el estilo segun la opcion seleccionada
-                $(this).click(function(){
-                    changeRange($(this).attr('id'));
-                    $("#compare_interval li").each(function(){
-                        $(this).removeClass("active");
-                    });
-                    $(this).addClass("active");
-                });
+                $(this).removeClass("active");
             });
-
-
-
-
-
-            $.ajax({
-                url: url,
-                type: "GET",
-                dataType: 'json',
-                async: 'true',
-                success: function(datos){
-                    //----------------------CHARTS----------------------------
-
-                    function drawVisualization() {
-                        var dashboard = new google.visualization.Dashboard(
-                                document.getElementById('dashboard'));
-
-                        control = new google.visualization.ControlWrapper({
-                            'controlType': 'ChartRangeFilter',
-                            'containerId': 'control',
-                            'options': {
-                                // Filter by the date axis.
-                                'filterColumnIndex': 0,
-                                'ui': {
-                                    'chartType': 'LineChart',
-                                    'chartOptions': {
-                                        'chartArea': {'width': '90%'},
-                                        'hAxis': {'baselineColor': 'none'}
-                                    },
-                                    // Display a single series that shows the closing value of the stock.
-                                    // Thus, this view has two columns: the date (axis) and the stock value (line series).
-                                    'chartView': {
-                                        'columns': [0, 1]
-                                    },
-                                    // 1 day in milliseconds = 24 * 60 * 60 * 1000 = 86,400,000
-                                    'minRangeSize': 3600000
-                                }
-                            },
-                            // Initial range: 2012-02-09 to 2012-03-20.
-                            'state': {'range': {'start': new Date("{{ fi|date:"F d, Y" }}"), 'end': new Date("{{ ff|date:"F d, Y" }}")}}
-                        });
-
-                        chart = new google.visualization.ChartWrapper({
-                            'chartType': 'LineChart',
-                            'containerId': 'chart',
-                            'options': {
-                                // Use the same chart area width as the control for axis alignment.
-                                'chartArea': {'height': '80%', 'width': '100%'},
-                                'hAxis': {'slantedText': false},
-                                'vAxis': {'viewWindow': {'min': 230, 'max': 275}, textPosition: 'in'},
-                                'legend': {'position': 'none'}
-                            },
-                            'colors': ['#ccc','#000'],
-                            // Convert the first column from 'date' to 'string'.
-                            'view': {
-                                'columns': [
-                                    {
-                                        'calc': function(dataTable, rowIndex) {
-                                            return dataTable.getFormattedValue(rowIndex, 0);
-                                        },
-                                        'type': 'string'
-                                    }, 1]
-                            }
-                        });
-
-
-                        data.addColumn('datetime', 'Date');
-                        data.addColumn('number', 'Potencia Activa');
-                        for(var x=0; x < datos.length; x++) {
-                            var e = datos[x];
-                            var fecha=new Date();
-                            fecha.setTime((e.date*1000) - (fecha.getTimezoneOffset() * 50000));
-                            data.addRow([fecha , parseFloat(e.kw)]);
-                        }
-                        dashboard.bind(control, chart);
-                        dashboard.draw(data);
-                    }
-                    drawVisualization();
-                }
-            });
+            $(this).addClass("active");
         });
+    });
 
 
 
-    </script>
+    var controlChartViewColumns = {
+        'columns': [0, buildings_number]
+    };
+
+    var chartViewColumns = [
+        {
+            'calc': function(dataTable, rowIndex) {
+                return dataTable.getFormattedValue(rowIndex, 0);
+            },
+            'type': 'string'
+        }];
+    for (var column_index = 1; column_index <= buildings_number; column_index++) {
+        chartViewColumns.push(column_index);
+    }
+
+    $.ajax({
+        url: url,
+        type: "GET",
+        dataType: 'json',
+        async: 'true',
+        success: function(datos){
+            var start_date_g = new Date("{{ fi|date:"F d, Y" }}");
+            var end_date_g = new Date("{{ ff|date:"F d, Y" }}");
+
+            //----------------------CHARTS----------------------------
+
+            function drawVisualization() {
+                var dashboard = new google.visualization.Dashboard(
+                        document.getElementById('dashboard'));
+
+                control = new google.visualization.ControlWrapper({
+                    'controlType': 'ChartRangeFilter',
+                    'containerId': 'control',
+                    'options': {
+                        // Filter by the date axis.
+                        'filterColumnIndex': 0,
+                        'ui': {
+                            'chartType': 'LineChart',
+                            'chartOptions': {
+                                'chartArea': {'width': '90%'},
+                                'hAxis': {'baselineColor': 'none'}
+                            },
+                            // Display a single series that shows the closing value of the stock.
+                            // Thus, this view has two columns: the date (axis) and the stock value (line series).
+                            'chartView': {
+                                'columns': controlChartViewColumns
+                            },
+                            // 1 day in milliseconds = 24 * 60 * 60 * 1000 = 86,400,000
+                            'minRangeSize': 3600000
+                        }
+                    },
+                    // Initial range: 2012-02-09 to 2012-03-20.
+                    'state': {'range': {'start': start_date_g , 'end': end_date_g}}
+                });
+
+                chart = new google.visualization.ChartWrapper({
+                    'chartType': 'LineChart',
+                    'containerId': 'chart',
+                    'options': {
+                        // Use the same chart area width as the control for axis alignment.
+                        'chartArea': {'height': '80%', 'width': '100%'},
+                        'hAxis': {'slantedText': false},
+                        'vAxis': {'viewWindow': {'min': 90, 'max': 260}, textPosition: 'in'},
+                        'legend': {position: 'top', textStyle: {color: '#1E90FF', fontSize: 16}}
+                    },
+                    'colors': ['#ccc','#000'],
+                    // Convert the first column from 'date' to 'string'.
+                    'view': {
+                        'columns': chartViewColumns
+                    }
+                });
+
+
+                data.addColumn('datetime', 'Date');
+            {% for building_name in building_names %}
+                data.addColumn('number', 'Potencia Activa - {{ building_name.building_name }}');
+            {% endfor %}
+                var max = 0;
+                var min = 1000;
+                for(var x=0; x < datos.length; x++) {
+                    // TODO: presentacion de los datos (labels y formato),  y testing
+                    var e = datos[x];
+                    var fecha=new Date();
+                    fecha.setTime((e.date*1000) - 3600000);//numero de milisegundos en una hora
+                    var rowArray = new Array();
+                    rowArray.push(fecha);
+
+                    var dat_kw;
+                    for (var medition_index = 0; medition_index < e.meditions.length; medition_index++) {
+                        dat_kw=parseFloat(e.meditions[medition_index]);
+                        rowArray.push(dat_kw);
+                        if(dat_kw > max){
+                            max = dat_kw;
+                        }
+                        if(dat_kw < min){
+                            min = dat_kw;
+                        }
+                    }
+                    data.addRow(rowArray);
+                }
+
+                chart.setOption("vAxis.viewWindow.max", max);
+                chart.setOption("vAxis.viewWindow.min", min);
+                dashboard.bind(control, chart);
+                dashboard.draw(data);
+            }
+            drawVisualization();
+        }
+    });
+});
+
+</script>
 </head>
 
 <body>
-    <ul id="compare_interval" class="fr">
-        <li id="hour">Hora</li>
-        <li id="day">D&iacute;a</li>
-        <li id="week" class="active">Semana</li>
-        <li id="month">Mes</li>
-    </ul>
-    <div id="dashboard" class="fl">
-        <div id="chart">
-            <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
-        </div>
-        <div id="control"></div>
+<ul id="compare_interval" class="fr">
+    <li id="hour">Hora</li>
+    <li id="day">D&iacute;a</li>
+    <li id="week" class="active">Semana</li>
+    <li id="month">Mes</li>
+</ul>
+<div id="dashboard" class="fl">
+    <div id="chart">
+        <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
     </div>
+    <div id="control"></div>
+</div>
 </body>
 </html>

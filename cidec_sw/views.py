@@ -5,6 +5,7 @@ from itertools import cycle
 from random import uniform, randrange
 from datetime import timedelta
 from decimal import Decimal
+import pytz #for timezone support
 
 #related third party imports
 import datetime
@@ -16,6 +17,15 @@ from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from c_center.models import ProfilePowermeter, ElectricData
 from c_center.views import main_page
+
+from django.shortcuts import redirect, render
+
+def set_timezone(request):
+    if request.method == 'POST':
+        request.session['django_timezone'] = pytz.timezone(request.POST['timezone'])
+        return redirect('/')
+    else:
+        return render(request, 'set_timezone.html', {'timezones': pytz.common_timezones})
 
 def parse_csv(request):
 
@@ -134,13 +144,16 @@ def changedate(key):
     """
     sets all the data in intervals of 3 hours
     """
-    data = ElectricData.objects.filter(profile_powermeter__pk=key)
-    initial_date = datetime.datetime(2012,01,01,00,00)
+    data = ElectricData.objects.filter(profile_powermeter__pk=key).order_by("-medition_date")
+    initial_date = ElectricData.objects.filter(profile_powermeter__pk=3).order_by("-medition_date")[:1]
+    initial_date = initial_date[0].medition_date
+    print "initial_date", initial_date
     for dato in data:
-        initial_date += timedelta(hours=3)
+        print "antes", dato.medition_date
+        initial_date -= timedelta(minutes=5)
         dato.medition_date = initial_date
         dato.save()
-        print dato.medition_date
+        print "despues", dato.medition_date
 
 def dummy_data_generator_2000():
     """
