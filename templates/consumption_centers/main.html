@@ -1,16 +1,54 @@
 {% extends "base.html" %}
 {% block titulo %}Reportes{% endblock %}
 {% block externalcss %}
-    <link rel="stylesheet" href="/static/css/consumption_centers/main.css">
+    <link rel="stylesheet" href="/static/css/consumption_centers/main.css" xmlns="http://www.w3.org/1999/html">
     <link rel="stylesheet" href="/static/date_picker/css/datepicker.css" type="text/css" />
+    <link rel="stylesheet" href="/static/js/external/fancybox/jquery.fancybox.css" type="text/css" />
 {% endblock %}
 {% block externaljs %}
+    <script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
     <script type="text/javascript" src="/static/date_picker/js/date_picker.js"></script>
     <script type="text/javascript" src="http://www.google.com/jsapi"></script>
     <script type="text/javascript">
         google.load('visualization', '1.1', {packages: ['corechart', 'controls']});
     </script>
     <script type="text/javascript">
+
+    function clean_dates(url){
+        var f1_init = encodeURIComponent($("#range1_init").val());
+        var f1_end = encodeURIComponent($("#range1_end").val());
+        var f2_init = encodeURIComponent($("#range2_init").val());
+        var f2_end = encodeURIComponent($("#range2_end").val());
+
+        url=url.replace('#','').split("?");
+        if (url.length > 1){
+            //if url has get_vars
+            var hash = url[1];
+            hash = hash.replace(/&{0,1}f1_init=\d{1,2}(\-|\/|\.|(%2F))\d{1,2}\1\d{4}&{0,1}/, '');
+            hash = hash.replace(/&{0,1}f1_end=\d{1,2}(\-|\/|\.|(%2F))\d{1,2}\1\d{4}&{0,1}/, '');
+            hash = hash.replace(/&{0,1}f2_init=\d{1,2}(\-|\/|\.|(%2F))\d{1,2}\1\d{4}&{0,1}/, '');
+            hash = hash.replace(/&{0,1}f2_end=\d{1,2}(\-|\/|\.|(%2F))\d{1,2}\1\d{4}&{0,1}/, '');
+            //hash is equal to all the get vars but the dates
+            url = url[0] + "?" + hash + "&";
+        }else{
+            url+="?";
+        }
+        url += "f1_init=" + f1_init;
+        if(f1_end != ''){
+            url += "&f1_end=" + f1_end;
+        }else{
+            url += "&f1_end=" + encodeURIComponent(new Date().format("dd/mm/yyyy"));
+        }
+        if(f2_init != ''){
+            url += "&f2_init=" + f2_init;
+            if(f2_end != ''){
+                url += "&f2_end=" + f2_end;
+            }else{
+                url += "&f2_end=" + encodeURIComponent(new Date().format("dd/mm/yyyy"));
+            }
+        }
+        return url;
+    }
 
     function graphsReload(){
         /* Takes the date in the range inputs and reloads the graph data */
@@ -30,25 +68,30 @@
                 hash = hash.replace(/&{0,1}f2_end=\d{1,2}(\-|\/|\.|(%2F))\d{1,2}\1\d{4}&{0,1}/, '');
                 url = url[0] + "?" + hash + "&";
 
-            }else{
-                url = url[0] + "?";
-            }
-            url += "f1_init=" + f1_init;
-            if(f1_end != ''){
-                url += "&f1_end=" + f1_end;
-            }else{
-                url += "&f1_end=" + encodeURIComponent(new Date().format("dd/mm/yyyy"));
-            }
-            if(f2_init != ''){
-                url += "&f2_init=" + f2_init;
-                if(f2_end != ''){
-                    url += "&f2_end=" + f2_end;
+
+                url += "f1_init=" + f1_init;
+                if(f1_end != ''){
+                    url += "&f1_end=" + f1_end;
                 }else{
-                    url += "&f2_end=" + encodeURIComponent(new Date());
+                    url += "&f1_end=" + encodeURIComponent(new Date().format("dd/mm/yyyy"));
                 }
+                if(f2_init != ''){
+                    url += "&f2_init=" + f2_init;
+                    if(f2_end != ''){
+                        url += "&f2_end=" + f2_end;
+                    }else{
+                        url += "&f2_end=" + encodeURIComponent(new Date());
+                    }
+                }
+
+                makeIframe(url);
+            }else{
+                $("#graph_container").html("<h2>Por favor, " +
+                        "primero seleccione el tipo de gr&aacute;fica a mostrar</h2>" +
+                        "<iframe id='graphFrame' src=''>" +
+                        "</iframe>");
             }
 
-            makeIframe(url);
         }
 
     }
@@ -61,7 +104,7 @@
         graphFrame.id = "graphFrame";
         graphFrame.src = src;
         $("#graph_container").html(graphFrame);
-        setTimeout("parent.document.getElementById('graphFrame').height = document['body'].offsetHeight;", 1000);
+        refresh_iframe_height();
     }
     </script>
 {% endblock %}
@@ -166,13 +209,13 @@
             var src;
             switch($(this).attr("id")){
                 case "kw":
-                    src = "/reportes/potencia_activa/";
+                    src = "/reportes/graficas?graph=kw";
                     break;
                 case "kvar":
-                    src = "/reportes/potencia_reactiva/";
+                    src = "/reportes/graficas?graph=kvar";
                     break;
                 case "pf":
-                    src = "/reportes/factor_potencia/";
+                    src = "/reportes/graficas?graph=pf";
                     break;
                 case "profile":
                     src = "/reportes/perfil_carga/";
@@ -183,9 +226,22 @@
                 case "kvarh":
                     src = "/reportes/graficas?graph=kvarh";
                     break;
+                case "kwh_c":
+                    src = "/reportes/graficas?graph=kwh_consumido";
+                    break;
+                case "kvarh_c":
+                    src = "/reportes/graficas?graph=kvarh_consumido";
+                    break;
             }
-            if($("#graphFrame").attr("src").split('?')[1] != undefined)
-                src += "&" + $("#graphFrame").attr("src").split('?')[1];
+            var get_vars = $("#graphFrame").attr("src").split('?')[1]
+            if(get_vars != undefined){
+                get_vars=get_vars.replace(/graph=\w*&/g,"");
+                src += "&" + get_vars;
+            }else{
+                console.log("concateno fechas");
+                src = clean_dates(src);
+                console.log(src);
+            }
             makeIframe(src);
             //cambia la clase de la pestania
             $(this).addClass("active");
@@ -213,6 +269,7 @@
                 $(this).parent().before('<span class="compared">' + $("#compare_to option:selected").text()
                                     + '</span><span class="vs_tag">VS</span>');
                 src = iframesrc;
+
                 makeIframe(src);
                 $("#evaluated_companies").val($("#evaluated_companies").val() + "," + $(this).val());
             }
@@ -239,11 +296,41 @@
             '</span>' +
             '<span class="vs_tag">VS</span>'
         );
-        $.ajax("/reportes/set_default_building/" + $(this).attr("rel"));
+        $.ajax({
+            url: "/reportes/set_default_building/" + $(this).attr("rel"),
+            type: "GET",
+            dataType: 'json',
+            async: 'true',
+            success: function(datos){
+                $("h2#titulo_reporte").html(datos.edificio + ' - ' +
+                        '<span>' +
+                        datos.electric_device_type +
+                        '</span>'
+                );
+            }
+        });
         var src = $("#graphFrame").attr("src").split('?')[0];
-        makeIframe(src);
+        $("#widgetField span").html("Fecha Inicio &ndash; Fecha Fin");
+        $("#range1_init").val("");
+        $("#range1_end").val("");
+        $("#range2_init").val("");
+        $("#range2_end").val("");
+        $('#widgetCalendar').DatePickerClear();
+        $('#widgetCalendar2').DatePickerClear();
+        $("#types_graphs ul li").removeClass("active");
+        makeIframe("");
     });
-
+    $(".various").fancybox({
+        maxWidth	: 500,
+        maxHeight	: 400,
+        fitToView	: false,
+        width		: '70%',
+        height		: '70%',
+        autoSize	: false,
+        closeClick	: false,
+        openEffect	: 'none',
+        closeEffect	: 'none'
+    });
     {% endblock %}
 {% block contenido %}
 <div id="bread_crumbs">
@@ -254,7 +341,7 @@
 
 </div>
 <div id="contenido_interno">
-    <h2 id="titulo_reporte">Reporte de Perfil de Carga</h2>
+    <h2 id="titulo_reporte">{{ empresa.building_name }} - <span>{{ consumer_unit.electric_device_type.electric_device_type_name }}</span></h2><a class="various fancybox.ajax" href="/reportes/set_consumer_unit/">Cambiar</a>
 
     <div id="datepicker_component">
         <span class="period_tag">Periodo</span>
@@ -300,18 +387,20 @@
 
     <div id="types_graphs">
         <ul>
-            <li id="kw" class="active">Potencia Activa (KW)</li>
+            <li id="kw">Potencia Activa (KW)</li>
             <li id="kvar">Potencia Reactiva (KVar)</li>
             <li id="pf">Factor de Potencia (PF)</li>
             <li id="profile">Perfil de Carga</li>
             <li id="kwh">kW Hora</li>
+            <li id="kwh_c">kW Hora Consumido</li>
             <li id="kvarh">kVAR Hora</li>
+            <li id="kvarh_c">kVAR Hora Consumido</li>
         </ul>
     </div>
     <div id="graphs_container">
         <div id="compare" class="fl">
             <input id="evaluated_companies" type="hidden" value="{{ empresa.pk }},"/>
-            <span>Comparar:</span>
+            <!--<span>Comparar:</span>
             <span class="compared">{{ empresa.building_name }}</span>
             <span class="vs_tag">VS</span>
             <select id="compare_to">
@@ -321,7 +410,7 @@
                         {{cntx.building.building_name}}
                     </option>
                 {% endfor %}
-            </select>
+            </select>-->
         </div>
 
         <div id="graph_container">

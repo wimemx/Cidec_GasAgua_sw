@@ -44,9 +44,21 @@ h2{
     float: left;
 }
 #titulo_reporte{
+    font-size: 18px;
     height: 22px;
     background: url(../images/imgs_icns/electric_icon.png) no-repeat;
     padding-left: 39px;
+}
+#titulo_reporte span{
+    font-size: 18px;
+    font-weight: 400;
+    color: #505e68;
+}
+.various{
+    line-height: 23px;
+    color: #86A2AC;
+    float: left;
+    margin-left: 5px;
 }
 .sidebar_option{
     padding-left: 11px;
@@ -292,4 +304,31 @@ iframe{
 }
 #chart rect{
     fill-opacity: .3;
+}
+#title_lb{
+    font-size: 16px;
+    font-weight: 400;
+    display: block;
+    margin: 1em auto;
+}
+#title_lb span{
+    font-weight: 700;
+    font-size: 16px;
+}
+#notice{
+    font-size: 12px;
+}
+ul#partes{
+    margin-top: 1em;
+}
+ul#partes li{
+    margin-left: 2em;
+}
+ul#partes li a{
+    font-size: 14px;
+    line-height: 150%;
+    color: #909aa2;
+}
+ul#partes li a:hover{
+    color: #505e68;
 }

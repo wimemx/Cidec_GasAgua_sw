@@ -321,3 +321,8 @@ class ElectricDataAdmin(admin.ModelAdmin):
 admin.site.register(c_center.models.ElectricData, ElectricDataAdmin)
 admin.site.register(c_center.models.IndustrialEquipment)
 admin.site.register(c_center.models.PowermeterForIndustrialEquipment)
+class ElectricRateForElectricDataAdmin(admin.ModelAdmin):
+    list_filter = ['electric_data__profile_powermeter']
+    search_fields = ['electric_data__profile_powermeter__powermeter__powermeter_serial',
+                     'electric_data__profile_powermeter__powermeter__powermeter_anotation']
+admin.site.register(c_center.models.ElectricRateForElectricData, ElectricRateForElectricDataAdmin)

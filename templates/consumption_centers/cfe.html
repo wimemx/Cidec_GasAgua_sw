@@ -2,11 +2,18 @@
 {% block titulo %}Reportes{% endblock %}
 {% block externalcss %}
     <link rel="stylesheet" href="/static/css/consumption_centers/cfe_bill.css">
-    <link rel="stylesheet" href="/static/date_picker/css/datepicker.css" type="text/css" />
+    <!--<link rel="stylesheet" href="/static/datepicker/css/datepicker.css" type="text/css" />-->
 {% endblock %}
 {% block externaljs %}
-    <script type="text/javascript" src="/static/date_picker/js/datepicker.js"></script>
+    <!--<script type="text/javascript" src="/static/datepicker/js/datepicker.js"></script>-->
     <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+
+
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.1/jquery.js"></script>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/jquery-ui.min.js"></script>
+    <link rel="stylesheet" type="text/css" media="screen" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/themes/base/jquery-ui.css">
+    <script type="text/javascript" src="/static/js/external/jqueryUniform/jquery.uniform.min.js"></script>
+
     <script type="text/javascript">
         google.load('visualization', '1', {packages: ['corechart']});
     </script>
@@ -23,7 +30,7 @@
                 if(f1_end != ''){
                     url += "&f1_end="+f1_end;
                 }else{
-                    url += "&f1_end=" + encodeURIComponent(new Date().format("dd-mm-yyyy"));
+                    url += "&f1_end=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
                 }
 
                 window.location.href = url;
@@ -54,255 +61,283 @@
 {% block document_ready %}
     $("select, input, input:checkbox, input:radio, input:file").uniform();
     $(".desp").click(function(){
-        $(this).next().slideToggle();
+    $(this).next().slideToggle();
     });
     $("#nav_toggle").click(function(){
-        if($("#sidebar").hasClass("collapsed_nav")){
+    if($("#sidebar").hasClass("collapsed_nav")){
 
-            $("#sidebar").animate({width: 'toggle',}, 500, function(){console.log("quito la clase");
-                $(this).removeClass("collapsed_nav");
-            });
-            $("#sidebar_content").show('slide', {direction: 'right'}, 100);
-            $("footer").show('slide', {direction: 'right'}, 100);
+    $("#sidebar").animate({width: 'toggle',}, 500, function(){console.log("quito la clase");
+    $(this).removeClass("collapsed_nav");
+    });
+    $("#sidebar_content").show('slide', {direction: 'right'}, 100);
+    $("footer").show('slide', {direction: 'right'}, 100);
 
-        }else{
-            $("#sidebar").addClass("collapsed_nav");
-            $("#sidebar_content").hide('slide', {direction: 'left'}, 100);
-            $("footer").hide('slide', {direction: 'left'}, 100);
-            $("#sidebar").animate({width: 'toggle',}, 500);
-        }
-        $("#nav_toggle").toggleClass("closed");
+    }else{
+    $("#sidebar").addClass("collapsed_nav");
+    $("#sidebar_content").hide('slide', {direction: 'left'}, 100);
+    $("footer").hide('slide', {direction: 'left'}, 100);
+    $("#sidebar").animate({width: 'toggle',}, 500);
+    }
+    $("#nav_toggle").toggleClass("closed");
     });
 
     var now3 = new Date();
     now3.addDays(-60);
     var now4 = new Date();
-    $('#widgetCalendar').DatePicker({
-        flat: true,
-        format: 'd/m/Y',
-        date: [new Date(now3), new Date(now4)],
-        calendars: 2,
-        mode: 'range',
-        starts: 1,
-        onChange: function(formated) {
-            $('#range1_init').val(formated[0]);
-            $('#range1_end').val(formated[1]);
-            $('#widgetField span').get(0).innerHTML = formated.join(' &ndash; ');
-        }
+    $('#widgetCalendar').datepicker({
+    flat: true,
+    format: 'd/m/Y',
+    date: [new Date(now3), new Date(now4)],
+    calendars: 2,
+    mode: 'range',
+    starts: 1,
+    onChange: function(formated) {
+    $('#range1_init').val(formated[0]);
+    $('#range1_end').val(formated[1]);
+    $('#widgetField span').get(0).innerHTML = formated.join(' &ndash; ');
+    }
     });
-    $('#widgetCalendar').DatePickerClear();
+    //$('#widgetCalendar').datepickerclear();
+
+
+    $('.date-picker').datepicker( {
+    changeMonth: true,
+    changeYear: true,
+    showButtonPanel: true,
+    dateFormat: 'MM yy',
+    monthNamesShort: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+    monthNames: ['Enero','Febrero','Marzo','Abril','Mayo','Junio', 'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'],
+    currentText: 'Hoy',
+    closeText: 'Listo',
+    onClose: function(dateText, inst) {
+    var month = $("#ui-datepicker-div .ui-datepicker-month :selected").val();
+    var year = $("#ui-datepicker-div .ui-datepicker-year :selected").val();
+    $('#id_month').val(month)
+    $('#id_year').val(year)
+    $(this).datepicker('setDate', new Date(year, month, 1));
+    document.forms["cfe"].submit();
+    }
+    });
 
 
     var state = false;
     $('#widgetField').click(function(){
-        $('#datepicker').slideToggle();
+    $('#datepicker').slideToggle();
     });
     $("#date_ranges .aqua_btn").click(function(e){
-        e.preventDefault();
-        $('#datepicker').slideUp();
-        graphsReload();
+    e.preventDefault();
+    $('#datepicker').slideUp();
+    graphsReload();
     });
 
 
     //custom select for sidebar
     $("#empresa").click(function(){
-        $("#company_list").slideToggle();
+    $("#company_list").slideToggle();
     });
     $("#company_list li").click(function(){
-        var texto=$(this).text().replace(/^\s*|\s*$/g,'');
-        var texto1=texto.substring(0,17)+"...";
-        $("#empresa").text(texto1);
-        $("#company_list").slideUp();
-        //reload with the selected company data
-        window.location.href="/reportes/set_default_building/"+$(this).attr("rel")+"/?referer=cfe";
+    var texto=$(this).text().replace(/^\s*|\s*$/g,'');
+    var texto1=texto.substring(0,17)+"...";
+    $("#empresa").text(texto1);
+    $("#company_list").slideUp();
+    //reload with the selected company data
+    window.location.href="/reportes/set_default_building/"+$(this).attr("rel")+"/?referer=cfe";
 
 
     });
 {% endblock %}
 {% block contenido %}
-<div id="bread_crumbs">
-    <ul>
-        <li><a href="/main/">Inicio</a></li>
-        <li><a href="/reportes/cfe/">Recibo CFE</a></li>
-    </ul>
 
-</div>
-<div id="contenido_interno">
-    <h2 id="titulo_reporte">Reporte de CFE</h2>
+    <style>
+        .ui-datepicker-calendar {
+            display: none;
+        }
+        #datepicker_component{
+            width: 300px;
+        }
 
-    <div class="divider" id="divider_top">&nbsp;</div>
+        #startDate{
+            width: 160px;
+            padding-left: 80px;
+            background-color: white;
+            color: #000000;
+        }
 
-    <div id="types_graphs">
-        <ul>
-            <li class="active"><a href="#">Reporte CFE</a></li>
-        </ul>
-    </div>
-    <div id="data_container">
-        <h3>{{ empresa.building_name }}</h3>
-        <input type="hidden" name="empresa_act" id="empresa_act" value="{{ empresa.pk }}"/>
-        <div id="datepicker_component">
-            <span class="period_tag">Periodo</span>
-            <div id="widgetField">
-                <span>Fecha Inicio &ndash; Fecha Fin</span>
-                <a href="#">&nbsp;</a>
+    </style>
+    <form name="cfe" method="POST" action=".">
+        {% csrf_token %}
+        <div id="bread_crumbs">
+            <ul>
+                <li><a href="/main/">Inicio</a></li>
+                <li><a href="/reportes/cfe/">Recibo CFE</a></li>
+            </ul>
+
+        </div>
+        <div id="contenido_interno">
+            <h2 id="titulo_reporte">Reporte de CFE</h2>
+
+            <div class="divider" id="divider_top">&nbsp;</div>
+
+            <div id="types_graphs">
+                <ul>
+                    <li class="active"><a href="#">Reporte CFE</a></li>
+                </ul>
             </div>
+            <div id="data_container">
+                <h3>{{ empresa.building_name }}</h3>
+                <input type="hidden" name="empresa_act" id="empresa_act" value="{{ empresa.pk }}"/>
+                <div id="datepicker_component">
+                    <span class="period_tag">Periodo</span>
 
-            <div id="datepicker">
-                <div id="widgetCalendar">
+                    <input name="startDate" id="startDate" class="date-picker" />
+                    <input type="hidden" name="month" id="id_month">
+                    <input type="hidden" name="year" id="id_year">
 
                 </div>
-                <div id="date_ranges">
-                    <span>Selecciona un periodo</span>
-                    <div>
-                        <label>Desde</label>
-                        <input type="text" name="range1_init" id="range1_init">
+                <div class="vacio"></div>
+                <h4>Estado de Cuenta</h4>
+                <div id="left_col" class="fl inner_col">
+
+                    <div id="sumary">
+                        <span class="l">Energ&iacute;a</span>
+                        <span class="r">${{ tarifaHM.costo_energia|floatformat:2 }}</span>
+                        <span class="l">Demanda Facturable</span>
+                        <span class="r">${{ tarifaHM.costo_dfacturable|floatformat:2 }}</span>
+                        <span class="l">Bonificaci&oacute;n Factor de Potencia</span>
+                        <span class="r">${{ tarifaHM.costo_fpotencia|floatformat:2 }}</span>
+                        <span class="l">Sub Total</span>
+                        <span class="r">${{ tarifaHM.subtotal|floatformat:2 }}</span>
+                        <span class="l">IVA 16%</span>
+                        <span class="r">${{ tarifaHM.iva|floatformat:2 }}</span>
+                        <span class="l">Total</span>
+                        <span class="r total">${{ tarifaHM.total|floatformat:2 }}</span>
                     </div>
-                    <span>&ndash;</span>
-                    <div>
-                        <label>Hasta</label>
-                        <input type="text" name="range1_end" id="range1_end">
-                    </div>
-                    <a href="#" class="aqua_btn">Aplicar</a>
+
+                    {% if totales_meses  %}
+                        {% for tm in totales_meses %}
+
+                            <table id="function_period">
+                                <thead>
+                                <tr>
+                                    <th class="h82">Funci&oacute;n y Periodo</th>
+                                    <th class="h18">Totales</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td>kWh Base</td>
+                                    <td>{{ tm.kwh_base }}</td>
+                                </tr>
+                                <tr>
+                                    <td>kWh Intermedia</td>
+                                    <td>{{ tm.kwh_intermedio }}</td>
+                                </tr>
+                                <tr>
+                                    <td>kWh Punta</td>
+                                    <td>{{ tm.kwh_punta }}</td>
+                                </tr>
+
+                                <tr>
+                                    <td>kW Base</td>
+                                    <td>{{ tm.kw_base }}</td>
+                                </tr>
+                                <tr>
+                                    <td>kW Intermedia</td>
+                                    <td>{{ tm.kw_intermedio }}</td>
+                                </tr>
+                                <tr>
+                                    <td>kW Punta</td>
+                                    <td>{{ tm.kw_punta }}</td>
+                                </tr>
+                                <tr>
+                                    <td>kVArh</td>
+                                    <td>{{ tm.kvarh }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Factor de potencia %</td>
+                                    <td>{{ tm.factor_pt }}</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <table id="rates">
+                                <thead>
+                                <tr>
+                                    <th>Diferencia</th>
+                                    <th>Totales</th>
+                                    <th>Precios Unitarios</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td>Energ&iacute;a en base kWh</td>
+                                    <td>{{ tm.kwh_base }}</td>
+                                    <td>{{ tm.tarifa_kwhb }}</td>
+
+                                </tr>
+                                <tr>
+                                    <td>Energ&iacute;a en intermedia kWh</td>
+                                    <td>{{ tm.kwh_intermedio }}</td>
+                                    <td>{{ tm.tarifa_kwhi }}</td>
+
+                                </tr>
+                                <tr>
+                                    <td>Energ&iacute;a en punta kWh</td>
+                                    <td>{{ tm.kwh_punta }}</td>
+                                    <td>{{ tm.tarifa_kwhp }}</td>
+
+                                </tr>
+                                <tr>
+                                    <td>Demanda facturable kW</td>
+                                    <td>{{ tm.demanda_facturable }}</td>
+                                    <td>{{ tm.tarifa_df }}</td>
+
+                                </tr>
+                                </tbody>
+                            </table>
+                        {% endfor %}
+                    {% endif %}
                 </div>
-            </div>
-        </div>
-        <div class="vacio"></div>
-        <h4>Estado de Cuenta</h4>
-        <div id="left_col" class="fl inner_col">
-
-            <div id="sumary">
-                <span class="l">Energ&iacute;a</span>
-                <span class="r">${{ tarifaHM.costo_energia|floatformat:2 }}</span>
-                <span class="l">Demanda Facturable</span>
-                <span class="r">{{ tarifaHM.costo_dfacturable|floatformat:2 }}</span>
-                <span class="l">Bonificaci&oacute;n Factor de Potencia</span>
-                <span class="r">${{ tarifaHM.costo_fpotencia|floatformat:2 }}</span>
-                <span class="l">Sub Total</span>
-                <span class="r">${{ tarifaHM.subtotal|floatformat:2 }}</span>
-                <span class="l">IVA 16%</span>
-                <span class="r">${{ tarifaHM.iva|floatformat:2 }}</span>
-                <span class="l">Total</span>
-                <span class="r total">${{ tarifaHM.total|floatformat:2 }}</span>
-            </div>
-            <table id="function_period">
-                <thead>
-                    <tr>
-                        <th class="h82">Funci&oacute;n y Periodo</th>
-                        <th class="h18">Totales</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>kWh Base</td>
-                        <td>{{ tarifaHM.kwh_base }}</td>
-                    </tr>
-                    <tr>
-                        <td>kWh Intermedia</td>
-                        <td>{{ tarifaHM.kwh_intermedio }}</td>
-                    </tr>
-                    <tr>
-                        <td>kWh Punta</td>
-                        <td>{{ tarifaHM.kwh_punta }}</td>
-                    </tr>
-
-                    <tr>
-                        <td>kW Base</td>
-                        <td>{{ tarifaHM.kw_base }}</td>
-                    </tr>
-                    <tr>
-                        <td>kW Intermedia</td>
-                        <td>{{ tarifaHM.kw_intermedio }}</td>
-                    </tr>
-                    <tr>
-                        <td>kW Punta</td>
-                        <td>{{ tarifaHM.kw_punta }}</td>
-                    </tr>
-                    <tr>
-                        <td>kVArh</td>
-                        <td>{{ tarifaHM.kvarh_totales }}</td>
-                    </tr>
-                    <tr>
-                        <td>Factor de potencia %</td>
-                        <td>{{ tarifaHM.factor_potencia|floatformat:2 }}%</td>
-                    </tr>
-                </tbody>
-            </table>
-            <table id="rates">
-                <thead>
-                    <tr>
-                        <th>Diferencia</th>
-                        <th>Totales</th>
-                        <th>Precios Unitarios</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Energ&iacute;a en base kWh</td>
-                        <td>{{ tarifaHM.kwh_base }}</td>
-                        <td>${{ tarifaHM.tarifa_kwhb|floatformat:2 }}</td>
-
-                    </tr>
-                    <tr>
-                        <td>Energ&iacute;a en intermedia kWh</td>
-                        <td>{{ tarifaHM.kwh_intermedio }}</td>
-                        <td>${{ tarifaHM.tarifa_kwhi|floatformat:2 }}</td>
-
-                    </tr>
-                    <tr>
-                        <td>Energ&iacute;a en punta kWh</td>
-                        <td>{{ tarifaHM.kwh_punta }}</td>
-                        <td>${{ tarifaHM.tarifa_kwhp|floatformat:2 }}</td>
-
-                    </tr>
-                    <tr>
-                        <td>Demanda facturable kW</td>
-                        <td>{{ tarifaHM.demanda_facturable }}</td>
-                        <td>${{ tarifaHM.tarifa_df|floatformat:2 }}</td>
-
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <div id="right_col" class="fl inner_col">
-            <div id="notes">
-                <span>Tarifa:</span><span>HM</span>
-                <span>Carga conectada kW:</span><span>150</span>
-                <span>Demanda contratada kW:</span><span>134</span>
-                <span>Multiplicador:</span><span>240</span>
-            </div>
-            <div id="history_graph">
-                <span id="graph_title">Datos Hist&oacute;ricos</span>
-                <div id="visualization"></div>
-            </div>
-            <table id="sumary_month">
-                <thead>
-                    <tr>
-                        <th>Mes</th>
-                        <th>Demanda M&aacute;xima</th>
-                        <th>Consumo Total (KWh)</th>
-                        <th>F.P. %</th>
-                        <th>F.C. %</th>
-                        <th>Precio Medio</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for hist in  historico%}
+                <div id="right_col" class="fl inner_col">
+                    <div id="notes">
+                        <span>Tarifa:</span><span>HM</span>
+                        <span>Carga conectada kW:</span><span>150</span>
+                        <span>Demanda contratada kW:</span><span>134</span>
+                        <span>Multiplicador:</span><span>240</span>
+                    </div>
+                    <div id="history_graph">
+                        <span id="graph_title">Datos Hist&oacute;ricos</span>
+                        <div id="visualization"></div>
+                    </div>
+                    <table id="sumary_month">
+                        <thead>
                         <tr>
-                            <td>{{ hist.fecha }}</td>
-                            <td>{{ hist.demanda_maxima }}</td>
-                            <td>{{ hist.total_kwh|floatformat:2 }}</td>
-                            <td>{{ hist.factor_potencia }}%</td>
-                            <td>{{ hist.factor_carga }}%</td>
-                            <td>{{ hist.costo_promedio|floatformat:2 }}</td>
+                            <th>Mes</th>
+                            <th>Demanda M&aacute;xima</th>
+                            <th>Consumo Total (KWh)</th>
+                            <th>F.P. %</th>
+                            <th>F.C. %</th>
+                            <th>Precio Medio</th>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                        </thead>
+                        <tbody>
+                        {% for hist in  historico%}
+                            <tr>
+                                <td>{{ hist.fecha }}</td>
+                                <td>{{ hist.demanda_maxima }}</td>
+                                <td>{{ hist.total_kwh }}</td>
+                                <td>{{ hist.factor_potencia|floatformat:2 }}%</td>
+                                <td>{{ hist.factor_carga|floatformat:2 }}%</td>
+                                <td>{{ hist.costo_promedio }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+
+            </div>
+
+
         </div>
-
-
-    </div>
-
-
-</div>
+    </form>
 {% endblock %}

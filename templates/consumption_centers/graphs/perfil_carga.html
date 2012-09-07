@@ -2,7 +2,9 @@
 <head>
 
     <link rel="stylesheet" href="/static/css/consumption_centers/graphs.css"/>
+    <link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
     <script type="text/javascript" src="http://www.google.com/jsapi"></script>
     <script type="text/javascript">
         google.load('visualization', '1.1', {packages: ['corechart', 'controls']});
@@ -156,7 +158,7 @@
                             'containerId': 'chart',
                             'options': {
                                 // Use the same chart area width as the control for axis alignment.
-                                'chartArea': {'height': '80%', 'width': '100%'},
+                                'chartArea': {'height': '80%', 'width': '90%'},
                                 'hAxis': {'slantedText': false},
                                 'vAxis': {'viewWindow': {'min': -850, 'max': 850}, textPosition: 'in'},
                                 'legend': {'position': 'none'}
@@ -178,14 +180,36 @@
                         data.addColumn('datetime', 'Date');
                         data.addColumn('number', 'Potencia Activa');
                         data.addColumn('number', 'Potencia Reactiva');
+                        var max = 0;
+                        var min = 9000000000;
                         for(var x=0; x < datos.length; x++) {
                             var e = datos[x];
                             var fecha=new Date();
                             fecha.setTime((e.date*1000) - 3600000);//numero de milisegundos en una hora
                             data.addRow([fecha , parseFloat(e.kw), parseFloat(e.kvar)]);
+                            var dato_electrico =  parseFloat(e.kw);
+                            if(dato_electrico > max){
+                                max = dato_electrico;
+                            }
+                            if(dato_electrico < min){
+                                min = dato_electrico;
+                            }
                         }
+                        chart.setOption("vAxis.viewWindow.max", max);
+                        chart.setOption("vAxis.viewWindow.min", min);
                         dashboard.bind(control, chart);
                         dashboard.draw(data);
+                        $( "#slider-range" ).slider({
+                            range: true,
+                            orientation: "vertical",
+                            min: min,
+                            max: max,
+                            values: [ min, max ],
+                            slide: function( event, ui ) {
+                                chart.setOption('vAxis', {'viewWindow':{'max':ui.values[ 1 ], 'min':ui.values[ 0 ]}});
+                                chart.draw();
+                            }
+                        });
                     }
                     drawVisualization();
                 }
@@ -234,7 +258,7 @@
                             'containerId': 'chart2',
                             'options': {
                                 // Use the same chart area width as the control for axis alignment.
-                                'chartArea': {'height': '80%', 'width': '100%'},
+                                'chartArea': {'height': '80%', 'width': '90%'},
                                 'hAxis': {'slantedText': false},
                                 'vAxis': {'viewWindow': {'min': -1, 'max': 1}, textPosition: 'in'},
                                 'legend': {'position': 'none'}
@@ -255,14 +279,36 @@
 
                         data2.addColumn('datetime', 'Date');
                         data2.addColumn('number', 'Factor Potencia');
+                        var max = 0;
+                        var min = 9000000000;
                         for(var x=0; x < datos.length; x++) {
                             var e = datos[x];
                             var fecha=new Date();
                             fecha.setTime((e.date*1000) - 3600000);//numero de milisegundos en una hora
                             data2.addRow([fecha , parseFloat(e.pf)]);
+                            var dato_electrico=parseFloat(e.pf);
+                            if(dato_electrico > max){
+                                max = dato_electrico;
+                            }
+                            if(dato_electrico < min){
+                                min = dato_electrico;
+                            }
                         }
+                        chart2.setOption("vAxis.viewWindow.max", max);
+                        chart2.setOption("vAxis.viewWindow.min", min);
                         dashboard2.bind(control2, chart2);
                         dashboard2.draw(data2);
+                        $( "#slider-range-pf" ).slider({
+                            range: true,
+                            orientation: "vertical",
+                            min: min,
+                            max: max,
+                            values: [ min, max ],
+                            slide: function( event, ui ) {
+                                chart2.setOption('vAxis', {'viewWindow':{'max':ui.values[ 1 ], 'min':ui.values[ 0 ]}});
+                                chart2.draw();
+                            }
+                        });
                     }
                     drawVisualization2();
                 }
@@ -284,6 +330,7 @@
         <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
     </div>
     <div id="control"></div>
+    <div id="slider-range" class="slider"></div>
 </div>
 <ul id="compare_interval2" class="fr">
     <li id="hour">Hora</li>
@@ -296,6 +343,7 @@
         <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
     </div>
     <div id="control2"></div>
+    <div id="slider-range-pf" class="slider"></div>
 </div>
 </body>
 </html>

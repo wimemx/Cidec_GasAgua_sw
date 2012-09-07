@@ -1,0 +1,39 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <title></title>
+
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $("#partes a").click(function(e){
+                e.preventDefault();
+                var texto = $(this).text();
+                $.ajax({
+                    url: "/reportes/set_c_u/"+$(this).attr("rel"),
+                    type: "GET",
+                    dataType: 'json',
+                    async: 'true',
+                    success: function(datos){
+                        $("h2#titulo_reporte span").text(texto);
+                        makeIframe("");
+                        $.fancybox.close( true );
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+<h1 id="title_lb">Cambiar la unidad de consumo de <span>{{ c_units.0.building.building_name }}</span></h1>
+<p id="notice">
+    Selecciona la parte del edificio que deseas consultar.
+</p>
+
+    <ul id="partes">
+{% for c_unit in c_units %}
+        <li><a href="#" rel="{{ c_unit.pk }}">{{ c_unit.electric_device_type.electric_device_type_name }}</a></li>
+{% endfor %}
+    </ul>
+</body>
+</html>

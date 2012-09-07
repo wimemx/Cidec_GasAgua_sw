@@ -136,3 +136,95 @@ ol, ul {
 #chart rect{
     fill-opacity: .3;
 }
+.ui-slider-vertical{
+    height: 211px !important;
+    position: absolute !important;
+    right: 25px;
+    top: 66px;
+}
+button{
+    height: 25px;
+}
+a.aqua_btn:hover{
+    text-decoration: none;
+}
+.aqua_btn{
+    text-align: center;
+    background: url(../images/bgs/aqua_button.png) repeat-x;
+    border: solid 1px #78939a;
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    box-shadow: 0 0 4px #999;
+    padding: 3px;
+}
+.aqua_btn:active{
+    background: #c7d9dd;
+}
+#weekly_summary{
+    clear: both;
+    padding-top: 3em;
+}
+#weekly_summary h1{
+    font-size: 18px;
+    height: 22px;
+    background: url(../images/imgs_icns/electric_icon.png) no-repeat;
+    padding-left: 39px;
+    line-height: 22px;
+    color: #878787;
+    font-weight: 700;
+}
+#weekly_summary div.selector{
+    width: 88px;
+}
+#weekly_summary div.selector select{
+    min-width: 100px !important;
+}
+#weekly_summary div.selector span{
+    width: 62px;
+}
+.vs_tag{
+    color: #920d50;
+    font-weight: 700;
+}
+#weekly_summary table{
+    width: 90%;
+    display: block;
+    margin: 3em auto;
+    border-collapse: collapse;
+    color: #6d6d6d;
+}
+#weekly_summary table thead tr{
+    text-align: left;
+    background-color: #CFCFCF !important;
+}
+#weekly_summary table td, #weekly_summary table th{
+    padding: 3px;
+}
+#weekly_summary table tr.bg_gray{
+    background-color: #e0e0e0;
+}
+div.container{
+    border: solid 1px #DDD;
+}
+#report_div p{
+    font-weight: 700;
+    width: 90%;
+    margin: 0 auto;
+    color: #878787;
+}
+#report_div p span{
+    font-size: 14px;
+}
+#compare_week_contrls,#main_week{
+    float: left;
+}
+#compare_week_contrls{
+    display: none;
+}
+#check_compare{
+    margin-top: 2px;
+}

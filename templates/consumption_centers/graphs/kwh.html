@@ -1,0 +1,79 @@
+<table>
+    <thead>
+        <tr>
+            <th width="20%">Día</th>
+            <th width="10%">Total de {{ type }}</th>
+            <th width="10%">Porcentaje</th>
+            <th width="60%"></th>
+        </tr>
+    </thead>
+    {% if compared %}
+        {% for week_day, week_01, week_02 in comparison %}
+            <tr class="bg_gray">
+                <td>{{ week_day }}</td>
+                <td></td>
+                <td></td>
+                <td  width="200"></td>
+            </tr>
+            <tr>
+                <td>{{ week_01.date }}</td>
+                <td>{{ week_01.kwh|floatformat:2 }}</td>
+                <td>{{ week_01.percentage|floatformat:2 }}%</td>
+                <td>
+                    <div class="container" width="200">
+                        <div style="width:{{ week_01.percentage|floatformat:2 }}%;background-color:#9ebfc6;height:10px;"></div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>{{ week_02.date }}</td>
+                <td>{{ week_02.kwh|floatformat:2 }}</td>
+                <td>{{ week_02.percentage|floatformat:2 }}%</td>
+                <td>
+                    <div class="container" width="200">
+                        <div style="width:{{ week_02.percentage|floatformat:2 }}%;background-color:#d41314;height:10px;"></div>
+                    </div>
+                </td>
+            </tr>
+        {% endfor %}
+    {% else %}
+        {% for week_day, week_01 in comparison %}
+            <tr class="bg_gray">
+                <td>{{ week_day }}</td>
+                <td></td>
+                <td></td>
+                <td  width="200"></td>
+            </tr>
+            <tr>
+                <td>{{ week_01.date }}</td>
+                <td>{{ week_01.kwh|floatformat:2 }}</td>
+                <td>{{ week_01.percentage|floatformat:2 }}%</td>
+                <td>
+                    <div class="container" width="200">
+                        <div style="width:{{ week_01.percentage|floatformat:2 }}%;background-color:#9ebfc6;height:10px;"></div>
+                    </div>
+                </td>
+            </tr>
+
+        {% endfor %}
+    {% endif %}
+
+</table>
+<p>
+    <span class="total_week_label">
+        Total de la semana:
+    </span>
+    <span class="total_week" style="color:#9ebfc6;">
+        {{ total1|floatformat:2 }} {{ type }}
+    </span>
+</p>
+{% if compared %}
+<p>
+    <span class="total_week_label">
+        Total de la semana:
+    </span>
+    <span class="total_week" style="color:#d41314;">
+        {{ total2|floatformat:2 }} {{ type }}
+    </span>
+</p>
+{% endif %}

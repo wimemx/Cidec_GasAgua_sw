@@ -163,7 +163,7 @@ class Building(models.Model):
     building_lat_address = models.DecimalField("Latitud", max_digits=10, decimal_places=6)
     electric_rate = models.ForeignKey(ElectricRates, on_delete=models.PROTECT, verbose_name=u"Tarifa Eléctrica")
     mts2_built = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
-
+    cutoff_day = models.IntegerField("Dia de Corte:", default=31)
     def __unicode__(self):
         return self.building_name + " - " + self.building_formatted_address
 
@@ -422,6 +422,19 @@ class ElectricData(models.Model):
     I1THD = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
     I2THD = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
     I3THD = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    kWhL1 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=0)
+    kWhL2 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=0)
+    kwhL3 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=0)
+    kvarhL1 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=0)
+    kvarhL2 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=0)
+    kvarhL3 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=0)
+    kVAhL1 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=0)
+    kVAhL2 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=0)
+    kVAhL3 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=0)
+    kW_import_sliding_window_demand = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=0)
+    kvar_import_sliding_window_demand = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=0)
+    kVA_sliding_window_demand = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=0)
+
     def __unicode__(self):
         return self.profile_powermeter.powermeter.powermeter_anotation + \
                " " + str(self.medition_date)
