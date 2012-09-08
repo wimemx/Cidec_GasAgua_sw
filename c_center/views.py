@@ -95,74 +95,79 @@ def main_page(request):
     in the mean time the main view is the graphics view
     sets the session variables needed to show graphs
     """
-    if has_permission(request.user, VIEW, "graphs") or request.user.is_superuser:
+    if has_permission(request.user, VIEW, "graphs"):
         #has perm to view graphs, now check what can the user see
         datacontext = DataContextPermission.objects.filter(user_role__user=request.user)
 
-        if 'main_building' not in request.session:
-            #sets the default building (the first)
-            request.session['main_building'] = datacontext[0].building
-        if 'consumer_unit' not in request.session:
-            #sets the default ConsumerUnit (the first)
-            c_unit = ConsumerUnit.objects.filter(building=request.session['main_building'])
-            request.session['consumer_unit'] = c_unit[0]
+        set_default_session_vars()
         #valid years for reporting
         request.session['years'] = [__date.year
                                     for __date in
                                     ElectricData.objects.all().dates('medition_date', 'year')]
 
         template_vars = {"type":"graphs", "datacontext":datacontext,
-                         'empresa':request.session['main_building'],
-                         'consumer_unit':request.session['consumer_unit']
+                         'empresa': request.session['main_building'],
+                         'consumer_unit': request.session['consumer_unit']
                          }
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/main.html", template_vars_template)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
+def set_default_session_vars(request):
+    if not request.session['main_building']:
+        #sets the default building (the first in DataContextPermission)
+        request.session['main_building'] = datacontext[0].building
+    if 'consumer_unit' not in request.session:
+        #sets the default ConsumerUnit (the first in ConsumerUnit for the main building)
+        c_unit = ConsumerUnit.objects.filter(building=request.session['main_building'])
+        request.session['consumer_unit'] = c_unit[0]
+
 def cfe_bill(request):
-    """ Returns a template with the CFE bill report"""
-    if has_permission(request.user, VIEW, "CFE bill") or request.user.is_superuser:
+    """ Just sends the main template for the CFE Bill """
+    if has_permission(request.user, VIEW, "CFE bill"):
         datacontext = DataContextPermission.objects.filter(user_role__user=request.user)
-        if not request.session['main_building']:
-            #sets the default building
-            request.session['main_building'] = datacontext[0].building
-
-        month = None
-        year = None
-
-        if request.method == 'POST':
-            month = int(request.POST['month'])+1
-            year = int(request.POST['year'])
-            print "Mes:",month
-            print "year:",year
-
-        if not month:
-            month = 9
-        if not year:
-            year = 2012
-
-        powermeter = request.session['consumer_unit'].profile_powermeter.powermeter
-        start_date, end_date = fechas_corte(request.session['main_building'].cutoff_day,
-                                            month, year)
-        t_hm=tarifaHM_mensual(powermeter, start_date, end_date,
-                              request.session['main_building'].region,
-                              request.session['main_building'].electric_rate)
-        arr_historico=obtenerHistorico(powermeter, t_hm['ultima_tarifa'],
-                                       request.session['main_building'].region, 3,
-                                       request.session['main_building'].electric_rate)
-        totales_meses = t_hm['meses']
+        set_default_session_vars(request)
 
         template_vars={"type":"cfe", "datacontext":datacontext,
-                       'empresa':request.session['main_building'],
-                       'tarifaHM': t_hm,
-                       'totales_meses': totales_meses,
-                       'historico': arr_historico
+                       'empresa':request.session['main_building']
         }
+        #print template_vars
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/cfe.html", template_vars_template)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
+
+def cfe_calculations(request):
+    template_vars = {}
+
+    if request.GET:
+        if request.method == "GET":
+
+            month = int(request.GET['month'])+1
+            year = int(request.GET['year'])
+
+            powermeter = request.session['consumer_unit'].profile_powermeter.powermeter
+
+            start_date, end_date = fechas_corte(request.session['main_building'].cutoff_day,
+                                                month, year)
+            t_hm=tarifaHM_mensual(powermeter, start_date, end_date,
+                                  request.session['main_building'].region,
+                                  request.session['main_building'].electric_rate)
+            totales_meses = t_hm['meses']
+            arr_historico=obtenerHistorico(powermeter, t_hm['ultima_tarifa'],
+                                           request.session['main_building'].region, 3,
+                                           request.session['main_building'].electric_rate)
+
+            template_vars['tarifaHM'] = t_hm
+            template_vars['totales_meses'] = totales_meses
+            template_vars['historico'] = arr_historico
+
+            template_vars_template = RequestContext(request, template_vars)
+            return render_to_response("consumption_centers/graphs/cfe_bill.html",
+                template_vars_template)
+
+    return HttpResponse(content="", content_type="text/html")
 
 def potencia_activa(request):
     template_vars = {"type":"kw"}

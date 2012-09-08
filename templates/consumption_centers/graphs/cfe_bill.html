@@ -1,0 +1,173 @@
+<html>
+<head>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <link rel="stylesheet" href="/static/css/consumption_centers/cfe_bill.css">
+    <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+        google.load('visualization', '1', {packages: ['corechart']});
+    </script>
+    <script type="text/javascript">
+
+        function drawVisualization() {
+            // Create and populate the data table.
+            var data = google.visualization.arrayToDataTable([
+                ['Mes', 'Base', 'Media', 'Punta'],
+                {% for hist in  historico%}
+                    ['{{ hist.fecha|date:"m/Y" }}', {{ hist.kw_base }}, {{ hist.kw_intermedio }}, {{ hist.kw_punta }}],
+                {% endfor %}
+            ]);
+
+            // Create and draw the visualization.
+            new google.visualization.ColumnChart(document.getElementById('visualization')).
+                    draw(data,
+                    {
+                        width:570, height:325,}
+            );
+        }
+
+        google.setOnLoadCallback(drawVisualization);
+    </script>
+
+</head>
+<body>
+<h4>Estado de Cuenta</h4>
+<div id="left_col" class="fl inner_col">
+
+    <div id="sumary">
+        <span class="l">Energ&iacute;a</span>
+        <span class="r">${{ tarifaHM.costo_energia|floatformat:2 }}</span>
+        <span class="l">Demanda Facturable</span>
+        <span class="r">${{ tarifaHM.costo_dfacturable|floatformat:2 }}</span>
+        <span class="l">Bonificaci&oacute;n Factor de Potencia</span>
+        <span class="r">${{ tarifaHM.costo_fpotencia|floatformat:2 }}</span>
+        <span class="l">Sub Total</span>
+        <span class="r">${{ tarifaHM.subtotal|floatformat:2 }}</span>
+        <span class="l">IVA 16%</span>
+        <span class="r">${{ tarifaHM.iva|floatformat:2 }}</span>
+        <span class="l">Total</span>
+        <span class="r total">${{ tarifaHM.total|floatformat:2 }}</span>
+    </div>
+
+    {% if totales_meses  %}
+        {% for tm in totales_meses %}
+
+            <table id="function_period">
+                <thead>
+                <tr>
+                    <th class="h82">Funci&oacute;n y Periodo</th>
+                    <th class="h18">Totales</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>kWh Base</td>
+                    <td>{{ tm.kwh_base }}</td>
+                </tr>
+                <tr>
+                    <td>kWh Intermedia</td>
+                    <td>{{ tm.kwh_intermedio }}</td>
+                </tr>
+                <tr>
+                    <td>kWh Punta</td>
+                    <td>{{ tm.kwh_punta }}</td>
+                </tr>
+
+                <tr>
+                    <td>kW Base</td>
+                    <td>{{ tm.kw_base }}</td>
+                </tr>
+                <tr>
+                    <td>kW Intermedia</td>
+                    <td>{{ tm.kw_intermedio }}</td>
+                </tr>
+                <tr>
+                    <td>kW Punta</td>
+                    <td>{{ tm.kw_punta }}</td>
+                </tr>
+                <tr>
+                    <td>kVArh</td>
+                    <td>{{ tm.kvarh }}</td>
+                </tr>
+                <tr>
+                    <td>Factor de potencia %</td>
+                    <td>{{ tm.factor_pt|floatformat:2  }}</td>
+                </tr>
+                </tbody>
+            </table>
+            <table id="rates">
+                <thead>
+                <tr>
+                    <th>Diferencia</th>
+                    <th>Totales</th>
+                    <th>Precios Unitarios</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>Energ&iacute;a en base kWh</td>
+                    <td>{{ tm.kwh_base }}</td>
+                    <td>{{ tm.tarifa_kwhb|floatformat:4 }}</td>
+
+                </tr>
+                <tr>
+                    <td>Energ&iacute;a en intermedia kWh</td>
+                    <td>{{ tm.kwh_intermedio }}</td>
+                    <td>{{ tm.tarifa_kwhi|floatformat:4 }}</td>
+
+                </tr>
+                <tr>
+                    <td>Energ&iacute;a en punta kWh</td>
+                    <td>{{ tm.kwh_punta }}</td>
+                    <td>{{ tm.tarifa_kwhp|floatformat:4 }}</td>
+
+                </tr>
+                <tr>
+                    <td>Demanda facturable kW</td>
+                    <td>{{ tm.demanda_facturable }}</td>
+                    <td>{{ tm.tarifa_df|floatformat:4 }}</td>
+
+                </tr>
+                </tbody>
+            </table>
+        {% endfor %}
+    {% endif %}
+</div>
+<div id="right_col" class="fl inner_col">
+    <div id="notes">
+        <span>Tarifa:</span><span>HM</span>
+        <span>Carga conectada kW:</span><span>150</span>
+        <span>Demanda contratada kW:</span><span>134</span>
+        <span>Multiplicador:</span><span>240</span>
+    </div>
+    <div id="history_graph">
+        <span id="graph_title">Datos Hist&oacute;ricos</span>
+        <div id="visualization"></div>
+    </div>
+    <table id="sumary_month">
+        <thead>
+        <tr>
+            <th>Mes</th>
+            <th>Demanda M&aacute;xima</th>
+            <th>Consumo Total (KWh)</th>
+            <th>F.P. %</th>
+            <th>F.C. %</th>
+            <th>Precio Medio</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for hist in  historico%}
+            <tr>
+                <td>{{ hist.fecha }}</td>
+                <td>{{ hist.demanda_maxima|floatformat:2 }}</td>
+                <td>{{ hist.total_kwh }}</td>
+                <td>{{ hist.factor_potencia|floatformat:2 }}%</td>
+                <td>{{ hist.factor_carga|floatformat:2 }}%</td>
+                <td>{{ hist.costo_promedio|floatformat:4 }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

@@ -12,14 +12,16 @@ ADMINS = (
 MANAGERS = ADMINS
 
 DATABASES = {
-    #'default': {
-    #    'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-    #    'NAME': 'audiwime_db',                      # Or path to database file if using sqlite3.
-    #    'USER': 'audiwime_user',                      # Not used with sqlite3.
-    #    'PASSWORD': 'A8d32e08.',#'5MnT)HXnm_pT',                  # Not used with sqlite3.
-    #    'HOST': 'audiwime.wimelabs.com',                      # Set to empty string for localhost. Not used with sqlite3.
-    #    'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
-    #}
+    'default': {
+        'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': 'audiwime_db',                      # Or path to database file if using sqlite3.
+        'USER': 'audiwime_user',                      # Not used with sqlite3.
+        'PASSWORD': 'A8d32e08.',#'5MnT)HXnm_pT',                  # Not used with sqlite3.
+        'HOST': 'audiwime.wimelabs.com',                      # Set to empty string for localhost. Not used with sqlite3.
+        'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
+    }
+}
+"""DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
         'NAME': 'satest_cidec',                      # Or path to database file if using sqlite3.
@@ -28,8 +30,8 @@ DATABASES = {
         'HOST': 'auditem.mx',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     }
-}
-#DATABASES = {
+}"""
+#DATABASES = {http://youtu.be/hSTVmYyk5ro?t=1m35s
 #'default': {
 #    'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
 #    'NAME': 'satest_cidec',                      # Or path to database file if using sqlite3.
@@ -146,6 +148,7 @@ INSTALLED_APPS = (
     'rbac',
     'electric_rates',
     'south',
+    'fts',
 )
 
 # A sample logging configuration. The only tangible logging
