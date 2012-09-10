@@ -61,17 +61,17 @@
             var end_date=new Date("{{ fi|date:"F d, Y" }}");
             console.log("{{ fi|date:"F d, Y" }}");
             switch (interval){
-                case 'hour' :
+                case 'hour_2' :
                     start_date.addHours(5);
                     end_date.addHours(7);
                     break;
-                case 'day' :
+                case 'day_2' :
                     end_date.addDays(1);
                     break;
-                case 'week' :
+                case 'week_2' :
                     end_date.addDays(7);
                     break;
-                case 'month' :
+                case 'month_2' :
                     end_date.addDays(30);
                     break;
             }
@@ -88,8 +88,8 @@
 
         var fi=encodeURIComponent("{{ fi|date:"d/m/Y" }}");
         var ff=encodeURIComponent("{{ ff|date:"d/m/Y" }}");
-        var url="/reportes/perfil_carga_data/?building={{ building }}&f1_init="+fi+"&f1_end="+ff;
-        var url2="/reportes/factor_potencia_data/?building={{ building }}&f1_init="+fi+"&f1_end="+ff;
+        var url="/reportes/perfil_carga_data/?building={{ building }}&f1_init="+
+                fi+"&f1_end="+ff;
 
         var data = new google.visualization.DataTable();
         var data2 = new google.visualization.DataTable();
@@ -195,6 +195,13 @@
                                 min = dato_electrico;
                             }
                         }
+                        if(min < 0){
+                            min += min/4;
+                        }else{
+                            min -= min/4;
+                        }
+
+                        max += max/4;
                         chart.setOption("vAxis.viewWindow.max", max);
                         chart.setOption("vAxis.viewWindow.min", min);
                         dashboard.bind(control, chart);
@@ -214,8 +221,29 @@
                     drawVisualization();
                 }
             });
+            var buildings_json = eval("{{ buildings }}");
+            var buildings_number = buildings_json.length;
+            var buildings_str = "";
+            for (var building_index = 0; building_index < buildings_number; building_index++) {
+                buildings_str += "building" + building_index + "=" +
+                        buildings_json[building_index] + "&";
+            }
+            var url2 = "/reportes/grafica_datos/?graph" +
+                    "=pf&"+buildings_str+"f1_init="+fi+"&f1_end="+ff;
+            var controlChartViewColumns = {
+                'columns': [0, 1]
+            };
 
-
+            var chartViewColumns = [
+                {
+                    'calc': function(dataTable, rowIndex) {
+                        return dataTable.getFormattedValue(rowIndex, 0);
+                    },
+                    'type': 'string'
+                }];
+            for (var column_index = 1; column_index <= 1; column_index++) {
+                chartViewColumns.push(column_index);
+            }
             $.ajax({
                 url: url2,
                 type: "GET",
@@ -223,10 +251,12 @@
                 async: 'true',
                 success: function(datos){
                     //----------------------CHARTS----------------------------
+                    var tipo = "Factor Potencia";
+                    tipo= tipo.replace("_", " ");
 
-                    function drawVisualization2() {
-                        var dashboard2 = new google.visualization.Dashboard(
-                                document.getElementById('dashboard2'));
+                    function drawVisualization() {
+                        var dashboard = new google.visualization.Dashboard(
+                                document.getElementById('dashboard'));
 
                         control2 = new google.visualization.ControlWrapper({
                             'controlType': 'ChartRangeFilter',
@@ -242,9 +272,7 @@
                                     },
                                     // Display a single series that shows the closing value of the stock.
                                     // Thus, this view has two columns: the date (axis) and the stock value (line series).
-                                    'chartView': {
-                                        'columns': [0, 1]
-                                    },
+                                    'chartView': controlChartViewColumns,
                                     // 1 day in milliseconds = 24 * 60 * 60 * 1000 = 86,400,000
                                     'minRangeSize': 3600000
                                 }
@@ -260,44 +288,65 @@
                                 // Use the same chart area width as the control for axis alignment.
                                 'chartArea': {'height': '80%', 'width': '90%'},
                                 'hAxis': {'slantedText': false},
-                                'vAxis': {'viewWindow': {'min': -1, 'max': 1}, textPosition: 'in'},
-                                'legend': {'position': 'none'}
+                                'vAxis': {'viewWindow': {'min': 90, 'max': 260}, textPosition: 'in'},
+                                'legend': {position: 'top', textStyle: {color: '#1E90FF', fontSize: 16}}
                             },
                             'colors': ['#ccc','#000'],
                             // Convert the first column from 'date' to 'string'.
                             'view': {
-                                'columns': [
-                                    {
-                                        'calc': function(dataTable, rowIndex) {
-                                            return dataTable.getFormattedValue(rowIndex, 0);
-                                        },
-                                        'type': 'string'
-                                    }, 1]
+                                'columns': chartViewColumns
                             }
                         });
 
 
                         data2.addColumn('datetime', 'Date');
-                        data2.addColumn('number', 'Factor Potencia');
+                    {% for building_name in building_names %}
+                        data2.addColumn('number', '{{ building_name.building_name }} - ' +
+                                tipo);
+                    {% endfor %}
                         var max = 0;
                         var min = 9000000000;
+
                         for(var x=0; x < datos.length; x++) {
+
                             var e = datos[x];
+
                             var fecha=new Date();
                             fecha.setTime((e.date*1000) - 3600000);//numero de milisegundos en una hora
-                            data2.addRow([fecha , parseFloat(e.pf)]);
-                            var dato_electrico=parseFloat(e.pf);
-                            if(dato_electrico > max){
-                                max = dato_electrico;
+                            var rowArray = new Array();
+                            rowArray.push(fecha);
+
+                            var dat_kw;
+                            for (var medition_index = 0; medition_index < e.meditions.length; medition_index++) {
+                                var dato_electrico=parseFloat(e.meditions[medition_index]);
+
+                                dat_kw={v: dato_electrico,
+                                    f: dato_electrico+" "+ tipo +" - " +
+                                            e.labels[medition_index]};
+
+                                rowArray.push(dat_kw);
+                                if(dato_electrico > max){
+                                    max = dato_electrico;
+                                }
+                                if(dato_electrico < min){
+                                    min = dato_electrico;
+                                }
                             }
-                            if(dato_electrico < min){
-                                min = dato_electrico;
-                            }
+
+                            data2.addRow(rowArray);
                         }
+                        if(min < 0){
+                            min += min/4;
+                        }else{
+                            min -= min/4;
+                        }
+
+                        max += max/4;
+
                         chart2.setOption("vAxis.viewWindow.max", max);
                         chart2.setOption("vAxis.viewWindow.min", min);
-                        dashboard2.bind(control2, chart2);
-                        dashboard2.draw(data2);
+                        dashboard.bind(control2, chart2);
+                        dashboard.draw(data2);
                         $( "#slider-range-pf" ).slider({
                             range: true,
                             orientation: "vertical",
@@ -305,12 +354,17 @@
                             max: max,
                             values: [ min, max ],
                             slide: function( event, ui ) {
-                                chart2.setOption('vAxis', {'viewWindow':{'max':ui.values[ 1 ], 'min':ui.values[ 0 ]}});
+                                chart2.setOption('vAxis', {
+                                        'viewWindow':{
+                                                'max': ui.values[ 1 ],
+                                                'min': ui.values[ 0 ]
+                                        }
+                                });
                                 chart2.draw();
                             }
                         });
                     }
-                    drawVisualization2();
+                    drawVisualization();
                 }
             });
         });
@@ -333,10 +387,10 @@
     <div id="slider-range" class="slider"></div>
 </div>
 <ul id="compare_interval2" class="fr">
-    <li id="hour">Hora</li>
-    <li id="day">D&iacute;a</li>
-    <li id="week" class="active">Semana</li>
-    <li id="month">Mes</li>
+    <li id="hour_2">Hora</li>
+    <li id="day_2">D&iacute;a</li>
+    <li id="week_2" class="active">Semana</li>
+    <li id="month_2">Mes</li>
 </ul>
 <div id="dashboard2" class="fl">
     <div id="chart2">

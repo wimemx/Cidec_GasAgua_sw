@@ -111,6 +111,7 @@ ol, ul {
     border-bottom-right-radius: 3px;
 }
 #dashboard, #dashboard2{
+    position: relative;
     clear: both;
     width: 100%;
 }

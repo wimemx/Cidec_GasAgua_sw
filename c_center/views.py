@@ -90,6 +90,41 @@ def get_intervals_2(get):
     get2=dict(f1_init=get['f2_init'], f1_end=get['f2_end'])
     return get_intervals_1(get2)
 
+def set_default_session_vars(request, datacontext):
+    """ Sets the default building and consumer unit """
+    if 'main_building' not in request.session:
+        #sets the default building (the first in DataContextPermission)
+        request.session['main_building'] = datacontext[0].building
+    if 'consumer_unit' not in request.session:
+        #sets the default ConsumerUnit (the first in ConsumerUnit for the main building)
+        c_unit = ConsumerUnit.objects.filter(building=request.session['main_building'])
+        request.session['consumer_unit'] = c_unit[0]
+
+def set_default_building(request, id_building):
+    """ Sets the default building for reports"""
+    request.session['main_building'] = Building.objects.get(pk=id_building)
+    c_unit = ConsumerUnit.objects.filter(building=request.session['main_building'])
+    request.session['consumer_unit'] = c_unit[0]
+    dicc = dict(edificio=request.session['main_building'].building_name,
+        electric_device_type=c_unit[0].electric_device_type.electric_device_type_name)
+    data = simplejson.dumps( dicc )
+    if 'referer' in request.GET:
+        if request.GET['referer'] == "cfe":
+            return HttpResponseRedirect("/reportes/cfe/")
+    return HttpResponse(content=data,content_type="application/json")
+
+def set_consumer_unit(request):
+    """ Shows a lightbox with all the profiles asociated for the main building """
+    c_units = ConsumerUnit.objects.filter(building=request.session['main_building'])
+    template_vars=dict(c_units=c_units)
+    template_vars_template = RequestContext(request, template_vars)
+    return render_to_response("consumption_centers/choose.html", template_vars_template)
+
+def set_default_consumer_unit(request, id_c_u):
+    """ Sets the consumer_unit for all the reports """
+    c_unit = ConsumerUnit.objects.filter(pk=id_c_u)
+    request.session['consumer_unit'] = c_unit[0]
+    return HttpResponse(status=200)
 def main_page(request):
     """ Main Page
     in the mean time the main view is the graphics view
@@ -99,7 +134,7 @@ def main_page(request):
         #has perm to view graphs, now check what can the user see
         datacontext = DataContextPermission.objects.filter(user_role__user=request.user)
 
-        set_default_session_vars()
+        set_default_session_vars(request, datacontext)
         #valid years for reporting
         request.session['years'] = [__date.year
                                     for __date in
@@ -114,20 +149,11 @@ def main_page(request):
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
-def set_default_session_vars(request):
-    if not request.session['main_building']:
-        #sets the default building (the first in DataContextPermission)
-        request.session['main_building'] = datacontext[0].building
-    if 'consumer_unit' not in request.session:
-        #sets the default ConsumerUnit (the first in ConsumerUnit for the main building)
-        c_unit = ConsumerUnit.objects.filter(building=request.session['main_building'])
-        request.session['consumer_unit'] = c_unit[0]
-
 def cfe_bill(request):
     """ Just sends the main template for the CFE Bill """
     if has_permission(request.user, VIEW, "CFE bill"):
         datacontext = DataContextPermission.objects.filter(user_role__user=request.user)
-        set_default_session_vars(request)
+        set_default_session_vars(request, datacontext)
 
         template_vars={"type":"cfe", "datacontext":datacontext,
                        'empresa':request.session['main_building']
@@ -139,6 +165,7 @@ def cfe_bill(request):
         return render_to_response("generic_error.html", RequestContext(request))
 
 def cfe_calculations(request):
+    """ Renders the cfe bill and the historic data chart"""
     template_vars = {}
 
     if request.GET:
@@ -169,49 +196,10 @@ def cfe_calculations(request):
 
     return HttpResponse(content="", content_type="text/html")
 
-def potencia_activa(request):
-    template_vars = {"type":"kw"}
-
-    #second interval, None by default
-    f2_init = None
-    f2_end = None
-
-    f1_init, f1_end = get_intervals_1(request.GET)
-
-    if request.GET:
-
-        if "f2_init" in request.GET:
-            #comparacion con un intervalo
-            template_vars['fi'], template_vars['ff'] = f1_init, f1_end
-            template_vars['fi2'], template_vars['ff2'] = get_intervals_2(request.GET)
-            template_vars['building']=request.session['main_building'].pk
-            template_vars_template = RequestContext(request, template_vars)
-            return render_to_response("consumption_centers/graphs/potencia_activa.html", template_vars_template)
-        else:
-            #graficas de un edificio
-            buildings = [request.session['main_building'].pk]
-            template_vars['building_names'] = []
-            template_vars['building_names'].append(get_object_or_404(Building, pk = request.session['main_building'].pk))
-
-            f1_init, f1_end = get_intervals_1(request.GET)
-            if request.method == "GET":
-                for key in request.GET:
-                    if re.search('^compare_to\d+', key):
-                        #graficas comparativas de 2 o mas edificios
-                        buildings.append(int(request.GET[key]))
-                        template_vars['building_names'].append(get_object_or_404(Building, pk = int(request.GET[key])))
-
-                template_vars['buildings'] = simplejson.dumps(buildings)
-
-            template_vars['fi'], template_vars['ff'] = f1_init, f1_end
-            template_vars_template = RequestContext(request, template_vars)
-            return render_to_response("consumption_centers/graphs/potencia_activa_b.html", template_vars_template)
-    else:
-        return HttpResponse(content="", content_type="text/html")
-
 
 def graficas(request):
-    template_vars = {'fi': get_intervals_1(request.GET)[0], 'ff': get_intervals_1(request.GET)[1]}
+    template_vars = {'fi': get_intervals_1(request.GET)[0],
+                     'ff': get_intervals_1(request.GET)[1]}
 
     #second interval, None by default
 
@@ -226,31 +214,39 @@ def graficas(request):
                 #comparacion con un intervalo
                 template_vars['fi2'], template_vars['ff2'] = get_intervals_2(request.GET)
                 buildings.append(1)
-                template_vars['building_names'].append(get_object_or_404(Building, pk = int(request.session['main_building'].pk)))
-                template_vars['building_names'].append(get_object_or_404(Building, pk = int(request.session['main_building'].pk)))
+                template_vars['building_names'].append(get_object_or_404(Building,
+                            pk = int(request.session['main_building'].pk)))
+                template_vars['building_names'].append(get_object_or_404(Building,
+                            pk = int(request.session['main_building'].pk)))
             else:
                 #graficas de un edificio
 
 
-                template_vars['building_names'].append(get_object_or_404(Building, pk = request.session['main_building'].pk))
+                template_vars['building_names'].append(get_object_or_404(Building,
+                            pk = request.session['main_building'].pk))
 
                 if request.method == "GET":
                     for key in request.GET:
                         if re.search('^compare_to\d+', key):
                             #graficas comparativas de 2 o mas edificios
                             buildings.append(int(request.GET[key]))
-                            template_vars['building_names'].append(get_object_or_404(Building, pk = int(request.GET[key])))
+                            template_vars['building_names'].append(get_object_or_404(Building,
+                                                                  pk = int(request.GET[key])))
 
             template_vars['buildings'] = simplejson.dumps(buildings)
-            template_vars['years'] = request.session['years']
-            ahora = datetime.now()
-            template_vars['year'] = ahora.year
-            template_vars['month'] = ahora.month
-            #week=ahora.isocalendar()[1]
-            template_vars['week'] = week_of_month(ahora)
-            print template_vars['week']
-            template_vars_template = RequestContext(request, template_vars)
-            return render_to_response("consumption_centers/graphs/test_graph.html", template_vars_template)
+            if request.GET["graph"] == "pp":
+                template_vars_template = RequestContext(request, template_vars)
+                return render_to_response("consumption_centers/graphs/perfil_carga.html",
+                    template_vars_template)
+            else:
+                template_vars['years'] = request.session['years']
+                ahora = datetime.now()
+                template_vars['year'] = ahora.year
+                template_vars['month'] = ahora.month
+                template_vars['week'] = week_of_month(ahora)
+                template_vars_template = RequestContext(request, template_vars)
+                return render_to_response("consumption_centers/graphs/test_graph.html",
+                                          template_vars_template)
     else:
         return HttpResponse(content="", content_type="text/html")
 
@@ -264,9 +260,9 @@ def grafica_datos(request):
             buildings.append(building)
     if "f2_init" in request.GET:
         f2_init, f2_end = get_intervals_2(request.GET)
-        building = Building.objects.get(pk=int(request.GET["building0"]))
 
-        data=get_json_data_from_intervals(profile, f1_init, f1_end, f2_init, f2_end, request.GET['graph'])
+        data=get_json_data_from_intervals(profile, f1_init, f1_end, f2_init, f2_end,
+                                          request.GET['graph'])
         return HttpResponse(content=data,content_type="application/json")
     elif len(buildings) > 0:
         data=get_json_data(buildings, f1_init, f1_end, request.GET['graph'],profile)
@@ -274,246 +270,10 @@ def grafica_datos(request):
     else:
         raise Http404
 
-def get_kw_data_boris(request):
-    f1_init, f1_end = get_intervals_1(request.GET)
-    buildings = []
-    if "f2_init" in request.GET:
-        f2_init, f2_end = get_intervals_2(request.GET)
-        #esto comparando con otro intervalo de tiempo
-        #tengo que sacar los datos de los dos intervalos y homologar las fechas
-        #como intervalos regulares de tiempo
-        building = Building.objects.get(pk=int(request.GET["building0"]))
-        meditions1 = get_medition_in_time(building, f1_init, f1_end)
-        meditions2 = get_medition_in_time(building, f2_init, f2_end)
-        len1=len(meditions1)
-        len2=len(meditions2)
-        cont=0
-        compared_meditions=[]
-
-        if len1 > len2:
-            for medition in meditions1:
-                cont+=1
-                kw2 = 0 if cont > len2 else meditions2[cont-1].kW
-                date2= 0 if cont > len2 else int(time.mktime(meditions2[cont-1].medition_date.timetuple()))
-                compared_meditions.append(dict(time1=int(time.mktime(medition.medition_date.timetuple())), kw1=str(medition.kW), time2=date2, kw2=str(kw2), cont=str(cont)))#date=int(time.mktime(medition.medition_date.timetuple()))
-                print medition.kW, kw2
-        else:
-            for medition in meditions2:
-                cont+=1
-                kw2 = 0 if cont > len1 else meditions1[cont-1].kW
-                date= 0 if cont > len1 else int(time.mktime(meditions1[cont-1].medition_date.timetuple()))
-                compared_meditions.append(dict(time1=str(date), kw1=str(kw2), kw2=str(medition.kW), time2=str(time.mktime(medition.medition_date.timetuple())), cont=str(cont)))
-                print medition.kW, kw2
-
-        return HttpResponse(content=simplejson.dumps(compared_meditions), content_type="application/json")
-
-    for key in request.GET:
-        if re.search('^building\d+', key):
-            building = get_object_or_404(Building, pk=int(request.GET[key]))
-            buildings.append(building)
-
-    if len(buildings) > 0:
-        data=get_KW_json_b(buildings, f1_init, f1_end)
-        return HttpResponse(content=data,content_type="application/json")
-    else:
-        raise Http404
-
-def get_kw_data(request):
-    if 'building' in request.GET:
-        f1_init, f1_end = get_intervals_1(request.GET)
-        building = get_object_or_404(Building, pk=int(request.GET['building']))
-        if "f2_init" in request.GET:
-            f2_init, f2_end = get_intervals_2(request.GET)
-            #esto comparando con otro intervalo de tiempo
-            #tengo que sacar los datos de los dos intervalos y homologar las fechas
-            #como intervalos regulares de tiempo
-
-            meditions1 = get_medition_in_time(building, f1_init, f1_end)
-            meditions2 = get_medition_in_time(building, f2_init, f2_end)
-            len1=len(meditions1)
-            len2=len(meditions2)
-            cont=0
-            compared_meditions=[]
-
-            if len1 > len2:
-                for medition in meditions1:
-                    cont+=1
-                    kw2 = 0 if cont > len2 else meditions2[cont-1].kW
-                    date2= 0 if cont > len2 else int(time.mktime(meditions2[cont-1].medition_date.timetuple()))
-                    compared_meditions.append(dict(time1=int(time.mktime(medition.medition_date.timetuple())), kw1=str(medition.kW), time2=date2, kw2=str(kw2), cont=str(cont)))#date=int(time.mktime(medition.medition_date.timetuple()))
-                    print medition.kW, kw2
-            else:
-                for medition in meditions2:
-                    cont+=1
-                    kw2 = 0 if cont > len1 else meditions1[cont-1].kW
-                    date= 0 if cont > len1 else int(time.mktime(meditions1[cont-1].medition_date.timetuple()))
-                    compared_meditions.append(dict(time1=str(date), kw1=str(kw2), kw2=str(medition.kW), time2=str(time.mktime(medition.medition_date.timetuple())), cont=str(cont)))
-                    print medition.kW, kw2
-
-            return HttpResponse(content=simplejson.dumps(compared_meditions), content_type="application/json")
-        data=get_KW_json(building, f1_init, f1_end)
-        return HttpResponse(content=data,content_type="application/json")
-    else:
-        raise Http404
-
-
-def get_kvar_data(request):
-    if 'building' in request.GET:
-        f1_init, f1_end = get_intervals_1(request.GET)
-        building = get_object_or_404(Building, pk=int(request.GET['building']))
-        if "f2_init" in request.GET:
-            f2_init, f2_end = get_intervals_2(request.GET)
-            #esto comparando con otro intervalo de tiempo
-            #tengo que sacar los datos de los dos intervalos y homologar las fechas
-            #como intervalos regulares de tiempo
-
-            meditions1 = get_medition_in_time(building, f1_init, f1_end)
-            meditions2 = get_medition_in_time(building, f2_init, f2_end)
-            len1=len(meditions1)
-            len2=len(meditions2)
-            cont=0
-            compared_meditions=[]
-
-            if len1 > len2:
-                for medition in meditions1:
-                    cont+=1
-                    kvar2 = 0 if cont > len2 else meditions2[cont-1].kvar
-                    date2= 0 if cont > len2 else int(time.mktime(meditions2[cont-1].medition_date.timetuple()))
-                    compared_meditions.append(dict(time1=int(time.mktime(medition.medition_date.timetuple())), kvar1=str(medition.kvar), time2=date2, kvar2=str(kvar2), cont=str(cont)))#date=int(time.mktime(medition.medition_date.timetuple()))
-                    print medition.kvar, kvar2
-            else:
-                for medition in meditions2:
-                    cont+=1
-                    kvar2 = 0 if cont > len1 else meditions1[cont-1].kvar
-                    date= 0 if cont > len1 else int(time.mktime(meditions1[cont-1].medition_date.timetuple()))
-                    compared_meditions.append(dict(time1=str(date), kvar1=str(kvar2), kvar2=str(medition.kvar), time2=str(medition.medition_date), cont=str(cont)))
-                    print medition.kvar, kvar2
-
-            return HttpResponse(content=simplejson.dumps(compared_meditions), content_type="application/json")
-        data=get_KVar_json(building, f1_init, f1_end)
-        return HttpResponse(content=data,content_type="application/json")
-    else:
-        raise Http404
-
-def get_kvar_data_boris(request):
-    f1_init, f1_end = get_intervals_1(request.GET)
-    buildings = []
-    for key in request.GET:
-        if re.search('^building\d+', key):
-            building = get_object_or_404(Building, pk=int(request.GET[key]))
-            buildings.append(building)
-
-    if len(buildings) > 0:
-        data = get_KVar_json_boris(buildings, f1_init, f1_end)
-        return HttpResponse(content=data,content_type="application/json")
-    else:
-        raise Http404
-
-def get_KVar_json_boris(buildings, datetime_from, datetime_to):
-    meditions_json = []
-    buildings_number = len(buildings)
-    if buildings_number < 1:
-        return simplejson.dumps(meditions_json)
-
-    buildings_meditions = []
-    for building in buildings:
-        print "Building"
-        buildings_meditions.append(get_medition_in_time(building, datetime_from, datetime_to))
-
-    meditions_number = len(buildings_meditions[0])
-    for medition_index in range(0, meditions_number):
-        current_medition = None
-        meditions_kw = []
-        for building_index in range(0, buildings_number):
-            #print buildings_meditions[building_index][medition_index]
-            current_medition = buildings_meditions[building_index][medition_index]
-            meditions_kw.append(str(current_medition.kvar))
-
-        meditions_json.append(dict(meditions = meditions_kw, date = int(time.mktime(current_medition.medition_date.timetuple()))))
-
-    return simplejson.dumps(meditions_json)
-
-
-def get_pf_data(request):
-    if 'building' in request.GET:
-        f1_init, f1_end = get_intervals_1(request.GET)
-        building = get_object_or_404(Building, pk=int(request.GET['building']))
-        if "f2_init" in request.GET:
-            f2_init, f2_end = get_intervals_2(request.GET)
-            #esto comparando con otro intervalo de tiempo
-            #tengo que sacar los datos de los dos intervalos y homologar las fechas
-            #como intervalos regulares de tiempo
-
-            meditions1 = get_medition_in_time(building, f1_init, f1_end)
-            meditions2 = get_medition_in_time(building, f2_init, f2_end)
-            len1=len(meditions1)
-            len2=len(meditions2)
-            cont=0
-            compared_meditions=[]
-
-            if len1 > len2:
-                for medition in meditions1:
-                    cont+=1
-                    pf2 = 0 if cont > len2 else meditions2[cont-1].PF
-                    date2= 0 if cont > len2 else int(time.mktime(meditions2[cont-1].medition_date.timetuple()))
-                    compared_meditions.append(dict(time1=int(time.mktime(medition.medition_date.timetuple())), pf1=str(medition.PF), time2=date2, pf2=str(pf2), cont=str(cont)))#date=int(time.mktime(medition.medition_date.timetuple()))
-
-            else:
-                for medition in meditions2:
-                    cont+=1
-                    pf2 = 0 if cont > len1 else meditions1[cont-1].PF
-                    date= 0 if cont > len1 else int(time.mktime(meditions1[cont-1].medition_date.timetuple()))
-                    compared_meditions.append(dict(time1=str(date), pf1=str(pf2), pf2=str(medition.PF), time2=str(medition.medition_date), cont=str(cont)))
-
-
-            return HttpResponse(content=simplejson.dumps(compared_meditions), content_type="application/json")
-        data=get_PF_json(building, f1_init, f1_end)
-        return HttpResponse(content=data,content_type="application/json")
-    else:
-        raise Http404
-
-def get_pf_data_boris(request):
-    f1_init, f1_end = get_intervals_1(request.GET)
-    buildings = []
-    for key in request.GET:
-        if re.search('^building\d+', key):
-            building = get_object_or_404(Building, pk=int(request.GET[key]))
-            buildings.append(building)
-
-    if len(buildings) > 0:
-        data = get_PF_json_boris(buildings, f1_init, f1_end)
-        return HttpResponse(content=data,content_type="application/json")
-    else:
-        raise Http404
-
-def get_PF_json_boris(buildings, datetime_from, datetime_to):
-    meditions_json = []
-    buildings_number = len(buildings)
-    if buildings_number < 1:
-        return simplejson.dumps(meditions_json)
-
-    buildings_meditions = []
-    for building in buildings:
-        print "Building"
-        buildings_meditions.append(get_medition_in_time(building, datetime_from, datetime_to))
-
-    meditions_number = len(buildings_meditions[0])
-    for medition_index in range(0, meditions_number):
-        current_medition = None
-        meditions_kw = []
-        for building_index in range(0, buildings_number):
-            #print buildings_meditions[building_index][medition_index]
-            current_medition = buildings_meditions[building_index][medition_index]
-            meditions_kw.append(str(current_medition.PF))
-
-        meditions_json.append(dict(meditions = meditions_kw, date = int(time.mktime(current_medition.medition_date.timetuple()))))
-
-    return simplejson.dumps(meditions_json)
 
 
 def get_pp_data(request):
     if 'building' in request.GET:
-        building = get_object_or_404(Building, pk=int(request.GET['building']))
         f1_init, f1_end = get_intervals_1(request.GET)
         data=get_power_profile_json(request.session['main_building'], f1_init, f1_end)
         return HttpResponse(content=data,content_type="application/json")
@@ -521,171 +281,49 @@ def get_pp_data(request):
         raise Http404
 
 
-def potencia_reactiva(request):
-    template_vars = {"type":"kvar"}
-    #second interval, None by default
-    f2_init = None
-    f2_end = None
-
-    f1_init, f1_end = get_intervals_1(request.GET)
-
-    if request.GET:
-
-        if "f2_init" in request.GET:
-            template_vars['fi'], template_vars['ff'] = f1_init, f1_end
-            template_vars['fi2'], template_vars['ff2'] = get_intervals_2(request.GET)
-            template_vars['building']=request.session['main_building'].pk
-            template_vars_template = RequestContext(request, template_vars)
-            return render_to_response("consumption_centers/graphs/potencia_reactiva.html", template_vars_template)
-        else:
-            buildings = []
-            buildings.append(request.session['main_building'].pk)
-            template_vars['building_names'] = []
-            template_vars['building_names'].append(get_object_or_404(Building, pk = request.session['main_building'].pk))
-
-            #second interval, None by default
-            f2_init = None
-            f2_end = None
-
-            f1_init, f1_end = get_intervals_1(request.GET)
-            print request.method
-            if request.method == "GET":
-                if "f2_init" in request.GET:
-                    f2_init, f2_end = get_intervals_2(request.GET)
-
-                for key in request.GET:
-                    if re.search('^compare_to\d+', key):
-                        buildings.append(int(request.GET[key]))
-                        template_vars['building_names'].append(get_object_or_404(Building, pk = int(request.GET[key])))
-
-                template_vars['buildings'] = simplejson.dumps(buildings)
-
-            template_vars['fi'], template_vars['ff'] = f1_init, f1_end
-            template_vars_template = RequestContext(request, template_vars)
-            return render_to_response("consumption_centers/graphs/potencia_reactiva_b.html", template_vars_template)
-    else:
-        return HttpResponse(content="", content_type="text/html")
-
-def factor_potencia(request):
-    template_vars = {"type":"pf"}
-    #second interval, None by default
-    f2_init = None
-    f2_end = None
-
-    f1_init, f1_end = get_intervals_1(request.GET)
-
-    if request.GET:
-
-        if "f2_init" in request.GET:
-            template_vars['fi'], template_vars['ff'] = f1_init, f1_end
-            template_vars['fi2'], template_vars['ff2'] = get_intervals_2(request.GET)
-            template_vars['building']=request.session['main_building'].pk
-            template_vars_template = RequestContext(request, template_vars)
-            return render_to_response("consumption_centers/graphs/factor_potencia.html", template_vars_template)
-        else:
-            buildings = []
-            buildings.append(request.session['main_building'].pk)
-            template_vars['building_names'] = []
-            template_vars['building_names'].append(get_object_or_404(Building, pk = request.session['main_building'].pk))
-
-            #second interval, None by default
-            f2_init = None
-            f2_end = None
-
-            f1_init, f1_end = get_intervals_1(request.GET)
-            print request.method
-            if request.method == "GET":
-                if "f2_init" in request.GET:
-                    f2_init, f2_end = get_intervals_2(request.GET)
-
-                for key in request.GET:
-                    if re.search('^compare_to\d+', key):
-                        buildings.append(int(request.GET[key]))
-                        template_vars['building_names'].append(get_object_or_404(Building, pk = int(request.GET[key])))
-
-                template_vars['buildings'] = simplejson.dumps(buildings)
-
-            template_vars['fi'], template_vars['ff'] = f1_init, f1_end
-            template_vars_template = RequestContext(request, template_vars)
-            return render_to_response("consumption_centers/graphs/factor_potencia_b.html", template_vars_template)
-    else:
-        return HttpResponse(content="", content_type="text/html")
-
-
 def perfil_carga(request):
-    template_vars = {"type":"profile"}
+    template_vars = {'fi': get_intervals_1(request.GET)[0],
+                     'ff': get_intervals_1(request.GET)[1]}
+
     #second interval, None by default
-    f2_init = None
-    f2_end = None
 
     f1_init, f1_end = get_intervals_1(request.GET)
 
     if request.GET:
-
+        buildings = [request.session['main_building'].pk]
+        template_vars['building_names'] = []
         if "f2_init" in request.GET:
             f2_init, f2_end = get_intervals_2(request.GET)
+
         for key in request.GET:
             if re.search('^compare_to\d+', key):
                 # "compare", request.session['main_building'], "with building", key
                 building_compare = Building.objects.get(pk=int(key))
-                template_vars['compare_interval_pf'] = get_PF(building_compare, f1_init, f1_end)
-                template_vars['compare_interval_kvar'] = get_KVar(building_compare, f1_init, f1_end)
-                template_vars['compare_interval_kw'] = get_KW(building_compare, f1_init, f1_end)
+                template_vars['compare_interval_pf'] = get_PF(building_compare, f1_init,
+                                                              f1_end)
+                template_vars['compare_interval_kvar'] = get_KVar(building_compare, f1_init,
+                                                                  f1_end)
+                template_vars['compare_interval_kw'] = get_KW(building_compare, f1_init,
+                                                              f1_end)
                 if f2_init:
-                    template_vars['compare_interval2_pf'] = get_PF(building_compare, f2_init, f2_end)
-                    template_vars['compare_interval2_kvar'] = get_KVar(building_compare, f2_init, f2_end)
-                    template_vars['compare_interval2_kw'] = get_KW(building_compare, f2_init, f2_end)
+                    template_vars['compare_interval2_pf'] = get_PF(building_compare, f2_init,
+                                                                   f2_end)
+                    template_vars['compare_interval2_kvar'] = get_KVar(building_compare,
+                                                                       f2_init, f2_end)
+                    template_vars['compare_interval2_kw'] = get_KW(building_compare, f2_init,
+                                                                   f2_end)
     template_vars['building']=request.session['main_building'].pk
     template_vars['fi'], template_vars['ff'] = f1_init, f1_end
-    #template_vars['main_interval_kw'], \
-    #template_vars['fi'], \
-    #template_vars['ff'] = get_KW(request.session['main_building'], f1_init, f1_end)
 
     if f2_init:
-        template_vars['main_interval2_pf'] = get_PF(request.session['main_building'], f2_init, f2_end)
-        template_vars['main_interval_kvar_kw2'] = get_power_profile(request.session['main_building'], f2_init, f2_end)
+        template_vars['main_interval2_pf'] = get_PF(request.session['main_building'], f2_init,
+                                                    f2_end)
+        template_vars['main_interval_kvar_kw2'] = \
+                        get_power_profile(request.session['main_building'], f2_init, f2_end)
 
     template_vars_template = RequestContext(request, template_vars)
-    return render_to_response("consumption_centers/graphs/perfil_carga.html", template_vars_template)
-
-def set_default_building(request, id_building):
-    """ Sets the default building for reports"""
-    request.session['main_building'] = Building.objects.get(pk=id_building)
-    c_unit = ConsumerUnit.objects.filter(building=request.session['main_building'])
-    request.session['consumer_unit'] = c_unit[0]
-    dicc = dict(edificio=request.session['main_building'].building_name,
-        electric_device_type=c_unit[0].electric_device_type.electric_device_type_name)
-    data = simplejson.dumps( dicc )
-    if 'referer' in request.GET:
-        if request.GET['referer'] == "cfe":
-            return HttpResponseRedirect("/reportes/cfe/")
-    return HttpResponse(content=data,content_type="application/json")
-
-def set_consumer_unit(request):
-    """ Shows a lightbox with all the profiles asociated for the main building """
-    c_units = ConsumerUnit.objects.filter(building=request.session['main_building'])
-    template_vars=dict(c_units=c_units)
-    template_vars_template = RequestContext(request, template_vars)
-    return render_to_response("consumption_centers/choose.html", template_vars_template)
-
-def set_default_consumer_unit(request, id_c_u):
-    """ Sets the consumer_unit for all the reports """
-    c_unit = ConsumerUnit.objects.filter(pk=id_c_u)
-    request.session['consumer_unit'] = c_unit[0]
-    return HttpResponse(status=200)
-
-def recibocfe(request):
-
-    #Obtiene los registros de un medidor en un determinado periodo de tiempo
-    start_date, end_date = get_intervals_1(request.GET)
-    consumer_unit = ConsumerUnit.objects.get(building=request.session['main_building'])
-    pr_powermeter = ProfilePowermeter.objects.get(pk=consumer_unit.profile_powermeter.pk)
-    region = request.session['main_building'].region
-
-    vars=dict(tarifa=tarifaHM_total(pr_powermeter, start_date, end_date, region, request.session['main_building'].electric_rate))
-
-    variables = RequestContext(request, vars)
-    return render_to_response('consumption_centers/cfe.html', variables)
+    return render_to_response("consumption_centers/graphs/perfil_carga.html",
+                              template_vars_template)
 
 def get_medition_in_time(profile, datetime_from, datetime_to):
     """ Gets the meditions registered in a time window
@@ -699,28 +337,10 @@ def get_medition_in_time(profile, datetime_from, datetime_to):
     """
     #consumer_unit = ConsumerUnit.objects.get(building=building)
     profile_powermeter = profile#ProfilePowermeter.objects.get(pk=consumer_unit.profile_powermeter.pk)
-    date_gte = datetime_from.replace(hour=0,minute=0,second=0,tzinfo=timezone.get_current_timezone())
-    date_lte = datetime_to.replace(hour=23,minute=59,second=59,tzinfo=timezone.get_current_timezone())
-    #date_gte = datetime_from-timedelta(hours=5)
-    #date_lte = datetime_to+timedelta(days=1)-timedelta(hours=5)
-
-    meditions = ElectricData.objects.filter(profile_powermeter=profile_powermeter,
-        medition_date__range=(date_gte, date_lte)).order_by("medition_date")
-    return meditions
-
-def get_medition_in_time_profile(profile, datetime_from, datetime_to):
-    """ Gets the meditions registered in a time window
-
-    profile = Profile powermeter
-    datetime_from = lower date limit
-    datetime_to = upper date limit
-
-    Right now we are assuming that there is only a powermeter(and one consumer unit) per building
-
-    """
-    profile_powermeter = profile
-    date_gte = datetime_from.replace(hour=0,minute=0,second=0,tzinfo=timezone.get_current_timezone())
-    date_lte = datetime_to.replace(hour=23,minute=59,second=59,tzinfo=timezone.get_current_timezone())
+    date_gte = datetime_from.replace(hour=0, minute=0, second=0,
+                                     tzinfo=timezone.get_current_timezone())
+    date_lte = datetime_to.replace(hour=23 ,minute=59, second=59,
+                                   tzinfo=timezone.get_current_timezone())
     #date_gte = datetime_from-timedelta(hours=5)
     #date_lte = datetime_to+timedelta(days=1)-timedelta(hours=5)
 
@@ -729,7 +349,7 @@ def get_medition_in_time_profile(profile, datetime_from, datetime_to):
     return meditions
 
 def get_KW(building, datetime_from, datetime_to):
-    """ Gets the KW data in a given interval"""
+    """ Gets the KW data in a given interval needed for Power Profile"""
     meditions = get_medition_in_time(building, datetime_from, datetime_to)
     kw=[]
     fi = None
@@ -740,40 +360,6 @@ def get_KW(building, datetime_from, datetime_to):
     ff = meditions[len(meditions)-1].medition_date
     return kw, fi, ff
 
-def get_KW_json(building, datetime_from, datetime_to):
-    """ Gets the KW data in a given interval"""
-    meditions = get_medition_in_time(building, datetime_from, datetime_to)
-    kw=[]
-    for medition in meditions:
-        kw.append(dict(kw=str(medition.kW), date=int(time.mktime(medition.medition_date.timetuple()))))
-
-    return simplejson.dumps(kw)
-
-def get_KW_json_b(buildings, datetime_from, datetime_to):
-    #pdb.set_trace()
-
-    meditions_json = []
-    buildings_number = len(buildings)
-    if buildings_number < 1:
-        return simplejson.dumps(meditions_json)
-
-    buildings_meditions = []
-    for building in buildings:
-        buildings_meditions.append(get_medition_in_time(building, datetime_from, datetime_to))
-
-    meditions_number = len(buildings_meditions[0])
-
-    for medition_index in range(0, meditions_number):
-        current_medition = None
-        meditions_kw = []
-        for building_index in range(0, buildings_number):
-            #print buildings_meditions[building_index][medition_index]
-            current_medition = buildings_meditions[building_index][medition_index]
-            meditions_kw.append(str(current_medition.kW))
-
-        meditions_json.append(dict(meditions = meditions_kw, date = int(time.mktime(current_medition.medition_date.timetuple()))))
-
-    return simplejson.dumps(meditions_json)
 
 def get_json_data_from_intervals(profile, f1_init, f1_end, f2_init, f2_end,  parameter):
     """ Returns a JSON containing the date and the parameter for a profile en 2 ranges of time
@@ -806,14 +392,19 @@ def get_json_data_from_intervals(profile, f1_init, f1_end, f2_init, f2_end,  par
         datetime_to2 = datetime_from2 + day_delta
 
         for day_index in range(0, number_days):
-            f1_init = f1_init.replace(hour=0,minute=0,second=0,tzinfo=timezone.get_current_timezone())
+            f1_init = f1_init.replace(hour=0, minute=0, second=0,
+                                      tzinfo=timezone.get_current_timezone())
 
             #intervalo1
-            datetime_from = datetime_from.replace(hour=0,minute=0,second=0,tzinfo=timezone.get_current_timezone())
-            datetime_to = datetime_to.replace(hour=0,minute=0,second=0,tzinfo=timezone.get_current_timezone())
+            datetime_from = datetime_from.replace(hour=0, minute=0, second=0,
+                                                  tzinfo=timezone.get_current_timezone())
+            datetime_to = datetime_to.replace(hour=0, minute=0, second=0,
+                                              tzinfo=timezone.get_current_timezone())
             #intervalo2
-            datetime_from2 = datetime_from2.replace(hour=0,minute=0,second=0,tzinfo=timezone.get_current_timezone())
-            datetime_to2 = datetime_to2.replace(hour=0,minute=0,second=0,tzinfo=timezone.get_current_timezone())
+            datetime_from2 = datetime_from2.replace(hour=0, minute=0, second=0,
+                                                    tzinfo=timezone.get_current_timezone())
+            datetime_to2 = datetime_to2.replace(hour=0, minute=0, second=0,
+                                                tzinfo=timezone.get_current_timezone())
 
             #all the meditions in a day for the first interval
             meditions = ElectricData.objects.filter(profile_powermeter=profile,
@@ -829,24 +420,29 @@ def get_json_data_from_intervals(profile, f1_init, f1_end, f2_init, f2_end,  par
 
             if meditions_last_index < 1:
                 e_parameter=0
-                #dayly_summary.append({"date":int(time.mktime(datetime_from.timetuple())), "meditions":[0], 'labels':[str(datetime_to)]})
+
             else:
                 if parameter == "kwh_consumido":
-                    e_parameter = meditions[meditions_last_index].kWhIMPORT - meditions[0].kWhIMPORT
+                    e_parameter = meditions[meditions_last_index].kWhIMPORT - \
+                                  meditions[0].kWhIMPORT
                 else:
-                    e_parameter = meditions[meditions_last_index].kvarhIMPORT - meditions[0].kvarhIMPORT
+                    e_parameter = meditions[meditions_last_index].kvarhIMPORT - \
+                                  meditions[0].kvarhIMPORT
 
             if meditions_last_index2 < 1:
                 e_parameter2=0
-                #dayly_summary.append({"date":int(time.mktime(datetime_from.timetuple())), "meditions":[0], 'labels':[str(datetime_to)]})
+
             else:
                 if parameter == "kwh_consumido":
-                    e_parameter2 = meditions2[meditions_last_index2].kWhIMPORT - meditions2[0].kWhIMPORT
+                    e_parameter2 = meditions2[meditions_last_index2].kWhIMPORT - \
+                                   meditions2[0].kWhIMPORT
                 else:
-                    e_parameter2 = meditions2[meditions_last_index2].kvarhIMPORT - meditions2[0].kvarhIMPORT
+                    e_parameter2 = meditions2[meditions_last_index2].kvarhIMPORT - \
+                                   meditions2[0].kvarhIMPORT
             meditions_parameters = [float(e_parameter), float(e_parameter2)]
             labels = [str(datetime_from), str(datetime_from2)]
-            dayly_summary.append({"date":int(time.mktime(f1_init.timetuple())), "meditions":meditions_parameters, 'labels':labels})
+            dayly_summary.append({"date":int(time.mktime(f1_init.timetuple())),
+                                  "meditions":meditions_parameters, 'labels':labels})
             datetime_from = datetime_to
             f1_init += day_delta
             datetime_to = datetime_from + day_delta
@@ -855,8 +451,8 @@ def get_json_data_from_intervals(profile, f1_init, f1_end, f2_init, f2_end,  par
 
 
     meditions_json = []
-    buildings_meditions = [get_medition_in_time_profile(profile, f1_init, f1_end),
-                           get_medition_in_time_profile(profile, f2_init, f2_end)]
+    buildings_meditions = [get_medition_in_time(profile, f1_init, f1_end),
+                           get_medition_in_time(profile, f2_init, f2_end)]
     len0=len(buildings_meditions[0])
     len1=len(buildings_meditions[1])
     if len0>len1:
@@ -865,7 +461,6 @@ def get_json_data_from_intervals(profile, f1_init, f1_end, f2_init, f2_end,  par
         meditions_number=len0
 
     for medition_index in range(0, meditions_number):
-        current_medition = None
         meditions = []
         labels = []
         _time = 0
@@ -876,7 +471,7 @@ def get_json_data_from_intervals(profile, f1_init, f1_end, f2_init, f2_end,  par
                 meditions.append('0')
             else:
                 medition_date=current_medition.medition_date
-                if _time == 0:
+                if not _time:
                     _time = int(time.mktime(medition_date.timetuple()))
 
                 if parameter == "kw":
@@ -904,7 +499,6 @@ def get_json_data(buildings, datetime_from, datetime_to, parameter, profile):
     """
     if parameter == "kwh_consumido" or parameter == "kvarh_consumido":
         dayly_summary=[]
-        labels=[]
         day_delta = timedelta(days=1)
         delta_days = datetime_to - datetime_from
 
@@ -913,25 +507,32 @@ def get_json_data(buildings, datetime_from, datetime_to, parameter, profile):
         datetime_to = datetime_from + day_delta
         for day_index in range(0, number_days):
 
-            datetime_from = datetime_from.replace(hour=0,minute=0,second=0,tzinfo=timezone.get_current_timezone())
+            datetime_from = datetime_from.replace(hour=0, minute=0, second=0,
+                                                  tzinfo=timezone.get_current_timezone())
 
-            datetime_to = datetime_to.replace(hour=0,minute=0,second=0,tzinfo=timezone.get_current_timezone())
+            datetime_to = datetime_to.replace(hour=0, minute=0, second=0,
+                                              tzinfo=timezone.get_current_timezone())
             #all the meditions in a day
             meditions = ElectricData.objects.filter(profile_powermeter=profile,
-                medition_date__gte=datetime_from,
-                medition_date__lt=datetime_to)
+                                                    medition_date__gte=datetime_from,
+                                                    medition_date__lt=datetime_to)
 
             meditions_last_index = len(meditions) - 1
 
             if meditions_last_index < 1:
-                dayly_summary.append({"date":int(time.mktime(datetime_from.timetuple())), "meditions":[0], 'labels':[str(datetime_to)]})
+                dayly_summary.append({"date":int(time.mktime(datetime_from.timetuple())),
+                                      "meditions":[0], 'labels':[str(datetime_to)]})
             else:
                 if parameter == "kwh_consumido":
-                    e_parameter = meditions[meditions_last_index].kWhIMPORT - meditions[0].kWhIMPORT
+                    e_parameter = meditions[meditions_last_index].kWhIMPORT - \
+                                  meditions[0].kWhIMPORT
                 else:
-                    e_parameter = meditions[meditions_last_index].kvarhIMPORT - meditions[0].kvarhIMPORT
+                    e_parameter = meditions[meditions_last_index].kvarhIMPORT - \
+                                  meditions[0].kvarhIMPORT
 
-                dayly_summary.append({"date":int(time.mktime(datetime_from.timetuple())), "meditions":[float(e_parameter)], 'labels':[str(datetime_to)]})
+                dayly_summary.append({"date":int(time.mktime(datetime_from.timetuple())),
+                                      "meditions":[float(e_parameter)],
+                                      'labels':[str(datetime_to)]})
             datetime_from = datetime_to
             datetime_to = datetime_from + day_delta
 
@@ -970,13 +571,14 @@ def get_json_data(buildings, datetime_from, datetime_to, parameter, profile):
 
             labels.append(str(timezone.localtime(current_medition.medition_date)))
 
-        meditions_json.append(dict(meditions = meditions, date = int(time.mktime(current_medition.medition_date.timetuple())), labels = labels))
+        meditions_json.append(dict(meditions = meditions, date =
+            int(time.mktime(current_medition.medition_date.timetuple())), labels = labels))
 
     return simplejson.dumps(meditions_json)
 
 
 def get_KVar(building, datetime_from, datetime_to):
-    """ Gets the KW data in a given interval"""
+    """ Gets the KW data in a given interval needed for Power Profile"""
     meditions = get_medition_in_time(building, datetime_from, datetime_to)
     kvar=[]
     for medition in meditions:
@@ -984,32 +586,14 @@ def get_KVar(building, datetime_from, datetime_to):
 
     return kvar
 
-def get_KVar_json(building, datetime_from, datetime_to):
-    """ Gets the KVar data in a given interval"""
-    meditions = get_medition_in_time(building, datetime_from, datetime_to)
-    kvar=[]
-    for medition in meditions:
-        kvar.append(dict(kvar=str(medition.kvar), date=int(time.mktime(medition.medition_date.timetuple()))))
-
-    return simplejson.dumps(kvar)
-
 
 def get_PF(building, datetime_from, datetime_to):
-    """ Gets the KW data in a given interval"""
+    """ Gets the KW data in a given interval needed for Power Profile"""
     meditions = get_medition_in_time(building, datetime_from, datetime_to)
     pf=[]
     for medition in meditions:
         pf.append(dict(pf=medition.PF, date=medition.medition_date))
     return pf
-
-def get_PF_json(building, datetime_from, datetime_to):
-    """ Gets the PF data in a given interval"""
-    meditions = get_medition_in_time(building, datetime_from, datetime_to)
-    pf=[]
-    for medition in meditions:
-        pf.append(dict(pf=str(medition.PF), date=int(time.mktime(medition.medition_date.timetuple()))))
-
-    return simplejson.dumps(pf)
 
 
 def get_power_profile(building, datetime_from, datetime_to):
@@ -1029,8 +613,8 @@ def get_power_profile_json(building, datetime_from, datetime_to):
     #kvar=[]
     kw=[]
     for medition in meditions:
-        kw.append(dict(kw=str(medition.kW), kvar=str(medition.kvar), date=int(time.mktime(medition.medition_date.timetuple()))))
-        #kvar.append(dict(kvar=str(medition.kvar), date=int(time.mktime(medition.medition_date.timetuple()))))
+        kw.append(dict(kw=str(medition.kW), kvar=str(medition.kvar),
+                  date=int(time.mktime(medition.medition_date.timetuple()))))
     return simplejson.dumps(kw)
 
 
@@ -1089,12 +673,13 @@ def get_weekly_summary_kwh(year, month, week, type, profile):
             else:
                 measure = measures[measures_last_index].kvarhIMPORT - measures[0].kvarhIMPORT
 
-        if week_measure != 0:
+        if week_measure:
             measure_percentage = (measure / week_measure) * 100
         else:
             measure_percentage = 0
 
-        weekly_summary.append({"date":datetime_from, "kwh":measure, "percentage":measure_percentage})
+        weekly_summary.append({"date":datetime_from, "kwh":measure,
+                               "percentage": measure_percentage})
         datetime_from = datetime_to
         datetime_to = datetime_from + day_delta
 
@@ -1102,8 +687,6 @@ def get_weekly_summary_kwh(year, month, week, type, profile):
 
 def get_weekly_summary_comparison_kwh(request):
     template_variables = {}
-    week_01 = []
-    week_02 = []
     week_days = ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado", "Domingo"]
 
     if request.GET:
@@ -1111,14 +694,16 @@ def get_weekly_summary_comparison_kwh(request):
                                                int(request.GET['month01']),
                                                int(request.GET['week01']),
                                                request.GET['type'],
-                                               request.session['consumer_unit'].profile_powermeter)
+                                               request.session['consumer_unit']
+                                                .profile_powermeter)
         template_variables['total1'] = tot1
         if "year02" in request.GET:
             week_02, total2 = get_weekly_summary_kwh(int(request.GET['year02']),
                                                    int(request.GET['month02']),
                                                    int(request.GET['week02']),
                                                    request.GET['type'],
-                                                   request.session['consumer_unit'].profile_powermeter)
+                                                   request.session['consumer_unit']
+                                                   .profile_powermeter)
             template_variables['total2'] = total2
             template_variables['comparison'] = zip(week_days, week_01, week_02)
             template_variables['compared'] = True
