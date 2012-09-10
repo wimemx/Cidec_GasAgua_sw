@@ -290,7 +290,6 @@ def perfil_carga(request):
     f1_init, f1_end = get_intervals_1(request.GET)
 
     if request.GET:
-        buildings = [request.session['main_building'].pk]
         template_vars['building_names'] = []
         if "f2_init" in request.GET:
             f2_init, f2_end = get_intervals_2(request.GET)
@@ -328,21 +327,18 @@ def perfil_carga(request):
 def get_medition_in_time(profile, datetime_from, datetime_to):
     """ Gets the meditions registered in a time window
 
-    building = Building model instance
+    profile = powermeter_profile model instance
     datetime_from = lower date limit
     datetime_to = upper date limit
 
-    Right now we are assuming that there is only a powermeter(and one consumer unit) per building
-
     """
-    #consumer_unit = ConsumerUnit.objects.get(building=building)
-    profile_powermeter = profile#ProfilePowermeter.objects.get(pk=consumer_unit.profile_powermeter.pk)
+
+    profile_powermeter = profile
+
     date_gte = datetime_from.replace(hour=0, minute=0, second=0,
                                      tzinfo=timezone.get_current_timezone())
     date_lte = datetime_to.replace(hour=23 ,minute=59, second=59,
                                    tzinfo=timezone.get_current_timezone())
-    #date_gte = datetime_from-timedelta(hours=5)
-    #date_lte = datetime_to+timedelta(days=1)-timedelta(hours=5)
 
     meditions = ElectricData.objects.filter(profile_powermeter=profile_powermeter,
         medition_date__range=(date_gte, date_lte)).order_by("medition_date")
@@ -618,7 +614,13 @@ def get_power_profile_json(building, datetime_from, datetime_to):
     return simplejson.dumps(kw)
 
 
-def get_weekly_summary_kwh(year, month, week, type, profile):
+def get_weekly_summary_for_parameter(year, month, week, type, profile):
+    """
+    year = year for the sumary
+    month = month for the sumary
+    week = week for the sumary
+    year = year for the sumary
+    """
 
     weekly_summary = []
     first_day_of_month = datetime(year=year, month=month, day=1)
@@ -690,7 +692,7 @@ def get_weekly_summary_comparison_kwh(request):
     week_days = ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado", "Domingo"]
 
     if request.GET:
-        week_01, tot1 = get_weekly_summary_kwh(int(request.GET['year01']),
+        week_01, tot1 = get_weekly_summary_for_parameter(int(request.GET['year01']),
                                                int(request.GET['month01']),
                                                int(request.GET['week01']),
                                                request.GET['type'],
@@ -698,7 +700,7 @@ def get_weekly_summary_comparison_kwh(request):
                                                 .profile_powermeter)
         template_variables['total1'] = tot1
         if "year02" in request.GET:
-            week_02, total2 = get_weekly_summary_kwh(int(request.GET['year02']),
+            week_02, total2 = get_weekly_summary_for_parameter(int(request.GET['year02']),
                                                    int(request.GET['month02']),
                                                    int(request.GET['week02']),
                                                    request.GET['type'],

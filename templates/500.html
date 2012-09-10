@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Error 500 - Internal Server Error</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <link rel="stylesheet" href="/static/js/external/jqueryUniform/css/uniform.default.css" type="text/css" media="screen" charset="utf-8" />
+    <link rel="stylesheet" href="/static/css/login.css">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/js/external/labels.js"></script>
+    <script type="text/javascript" src="/static/js/external/jqueryUniform/jquery.uniform.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $("input").uniform();
+        });
+    </script>
+</head>
+<body>
+{% if error %}<span class="notif_error">{% autoescape off %}{{ error }}{% endautoescape %}</span>{% endif %}
+<div id="login_div">
+
+    <div id="title">
+        <h1><img src="{{ STATIC_URL }}css/images/imgs_icns/auditem_gray_transp.png" alt="Auditem"/></h1>
+    </div>
+    <p>
+        Lo Sentimos, ha ocurrido un error interno, estamos trabajando en ello,
+        disculpa las molestias.
+        <br/>
+        Para mayor informaci&oacute;n por favor contacta al administrador.
+        <br/>
+        <button onclick="history.back();" class="aqua_btn">Regresar</button>
+    </p>
+
+</div>
+<footer>
+
+</footer>
+</body>
+</html>

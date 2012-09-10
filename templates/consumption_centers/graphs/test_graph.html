@@ -139,7 +139,11 @@ $(document).ready(function(){
                 });
 
                 chart = new google.visualization.ChartWrapper({
-                    'chartType': 'LineChart',
+                    {% if tipo == "kwh" or tipo == "kvarh" or tipo == "kwh_consumido" or tipo == "kvarh_consumido" %}
+                        'chartType': 'AreaChart',
+                    {% else %}
+                        'chartType': 'LineChart',
+                    {% endif %}
                     'containerId': 'chart',
                     'options': {
                         // Use the same chart area width as the control for axis alignment.
