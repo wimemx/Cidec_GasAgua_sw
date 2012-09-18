@@ -1,0 +1,47 @@
+@import url(http://fonts.googleapis.com/css?family=Droid+Sans:400,700);
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video, p, td {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 14px !important;
+    vertical-align: baseline;
+    font-family: 'Droid Sans', Helvetica, sans-serif !important;
+    text-decoration: none;
+}
+#visualization{
+    display: block;
+    margin: 0 auto;
+}
+#visualization a{
+    font-size: 14px;
+    line-height: 150%;
+    color: #909aa2 !important;
+}
+#visualization a:hover{
+    color: #505e68 !important;
+}
+h1#title_lb{
+    font-size: 16px !important;
+    font-weight: 400;
+    color: #4a5c65;
+}
+h1#title_lb span{
+    font-size: 16px !important;
+    font-weight: 700;
+    color: #4f5962;
+}
+#notice{
+    font-size: 12px !important;
+}

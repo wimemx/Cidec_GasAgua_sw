@@ -44,6 +44,7 @@ class Cluster(models.Model):
     cluster_registered = models.DateTimeField(default=datetime.datetime.now())
     cluster_status = models.IntegerField(choices=STATUS, default=1)
     cluster_name = models.CharField(max_length=128)
+    cluster_description = models.TextField(blank=True, null=True)
     cluster_image = models.CharField(max_length=200, null=True, blank=True)
 
     def __unicode__(self):
@@ -428,6 +429,55 @@ class ElectricData(models.Model):
 
     def __unicode__(self):
         return self.profile_powermeter.powermeter.powermeter_anotation + \
+               " " + str(self.medition_date)
+
+class ElectricDataTemp(models.Model):
+    profile_powermeter = models.ForeignKey(ProfilePowermeter, on_delete=models.PROTECT, null=True, blank=True)
+
+    medition_date = models.DateTimeField(default=datetime.datetime.now())
+    V1 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    V2 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    V3 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    I1 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    I2 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    I3 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    kWL1 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    kWL2 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    kWL3 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    kvarL1 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    kvarL2 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    kvarL3 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    kVAL1 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    kVAL2 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    kVAL3 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    PFL1 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    PFL2 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    PFL3 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    kW = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    kvar = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    TotalkVA = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    PF = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    FREQ = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    TotalkWhIMPORT = models.DecimalField(max_digits=20, decimal_places=6, null=True,
+        blank=True)
+    powermeter_serial = models.CharField(max_length=128)
+    TotalkvarhIMPORT = models.DecimalField(max_digits=20, decimal_places=6, null=True,
+        blank=True)
+    kWhL1 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=0)
+    kWhL2 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=0)
+    kwhL3 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=0)
+    kvarhL1 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=0)
+    kvarhL2 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=0)
+    kvarhL3 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=0)
+    kVAhL1 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=0)
+    kVAhL2 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=0)
+    kVAhL3 = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=0)
+    kW_import_sliding_window_demand = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=0)
+    kvar_import_sliding_window_demand = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=0)
+    kVA_sliding_window_demand = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=0)
+    kvahTOTAL = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    def __unicode__(self):
+        return self.profile_powermeter.powermeter.powermeter_anotation +\
                " " + str(self.medition_date)
 
 class ElectricRateForElectricData(models.Model):

@@ -15,7 +15,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 #local application/library specific imports
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
-from c_center.models import ProfilePowermeter, ElectricData
+from c_center.models import ProfilePowermeter, ElectricData, ElectricDataTemp
 from c_center.views import main_page
 
 from django.shortcuts import redirect, render
@@ -221,5 +221,51 @@ def dummy_data_generator_2000():
             if i >= 65512:
                 break
 
-def dummy_volts():
-    return
+def data_exchange():
+    electric_d=ElectricDataTemp.objects.all()
+    for el in electric_d:
+        elec=ElectricData(
+            profile_powermeter = el.profile_powermeter,
+            powermeter_serial = el.powermeter_serial,
+            medition_date = el.medition_date,
+            V1 = el.V1,
+            V2 = el.V2,
+            V3 = el.V3,
+            I1 = el.I1,
+            I2 = el.I2,
+            I3 = el.I3,
+            kWL1 = el.kWL1,
+            kWL2 = el.kWL2,
+            kWL3 = el.kWL3,
+            kvarL1 = el.kvarL1,
+            kvarL2 = el.kvarL2,
+            kvarL3 = el.kvarL3,
+            kVAL1 = el.kVAL1,
+            kVAL2 = el.kVAL2,
+            kVAL3 = el.kVAL3,
+            PFL1 = el.PFL1,
+            PFL2 = el.PFL2,
+            PFL3 = el.PFL3,
+            kW = el.kW,
+            kvar = el.kvar,
+            kVA = el.TotalkVA,
+            PF = el.PF,
+            FREQ = el.FREQ,
+            kWhIMPORT = el.TotalkWhIMPORT,
+            kvahTOTAL = el.kvahTOTAL,
+            kvarhIMPORT = el.TotalkvarhIMPORT,
+            kWhL1 = el.kWhL1,
+            kWhL2 = el.kWhL2,
+            kwhL3 = el.kwhL3,
+            kvarhL1 = el.kvarhL1,
+            kvarhL2 = el.kvarhL2,
+            kvarhL3 = el.kvarhL3,
+            kVAhL1 = el.kVAhL1,
+            kVAhL2 = el.kVAhL2,
+            kVAhL3 = el.kVAhL3,
+            kW_import_sliding_window_demand = el.kW_import_sliding_window_demand,
+            kvar_import_sliding_window_demand = el.kvar_import_sliding_window_demand,
+            kVA_sliding_window_demand = el.kVA_sliding_window_demand
+        )
+        elec.save()
+    print "success :D"

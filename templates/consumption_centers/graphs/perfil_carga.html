@@ -23,8 +23,8 @@
 
 
             //Date("October 13, 1975 11:13:00")
-            var start_date = new Date("{{ fi|date:"F d, Y" }}");
-            var end_date=new Date("{{ fi|date:"F d, Y" }}");
+            var start_date = new Date("{{ fi|date:"F d, Y" }} 00:00:00");
+            var end_date=new Date("{{ fi|date:"F d, Y" }} 23:59:59");
             console.log("{{ fi|date:"F d, Y" }}");
             switch (interval){
                 case 'hour' :
@@ -57,8 +57,8 @@
 
 
             //Date("October 13, 1975 11:13:00")
-            var start_date = new Date("{{ fi|date:"F d, Y" }}");
-            var end_date=new Date("{{ fi|date:"F d, Y" }}");
+            var start_date = new Date("{{ fi|date:"F d, Y" }} 00:00:00");
+            var end_date=new Date("{{ fi|date:"F d, Y" }} 00:00:00");
             console.log("{{ fi|date:"F d, Y" }}");
             switch (interval){
                 case 'hour_2' :
@@ -150,7 +150,12 @@
                                 }
                             },
                             // Initial range: 2012-02-09 to 2012-03-20.
-                            'state': {'range': {'start': new Date("{{ fi|date:"F d, Y" }}"), 'end': new Date("{{ ff|date:"F d, Y" }}")}}
+                            'state': {
+                                'range': {
+                                    'start': new Date("{{ fi|date:"F d, Y" }} 00:00:00"),
+                                    'end': new Date("{{ ff|date:"F d, Y" }} 23:59:59")
+                                }
+                            }
                         });
 
                         chart = new google.visualization.ChartWrapper({
@@ -278,7 +283,12 @@
                                 }
                             },
                             // Initial range: 2012-02-09 to 2012-03-20.
-                            'state': {'range': {'start': new Date("{{ fi|date:"F d, Y" }}"), 'end': new Date("{{ ff|date:"F d, Y" }}")}}
+                            'state': {
+                                'range': {
+                                    'start': new Date("{{ fi|date:"F d, Y" }} 00:00:00"),
+                                    'end': new Date("{{ ff|date:"F d, Y" }} 23:59:59")
+                                }
+                            }
                         });
 
                         chart2 = new google.visualization.ChartWrapper({

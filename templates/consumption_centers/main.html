@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block titulo %}Reportes{% endblock %}
 {% block externalcss %}
-    <link rel="stylesheet" href="/static/css/consumption_centers/main.css" xmlns="http://www.w3.org/1999/html">
+    <link rel="stylesheet" href="/static/css/consumption_centers/main.css" type="text/css">
     <link rel="stylesheet" href="/static/date_picker/css/datepicker.css" type="text/css" />
     <link rel="stylesheet" href="/static/js/external/fancybox/jquery.fancybox.css" type="text/css" />
 {% endblock %}
@@ -321,8 +321,8 @@
         makeIframe("");
     });
     $(".various").fancybox({
-        maxWidth	: 500,
-        maxHeight	: 400,
+        maxWidth	: 800,
+        maxHeight	: 800,
         fitToView	: false,
         width		: '70%',
         height		: '70%',
@@ -341,7 +341,15 @@
 
 </div>
 <div id="contenido_interno">
-    <h2 id="titulo_reporte">{{ empresa.building_name }} - <span>{{ consumer_unit.electric_device_type.electric_device_type_name }}</span></h2><a class="various fancybox.ajax" href="/reportes/set_consumer_unit/">Cambiar</a>
+    <h2 id="titulo_reporte">{{ empresa.building_name }} -
+        <span>
+            {% if consumer_unit.part_of_building %}
+                {{ consumer_unit.part_of_building.part_of_building_name }}
+            {% else %}
+                {{ consumer_unit.electric_device_type.electric_device_type_name }}
+            {% endif %}
+        </span>
+    </h2><a class="various" data-fancybox-type="iframe"  href="/reportes/set_consumer_unit/">Cambiar</a>
 
     <div id="datepicker_component">
         <span class="period_tag">Periodo</span>
@@ -414,7 +422,7 @@
         </div>
 
         <div id="graph_container">
-            <iframe src="/reportes/graficas/" id="graphFrame"></iframe>
+            <iframe src="/reportes/graficas/" id="graphFrame" seamless="seamless"></iframe>
         </div>
 
     </div>

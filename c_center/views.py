@@ -12,25 +12,31 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.template.context import RequestContext
 from django.utils import timezone
 from django.db.models.aggregates import *
+from django.core.exceptions import ObjectDoesNotExist
 
 from c_center.calculations import tarifaHM_mensual, tarifaHM_total, obtenerHistorico, \
     fechas_corte
 from c_center.models import ConsumerUnit, Building, ElectricData, ProfilePowermeter, \
-    Powermeter
+    Powermeter, PartOfBuilding, HierarchyOfPart
 from electric_rates.models import ElectricRatesDetail
 from rbac.models import Operation, DataContextPermission
 from rbac.rbac_functions import  has_permission
 
 import json as simplejson
 
+from tareas.tasks import add
 
 VIEW = Operation.objects.get(operation_name="view")
 CREATE = Operation.objects.get(operation_name="create")
 DELETE = Operation.objects.get(operation_name="delete")
 UPDATE = Operation.objects.get(operation_name="update")
 
+def call_celery_delay():
+    add.delay()
+    return "Task set to execute."
+
 def week_of_month(datetime_variable):
-    """ Get the week number of the month for a datetime
+    """Get the week number of the month for a datetime
     datetime_variable = the date
     returns the week number (int)
     """
@@ -47,7 +53,7 @@ def week_of_month(datetime_variable):
     return week_number
 
 def get_intervals_1(get):
-    """ get the interval for the graphs
+    """get the interval for the graphs
     by default we get the data from the last month
     returns f1_init, f1_end as datetime objects
     """
@@ -65,7 +71,7 @@ def get_intervals_1(get):
     return f1_init, f1_end
 
 def get_intervals_fecha(get):
-    """ get the interval for the graphs
+    """get the interval for the graphs
     by default we get the data from the last month
     returns f1_init, f1_end as formated strings
     """
@@ -86,12 +92,12 @@ def get_intervals_fecha(get):
 
 
 def get_intervals_2(get):
-    """ gets the second date interval """
+    """gets the second date interval """
     get2=dict(f1_init=get['f2_init'], f1_end=get['f2_end'])
     return get_intervals_1(get2)
 
 def set_default_session_vars(request, datacontext):
-    """ Sets the default building and consumer unit """
+    """Sets the default building and consumer unit """
     if 'main_building' not in request.session:
         #sets the default building (the first in DataContextPermission)
         request.session['main_building'] = datacontext[0].building
@@ -101,7 +107,7 @@ def set_default_session_vars(request, datacontext):
         request.session['consumer_unit'] = c_unit[0]
 
 def set_default_building(request, id_building):
-    """ Sets the default building for reports"""
+    """Sets the default building for reports"""
     request.session['main_building'] = Building.objects.get(pk=id_building)
     c_unit = ConsumerUnit.objects.filter(building=request.session['main_building'])
     request.session['consumer_unit'] = c_unit[0]
@@ -113,20 +119,82 @@ def set_default_building(request, id_building):
             return HttpResponseRedirect("/reportes/cfe/")
     return HttpResponse(content=data,content_type="application/json")
 
+#def set_consumer_unit(request):
+#    """Shows a lightbox with all the profiles asociated for the main building """
+#    c_units = ConsumerUnit.objects.filter(building=request.session['main_building'])
+#    template_vars=dict(c_units=c_units)
+#    template_vars_template = RequestContext(request, template_vars)
+#    return render_to_response("consumption_centers/choose.html", template_vars_template)
+
 def set_consumer_unit(request):
-    """ Shows a lightbox with all the profiles asociated for the main building """
-    c_units = ConsumerUnit.objects.filter(building=request.session['main_building'])
-    template_vars=dict(c_units=c_units)
+
+    building=request.session['main_building']
+
+    hierarchy = HierarchyOfPart.objects.filter(part_of_building_composite__building=building)
+    ids_hierarchy = []
+    for hy in hierarchy:
+        ids_hierarchy.append(hy.part_of_building_leaf.pk)
+    hierarchy_array="[['Name','Parent','Tooltip'],['"+building.building_name+"', null, null],"
+    #sacar el padre(partes de edificios que no son hijos de nadie)
+    parent = PartOfBuilding.objects.filter(building=building).exclude(pk__in=ids_hierarchy)
+    try:
+        parent[0]
+    except IndexError:
+        #si no hay ninguno, es un edificio sin partes, o sin partes anidadas
+        c_unit_parent = ConsumerUnit.objects.filter(building=building,
+            part_of_building__isnull=True)
+        for c_u_p in c_unit_parent:
+            hierarchy_array += """[{
+                                    v: '%s',
+                                    f:'<a href="#" rel="%s" style="color:#9ebfc6;">%s</a>'},
+                                    null,'Top Level'],""" % (str(c_u_p.pk), str(c_u_p.pk),
+                                                             c_u_p.building.building_name)
+    else:
+        c_unit_parent = ConsumerUnit.objects.filter(building=building,
+            part_of_building__isnull=True)
+        for c_u_p in c_unit_parent:
+            hierarchy_array += """[{
+                                    v: '%s',
+                                    f:'<a href="#" rel="%s" style="color:#9ebfc6;">%s</a>'},
+                                    null,'Top Level'],""" % (str(c_u_p.pk), str(c_u_p.pk),
+                                                             c_u_p.electric_device_type
+                                                             .electric_device_type_name)
+        for par in parent:
+            try:
+                c_unit_parent = ConsumerUnit.objects.get(part_of_building = par)
+            except ObjectDoesNotExist:
+                label = """{v: '%s',f: '%s'}""" % (str(par.pk),
+                                                   par.part_of_building_name)
+            else:
+                label = """{v: '%s',f: '<a href="#" rel="%s" style="color:#9ebfc6;">%s</a>'}"""\
+                        % (str(par.pk), str(c_unit_parent.pk), par.part_of_building_name)
+            hierarchy_array += "["+label+",'"+building.building_name+"','Top Level'],"
+        for leaf in hierarchy:
+            try:
+                c_unit = ConsumerUnit.objects.get(part_of_building=leaf.part_of_building_leaf)
+            except ObjectDoesNotExist:
+
+                label = """{v: '%s',f: '%s'}""" % (str(leaf.part_of_building_leaf.pk),
+                                                   leaf.part_of_building_leaf.part_of_building_name)
+            else:
+                label = """{v: '%s',f: '<a href="#" rel="%s" style="color:#9ebfc6;">%s</a>'}"""\
+                        % (str(leaf.part_of_building_leaf.pk), str(c_unit.pk),
+                           leaf.part_of_building_leaf.part_of_building_name)
+            hierarchy_array += "\n["+label+",'"+\
+                               str(leaf.part_of_building_composite.pk)+\
+                               "',null],"
+    hierarchy_array += "]"
+    template_vars=dict(array=hierarchy_array, building=building)
     template_vars_template = RequestContext(request, template_vars)
-    return render_to_response("consumption_centers/choose.html", template_vars_template)
+    return render_to_response("consumption_centers/choose_hierarchy.html", template_vars_template)
 
 def set_default_consumer_unit(request, id_c_u):
-    """ Sets the consumer_unit for all the reports """
+    """Sets the consumer_unit for all the reports"""
     c_unit = ConsumerUnit.objects.filter(pk=id_c_u)
     request.session['consumer_unit'] = c_unit[0]
     return HttpResponse(status=200)
 def main_page(request):
-    """ Main Page
+    """Main Page
     in the mean time the main view is the graphics view
     sets the session variables needed to show graphs
     """
@@ -150,7 +218,7 @@ def main_page(request):
         return render_to_response("generic_error.html", RequestContext(request))
 
 def cfe_bill(request):
-    """ Just sends the main template for the CFE Bill """
+    """Just sends the main template for the CFE Bill """
     if has_permission(request.user, VIEW, "CFE bill"):
         datacontext = DataContextPermission.objects.filter(user_role__user=request.user)
         set_default_session_vars(request, datacontext)
@@ -165,7 +233,7 @@ def cfe_bill(request):
         return render_to_response("generic_error.html", RequestContext(request))
 
 def cfe_calculations(request):
-    """ Renders the cfe bill and the historic data chart"""
+    """Renders the cfe bill and the historic data chart"""
     template_vars = {}
 
     if request.GET:
@@ -264,7 +332,7 @@ def grafica_datos(request):
         data=get_json_data_from_intervals(profile, f1_init, f1_end, f2_init, f2_end,
                                           request.GET['graph'])
         return HttpResponse(content=data,content_type="application/json")
-    elif len(buildings) > 0:
+    elif buildings:
         data=get_json_data(buildings, f1_init, f1_end, request.GET['graph'],profile)
         return HttpResponse(content=data,content_type="application/json")
     else:
@@ -325,7 +393,7 @@ def perfil_carga(request):
                               template_vars_template)
 
 def get_medition_in_time(profile, datetime_from, datetime_to):
-    """ Gets the meditions registered in a time window
+    """Gets the meditions registered in a time window
 
     profile = powermeter_profile model instance
     datetime_from = lower date limit
@@ -345,7 +413,7 @@ def get_medition_in_time(profile, datetime_from, datetime_to):
     return meditions
 
 def get_KW(building, datetime_from, datetime_to):
-    """ Gets the KW data in a given interval needed for Power Profile"""
+    """Gets the KW data in a given interval needed for Power Profile"""
     meditions = get_medition_in_time(building, datetime_from, datetime_to)
     kw=[]
     fi = None
@@ -358,7 +426,7 @@ def get_KW(building, datetime_from, datetime_to):
 
 
 def get_json_data_from_intervals(profile, f1_init, f1_end, f2_init, f2_end,  parameter):
-    """ Returns a JSON containing the date and the parameter for a profile en 2 ranges of time
+    """Returns a JSON containing the date and the parameter for a profile en 2 ranges of time
     buildings = An array of buildings to compare
     datetime_from = initial date interval
     datetime_to = final date interval
@@ -369,11 +437,11 @@ def get_json_data_from_intervals(profile, f1_init, f1_end, f2_init, f2_end,  par
 
         dayly_summary=[]
 
-        day_delta = timedelta(days=1)
+        day_delta = timedelta(hours=1)
         delta_days = f1_end - f1_init
-        number_days = delta_days.days
+        number_days = delta_days.days *24
         delta_days2 = f2_end - f2_init
-        number_days2 = delta_days2.days
+        number_days2 = delta_days2.days *24
 
         if number_days2 > number_days:
             number_days = number_days2
@@ -388,19 +456,14 @@ def get_json_data_from_intervals(profile, f1_init, f1_end, f2_init, f2_end,  par
         datetime_to2 = datetime_from2 + day_delta
 
         for day_index in range(0, number_days):
-            f1_init = f1_init.replace(hour=0, minute=0, second=0,
-                                      tzinfo=timezone.get_current_timezone())
+            f1_init = f1_init.replace(tzinfo=timezone.get_current_timezone())
 
             #intervalo1
-            datetime_from = datetime_from.replace(hour=0, minute=0, second=0,
-                                                  tzinfo=timezone.get_current_timezone())
-            datetime_to = datetime_to.replace(hour=0, minute=0, second=0,
-                                              tzinfo=timezone.get_current_timezone())
+            datetime_from = datetime_from.replace(tzinfo=timezone.get_current_timezone())
+            datetime_to = datetime_to.replace(tzinfo=timezone.get_current_timezone())
             #intervalo2
-            datetime_from2 = datetime_from2.replace(hour=0, minute=0, second=0,
-                                                    tzinfo=timezone.get_current_timezone())
-            datetime_to2 = datetime_to2.replace(hour=0, minute=0, second=0,
-                                                tzinfo=timezone.get_current_timezone())
+            datetime_from2 = datetime_from2.replace(tzinfo=timezone.get_current_timezone())
+            datetime_to2 = datetime_to2.replace(tzinfo=timezone.get_current_timezone())
 
             #all the meditions in a day for the first interval
             meditions = ElectricData.objects.filter(profile_powermeter=profile,
@@ -487,7 +550,7 @@ def get_json_data_from_intervals(profile, f1_init, f1_end, f2_init, f2_end,  par
     return simplejson.dumps(meditions_json)
 
 def get_json_data(buildings, datetime_from, datetime_to, parameter, profile):
-    """ Returns a JSON containing the date and the parameter
+    """Returns a JSON containing the date and the parameter
     buildings = An array of buildings to compare
     datetime_from = initial date interval
     datetime_to = final date interval
@@ -495,19 +558,17 @@ def get_json_data(buildings, datetime_from, datetime_to, parameter, profile):
     """
     if parameter == "kwh_consumido" or parameter == "kvarh_consumido":
         dayly_summary=[]
-        day_delta = timedelta(days=1)
+        day_delta = timedelta(hours=1)
         delta_days = datetime_to - datetime_from
 
-        number_days = delta_days.days
+        number_days = delta_days.days * 24
         #de la fecha de inicio, al dia siguiente
         datetime_to = datetime_from + day_delta
         for day_index in range(0, number_days):
 
-            datetime_from = datetime_from.replace(hour=0, minute=0, second=0,
-                                                  tzinfo=timezone.get_current_timezone())
+            datetime_from = datetime_from.replace(tzinfo=timezone.get_current_timezone())
 
-            datetime_to = datetime_to.replace(hour=0, minute=0, second=0,
-                                              tzinfo=timezone.get_current_timezone())
+            datetime_to = datetime_to.replace(tzinfo=timezone.get_current_timezone())
             #all the meditions in a day
             meditions = ElectricData.objects.filter(profile_powermeter=profile,
                                                     medition_date__gte=datetime_from,
@@ -566,15 +627,17 @@ def get_json_data(buildings, datetime_from, datetime_to, parameter, profile):
                 meditions.append(str(current_medition.kvar))
 
             labels.append(str(timezone.localtime(current_medition.medition_date)))
+        medition_time = timezone.localtime(current_medition.medition_date)
 
         meditions_json.append(dict(meditions = meditions, date =
-            int(time.mktime(current_medition.medition_date.timetuple())), labels = labels))
+            int(time.mktime(medition_time.timetuple())),
+            labels = labels))
 
     return simplejson.dumps(meditions_json)
 
 
 def get_KVar(building, datetime_from, datetime_to):
-    """ Gets the KW data in a given interval needed for Power Profile"""
+    """Gets the KW data in a given interval needed for Power Profile"""
     meditions = get_medition_in_time(building, datetime_from, datetime_to)
     kvar=[]
     for medition in meditions:
@@ -584,7 +647,7 @@ def get_KVar(building, datetime_from, datetime_to):
 
 
 def get_PF(building, datetime_from, datetime_to):
-    """ Gets the KW data in a given interval needed for Power Profile"""
+    """Gets the KW data in a given interval needed for Power Profile"""
     meditions = get_medition_in_time(building, datetime_from, datetime_to)
     pf=[]
     for medition in meditions:
@@ -593,7 +656,7 @@ def get_PF(building, datetime_from, datetime_to):
 
 
 def get_power_profile(building, datetime_from, datetime_to):
-    """ gets the data from the active and reactive energy for a building in a time window"""
+    """gets the data from the active and reactive energy for a building in a time window"""
     meditions = get_medition_in_time(building, datetime_from, datetime_to)
     kvar=[]
     kw=[]
@@ -604,7 +667,7 @@ def get_power_profile(building, datetime_from, datetime_to):
 
 
 def get_power_profile_json(building, datetime_from, datetime_to):
-    """ gets the data from the active and reactive energy for a building in a time window"""
+    """gets the data from the active and reactive energy for a building in a time window"""
     meditions = get_medition_in_time(building, datetime_from, datetime_to)
     #kvar=[]
     kw=[]

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <title>
+        Jerarqu&iacute;a de unidades de consumo
+    </title>
+    <link rel="stylesheet" href="/static/css/consumption_centers/iframe_consumer_units.css">
+    <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js"></script>
+
+    <script type="text/javascript">
+        google.load('visualization', '1', {packages: ['orgchart']});
+    </script>
+    <script type="text/javascript">
+        var chart;
+        function drawVisualization() {
+            // Create and populate the data table.
+            var data = google.visualization.arrayToDataTable({% autoescape off %}
+                    {{ array }}{% endautoescape %}
+            );
+            // Create and draw the visualization.
+            chart = new google.visualization.OrgChart(document.getElementById
+                    ('visualization')).
+                    draw(data, {allowHtml: true});
+
+            $("#visualization a").click(function(e){
+                e.preventDefault();
+
+                var texto = $(this).text();
+                $.ajax({
+                    url: "/reportes/set_c_u/"+$(this).attr("rel"),
+                    type: "GET",
+                    dataType: 'json',
+                    async: 'true',
+                    success: function(datos){
+                        parent.jQuery("h2#titulo_reporte span").text(texto);
+                        parent.makeIframe("");
+                        //$.fancybox.close( true );
+                        parent.jQuery.fancybox.close();
+                    }
+                });
+            });
+        }
+        google.setOnLoadCallback(drawVisualization);
+
+        $(document).ready(function(){
+
+        });
+    </script>
+</head>
+<body>
+<h1 id="title_lb">Cambiar la unidad de consumo de <span>{{ building.building_name }}</span></h1>
+<p id="notice">
+    Selecciona la parte del edificio que deseas consultar.
+</p>
+<div id="visualization" style="width: 650px; height: 260px;"></div>
+</body>
+</html>
+​

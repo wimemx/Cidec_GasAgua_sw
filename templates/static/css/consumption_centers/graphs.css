@@ -207,6 +207,7 @@ a.aqua_btn:hover{
 }
 #weekly_summary table tr.bg_gray{
     background-color: #e0e0e0;
+    font-weight: 700;
 }
 div.container{
     border: solid 1px #DDD;

@@ -24,8 +24,8 @@ function changeRange(interval) {
     var start_date, end_date;
 
     //Date("October 13, 1975 11:13:00")
-    start_date = new Date("{{ fi|date:"F d, Y" }}");
-    end_date=  new Date("{{ fi|date:"F d, Y" }}");
+    start_date = new Date("{{ fi|date:"F d, Y" }} 00:00:00");
+    end_date=  new Date("{{ fi|date:"F d, Y" }} 00:00:00");
     switch (interval){
         case 'hour' :
             start_date.addHours(5);
@@ -135,12 +135,13 @@ $(document).ready(function(){
                         }
                     },
                     // Initial range: 2012-02-09 to 2012-03-20.
-                    'state': {'range': {'start': new Date("{{ fi|date:"F d, Y" }}"), 'end': new Date("{{ ff|date:"F d, Y" }}")}}
+                    'state': {'range': {'start': new Date("{{ fi|date:"F d, Y" }} 00:00:00"),
+                        'end': new Date("{{ ff|date:"F d, Y" }} 23:59:59")}}
                 });
 
                 chart = new google.visualization.ChartWrapper({
-                    {% if tipo == "kwh" or tipo == "kvarh" or tipo == "kwh_consumido" or tipo == "kvarh_consumido" %}
-                        'chartType': 'AreaChart',
+                    {% if tipo == "kwh_consumido" or tipo == "kvarh_consumido" %}
+                        'chartType': 'ColumnChart',
                     {% else %}
                         'chartType': 'LineChart',
                     {% endif %}

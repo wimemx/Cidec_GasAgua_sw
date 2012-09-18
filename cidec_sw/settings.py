@@ -1,5 +1,13 @@
 # Django settings for cidec_sw project.
+import djcelery
+djcelery.setup_loader()
 import os
+BROKER_HOST = "myhost"
+BROKER_PORT = "5672"
+BROKER_USER = "cidec_user"
+BROKER_PASSWORD = "a8d32e08"
+BROKER_VHOST = 'cidec_vhost'
+
 PROJECT_PATH = os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(__file__)), os.path.pardir))
 
 DEBUG = True
@@ -11,7 +19,7 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-"""DATABASES = {
+DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
         'NAME': 'audiwime_db',                      # Or path to database file if using sqlite3.
@@ -20,7 +28,7 @@ MANAGERS = ADMINS
         'HOST': 'audiwime.wimelabs.com',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     }
-}"""
+}
 """DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
@@ -28,10 +36,11 @@ MANAGERS = ADMINS
         'USER': 'satest_cidec',                      # Not used with sqlite3.
         'PASSWORD': '5MnT)HXnm_pT',                  # Not used with sqlite3.
         'HOST': 'auditem.mx',                      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
+        'PORT': '',                      # Set to empty string for default. Not used with
+        # sqlite3.
     }
 }"""
-DATABASES = {
+"""DATABASES = {
 'default': {
     'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
     'NAME': 'satest_cidec',                      # Or path to database file if using sqlite3.
@@ -40,7 +49,7 @@ DATABASES = {
     'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
     'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
 }
-}
+}"""
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -147,8 +156,9 @@ INSTALLED_APPS = (
     'c_center',
     'rbac',
     'electric_rates',
-    #'south',
-    'fts',
+    'south',
+    'djcelery',
+    'tareas',
 )
 
 # A sample logging configuration. The only tangible logging
