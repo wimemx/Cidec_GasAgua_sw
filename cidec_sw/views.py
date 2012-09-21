@@ -222,9 +222,9 @@ def dummy_data_generator_2000():
                 break
 
 def data_exchange():
-    electric_d=ElectricDataTemp.objects.all()
+    electric_d=ElectricData.objects.all()
     for el in electric_d:
-        elec=ElectricData(
+        elec=ElectricDataTemp(
             profile_powermeter = el.profile_powermeter,
             powermeter_serial = el.powermeter_serial,
             medition_date = el.medition_date,
@@ -248,12 +248,12 @@ def data_exchange():
             PFL3 = el.PFL3,
             kW = el.kW,
             kvar = el.kvar,
-            kVA = el.TotalkVA,
+            TotalkVA = el.kVA,
             PF = el.PF,
             FREQ = el.FREQ,
-            kWhIMPORT = el.TotalkWhIMPORT,
+            TotalkWhIMPORT =  el.kWhIMPORT,
             kvahTOTAL = el.kvahTOTAL,
-            kvarhIMPORT = el.TotalkvarhIMPORT,
+            TotalkvarhIMPORT = el.kvarhIMPORT,
             kWhL1 = el.kWhL1,
             kWhL2 = el.kWhL2,
             kwhL3 = el.kwhL3,

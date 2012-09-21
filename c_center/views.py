@@ -16,7 +16,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from c_center.calculations import tarifaHM_mensual, tarifaHM_total, obtenerHistorico, \
     fechas_corte
-from c_center.models import ConsumerUnit, Building, ElectricData, ProfilePowermeter, \
+from c_center.models import ConsumerUnit, Building, ElectricDataTemp, ProfilePowermeter, \
     Powermeter, PartOfBuilding, HierarchyOfPart
 from electric_rates.models import ElectricRatesDetail
 from rbac.models import Operation, DataContextPermission
@@ -24,16 +24,16 @@ from rbac.rbac_functions import  has_permission
 
 import json as simplejson
 
-from tareas.tasks import add
+#from tareas.tasks import add
 
 VIEW = Operation.objects.get(operation_name="view")
 CREATE = Operation.objects.get(operation_name="create")
 DELETE = Operation.objects.get(operation_name="delete")
 UPDATE = Operation.objects.get(operation_name="update")
 
-def call_celery_delay():
-    add.delay()
-    return "Task set to execute."
+#def call_celery_delay():
+#    add.delay()
+#    return "Task set to execute."
 
 def week_of_month(datetime_variable):
     """Get the week number of the month for a datetime
@@ -206,7 +206,7 @@ def main_page(request):
         set_default_session_vars(request, datacontext)
         #valid years for reporting
         request.session['years'] = [__date.year for __date in
-                                    ElectricData.objects.all().dates('medition_date', 'year')]
+                                    ElectricDataTemp.objects.all().dates('medition_date', 'year')]
 
         template_vars = {"type":"graphs", "datacontext":datacontext,
                          'empresa': request.session['main_building'],
@@ -408,7 +408,7 @@ def get_medition_in_time(profile, datetime_from, datetime_to):
     date_lte = datetime_to.replace(hour=23 ,minute=59, second=59,
                                    tzinfo=timezone.get_current_timezone())
 
-    meditions = ElectricData.objects.filter(profile_powermeter=profile_powermeter,
+    meditions = ElectricDataTemp.objects.filter(profile_powermeter=profile_powermeter,
         medition_date__range=(date_gte, date_lte)).order_by("medition_date")
     return meditions
 
@@ -466,11 +466,11 @@ def get_json_data_from_intervals(profile, f1_init, f1_end, f2_init, f2_end,  par
             datetime_to2 = datetime_to2.replace(tzinfo=timezone.get_current_timezone())
 
             #all the meditions in a day for the first interval
-            meditions = ElectricData.objects.filter(profile_powermeter=profile,
+            meditions = ElectricDataTemp.objects.filter(profile_powermeter=profile,
                 medition_date__gte=datetime_from,
                 medition_date__lt=datetime_to)
             #all the meditions in a day for the second interval
-            meditions2 = ElectricData.objects.filter(profile_powermeter=profile,
+            meditions2 = ElectricDataTemp.objects.filter(profile_powermeter=profile,
                 medition_date__gte=datetime_from2,
                 medition_date__lt=datetime_to2)
 
@@ -482,22 +482,22 @@ def get_json_data_from_intervals(profile, f1_init, f1_end, f2_init, f2_end,  par
 
             else:
                 if parameter == "kwh_consumido":
-                    e_parameter = meditions[meditions_last_index].kWhIMPORT - \
-                                  meditions[0].kWhIMPORT
+                    e_parameter = meditions[meditions_last_index].TotalkWhIMPORT - \
+                                  meditions[0].TotalkWhIMPORT
                 else:
-                    e_parameter = meditions[meditions_last_index].kvarhIMPORT - \
-                                  meditions[0].kvarhIMPORT
+                    e_parameter = meditions[meditions_last_index].TotalkvarhIMPORT - \
+                                  meditions[0].TotalkvarhIMPORT
 
             if meditions_last_index2 < 1:
                 e_parameter2=0
 
             else:
                 if parameter == "kwh_consumido":
-                    e_parameter2 = meditions2[meditions_last_index2].kWhIMPORT - \
-                                   meditions2[0].kWhIMPORT
+                    e_parameter2 = meditions2[meditions_last_index2].TotalkWhIMPORT - \
+                                   meditions2[0].TotalkWhIMPORT
                 else:
-                    e_parameter2 = meditions2[meditions_last_index2].kvarhIMPORT - \
-                                   meditions2[0].kvarhIMPORT
+                    e_parameter2 = meditions2[meditions_last_index2].TotalkvarhIMPORT - \
+                                   meditions2[0].TotalkvarhIMPORT
             meditions_parameters = [float(e_parameter), float(e_parameter2)]
             labels = [str(datetime_from), str(datetime_from2)]
             dayly_summary.append({"date":int(time.mktime(f1_init.timetuple())),
@@ -536,9 +536,9 @@ def get_json_data_from_intervals(profile, f1_init, f1_end, f2_init, f2_end,  par
                 if parameter == "kw":
                     meditions.append(str(current_medition.kW))
                 elif parameter == "kwh":
-                    meditions.append(str(current_medition.kWhIMPORT))
+                    meditions.append(str(current_medition.TotalkWhIMPORT))
                 elif parameter == "kvarh":
-                    meditions.append(str(current_medition.kvarhIMPORT))
+                    meditions.append(str(current_medition.TotalkvarhIMPORT))
                 elif parameter == "pf":
                     meditions.append(str(current_medition.PF))
                 elif parameter == "kvar":
@@ -570,7 +570,7 @@ def get_json_data(buildings, datetime_from, datetime_to, parameter, profile):
 
             datetime_to = datetime_to.replace(tzinfo=timezone.get_current_timezone())
             #all the meditions in a day
-            meditions = ElectricData.objects.filter(profile_powermeter=profile,
+            meditions = ElectricDataTemp.objects.filter(profile_powermeter=profile,
                                                     medition_date__gte=datetime_from,
                                                     medition_date__lt=datetime_to)
 
@@ -581,11 +581,11 @@ def get_json_data(buildings, datetime_from, datetime_to, parameter, profile):
                                       "meditions":[0], 'labels':[str(datetime_to)]})
             else:
                 if parameter == "kwh_consumido":
-                    e_parameter = meditions[meditions_last_index].kWhIMPORT - \
-                                  meditions[0].kWhIMPORT
+                    e_parameter = meditions[meditions_last_index].TotalkWhIMPORT - \
+                                  meditions[0].TotalkWhIMPORT
                 else:
-                    e_parameter = meditions[meditions_last_index].kvarhIMPORT - \
-                                  meditions[0].kvarhIMPORT
+                    e_parameter = meditions[meditions_last_index].TotalkvarhIMPORT - \
+                                  meditions[0].TotalkvarhIMPORT
 
                 dayly_summary.append({"date":int(time.mktime(datetime_from.timetuple())),
                                       "meditions":[float(e_parameter)],
@@ -618,9 +618,9 @@ def get_json_data(buildings, datetime_from, datetime_to, parameter, profile):
             if parameter == "kw":
                 meditions.append(str(current_medition.kW))
             elif parameter == "kwh":
-                meditions.append(str(current_medition.kWhIMPORT))
+                meditions.append(str(current_medition.TotalkWhIMPORT))
             elif parameter == "kvarh":
-                meditions.append(str(current_medition.kvarhIMPORT))
+                meditions.append(str(current_medition.TotalkvarhIMPORT))
             elif parameter == "pf":
                 meditions.append(str(current_medition.PF))
             elif parameter == "kvar":
@@ -704,27 +704,27 @@ def get_weekly_summary_for_parameter(year, month, week, type, profile):
         tzinfo=timezone.get_current_timezone())
 
     week_end = week_start + week_delta
-    week_measures = ElectricData.objects.filter(profile_powermeter=profile,
+    week_measures = ElectricDataTemp.objects.filter(profile_powermeter=profile,
         medition_date__gte=week_start,
-        medition_date__lt=week_end)
+        medition_date__lt=week_end).order_by("medition_date")
 
     week_measures_last_index = len(week_measures) - 1
     if week_measures_last_index < 1:
         week_measure = 0
     else:
         if type == "kwh" or type == "kwh_consumido":
-            week_measure = week_measures[week_measures_last_index].kWhIMPORT -\
-                           week_measures[0].kWhIMPORT
+            week_measure = week_measures[week_measures_last_index].TotalkWhIMPORT -\
+                           week_measures[0].TotalkWhIMPORT
 
         else:
-            week_measure = week_measures[week_measures_last_index].kvarhIMPORT -\
-                           week_measures[0].kvarhIMPORT
+            week_measure = week_measures[week_measures_last_index].TotalkvarhIMPORT -\
+                           week_measures[0].TotalkvarhIMPORT
 
     day_delta = timedelta(days=1)
     datetime_from = week_start
     datetime_to = datetime_from + day_delta
     for day_index in range(0,7):
-        measures = ElectricData.objects.filter(profile_powermeter=profile,
+        measures = ElectricDataTemp.objects.filter(profile_powermeter=profile,
             medition_date__gte=datetime_from,
             medition_date__lt=datetime_to)
 
@@ -733,10 +733,11 @@ def get_weekly_summary_for_parameter(year, month, week, type, profile):
             measure = 0
         else:
             if type == "kwh" or type == "kwh_consumido":
-                measure = measures[measures_last_index].kWhIMPORT - measures[0].kWhIMPORT
+
+                measure = measures[measures_last_index].TotalkWhIMPORT - measures[0].TotalkWhIMPORT
 
             else:
-                measure = measures[measures_last_index].kvarhIMPORT - measures[0].kvarhIMPORT
+                measure = measures[measures_last_index].TotalkvarhIMPORT - measures[0].TotalkvarhIMPORT
 
         if week_measure:
             measure_percentage = (measure / week_measure) * 100

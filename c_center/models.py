@@ -482,7 +482,7 @@ class ElectricDataTemp(models.Model):
 
 class ElectricRateForElectricData(models.Model):
     electric_rates_periods = models.ForeignKey(ElectricRatesPeriods, on_delete=models.PROTECT)
-    electric_data = models.ForeignKey(ElectricData, on_delete=models.PROTECT)
+    electric_data = models.ForeignKey(ElectricDataTemp, on_delete=models.PROTECT)
     identifier = models.CharField(max_length=128)
 
     class META:
