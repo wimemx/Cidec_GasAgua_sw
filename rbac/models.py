@@ -118,3 +118,56 @@ class DataContextPermission(models.Model):
     def __unicode__(self):
         return self.user_role.user.username + " - " + \
                self.building.building_name
+
+# ! ! ! NOTA: Los siguientes modelos solo son de referencia para el llenado de formularios,
+# para gestion de permisos se usaran los modelos especificados originalmente (arriba de esta
+# nota)
+
+class Group(models.Model):
+    """ Agrupacion de objetos de permisos
+    almacena las categorias en que se agrupan logicamente los objetos sobre los que se
+    aplicaran las operaciones. Ejemplo: Reportes, Usuarios y permisos, Empresas
+    """
+    group_name = models.CharField(max_length=256)
+    def __unicode__(self):
+        return self.group_name
+
+class GroupObject(models.Model):
+    """Agrupacion de objetos
+    almacena la relacion entre categorias y los objetos sobre los que se aplicaran las
+    operaciones. Ejemplo: Reportes-kwh, Usuarios y permisos-asignacion de roles,
+    Empresas - alta edificios
+    """
+    object = models.ForeignKey(Object, on_delete=models.PROTECT)
+    group = models.ForeignKey(Group, on_delete=models.PROTECT)
+
+    def __unicode__(self):
+        return self.object.object_name + " - " + self.group.group_name
+
+    class Meta:
+        unique_together = ('object', 'group')
+
+class OperationForGroup(models.Model):
+    """Agrupacion de objetos por grupo
+    Almacena la relacion de la(s) operacion(es) que pueden aplicar para cierto grupo.
+    Ejemplo: Reportes-Lectura, Edificios-Lectura, Edificios-Crear, Edificios-Actualizar
+    """
+    operation = models.ForeignKey(Operation, on_delete=models.PROTECT)
+    group = models.ForeignKey(Group,on_delete=models.PROTECT)
+
+    def __unicode__(self):
+        return self.operation.operation_name + " - " + self.group.group_name
+
+    class Meta:
+        unique_together = ('operation', 'group')
+
+class OperationForGroupObjects(models.Model):
+    """Agrupa los tipos de operaciones que se pueden realizar para cada objeto"""
+    operation = models.ForeignKey(Operation, on_delete=models.PROTECT)
+    group_object = models.ForeignKey(GroupObject, on_delete=models.PROTECT)
+
+    def __unicode__(self):
+        return self.operation.operation_name + " - " + self.group_object.object.object_name
+
+    class Meta:
+        unique_together = ('operation','group_object')

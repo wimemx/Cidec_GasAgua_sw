@@ -193,19 +193,19 @@ def set_default_consumer_unit(request, id_c_u):
     c_unit = ConsumerUnit.objects.filter(pk=id_c_u)
     request.session['consumer_unit'] = c_unit[0]
     return HttpResponse(status=200)
+
 def main_page(request):
     """Main Page
     in the mean time the main view is the graphics view
     sets the session variables needed to show graphs
     """
-    if has_permission(request.user, VIEW, "graphs"):
+    if has_permission(request.user, VIEW, "Ver graficas"):
         #has perm to view graphs, now check what can the user see
         datacontext = DataContextPermission.objects.filter(user_role__user=request.user)
 
         set_default_session_vars(request, datacontext)
         #valid years for reporting
-        request.session['years'] = [__date.year
-                                    for __date in
+        request.session['years'] = [__date.year for __date in
                                     ElectricData.objects.all().dates('medition_date', 'year')]
 
         template_vars = {"type":"graphs", "datacontext":datacontext,
@@ -219,7 +219,7 @@ def main_page(request):
 
 def cfe_bill(request):
     """Just sends the main template for the CFE Bill """
-    if has_permission(request.user, VIEW, "CFE bill"):
+    if has_permission(request.user, VIEW, "Consultar recibo CFE"):
         datacontext = DataContextPermission.objects.filter(user_role__user=request.user)
         set_default_session_vars(request, datacontext)
 
