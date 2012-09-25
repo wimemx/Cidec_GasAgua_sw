@@ -20,16 +20,16 @@ from c_center.models import ConsumerUnit, Building, ElectricDataTemp, ProfilePow
     Powermeter, PartOfBuilding, HierarchyOfPart
 from electric_rates.models import ElectricRatesDetail
 from rbac.models import Operation, DataContextPermission
-from rbac.rbac_functions import  has_permission
+from rbac.rbac_functions import  has_permission, get_buildings_context
 
 import json as simplejson
 
 #from tareas.tasks import add
 
-VIEW = Operation.objects.get(operation_name="view")
-CREATE = Operation.objects.get(operation_name="create")
-DELETE = Operation.objects.get(operation_name="delete")
-UPDATE = Operation.objects.get(operation_name="update")
+VIEW = Operation.objects.get(operation_name="Ver")
+CREATE = Operation.objects.get(operation_name="Crear")
+DELETE = Operation.objects.get(operation_name="Eliminar")
+UPDATE = Operation.objects.get(operation_name="Modificar")
 
 #def call_celery_delay():
 #    add.delay()
@@ -100,7 +100,8 @@ def set_default_session_vars(request, datacontext):
     """Sets the default building and consumer unit """
     if 'main_building' not in request.session:
         #sets the default building (the first in DataContextPermission)
-        request.session['main_building'] = datacontext[0].building
+        building=Building.objects.get(pk=datacontext[0]['building_pk'])
+        request.session['main_building'] = building
     if 'consumer_unit' not in request.session:
         #sets the default ConsumerUnit (the first in ConsumerUnit for the main building)
         c_unit = ConsumerUnit.objects.filter(building=request.session['main_building'])
@@ -199,10 +200,9 @@ def main_page(request):
     in the mean time the main view is the graphics view
     sets the session variables needed to show graphs
     """
-    if has_permission(request.user, VIEW, "Ver graficas"):
+    if has_permission(request.user, VIEW, "Perfil de carga"):
         #has perm to view graphs, now check what can the user see
-        datacontext = DataContextPermission.objects.filter(user_role__user=request.user)
-
+        datacontext = get_buildings_context(request.user)
         set_default_session_vars(request, datacontext)
         #valid years for reporting
         request.session['years'] = [__date.year for __date in
@@ -220,7 +220,7 @@ def main_page(request):
 def cfe_bill(request):
     """Just sends the main template for the CFE Bill """
     if has_permission(request.user, VIEW, "Consultar recibo CFE"):
-        datacontext = DataContextPermission.objects.filter(user_role__user=request.user)
+        datacontext = get_buildings_context(request.user)
         set_default_session_vars(request, datacontext)
 
         template_vars={"type":"cfe", "datacontext":datacontext,

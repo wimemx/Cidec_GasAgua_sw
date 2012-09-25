@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block titulo %}Reportes{% endblock %}
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
+    <link rel="stylesheet" href="/static/css/forms/rbac.css" type="text/css">
+{% endblock %}
+{% block externaljs %}
+
+{% endblock %}
+
+<script type="text/javascript">
+    $(document).ready(function(){
+        //custom select for sidebar
+        $("#empresa").click(function(){
+            $("#company_list").slideToggle();
+        });
+        $("#company_list li").click(function(){
+            var texto=$(this).text().replace(/^\s*|\s*$/g,'');
+            var texto1 = texto.substring(0,17) + "...";
+            $("#empresa").text(texto1);
+            $("#company_list").slideUp();
+
+            $.ajax({
+                url: "/reportes/set_default_building/" + $(this).attr("rel"),
+                type: "GET",
+                dataType: 'json',
+                async: 'true',
+                success: function(datos){
+                    console.log("changed");
+                }
+            });
+
+        });
+
+
+
+
+    });
+</script>
+{% block contenido %}
+    <div id="bread_crumbs">
+        <ul>
+            <li><a href="/main/">Inicio</a></li>
+            <li><a href="/admin/">Administraci&oacute;n</a></li>
+            <li><a href="/admin/new_role/">Crear un nuevo rol</a></li>
+        </ul>
+
+    </div>
+    <div id="contenido_interno">
+        <h2 id="titulo_form" class="user_role">Crear un nuevo rol</h2>
+
+
+        <div class="divider" id="divider_top">&nbsp;</div>
+        <div id="form_container">
+            <p class="description">
+                Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
+                <br/>
+                Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
+            </p>
+            <form method="post" action=".">
+                {% csrf_token %}
+                <div id="basic_rol_info">
+                    <label class="input">
+                        <span>Nombre del rol</span>
+                        <input type="text" name="role_name" id="role_name"/>
+                    </label>
+                    <label class="input">
+                        <span>Descripcion del rol</span>
+                        <input type="text" name="role_desc" id="role_desc"/>
+                    </label>
+                    <p class="buttons">
+                        <button class="aqua_btn" id="add_permission">
+                            A&ntilde;adir permisos
+                        </button> &oacute;
+                        <a href="#" rel="cancel">cancelar</a>
+                    </p>
+                </div>
+                <div id="add_permissions">
+                    <span id="rolename">Administrador</span>
+                    <p id="role_description">
+                        Pid eu, nisi egestas. Enim in porttitor,
+                        sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras!
+                        <br/>
+                        Pid eu, nisi egestas. Enim in porttitor,
+                        sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras!
+                    </p>
+                    <div class="added_permissions">
+                        <span class="delete"></span>
+                        <span class="edit"></span>
+                        <span class="permission">Ver</span>
+                        <span class="group">Usuarios</span>
+                        <span class="object">Usuarios</span>
+                    </div>
+                    <div class="add_another_perm">
+                        <div class="widgetField" id="operation">
+                            <span>Operacion</span>
+                            <a href="#">&nbsp;</a>
+                        </div>
+                        <div class="widgetField" id="grupo">
+                            <span>grupo</span>
+                            <a href="#">&nbsp;</a>
+                        </div>
+                        <div class="widgetField" id="object">
+                            <span>Objeto</span>
+                            <a href="#">&nbsp;</a>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+
+        </div>
+
+
+    </div>
+{% endblock %}

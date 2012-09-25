@@ -1,5 +1,6 @@
 from django.conf.urls import patterns, include, url
 from c_center import urls as c_center_urls
+from rbac import urls as rbac_urls
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 admin.autodiscover()
@@ -11,6 +12,8 @@ urlpatterns = patterns('',
     url(r'^main/', 'cidec_sw.views.index'),
     url(r'^parse/', 'cidec_sw.views.parse_csv'),
     url(r'^reportes/', include(c_center_urls)),
+    url(r'^admin/', include(rbac_urls)),
+    url(r'^rbac/', include(rbac_urls)),
     url(r'^prueba_cfe/', 'c_center.calculations.recibocfe'),
     url(r'^set_timezone/', 'cidec_sw.views.set_timezone', name="set_timezone"),
 

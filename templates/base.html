@@ -31,6 +31,28 @@
                 return this;
             }
             $("select, input, input:checkbox, input:radio, input:file").uniform();
+            $("#nav_toggle").click(function(){
+                //maneja el evento de colapsar o mostrar la barra de navegacion
+                if($("#sidebar").hasClass("collapsed_nav")){
+
+                    $("#sidebar").animate({width: 'toggle'}, 500, function(){
+                        $(this).removeClass("collapsed_nav");
+                    });
+                    $("#sidebar_content").show('slide', {direction: 'right'}, 100);
+                    $("footer").show('slide', {direction: 'right'}, 100);
+
+                }else{
+                    $("#sidebar").addClass("collapsed_nav");
+                    $("#sidebar_content").hide('slide', {direction: 'left'}, 100);
+                    $("footer").hide('slide', {direction: 'left'}, 100);
+                    $("#sidebar").animate({width: 'toggle'}, 500);
+                }
+                $("#nav_toggle").toggleClass("closed");
+            });
+            $(".desp").click(function(){
+                $(".sidebarsub_op").each(function(){$(this).slideUp();});
+                $(this).next().slideDown();
+            });
             {% block document_ready %}{% endblock %}
             $("#user_menu li a[title]").tooltip({effect: 'slide'}).dynamic({ bottom: { direction: 'down', bounce: true } });
         });

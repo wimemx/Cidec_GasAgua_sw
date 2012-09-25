@@ -1,16 +1,36 @@
+from django.views.generic.simple import direct_to_template
+from django.shortcuts import render_to_response
+from django.template.context import RequestContext
+
 from rbac.models import *
-VIEW = Operation.objects.get(operation_name="view")
-CREATE = Operation.objects.get(operation_name="create")
-DELETE = Operation.objects.get(operation_name="delete")
-UPDATE = Operation.objects.get(operation_name="update")
-# Create your views here.
+from rbac.rbac_functions import has_permission, get_buildings_context
+VIEW = Operation.objects.get(operation_name="Ver")
+CREATE = Operation.objects.get(operation_name="Crear")
+DELETE = Operation.objects.get(operation_name="Eliminar")
+UPDATE = Operation.objects.get(operation_name="Modificar")
+
+
+def add_role(request):
+    """Add role web form"""
+    if has_permission(request.user, CREATE, "crear rol"):
+        if request.method == "POST":
+            pass
+        else:
+            datacontext = get_buildings_context(request.user)
+            template_vars = dict(datacontext=datacontext, empresa=request.session[
+                                                                  'main_building'])
+            template_vars_template = RequestContext(request, template_vars)
+            return render_to_response("rbac/add_role.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
 def add_data_context_permissions(request):
     """Permission Asigments
     show a form for data context permission asigment
     """
     if has_permission(request.user, CREATE, "data_context_permissions"):
         #has perm to view graphs, now check what can the user see
-        datacontext = DataContextPermission.objects.filter(user_role__user=request.user)
+        datacontext = get_buildings_context(request.user)
 
         set_default_session_vars(request, datacontext)
         #valid years for reporting

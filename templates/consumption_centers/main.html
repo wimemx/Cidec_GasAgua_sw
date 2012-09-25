@@ -114,27 +114,8 @@
     window.history.replaceState(url,"Reporte el&eacute;ctrico", url);
 
 
-    $(".desp").click(function(){
-        $(this).next().slideToggle();
-    });
-    $("#nav_toggle").click(function(){
-        //maneja el evento de colapsar o mostrar la barra de navegacion
-        if($("#sidebar").hasClass("collapsed_nav")){
 
-            $("#sidebar").animate({width: 'toggle'}, 500, function(){
-                $(this).removeClass("collapsed_nav");
-            });
-            $("#sidebar_content").show('slide', {direction: 'right'}, 100);
-            $("footer").show('slide', {direction: 'right'}, 100);
 
-        }else{
-            $("#sidebar").addClass("collapsed_nav");
-            $("#sidebar_content").hide('slide', {direction: 'left'}, 100);
-            $("footer").hide('slide', {direction: 'left'}, 100);
-            $("#sidebar").animate({width: 'toggle'}, 500);
-        }
-        $("#nav_toggle").toggleClass("closed");
-    });
 
     var now3 = new Date();
     now3.addDays(-4);
@@ -398,7 +379,7 @@
             <li id="kw">Potencia Activa (KW)</li>
             <li id="kvar">Potencia Reactiva (KVar)</li>
             <li id="pf">Factor de Potencia (PF)</li>
-            <li id="profile">Perfil de Carga</li>
+            <!--<li id="profile">Perfil de Carga</li>-->
             <li id="kwh">kW Hora</li>
             <li id="kwh_c">kW Hora Consumido</li>
             <li id="kvarh">kVAR Hora</li>

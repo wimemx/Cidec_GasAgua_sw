@@ -1070,7 +1070,7 @@ def recibocfe(request):
 
 def tag_reading_batch():
 
-    readingsObj = ElectricDataTemp.objects.all()
+    readingsObj = ElectricDataTemp.objects.filter(pk__gte=1241619)
     for readingObj in readingsObj:
 
         print readingObj.profile_powermeter.pk

@@ -479,6 +479,8 @@ class ElectricDataTemp(models.Model):
     def __unicode__(self):
         return self.profile_powermeter.powermeter.powermeter_anotation +\
                " " + str(self.medition_date)
+    class Meta:
+        verbose_name = "Electric Data"
 
 class ElectricRateForElectricData(models.Model):
     electric_rates_periods = models.ForeignKey(ElectricRatesPeriods, on_delete=models.PROTECT)

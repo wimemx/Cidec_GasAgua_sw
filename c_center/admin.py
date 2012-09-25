@@ -318,7 +318,7 @@ admin.site.register(c_center.models.ConsumerUnit, ConsumerUnitAdmin)
 
 class ElectricDataAdmin(admin.ModelAdmin):
     list_filter = ['profile_powermeter']
-admin.site.register(c_center.models.ElectricData, ElectricDataAdmin)
+admin.site.register(c_center.models.ElectricDataTemp, ElectricDataAdmin)
 admin.site.register(c_center.models.IndustrialEquipment)
 admin.site.register(c_center.models.PowermeterForIndustrialEquipment)
 class ElectricRateForElectricDataAdmin(admin.ModelAdmin):

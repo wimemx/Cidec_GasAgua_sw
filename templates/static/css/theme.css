@@ -305,7 +305,7 @@ a.aqua_btn:hover{
     -moz-border-radius: 5px;
     -webkit-border-radius: 5px;
     box-shadow: 0 0 4px #999;
-    padding: 7px;
+    padding: 6px 11px;
 }
 .aqua_btn:active{
     background: #c7d9dd;
@@ -354,4 +354,7 @@ footer span{
 }
 .selector span{
     visibility: visible !important;
+}
+.sidebarsub_op{
+    display: none;
 }

@@ -1,4 +1,5 @@
-from rbac.models import  PermissionAsigment, UserRole
+from django.db.models.aggregates import Count
+from rbac.models import  PermissionAsigment, UserRole, DataContextPermission
 
 def check_roles_permission(object):
     """ Check the roles that have an allowed operation over an object
@@ -28,6 +29,18 @@ def has_permission(user, operation, object):
     for u_role in user_role:
         permission = PermissionAsigment.objects.filter(object__object_name=object,
             role=u_role.role, operation=operation)
-        if len(permission) > 0:
+        if permission:
             return True
     return False
+
+def get_buildings_context(user):
+    """Gets and return a dict with the different buildings in the DataContextPermission
+    for the active user
+    """
+    datacontext = DataContextPermission.objects.filter(user_role__user=user).values(
+        "building__building_name", "building").annotate(Count("building"))
+    buildings=[]
+    for building in datacontext:
+        buildings.append(dict(building_pk=building['building'],
+            building_name=building['building__building_name']))
+    return buildings

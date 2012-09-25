@@ -1,0 +1,35 @@
+#add_permissions{
+    margin-left: 50px;
+}
+#rolename{
+    display: block;
+    color: #636363;
+    font-weight: 700;
+    font-size: 14px;
+    margin: 10px 0;
+}
+#role_description{
+    color: #636363;
+    line-height: 150%;
+    display: block;
+    margin: 10px 0;
+}
+.add_another_perm{
+    display: block;
+    overflow: auto;
+}
+.delete, .edit{
+    margin-right: 10px;
+}
+.permission, .group, .object{
+    color: #636363;
+    display: inline-block;
+}
+.permission{
+    font-size: 14px;
+    font-weight: 700;
+    width: 150px;
+}
+.group{
+    width: 130px;
+}
