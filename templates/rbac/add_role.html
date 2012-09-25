@@ -1,42 +1,128 @@
 {% extends "base.html" %}
-{% block titulo %}Reportes{% endblock %}
+{% block titulo %}Alta de Rol{% endblock %}
 {% block externalcss %}
     <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
     <link rel="stylesheet" href="/static/css/forms/rbac.css" type="text/css">
 {% endblock %}
 {% block externaljs %}
+    <script type="text/javascript">
+        $(document).ready(function(){
+            //custom select for sidebar
+            $("#empresa").click(function(){
+                $("#company_list").slideToggle();
+            });
+            $("#company_list li").click(function(){
+                var texto=$(this).text().replace(/^\s*|\s*$/g,'');
+                var texto1 = texto.substring(0,17) + "...";
+                $("#empresa").text(texto1);
+                $("#company_list").slideUp();
 
-{% endblock %}
+                $.ajax({
+                    url: "/reportes/set_default_building/" + $(this).attr("rel"),
+                    type: "GET",
+                    dataType: 'json',
+                    async: 'true',
+                    success: function(datos){
+                        console.log("changed");
+                    }
+                });
 
-<script type="text/javascript">
-    $(document).ready(function(){
-        //custom select for sidebar
-        $("#empresa").click(function(){
-            $("#company_list").slideToggle();
-        });
-        $("#company_list li").click(function(){
-            var texto=$(this).text().replace(/^\s*|\s*$/g,'');
-            var texto1 = texto.substring(0,17) + "...";
-            $("#empresa").text(texto1);
-            $("#company_list").slideUp();
-
-            $.ajax({
-                url: "/reportes/set_default_building/" + $(this).attr("rel"),
-                type: "GET",
-                dataType: 'json',
-                async: 'true',
-                success: function(datos){
-                    console.log("changed");
+            });
+            $(".added_permissions").mouseenter(function(){
+                $(this).find(".hidden_icon").css("visibility","visible");
+            }).mouseleave(function(){
+                        $(this).find(".hidden_icon").css("visibility","hidden");
+                    });
+            $("#add_permission").click(function(e){
+                e.preventDefault();
+                var rol = $("#role_name");
+                if(rol.val() != ''){
+                    $("#basic_rol_info").hide();
+                    $("#rolename").text(rol.val());
+                    $("#role_description").text($("#role_desc").val());
+                    $("#add_permissions").show();
+                }else{
+                    rol.parent().addClass("error");
                 }
             });
+            $("#operation").click(function(){
+                $(this).find("ul.ddl").slideToggle();
+            });
+            $("#operation_list li").click(function(){
+                var elemento = $(this);
+                $("#operation span").text(elemento.text());
+                elemento.parent().slideUp().stop();
+                var uri = elemento.attr("rel");
+                var url = "/rbac/get_group/"+uri;
+                $("#group_list").load(url, function(){
+                    $(this).slideDown();
+
+
+                    $("#group_list li").click(function(){
+                        console.log("clic en grouplist");
+                        var elemento = $(this);
+                        $("#group span").text(elemento.text());
+                        elemento.parent().slideUp().stop();
+                        var url2 = elemento.attr("rel");
+                        url2 = "/rbac/get_object/"+url2+"?operation="+uri;
+                        $("#object_list").load(url2, function(){
+                            $(this).slideDown().uniform();
+                            $("#object_list input:checkbox").uniform();
+                            $("#add_buttons").show();
+
+                        });
+
+                    });
+
+                });
+                $("#group").click(function(){
+                    $(this).find("ul.ddl").slideToggle();
+                });
+                $("#add_objects").click(function(e){
+                    e.preventDefault();
+                    var added_objects='';
+                    var added_objects_ids='';
+                    $("#object_list").find("input:checkbox").each(function(){
+                        if ($(this).is(':checked')){
+                            if (added_objects == ''){
+                                added_objects = $(this).parent().parent().next().text();
+                                added_objects_ids = $(this).attr('id');
+                            }
+                            else{
+                                added_objects += ',' + $(this).parent().parent().next().text();
+                                added_objects_ids += ',' + $(this).attr('id');
+                            }
+
+                        }
+                    });
+                    var append = '<div class="added_permissions"> ' +
+                            '<a href="#" class="delete hidden_icon"></a>' +
+                            '<a href="#" class="edit hidden_icon"></a>' +
+                            '<span class="permission">' +
+                                $("#operation span").text() +
+                            '</span>' +
+                            '<span class="group">' +
+                                $("#group span").text() +
+                            '</span>'+
+                            '<span class="object">'+
+                                added_objects +
+                            '</span>' +
+                            '<input type="hidden" name="operation_'+$("#operation span").text()+'" value="' +
+                            added_objects_ids +
+                            '"/>' +
+                            '</div>';
+                    $("#add_another_perm").before(append);
+                });
+            });
+
+
+
 
         });
+    </script>
+{% endblock %}
 
 
-
-
-    });
-</script>
 {% block contenido %}
     <div id="bread_crumbs">
         <ul>
@@ -75,35 +161,76 @@
                         <a href="#" rel="cancel">cancelar</a>
                     </p>
                 </div>
+
                 <div id="add_permissions">
-                    <span id="rolename">Administrador</span>
+                    <span id="rolename"></span>
                     <p id="role_description">
-                        Pid eu, nisi egestas. Enim in porttitor,
-                        sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras!
-                        <br/>
-                        Pid eu, nisi egestas. Enim in porttitor,
-                        sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras!
+
                     </p>
                     <div class="added_permissions">
-                        <span class="delete"></span>
-                        <span class="edit"></span>
-                        <span class="permission">Ver</span>
+                        <a href="#" class="delete hidden_icon"></a>
+                        <a href="#" class="edit hidden_icon"></a>
+                        <span class="permission">Puede leer</span>
                         <span class="group">Usuarios</span>
-                        <span class="object">Usuarios</span>
+                        <span class="object">Kw/h, KVar, Factor de potencia, recibo de la CFE</span>
                     </div>
-                    <div class="add_another_perm">
+                    <div class="added_permissions">
+                        <a href="#" class="delete hidden_icon"></a>
+                        <a href="#" class="edit hidden_icon"></a>
+                        <span class="permission">Puede leer</span>
+                        <span class="group">Usuarios</span>
+                        <span class="object">Kw/h, KVar, Factor de potencia, recibo de la CFE</span>
+                    </div>
+                    <div id="add_another_perm">
                         <div class="widgetField" id="operation">
-                            <span>Operacion</span>
+                            <span class="legend">Operacion</span>
                             <a href="#">&nbsp;</a>
+                            <ul id="operation_list" class="ddl">
+                                {% for operation in operations %}
+                                    <li rel="{{ operation.pk }}">
+                                        {{ operation.operation_name }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
                         </div>
-                        <div class="widgetField" id="grupo">
-                            <span>grupo</span>
+
+                        <div class="widgetField" id="group">
+                            <span class="legend">grupo</span>
                             <a href="#">&nbsp;</a>
+                            <ul id="group_list" class="ddl">
+                                <li></li>
+                            </ul>
                         </div>
+
                         <div class="widgetField" id="object">
-                            <span>Objeto</span>
+                            <span class="legend">Objeto</span>
                             <a href="#">&nbsp;</a>
+                            <ul id="object_list" class="ddl">
+                                <li>
+                                    <label>
+                                        <input type="checkbox" name="uno"/>
+                                        uno
+                                    </label>
+                                </li>
+                                <li>
+                                    <label>
+                                        <input type="checkbox" name="dos"/>
+                                        dos
+                                    </label>
+                                </li>
+                                <li><label><input type="checkbox" name="tres"/>
+                                        tres
+                                    </label>
+                                </li>
+                            </ul>
                         </div>
+
+                        <p class="buttons" id="add_buttons">
+                            <button class="aqua_btn" id="add_objects">
+                                Guardar
+                            </button> &oacute;
+                            <a href="#" rel="save_another">Guardar y a&ntilde;adir otro</a>
+                        </p>
                     </div>
                 </div>
 

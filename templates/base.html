@@ -30,6 +30,15 @@
                 this.setHours(this.getHours()+h);
                 return this;
             }
+            String.prototype.format = function() {
+                var args = arguments;
+                return this.replace(/{(\d+)}/g, function(match, number) {
+                    return typeof args[number] != 'undefined'
+                            ? args[number]
+                            : match
+                            ;
+                });
+            };
             $("select, input, input:checkbox, input:radio, input:file").uniform();
             $("#nav_toggle").click(function(){
                 //maneja el evento de colapsar o mostrar la barra de navegacion

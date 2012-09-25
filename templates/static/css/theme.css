@@ -358,3 +358,6 @@ footer span{
 .sidebarsub_op{
     display: none;
 }
+.error{
+    border: solid 1px #dd3333;
+}

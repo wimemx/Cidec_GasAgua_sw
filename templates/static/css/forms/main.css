@@ -1,3 +1,6 @@
+#add_permissions{
+    display: none;
+}
 #company_profile_pic{
     max-width: 154px;
     max-height: 154px;
@@ -130,7 +133,7 @@ h2{
 }
 .widgetField{
     text-align: center;
-    width: 320px;
+    color: #6e6e6e;
     height: 26px;
     float: left;
     line-height: 26px;
