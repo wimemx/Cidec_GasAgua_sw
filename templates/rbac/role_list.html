@@ -204,6 +204,34 @@
 
 
         });
+    function search_submit(pagina){
+        if (typeof pagina == "object") {
+            pagina = "1";
+        }
+        var url;
+        url=window.location.href;
+        url=url.split("/");
+        url=url[url.length-1];
+        url=url.replace("#",'');
+        url=url.replace(/&page=\d+/,'');
+        url+="&page="+pagina;
+
+        //window.history.replaceState(search_param,"Busqueda de propiedades", search_param);
+        //$("#search-results").load("/property/"+url+search_param+"&ajax", function(){
+        window.history.replaceState(url,"Busqueda de propiedades", url);
+        $("#search-results").load(url+"&ajax", function(){
+            $("#search-results input:checkbox").uniform();
+            $(".prop_search_result").mouseover(function(){
+                $(this).next().slideDown();
+            });
+            $(".prop_search_result").parent().mouseleave(function(){
+                $(this).find(".options").slideUp();
+            });
+            $("#filters_body").removeClass("hidden");
+        });
+        //$('#print_pdf').attr('href','/professional_search_pdf/'+search_param);
+        return false;
+    }
     </script>
 {% endblock %}
 
@@ -213,18 +241,18 @@
         <ul>
             <li><a href="/main/">Inicio</a></li>
             <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
-            <li><a href="/panel_de_control/nuevo_rol/">Crear un nuevo rol</a></li>
+            <li><a href="/panel_de_control/roles">Listado de roles</a></li>
         </ul>
 
     </div>
     <div id="contenido_interno">
-        <h2 id="titulo_form" class="user_role">Crear un nuevo rol</h2>
+        <h2 id="titulo_form" class="user_role">Ver Roles</h2>
 
 
         <div class="divider" id="divider_top">&nbsp;</div>
         <div id="form_container">
             {% if message %}
-                <span class="notif {% if msg_type == "success" %}n_success{% else %}n_error{% endif %}">
+                <span class="notif {% if msg_type == "success" %}n_success{% else %}n_notif{% endif %}">
                     {% autoescape off %}{{ message }}{% endautoescape %}
                 </span>
             {% endif %}
@@ -235,86 +263,68 @@
             </p>
             <form method="post" action=".">
                 {% csrf_token %}
-                <div id="basic_rol_info">
+                <div id="list_container">
+                    <a href="/panel_de_control/nuevo_rol/">Crear Nuevo</a>
                     <label class="input">
-                        <span>Nombre del rol</span>
-                        <input type="text" name="role_name" id="role_name"
-                                value="{{  post.role_name }}"/>
+                        <span>Inserte su texto aqu&iacute;</span>
+                        <input type="text" name="search" id="search"/>
                     </label>
-                    <label class="input">
-                        <span>Descripcion del rol</span>
-                        <input type="text" name="role_desc" id="role_desc" value="{{  post.role_desc }}"/>
-                    </label>
-                    <p class="buttons">
-                        <button class="aqua_btn" id="add_permission">
-                            A&ntilde;adir permisos
-                        </button> &oacute;
-                        <a href="#" rel="cancel">cancelar</a>
-                    </p>
+                    <button class="aqua_btn">
+                        Buscar
+                    </button>
                 </div>
+                <div id="grid_container">
+                    <span>Todos los roles</span>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nombre del rol</th>
+                                <th>Descripci&oacute;n</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for permrole in paginacion.object_list %}
 
-                <div id="add_permissions">
-                    <span id="rolename">{{  post.role_name }}</span>
-                    <a href="#editar" class="edit" title="Editar rol"></a>
-                    <p id="role_description">
-                        {{  post.role_desc }}
-                    </p>
+                            <tr>
+                                <td>
+                                    <input type="checkbox" id="{{ permrole.role__pk }}"/>
+                                    <label for="{{ permrole.role__pk }}">
+                                        {{ permrole.role__role_name }}
+                                    </label>
+                                </td>
+                                <td>
+                                    {{ permrole.role__role_description }}
+                                </td>
+                                <td>
+                                    <a class=".delete"></a>
+                                    <a class=".edit"></a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    <div id="table_footer">
+                        <select id="actions">
+                            <option>Eliminar</option>
+                        </select>
+                        <div class="pagination">
+                            <span class="step-links">
+                                {% if paginacion.has_previous %}
+                                    <a href="#" onclick="search_submit({{ paginacion.previous_page_number }})">Anterior</a> &ndash;
+                                {% endif %}
 
-                    <div id="add_another_perm">
-                        <div class="widgetField" id="operation">
-                            <span class="legend">Operaci&oacute;n</span>
-                            <a href="#">&nbsp;</a>
-                            <ul id="operation_list" class="ddl">
-                                {% for operation in operations %}
-                                    <li rel="{{ operation.pk }}">
-                                        {{ operation.operation_name }}
-                                    </li>
-                                {% endfor %}
-                            </ul>
+                                <span class="current">
+                                    P&aacute;gina {{ paginacion.number }} de {{ paginacion.paginator.num_pages }}.
+                                </span>
+
+                                {% if paginacion.has_next %}
+                                    &ndash; <a href="#" onclick="search_submit({{ paginacion.next_page_number }})">Siguiente</a>
+                                {% endif %}
+                            </span>
                         </div>
 
-                        <div class="widgetField" id="group">
-                            <span class="legend">Grupo</span>
-                            <a href="#">&nbsp;</a>
-                            <ul id="group_list" class="ddl">
-                                <li></li>
-                            </ul>
-                        </div>
-
-                        <div class="widgetField" id="object">
-                            <span class="legend">Privilegio</span>
-                            <a href="#">&nbsp;</a>
-                            <ul id="object_list" class="ddl">
-                                <li>
-                                    <label>
-                                        <input type="checkbox" name="uno"/>
-                                        uno
-                                    </label>
-                                </li>
-                                <li>
-                                    <label>
-                                        <input type="checkbox" name="dos"/>
-                                        dos
-                                    </label>
-                                </li>
-                                <li><label><input type="checkbox" name="tres"/>
-                                        tres
-                                    </label>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <p class="buttons" id="add_buttons">
-                            <button class="aqua_btn" id="add_objects">
-                                Agregar
-                            </button>
-                        </p>
                     </div>
-                    <p class="buttons" id="save_btn">
-                        <button class="aqua_btn">
-                            Guardar Rol
-                        </button>
-                    </p>
                 </div>
 
             </form>

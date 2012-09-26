@@ -311,15 +311,22 @@ a.aqua_btn:hover{
     background: #c7d9dd;
 }
 /*------Notification Bars------*/
-.notif_error{
-    background: url(images/bgs/notif_error.png) repeat-x;
+.notif{
     height: 31px;
     line-height: 31px;
     text-align: center;
     color: #fff;
     font-weight: 700;
     display: block;
-
+}
+.n_error{
+    background: url(images/bgs/notif_error.png) repeat-x;
+}
+.n_success{
+    background: url(images/bgs/notif_success.png) repeat-x;
+}
+.n_notif{
+    background: url(images/bgs/notif_notif.png) repeat-x;
 }
 /*------------Breadcrumbs-----------*/
 #bread_crumbs{
