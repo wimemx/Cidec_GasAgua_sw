@@ -2,7 +2,7 @@
 import re
 
 from django.views.generic.simple import direct_to_template
-from django.shortcuts import render_to_response, HttpResponse, HttpResponseRedirect
+from django.shortcuts import render_to_response, HttpResponse, HttpResponseRedirect, get_object_or_404
 from django.template.context import RequestContext
 from django.http import Http404
 from django.core.exceptions import ObjectDoesNotExist
@@ -89,7 +89,7 @@ def add_role(request):
                     ntype = "success"
                 if has_permission(request.user, VIEW, "Ver roles"):
                     return HttpResponseRedirect("/panel_de_control/roles?msj=" + mensaje +
-                                                "&ntype=notif")
+                                                "&ntype="+ntype)
                 else:
                     #regresa al formulario de alta
                     datacontext = get_buildings_context(request.user)
@@ -97,7 +97,7 @@ def add_role(request):
                         empresa=request.session['main_building'],
                         operations=Operation.objects.all(),
                         message=mensaje,
-                        msg_type="success"
+                        msg_type=ntype
                     )
                     template_vars_template = RequestContext(request, template_vars)
                     return render_to_response("rbac/add_role.html", template_vars_template)
@@ -126,13 +126,26 @@ def add_role(request):
             return render_to_response("rbac/add_role.html", template_vars_template)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
+def edit_role(request, id_role):
+    if has_permission(request.user, UPDATE, "Modificar asignaciones de permisos a roles"):
+        rol = get_object_or_404(Role, pk=id_role)
+        datacontext = get_buildings_context(request.user)
+        template_vars = dict(rol=rol,datacontext=datacontext,
+            empresa=request.session['main_building'],
+            operations=Operation.objects.all())
+        permissions = PermissionAsigment.objects.filter(role=rol)
+        objects = [ob.object.pk for ob in permissions]
+        objs_group_perms = OperationForGroupObjects.objects.filter(group_object__object__pk__in=objects)
+        template_vars['objs_group_perms'] = objs_group_perms
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("rbac/add_role.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
 
 def view_roles(request):
     if has_permission(request.user, VIEW, "Ver roles"):
 
-        lista = PermissionAsigment.objects.all().values(
-            "role__pk", "role__role_name","role__role_description").annotate(Count("role"))
-        print lista
+        lista = Role.objects.all()
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
         template_vars = dict(roles=paginator)
         # Make sure page request is an int. If not, deliver first page.
@@ -152,7 +165,8 @@ def view_roles(request):
         if 'msj' in request.GET:
             template_vars['message'] = request.GET['msj']
             template_vars['msg_type'] = request.GET['ntype']
-
+        if has_permission(request.user, CREATE, "crear rol"):
+            template_vars['create_rol']="create"
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("rbac/role_list.html", template_vars_template)
     else:

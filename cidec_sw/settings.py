@@ -1,6 +1,6 @@
 # Django settings for cidec_sw project.
-import djcelery
-djcelery.setup_loader()
+#import djcelery
+#djcelery.setup_loader()
 import os
 BROKER_HOST = "myhost"
 BROKER_PORT = "5672"
@@ -157,7 +157,7 @@ INSTALLED_APPS = (
     'rbac',
     'electric_rates',
     'south',
-    'djcelery',
+    #'djcelery',
     'tareas',
 )
 

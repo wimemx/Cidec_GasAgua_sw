@@ -264,7 +264,9 @@
             <form method="post" action=".">
                 {% csrf_token %}
                 <div id="list_container">
-                    <a href="/panel_de_control/nuevo_rol/">Crear Nuevo</a>
+                    {% if create_rol %}
+                    <a href="/panel_de_control/nuevo_rol/">Nuevo Rol</a>
+                    {% endif %}
                     <label class="input">
                         <span>Inserte su texto aqu&iacute;</span>
                         <input type="text" name="search" id="search"/>
@@ -288,13 +290,13 @@
 
                             <tr>
                                 <td>
-                                    <input type="checkbox" id="{{ permrole.role__pk }}"/>
-                                    <label for="{{ permrole.role__pk }}">
-                                        {{ permrole.role__role_name }}
+                                    <input type="checkbox" id="{{ permrole.pk }}"/>
+                                    <label for="{{ permrole.pk }}">
+                                        {{ permrole.role_name }}
                                     </label>
                                 </td>
                                 <td>
-                                    {{ permrole.role__role_description }}
+                                    {{ permrole.role_description }}
                                 </td>
                                 <td>
                                     <a class=".delete"></a>
