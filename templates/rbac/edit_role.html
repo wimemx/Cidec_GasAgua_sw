@@ -1,11 +1,104 @@
 {% extends "base.html" %}
-{% block titulo %}Alta de Rol{% endblock %}
+{% block titulo %}{% if just_watch %}Ver{% else %}Editar{% endif %} Rol{% endblock %}
 {% block externalcss %}
     <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
     <link rel="stylesheet" href="/static/css/forms/rbac.css" type="text/css">
 {% endblock %}
+{% if not just_watch %}
+    {% block externaljs %}
+        <script type="text/javascript">
+            function add_object(){
+                var added_objects='';
+                var added_objects_ids='';
+                if ($("#all").is(":checked")){
+                    added_objects='Todos';
+                    $("#object_list").find("input:checkbox").each(function(){
+                        if ($(this).is(':checked')){
+                            if (added_objects_ids == ''){
+                                added_objects_ids = $(this).attr('id');
+                            }
+                            else{
+                                added_objects_ids += ',' + $(this).attr('id');
+                            }
+                        }
+                    });
+                }else{
+                    $("#object_list").find("input:checkbox").each(function(){
+                        if ($(this).is(':checked')){
+                            if (added_objects == ''){
+                                added_objects = $(this).parent().parent().next().text();
+                                added_objects_ids = $(this).attr('id');
+                            }
+                            else{
+                                added_objects += ',' + $(this).parent().parent().next().text();
+                                added_objects_ids += ',' + $(this).attr('id');
+                            }
+                        }
+                    });
+                }
 
-    {% block document_ready %}
+                if (added_objects != ''){
+                    var operacion = $("#operation span").text().replace(/^\s+/,'').replace(/\s+$/,'');
+
+                    var grupo = $("#group span").text().replace(/^\s+/,'').replace(/\s+$/,'');
+
+                    var append = '<a href="#eliminar" class="delete hidden_icon" ' +
+                            'title="eliminar permiso asignado"></a>' +
+                            '<span class="permission">' +
+                            operacion +
+                            '</span>' +
+                            '<span class="group">' +
+                            grupo +
+                            '</span>'+
+                            '<span class="object">'+
+                            added_objects +
+                            '</span>' +
+                            '<input type="hidden" name="' + operacion + "_" +grupo +'" ' +
+                            'value="' +
+                            added_objects_ids +
+                            '"/>';
+                    var change=true;
+                    $("#add_permissions").find("input:hidden").each(function(){
+
+                        if($(this).attr("name") == operacion + "_" +grupo){
+                            change = false;
+                            $(this).parent().html(append);
+                        }
+                    });
+                    if(change){
+                        append = '<div class="added_permissions"> ' +
+                                append +
+                                '</div>';
+                        $("#add_another_perm").before(append);
+                    }
+
+                    $(".added_permissions").mouseenter(function(){
+                        $(this).find(".hidden_icon").css("visibility","visible");
+                    }).mouseleave(function(){
+                                $(this).find(".hidden_icon").css("visibility","hidden");
+                            });
+                    $(".delete").click(function(e){
+                        e.preventDefault();
+                        $(this).parent().remove();
+                        if($(".added_permissions").length > 0){
+                            $("#save_btn").show();
+                        }else{
+                            $("#save_btn").hide();
+                        }
+                    });
+
+                    $("#group_list, #object_list").html("").hide();
+                    $("#group span.legend").text("Grupo");
+                    $("#object span.legend").text("Privilegio");
+                    $("#operation span.legend").text("Operación");
+                    if($(".added_permissions").length > 0){
+                        $("#save_btn").show();
+                    }
+                }
+            }
+        </script>
+    {% endblock %}
+{% block document_ready %}
             //custom select for sidebar
             $("#empresa").click(function(){
                 $("#company_list").slideToggle();
@@ -54,6 +147,21 @@
             $("#group").click(function(){
                 $(this).find("ul.ddl").slideToggle();
             });
+            $(".delete").click(function(e){
+                e.preventDefault();
+                $(this).parent().remove();
+                if($(".added_permissions").length > 0){
+                    $("#save_btn").show();
+                }else{
+                    $("#save_btn").hide();
+                }
+            });
+            $(".added_permissions").mouseenter(function(){
+                $(this).find(".hidden_icon").css("visibility","visible");
+            }).mouseleave(function(){
+                        $(this).find(".hidden_icon").css("visibility","hidden");
+                    });
+
             $("#operation_list li").click(function(){
                 var elemento = $(this);
                 $("#operation span").text(elemento.text());
@@ -109,7 +217,7 @@
 
                 $("#add_objects").click(function(e){
                     e.preventDefault();
-                    add_object();
+                    add_object()
                 });
                 $("#add_save").click(function(e){
                     e.preventDefault();
@@ -117,116 +225,20 @@
                     $("#save_btn button").click();
                 });
             });
-
-
-        {% endblock %}
-{% block externaljs %}
-    <script type="text/javascript">
-    function add_object(){
-        var added_objects='';
-        var added_objects_ids='';
-        if ($("#all").is(":checked")){
-            added_objects='Todos';
-            $("#object_list").find("input:checkbox").each(function(){
-                if ($(this).is(':checked')){
-                    if (added_objects_ids == ''){
-                        added_objects_ids = $(this).attr('id');
-                    }
-                    else{
-                        added_objects_ids += ',' + $(this).attr('id');
-                    }
-                }
-            });
-        }else{
-            $("#object_list").find("input:checkbox").each(function(){
-                if ($(this).is(':checked')){
-                    if (added_objects == ''){
-                        added_objects = $(this).parent().parent().next().text();
-                        added_objects_ids = $(this).attr('id');
-                    }
-                    else{
-                        added_objects += ',' + $(this).parent().parent().next().text();
-                        added_objects_ids += ',' + $(this).attr('id');
-                    }
-                }
-            });
-        }
-
-        if (added_objects != ''){
-            var operacion = $("#operation span").text().replace(/^\s+/,'').replace(/\s+$/,'');
-
-            var grupo = $("#group span").text().replace(/^\s+/,'').replace(/\s+$/,'');
-
-            var append = '<a href="#eliminar" class="delete hidden_icon" ' +
-                    'title="eliminar permiso asignado"></a>' +
-                    '<span class="permission">' +
-                    operacion +
-                    '</span>' +
-                    '<span class="group">' +
-                    grupo +
-                    '</span>'+
-                    '<span class="object">'+
-                    added_objects +
-                    '</span>' +
-                    '<input type="hidden" name="' + operacion + "_" +grupo +'" ' +
-                    'value="' +
-                    added_objects_ids +
-                    '"/>';
-            var change=true;
-            $("#add_permissions").find("input:hidden").each(function(){
-
-                if($(this).attr("name") == operacion + "_" +grupo){
-                    change = false;
-                    $(this).parent().html(append);
-                }
-            });
-            if(change){
-                append = '<div class="added_permissions"> ' +
-                        append +
-                        '</div>';
-                $("#add_another_perm").before(append);
-            }
-
-            $(".added_permissions").mouseenter(function(){
-                $(this).find(".hidden_icon").css("visibility","visible");
-            }).mouseleave(function(){
-                        $(this).find(".hidden_icon").css("visibility","hidden");
-                    });
-            $(".delete").click(function(e){
-                e.preventDefault();
-                $(this).parent().remove();
-                if($(".added_permissions").length > 0){
-                    $("#save_btn").show();
-                }else{
-                    $("#save_btn").hide();
-                }
-            });
-
-            $("#group_list, #object_list").html("").hide();
-            $("#group span.legend").text("Grupo");
-            $("#object span.legend").text("Privilegio");
-            $("#operation span.legend").text("Operación");
-            if($(".added_permissions").length > 0){
-                $("#save_btn").show();
-            }
-        }
-    }
-    </script>
 {% endblock %}
-
+{% endif %}
 
 {% block contenido %}
     <div id="bread_crumbs">
         <ul>
             <li><a href="/main/">Inicio</a></li>
             <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
-            <li><a href="/panel_de_control/nuevo_rol/">Crear un nuevo rol</a></li>
+            <li><a href="/panel_de_control/roles/">roles</a></li>
         </ul>
-
     </div>
     <div id="contenido_interno">
         <h2 id="titulo_form" class="user_role">
-            {% if role %}Modificar rol{% else %}Crear un nuevo rol{% endif %}
+            {% if just_watch %}Ver{% else %}Modificar{% endif %} rol
         </h2>
 
 
@@ -235,7 +247,7 @@
             {% if message %}
                 <span class="notif {% if msg_type == "success" %}n_success{% else %}n_error{% endif %}">
                     {% autoescape off %}{{ message }}{% endautoescape %}
-                    <a href="#" onclick="$(this).parent().remove();">X</a>
+                <a href="#" onclick="$(this).parent().remove();">X</a>
                 </span>
             {% endif %}
             <p class="description">
@@ -243,17 +255,18 @@
                 <br/>
                 Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
             </p>
+            {% if not just_watch %}
             <form method="post" action=".">
                 {% csrf_token %}
                 <div id="basic_rol_info">
                     <label class="input">
                         <span>Nombre del rol</span>
                         <input type="text" name="role_name" id="role_name"
-                                value="{{  post.role_name }}"/>
+                               value="{{  rol.role_name }}"/>
                     </label>
                     <label class="input">
                         <span>Descripcion del rol</span>
-                        <input type="text" name="role_desc" id="role_desc" value="{{  post.role_desc }}"/>
+                        <input type="text" name="role_desc" id="role_desc" value="{{  rol.role_description }}"/>
                     </label>
                     <p class="buttons">
                         <button class="aqua_btn" id="add_permission">
@@ -262,14 +275,43 @@
                         <a href="#" rel="cancel">cancelar</a>
                     </p>
                 </div>
-
-                <div id="add_permissions">
-                    <span id="rolename">{{  post.role_name }}</span>
+            {% endif %}
+                <div id="add_permissions"{% if just_watch %} style="display: block;" {% endif %}>
+                    <span id="rolename">{{  rol.role_name }}</span>
+                    {% if not just_watch %}
                     <a href="#editar" class="edit" title="Editar rol"></a>
+                    {% endif %}
                     <p id="role_description">
-                        {{  post.role_desc }}
+                        {{  rol.role_description }}
                     </p>
-
+                {% for obj in objs_group_perms %}
+                    <div class="added_permissions">
+                        {% if not just_watch %}
+                        <a href="#eliminar" class="delete hidden_icon" title="eliminarpermiso asignado"></a>
+                        {% endif %}
+                        <span class="permission">
+                            {{ obj.operacion }}
+                        </span>
+                        <span class="group">
+                            {{ obj.grupo}}
+                        </span>
+                        <span class="object" style="visibility: visible !important; ">
+                                {% for op in obj.privs %}
+                                    {{ op.object_name }},
+                                {% endfor %}
+                        </span>
+                        <input type="hidden" name="{{ obj.operacion }}_{{ obj.grupo }}"
+                               value="all{% for op in obj.privs %},{{ op.pk }}{% endfor %}"/>
+                    </div>
+                {% endfor %}
+                {% if just_watch %}
+                    <div class="c" style="margin-top: 4em;">
+                        <a href="/panel_de_control/editar_rol/{{ rol.pk }}/" class="aqua_btn">
+                            A&ntilde;adir m&aacute;s permisos
+                        </a>
+                    </div>
+                {% endif %}
+                {% if not just_watch %}
                     <div id="add_another_perm">
                         <div class="widgetField" id="operation">
                             <span class="legend">Operaci&oacute;n</span>
@@ -308,8 +350,8 @@
                                     </label>
                                 </li>
                                 <li><label><input type="checkbox" name="tres"/>
-                                        tres
-                                    </label>
+                                    tres
+                                </label>
                                 </li>
                             </ul>
                         </div>
@@ -332,7 +374,7 @@
                 </div>
 
             </form>
-
+            {% endif %}
         </div>
 
 

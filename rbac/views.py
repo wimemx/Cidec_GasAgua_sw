@@ -46,9 +46,12 @@ def save_perm(role, objs_ids, operation):
                     object=object)
                 perm.save()
     return True, "El registro se completó exitosamente"
+
 def add_role(request):
     """Add role web form"""
     if has_permission(request.user, CREATE, "crear rol"):
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
         if request.method == "POST":
             role = request.POST['role_name'].strip()
             role_desc = request.POST['role_desc'].strip()
@@ -92,9 +95,9 @@ def add_role(request):
                                                 "&ntype="+ntype)
                 else:
                     #regresa al formulario de alta
-                    datacontext = get_buildings_context(request.user)
+
                     template_vars = dict(datacontext=datacontext,
-                        empresa=request.session['main_building'],
+                        empresa=empresa,
                         operations=Operation.objects.all(),
                         message=mensaje,
                         msg_type=ntype
@@ -106,9 +109,9 @@ def add_role(request):
                 # borro el rol y los privilegios asociados
                 PermissionAsigment.objects.filter(role=rol).delete()
                 rol.delete()
-                datacontext = get_buildings_context(request.user)
+
                 template_vars = dict(datacontext=datacontext,
-                    empresa=request.session['main_building'],
+                    empresa=empresa,
                     operations=Operation.objects.all(),
                     message=mensaje,
                     msg_type="fail",
@@ -118,27 +121,168 @@ def add_role(request):
                 return render_to_response("rbac/add_role.html", template_vars_template)
 
         else:
-            datacontext = get_buildings_context(request.user)
             template_vars = dict(datacontext=datacontext,
-                                 empresa=request.session['main_building'],
+                                 empresa=empresa,
                                  operations=Operation.objects.all())
             template_vars_template = RequestContext(request, template_vars)
             return render_to_response("rbac/add_role.html", template_vars_template)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
+
+def update_role_privs(role, objs_ids, operation):
+    """Update a  list of PermissionAsigments for a given role
+    role = a Role instance
+    objs_ids = array with ids of objects
+    operation = string ["Cer", "Crear", "Eliminar"], if neither, defaults UPDATE
+    """
+    if operation == "Ver":
+        operation = VIEW
+    elif operation == "Crear":
+        operation = CREATE
+    elif operation == "Eliminar":
+        operation = DELETE
+    else:
+        operation = UPDATE
+
+    objs_arr = []
+    for obj_id in objs_ids:
+        if obj_id != "all":
+            try:
+                objs_arr.append(Object.objects.get(pk=int(obj_id)))
+            except ObjectDoesNotExist:
+                mensaje = "El privilegio no existe, por favor seleccione nuevamente la "\
+                          "operaci&oacute;n y el privilegio"
+                return False, mensaje
+
+    PermissionAsigment.objects.filter(role=role, operation=operation).delete()
+    for object in objs_arr:
+        perm=PermissionAsigment(role=role, operation=operation, object=object)
+        perm.save()
+    return True, "El rol se modificó exitosamente"
+
 def edit_role(request, id_role):
     if has_permission(request.user, UPDATE, "Modificar asignaciones de permisos a roles"):
         rol = get_object_or_404(Role, pk=id_role)
         datacontext = get_buildings_context(request.user)
-        template_vars = dict(rol=rol,datacontext=datacontext,
-            empresa=request.session['main_building'],
+        empresa = request.session['main_building']
+        ntype = ""
+        mensaje = ""
+        if request.method == "POST":
+            asignation = False
+            ids_ver = []
+            ids_crear = []
+            ids_modificar = []
+            ids_eliminar = []
+            for key in request.POST:
+                objs_ids = request.POST[str(key)].split(",")
+
+                #checks the type of the allowed operation for the role
+                if re.search('^Ver_\w+', key):
+                    ids_ver.extend(objs_ids)
+                    #asignation, mensaje = save_perm(rol, objs_ids, "Ver")
+
+                elif re.search('^Crear_\w+', key):
+                    ids_crear.extend(objs_ids)
+                    #asignation, mensaje = save_perm(rol, objs_ids, "Crear")
+
+                elif re.search('^Eliminar_\w+', key):
+                    ids_eliminar.extend(objs_ids)
+                    #asignation, mensaje = save_perm(rol, objs_ids, "Eliminar")
+
+                elif re.search('^Modificar_\w+', key):
+                    ids_modificar.extend(objs_ids)
+                    #asignation, mensaje = save_perm(rol, objs_ids, "Modificar")
+            #guardo la totalidad de objetos, por operación, independientemente de su grupo
+            if ids_ver:
+                asignation, mensaje = update_role_privs(rol, ids_ver, "Ver")
+            if ids_crear:
+                asignation, mensaje = update_role_privs(rol, ids_crear, "Crear")
+            if ids_eliminar:
+                asignation, mensaje = update_role_privs(rol, ids_eliminar, "Eliminar")
+            if ids_modificar:
+                asignation, mensaje = update_role_privs(rol, ids_modificar, "Modificar")
+            if asignation:
+                #if save_perm register the PermissionAsigment correctly
+                if not ntype:
+                    ntype = "success"
+
+                return HttpResponseRedirect("/panel_de_control/roles?msj=" + mensaje +
+                                            "&ntype="+ntype)
+            else:
+                #regresa al formulario de alta con el mensaje de error,
+                # borro el rol y los privilegios asociados
+                PermissionAsigment.objects.filter(role=rol).delete()
+                rol.delete()
+
+                template_vars = dict(datacontext=datacontext,
+                    empresa=empresa,
+                    operations=Operation.objects.all(),
+                    message=mensaje,
+                    msg_type="fail",
+                    post=request.POST
+                )
+                template_vars_template = RequestContext(request, template_vars)
+                return render_to_response("rbac/add_role.html", template_vars_template)
+        else:
+            template_vars = dict(rol=rol,
+                                 datacontext=datacontext,
+                                 empresa=empresa,
+                                 operations=Operation.objects.all())
+            permissions = PermissionAsigment.objects.filter(role=rol)
+            objects = [ob.object.pk for ob in permissions]
+
+            objs_group_perms = OperationForGroupObjects.objects.filter(group_object__object__pk__in=objects)
+            objs = {}
+            for gp in objs_group_perms:
+                key = gp.operation.operation_name+"-"+gp.group_object.group.group_name
+                if key in objs:
+                    objs[key].append(gp.group_object.object)
+                else:
+                    objs[key] = [gp.group_object.object,]
+            arr_ops=[]
+            for key in objs:
+                key_split = key.split("-")
+                operacion = key_split[0]
+                grupo = key_split[1]
+                arr_ops.append(dict(operacion=operacion, grupo=grupo, privs=objs[key]))
+
+            template_vars['objs_group_perms'] = arr_ops
+            template_vars_template = RequestContext(request, template_vars)
+            return render_to_response("rbac/edit_role.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def see_role(request, id_role):
+    if has_permission(request.user, VIEW, "Ver roles"):
+        rol = get_object_or_404(Role, pk=id_role)
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        template_vars = dict(rol=rol,
+            datacontext=datacontext,
+            empresa=empresa,
             operations=Operation.objects.all())
         permissions = PermissionAsigment.objects.filter(role=rol)
         objects = [ob.object.pk for ob in permissions]
+
         objs_group_perms = OperationForGroupObjects.objects.filter(group_object__object__pk__in=objects)
-        template_vars['objs_group_perms'] = objs_group_perms
+        objs = {}
+        for gp in objs_group_perms:
+            key = gp.operation.operation_name+"-"+gp.group_object.group.group_name
+            if key in objs:
+                objs[key].append(gp.group_object.object)
+            else:
+                objs[key] = [gp.group_object.object,]
+        arr_ops=[]
+        for key in objs:
+            key_split = key.split("-")
+            operacion = key_split[0]
+            grupo = key_split[1]
+            arr_ops.append(dict(operacion=operacion, grupo=grupo, privs=objs[key]))
+
+        template_vars['objs_group_perms'] = arr_ops
+        template_vars['just_watch'] = "solo ver"
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("rbac/add_role.html", template_vars_template)
+        return render_to_response("rbac/edit_role.html", template_vars_template)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 

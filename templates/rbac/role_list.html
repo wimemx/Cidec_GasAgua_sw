@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block titulo %}Alta de Rol{% endblock %}
+{% block titulo %}Ver Roles{% endblock %}
 {% block externalcss %}
     <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
     <link rel="stylesheet" href="/static/css/forms/rbac.css" type="text/css">
@@ -29,179 +29,6 @@
 
             });
 
-            $("#add_permission").click(function(e){
-                e.preventDefault();
-                var rol = $("#role_name");
-                if(rol.val() != ''){
-                    $("#basic_rol_info").hide();
-                    $("#rolename").text(rol.val());
-                    $("#role_description").text($("#role_desc").val());
-                    $("#add_permissions").show();
-                    if(rol.parent().hasClass("error")){
-                        rol.parent().removeClass("error");
-                    }
-                }else{
-                    rol.parent().addClass("error");
-                }
-            });
-            $(".edit").click(function(e){
-                $("#add_permissions").hide();
-                $("#basic_rol_info").show();
-            });
-
-            $("#operation").click(function(){
-                $(this).find("ul.ddl").slideToggle();
-            });
-            $("#group").click(function(){
-                $(this).find("ul.ddl").slideToggle();
-            });
-            $("#operation_list li").click(function(){
-                var elemento = $(this);
-                $("#operation span").text(elemento.text());
-                elemento.parent().slideUp().stop();
-                var uri = elemento.attr("rel");
-                var url = "/rbac/get_group/"+uri;
-                $("#group_list").load(url, function(){
-                    $(this).slideDown();
-
-
-                    $("#group_list li").click(function(){
-                        var elemento = $(this);
-                        $("#group span").text(elemento.text());
-                        elemento.parent().slideUp().stop();
-                        var url2 = elemento.attr("rel");
-                        url2 = "/rbac/get_object/"+url2+"?operation="+uri;
-                        $("#object_list").load(url2, function(){
-                            var all = '<li><input type="checkbox" name="all" ' +
-                                    'id="all"/>'+
-                                    '<label for="all" >'+
-                                    'Todos'+
-                                    '</label></li>';
-                            $(this).prepend(all).slideDown();
-                            $("#object_list input:checkbox").uniform();
-                            $("#add_buttons").show();
-                            $("#all").change(function(){
-
-                                if($(this).is(":checked")){
-                                    $("#object_list").find("input:checkbox").each(function(){
-
-                                        if($(this).attr('id')!="all"){
-                                            $(this).prop("checked", true);
-                                        }
-
-                                    });
-                                }else{
-                                    $("#object_list").find("input:checkbox").each(function(){
-
-                                        if($(this).attr('id')!="all"){
-                                            $(this).prop("checked", false);
-                                        }
-
-                                    });
-                                }
-
-                                $.uniform.update();
-                            });
-                        });
-
-                    });
-
-                });
-
-                $("#add_objects").click(function(e){
-                    e.preventDefault();
-                    var added_objects='';
-                    var added_objects_ids='';
-                    if ($("#all").is(":checked")){
-                        added_objects='Todos';
-                        $("#object_list").find("input:checkbox").each(function(){
-                            if ($(this).is(':checked')){
-                                if (added_objects_ids == ''){
-                                    added_objects_ids = $(this).attr('id');
-                                }
-                                else{
-                                    added_objects_ids += ',' + $(this).attr('id');
-                                }
-                            }
-                        });
-                    }else{
-                        $("#object_list").find("input:checkbox").each(function(){
-                            if ($(this).is(':checked')){
-                                if (added_objects == ''){
-                                    added_objects = $(this).parent().parent().next().text();
-                                    added_objects_ids = $(this).attr('id');
-                                }
-                                else{
-                                    added_objects += ',' + $(this).parent().parent().next().text();
-                                    added_objects_ids += ',' + $(this).attr('id');
-                                }
-                            }
-                        });
-                    }
-
-                    if (added_objects != ''){
-                        var operacion = $("#operation span").text().replace(/^\s+/,'').replace(/\s+$/,'');
-
-                        var grupo = $("#group span").text().replace(/^\s+/,'').replace(/\s+$/,'');
-
-                        var append = '<a href="#eliminar" class="delete hidden_icon" ' +
-                                'title="eliminar permiso asignado"></a>' +
-                                '<span class="permission">' +
-                                operacion +
-                                '</span>' +
-                                '<span class="group">' +
-                                grupo +
-                                '</span>'+
-                                '<span class="object">'+
-                                added_objects +
-                                '</span>' +
-                                '<input type="hidden" name="' + operacion + "_" +grupo +'" ' +
-                                'value="' +
-                                added_objects_ids +
-                                '"/>';
-                        var change=true;
-                        $("#add_permissions").find("input:hidden").each(function(){
-
-                            if($(this).attr("name") == operacion + "_" +grupo){
-                                change = false;
-                                $(this).parent().html(append);
-                            }
-                        });
-                        if(change){
-                            append = '<div class="added_permissions"> ' +
-                                    append +
-                                    '</div>';
-                            $("#add_another_perm").before(append);
-                        }
-
-                        $(".added_permissions").mouseenter(function(){
-                            $(this).find(".hidden_icon").css("visibility","visible");
-                        }).mouseleave(function(){
-                                    $(this).find(".hidden_icon").css("visibility","hidden");
-                                });
-                        $(".delete").click(function(e){
-                            e.preventDefault();
-                            $(this).parent().remove();
-                            if($(".added_permissions").length > 0){
-                                $("#save_btn").show();
-                            }else{
-                                $("#save_btn").hide();
-                            }
-                        });
-
-                        $("#group_list, #object_list").html("").hide();
-                        $("#group span.legend").text("Grupo");
-                        $("#object span.legend").text("Privilegio");
-                        $("#operation span.legend").text("Operación");
-                        if($(".added_permissions").length > 0){
-                            $("#save_btn").show();
-                        }
-                    }
-                });
-            });
-
-
-
 
         });
     function search_submit(pagina){
@@ -218,7 +45,7 @@
 
         //window.history.replaceState(search_param,"Busqueda de propiedades", search_param);
         //$("#search-results").load("/property/"+url+search_param+"&ajax", function(){
-        window.history.replaceState(url,"Busqueda de propiedades", url);
+        window.history.replaceState(url,"Busqueda de roles", url);
         $("#search-results").load(url+"&ajax", function(){
             $("#search-results input:checkbox").uniform();
             $(".prop_search_result").mouseover(function(){
@@ -254,6 +81,7 @@
             {% if message %}
                 <span class="notif {% if msg_type == "success" %}n_success{% else %}n_notif{% endif %}">
                     {% autoescape off %}{{ message }}{% endautoescape %}
+                <a href="#" onclick="$(this).parent().remove();">X</a>
                 </span>
             {% endif %}
             <p class="description">
@@ -263,9 +91,12 @@
             </p>
             <form method="post" action=".">
                 {% csrf_token %}
-                <div id="list_container">
+                <div id="role_actions">
                     {% if create_rol %}
-                    <a href="/panel_de_control/nuevo_rol/">Nuevo Rol</a>
+                    <a href="/panel_de_control/nuevo_rol/"><span class="plus"></span>
+                        Nuevo Rol
+                    </a>
+                    <span class="hz_divider"></span>
                     {% endif %}
                     <label class="input">
                         <span>Inserte su texto aqu&iacute;</span>
@@ -276,31 +107,32 @@
                     </button>
                 </div>
                 <div id="grid_container">
-                    <span>Todos los roles</span>
                     <table>
                         <thead>
                             <tr>
-                                <th>Nombre del rol</th>
-                                <th>Descripci&oacute;n</th>
-                                <th>Acciones</th>
+                                <th style="width: 20%;">Nombre del rol<span
+                                        class="sort"></span></th>
+                                <th style="width: 65%;">Descripci&oacute;n<span
+                                        class="sort"></span></th>
+                                <th style="width: 15%;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for permrole in paginacion.object_list %}
 
-                            <tr>
+                            <tr class="{% cycle 'row1' 'row2' %}">
                                 <td>
                                     <input type="checkbox" id="{{ permrole.pk }}"/>
                                     <label for="{{ permrole.pk }}">
                                         {{ permrole.role_name }}
                                     </label>
                                 </td>
-                                <td>
+                                <td class="c">
                                     {{ permrole.role_description }}
                                 </td>
-                                <td>
-                                    <a class=".delete"></a>
-                                    <a class=".edit"></a>
+                                <td class="c">
+                                    <a class="del"></a>
+                                    <a class="edit"></a>
                                 </td>
                             </tr>
                         {% endfor %}
@@ -310,6 +142,8 @@
                         <select id="actions">
                             <option>Eliminar</option>
                         </select>
+                        <button class="fl aqua_btn" id="aplicar">Aplicar a la
+                            selecci&oacute;n</button>
                         <div class="pagination">
                             <span class="step-links">
                                 {% if paginacion.has_previous %}

@@ -288,17 +288,25 @@ header{
 #sidebar_content{
 
 }
+/* ----- Buttons -----*/
 button{
     height: 31px;
 }
-a.aqua_btn:hover{
+a.aqua_btn:hover, a.grey_btn:hover{
     text-decoration: none;
 }
 .aqua_btn{
-    text-align: center;
     background: url(images/bgs/aqua_button.png) repeat-x;
     border: solid 1px #78939a;
     color: #fff;
+}
+.grey_btn{
+    background: url(images/bgs/grey_button.png) repeat-x;
+    border: solid 1px #bdbdbd;
+    color: #636363;
+}
+.aqua_btn, .grey_btn{
+    text-align: center;
     font-weight: 700;
     font-size: 14px;
     border-radius: 5px;
@@ -307,9 +315,8 @@ a.aqua_btn:hover{
     box-shadow: 0 0 4px #999;
     padding: 6px 11px;
 }
-.aqua_btn:active{
-    background: #c7d9dd;
-}
+
+
 /*------Notification Bars------*/
 .notif{
     height: 31px;
@@ -318,6 +325,12 @@ a.aqua_btn:hover{
     color: #fff;
     font-weight: 700;
     display: block;
+}
+.notif a,.notif a:active{
+    color: #fff;
+    font-weight: 700;
+    float: right;
+    margin-right: 1em;
 }
 .n_error{
     background: url(images/bgs/notif_error.png) repeat-x;
@@ -367,4 +380,25 @@ footer span{
 }
 .error{
     border: solid 1px #dd3333;
+}
+.plus{
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background: url(images/imgs_icns/plus_circle.png);
+    cursor: pointer;
+}
+.sort{
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    background: url(images/imgs_icns/sort_icon.png) no-repeat;
+    cursor: pointer;
+}
+.delete{
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    background: url(images/imgs_icns/del_circle.png) no-repeat;
+    cursor: pointer;
 }

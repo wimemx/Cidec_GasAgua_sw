@@ -149,7 +149,7 @@ h2{
     background: url(../images/imgs_icns/arrow_down_sm_gray.png) no-repeat 0 50%;
     display: inline-block;
 }
-.delete, .edit{
+.delete, .edit, .del{
     display: inline-block;
     width: 16px;
     height: 16px;
@@ -157,6 +157,9 @@ h2{
 .delete{
     background: url(../images/imgs_icns/minus_red.png) no-repeat 50% 50%;
 }
+.del{
+    background: url(../images/imgs_icns/del_circle.png) no-repeat 50% 50%;
+}
 .edit{
-    background: url(../images/imgs_icns/pencil.png) no-repeat 50% 50%;
+    background: url(../images/imgs_icns/edit_squere.png) no-repeat 50% 50%;
 }

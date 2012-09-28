@@ -85,3 +85,135 @@
 #save_btn{
     display: none;
 }
+.added_perm{
+    margin-left: 3px;
+}
+.plus{
+    float: left;
+    margin-right: 3px;
+}
+#add_and_save{
+    margin: 11px 0 0 14px;
+}
+#form_container{
+    width: 900px;
+}
+#role_actions label{
+    display: inline-block;
+}
+#role_actions a{
+    float: left;
+    margin-top: 13px;
+    font-weight: 700;
+    color: #6c6c6c;
+}
+#role_actions a span.plus{
+    margin: -3px 15px;
+}
+#role_actions label{
+    margin-right: 25px;
+    width: 564px;
+}
+#role_actions label span{
+    font-style: italic;
+}
+#role_actions label input{
+    width: 99%;
+}
+
+
+#role_actions .aqua_btn{
+    width: 106px;
+}
+.hz_divider{
+    float: left;
+    display: inline-block;
+    height: 27px;
+    margin: 4px 4em 0 4em;
+    border-right: solid 1px #9EBFC7;
+}
+#grid_container{
+    border: solid 1px #9EBFC7;
+    margin-top: 20px;
+    border-radius: 7px;
+    overflow: hidden;
+}
+#grid_container table{
+    width: 100%;
+    color: #6c6c6c;
+}
+#grid_container table td, #grid_container table th{
+    border: solid 1px #9EBFC7;
+    vertical-align: middle;
+}
+#grid_container table tr:first-child th {
+    border-top: 0;
+}
+#grid_container table tr:last-child td {
+    border-bottom: 0;
+}
+#grid_container table tr td:first-child,
+#grid_container table tr th:first-child {
+    border-left: 0;
+}
+#grid_container table tr td:last-child,
+#grid_container table tr th:last-child {
+    border-right: 0;
+}
+#grid_container table tr{
+    height: 30px;
+}
+#grid_container table thead tr{
+    background: url(../images/bgs/bread_crumbs_bg.png) repeat-x;
+}
+#grid_container table tr.row1{
+    background-image: linear-gradient(top, rgb(252,253,253) 12%, rgb(240,245,247) 56%);
+    background-image: -o-linear-gradient(top, rgb(252,253,253) 12%, rgb(240,245,247) 56%);
+    background-image: -moz-linear-gradient(top, rgb(252,253,253) 12%, rgb(240,245,247) 56%);
+    background-image: -webkit-linear-gradient(top, rgb(252,253,253) 12%, rgb(240,245,247) 56%);
+    background-image: -ms-linear-gradient(top, rgb(252,253,253) 12%, rgb(240,245,247) 56%);
+
+    background-image: -webkit-gradient(
+        linear,
+        left top,
+        left bottom,
+        color-stop(0.12, rgb(252,253,253)),
+        color-stop(0.56, rgb(240,245,247))
+    );
+}
+#grid_container table tr.row2{
+    background: #fff;
+}
+#table_footer{
+    border-top: solid 1px #9EBFC7;
+    height: 39px;
+    padding-top: 9px;
+    background-image: linear-gradient(bottom, rgb(240,240,240) 47%, rgb(255,255,255) 74%);
+    background-image: -o-linear-gradient(bottom, rgb(240,240,240) 47%, rgb(255,255,255) 74%);
+    background-image: -moz-linear-gradient(bottom, rgb(240,240,240) 47%, rgb(255,255,255) 74%);
+    background-image: -webkit-linear-gradient(bottom, rgb(240,240,240) 47%, rgb(255,255,255) 74%);
+    background-image: -ms-linear-gradient(bottom, rgb(240,240,240) 47%, rgb(255,255,255) 74%);
+
+    background-image: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(0.47, rgb(240,240,240)),
+        color-stop(0.74, rgb(255,255,255))
+    );
+}
+.sort{
+    top: 2px;
+    position: relative;
+    left: 7px;
+}
+.checker{
+    margin: 0 10px;
+}
+#table_footer .selector{
+    float: left;
+}
+#table_footer .pagination{
+    float: right;
+    margin: 5px 20px;
+}
