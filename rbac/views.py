@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 import re
+import urllib
 
 from django.views.generic.simple import direct_to_template
 from django.shortcuts import render_to_response, HttpResponse, HttpResponseRedirect, get_object_or_404
 from django.template.context import RequestContext
 from django.http import Http404
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.db.models.aggregates import Count
+from django.db.models import Q
 
 from rbac.models import *
 from rbac.rbac_functions import has_permission, get_buildings_context
@@ -288,10 +290,37 @@ def see_role(request, id_role):
 
 def view_roles(request):
     if has_permission(request.user, VIEW, "Ver roles"):
+        if "search" in request.GET:
+            search = request.GET["search"]
+        else:
+            search = ''
+        order_desc = 'asc'
+        order_name = 'asc'
+        order = "role_name" #default order
+        if "order_name" in request.GET:
+            #request.GET["order_name"]=asc or desc
+            if request.GET["order_name"] == "desc":
+                order = "-role_name"
+                order_name = "asc"
+            else:
+                order_name = "desc"
+        else:
 
-        lista = Role.objects.all()
+            if "order_desc" in request.GET:
+            #request.GET["order_name"]=asc or desc
+                if request.GET["order_desc"] == "asc":
+                    order = "role_description"
+                    order_desc = "desc"
+                else:
+                    order = "-role_description"
+                    order_desc = "asc"
+        if search:
+            lista = Role.objects.filter(Q(role_name__icontains=request.GET['search'])|Q(
+                role_description__icontains=request.GET['search'])).order_by(order)
+        else:
+            lista = Role.objects.all().order_by(order)
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
-        template_vars = dict(roles=paginator)
+        template_vars = dict(roles=paginator, order_name=order_name, order_desc=order_desc)
         # Make sure page request is an int. If not, deliver first page.
         try:
             page = int(request.GET.get('page', '1'))
@@ -309,10 +338,61 @@ def view_roles(request):
         if 'msj' in request.GET:
             template_vars['message'] = request.GET['msj']
             template_vars['msg_type'] = request.GET['ntype']
-        if has_permission(request.user, CREATE, "crear rol"):
-            template_vars['create_rol']="create"
+
+
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("rbac/role_list.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def delete_role(request, id_role):
+    if has_permission(request.user, DELETE, "Eliminar rol"):
+        rol = get_object_or_404(Role, pk=id_role)
+        user_r = UserRole.objects.filter(role=rol)
+        if user_r:
+            mensaje = "Para eliminar un rol, no debe haber ningún usuario asocioado, " \
+                      "por favor elimine o cambie las asociaciones de usuarios a este rol e " \
+                      "intente de nuevo"
+            return HttpResponseRedirect("/panel_de_control/roles/?msj=" + mensaje +
+                                       "&ntype=warning")
+        else:
+            PermissionAsigment.objects.filter(role=rol).delete()
+            rol.delete()
+            mensaje = "El rol, y todos los privilegios asociados al mismo se han eliminado"
+            return HttpResponseRedirect("/panel_de_control/roles/?msj=" + mensaje +
+                                        "&ntype=success")
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def delete_batch(request):
+    if has_permission(request.user, DELETE, "Eliminar rol"):
+        if request.method == "GET":
+            raise Http404
+        if request.POST['actions'] == 'delete':
+            for key in request.POST:
+                if re.search('^rol_\w+', key):
+                    r_id = int(key.replace("rol_",""))
+                    rol = get_object_or_404(Role, pk=r_id)
+                    user_r = UserRole.objects.filter(role=rol)
+                    if user_r:
+                        mensaje = "Para eliminar un rol, no debe haber ningún usuario asocioado, "\
+                                  "por favor elimine o cambie las asociaciones de usuarios al " \
+                                  "rol "+ str(rol.role_name) +", e intente de nuevo"
+                        
+                        return HttpResponseRedirect("/panel_de_control/roles/?msj=" + mensaje +
+                                                    "&ntype=warning")
+                    else:
+                        PermissionAsigment.objects.filter(role=rol).delete()
+                        rol.delete()
+            mensaje = "Los roles seleccionados, y todos los privilegios asociados al mismo se " \
+                      "han eliminado"
+            return HttpResponseRedirect("/panel_de_control/roles/?msj=" + mensaje +
+                                        "&ntype=success")
+        else:
+            mensaje = "No se ha seleccionado una acción"
+            return HttpResponseRedirect("/panel_de_control/roles/?msj=" + mensaje +
+                                        "&ntype=success")
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
@@ -346,6 +426,18 @@ def get_select_object(request, id_group):
         return HttpResponse(content=string_to_return, content_type="text/html")
     else:
         raise Http404
+
+def add_user(request):
+    if has_permission(request.user, CREATE, "Alta de usuarios"):
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+
+        template_vars = dict(datacontext=datacontext,
+                             empresa=empresa)
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("rbac/add_user.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
 
 def add_data_context_permissions(request):
     """Permission Asigments

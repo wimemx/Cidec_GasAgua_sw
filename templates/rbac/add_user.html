@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block titulo %}Alta de Rol{% endblock %}
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
+    <link rel="stylesheet" href="/static/css/forms/rbac_add_user.css" type="text/css">
+{% endblock %}
+{% block externaljs %}
+    <script type="text/javascript">
+
+    </script>
+{% endblock %}
+
+
+{% block contenido %}
+    <div id="bread_crumbs">
+        <ul>
+            <li><a href="/main/">Inicio</a></li>
+            <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
+            <li><a href="/panel_de_control/nuevo_rol/">Alta de nuevo usuario</a></li>
+        </ul>
+
+    </div>
+    <div id="contenido_interno">
+        <h2 id="titulo_form" class="user_role">
+            Alta de nuevo usuario
+        </h2>
+
+
+        <div class="divider" id="divider_top">&nbsp;</div>
+        <div id="form_container">
+            {% if message %}
+                <span class="notif {% if msg_type == "success" %}n_success{% else %}n_error{% endif %}">
+                    {% autoescape off %}{{ message }}{% endautoescape %}
+                    <a href="#" onclick="$(this).parent().remove();">X</a>
+                </span>
+            {% endif %}
+            <p class="description">
+                Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
+                <br/>
+                Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
+            </p>
+            <form method="post" action=".">
+                {% csrf_token %}
+                <h3 class="g12">Nombre de Usuario y Contraseña</h3>
+                <div id="basic_info">
+                    <div class="fields_row g12">
+                        <label for="username" class="g2">Nombre de usuario</label>
+                        <input type="text" name="username" id="username" class="g9"/>
+                    </div>
+                    <div class="fields_row g12">
+                        <label for="pass1" class="g2">
+                            Contrase&ntilde;a
+                            <span class="g12">La contrase&ntilde;a debe contener al menos 8
+                                caracteres</span>
+                        </label>
+
+                        <input type="password" name="pass1" id="pass1" class="g9"/>
+                    </div>
+                    <div class="fields_row g12">
+                        <label for="pass2" class="g2">Re-introducir Contrase&ntilde;a</label>
+                        <input type="password" name="pass2" id="pass2" class="g9"/>
+                    </div>
+                </div>
+                <h3 class="g12">Informaci&oacute;n Personal</h3>
+                <div id="personal_info">
+                    <div class="fields_row g12">
+                        <label for="name" class="g2">Nombre(s)</label>
+                        <input type="text" name="name" id="name" class="g9"/>
+                    </div>
+                    <div class="fields_row g12">
+                        <label for="last_name" class="g2">Apellido Paterno</label>
+                        <input type="text" name="last_name" id="last_name" class="g9"/>
+                    </div>
+                    <div class="fields_row g12">
+                        <label for="surname" class="g2">Apellido Materno</label>
+                        <input type="text" name="surname" id="surname" class="g9"/>
+                    </div>
+                    <div class="fields_row g12">
+                        <label for="mail" class="g2">Correo Electr&oacute;nico</label>
+                        <input type="email" name="mail" id="mail" class="g9"/>
+                    </div>
+                    <div class="fields_row g12">
+                        <span class="label g2">Sexo</span>
+                        <label for="sex_m" class="g2">
+                            <input type="checkbox" name="sex_m" id="sex_m"/>
+                            Masculino
+                        </label>
+                        <label for="sex_f" class="g2">
+                            <input type="checkbox" name="sex_f" id="sex_f"/>
+                            Femenino
+                        </label>
+                    </div>
+                    <div class="fields_row g12">
+                        <label for="dob" class="g2">Fecha de Nacimiento</label>
+                        <input type="text" name="dob" id="dob" class="g2"/>
+                    </div>
+                    <div class="fields_row g12">
+                        <label for="tel_o" class="g2">Tel&eacute;fono Oficina</label>
+                        <input type="text" name="tel_o" id="tel_o" class="g9"/>
+                    </div>
+                    <div class="fields_row g12">
+                        <label for="tel_m" class="g2">Tel&eacute;fono Celular</label>
+                        <input type="text" name="tel_m" id="tel_m" class="g9"/>
+                    </div>
+                </div>
+                <p class="buttons g2 fr">
+                    <button class="aqua_btn">
+                        Guardar
+                    </button>
+                </p>
+            </form>
+
+        </div>
+
+
+    </div>
+{% endblock %}

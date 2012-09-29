@@ -117,7 +117,7 @@
                     $("#save_btn button").click();
                 });
             });
-
+            $("a.back").click(function(e){e.preventDefault(); history.back();});
 
         {% endblock %}
 {% block externaljs %}
@@ -259,7 +259,7 @@
                         <button class="aqua_btn" id="add_permission">
                             A&ntilde;adir permisos
                         </button> &oacute;
-                        <a href="#" rel="cancel">cancelar</a>
+                        <a href="#" class="back" rel="cancel">cancelar</a>
                     </p>
                 </div>
 

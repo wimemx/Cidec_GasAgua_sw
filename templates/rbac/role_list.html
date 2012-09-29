@@ -3,10 +3,29 @@
 {% block externalcss %}
     <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
     <link rel="stylesheet" href="/static/css/forms/rbac.css" type="text/css">
+    <link href="/static/js/external/messi/messi.css" rel="stylesheet" type="text/css" media="screen" />
 {% endblock %}
 {% block externaljs %}
+    <script src="/static/js/external/messi/messi.min.js"></script>
     <script type="text/javascript">
-        $(document).ready(function(){
+        function search_submit(pagina){
+            if (typeof pagina == "object") {
+                pagina = "1";
+            }
+            var url;
+            url=window.location.href;
+            url=url.split("/");
+            url=url[url.length-1];
+            url=url.replace("#",'');
+            url=url.replace(/&page=\d+/,'');
+            url+="&page="+pagina;
+            window.location = url;
+
+        }
+    </script>
+{% endblock %}
+{% block document_ready %}
+
             //custom select for sidebar
             $("#empresa").click(function(){
                 $("#company_list").slideToggle();
@@ -26,40 +45,79 @@
                         console.log("changed");
                     }
                 });
+            });
+            $("a.del").click(function(event){
+                event.preventDefault();
+                var url="/rbac/eliminar_rol/"+$(this).attr("rel")+"/";
+                new Messi('&iquest;Est&aacute; seguro de que desea eliminar el rol?',
+                        {title: 'Eliminar rol', modal: true, buttons: [{id: 0,
+                            label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
+                        }],
+                        callback: function(val) {
+                            if(val=='Y'){
+                                document.location.href=url;
+                            } else return false; }
+                        });
+            });
+            $("#aplicar").click(function(e){
+                e.preventDefault();
+                if($("#actions").val()!="0"){
+                    new Messi('&iquest;Est&aacute; seguro de que desea eliminar los roles ' +
+                            'seleccionados?',
+                            {title: 'Eliminar roles', modal: true, buttons: [{id: 0,
+                                label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
+                            }],
+                                callback: function(val) {
+                                    if(val=='Y'){
+                                        document.forms["operations_batch"].submit();
+                                    } else return false; }
+                            });
+                }else{
+                    return false;
+                }
 
             });
 
+            $("#sort_name").click(function(e){
+                e.preventDefault();
+                var get = getUrlVars();
 
-        });
-    function search_submit(pagina){
-        if (typeof pagina == "object") {
-            pagina = "1";
-        }
-        var url;
-        url=window.location.href;
-        url=url.split("/");
-        url=url[url.length-1];
-        url=url.replace("#",'');
-        url=url.replace(/&page=\d+/,'');
-        url+="&page="+pagina;
+                var base_url = window.location.pathname;
+                base_url+="?order_name="+$("#sort_name").attr("rel");
+                if(get.length>0){
+                    if (get[0]!=window.location.protocol+"//"+window.location
+                            .host+window.location.pathname){
+                        for(var i=0; i<get.length; i++){
+                            if (get[i]!="order_desc" && get[i]!="order_name"){
+                                base_url+="&"+get[i]+"="+get[get[i]];
+                            }
+                        }
+                    }
+                }
+                window.location = base_url;
+            });
+            $("#sort_desc").click(function(e){
+                e.preventDefault();
+                var get = getUrlVars();
 
-        //window.history.replaceState(search_param,"Busqueda de propiedades", search_param);
-        //$("#search-results").load("/property/"+url+search_param+"&ajax", function(){
-        window.history.replaceState(url,"Busqueda de roles", url);
-        $("#search-results").load(url+"&ajax", function(){
-            $("#search-results input:checkbox").uniform();
-            $(".prop_search_result").mouseover(function(){
-                $(this).next().slideDown();
+                var base_url = window.location.pathname;
+                base_url+="?order_desc="+$("#sort_desc").attr("rel");
+                if(get.length>0){
+                    if (get[0]!=window.location.protocol+"//"+window.location
+                            .host+window.location.pathname){
+                        for(var i=0; i<get.length; i++){
+                            if (get[i]!="order_desc" && get[i]!="order_name"){
+                                base_url+="&"+get[i]+"="+get[get[i]];
+                            }
+                        }
+                    }
+
+                }
+
+                window.location = base_url;
             });
-            $(".prop_search_result").parent().mouseleave(function(){
-                $(this).find(".options").slideUp();
-            });
-            $("#filters_body").removeClass("hidden");
-        });
-        //$('#print_pdf').attr('href','/professional_search_pdf/'+search_param);
-        return false;
-    }
-    </script>
+
+
 {% endblock %}
 
 
@@ -77,93 +135,114 @@
 
 
         <div class="divider" id="divider_top">&nbsp;</div>
-        <div id="form_container">
-            {% if message %}
-                <span class="notif {% if msg_type == "success" %}n_success{% else %}n_notif{% endif %}">
+        {% if message %}
+            <span class="notif {% if msg_type == "success" %}n_success{% else %}n_notif{% endif %}">
                     {% autoescape off %}{{ message }}{% endautoescape %}
                 <a href="#" onclick="$(this).parent().remove();">X</a>
                 </span>
-            {% endif %}
+        {% endif %}
+        <div id="form_container">
+
             <p class="description">
                 Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
                 <br/>
                 Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
             </p>
-            <form method="post" action=".">
-                {% csrf_token %}
+
+
                 <div id="role_actions">
-                    {% if create_rol %}
+
                     <a href="/panel_de_control/nuevo_rol/"><span class="plus"></span>
                         Nuevo Rol
                     </a>
                     <span class="hz_divider"></span>
-                    {% endif %}
-                    <label class="input">
-                        <span>Inserte su texto aqu&iacute;</span>
-                        <input type="text" name="search" id="search"/>
-                    </label>
-                    <button class="aqua_btn">
-                        Buscar
-                    </button>
+                    <form method="get" action=".">
+                        <label class="input">
+                            <span>Inserte su texto aqu&iacute;</span>
+                            <input type="text" name="search" id="search"/>
+                        </label>
+                        <button class="aqua_btn">
+                            Buscar
+                        </button>
+                    </form>
                 </div>
-                <div id="grid_container">
-                    <table>
-                        <thead>
+                <form id="operations_batch" action="/rbac/delete_batch/" method="post">
+                    {% csrf_token %}
+                    <div id="grid_container">
+                        <table>
+                            <thead>
                             <tr>
-                                <th style="width: 20%;">Nombre del rol<span
-                                        class="sort"></span></th>
-                                <th style="width: 65%;">Descripci&oacute;n<span
-                                        class="sort"></span></th>
+                                <th style="width: 20%;">
+                                    <a href="#" id="sort_name" rel="{{ order_name }}">
+                                        Nombre del rol
+                                        <span class="sort"></span>
+                                    </a>
+                                </th>
+                                <th style="width: 65%;">
+                                    <a href="#" id="sort_desc" rel="{{ order_desc }}">
+                                        Descripci&oacute;n
+                                        <span class="sort"></span>
+                                    </a>
+                                </th>
                                 <th style="width: 15%;">Acciones</th>
                             </tr>
-                        </thead>
-                        <tbody>
+                            </thead>
+                            <tbody>
                             {% for permrole in paginacion.object_list %}
 
-                            <tr class="{% cycle 'row1' 'row2' %}">
-                                <td>
-                                    <input type="checkbox" id="{{ permrole.pk }}"/>
-                                    <label for="{{ permrole.pk }}">
-                                        {{ permrole.role_name }}
-                                    </label>
-                                </td>
-                                <td class="c">
-                                    {{ permrole.role_description }}
-                                </td>
-                                <td class="c">
-                                    <a class="del"></a>
-                                    <a class="edit"></a>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                    <div id="table_footer">
-                        <select id="actions">
-                            <option>Eliminar</option>
-                        </select>
-                        <button class="fl aqua_btn" id="aplicar">Aplicar a la
-                            selecci&oacute;n</button>
-                        <div class="pagination">
+                                <tr class="{% cycle 'row1' 'row2' %}">
+                                    <td>
+                                        <input type="checkbox" id="rol_{{ permrole.pk }}" name="rol_{{ permrole.pk }}"/>
+                                        <label for="rol_{{ permrole.pk }}">
+                                            <a href="/panel_de_control/ver_rol/{{ permrole.pk }}/">
+                                                {{ permrole.role_name }}
+                                            </a>
+                                        </label>
+                                    </td>
+                                    <td class="c">
+                                        <a href="/panel_de_control/ver_rol/{{ permrole.pk }}/">
+                                            {{ permrole.role_description }}
+                                        </a>
+                                    </td>
+                                    <td class="c">
+                                        <a class="del" rel="{{ permrole.pk }}"
+                                           href="#"></a>
+                                        <a class="edit" href="/panel_de_control/editar_rol/{{ permrole.pk }}/"></a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        <div id="table_footer">
+                            <select id="actions" name="actions">
+                                <option value="0">Elije una Acci&oacute;n</option>
+                                <option value="delete">Eliminar</option>
+                            </select>
+                            <button class="fl aqua_btn" id="aplicar">Aplicar a la
+                                selecci&oacute;n</button>
+
+                            <div class="pagination">
                             <span class="step-links">
                                 {% if paginacion.has_previous %}
                                     <a href="#" onclick="search_submit({{ paginacion.previous_page_number }})">Anterior</a> &ndash;
                                 {% endif %}
 
                                 <span class="current">
-                                    P&aacute;gina {{ paginacion.number }} de {{ paginacion.paginator.num_pages }}.
+                                    P&aacute;gina {{ paginacion.number }} de {{ paginacion.paginator.num_pages }}
                                 </span>
 
                                 {% if paginacion.has_next %}
                                     &ndash; <a href="#" onclick="search_submit({{ paginacion.next_page_number }})">Siguiente</a>
                                 {% endif %}
                             </span>
+                            </div>
+
                         </div>
-
                     </div>
-                </div>
+                </form>
 
-            </form>
+
+
 
         </div>
 

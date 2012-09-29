@@ -44,7 +44,7 @@ class Cluster(models.Model):
     cluster_registered = models.DateTimeField(default=datetime.datetime.now())
     cluster_status = models.IntegerField(choices=STATUS, default=1)
     cluster_name = models.CharField(max_length=128)
-    cluster_description = models.TextField(blank=True, null=True)
+    #cluster_description = models.TextField(blank=True, null=True)
     cluster_image = models.CharField(max_length=200, null=True, blank=True)
 
     def __unicode__(self):
