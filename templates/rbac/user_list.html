@@ -1,8 +1,8 @@
 {% extends "base.html" %}
-{% block titulo %}Ver Roles{% endblock %}
+{% block titulo %}Ver Usuarios{% endblock %}
 {% block externalcss %}
     <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
-    <link rel="stylesheet" href="/static/css/forms/rbac.css" type="text/css">
+    <link rel="stylesheet" href="/static/css/forms/rbac_user_list.css" type="text/css">
     <link href="/static/js/external/messi/messi.css" rel="stylesheet" type="text/css" media="screen" />
 {% endblock %}
 {% block externaljs %}
@@ -48,9 +48,9 @@
             });
             $("a.del").click(function(event){
                 event.preventDefault();
-                var url="/rbac/eliminar_rol/"+$(this).attr("rel")+"/";
-                new Messi('&iquest;Est&aacute; seguro de que desea eliminar el rol?',
-                        {title: 'Eliminar rol', modal: true, buttons: [{id: 0,
+                var url="/rbac/eliminar_usuario/"+$(this).attr("rel")+"/";
+                new Messi('&iquest;Est&aacute; seguro de que desea eliminar el usuario?',
+                        {title: 'Eliminar usuario', modal: true, buttons: [{id: 0,
                             label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
                         }],
                         callback: function(val) {
@@ -62,9 +62,9 @@
             $("#aplicar").click(function(e){
                 e.preventDefault();
                 if($("#actions").val()!="0"){
-                    new Messi('&iquest;Est&aacute; seguro de que desea eliminar los roles ' +
+                    new Messi('&iquest;Est&aacute; seguro de que desea eliminar los usuarios' +
                             'seleccionados?',
-                            {title: 'Eliminar roles', modal: true, buttons: [{id: 0,
+                            {title: 'Eliminar usuarios', modal: true, buttons: [{id: 0,
                                 label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
                             }],
                                 callback: function(val) {
@@ -88,7 +88,7 @@
                     if (get[0]!=window.location.protocol+"//"+window.location
                             .host+window.location.pathname){
                         for(var i=0; i<get.length; i++){
-                            if (get[i]!="order_desc" && get[i]!="order_name"){
+                            if (get[i]!="order_username" && get[i]!="order_name" && get[i]!="order_mail"){
                                 base_url+="&"+get[i]+"="+get[get[i]];
                             }
                         }
@@ -96,22 +96,41 @@
                 }
                 window.location = base_url;
             });
-            $("#sort_desc").click(function(e){
+            $("#sort_username").click(function(e){
                 e.preventDefault();
                 var get = getUrlVars();
 
                 var base_url = window.location.pathname;
-                base_url+="?order_desc="+$("#sort_desc").attr("rel");
+                base_url+="?order_username="+$("#sort_username").attr("rel");
                 if(get.length>0){
                     if (get[0]!=window.location.protocol+"//"+window.location
                             .host+window.location.pathname){
                         for(var i=0; i<get.length; i++){
-                            if (get[i]!="order_desc" && get[i]!="order_name"){
+                            if (get[i]!="order_username" && get[i]!="order_name" && get[i]!="order_mail"){
                                 base_url+="&"+get[i]+"="+get[get[i]];
                             }
                         }
                     }
 
+                }
+
+                window.location = base_url;
+            });
+            $("#sort_email").click(function(e){
+                e.preventDefault();
+                var get = getUrlVars();
+
+                var base_url = window.location.pathname;
+                base_url+="?order_mail="+$("#sort_email").attr("rel");
+                if(get.length>0){
+                    if (get[0]!=window.location.protocol+"//"+window.location
+                            .host+window.location.pathname){
+                        for(var i=0; i<get.length; i++){
+                            if (get[i]!="order_username" && get[i]!="order_name" && get[i]!="order_mail"){
+                                base_url+="&"+get[i]+"="+get[get[i]];
+                            }
+                        }
+                    }
                 }
 
                 window.location = base_url;
@@ -126,17 +145,17 @@
         <ul>
             <li><a href="/main/">Inicio</a></li>
             <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
-            <li>Roles</li>
+            <li>Usuarios</li>
         </ul>
 
     </div>
     <div id="contenido_interno">
-        <h2 id="titulo_form" class="user_role">Ver Roles</h2>
+        <h2 id="titulo_form" class="user_role">Ver Usuarios</h2>
 
 
         <div class="divider" id="divider_top">&nbsp;</div>
         {% if message %}
-            <span class="notif {% if msg_type == "success" %}n_success{% else %}n_notif{% endif %}">
+            <span class="notif {{ msg_type }}">
                     {% autoescape off %}{{ message }}{% endautoescape %}
                 <a href="#" onclick="$(this).parent().remove();">X</a>
                 </span>
@@ -150,10 +169,10 @@
             </p>
 
 
-                <div id="role_actions">
+                <div id="user_actions">
 
-                    <a href="/panel_de_control/nuevo_rol/"><span class="plus"></span>
-                        Nuevo Rol
+                    <a href="/panel_de_control/add_user/"><span class="plus"></span>
+                        Nuevo Usuario
                     </a>
                     <span class="hz_divider"></span>
                     <form method="get" action=".">
@@ -166,48 +185,61 @@
                         </button>
                     </form>
                 </div>
-                <form id="operations_batch" action="/rbac/delete_batch/" method="post">
+                <form id="operations_batch" action="/rbac/delete_batch_user/" method="post">
                     {% csrf_token %}
                     <div id="grid_container">
                         <table>
                             <thead>
                             <tr>
-                                <th style="width: 20%;">
+                                <th style="width: 25%;">
+                                    <a href="#" id="sort_username" rel="{{ order_username }}">
+                                        Usuario
+                                        <span class="sort"></span>
+                                    </a>
+                                </th>
+                                <th style="width: 25%;">
                                     <a href="#" id="sort_name" rel="{{ order_name }}">
-                                        Nombre del rol
+                                        Nombre
                                         <span class="sort"></span>
                                     </a>
                                 </th>
-                                <th style="width: 65%;">
-                                    <a href="#" id="sort_desc" rel="{{ order_desc }}">
-                                        Descripci&oacute;n
+                                <th style="width: 25%;">
+                                    <a href="#" id="sort_email" rel="{{ order_email }}">
+                                        Correo Electr&oacute;nico
                                         <span class="sort"></span>
                                     </a>
                                 </th>
-                                <th style="width: 15%;">Acciones</th>
+                                <th style="width: 25%;">Acciones</th>
                             </tr>
                             </thead>
                             <tbody>
-                            {% for permrole in paginacion.object_list %}
+                            {% for user in paginacion.object_list %}
 
                                 <tr class="{% cycle 'row1' 'row2' %}">
                                     <td>
-                                        <input type="checkbox" id="rol_{{ permrole.pk }}" name="rol_{{ permrole.pk }}"/>
-                                        <label for="rol_{{ permrole.pk }}">
-                                            <a href="/panel_de_control/ver_rol/{{ permrole.pk }}/">
-                                                {{ permrole.role_name }}
+                                        <input type="checkbox" id="user_{{ user.pk }}"
+                                               name="user_{{ user.pk }}"/>
+                                        <label for="user_{{ user.pk }}">
+                                            <a href="/panel_de_control/ver_usuario/{{ user.pk }}/">
+                                                {{ user.username }}
                                             </a>
                                         </label>
                                     </td>
                                     <td class="c">
-                                        <a href="/panel_de_control/ver_rol/{{ permrole.pk }}/">
-                                            {{ permrole.role_description }}
+                                        <a href="/panel_de_control/ver_usuario/{{ user.pk }}/">
+                                            {{ user.first_name }}
                                         </a>
                                     </td>
                                     <td class="c">
-                                        <a class="del" rel="{{ permrole.pk }}"
+                                        <a href="/panel_de_control/ver_usuario/{{ user.pk }}/">
+                                            {{ user.email }}
+                                        </a>
+                                    </td>
+                                    <td class="c">
+                                        <a class="del" rel="{{ user.pk }}"
                                            href="#"></a>
-                                        <a class="edit" href="/panel_de_control/editar_rol/{{ permrole.pk }}/"></a>
+                                        <a class="edit"
+                                           href="/panel_de_control/editar_usuario/{{ user.pk }}/"></a>
                                     </td>
                                 </tr>
                             {% endfor %}

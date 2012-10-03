@@ -54,6 +54,12 @@ h2{
 #titulo_form.user_role{
     background: url(../images/imgs_icns/user_role_icon.png) no-repeat left 50%;
 }
+#titulo_form.user{
+    background: url(../images/imgs_icns/user_icon.png) no-repeat left 50%;
+}
+#titulo_form.privileges{
+    background: url(../images/imgs_icns/privileges_icon.png) no-repeat left 50%;
+}
 #titulo_form span{
     font-size: 18px;
     font-weight: 400;

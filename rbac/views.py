@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import re
 import urllib
+from datetime import date
+
+import variety
 
 from django.views.generic.simple import direct_to_template
 from django.shortcuts import render_to_response, HttpResponse, HttpResponseRedirect, get_object_or_404
@@ -10,9 +13,14 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.db.models.aggregates import Count
 from django.db.models import Q
+from django.db import IntegrityError
+from django.utils import simplejson
 
+from django.contrib.auth.models import User
 from rbac.models import *
+from c_center.models import Cluster, ClusterCompany
 from rbac.rbac_functions import has_permission, get_buildings_context
+
 VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
 DELETE = Operation.objects.get(operation_name="Eliminar")
@@ -431,23 +439,387 @@ def add_user(request):
     if has_permission(request.user, CREATE, "Alta de usuarios"):
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
-
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa)
+            empresa=empresa,
+        )
+        if request.method == "POST":
+            template_vars["post"] = request.POST
+            username = request.POST.get('username')
+            name = request.POST.get('name')
+            lname = request.POST.get('last_name')
+            email = request.POST.get('mail')
+            password = request.POST.get('pass1')
+            confirm_pass = request.POST.get('pass2')
+            dat_o_b = request.POST.get('dob')
+
+            if password == confirm_pass and variety.is_valid_email(email) and username and dat_o_b:
+                fnac = dat_o_b.split("-")#03-10-2012
+                try:
+                    fnac = date(int(fnac[2]), int(fnac[1]), int(fnac[0]))
+                except IndexError:
+                    template_vars["message"] = "Hay un error en la fecha de nacimiento, " \
+                                               "por favor verifique sus datos"
+                    template_vars["type"] = "n_notif"
+                else:
+                    age = int((date.today() - fnac).days/365.25)
+
+                    if age < 18:
+                        template_vars["message"] = "El usuario debe de ser mayor de 18 "\
+                                                   "a&ntilde;os"
+                        template_vars["type"] = "n_notif"
+                    elif age > 90:
+                        template_vars["message"] = "Edad incorrecta"
+                        template_vars["type"] = "n_notif"
+                    else:
+                        try:
+                            newUser = User.objects.create_user(username,email,password)
+                        except IntegrityError:
+                            template_vars["message"] = "El nombre de usuario ya existe, " \
+                                                       "por favor elija otro e intente de nuevo"
+                            template_vars["type"] = "n_notif"
+                        else:
+                            newUser.first_name = name
+                            newUser.last_name = lname
+                            newUser.is_staff = False
+                            newUser.is_active = True
+                            newUser.is_superuser = False
+                            newUser.save()
+
+                            ExtendedUser(
+                                user = newUser,
+                                user_activation_key = variety.random_string_generator(size=10)
+                            ).save()
+                            UserProfile(
+                                user = newUser,
+                                user_profile_surname_mother = request.POST['surname'],
+                                user_profile_birth_dates = fnac,
+                                user_profile_sex = request.POST['sex'],
+                                user_profile_office_phone1 = request.POST['tel_o'],
+                                user_profile_mobile_phone = request.POST['tel_m'],
+                                user_profile_contact_email = email
+                                ).save()
+
+                            template_vars["message"] = "Usuario creado exitosamente"
+                            template_vars["type"] = "n_success"
+                            if has_permission(request.user, VIEW, "Ver usuarios"):
+                                return HttpResponseRedirect("/panel_de_control/usuarios?msj=" +
+                                                            template_vars["message"] +
+                                                            "&ntype=n_success")
+            else:
+                template_vars["message"] = "Error en la validaci&oacute;n del formulario, " \
+                          "revise los campos por favor"
+                template_vars["type"] = "n_error"
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("rbac/add_user.html", template_vars_template)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
+
+def view_users(request):
+    if has_permission(request.user, VIEW, "Ver usuarios"):
+        if "search" in request.GET:
+            search = request.GET["search"]
+        else:
+            search = ''
+        order_username = 'asc'
+        order_name = 'asc'
+        order_email = 'asc'
+        order = "first_name" #default order
+        if "order_name" in request.GET:
+            #request.GET["order_name"]=asc or desc
+            if request.GET["order_name"] == "desc":
+                order = "-first_name"
+                order_name = "asc"
+            else:
+                order_name = "desc"
+        else:
+
+            if "order_username" in request.GET:
+                    #request.GET["order_name"]=asc or desc
+                    if request.GET["order_username"] == "asc":
+                        order = "username"
+                        order_username = "desc"
+                    else:
+                        order = "-username"
+                        order_username = "asc"
+            else:
+                if "order_mail" in request.GET:
+                #request.GET["order_name"]=asc or desc
+                    if request.GET["order_mail"] == "asc":
+                        order = "email"
+                        order_email = "desc"
+                    else:
+                        order = "-email"
+                        order_email = "asc"
+        if search:
+            lista = User.objects.filter(Q(username__icontains=request.GET['search'])|Q(
+                first_name__icontains=request.GET['search'])|Q(last_name__icontains=request
+                .GET['search'])|Q(email__icontains=request.GET['search'])).exclude(
+                is_active=False).order_by(
+                order)
+        else:
+            lista = User.objects.all().exclude(is_active=False).order_by(order)
+        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        template_vars = dict(order_name=order_name, order_username=order_username,
+            order_email=order_email)
+        # Make sure page request is an int. If not, deliver first page.
+        try:
+            page = int(request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+
+        # If page request (9999) is out of range, deliver last page of results.
+        try:
+            pag_user = paginator.page(page)
+        except (EmptyPage, InvalidPage):
+            pag_user = paginator.page(paginator.num_pages)
+
+        template_vars['paginacion']=pag_user
+
+        if 'msj' in request.GET:
+            template_vars['message'] = request.GET['msj']
+            template_vars['msg_type'] = request.GET['ntype']
+
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("rbac/user_list.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def delete_user(request, id_user):
+    if has_permission(request.user, DELETE, "Baja de usuarios"):
+        user = get_object_or_404(User, pk=id_user)
+        user.is_active = False
+        user.save()
+        mensaje = "El usuario se ha dado de baja correctamente"
+        return HttpResponseRedirect("/panel_de_control/usuarios/?msj=" + mensaje +
+                                    "&ntype=n_success")
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def edit_user(request, id_user):
+    if has_permission(request.user, UPDATE, "Actualizar informacion de usuarios"):
+        user = get_object_or_404(User, pk=id_user)
+        profile = UserProfile.objects.get(user=user)
+        post = {'username': user.username, 'name': user.first_name,
+                'last_name': user.last_name, 'surname': profile.user_profile_surname_mother,
+                'mail': user.email, 'sex': profile.user_profile_sex,
+                'dob': profile.user_profile_birth_dates,
+                'tel_o': profile.user_profile_office_phone1,
+                'tel_m': profile.user_profile_mobile_phone}
+
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        message = ''
+        type = ''
+
+        if request.method == "POST":
+            post = request.POST
+            username = request.POST.get('username')
+            name = request.POST.get('name')
+            lname = request.POST.get('last_name')
+            email = request.POST.get('mail')
+            password = request.POST.get('pass1')
+            confirm_pass = request.POST.get('pass2')
+            dat_o_b = request.POST.get('dob')
+            password_ = True
+            if password != '':
+                if password != confirm_pass:
+                    message = "Las contraseñas no coinciden"
+                    type = "n_notif"
+                    password_ = False
+
+
+            if password_ and variety.is_valid_email(email) and username and dat_o_b:
+                fnac = dat_o_b.split("-")#03-10-2012
+                try:
+                    fnac = date(int(fnac[2]), int(fnac[1]), int(fnac[0]))
+                except IndexError:
+                    message = "Hay un error en la fecha de nacimiento, "\
+                                               "por favor verifique sus datos"
+                    type = "n_notif"
+                else:
+                    age = int((date.today() - fnac).days/365.25)
+
+                    if age < 18:
+                        message = "El usuario debe de ser mayor de 18 "\
+                                                   "a&ntilde;os"
+                        type = "n_notif"
+                    elif age > 90:
+                        message = "Edad incorrecta"
+                        type = "n_notif"
+                    else:
+                        #update user
+                        if password:
+                            user.set_password(password)
+                            user.save()
+                        user.first_name = name
+                        user.last_name = lname
+                        user.email = email
+                        user.save()
+                        profile.user_profile_surname_mother = request.POST['surname']
+                        profile.user_profile_birth_dates = fnac
+                        profile.user_profile_sex = request.POST['sex']
+                        profile.user_profile_office_phone1 = request.POST['tel_o']
+                        profile.user_profile_mobile_phone = request.POST['tel_m']
+                        profile.user_profile_contact_email = email
+                        profile.save()
+
+                        message = "Usuario creado exitosamente"
+                        type = "n_success"
+                        if has_permission(request.user, VIEW, "Ver usuarios"):
+                            return HttpResponseRedirect("/panel_de_control/usuarios?msj=" +
+                                                        message +
+                                                        "&ntype=n_success")
+
+
+        template_vars = dict(datacontext=datacontext,
+            empresa=empresa,
+            post=post,
+            operation="edit",
+            message=message,
+            type=type
+        )
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("rbac/add_user.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def delete_batch_user(request):
+    if has_permission(request.user, DELETE, "Baja de usuarios"):
+        if request.method == "GET":
+            raise Http404
+        if request.POST['actions'] == 'delete':
+            for key in request.POST:
+                if re.search('^user_\w+', key):
+                    r_id = int(key.replace("user_",""))
+                    user = get_object_or_404(User, pk=r_id)
+                    user.is_active = False
+                    user.save()
+            mensaje = "Los usuarios seleccionados se han dado de baja"
+            return HttpResponseRedirect("/panel_de_control/usuarios/?msj=" + mensaje +
+                                        "&ntype=n_success")
+        else:
+            mensaje = "No se ha seleccionado una acción"
+            return HttpResponseRedirect("/panel_de_control/roles/?msj=" + mensaje +
+                                        "&ntype=n_success")
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def see_user(request, id_user):
+    if has_permission(request.user, VIEW, "Ver usuarios"):
+        user1 = get_object_or_404(User, pk=id_user)
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        profile = UserProfile.objects.get(user=user1)
+        age = int((date.today() - profile.user_profile_birth_dates).days/365.25)
+        template_vars = dict(user1=user1,
+            profile=profile,
+            datacontext=datacontext,
+            age = age,
+            empresa=empresa)
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("rbac/see_user.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
 
 def add_data_context_permissions(request):
     """Permission Asigments
     show a form for data context permission asigment
     """
     if has_permission(request.user, CREATE, "Asignar roles a usuarios"):
-        #has perm to view graphs, now check what can the user see
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        roles = Role.objects.all()
+        #obtengo los clusters que tengan empresas asociadas
+        #en caso de que haya clusters sin empresas (altas a medio hacer, por ejemplo)
+        c_comp = ClusterCompany.objects.all()
+        c_comp = [cl.cluster.pk for cl in c_comp]
+        clusters = Cluster.objects.filter(pk__in=c_comp)
+        message = ""
+        type = ""
+        if request.method == 'POST':
+            try:
+                usuario = User.objects.get(pk=int(request.POST['usuario']))
+                rol = Role.objects.get(pk=int(request.POST['role']))
+                cluster = Cluster.objects.get(pk=int(request.POST['cluster']))
+                company = Company.objects.get(pk=int(request.POST['company']))
+            except ObjectDoesNotExist:
+                message = "Ha ocurrido un error al validar sus campos, por favor verifiquelos " \
+                          "e intente de nuevo"
+                type = "n_error"
+            else:
+                if request.POST['building'] != "todos":
+                    try:
+                        building = Building.objects.get(pk=int(request.POST['building']))
+                    except ObjectDoesNotExist:
+                        message = "Ha ocurrido un error al seleccionar el edificio, por favor " \
+                                  "verifique e intente de nuevo"
+                        type = "n_error"
+                    else:
+                        if "part" in request.POST:
 
+                            if request.POST['part'] != "todas":
+                                user_role, created = UserRole.objects.get_or_create(user=usuario,
+                                    role=rol)
+                                part = PartOfBuilding.objects.get(pk=request.POST['part'])
+                                data_context, created = DataContextPermission.objects.get_or_create(
+                                                        user_role=user_role,
+                                                        cluster=cluster,
+                                                        company=company,
+                                                        building=building,
+                                                        part_of_building=part
+                                                        )
+                                message = "El rol, sus permisos y asignaciones al edificio y " \
+                                          "sus partes, se ha guardado correctamente"
+                                type = "n_success"
+                            else:
+                                #alta de asignaciónd de roles/permisos para todas las partes de
+                                # un edificio
+                                pass
+                        else:
+                            user_role, created = UserRole.objects.get_or_create(user=usuario,
+                                                 role=rol)
+                            data_context, created = DataContextPermission.objects.get_or_create(
+                                user_role=user_role,
+                                cluster=cluster,
+                                company=company,
+                                building=building
+                            )
+                            message = "El rol, sus permisos y su asignación al edificio, se" \
+                                      " ha guardado correctamente"
+                            type = "n_success"
+                else:
+                    #alta de asignaciónd de roles/permisos para todas las partes de
+                    # todos los edificios de una empresa
+                    pass
 
-        template_vars_template = RequestContext(request, {})
-        return render_to_response("rbac/add_data_context_permissions.html", template_vars_template)
+        template_vars = dict(
+            datacontext=datacontext,
+            roles=roles,
+            clusters=clusters,
+            empresa=empresa,
+            message=message,
+            type=type
+        )
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("rbac/asign_data_context.html", template_vars_template)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
+
+def search_users(request):
+    if "term" in request.GET:
+        term = request.GET['term']
+        usuarios = User.objects.filter(Q(username__icontains=term)|Q(
+            first_name__icontains=term) | Q(last_name__icontains=term))
+        users = []
+        for usuario in usuarios:
+            nombre = usuario.username + " - " + usuario.first_name + " " + usuario.last_name
+            users.append(dict(value=nombre, pk=usuario.pk, label=nombre))
+        data=simplejson.dumps(users)
+        return HttpResponse(content=data,content_type="application/json")
+    else:
+        raise Http404

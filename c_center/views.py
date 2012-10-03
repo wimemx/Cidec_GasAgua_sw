@@ -17,7 +17,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from c_center.calculations import tarifaHM_mensual, tarifaHM_total, obtenerHistorico, \
     fechas_corte
 from c_center.models import ConsumerUnit, Building, ElectricDataTemp, ProfilePowermeter, \
-    Powermeter, PartOfBuilding, HierarchyOfPart
+    Powermeter, PartOfBuilding, HierarchyOfPart, Cluster, ClusterCompany, Company, CompanyBuilding
 from electric_rates.models import ElectricRatesDetail
 from rbac.models import Operation, DataContextPermission
 from rbac.rbac_functions import  has_permission, get_buildings_context
@@ -782,3 +782,30 @@ def get_weekly_summary_comparison_kwh(request):
         return render_to_response('consumption_centers/graphs/kwh.html', request_variables)
     else:
         raise Http404
+
+def get_cluster_companies(request, id_cluster):
+    cluster = get_object_or_404(Cluster, pk=id_cluster)
+    c_buildings= ClusterCompany.objects.filter(cluster=cluster)
+    companies = []
+    for company in c_buildings:
+        companies.append(dict(pk=company.company.pk, company=company.company.company_name))
+    data=simplejson.dumps(companies)
+    return HttpResponse(content=data,content_type="application/json")
+
+def get_company_buildings(request, id_company):
+    company = get_object_or_404(Company, pk=id_company)
+    c_buildings= CompanyBuilding.objects.filter(company=company)
+    buildings = []
+    for building in c_buildings:
+        buildings.append(dict(pk=building.building.pk, building=building.building.building_name))
+    data=simplejson.dumps(buildings)
+    return HttpResponse(content=data,content_type="application/json")
+
+def get_parts_of_building(request, id_building):
+    building = get_object_or_404(Building, pk=id_building)
+    p_buildings= PartOfBuilding.objects.filter(building=building)
+    parts = []
+    for part in p_buildings:
+        parts.append(dict(pk=part.pk, part=part.part_of_building_name))
+    data=simplejson.dumps(parts)
+    return HttpResponse(content=data,content_type="application/json")

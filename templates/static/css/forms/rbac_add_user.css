@@ -13,6 +13,9 @@ label span{
 .fields_row.g12{
     margin: 0;
 }
+.required{
+    color: red;
+}
 
 .widgetField{
     width: 150px;
@@ -110,4 +113,33 @@ label span{
     top: 2px;
     position: relative;
     left: 7px;
+}
+.ui-datepicker-header{
+    width: 102%;
+    margin-top: -4px !important;
+    margin-left: -3px !important;
+    border-bottom: solid 1px #C6C6C6 !important;
+    background: url(../images/bgs/input_inner_shadow.png) repeat-x !important;
+}
+.ui-datepicker{
+    background: #f5f5f5 !important;
+}
+.ui-icon-circle-triangle-e{
+    background-position: -32px -16px !important;
+}
+.ui-icon-circle-triangle-w{
+    background-position: -97px -16px !important;
+}
+.ui-state-active{
+    background: #a3d892 !important;
+}
+.ui-state-default{
+    background: #f5f5f5 !important;
+    border: none !important;
+}
+.ui-state-default:hover{
+    background: #a3d892 !important;
+}
+#dob{
+    text-align: center;
 }

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block titulo %}Ver Usuario{% endblock %}
+
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
+    <link rel="stylesheet" href="/static/css/forms/rbac.css" type="text/css">
+
+{% endblock %}
+
+
+
+{% block contenido %}
+    <div id="bread_crumbs">
+        <ul>
+            <li><a href="/main/">Inicio</a></li>
+            <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
+            <li><a href="/panel_de_control/usuarios/">Usuarios</a></li>
+            <li>Ver usuario</li>
+        </ul>
+
+    </div>
+    <div id="contenido_interno" class="card">
+        <h2 id="titulo_form" class="user">
+            Usuario
+        </h2>
+
+
+        <div class="divider" id="divider_top">&nbsp;</div>
+        <div id="card_container">
+            <div id="user_img" class="fl">
+                {% if profile.user_profile_image %}
+                    <img src="/media/usuarios/{{ user1.pk }}/{{ profile.user_profile_image }}" alt="{{ user1.username }}"/>
+                {% else %}
+                    <img src="/static/css/images/imgs_icns/place_holder_user.png" alt="{{ user1.username }}"/>
+                {% endif %}
+            </div>
+            <div id="user_data" class="fl">
+                <span class="strong username">{{ user1.username }}</span>
+                <p>
+                    <span class="strong label">Nombre:</span>
+
+                    {{ user1.first_name }} {{ user1.last_name }}
+                    {{ profile.user_profile_surname_mother }}
+                </p>
+                <p>
+                    <span class="strong label">Edad:</span>
+                    {{ age }}
+                </p>
+
+                <p>
+                    <span class="strong label">Email:</span>
+                    {{ user1.email }}
+                </p>
+
+                <p>
+                    <span class="strong label">Tel&eacute;fono de oficina:</span>
+                    {{ profile.user_profile_office_phone1 }}
+                </p>
+
+                <p>
+                    <span class="strong label">Tel&eacute;fono de celular:</span>
+                    {{ profile.user_profile_mobile_phone }}
+                </p>
+
+
+                <a href="/panel_de_control/usuarios/" id="go_back">Volver al listado</a>
+            </div>
+
+        </div>
+
+
+    </div>
+{% endblock %}

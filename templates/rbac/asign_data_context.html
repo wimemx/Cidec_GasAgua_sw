@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% block titulo %}Asignaci&oacute;n de privilegios{% endblock %}
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
+    <link rel="stylesheet" href="/static/css/forms/rbac_add_user.css" type="text/css">
+    <link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
+{% endblock %}
+{% block externaljs %}
+    <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+    <script type="text/javascript">
+        $(function() {
+            $("#asign").hide();
+            $("#agregar").hide();
+            $( "#user" ).autocomplete({
+                source: "/rbac/search_users/",
+                minLength: 2,
+                select: function( event, ui ) {
+                    $("#usuario").val(ui.item.pk);
+                    $("#asign").show();
+                }
+            });
+
+            $("#cluster").change(function(){
+                if($(this).val() != "0"){
+                    $.ajax({
+                        url: "/buildings/get_cluster_companies/"+$(this).val()+"/",
+                        type: "GET",
+                        dataType: 'json',
+                        async: 'true',
+                        success: function(datos){
+                            var append_text = '';
+                            if(datos.length >0){
+                                append_text = '<label for="company" class="g2">' +
+                                        'Selecciona una empresa' +
+                                        '</label>' +
+                                        '<select name="company" id="company" class="g9">';
+
+                                append_text += '<option value="0">Seleccione ' +
+                                               'una empresa</option>';
+
+
+                                for(var i=0; i<datos.length; i++){
+                                    append_text+='<option value="' + datos[i].pk + '"> ' +
+                                                 datos[i].company +
+                                                 '</option>';
+                                }
+                                append_text += "</select>"
+
+                                $("#empresas").html(append_text);
+                                $("#edificios").html("");
+                                $("#partes").html("");
+                                $("#agregar").hide();
+
+                                $("#company").uniform().change(function(){
+                                    if ($(this).val()!="0" && $(this).val()!="todas"){
+                                        $.ajax({
+                                            url: "/buildings/get_company_buildings/"+$(this).val()+"/",
+                                            type: "GET",
+                                            dataType: 'json',
+                                            async: 'true',
+                                            success: function(datos){
+                                                $("#agregar").show();
+                                                var append_text = '';
+                                                if(datos.length >0){
+                                                    append_text = '<label for="building" class="g2">' +
+                                                            'Selecciona un edificio' +
+                                                            '</label>' +
+                                                            '<select name="building" id="building" class="g9">';
+                                                    if(datos.length >1){
+                                                        append_text += '<option value="todos">'+
+                                                                'Todos los edificios de la empresa</option>';
+                                                    }else{
+                                                        append_text += '<option value="0">Seleccione ' +
+                                                                'un edificio</option>';
+                                                    }
+
+                                                    for(var i=0; i<datos.length; i++){
+                                                        append_text+='<option value="' + datos[i].pk + '"> ' +
+                                                                datos[i].building +
+                                                                '</option>';
+                                                    }
+                                                    append_text += "</select>";
+
+                                                    $("#edificios").html(append_text);
+                                                    $("#partes").html("");
+
+                                                    $("#building").uniform().change(function(){
+                                                        if ($(this).val()!="0" && $(this).val()!="todos"){
+                                                            $.ajax({
+                                                                url: "/buildings/get_parts_of_building/"+$(this).val()+"/",
+                                                                type: "GET",
+                                                                dataType: 'json',
+                                                                async: 'true',
+                                                                success: function(datos){
+                                                                    var append_text = '';
+                                                                    if(datos.length >0){
+                                                                        append_text = '<label for="part" class="g2">' +
+                                                                                'Selecciona una parte del edificio' +
+                                                                                '</label>' +
+                                                                                '<select name="part" id="part" class="g9">';
+                                                                        if(datos.length >1){
+                                                                            append_text += '<option value="todas">'+
+                                                                                    'Todas las partes del edificio</option>';
+                                                                        }
+
+                                                                        for(var i=0; i<datos.length; i++){
+                                                                            append_text+='<option value="' + datos[i].pk + '"> ' +
+                                                                                    datos[i].part +
+                                                                                    '</option>';
+                                                                        }
+                                                                        append_text += "</select>";
+
+                                                                        $("#partes").html(append_text);
+                                                                        $("#part").uniform();
+                                                                    }
+                                                                }
+                                                            });
+                                                        }
+                                                    });
+                                                }
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+{% endblock %}
+
+
+{% block contenido %}
+    <div id="bread_crumbs">
+        <ul>
+            <li><a href="/main/">Inicio</a></li>
+            <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
+            <li><a href="/panel_de_control/roles/">Roles</a></li>
+            <li>Asignaci&oacute;n de privilegios</li>
+
+
+        </ul>
+
+    </div>
+    <div id="contenido_interno">
+        <h2 id="titulo_form" class="privileges">
+            Asignaci&oacute;n de privilegios
+        </h2>
+
+
+        <div class="divider" id="divider_top">&nbsp;</div>
+        <div id="form_container">
+            {% if message %}
+                <span class="notif {{ type }}">
+                    {% autoescape off %}{{ message }}{% endautoescape %}
+                    <a href="#" onclick="$(this).parent().remove();">X</a>
+                </span>
+            {% endif %}
+            <p class="description">
+                Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
+                <br/>
+                Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
+            </p>
+            <form method="post" action=".">
+                {% csrf_token %}
+
+                <div class="fields_row g12">
+                    <label for="user" class="g2">
+                        Usuario
+                    </label>
+                    <input type="text" name="user" id="user" class="g9" autocomplete="off"/>
+                    <input type="hidden" name="usuario" id="usuario">
+                </div>
+
+                <div id="asign">
+                    <div class="fields_row g12">
+                        <label for="role" class="g2">
+                            Selecciona un rol
+                        </label>
+                        <select name="role" id="role" class="g9">
+                            {% for rol in roles %}
+                                <option value="{{ rol.pk }}">{{ rol.role_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="fields_row g12">
+                        <label for="cluster" class="g2">
+                            Selecciona un grupo de empresas
+                        </label>
+                        <select name="cluster" id="cluster" class="g9">
+                            <option value="0">Selecciona un grupo de empresas</option>
+                            {% for cluster in clusters %}
+                                <option value="{{ cluster.pk }}">{{ cluster.cluster_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="fields_row g12" id="empresas">
+
+                    </div>
+                    <div class="fields_row g12" id="edificios">
+
+                    </div>
+                    <div class="fields_row g12" id="partes">
+
+                    </div>
+
+                    <div class="buttons g12" id="agregar">
+
+                        <span class="g2">&nbsp;</span>
+                        <div class="g9">
+                            <button class="aqua_btn fr" id="save">
+                                Guardar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+        </div>
+
+
+    </div>
+{% endblock %}

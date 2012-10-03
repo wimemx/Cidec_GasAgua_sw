@@ -1,12 +1,140 @@
 {% extends "base.html" %}
-{% block titulo %}Alta de Rol{% endblock %}
+{% block titulo %}{% if operation == "edit" %}Edici&oacute;n{% else %}Alta{% endif %} de
+    Usuario{% endblock %}
 {% block externalcss %}
     <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
     <link rel="stylesheet" href="/static/css/forms/rbac_add_user.css" type="text/css">
+    <link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
 {% endblock %}
 {% block externaljs %}
+    <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
     <script type="text/javascript">
+    var form_valid = true;
+        $(document).ready(function(){
+            $("#username").focus();
+            $( "#dob" ).datepicker({ monthNames: ["Enero","Febrero","Marzo","Abril","Mayo",
+                "Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"],
+                                     dateFormat: "dd-mm-yy"});
+            $(".required").each(function(){
+                $(this).parent().next().blur(function(e){
+                    var _span;
 
+                    if(e.delegateTarget.value==''){
+                        _span = "incorrect";
+                        form_valid = false;
+                    }else{
+                        _span = "correct";
+                        form_valid = true;
+                    }
+                    if (e.delegateTarget.id == "pass1"){
+                        if (e.delegateTarget.length < 8){
+                            _span = "incorrect";
+                            form_valid = false;
+                        }else{
+                            _span = "correct";
+                            form_valid = true;
+                        }
+                    }
+                    if (e.delegateTarget.id == "pass2"){
+
+                        var pass1 = $("#pass1");
+                        if(pass1.val() != $("#pass2").val()){
+                            _span = "incorrect";
+                            form_valid = false;
+                            pass1.next().removeClass("incorrect");
+                            pass1.next().removeClass("correct");
+                            pass1.next().addClass(_span);
+                        }else{
+                            _span = "correct";
+                            form_valid = true;
+                        }
+                    }
+
+                    var n_span = $("#"+e.delegateTarget.id).next();
+                    n_span.removeClass("incorrect");
+                    n_span.removeClass("correct");
+                    n_span.addClass(_span);
+                });
+            });
+            $("#save").click(function(){
+                return validate_form();
+            });
+        });
+    function validate_form(){
+        if (form_valid){
+            var _span;
+            var username = $("#username");
+            if(username.val()==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                _span = "correct";
+            }
+            username.next().removeClass("incorrect");
+            username.next().removeClass("correct");
+            username.next().addClass(_span);
+            {% if operation != "edit" %}
+            var pass1 = $("#pass1");
+            var pass2 = $("#pass2");
+            if (pass1.val().length < 8){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                if(pass1.val() != pass2.val()){
+                    _span = "incorrect";
+                    form_valid = false;
+                }else{
+                    _span = "correct";
+                }
+            }
+            pass1.next().removeClass("incorrect");
+            pass1.next().removeClass("correct");
+            pass1.next().addClass(_span);
+            {% endif %}
+            var lastname = $("#last_name");
+            if(lastname.val()==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                _span = "correct";
+            }
+            lastname.next().removeClass("incorrect");
+            lastname.next().removeClass("correct");
+            lastname.next().addClass(_span);
+
+            var name = $("#name");
+            if(name.val()==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                _span = "correct";
+            }
+            name.next().removeClass("incorrect");
+            name.next().removeClass("correct");
+            name.next().addClass(_span);
+
+
+            var mail = $("#mail");
+            if(mail.val()==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                if(isValidEmailAddress(mail.val())){
+                    _span = "correct";
+                }else{
+                    _span = "incorrect";
+                    form_valid = false;
+                }
+
+            }
+            mail.next().removeClass("incorrect");
+            mail.next().removeClass("correct");
+            mail.next().addClass(_span);
+
+        }
+
+        return form_valid
+    }
     </script>
 {% endblock %}
 
@@ -16,20 +144,30 @@
         <ul>
             <li><a href="/main/">Inicio</a></li>
             <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
-            <li><a href="/panel_de_control/nuevo_rol/">Alta de nuevo usuario</a></li>
+            <li><a href="/panel_de_control/usuarios/">Usuarios</a></li>
+            {% if operation == "edit" %}
+                <li>
+
+                        Edici&oacute;n de usuario
+
+                </li>
+            {% else %}
+                <li>Alta de nuevo usuario</li>
+            {% endif %}
+
         </ul>
 
     </div>
     <div id="contenido_interno">
         <h2 id="titulo_form" class="user_role">
-            Alta de nuevo usuario
+            {% if operation == "edit" %}Edici&oacute;n{% else %}Alta{% endif %} de nuevo usuario
         </h2>
 
 
         <div class="divider" id="divider_top">&nbsp;</div>
         <div id="form_container">
             {% if message %}
-                <span class="notif {% if msg_type == "success" %}n_success{% else %}n_error{% endif %}">
+                <span class="notif {{ type }}">
                     {% autoescape off %}{{ message }}{% endautoescape %}
                     <a href="#" onclick="$(this).parent().remove();">X</a>
                 </span>
@@ -44,70 +182,105 @@
                 <h3 class="g12">Nombre de Usuario y Contraseña</h3>
                 <div id="basic_info">
                     <div class="fields_row g12">
-                        <label for="username" class="g2">Nombre de usuario</label>
-                        <input type="text" name="username" id="username" class="g9"/>
+                        <label for="username" class="g2">Nombre de
+                            usuario<span class="required">*</span></label>
+                        <input type="text" name="username" id="username" class="g9"
+                               value="{{ post.username }}"
+                               {% if operation == "edit" %}readonly="readonly" {% endif %}
+                                />
+                        <span></span>
                     </div>
                     <div class="fields_row g12">
                         <label for="pass1" class="g2">
-                            Contrase&ntilde;a
+                            Contrase&ntilde;a<span class="required">*</span>
                             <span class="g12">La contrase&ntilde;a debe contener al menos 8
                                 caracteres</span>
                         </label>
 
                         <input type="password" name="pass1" id="pass1" class="g9"/>
+                        <span></span>
                     </div>
                     <div class="fields_row g12">
-                        <label for="pass2" class="g2">Re-introducir Contrase&ntilde;a</label>
+                        <label for="pass2" class="g2">
+                            Re-introducir Contrase&ntilde;a<span class="required">*</span>
+                            {% if operation == "edit" %}
+                                <span class="g12">Deja los campos vac&iacute;os para
+                                    conservar la misma contrase&ntilde;a
+                                </span>
+                            {% endif %}
+                        </label>
                         <input type="password" name="pass2" id="pass2" class="g9"/>
                     </div>
                 </div>
                 <h3 class="g12">Informaci&oacute;n Personal</h3>
                 <div id="personal_info">
                     <div class="fields_row g12">
-                        <label for="name" class="g2">Nombre(s)</label>
-                        <input type="text" name="name" id="name" class="g9"/>
+                        <label for="name" class="g2">Nombre(s)<span class="required">*</span></label>
+                        <input type="text" name="name" id="name" class="g9" value="{{ post.name }}"/>
+                        <span></span>
                     </div>
                     <div class="fields_row g12">
-                        <label for="last_name" class="g2">Apellido Paterno</label>
-                        <input type="text" name="last_name" id="last_name" class="g9"/>
+                        <label for="last_name" class="g2">Apellido Paterno<span class="required">*</span></label>
+                        <input type="text" name="last_name" id="last_name" class="g9"
+                               value="{{ post.last_name }}"/>
+                        <span></span>
                     </div>
                     <div class="fields_row g12">
                         <label for="surname" class="g2">Apellido Materno</label>
-                        <input type="text" name="surname" id="surname" class="g9"/>
+                        <input type="text" name="surname" id="surname" class="g9" value="{{ post.surname }}"/>
                     </div>
                     <div class="fields_row g12">
-                        <label for="mail" class="g2">Correo Electr&oacute;nico</label>
-                        <input type="email" name="mail" id="mail" class="g9"/>
+                        <label for="mail" class="g2">Correo Electr&oacute;nico<span class="required">*</span></label>
+                        <input type="email" name="mail" id="mail" class="g9" value="{{ post.mail }}"/>
+                        <span></span>
                     </div>
                     <div class="fields_row g12">
                         <span class="label g2">Sexo</span>
                         <label for="sex_m" class="g2">
-                            <input type="checkbox" name="sex_m" id="sex_m"/>
+                            <input type="radio" name="sex" id="sex_m" value="M"
+                                       {% if post.sex == "M" %}
+                                            checked="checked"
+                                       {% endif %}
+                                       {% if not post %}
+                                            checked="checked"
+                                       {% endif %}
+                                   />
                             Masculino
                         </label>
                         <label for="sex_f" class="g2">
-                            <input type="checkbox" name="sex_f" id="sex_f"/>
+                            <input type="radio" name="sex" id="sex_f" value="F"
+                                        {% if post.sex == "F" %}
+                                            checked="checked"
+                                        {% endif %}
+                                    />
                             Femenino
                         </label>
                     </div>
                     <div class="fields_row g12">
                         <label for="dob" class="g2">Fecha de Nacimiento</label>
-                        <input type="text" name="dob" id="dob" class="g2"/>
+                        <input type="text" name="dob" id="dob" class="g2"
+                               {% if operation == "edit" %}value="{{ post.dob|date:"d-m-Y" }}"
+                               {% else %}value="{{ post.dob }}"
+                               {% endif %}/>
                     </div>
                     <div class="fields_row g12">
                         <label for="tel_o" class="g2">Tel&eacute;fono Oficina</label>
-                        <input type="text" name="tel_o" id="tel_o" class="g9"/>
+                        <input type="text" name="tel_o" id="tel_o" class="g9" value="{{ post.tel_o }}"/>
                     </div>
                     <div class="fields_row g12">
                         <label for="tel_m" class="g2">Tel&eacute;fono Celular</label>
-                        <input type="text" name="tel_m" id="tel_m" class="g9"/>
+                        <input type="text" name="tel_m" id="tel_m" class="g9" value="{{ post.tel_m }}"/>
                     </div>
                 </div>
-                <p class="buttons g2 fr">
-                    <button class="aqua_btn">
-                        Guardar
-                    </button>
-                </p>
+                <div class="buttons g12">
+
+                    <span class="g2">&nbsp;</span>
+                    <div class="g9">
+                        <button class="aqua_btn fr" id="save">
+                            Guardar
+                        </button>
+                    </div>
+                </div>
             </form>
 
         </div>

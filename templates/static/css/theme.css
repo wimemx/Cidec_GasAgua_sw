@@ -403,3 +403,15 @@ footer span{
     background: url(images/imgs_icns/del_circle.png) no-repeat;
     cursor: pointer;
 }
+.correct{
+    background: url(images/imgs_icns/correct.png) no-repeat;
+    width: 19px;
+    height: 16px;
+    display: inline-block;
+}
+.incorrect{
+    background: url(images/imgs_icns/incorrect.png) no-repeat;
+    width: 13px;
+    height: 12px;
+    display: inline-block;
+}

@@ -14,5 +14,11 @@ urlpatterns = patterns('',
     url(r'^set_c_u/(?P<id_c_u>\d+)/', 'c_center.views.set_default_consumer_unit'),
 
     url(r'^weekly_summary_kwh/', 'c_center.views.get_weekly_summary_comparison_kwh'),
-    url(r'^cfe_calculos/', 'c_center.views.cfe_calculations')
+    url(r'^cfe_calculos/', 'c_center.views.cfe_calculations'),
+
+    url(r'^get_cluster_companies/(?P<id_cluster>\d+)/', 'c_center.views.get_cluster_companies'),
+    url(r'^get_company_buildings/(?P<id_company>\d+)/', 'c_center.views.get_company_buildings'),
+    url(r'^get_parts_of_building/(?P<id_building>\d+)/', 'c_center.views.get_parts_of_building'),
+
+
 )
