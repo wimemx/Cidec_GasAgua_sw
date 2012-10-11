@@ -1,0 +1,14 @@
+#attr_info .g12{
+    margin: 0;
+    color: #636363;
+}
+.required{
+    color: red;
+}
+.fields_row input[type="text"], .fields_row textarea{
+    background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px !important;
+    resize: none;
+}
+.fields_row .selector{
+    margin: 0 1%;
+}

@@ -1,5 +1,11 @@
 <div id="sidebar_content">
-    <img id="company_profile_pic" src="/static/css/images/imgs_icns/company_placeholder.png" alt="logotipo"/>
+
+    {% if company.company_logo %}
+        <img id="company_profile_pic" src="{{ MEDIA_URL }}{{ company.company_logo }}" alt="logotipo"/>
+    {% else %}
+        <img id="company_profile_pic" src="/static/css/images/imgs_icns/company_placeholder.png" alt="logotipo"/>
+    {% endif %}
+
     <span id="empresa">
         {{empresa.building_name|slice:"17" }}
         {% if empresa.building_name|length > 17 %}...{% endif %}
@@ -16,8 +22,16 @@
     </span>
     <ul class="sidebarsub_op">
         <!-- TODO: fill with allowed operations -->
-        <li><a href="/admin/new_role/">Nuevo Rol</a></li>
-        <li><a href="/admin/add_permissions/">Asignar Permisos</a></li>
+        <li><a href="/panel_de_control/usuarios/">Ver usuarios</a></li>
+        <li><a href="/panel_de_control/add_user/">Nuevo Usuario</a></li>
+
+        <li><a href="/panel_de_control/roles/">Ver roles</a></li>
+        <li><a href="/panel_de_control/nuevo_rol/">Nuevo Rol</a></li>
+        <li><a href="/panel_de_control/asignar_roles/">Asignar Roles</a></li>
+        <li><a href="/panel_de_control/roles_asignados/">Ver roles asignados</a></li>
+        <li><a href="/buildings/atributos/">Ver atributos de edificio</a></li>
+        <li><a href="/buildings/agregar_atributo/">Agregar atributos de edificio</a></li>
+
     </ul>
     <span class="sidebar_option desp">
         <span>Reportes</span>

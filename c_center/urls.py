@@ -20,5 +20,13 @@ urlpatterns = patterns('',
     url(r'^get_company_buildings/(?P<id_company>\d+)/', 'c_center.views.get_company_buildings'),
     url(r'^get_parts_of_building/(?P<id_building>\d+)/', 'c_center.views.get_parts_of_building'),
 
+    url(r'^agregar_atributo/', 'c_center.views.add_building_attr'),
+    url(r'^atributos/', 'c_center.views.b_attr_list'),
+    url(r'^eliminar_b_attr/(?P<id_b_attr>\d+)/', 'c_center.views.delete_b_attr'),
+    url(r'^editar_b_attr/(?P<id_b_attr>\d+)/', 'c_center.views.editar_b_attr'),
+    url(r'^ver_b_attr/(?P<id_b_attr>\d+)/', 'c_center.views.ver_b_attr'),
+
+
+
 
 )

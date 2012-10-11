@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+{% block titulo %}Ver Atributos{% endblock %}
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
+    <link rel="stylesheet" href="/static/css/forms/rbac_user_list.css" type="text/css">
+    <link href="/static/js/external/messi/messi.css" rel="stylesheet" type="text/css" media="screen" />
+{% endblock %}
+{% block externaljs %}
+    <script src="/static/js/external/messi/messi.min.js"></script>
+    <script type="text/javascript">
+        function search_submit(pagina){
+            if (typeof pagina == "object") {
+                pagina = "1";
+            }
+
+            var base_url = window.location.pathname;
+            base_url+="?page="+pagina;
+            base_url=append_page(base_url);
+            window.location = base_url;
+        }
+        function append_page(base_url){
+            var get = getUrlVars();
+            if(get.length>0){
+                if (get[0]!=window.location.protocol+"//"+window.location
+                        .host+window.location.pathname){
+                    for(var i=0; i<get.length; i++){
+                        if (get[i]!="msg" && get[i]!="ntype" && get[i]!="page"){
+                            base_url+="&"+get[i]+"="+get[get[i]];
+                        }
+                    }
+                }
+
+            }
+            return base_url
+        }
+        function append_get(base_url){
+            var get = getUrlVars();
+            if(get.length>0){
+                if (get[0]!=window.location.protocol+"//"+window.location
+                        .host+window.location.pathname){
+                    for(var i=0; i<get.length; i++){
+                        if (get[i]!="order_attrname" && get[i]!="order_type" && get[i]!="order_units" && get[i]!="order_sequence"){
+                            base_url+="&"+get[i]+"="+get[get[i]];
+                        }
+                    }
+                }
+
+            }
+            return base_url
+        }
+    </script>
+{% endblock %}
+{% block document_ready %}
+
+            //custom select for sidebar
+            $("#empresa").click(function(){
+                $("#company_list").slideToggle();
+            });
+            $("#company_list li").click(function(){
+                var texto=$(this).text().replace(/^\s*|\s*$/g,'');
+                var texto1 = texto.substring(0,17) + "...";
+                $("#empresa").text(texto1);
+                $("#company_list").slideUp();
+
+                $.ajax({
+                    url: "/reportes/set_default_building/" + $(this).attr("rel"),
+                    type: "GET",
+                    dataType: 'json',
+                    async: 'true',
+                    success: function(datos){
+                        console.log("changed");
+                    }
+                });
+            });
+            $("a.del").click(function(event){
+                event.preventDefault();
+                var url="/buildings/eliminar_b_attr/"+$(this).attr("rel")+"/";
+                new Messi('&iquest;Est&aacute; seguro de que desea eliminar el atributo?',
+                        {title: 'Eliminar atributo', modal: true, buttons: [{id: 0,
+                            label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
+                        }],
+                        callback: function(val) {
+                            if(val=='Y'){
+                                document.location.href=url;
+                            } else return false; }
+                        });
+            });
+            $("#aplicar").click(function(e){
+                e.preventDefault();
+                if($("#actions").val()!="0"){
+                    var check = false;
+                    $("tbody input:checkbox").each(function(){
+                        if($(this).is(":checked")){
+                            check = true;
+                        }
+                    });
+                    if(check){
+                    new Messi('&iquest;Est&aacute; seguro de que desea eliminar los atributos' +
+                            'seleccionados?',
+                            {title: 'Eliminar atributos', modal: true, buttons: [{id: 0,
+                                label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
+                            }],
+                                callback: function(val) {
+                                    if(val=='Y'){
+                                        document.forms["operations_batch"].submit();
+                                    } else return false; }
+                            });
+                    }
+                }else{
+                    return false;
+                }
+
+            });
+
+            $("#order_attrname").click(function(e){
+                e.preventDefault();
+                var base_url = window.location.pathname;
+                base_url+="?order_attrname="+$("#order_attrname").attr("rel");
+                base_url=append_get(base_url);
+                window.location = base_url;
+            });
+            $("#order_type").click(function(e){
+                e.preventDefault();
+                var base_url = window.location.pathname;
+                base_url+="?order_type="+$("#order_type").attr("rel");
+                base_url=append_get(base_url);
+                window.location = base_url;
+            });
+            $("#order_units").click(function(e){
+                e.preventDefault();
+                var base_url = window.location.pathname;
+                base_url+="?order_units="+$("#order_units").attr("rel");
+                base_url=append_get(base_url);
+                window.location = base_url;
+            });
+            $("#order_sequence").click(function(e){
+                e.preventDefault();
+                var base_url = window.location.pathname;
+                base_url+="?order_sequence="+$("#order_sequence").attr("rel");
+                base_url=append_get(base_url);
+                window.location = base_url;
+            });
+
+
+{% endblock %}
+
+
+{% block contenido %}
+    <div id="bread_crumbs">
+        <ul>
+            <li><a href="/main/">Inicio</a></li>
+            <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
+            <li>Atributos de edificio</li>
+        </ul>
+
+    </div>
+    <div id="contenido_interno">
+        <h2 id="titulo_form" class="building_attr">Ver atributos de edificio</h2>
+
+
+        <div class="divider" id="divider_top">&nbsp;</div>
+        {% if message %}
+            <span class="notif {{ msg_type }}">
+                    {% autoescape off %}{{ message }}{% endautoescape %}
+                <a href="#" onclick="$(this).parent().remove(); history.replaceState({}, '', '?page=1');">X</a>
+                </span>
+        {% endif %}
+        <div id="form_container" class="attr_list">
+
+            <p class="description">
+                Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
+                <br/>
+                Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
+            </p>
+
+
+                <div id="user_actions">
+
+                    <a href="/buildings/agregar_atributo/"><span class="plus"></span>
+                        Nuevo atributo de edificio
+                    </a>
+                    <span class="hz_divider"></span>
+                    <form method="get" action=".">
+                        <label class="input">
+                            <span>Inserte su texto aqu&iacute;</span>
+                            <input type="text" name="search" id="search"/>
+                        </label>
+                        <button class="aqua_btn">
+                            Buscar
+                        </button>
+                    </form>
+                </div>
+                <form id="operations_batch" action="/buildings/delete_batch_building_attr/" method="post">
+                    {% csrf_token %}
+                    <div id="grid_container">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th style="width: 20%;">
+                                    <a href="#" id="order_attrname" rel="{{ order_attrname }}">
+                                        Nombre
+                                        <span class="sort"></span>
+                                    </a>
+                                </th>
+                                <th style="width: 20%;">
+                                    <a href="#" id="order_type" rel="{{ order_type }}">
+                                        Tipo de atributo
+                                        <span class="sort"></span>
+                                    </a>
+                                </th>
+                                <th style="width: 20%;">
+                                    <a href="#" id="order_units" rel="{{ order_units }}">
+                                        Unidades
+                                        <span class="sort"></span>
+                                    </a>
+                                </th>
+                                <th style="width: 20%;">
+                                    <a href="#" id="order_sequence" rel="{{ order_sequence }}">
+                                        orden
+                                        <span class="sort"></span>
+                                    </a>
+                                </th>
+                                <th style="width: 20%;">Acciones</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for attr in paginacion.object_list %}
+
+                                <tr class="{% cycle 'row1' 'row2' %}">
+                                    <td>
+                                        <input type="checkbox" id="attr_{{ attr.pk }}"
+                                               name="attr_{{ attr.pk }}"/>
+                                        <label for="attr_{{ attr.pk }}">
+                                            <a href="/buildings/ver_b_attr/{{ attr.pk }}/">
+                                                {{ attr.building_attributes_name }}
+                                            </a>
+                                        </label>
+                                    </td>
+                                    <td class="c">
+                                        <a href="/buildings/ver_b_attr/{{ attr.pk }}/">
+                                            {{ attr.building_attributes_type.building_attributes_type_name }}
+                                        </a>
+                                    </td>
+                                    <td class="c">
+                                        <a href="/buildings/ver_b_attr/{{ attr.pk }}/">
+                                            {{ attr.building_attributes_units_of_measurement }}
+                                        </a>
+                                    </td>
+
+                                    <td class="c">
+                                        <a href="/building/ver_b_attr/{{ attr.pk }}/">
+                                            {% if attr.building_attributes_sequence %}
+                                                {{ attr.building_attributes_sequence }}
+                                            {% endif %}
+
+                                        </a>
+                                    </td>
+                                    <td class="c">
+                                        <a class="del" rel="{{ attr.pk }}"
+                                           href="#"></a>
+                                        <a class="edit"
+                                           href="/buildings/editar_b_attr/{{ attr.pk }}/"></a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        <div id="table_footer">
+                            <select id="actions" name="actions">
+                                <option value="0">Elije una Acci&oacute;n</option>
+                                <option value="delete">Eliminar</option>
+                            </select>
+                            <button class="fl aqua_btn" id="aplicar">Aplicar a la
+                                selecci&oacute;n</button>
+
+                            <div class="pagination">
+                            <span class="step-links">
+                                {% if paginacion.has_previous %}
+                                    <a href="#" onclick="search_submit({{ paginacion.previous_page_number }})">Anterior</a> &ndash;
+                                {% endif %}
+
+                                <span class="current">
+                                    P&aacute;gina {{ paginacion.number }} de {{ paginacion.paginator.num_pages }}
+                                </span>
+
+                                {% if paginacion.has_next %}
+                                    &ndash; <a href="#" onclick="search_submit({{ paginacion.next_page_number }})">Siguiente</a>
+                                {% endif %}
+                            </span>
+                            </div>
+
+                        </div>
+                    </div>
+                </form>
+
+
+
+
+        </div>
+
+
+    </div>
+{% endblock %}

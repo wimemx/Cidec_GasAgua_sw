@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #standard library imports
 from datetime import  timedelta, datetime
 from dateutil.relativedelta import relativedelta
@@ -5,6 +6,7 @@ import re
 import time
 import calendar
 #related third party imports
+import variety
 
 #local application/library specific imports
 from django.shortcuts import render_to_response, get_object_or_404
@@ -12,15 +14,18 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.template.context import RequestContext
 from django.utils import timezone
 from django.db.models.aggregates import *
+from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.paginator import Paginator, EmptyPage, InvalidPage
 
 from c_center.calculations import tarifaHM_mensual, tarifaHM_total, obtenerHistorico, \
     fechas_corte
 from c_center.models import ConsumerUnit, Building, ElectricDataTemp, ProfilePowermeter, \
-    Powermeter, PartOfBuilding, HierarchyOfPart, Cluster, ClusterCompany, Company, CompanyBuilding
+    Powermeter, PartOfBuilding, HierarchyOfPart, Cluster, ClusterCompany, Company, \
+    CompanyBuilding, BuildingAttributesType, BuildingAttributes, BuildingAttributesForBuilding
 from electric_rates.models import ElectricRatesDetail
 from rbac.models import Operation, DataContextPermission
-from rbac.rbac_functions import  has_permission, get_buildings_context
+from rbac.rbac_functions import  has_permission, get_buildings_context, graphs_permission
 
 import json as simplejson
 
@@ -30,6 +35,9 @@ VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
 DELETE = Operation.objects.get(operation_name="Eliminar")
 UPDATE = Operation.objects.get(operation_name="Modificar")
+
+GRAPHS =['Potencia Activa (KW)', 'Potencia Reactiva (KVar)', 'Factor de Potencia (PF)',
+         'kW Hora', 'kW Hora Consumido', 'kVAR Hora', 'kVAR Hora Consumido']
 
 #def call_celery_delay():
 #    add.delay()
@@ -100,16 +108,27 @@ def set_default_session_vars(request, datacontext):
     """Sets the default building and consumer unit """
     if 'main_building' not in request.session:
         #sets the default building (the first in DataContextPermission)
-        building=Building.objects.get(pk=datacontext[0]['building_pk'])
-        request.session['main_building'] = building
+        try:
+            building=Building.objects.get(pk=datacontext[0]['building_pk'])
+            request.session['main_building'] = building
+        except ObjectDoesNotExist, KeyError:
+            request.session['main_building'] = None
+    if "company" not in request.session:
+        c_b = CompanyBuilding.objects.get(building=request.session['main_building'])
+        request.session['company'] = c_b.company
     if 'consumer_unit' not in request.session:
         #sets the default ConsumerUnit (the first in ConsumerUnit for the main building)
-        c_unit = ConsumerUnit.objects.filter(building=request.session['main_building'])
-        request.session['consumer_unit'] = c_unit[0]
+        try:
+            c_unit = ConsumerUnit.objects.filter(building=request.session['main_building'])
+            request.session['consumer_unit'] = c_unit[0]
+        except ObjectDoesNotExist, KeyError:
+            request.session['main_building'] = None
 
 def set_default_building(request, id_building):
     """Sets the default building for reports"""
     request.session['main_building'] = Building.objects.get(pk=id_building)
+    c_b = CompanyBuilding.objects.get(building=request.session['main_building'])
+    request.session['company'] = c_b.company
     c_unit = ConsumerUnit.objects.filter(building=request.session['main_building'])
     request.session['consumer_unit'] = c_unit[0]
     dicc = dict(edificio=request.session['main_building'].building_name,
@@ -120,79 +139,112 @@ def set_default_building(request, id_building):
             return HttpResponseRedirect("/reportes/cfe/")
     return HttpResponse(content=data,content_type="application/json")
 
-#def set_consumer_unit(request):
-#    """Shows a lightbox with all the profiles asociated for the main building """
-#    c_units = ConsumerUnit.objects.filter(building=request.session['main_building'])
-#    template_vars=dict(c_units=c_units)
-#    template_vars_template = RequestContext(request, template_vars)
-#    return render_to_response("consumption_centers/choose.html", template_vars_template)
+
+def get_sons(parent, part):
+    """ Gets a list of the direct sons of a given part, or consumer unit
+    parent = instance of PartOfBuilding, or ConsumerUnit
+    part = string, is the type of the parent
+    """
+    if part == "part":
+        sons_of_parent = HierarchyOfPart.objects.filter(part_of_building_composite=parent)
+    else:
+        sons_of_parent = HierarchyOfPart.objects.filter(consumer_unit_composite=parent)
+
+    if sons_of_parent:
+        list = '<ul>'
+        for son in sons_of_parent:
+            if son.part_of_building_leaf:
+                tag = son.part_of_building_leaf.part_of_building_name
+                sons = get_sons(son.part_of_building_leaf, "part")
+                cu = ConsumerUnit.objects.get(part_of_building=son.part_of_building_leaf)
+                _class = "part_of_building"
+            else:
+                tag = son.consumer_unit_leaf.electric_device_type.electric_device_type_name
+                sons = get_sons(son.consumer_unit_leaf, "consumer")
+                cu = son.consumer_unit_leaf
+                _class = "consumer_unit"
+            list += '<li><a href="#" rel="' + str(cu.pk) + '" class="' + _class + '">'
+            list +=  tag + '</a>' + sons
+            list += '</li>'
+        list += '</ul>'
+        return list
+    else:
+        return ""
 
 def set_consumer_unit(request):
 
-    building=request.session['main_building']
-
+    building = request.session['main_building']
     hierarchy = HierarchyOfPart.objects.filter(part_of_building_composite__building=building)
     ids_hierarchy = []
     for hy in hierarchy:
-        ids_hierarchy.append(hy.part_of_building_leaf.pk)
-    hierarchy_array="[['Name','Parent','Tooltip'],['"+building.building_name+"', null, null],"
-    #sacar el padre(partes de edificios que no son hijos de nadie)
-    parent = PartOfBuilding.objects.filter(building=building).exclude(pk__in=ids_hierarchy)
-    try:
-        parent[0]
-    except IndexError:
-        #si no hay ninguno, es un edificio sin partes, o sin partes anidadas
-        c_unit_parent = ConsumerUnit.objects.filter(building=building,
-            part_of_building__isnull=True)
-        for c_u_p in c_unit_parent:
-            hierarchy_array += """[{
-                                    v: '%s',
-                                    f:'<a href="#" rel="%s" style="color:#9ebfc6;">%s</a>'},
-                                    null,'Top Level'],""" % (str(c_u_p.pk), str(c_u_p.pk),
-                                                             c_u_p.building.building_name)
-    else:
-        c_unit_parent = ConsumerUnit.objects.filter(building=building,
-            part_of_building__isnull=True)
-        for c_u_p in c_unit_parent:
-            hierarchy_array += """[{
-                                    v: '%s',
-                                    f:'<a href="#" rel="%s" style="color:#9ebfc6;">%s</a>'},
-                                    null,'Top Level'],""" % (str(c_u_p.pk), str(c_u_p.pk),
-                                                             c_u_p.electric_device_type
-                                                             .electric_device_type_name)
-        for par in parent:
-            try:
-                c_unit_parent = ConsumerUnit.objects.get(part_of_building = par)
-            except ObjectDoesNotExist:
-                label = """{v: '%s',f: '%s'}""" % (str(par.pk),
-                                                   par.part_of_building_name)
-            else:
-                label = """{v: '%s',f: '<a href="#" rel="%s" style="color:#9ebfc6;">%s</a>'}"""\
-                        % (str(par.pk), str(c_unit_parent.pk), par.part_of_building_name)
-            hierarchy_array += "["+label+",'"+building.building_name+"','Top Level'],"
-        for leaf in hierarchy:
-            try:
-                c_unit = ConsumerUnit.objects.get(part_of_building=leaf.part_of_building_leaf)
-            except ObjectDoesNotExist:
+        if hy.part_of_building_leaf:
+            ids_hierarchy.append(hy.part_of_building_leaf.pk)
 
-                label = """{v: '%s',f: '%s'}""" % (str(leaf.part_of_building_leaf.pk),
-                                                   leaf.part_of_building_leaf.part_of_building_name)
-            else:
-                label = """{v: '%s',f: '<a href="#" rel="%s" style="color:#9ebfc6;">%s</a>'}"""\
-                        % (str(leaf.part_of_building_leaf.pk), str(c_unit.pk),
-                           leaf.part_of_building_leaf.part_of_building_name)
-            hierarchy_array += "\n["+label+",'"+\
-                               str(leaf.part_of_building_composite.pk)+\
-                               "',null],"
-    hierarchy_array += "]"
-    template_vars=dict(array=hierarchy_array, building=building)
+    #sacar el padre(partes de edificios que no son hijos de nadie)
+    parents = PartOfBuilding.objects.filter(building=building).exclude(pk__in=ids_hierarchy)
+
+    main_cu = ConsumerUnit.objects.get(building=building,
+        electric_device_type__electric_device_type_name="Total")
+    hierarchy_list = "<ul id='org'>"\
+                     "<li>"\
+                     "<a href='#' rel='" + str(main_cu.pk) + "'>"+\
+                     building.building_name +\
+                     "</a>"
+
+    try:
+        parents[0]
+    except IndexError:
+
+        #revisar si tiene consumer_units anidadas
+        hierarchy = HierarchyOfPart.objects.filter(consumer_unit_composite__building=building)
+        ids_hierarchy = []
+        for hy in hierarchy:
+            if hy.consumer_unit_leaf:
+                ids_hierarchy.append(hy.consumer_unit_leaf.pk)
+
+        #sacar el padre(ConsumerUnits que no son hijos de nadie)
+        parents = ConsumerUnit.objects.filter(building=building).exclude(
+                  Q(pk__in=ids_hierarchy)|
+                  Q(electric_device_type__electric_device_type_name="Total") )
+        try:
+            parents[0]
+        except IndexError:
+            #si no hay ninguno, es un edificio sin partes, o sin partes anidadas
+            pass
+        else:
+            hierarchy_list += "<ul>"
+            for parent in parents:
+                hierarchy_list += "<li> <a href='#' rel='" + str(parent.pk) + "'>" +\
+                                  parent.electric_device_type.electric_device_type_name + \
+                                  "</a>"
+                #obtengo la jerarquia de cada rama del arbol
+                hierarchy_list += get_sons(parent, "consumer")
+                hierarchy_list +="</li>"
+            hierarchy_list +="</ul>"
+    else:
+        hierarchy_list += "<ul>"
+        for parent in parents:
+
+            c_unit_parent = ConsumerUnit.objects.filter(building=building,
+                            part_of_building=parent).exclude(
+                            electric_device_type__electric_device_type_name="Total")
+
+            hierarchy_list += "<li> <a href='#' rel='" + str(c_unit_parent[0].pk) + "'>" + \
+                              parent.part_of_building_name + "</a>"
+            #obtengo la jerarquia de cada rama del arbol
+            hierarchy_list += get_sons(parent, "part")
+            hierarchy_list +="</li>"
+        hierarchy_list +="</ul>"
+    hierarchy_list +="</li></ul>"
+    template_vars = dict(hierarchy=hierarchy_list)
     template_vars_template = RequestContext(request, template_vars)
+
     return render_to_response("consumption_centers/choose_hierarchy.html", template_vars_template)
 
 def set_default_consumer_unit(request, id_c_u):
     """Sets the consumer_unit for all the reports"""
-    c_unit = ConsumerUnit.objects.filter(pk=id_c_u)
-    request.session['consumer_unit'] = c_unit[0]
+    c_unit = ConsumerUnit.objects.get(pk=id_c_u)
+    request.session['consumer_unit'] = c_unit
     return HttpResponse(status=200)
 
 def main_page(request):
@@ -200,17 +252,21 @@ def main_page(request):
     in the mean time the main view is the graphics view
     sets the session variables needed to show graphs
     """
-    if has_permission(request.user, VIEW, "Perfil de carga"):
-        #has perm to view graphs, now check what can the user see
-        datacontext = get_buildings_context(request.user)
-        set_default_session_vars(request, datacontext)
+    datacontext = get_buildings_context(request.user)
+    set_default_session_vars(request, datacontext)
+
+    graphs = graphs_permission(request.user)
+
+    if graphs:
+
         #valid years for reporting
         request.session['years'] = [__date.year for __date in
                                     ElectricDataTemp.objects.all().dates('medition_date', 'year')]
 
-        template_vars = {"type":"graphs", "datacontext":datacontext,
+        template_vars = {"graphs":graphs, "datacontext":datacontext,
                          'empresa': request.session['main_building'],
-                         'consumer_unit': request.session['consumer_unit']
+                         'company': request.session['company'],
+                         'consumer_unit': request.session['consumer_unit'],
                          }
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/main.html", template_vars_template)
@@ -224,7 +280,8 @@ def cfe_bill(request):
         set_default_session_vars(request, datacontext)
 
         template_vars={"type":"cfe", "datacontext":datacontext,
-                       'empresa':request.session['main_building']
+                       'empresa':request.session['main_building'],
+                       'company': request.session['company'],
         }
         #print template_vars
         template_vars_template = RequestContext(request, template_vars)
@@ -809,3 +866,268 @@ def get_parts_of_building(request, id_building):
         parts.append(dict(pk=part.pk, part=part.part_of_building_name))
     data=simplejson.dumps(parts)
     return HttpResponse(content=data,content_type="application/json")
+
+def add_building_attr(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, CREATE, "Alta de atributos de edificios"):
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
+        type = ""
+        message = ""
+        attributes = BuildingAttributesType.objects.all().order_by(
+                     "building_attributes_type_sequence")
+        template_vars = dict(datacontext=datacontext, empresa=empresa, company=company,
+                             type=type, message=message, attributes=attributes)
+        if request.method == "POST":
+            template_vars['post'] = variety.get_post_data(request.POST)
+
+            valid = True
+            attr_name = template_vars['post']['attr_name']
+            attr = get_object_or_404(BuildingAttributesType, pk=template_vars['post']['attr_type'])
+            desc = template_vars['post']['description']
+            if not variety.validate_string(desc) or not variety.validate_string(attr_name):
+                valid = False
+                template_vars['message'] = "Por favor solo ingrese caracteres v&aacute;lidos"
+
+
+            if template_vars['post']['value_boolean'] == 1:
+                bool = True
+                unidades = template_vars['post']['unidades']
+                if not unidades:
+                    valid = False
+                else:
+                    if not variety.validate_string(unidades):
+                        valid = False
+                        template_vars['message'] = "Por favor solo ingrese caracteres v&aacute;lidos"
+            else:
+                bool = False
+                unidades = ""
+            if attr_name and valid:
+                b_attr = BuildingAttributes(
+                            building_attributes_type = attr,
+                            building_attributes_name = attr_name,
+                            building_attributes_description = desc,
+                            building_attributes_value_boolean = bool,
+                            building_attributes_units_of_measurement = unidades
+                         )
+                b_attr.save()
+                template_vars['message'] = "El atributo fue dado de alta correctamente"
+                template_vars['type'] = "n_success"
+                if has_permission(request.user, VIEW, "Ver atributos de edificios"):
+                    return HttpResponseRedirect("/buildings/atributos?msj=" +
+                                                template_vars["message"] +
+                                                "&ntype=n_success")
+            else:
+
+                template_vars['type'] = "n_error"
+
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/add_building_attr.html",
+               template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def b_attr_list(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, VIEW, "Ver atributos de edificios"):
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
+        if "search" in request.GET:
+            search = request.GET["search"]
+        else:
+            search = ''
+        order_attrname = 'asc'
+        order_type = 'asc'
+        order_units = 'asc'
+        order_sequence = 'asc'
+        order = "building_attributes_name" #default order
+        if "order_attrname" in request.GET:
+            if request.GET["order_attrname"] == "desc":
+                order = "-building_attributes_name"
+                order_attrname = "asc"
+            else:
+                order_attrname = "desc"
+        elif "order_type" in request.GET:
+
+                if request.GET["order_type"] == "asc":
+                    order = "building_attributes_type__building_attributes_type_name"
+                    order_type = "desc"
+                else:
+                    order = "-building_attributes_type__building_attributes_type_name"
+                    order_type = "asc"
+        elif "order_units" in request.GET:
+            if request.GET["order_units"] == "asc":
+                order = "building_attributes_units_of_measurement"
+                order_units = "desc"
+            else:
+                order = "-building_attributes_units_of_measurement"
+                order_units = "asc"
+        elif "order_sequence" in request.GET:
+            if request.GET["order_sequence"] == "asc":
+                order = "building_attributes_sequence"
+                order_sequence = "desc"
+            else:
+                order = "-building_attributes_sequence"
+                order_sequence = "asc"
+
+        if search:
+            lista = BuildingAttributes.objects.filter(
+                        Q(building_attributes_name__icontains=request.GET['search'])|
+                        Q(building_attributes_description__icontains=request.GET['search']))\
+                    .order_by(order)
+        else:
+            lista = BuildingAttributes.objects.all().order_by(order)
+        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        template_vars = dict(roles=paginator, order_attrname=order_attrname,
+                             order_type=order_type, order_units=order_units,
+                             order_sequence=order_sequence, empresa=empresa, company=company,
+                             datacontext=datacontext)
+        # Make sure page request is an int. If not, deliver first page.
+        try:
+            page = int(request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+
+        # If page request (9999) is out of range, deliver last page of results.
+        try:
+            pag_role = paginator.page(page)
+        except (EmptyPage, InvalidPage):
+            pag_role = paginator.page(paginator.num_pages)
+
+        template_vars['paginacion']=pag_role
+
+        if 'msj' in request.GET:
+            template_vars['message'] = request.GET['msj']
+            template_vars['msg_type'] = request.GET['ntype']
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/building_attr_list.html",
+               template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def delete_b_attr(request, id_b_attr):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, DELETE, "Eliminar atributos de edificios"):
+        b_attr = get_object_or_404(BuildingAttributes, pk=id_b_attr)
+        b_attr_for_b = BuildingAttributesForBuilding.objects.filter(building_attributes=b_attr)
+        if b_attr_for_b:
+            mensaje = "Para eliminar un atributo, primero se tienen que eliminar las " \
+                      "asignaciones de atributos a edificios"
+            type = "n_notif"
+        else:
+            b_attr.delete()
+            mensaje = "El atributo se ha dado de baja correctamente"
+            type="n_success"
+        return HttpResponseRedirect("/buildings/atributos/?msj=" + mensaje +
+                                    "&ntype="+type)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def editar_b_attr(request, id_b_attr):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, VIEW, "Ver atributos de edificios"):
+        b_attr = get_object_or_404(BuildingAttributes, pk=id_b_attr)
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
+        if b_attr.building_attributes_value_boolean:
+            bool = "1"
+        else:
+            bool = "0"
+        post = {'attr_name': b_attr.building_attributes_name,
+                'description': b_attr.building_attributes_description,
+                'attr_type': b_attr.building_attributes_type.pk,
+                'value_boolean': bool,
+                'unidades': b_attr.building_attributes_units_of_measurement}
+        message = ''
+        type = ''
+        attributes = BuildingAttributesType.objects.all().order_by(
+                     "building_attributes_type_sequence")
+        template_vars = dict(datacontext=datacontext, empresa=empresa, message=message,
+                             post=post,type=type, operation="edit", company=company,
+                             attributes=attributes)
+        if request.method == "POST":
+            template_vars['post'] = variety.get_post_data(request.POST)
+
+            valid = True
+            attr_name = template_vars['post']['attr_name']
+            attr = get_object_or_404(BuildingAttributesType, pk=template_vars['post']['attr_type'])
+            desc = template_vars['post']['description']
+            if not variety.validate_string(desc) or not variety.validate_string(attr_name):
+                valid = False
+                template_vars['message'] = "Por favor solo ingrese caracteres v&aacute;lidos"
+
+
+            if template_vars['post']['value_boolean'] == 1:
+                bool = True
+                unidades = template_vars['post']['unidades']
+                if not unidades:
+                    valid = False
+                else:
+                    if not variety.validate_string(unidades):
+                        valid = False
+                        template_vars['message'] = "Por favor solo ingrese caracteres v&aacute;lidos"
+            else:
+                bool = False
+                unidades = ""
+            if attr_name and valid:
+                b_attr.building_attributes_type = attr
+                b_attr.building_attributes_name = attr_name
+                b_attr.building_attributes_description = desc
+                b_attr.building_attributes_value_boolean = bool
+                b_attr.building_attributes_units_of_measurement = unidades
+                b_attr.save()
+                template_vars['message'] = "El atributo fue editado correctamente"
+                template_vars['type'] = "n_success"
+                if has_permission(request.user, VIEW, "Ver atributos de edificios"):
+                    return HttpResponseRedirect("/buildings/atributos?msj=" +
+                                                template_vars["message"] +
+                                                "&ntype=n_success")
+            else:
+
+                template_vars['type'] = "n_error"
+
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/add_building_attr.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def ver_b_attr(request, id_b_attr):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, VIEW, "Ver atributos de edificios"):
+        b_attr = get_object_or_404(BuildingAttributes, pk=id_b_attr)
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
+        if b_attr.building_attributes_value_boolean:
+            bool = "1"
+        else:
+            bool = "0"
+        post = {'attr_name': b_attr.building_attributes_name,
+                'description': b_attr.building_attributes_description,
+                'attr_type': b_attr.building_attributes_type.building_attributes_type_name,
+                'value_boolean': bool,
+                'unidades': b_attr.building_attributes_units_of_measurement}
+        message = ''
+        type = ''
+        attributes = BuildingAttributesType.objects.all().order_by(
+            "building_attributes_type_sequence")
+        template_vars = dict(datacontext=datacontext, empresa=empresa, message=message,
+                             company=company, post=post,type=type, operation="edit",
+                             attributes=attributes)
+
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/see_building_attr.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))

@@ -189,30 +189,11 @@
             $("#types_graphs ul li").each(function(){$(this).removeClass("active");});
             var src;
             switch($(this).attr("id")){
-                case "kw":
-                    src = "/reportes/graficas?graph=kw";
+                {% for type in graphs %}
+                case "{{ type.pk }}":
+                    src = "{{ type.object_access_point }}";
                     break;
-                case "kvar":
-                    src = "/reportes/graficas?graph=kvar";
-                    break;
-                case "pf":
-                    src = "/reportes/graficas?graph=pf";
-                    break;
-                case "profile":
-                    src = "/reportes/graficas?graph=pp";
-                    break;
-                case "kwh":
-                    src = "/reportes/graficas?graph=kwh";
-                    break;
-                case "kvarh":
-                    src = "/reportes/graficas?graph=kvarh";
-                    break;
-                case "kwh_c":
-                    src = "/reportes/graficas?graph=kwh_consumido";
-                    break;
-                case "kvarh_c":
-                    src = "/reportes/graficas?graph=kvarh_consumido";
-                    break;
+                {% endfor %}
             }
             var get_vars = $("#graphFrame").attr("src").split('?')[1]
             if(get_vars != undefined){
@@ -283,11 +264,7 @@
             dataType: 'json',
             async: 'true',
             success: function(datos){
-                $("h2#titulo_reporte").html(datos.edificio + ' - ' +
-                        '<span>' +
-                        datos.electric_device_type +
-                        '</span>'
-                );
+                document.location.reload(true);
             }
         });
         var src = $("#graphFrame").attr("src").split('?')[0];
@@ -376,14 +353,9 @@
 
     <div id="types_graphs">
         <ul>
-            <li id="kw">Potencia Activa (KW)</li>
-            <li id="kvar">Potencia Reactiva (KVar)</li>
-            <li id="pf">Factor de Potencia (PF)</li>
-            <!--<li id="profile">Perfil de Carga</li>-->
-            <li id="kwh">kW Hora</li>
-            <li id="kwh_c">kW Hora Consumido</li>
-            <li id="kvarh">kVAR Hora</li>
-            <li id="kvarh_c">kVAR Hora Consumido</li>
+            {% for type in graphs %}
+                <li id="{{ type.pk }}">{{ type.object_name }}</li>
+            {% endfor %}
         </ul>
     </div>
     <div id="graphs_container">

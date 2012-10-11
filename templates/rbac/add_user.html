@@ -1,6 +1,7 @@
 {% extends "base.html" %}
-{% block titulo %}{% if operation == "edit" %}Edici&oacute;n{% else %}Alta{% endif %} de
-    Usuario{% endblock %}
+{% block titulo %}
+    {% if operation == "edit" %}Editar{% else %}Crear nuevo{% endif %}usuario
+{% endblock %}
 {% block externalcss %}
     <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
     <link rel="stylesheet" href="/static/css/forms/rbac_add_user.css" type="text/css">
@@ -19,7 +20,9 @@
                 $(this).parent().next().blur(function(e){
                     var _span;
 
-                    if(e.delegateTarget.value==''){
+                    var valor = $.trim(e.delegateTarget.value);
+
+                    if(valor==''){
                         _span = "incorrect";
                         form_valid = false;
                     }else{
@@ -64,7 +67,7 @@
         if (form_valid){
             var _span;
             var username = $("#username");
-            if(username.val()==''){
+            if($.trim(username.val())==''){
                 _span = "incorrect";
                 form_valid = false;
             }else{
@@ -92,7 +95,7 @@
             pass1.next().addClass(_span);
             {% endif %}
             var lastname = $("#last_name");
-            if(lastname.val()==''){
+            if($.trim(lastname.val())==''){
                 _span = "incorrect";
                 form_valid = false;
             }else{
@@ -103,7 +106,7 @@
             lastname.next().addClass(_span);
 
             var name = $("#name");
-            if(name.val()==''){
+            if($.trim(name.val())==''){
                 _span = "incorrect";
                 form_valid = false;
             }else{
@@ -115,7 +118,7 @@
 
 
             var mail = $("#mail");
-            if(mail.val()==''){
+            if($.trim(mail.val())==''){
                 _span = "incorrect";
                 form_valid = false;
             }else{
@@ -160,7 +163,7 @@
     </div>
     <div id="contenido_interno">
         <h2 id="titulo_form" class="user_role">
-            {% if operation == "edit" %}Edici&oacute;n{% else %}Alta{% endif %} de nuevo usuario
+            {% if operation == "edit" %}Editar{% else %}Crear nuevo{% endif %}usuario
         </h2>
 
 

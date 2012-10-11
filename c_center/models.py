@@ -44,7 +44,7 @@ class Cluster(models.Model):
     cluster_registered = models.DateTimeField(default=datetime.datetime.now())
     cluster_status = models.IntegerField(choices=STATUS, default=1)
     cluster_name = models.CharField(max_length=128)
-    #cluster_description = models.TextField(blank=True, null=True)
+    cluster_description = models.TextField(blank=True, null=True)
     cluster_image = models.CharField(max_length=200, null=True, blank=True)
 
     def __unicode__(self):
@@ -60,6 +60,7 @@ class Company(models.Model):
     company_status = models.IntegerField(choices=STATUS, default=1)
     company_name = models.CharField(max_length=128)
     company_description = models.TextField(max_length=256, null=True, blank=True)
+    company_logo = models.ImageField(max_length=500, blank=True, null=True, upload_to="logotipos/" )
 
     def __unicode__(self):
         return self.company_name + " - " + self.sectoral_type.sectorial_type_name
@@ -129,7 +130,7 @@ class BuildingAttributes(models.Model):
     building_attributes_name = models.CharField(max_length=128)
     building_attributes_description = models.TextField(max_length=256, null=True, blank=True)
     building_attributes_value_boolean = models.BooleanField(default=False)
-    building_attributes_units_of_measurement = models.CharField(max_length=10)
+    building_attributes_units_of_measurement = models.CharField(max_length=80, blank=True, null=True, default="")
     building_attributes_sequence = models.IntegerField(null=True, blank=True)
 
     def __unicode__(self):
@@ -176,7 +177,7 @@ class BuildingAttributesForBuilding(models.Model):
 
     def __unicode__(self):
         return self.building.building_name + " - " + str(self.building_attributes_value)\
-        + self.building_attributes.building_attributes_name
+               + self.building_attributes.building_attributes_name
     class Meta:
         unique_together = ('building', 'building_attributes')
 
@@ -314,23 +315,6 @@ class PartOfBuilding(models.Model):
     def __unicode__(self):
         return self.building.building_name + " - " + self.part_of_building_name
 
-class HierarchyOfPart(models.Model):
-    """ Gerarquia de parte
-
-    Almacena la informacion del perfil basico de un edificio/centro/unidad
-    de negocio/sede/oficina/entre otros espacios fisicos.
-    Una empresa puede estar operando en diferentes espacios fisicos.
-
-    """
-    part_of_building_composite = models.ForeignKey(PartOfBuilding,
-        on_delete=models.PROTECT, related_name="hyerarchy_of_part_composite")
-    part_of_building_leaf = models.ForeignKey(PartOfBuilding,
-        on_delete=models.PROTECT, related_name="hyerarchy_of_part_leaf")
-
-    def __unicode__(self):
-        return self.part_of_building_composite.building.building_name +\
-               " > " +self.part_of_building_leaf.building.building_name
-
 class CompanyBuilding(models.Model):
     """ Agrupa el conjunto de edificios que pertenecen a una empresa """
     company = models.ForeignKey(Company, on_delete=models.PROTECT)
@@ -364,14 +348,50 @@ class ConsumerUnit(models.Model):
     building = models.ForeignKey(Building, on_delete=models.PROTECT)
     part_of_building = models.ForeignKey(PartOfBuilding, on_delete=models.PROTECT, null=True, blank=True)
     electric_device_type = models.ForeignKey(ElectricDeviceType, on_delete=models.PROTECT)
-    profile_powermeter = models.OneToOneField(ProfilePowermeter, on_delete=models.PROTECT)
+    profile_powermeter = models.ForeignKey(ProfilePowermeter, on_delete=models.PROTECT)
 
     def __unicode__(self):
         return self.building.building_name + " - " +\
                self.electric_device_type.electric_device_type_name + " - " +\
                self.profile_powermeter.powermeter.powermeter_anotation
+
+
+class HierarchyOfPart(models.Model):
+    """ Gerarquia de parte
+
+    Almacena la informacion del perfil basico de un edificio/centro/unidad
+    de negocio/sede/oficina/entre otros espacios fisicos.
+    Una empresa puede estar operando en diferentes espacios fisicos.
+
+    """
+    part_of_building_composite = models.ForeignKey(PartOfBuilding,
+        on_delete=models.PROTECT, related_name="hyerarchy_of_part_composite", null=True,
+        blank=True, default=None)
+    part_of_building_leaf = models.ForeignKey(PartOfBuilding,
+        on_delete=models.PROTECT, related_name="hyerarchy_of_part_leaf", null=True,
+        blank=True, default=None)
+    consumer_unit_composite = models.ForeignKey(ConsumerUnit,
+        on_delete=models.PROTECT, related_name="consumer_unit_composite", null=True,
+        blank=True, default=None)
+    consumer_unit_leaf = models.ForeignKey(ConsumerUnit,
+        on_delete=models.PROTECT, related_name="consumer_unit_leaf", null=True, blank=True,
+        default=None)
+    ExistsPowermeter = models.BooleanField()
+
+    def __unicode__(self):
+        if self.part_of_building_composite:
+            s = self.part_of_building_composite.part_of_building_name
+        else:
+            s = self.consumer_unit_composite.electric_device_type.electric_device_type_name
+        if self.part_of_building_leaf:
+            t = self.part_of_building_leaf.part_of_building_name
+        else:
+            t = self.consumer_unit_leaf.electric_device_type.electric_device_type_name
+        return s + " > " + t
+
     class Meta:
-        unique_together = ('building', 'profile_powermeter')
+        unique_together = ('part_of_building_composite', 'part_of_building_leaf')
+
 
 class ElectricData(models.Model):
     """ Historico de datos electricos
@@ -428,7 +448,7 @@ class ElectricData(models.Model):
     kVA_sliding_window_demand = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=0)
 
     def __unicode__(self):
-        return self.profile_powermeter.powermeter.powermeter_anotation + \
+        return self.profile_powermeter.powermeter.powermeter_anotation +\
                " " + str(self.medition_date)
 
 class ElectricDataTemp(models.Model):
@@ -508,7 +528,20 @@ class PowermeterForIndustrialEquipment(models.Model):
     powermeter = models.ForeignKey(Powermeter, on_delete=models.PROTECT)
     industrial_equipment = models.ForeignKey(IndustrialEquipment, on_delete=models.PROTECT)
     def __unicode__(self):
-        return self.powermeter.powermeter_anotation + " - " + \
+        return self.powermeter.powermeter_anotation + " - " +\
                self.industrial_equipment.indistrial_equipment_identifier
     class Meta:
         unique_together = ('powermeter', 'industrial_equipment')
+
+class MonthlyCutDates(models.Model):
+    building = models.ForeignKey(Building, on_delete=models.PROTECT)
+    billing_month = models.DateField("Fecha de Inicio")
+    date_init = models.DateField("Fecha de Inicio")
+    date_end = models.DateField("Fecha de Fin", null=True, blank=True)
+
+    def __unicode__(self):
+        return "Edificio: " + self.building.building_name + " - Mes:" + str(self.billing_month) + ": Del " +\
+               str(self.date_init) + " al " + str(self.date_end)
+
+    class Meta:
+        verbose_name_plural = "Fechas Mensuales de Corte"

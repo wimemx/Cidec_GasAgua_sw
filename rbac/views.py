@@ -18,7 +18,7 @@ from django.utils import simplejson
 
 from django.contrib.auth.models import User
 from rbac.models import *
-from c_center.models import Cluster, ClusterCompany
+from c_center.models import Cluster, ClusterCompany, CompanyBuilding
 from rbac.rbac_functions import has_permission, get_buildings_context
 
 VIEW = Operation.objects.get(operation_name="Ver")
@@ -59,9 +59,13 @@ def save_perm(role, objs_ids, operation):
 
 def add_role(request):
     """Add role web form"""
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+
     if has_permission(request.user, CREATE, "crear rol"):
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
+        company = request.session['company']
         if request.method == "POST":
             role = request.POST['role_name'].strip()
             role_desc = request.POST['role_desc'].strip()
@@ -106,10 +110,8 @@ def add_role(request):
                 else:
                     #regresa al formulario de alta
 
-                    template_vars = dict(datacontext=datacontext,
-                        empresa=empresa,
-                        operations=Operation.objects.all(),
-                        message=mensaje,
+                    template_vars = dict(datacontext=datacontext, company=company,
+                        empresa=empresa, operations=Operation.objects.all(), message=mensaje,
                         msg_type=ntype
                     )
                     template_vars_template = RequestContext(request, template_vars)
@@ -120,9 +122,8 @@ def add_role(request):
                 PermissionAsigment.objects.filter(role=rol).delete()
                 rol.delete()
 
-                template_vars = dict(datacontext=datacontext,
-                    empresa=empresa,
-                    operations=Operation.objects.all(),
+                template_vars = dict(datacontext=datacontext, empresa=empresa,
+                    operations=Operation.objects.all(), company=company,
                     message=mensaje,
                     msg_type="fail",
                     post=request.POST
@@ -131,8 +132,7 @@ def add_role(request):
                 return render_to_response("rbac/add_role.html", template_vars_template)
 
         else:
-            template_vars = dict(datacontext=datacontext,
-                                 empresa=empresa,
+            template_vars = dict(datacontext=datacontext, empresa=empresa,company=company,
                                  operations=Operation.objects.all())
             template_vars_template = RequestContext(request, template_vars)
             return render_to_response("rbac/add_role.html", template_vars_template)
@@ -171,10 +171,13 @@ def update_role_privs(role, objs_ids, operation):
     return True, "El rol se modificó exitosamente"
 
 def edit_role(request, id_role):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE, "Modificar asignaciones de permisos a roles"):
         rol = get_object_or_404(Role, pk=id_role)
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
+        company = request.session['company']
         ntype = ""
         mensaje = ""
         if request.method == "POST":
@@ -226,6 +229,7 @@ def edit_role(request, id_role):
 
                 template_vars = dict(datacontext=datacontext,
                     empresa=empresa,
+                    company=company,
                     operations=Operation.objects.all(),
                     message=mensaje,
                     msg_type="fail",
@@ -235,8 +239,7 @@ def edit_role(request, id_role):
                 return render_to_response("rbac/add_role.html", template_vars_template)
         else:
             template_vars = dict(rol=rol,
-                                 datacontext=datacontext,
-                                 empresa=empresa,
+                                 datacontext=datacontext, empresa=empresa, company=company,
                                  operations=Operation.objects.all())
             permissions = PermissionAsigment.objects.filter(role=rol)
             objects = [ob.object.pk for ob in permissions]
@@ -263,14 +266,15 @@ def edit_role(request, id_role):
         return render_to_response("generic_error.html", RequestContext(request))
 
 def see_role(request, id_role):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
     if has_permission(request.user, VIEW, "Ver roles"):
         rol = get_object_or_404(Role, pk=id_role)
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
-        template_vars = dict(rol=rol,
-            datacontext=datacontext,
-            empresa=empresa,
-            operations=Operation.objects.all())
+        company = request.session['company']
+        template_vars = dict(rol=rol, datacontext=datacontext, empresa=empresa,
+                             company=company, operations=Operation.objects.all())
         permissions = PermissionAsigment.objects.filter(role=rol)
         objects = [ob.object.pk for ob in permissions]
 
@@ -297,7 +301,12 @@ def see_role(request, id_role):
         return render_to_response("generic_error.html", RequestContext(request))
 
 def view_roles(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
     if has_permission(request.user, VIEW, "Ver roles"):
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
         if "search" in request.GET:
             search = request.GET["search"]
         else:
@@ -328,7 +337,8 @@ def view_roles(request):
         else:
             lista = Role.objects.all().order_by(order)
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
-        template_vars = dict(roles=paginator, order_name=order_name, order_desc=order_desc)
+        template_vars = dict(roles=paginator, order_name=order_name, order_desc=order_desc,
+                            empresa=empresa, company=company, datacontext=datacontext)
         # Make sure page request is an int. If not, deliver first page.
         try:
             page = int(request.GET.get('page', '1'))
@@ -354,6 +364,8 @@ def view_roles(request):
         return render_to_response("generic_error.html", RequestContext(request))
 
 def delete_role(request, id_role):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
     if has_permission(request.user, DELETE, "Eliminar rol"):
         rol = get_object_or_404(Role, pk=id_role)
         user_r = UserRole.objects.filter(role=rol)
@@ -374,6 +386,8 @@ def delete_role(request, id_role):
 
 
 def delete_batch(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
     if has_permission(request.user, DELETE, "Eliminar rol"):
         if request.method == "GET":
             raise Http404
@@ -405,6 +419,8 @@ def delete_batch(request):
         return render_to_response("generic_error.html", RequestContext(request))
 
 def get_select_group(request, id_operation):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
     operation_group = OperationForGroup.objects.filter(operation__pk=id_operation)
     string_to_return=''
     for operation in operation_group:
@@ -414,6 +430,8 @@ def get_select_group(request, id_operation):
     return HttpResponse(content=string_to_return, content_type="text/html")
 
 def get_select_object(request, id_group):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
     if request.GET['operation']:
         objects = OperationForGroupObjects.objects.filter(operation__pk=request.GET[
                                                                         'operation'],
@@ -436,11 +454,14 @@ def get_select_object(request, id_group):
         raise Http404
 
 def add_user(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
     if has_permission(request.user, CREATE, "Alta de usuarios"):
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
+        company = request.session['company']
         template_vars = dict(datacontext=datacontext,
-            empresa=empresa,
+            empresa=empresa, company=company
         )
         if request.method == "POST":
             template_vars["post"] = request.POST
@@ -515,7 +536,12 @@ def add_user(request):
         return render_to_response("generic_error.html", RequestContext(request))
 
 def view_users(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
     if has_permission(request.user, VIEW, "Ver usuarios"):
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
         if "search" in request.GET:
             search = request.GET["search"]
         else:
@@ -560,7 +586,7 @@ def view_users(request):
             lista = User.objects.all().exclude(is_active=False).order_by(order)
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
         template_vars = dict(order_name=order_name, order_username=order_username,
-            order_email=order_email)
+            order_email=order_email, datacontext=datacontext, empresa=empresa, company=company)
         # Make sure page request is an int. If not, deliver first page.
         try:
             page = int(request.GET.get('page', '1'))
@@ -586,18 +612,27 @@ def view_users(request):
         return render_to_response("generic_error.html", RequestContext(request))
 
 def delete_user(request, id_user):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
     if has_permission(request.user, DELETE, "Baja de usuarios"):
         user = get_object_or_404(User, pk=id_user)
-        user.is_active = False
-        user.save()
-        mensaje = "El usuario se ha dado de baja correctamente"
+        if user.is_superuser:
+            mensaje = "No puedes eliminar a un super usuario"
+            type = "n_notif"
+        else:
+            user.is_active = False
+            user.save()
+            mensaje = "El usuario se ha dado de baja correctamente"
+            type="n_success"
         return HttpResponseRedirect("/panel_de_control/usuarios/?msj=" + mensaje +
-                                    "&ntype=n_success")
+                                    "&ntype="+type)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
 
 def edit_user(request, id_user):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE, "Actualizar informacion de usuarios"):
         user = get_object_or_404(User, pk=id_user)
         profile = UserProfile.objects.get(user=user)
@@ -610,6 +645,7 @@ def edit_user(request, id_user):
 
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
+        company = request.session['company']
         message = ''
         type = ''
 
@@ -675,6 +711,7 @@ def edit_user(request, id_user):
 
         template_vars = dict(datacontext=datacontext,
             empresa=empresa,
+            company=company,
             post=post,
             operation="edit",
             message=message,
@@ -686,6 +723,8 @@ def edit_user(request, id_user):
         return render_to_response("generic_error.html", RequestContext(request))
 
 def delete_batch_user(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
     if has_permission(request.user, DELETE, "Baja de usuarios"):
         if request.method == "GET":
             raise Http404
@@ -694,9 +733,10 @@ def delete_batch_user(request):
                 if re.search('^user_\w+', key):
                     r_id = int(key.replace("user_",""))
                     user = get_object_or_404(User, pk=r_id)
-                    user.is_active = False
-                    user.save()
-            mensaje = "Los usuarios seleccionados se han dado de baja"
+                    if not user.is_superuser:
+                        user.is_active = False
+                        user.save()
+            mensaje = "Los usuarios seleccionados (excepto super usuarios) se han dado de baja"
             return HttpResponseRedirect("/panel_de_control/usuarios/?msj=" + mensaje +
                                         "&ntype=n_success")
         else:
@@ -708,17 +748,17 @@ def delete_batch_user(request):
 
 
 def see_user(request, id_user):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
     if has_permission(request.user, VIEW, "Ver usuarios"):
         user1 = get_object_or_404(User, pk=id_user)
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
+        company = request.session['company']
         profile = UserProfile.objects.get(user=user1)
         age = int((date.today() - profile.user_profile_birth_dates).days/365.25)
-        template_vars = dict(user1=user1,
-            profile=profile,
-            datacontext=datacontext,
-            age = age,
-            empresa=empresa)
+        template_vars = dict(user1=user1, company=company, profile=profile,
+            datacontext=datacontext, age = age, empresa=empresa)
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("rbac/see_user.html", template_vars_template)
@@ -730,9 +770,12 @@ def add_data_context_permissions(request):
     """Permission Asigments
     show a form for data context permission asigment
     """
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
     if has_permission(request.user, CREATE, "Asignar roles a usuarios"):
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
+        company = request.session['company']
         roles = Role.objects.all()
         #obtengo los clusters que tengan empresas asociadas
         #en caso de que haya clusters sin empresas (altas a medio hacer, por ejemplo)
@@ -779,7 +822,28 @@ def add_data_context_permissions(request):
                             else:
                                 #alta de asignaciónd de roles/permisos para todas las partes de
                                 # un edificio
-                                pass
+                                partes = PartOfBuilding.objects.filter(building=building)
+                                user_role, created = UserRole.objects.get_or_create(user=usuario,
+                                                     role=rol)
+                                if partes:
+                                    for parte in partes:
+                                        data_context, created = DataContextPermission.objects.get_or_create(
+                                            user_role=user_role,
+                                            cluster=cluster,
+                                            company=company,
+                                            building=building,
+                                            part_of_building=parte
+                                        )
+                                else:
+                                    data_context, created = DataContextPermission.objects.get_or_create(
+                                        user_role=user_role,
+                                        cluster=cluster,
+                                        company=company,
+                                        building=building
+                                    )
+                                message = "El rol, sus permisos y asignaciones al edificio y "\
+                                          "sus partes, se ha guardado correctamente"
+                                type = "n_success"
                         else:
                             user_role, created = UserRole.objects.get_or_create(user=usuario,
                                                  role=rol)
@@ -795,13 +859,40 @@ def add_data_context_permissions(request):
                 else:
                     #alta de asignaciónd de roles/permisos para todas las partes de
                     # todos los edificios de una empresa
-                    pass
+                    user_role, created = UserRole.objects.get_or_create(user=usuario,
+                                         role=rol)
+                    buildings = CompanyBuilding.objects.filter(company=company)
+                    for building_com in buildings:
+                        partes = PartOfBuilding.objects.filter(building=building_com.building)
+                        user_role, created = UserRole.objects.get_or_create(user=usuario,
+                            role=rol)
+                        if partes:
+                            for parte in partes:
+                                data_context, created = DataContextPermission.objects.get_or_create(
+                                    user_role=user_role,
+                                    cluster=cluster,
+                                    company=company,
+                                    building=building_com.building,
+                                    part_of_building=parte
+                                )
+                        else:
+                            data_context, created = DataContextPermission.objects.get_or_create(
+                                user_role=user_role,
+                                cluster=cluster,
+                                company=company,
+                                building=building_com.building
+                            )
+
+                    message = "El rol, sus permisos y su asignación al edificio, se"\
+                              " ha guardado correctamente"
+                    type = "n_success"
 
         template_vars = dict(
             datacontext=datacontext,
             roles=roles,
             clusters=clusters,
             empresa=empresa,
+            company=company,
             message=message,
             type=type
         )
@@ -810,7 +901,129 @@ def add_data_context_permissions(request):
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
+def added_data_context_permissions(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, VIEW, "Ver asignaciones de roles a usuarios"):
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
+
+        if "select_user" in request.GET:
+            select_user = request.GET["select_user"]
+        else:
+            select_user = "0"
+        if "select_emp" in request.GET:
+            select_emp = request.GET['select_emp']
+        else:
+            select_emp = '0'
+
+        order_username = 'asc'
+        order_role = 'asc'
+        order_entity = 'asc'
+        order = "user_role__role__role_name" #default order
+        if "order_role" in request.GET:
+            #request.GET["order_name"]=asc or desc
+            if request.GET["order_role"] == "desc":
+                order = "-user_role__role__role_name"
+                order_role = "asc"
+            else:
+                order_role = "desc"
+        else:
+
+            if "order_username" in request.GET:
+                #request.GET["order_name"]=asc or desc
+                if request.GET["order_username"] == "asc":
+                    order = "user_role__user__username"
+                    order_username = "desc"
+                else:
+                    order = "-user_role__user__username"
+                    order_username = "asc"
+            else:
+                if "order_entity" in request.GET:
+                #request.GET["order_name"]=asc or desc
+                    if request.GET["order_entity"] == "asc":
+                        order = "cluster__cluster_name"
+                        order_entity = "desc"
+                    else:
+                        order = "-cluster__cluster_name"
+                        order_entity = "asc"
+        if select_user != '0' or select_emp != '0':
+            lista = DataContextPermission.objects.filter(Q(user_role__user__pk=int(select_user))|Q(
+                cluster__pk=int(select_emp))).order_by(order)
+        else:
+            lista = DataContextPermission.objects.all().order_by(order)
+        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        template_vars = dict(order_role=order_role, order_username=order_username,
+            order_entity=order_entity, datacontext=datacontext, empresa=empresa,
+            company=company)
+        # Make sure page request is an int. If not, deliver first page.
+        try:
+            page = int(request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+
+        # If page request (9999) is out of range, deliver last page of results.
+        try:
+            pag_user = paginator.page(page)
+        except (EmptyPage, InvalidPage):
+            pag_user = paginator.page(paginator.num_pages)
+
+        template_vars['paginacion']=pag_user
+
+        if 'msj' in request.GET:
+            template_vars['message'] = request.GET['msj']
+            template_vars['msg_type'] = request.GET['ntype']
+
+        users_in_dc = DataContextPermission.objects.all()
+        users_pks = [dc.user_role.user.pk for dc in users_in_dc]
+        template_vars["usuarios"] = User.objects.filter(pk__in=users_pks)
+        company_pks = [dc.company.pk for dc in users_in_dc]
+        template_vars["empresas"] = Company.objects.filter(pk__in=company_pks)
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("rbac/added_data_context.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def delete_data_context(request, id_data_context):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, DELETE, "Eliminar asignaciones de roles a usuarios"):
+        data_c = get_object_or_404(DataContextPermission, pk=id_data_context)
+        data_c.delete()
+        mensaje = "La asignación se ha eliminado correctamente"
+        return HttpResponseRedirect("/panel_de_control/roles_asignados/?msj=" + mensaje +
+                                    "&ntype=n_success")
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def delete_batch_data_context(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, DELETE, "Eliminar asignaciones de roles a usuarios"):
+        if request.method == "GET":
+            raise Http404
+        if request.POST['actions'] == 'delete':
+            for key in request.POST:
+                if re.search('^context_\w+', key):
+                    r_id = int(key.replace("context_",""))
+                    context = get_object_or_404(DataContextPermission, pk=r_id)
+                    context.delete()
+            mensaje = "Las asignaciones roles-usuarios se han dado de baja correctamente"
+            return HttpResponseRedirect("/panel_de_control/roles_asignados/?msj=" + mensaje +
+                                        "&ntype=n_success")
+        else:
+            mensaje = "No se ha seleccionado una acción"
+            return HttpResponseRedirect("/panel_de_control/roles/?msj=" + mensaje +
+                                        "&ntype=n_success")
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
 def search_users(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
     if "term" in request.GET:
         term = request.GET['term']
         usuarios = User.objects.filter(Q(username__icontains=term)|Q(

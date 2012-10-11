@@ -20,16 +20,16 @@ time, mark, audio, video, p, td {
     font-family: 'Droid Sans', Helvetica, sans-serif !important;
     text-decoration: none;
 }
-#visualization{
+#chart{
     display: block;
     margin: 0 auto;
 }
-#visualization a{
+#chart a{
     font-size: 14px;
     line-height: 150%;
     color: #909aa2 !important;
 }
-#visualization a:hover{
+#chart a:hover{
     color: #505e68 !important;
 }
 h1#title_lb{
@@ -44,4 +44,23 @@ h1#title_lb span{
 }
 #notice{
     font-size: 12px !important;
+}
+#list{
+    display: none;
+}
+a.consumer_unit{
+    width: 100%;
+    display: block;
+    height: 100%;
+    background: url(../images/imgs_icns/consumer_unit_icon.png) 50% 50% no-repeat;
+}
+.jOrgChart table{
+    margin: 0 auto;
+}
+.jOrgChart .node{
+    background: #fafafa;
+    border: solid 2px #869baf;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
 }

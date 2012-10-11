@@ -233,6 +233,9 @@
 #user_img,#user_data{
     color: #6e6e6e;
 }
+#user_data{
+    width: 50%;
+}
 #user_data p{
     margin: 5px 0;
 }

@@ -140,6 +140,29 @@ label span{
 .ui-state-default:hover{
     background: #a3d892 !important;
 }
+.ui-state-hover{
+    background: #c2e3ec !important;
+}
 #dob{
     text-align: center;
+}
+#asign .selector{
+    margin-left: 7px;
+    width: 500px;
+}
+#asign .selector span{
+    width: 467px;
+}
+#asign .selector select{
+    width: 500px;
+}
+#asign div.fields_row{
+    margin: 4px 0;
+}
+input.user_role{
+    margin-left: 10px;
+    width: 489px;
+}
+p.descripcion{
+    width: 77%;
 }

@@ -1,7 +1,9 @@
 from decimal import Decimal
 import decimal
+from decimal import InvalidOperation
 import random
 import string
+import re
 from urlparse import urlparse
 from django.core.validators import email_re
 
@@ -48,6 +50,15 @@ def validate_url(url):
     else:
         return False
 
+
+def validate_string(string):
+    arePat = re.compile(r'[^\w\s]', re.UNICODE)
+    string_arr = string.split(" ")
+    for i in string_arr:
+        if i == "" or arePat.search(i):
+            return False
+    return True
+
 def unique_from_array(array):
     #returns an array with unique values
     #ej. [1,1,2,3,3,,1] regresa [1,2,3]
@@ -59,20 +70,20 @@ def unique_from_array(array):
 
     return u
 
-def get_post_data(request):
+def get_post_data(post):
     """
     cleans the POST data, turns the strings into str(),
     and the numbers into long or float
     """
     datos_post={}
-    for postdata in request.POST:
+    for postdata in post:
         #print str(postdata)
-        dato=request.POST[str(postdata)].strip()
+        dato=post[str(postdata)].strip()
 
         try:
             dato=Decimal(dato)
         except InvalidOperation:
-            datos_post[str(postdata)]=request.POST[str(postdata)]
+            datos_post[str(postdata)]=post[str(postdata)]
         else:
             if(dato%1 == 0): #si es un numero entero
                 datos_post[str(postdata)]=long(dato)

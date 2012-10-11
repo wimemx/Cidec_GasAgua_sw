@@ -2,6 +2,17 @@
 from django.db import models
 from location.models import Region
 # Create your models here.
+
+class ElectricRates(models.Model):
+    """Catalogo de tarifas electricas"""
+    electric_rate_name = models.CharField(max_length=128)
+    description = models.CharField(max_length=256)
+
+    def __unicode__(self):
+        return self.electric_rate_name
+    class Meta:
+        verbose_name_plural = "Electric Rates"
+
 class DateIntervals(models.Model):
     """ Intelvalo de Fechas de cobro
 
@@ -11,6 +22,7 @@ class DateIntervals(models.Model):
     interval_identifier = models.CharField("Identificador", max_length=128)
     date_init = models.DateField()
     date_end = models.DateField()
+    electric_rate = models.ForeignKey(ElectricRates, on_delete=models.PROTECT, default=1)
 
     def __unicode__(self):
         return self.interval_identifier + "(" + str(self.date_init) + \
@@ -46,15 +58,6 @@ class Holydays(models.Model):
     class Meta:
         verbose_name_plural = "Holydays"
 
-class ElectricRates(models.Model):
-    """Catalogo de tarifas electricas"""
-    electric_rate_name = models.CharField(max_length=128)
-    description = models.CharField(max_length=256)
-
-    def __unicode__(self):
-        return self.electric_rate_name
-    class Meta:
-        verbose_name_plural = "Electric Rates"
 
 class ElectricRatesDetail(models.Model):
     """Cuotas aplicables a las tarifa por periodo"""
@@ -95,6 +98,21 @@ class ElectricRatesPeriods(models.Model):
 
     def __unicode__(self):
         return self.electric_rate.electric_rate_name + " - " + \
-               self.region.date_interval
+               str(self.date_interval)
     class Meta:
         verbose_name_plural = "Electric Rates Periods"
+
+class DACElectricRateDetail(models.Model):
+    region = models.ForeignKey(Region, on_delete=models.PROTECT, null=True, blank=True)
+    date_interval = models.ForeignKey(DateIntervals, on_delete=models.PROTECT, verbose_name="Periodo", null=True, blank=True)
+    month_rate = models.DecimalField(u"Cargo mensual", max_digits=12, decimal_places=6)
+    kwh_rate = models.DecimalField(u"Cargo por kilowatt - hora", max_digits=12, decimal_places=6)
+    date_init = models.DateField("Fecha de Inicio")
+    date_end = models.DateField("Fecha de Fin")
+
+    def __unicode__(self):
+        return "Cuota Aplicable para la region " + self.region.region_name +\
+               " del " + str(self.date_init) + " al " + str(self.date_end)
+
+    class Meta:
+        verbose_name_plural = "Dac Electric Rate Detail"

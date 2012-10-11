@@ -16,6 +16,11 @@ urlpatterns = patterns('',
     url(r'^roles/', 'rbac.views.view_roles'),
     url(r'^usuarios/', 'rbac.views.view_users'),
     url(r'^asignar_roles/', 'rbac.views.add_data_context_permissions'),
+    url(r'^roles_asignados/', 'rbac.views.added_data_context_permissions'),
+    url(r'^eliminar_asignacion_rol/(?P<id_data_context>\d+)/', 'rbac.views.delete_data_context'),
+    url(r'^delete_batch_datacontext/$', 'rbac.views.delete_batch_data_context'),
+
+
     url(r'^search_users/', 'rbac.views.search_users'),
     url(r'^get_group/(?P<id_operation>\d+)', 'rbac.views.get_select_group'),
     url(r'^get_object/(?P<id_group>\d+)', 'rbac.views.get_select_object'),
