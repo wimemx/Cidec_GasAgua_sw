@@ -21,7 +21,9 @@
     <script type="text/javascript" src="/static/js/external/jqueryUniform/jquery.uniform.min.js"></script>
     {% block externaljs %}{% endblock %}
     <script type="text/javascript">
+
         $(document).ready(function(){
+
             Date.prototype.addDays = function (n) {
                 this.setDate(this.getDate() + n);
                 this.tempDate = this.getDate();
@@ -39,6 +41,11 @@
                             ;
                 });
             };
+            $("#salir").click(function(e){
+                e.preventDefault();
+                history.replaceState({}, '', '/');
+                window.location = "/logout/";
+            });
             $("select, input, input:checkbox, input:radio, input:file, textarea").uniform();
             $("#nav_toggle").click(function(){
                 //maneja el evento de colapsar o mostrar la barra de navegacion

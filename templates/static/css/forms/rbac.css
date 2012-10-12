@@ -260,3 +260,12 @@
     display: inline-block;
 
 }
+#basic_rol_info label.input{
+    position: relative;
+    width: 94%;
+}
+label.input span.incorrect,label.input span.correct{
+    position: absolute;
+    right: -34px;
+    top: 10px;
+}

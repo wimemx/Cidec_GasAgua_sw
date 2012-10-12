@@ -62,6 +62,13 @@
             $("#aplicar").click(function(e){
                 e.preventDefault();
                 if($("#actions").val()!="0"){
+                    var check = false;
+                    $("tbody input:checkbox").each(function(){
+                        if($(this).is(":checked")){
+                            check = true;
+                        }
+                    });
+                    if(check){
                     new Messi('&iquest;Est&aacute; seguro de que desea eliminar los usuarios' +
                             'seleccionados?',
                             {title: 'Eliminar usuarios', modal: true, buttons: [{id: 0,
@@ -72,6 +79,7 @@
                                         document.forms["operations_batch"].submit();
                                     } else return false; }
                             });
+                    }
                 }else{
                     return false;
                 }

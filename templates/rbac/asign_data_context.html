@@ -18,7 +18,15 @@
                     $("#usuario").val(ui.item.pk);
                     $("#asign").show();
                 }
-            });
+            }).keyup(function(){
+                        if($.trim($(this).val())==''){
+                            $("#usuario").val();
+                            $("#asign").hide();
+                            $("#empresas").html("");
+                            $("#edificios").html("");
+                            $("#partes").html("");
+                        }
+                    });
 
             $("#cluster").change(function(){
                 if($(this).val() != "0"){
@@ -137,7 +145,7 @@
         <ul>
             <li><a href="/main/">Inicio</a></li>
             <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
-            <li><a href="/panel_de_control/roles/">Roles</a></li>
+            <li><a href="/panel_de_control/roles_asignados/">privilegios asignados</a></li>
             <li>Asignaci&oacute;n de privilegios</li>
 
 

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block titulo %}
-    {% if operation == "edit" %}Editar{% else %}Crear nuevo{% endif %}usuario
+    {% if operation == "edit" %}Editar{% else %}Crear nuevo{% endif %} usuario
 {% endblock %}
 {% block externalcss %}
     <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
@@ -9,11 +9,15 @@
 {% endblock %}
 {% block externaljs %}
     <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/external/maskedinput.js"></script>
     <script type="text/javascript">
     var form_valid = true;
         $(document).ready(function(){
             $("#username").focus();
-            $( "#dob" ).datepicker({ monthNames: ["Enero","Febrero","Marzo","Abril","Mayo",
+
+            $("#tel_o, #tel_m").mask("(999) 999-9999");
+
+            $( "#dob" ).mask("99-99-9999").datepicker({ monthNames: ["Enero","Febrero","Marzo","Abril","Mayo",
                 "Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"],
                                      dateFormat: "dd-mm-yy"});
             $(".required").each(function(){
@@ -21,6 +25,7 @@
                     var _span;
 
                     var valor = $.trim(e.delegateTarget.value);
+
 
                     if(valor==''){
                         _span = "incorrect";
@@ -30,7 +35,7 @@
                         form_valid = true;
                     }
                     if (e.delegateTarget.id == "pass1"){
-                        if (e.delegateTarget.length < 8){
+                        if (e.delegateTarget.value.length < 8){
                             _span = "incorrect";
                             form_valid = false;
                         }else{
@@ -48,8 +53,20 @@
                             pass1.next().removeClass("correct");
                             pass1.next().addClass(_span);
                         }else{
+                            if (valor !=''){
+                                _span = "correct";
+                                form_valid = true;
+                            }
+
+                        }
+                    }
+                    if (e.delegateTarget.id == "mail"){
+                        if(isValidEmailAddress(e.delegateTarget.value)){
                             _span = "correct";
                             form_valid = true;
+                        }else{
+                            _span = "incorrect";
+                            form_valid = false;
                         }
                     }
 
@@ -64,8 +81,23 @@
             });
         });
     function validate_form(){
-        if (form_valid){
+        form_valid= true;
+
             var _span;
+
+
+            if($.trim($("#dob").val()) == ''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                _span = "correct";
+            }
+            $("#dob").next().removeClass("incorrect");
+            $("#dob").next().removeClass("correct");
+            $("#dob").next().addClass(_span);
+
+
+
             var username = $("#username");
             if($.trim(username.val())==''){
                 _span = "incorrect";
@@ -79,17 +111,21 @@
             {% if operation != "edit" %}
             var pass1 = $("#pass1");
             var pass2 = $("#pass2");
+            {% if operation != "edit" %}
             if (pass1.val().length < 8){
                 _span = "incorrect";
                 form_valid = false;
             }else{
+            {% endif %}
                 if(pass1.val() != pass2.val()){
                     _span = "incorrect";
                     form_valid = false;
                 }else{
                     _span = "correct";
                 }
+            {% if operation != "edit" %}
             }
+            {% endif %}
             pass1.next().removeClass("incorrect");
             pass1.next().removeClass("correct");
             pass1.next().addClass(_span);
@@ -134,9 +170,10 @@
             mail.next().removeClass("correct");
             mail.next().addClass(_span);
 
-        }
 
-        return form_valid
+
+
+        return form_valid;
     }
     </script>
 {% endblock %}
@@ -163,7 +200,7 @@
     </div>
     <div id="contenido_interno">
         <h2 id="titulo_form" class="user_role">
-            {% if operation == "edit" %}Editar{% else %}Crear nuevo{% endif %}usuario
+            {% if operation == "edit" %}Editar{% else %}Crear nuevo{% endif %} usuario
         </h2>
 
 
@@ -260,11 +297,12 @@
                         </label>
                     </div>
                     <div class="fields_row g12">
-                        <label for="dob" class="g2">Fecha de Nacimiento</label>
+                        <label for="dob" class="g2">Fecha de Nacimiento<span class="required">*</span></label>
                         <input type="text" name="dob" id="dob" class="g2"
                                {% if operation == "edit" %}value="{{ post.dob|date:"d-m-Y" }}"
                                {% else %}value="{{ post.dob }}"
                                {% endif %}/>
+                        <span></span>
                     </div>
                     <div class="fields_row g12">
                         <label for="tel_o" class="g2">Tel&eacute;fono Oficina</label>

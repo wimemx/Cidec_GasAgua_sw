@@ -181,6 +181,16 @@ def edit_role(request, id_role):
         ntype = ""
         mensaje = ""
         if request.method == "POST":
+            valid = True
+            if not variety.validate_string(request.POST['role_name']):
+                valid = False
+            if not variety.validate_string(request.POST['role_desc']):
+                valid = False
+
+            if valid:
+                rol.role_name = request.POST['role_name']
+                rol.role_description = request.POST['role_desc']
+                rol.save()
             asignation = False
             ids_ver = []
             ids_crear = []
@@ -253,6 +263,7 @@ def edit_role(request, id_role):
                 else:
                     objs[key] = [gp.group_object.object,]
             arr_ops=[]
+
             for key in objs:
                 key_split = key.split("-")
                 operacion = key_split[0]
@@ -453,6 +464,69 @@ def get_select_object(request, id_group):
     else:
         raise Http404
 
+def validate_user(post):
+
+    data={}
+    if variety.validate_string(post['username']):
+        data['username'] = post['username'].strip()
+    else:
+        return False
+
+    if variety.validate_string(post['name']):
+        if not re.search("\d", post['name']):
+            data['name'] = post['name'].strip()
+        else:
+            return False
+    else:
+        return False
+
+    if variety.validate_string(post['last_name']):
+            if not re.search("\d", post['last_name']):
+                data['last_name'] = post['last_name'].strip()
+            else:
+                return False
+    else:
+        return False
+
+    if post['surname']:
+        if variety.validate_string(post['surname']):
+            if not re.search("\d", post['surname']):
+                data['surname'] = post['surname'].strip()
+            else:
+                return False
+        else:
+            return False
+    else:
+        data['surname'] = ''
+
+    if variety.is_valid_email(post['mail']):
+        data['mail'] = post['mail']
+    else:
+        return False
+
+    if post['dob']:
+        try:
+            fnac = post['dob'].split("-")
+            data['fnac'] = date(int(fnac[2]), int(fnac[1]), int(fnac[0]))
+        except IndexError, ValueError:
+            return False
+    else:
+        return False
+
+    if post['pass1']:
+        if post['pass1'] == post['pass2']:
+            data['pass'] = post['pass1']
+        else:
+            return False
+    else:
+        data['pass'] = False
+
+    return data
+
+
+
+
+
 def add_user(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
@@ -464,72 +538,63 @@ def add_user(request):
             empresa=empresa, company=company
         )
         if request.method == "POST":
-            template_vars["post"] = request.POST
-            username = request.POST.get('username')
-            name = request.POST.get('name')
-            lname = request.POST.get('last_name')
-            email = request.POST.get('mail')
-            password = request.POST.get('pass1')
-            confirm_pass = request.POST.get('pass2')
-            dat_o_b = request.POST.get('dob')
 
-            if password == confirm_pass and variety.is_valid_email(email) and username and dat_o_b:
-                fnac = dat_o_b.split("-")#03-10-2012
-                try:
-                    fnac = date(int(fnac[2]), int(fnac[1]), int(fnac[0]))
-                except IndexError:
-                    template_vars["message"] = "Hay un error en la fecha de nacimiento, " \
-                                               "por favor verifique sus datos"
+            post=variety.get_post_data(request.POST)
+            template_vars["post"] = post
+            valid = validate_user(post)
+
+            if valid:
+
+                age = int((date.today() - valid['fnac']).days/365.25)
+
+                if age < 18:
+                    template_vars["message"] = "El usuario debe de ser mayor de 18 "\
+                                               "a&ntilde;os"
+                    template_vars["type"] = "n_notif"
+                elif age > 90:
+                    template_vars["message"] = "Edad incorrecta, por favor revise la fecha " \
+                                               "de nacimiento"
                     template_vars["type"] = "n_notif"
                 else:
-                    age = int((date.today() - fnac).days/365.25)
-
-                    if age < 18:
-                        template_vars["message"] = "El usuario debe de ser mayor de 18 "\
-                                                   "a&ntilde;os"
-                        template_vars["type"] = "n_notif"
-                    elif age > 90:
-                        template_vars["message"] = "Edad incorrecta"
+                    try:
+                        newUser = User.objects.create_user(valid['username'],valid['mail'],valid['pass'])
+                    except IntegrityError:
+                        template_vars["message"] = "El nombre de usuario ya existe, "\
+                                                   "por favor elija otro e intente de nuevo"
                         template_vars["type"] = "n_notif"
                     else:
-                        try:
-                            newUser = User.objects.create_user(username,email,password)
-                        except IntegrityError:
-                            template_vars["message"] = "El nombre de usuario ya existe, " \
-                                                       "por favor elija otro e intente de nuevo"
-                            template_vars["type"] = "n_notif"
-                        else:
-                            newUser.first_name = name
-                            newUser.last_name = lname
-                            newUser.is_staff = False
-                            newUser.is_active = True
-                            newUser.is_superuser = False
-                            newUser.save()
+                        newUser.first_name = valid['name']
+                        newUser.last_name = valid['last_name']
+                        newUser.is_staff = False
+                        newUser.is_active = True
+                        newUser.is_superuser = False
+                        newUser.save()
 
-                            ExtendedUser(
-                                user = newUser,
-                                user_activation_key = variety.random_string_generator(size=10)
-                            ).save()
-                            UserProfile(
-                                user = newUser,
-                                user_profile_surname_mother = request.POST['surname'],
-                                user_profile_birth_dates = fnac,
-                                user_profile_sex = request.POST['sex'],
-                                user_profile_office_phone1 = request.POST['tel_o'],
-                                user_profile_mobile_phone = request.POST['tel_m'],
-                                user_profile_contact_email = email
-                                ).save()
+                        ExtendedUser(
+                            user = newUser,
+                            user_activation_key = variety.random_string_generator(size=10)
+                        ).save()
+                        UserProfile(
+                            user = newUser,
+                            user_profile_surname_mother = valid['surname'],
+                            user_profile_birth_dates = valid['fnac'],
+                            user_profile_sex = request.POST['sex'],
+                            user_profile_office_phone1 = request.POST['tel_o'],
+                            user_profile_mobile_phone = request.POST['tel_m'],
+                            user_profile_contact_email = valid['mail']
+                        ).save()
 
-                            template_vars["message"] = "Usuario creado exitosamente"
-                            template_vars["type"] = "n_success"
-                            if has_permission(request.user, VIEW, "Ver usuarios"):
-                                return HttpResponseRedirect("/panel_de_control/usuarios?msj=" +
-                                                            template_vars["message"] +
-                                                            "&ntype=n_success")
+                        template_vars["message"] = "Usuario creado exitosamente"
+                        template_vars["type"] = "n_success"
+                        if has_permission(request.user, VIEW, "Ver usuarios"):
+                            return HttpResponseRedirect("/panel_de_control/usuarios?msj=" +
+                                                        template_vars["message"] +
+                                                        "&ntype=n_success")
             else:
-                template_vars["message"] = "Error en la validaci&oacute;n del formulario, " \
-                          "revise los campos por favor"
-                template_vars["type"] = "n_error"
+                template_vars["message"] = "Ha ocurrido un error al validar los datos por " \
+                                           "favor revise que no haya caracteres inv&aacute;lidos"
+                template_vars["type"] = "n_notif"
+
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("rbac/add_user.html", template_vars_template)
     else:
@@ -650,64 +715,51 @@ def edit_user(request, id_user):
         type = ''
 
         if request.method == "POST":
-            post = request.POST
-            username = request.POST.get('username')
-            name = request.POST.get('name')
-            lname = request.POST.get('last_name')
-            email = request.POST.get('mail')
-            password = request.POST.get('pass1')
-            confirm_pass = request.POST.get('pass2')
-            dat_o_b = request.POST.get('dob')
-            password_ = True
-            if password != '':
-                if password != confirm_pass:
-                    message = "Las contraseñas no coinciden"
+            post=variety.get_post_data(request.POST)
+
+            valid = validate_user(post)
+
+
+            if valid:
+                print "valida"
+
+                age = int((date.today() - valid['fnac']).days/365.25)
+
+                if age < 18:
+                    message = "El usuario debe de ser mayor de 18 "\
+                                               "a&ntilde;os"
                     type = "n_notif"
-                    password_ = False
-
-
-            if password_ and variety.is_valid_email(email) and username and dat_o_b:
-                fnac = dat_o_b.split("-")#03-10-2012
-                try:
-                    fnac = date(int(fnac[2]), int(fnac[1]), int(fnac[0]))
-                except IndexError:
-                    message = "Hay un error en la fecha de nacimiento, "\
-                                               "por favor verifique sus datos"
+                elif age > 90:
+                    message = "Edad incorrecta, por favor revise la fecha "\
+                                               "de nacimiento"
                     type = "n_notif"
                 else:
-                    age = int((date.today() - fnac).days/365.25)
-
-                    if age < 18:
-                        message = "El usuario debe de ser mayor de 18 "\
-                                                   "a&ntilde;os"
-                        type = "n_notif"
-                    elif age > 90:
-                        message = "Edad incorrecta"
-                        type = "n_notif"
-                    else:
-                        #update user
-                        if password:
-                            user.set_password(password)
-                            user.save()
-                        user.first_name = name
-                        user.last_name = lname
-                        user.email = email
+                    #update user
+                    if valid['pass']:
+                        user.set_password(password)
                         user.save()
-                        profile.user_profile_surname_mother = request.POST['surname']
-                        profile.user_profile_birth_dates = fnac
-                        profile.user_profile_sex = request.POST['sex']
-                        profile.user_profile_office_phone1 = request.POST['tel_o']
-                        profile.user_profile_mobile_phone = request.POST['tel_m']
-                        profile.user_profile_contact_email = email
-                        profile.save()
+                    user.first_name = valid['name']
+                    user.last_name = valid['last_name']
+                    user.email = valid['mail']
+                    user.save()
+                    profile.user_profile_surname_mother = valid['surname']
+                    profile.user_profile_birth_dates = valid['fnac']
+                    profile.user_profile_sex = request.POST['sex']
+                    profile.user_profile_office_phone1 = request.POST['tel_o']
+                    profile.user_profile_mobile_phone = request.POST['tel_m']
+                    profile.user_profile_contact_email = valid['mail']
+                    profile.save()
 
-                        message = "Usuario creado exitosamente"
-                        type = "n_success"
-                        if has_permission(request.user, VIEW, "Ver usuarios"):
-                            return HttpResponseRedirect("/panel_de_control/usuarios?msj=" +
-                                                        message +
-                                                        "&ntype=n_success")
-
+                    message = "Usuario editado exitosamente"
+                    type = "n_success"
+                    if has_permission(request.user, VIEW, "Ver usuarios"):
+                        return HttpResponseRedirect("/panel_de_control/usuarios?msj=" +
+                                                    message +
+                                                    "&ntype=n_success")
+            else:
+                message = "Ha ocurrido un error al validar los datos por "\
+                          "favor revise que no haya caracteres inv&aacute;lidos"
+                type = "n_notif"
 
         template_vars = dict(datacontext=datacontext,
             empresa=empresa,

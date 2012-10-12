@@ -31,7 +31,11 @@
                 {% if profile.user_profile_image %}
                     <img src="/media/usuarios/{{ user1.pk }}/{{ profile.user_profile_image }}" alt="{{ user1.username }}"/>
                 {% else %}
-                    <img src="/static/css/images/imgs_icns/place_holder_user.png" alt="{{ user1.username }}"/>
+                    {% if profile.user_profile_sex == "M" %}
+                        <img src="/static/css/images/imgs_icns/place_holder_user.png" alt="{{ user1.username }}"/>
+                    {% else %}
+                        <img src="/static/css/images/imgs_icns/place_holder_user_f.png" alt="{{ user1.username }}"/>
+                    {% endif %}
                 {% endif %}
             </div>
             <div id="user_data" class="fl">

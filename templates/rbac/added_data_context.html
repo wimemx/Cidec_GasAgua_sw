@@ -69,6 +69,13 @@
             $("#aplicar").click(function(e){
                 e.preventDefault();
                 if($("#actions").val()!="0"){
+                    var check = false;
+                    $("tbody input:checkbox").each(function(){
+                        if($(this).is(":checked")){
+                            check = true;
+                        }
+                    });
+                    if(check){
                     new Messi('&iquest;Est&aacute; seguro de que desea eliminar las asignaciones rol-usuario seleccionados?',
                             {title: 'Eliminar usuarios', modal: true, buttons: [{id: 0,
                                 label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
@@ -78,6 +85,7 @@
                                         document.forms["operations_batch"].submit();
                                     } else return false; }
                             });
+                    }
                 }else{
                     return false;
                 }
@@ -247,9 +255,9 @@
                                         <input type="checkbox" id="context_{{ data_context.pk }}"
                                                name="context_{{ data_context.pk }}"/>
                                         <label for="context_{{ data_context.pk }}">
-                                            <a href="/panel_de_control/ver_asignacion_rol/{{ data_context.pk }}/">
+
                                                 {{ data_context.user_role.user.username }}
-                                            </a>
+
                                         </label>
                                     </td>
                                     <td class="c">
@@ -258,9 +266,9 @@
                                         </a>
                                     </td>
                                     <td class="c">
-                                        <a href="/panel_de_control/ver_asignacion_rol/{{ data_context.pk }}/">
+
                                             {{ data_context.building.building_name }}
-                                        </a>
+
                                     </td>
                                     <td class="c">
                                         <a class="del" rel="{{ data_context.pk }}"

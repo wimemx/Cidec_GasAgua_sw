@@ -138,7 +138,7 @@ def index(request):
 
 def logout_page(request):
     logout(request)
-    return HttpResponseRedirect('/')
+    return HttpResponseRedirect('/main/?logout')
 
 def changedate(key):
     """

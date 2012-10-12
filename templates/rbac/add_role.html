@@ -31,16 +31,18 @@
             $("#add_permission").click(function(e){
                 e.preventDefault();
                 var rol = $("#role_name");
-                if(rol.val() != ''){
+                if($.trim(rol.val()) != ''){
+                    rol.val($.trim(rol.val()));
                     $("#basic_rol_info").hide();
                     $("#rolename").text(rol.val());
                     $("#role_description").text($("#role_desc").val());
                     $("#add_permissions").show();
-                    if(rol.parent().hasClass("error")){
-                        rol.parent().removeClass("error");
+                    if(rol.parent().find("span.g1").hasClass("incorrect")){
+                        rol.parent().find("span.g1").removeClass("incorrect");
+                        rol.parent().find("span.g1").addClass("correct");
                     }
                 }else{
-                    rol.parent().addClass("error");
+                    rol.parent().find("span.g1").addClass("incorrect");
                 }
             });
             $(".edit").click(function(e){
@@ -54,7 +56,11 @@
             $("#group").click(function(){
                 $(this).find("ul.ddl").slideToggle();
             });
+            $("#object .legend").click(function(){
+                $(this).parent().find("ul.ddl").slideToggle();
+            });
             $("#operation_list li").click(function(){
+                $("#group_list, #object_list").html("").hide();
                 var elemento = $(this);
                 $("#operation span").text(elemento.text());
                 elemento.parent().slideUp().stop();
@@ -65,6 +71,7 @@
 
 
                     $("#group_list li").click(function(){
+                        $("#object_list").html("").hide();
                         var elemento = $(this);
                         $("#group span").text(elemento.text());
                         elemento.parent().slideUp().stop();
@@ -251,7 +258,9 @@
                         <span>Nombre del rol</span>
                         <input type="text" name="role_name" id="role_name"
                                 value="{{  post.role_name }}"/>
+                        <span class="g1"></span>
                     </label>
+
                     <label class="input">
                         <span>Descripcion del rol</span>
                         <input type="text" name="role_desc" id="role_desc" value="{{  post.role_desc }}"/>
@@ -274,7 +283,7 @@
                     <div id="add_another_perm">
                         <div class="widgetField" id="operation">
                             <span class="legend">Operaci&oacute;n</span>
-                            <a href="#">&nbsp;</a>
+                            <a href="#"></a>
                             <ul id="operation_list" class="ddl">
                                 {% for operation in operations %}
                                     <li rel="{{ operation.pk }}">
@@ -286,7 +295,7 @@
 
                         <div class="widgetField" id="group">
                             <span class="legend">Grupo</span>
-                            <a href="#">&nbsp;</a>
+                            <a href="#"></a>
                             <ul id="group_list" class="ddl">
                                 <li></li>
                             </ul>
@@ -294,7 +303,7 @@
 
                         <div class="widgetField" id="object">
                             <span class="legend">Privilegio</span>
-                            <a href="#">&nbsp;</a>
+                            <a href="#"></a>
                             <ul id="object_list" class="ddl">
                                 <li>
                                     <label>
