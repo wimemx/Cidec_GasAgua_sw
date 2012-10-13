@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block titulo %}Ver Empresa{% endblock %}
+
+{% block externalcss %}
+<link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
+<link rel="stylesheet" href="/static/css/forms/rbac.css" type="text/css">
+<link rel="stylesheet" href="/static/css/forms/c_centers.css" type="text/css">
+
+{% endblock %}
+
+
+
+{% block contenido %}
+<div id="bread_crumbs">
+    <ul>
+        <li><a href="/main/">Inicio</a></li>
+        <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
+        <li><a href="/buildings/empresas/">Empresas</a></li>
+        <li>Ver empresa</li>
+    </ul>
+
+</div>
+<div id="contenido_interno" class="card">
+    <h2 id="titulo_form" class="company">
+        Empresa
+    </h2>
+
+
+    <div class="divider" id="divider_top">&nbsp;</div>
+    <div id="card_container">
+        <div id="user_img" class="fl">
+            {% if company.company.company_logo %}
+            <img src="/static/media/company_logos/company_{{company.company.pk}}/{{company.company.company_logo}}" alt="{{company.company.company_name}}_logo">
+            {% else %}
+            <img src="/static/css/images/imgs_icns/place_holder_user.png" alt="{{ user1.username }}"/>
+            {%endif%}
+        </div>
+        <div id="user_data" class="fl">
+            <p>
+                <span class="strong label">Nombre:</span>
+                {{ company.company.company_name }}
+            </p>
+            <p>
+                <span class="strong label">Descripción:</span>
+                {{ company.company.company_description }}
+            </p>
+
+            <p>
+                <span class="strong label">Grupo de Empresas:</span>
+                {{ company.cluster.cluster_name }}
+            </p>
+
+            <p>
+                <span class="strong label">Sector:</span>
+                {{ company.company.sectoral_type.sectorial_type_name }}
+            </p>
+
+
+            <a href="/buildings/empresas/" id="go_back">Volver al listado</a>
+        </div>
+
+    </div>
+
+
+</div>
+{% endblock %}

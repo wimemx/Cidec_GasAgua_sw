@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block titulo %}Ver Medidor{% endblock %}
+
+{% block externalcss %}
+<link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
+<link rel="stylesheet" href="/static/css/forms/rbac.css" type="text/css">
+<link rel="stylesheet" href="/static/css/forms/c_centers.css" type="text/css">
+
+{% endblock %}
+
+
+
+{% block contenido %}
+<div id="bread_crumbs">
+    <ul>
+        <li><a href="/main/">Inicio</a></li>
+        <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
+        <li><a href="/buildings/medidores/">Medidores</a></li>
+        <li>Ver Medidor</li>
+    </ul>
+
+</div>
+<div id="contenido_interno" class="card">
+    <h2 id="titulo_form" class="powermeter">
+        Medidor
+    </h2>
+
+
+    <div class="divider" id="divider_top">&nbsp;</div>
+    <div id="card_container">
+        <div id="user_img" class="fl">
+            <img src="/static/css/images/imgs_icns/place_holder_user.png" alt="Medidor"/>
+        </div>
+        <div id="user_data" class="fl">
+            <p>
+                <span class="strong label">Medidor:</span>
+                {{ powermeter.powermeter_anotation }}
+            </p>
+            <p>
+                <span class="strong label">Modelo:</span>
+                {{ powermeter.powermeter_model.powermeter_brand }} - {{ powermeter.powermeter_model.powermeter_model }}
+            </p>
+
+            <p>
+                <span class="strong label">Número de serie:</span>
+                {{ powermeter.powermeter_serial }}
+            </p>
+
+            <p>
+                <span class="strong label">Estado:</span>
+                {% if powermeter.status == 1 %}
+                    Activo
+                {% else %}
+                    Inactivo
+                {% endif %}
+            </p>
+            <p>
+                <span class="strong label">Instalado en:</span>
+                <a href="#">{{ location }}</a>
+            </p>
+
+
+            <a href="/buildings/medidores/" id="go_back">Volver al listado</a>
+        </div>
+
+    </div>
+
+
+</div>
+{% endblock %}

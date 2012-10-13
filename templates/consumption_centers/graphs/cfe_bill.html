@@ -33,108 +33,147 @@
 <h4>Estado de Cuenta</h4>
 <div id="left_col" class="fl inner_col">
 
+    {% if tipo_tarifa.pk == 1 %}
     <div id="sumary">
+        <span class="l">Periodo</span>
+        <span class="r">{{ resultados.periodo }}</span>
         <span class="l">Energ&iacute;a</span>
-        <span class="r">${{ tarifaHM.costo_energia|floatformat:2 }}</span>
+        <span class="r">${{ resultados.costo_energia|floatformat:2 }}</span>
         <span class="l">Demanda Facturable</span>
-        <span class="r">${{ tarifaHM.costo_dfacturable|floatformat:2 }}</span>
+        <span class="r">${{ resultados.costo_dfacturable|floatformat:2 }}</span>
         <span class="l">Bonificaci&oacute;n Factor de Potencia</span>
-        <span class="r">${{ tarifaHM.costo_fpotencia|floatformat:2 }}</span>
+        <span class="r">${{ resultados.costo_fpotencia|floatformat:2 }}</span>
         <span class="l">Sub Total</span>
-        <span class="r">${{ tarifaHM.subtotal|floatformat:2 }}</span>
+        <span class="r">${{ resultados.subtotal|floatformat:2 }}</span>
         <span class="l">IVA 16%</span>
-        <span class="r">${{ tarifaHM.iva|floatformat:2 }}</span>
+        <span class="r">${{ resultados.iva|floatformat:2 }}</span>
         <span class="l">Total</span>
-        <span class="r total">${{ tarifaHM.total|floatformat:2 }}</span>
+        <span class="r total">${{ resultados.total|floatformat:2 }}</span>
     </div>
+    {% elif tipo_tarifa.pk = 2 %}
+    <div id="sumary">
+        <span class="l">Periodo</span>
+        <span class="r">{{ resultados.periodo }}</span>
+        <span class="l">Energ&iacute;a</span>
+        <span class="r">${{ resultados.costo_energia|floatformat:2 }}</span>
+        <span class="l">IVA 16%</span>
+        <span class="r">${{ resultados.iva|floatformat:2 }}</span>
+        <span class="l">Total</span>
+        <span class="r total">${{ resultados.total|floatformat:2 }}</span>
+    </div>
+    {% endif %}
 
-    {% if totales_meses  %}
-        {% for tm in totales_meses %}
+    {% if tipo_tarifa.pk == 1 %}
+    <table id="function_period">
+        <thead>
+        <tr>
+            <th class="h82">Funci&oacute;n y Periodo</th>
+            <th class="h18">Totales</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>kWh Base</td>
+            <td>{{ resultados.kwh_base }}</td>
+        </tr>
+        <tr>
+            <td>kWh Intermedia</td>
+            <td>{{ resultados.kwh_intermedio }}</td>
+        </tr>
+        <tr>
+            <td>kWh Punta</td>
+            <td>{{ resultados.kwh_punta }}</td>
+        </tr>
 
-            <table id="function_period">
-                <thead>
-                <tr>
-                    <th class="h82">Funci&oacute;n y Periodo</th>
-                    <th class="h18">Totales</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr>
-                    <td>kWh Base</td>
-                    <td>{{ tm.kwh_base }}</td>
-                </tr>
-                <tr>
-                    <td>kWh Intermedia</td>
-                    <td>{{ tm.kwh_intermedio }}</td>
-                </tr>
-                <tr>
-                    <td>kWh Punta</td>
-                    <td>{{ tm.kwh_punta }}</td>
-                </tr>
+        <tr>
+            <td>kW Base</td>
+            <td>{{ resultados.kw_base }}</td>
+        </tr>
+        <tr>
+            <td>kW Intermedia</td>
+            <td>{{ resultados.kw_intermedio }}</td>
+        </tr>
+        <tr>
+            <td>kW Punta</td>
+            <td>{{ resultados.kw_punta }}</td>
+        </tr>
+        <tr>
+            <td>kVArh</td>
+            <td>{{ resultados.kvarh_totales }}</td>
+        </tr>
+        <tr>
+            <td>Factor de potencia %</td>
+            <td>{{ resultados.factor_potencia|floatformat:2  }}</td>
+        </tr>
+        </tbody>
+    </table>
+    <table id="rates">
+        <thead>
+        <tr>
+            <th>Diferencia</th>
+            <th>Totales</th>
+            <th>Precios Unitarios</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>Energ&iacute;a en base kWh</td>
+            <td>{{ resultados.kwh_base }}</td>
+            <td>{{ resultados.tarifa_kwhb|floatformat:4 }}</td>
 
-                <tr>
-                    <td>kW Base</td>
-                    <td>{{ tm.kw_base }}</td>
-                </tr>
-                <tr>
-                    <td>kW Intermedia</td>
-                    <td>{{ tm.kw_intermedio }}</td>
-                </tr>
-                <tr>
-                    <td>kW Punta</td>
-                    <td>{{ tm.kw_punta }}</td>
-                </tr>
-                <tr>
-                    <td>kVArh</td>
-                    <td>{{ tm.kvarh }}</td>
-                </tr>
-                <tr>
-                    <td>Factor de potencia %</td>
-                    <td>{{ tm.factor_pt|floatformat:2  }}</td>
-                </tr>
-                </tbody>
-            </table>
-            <table id="rates">
-                <thead>
-                <tr>
-                    <th>Diferencia</th>
-                    <th>Totales</th>
-                    <th>Precios Unitarios</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr>
-                    <td>Energ&iacute;a en base kWh</td>
-                    <td>{{ tm.kwh_base }}</td>
-                    <td>{{ tm.tarifa_kwhb|floatformat:4 }}</td>
+        </tr>
+        <tr>
+            <td>Energ&iacute;a en intermedia kWh</td>
+            <td>{{ resultados.kwh_intermedio }}</td>
+            <td>{{ resultados.tarifa_kwhi|floatformat:4 }}</td>
 
-                </tr>
-                <tr>
-                    <td>Energ&iacute;a en intermedia kWh</td>
-                    <td>{{ tm.kwh_intermedio }}</td>
-                    <td>{{ tm.tarifa_kwhi|floatformat:4 }}</td>
+        </tr>
+        <tr>
+            <td>Energ&iacute;a en punta kWh</td>
+            <td>{{ resultados.kwh_punta }}</td>
+            <td>{{ resultados.tarifa_kwhp|floatformat:4 }}</td>
 
-                </tr>
-                <tr>
-                    <td>Energ&iacute;a en punta kWh</td>
-                    <td>{{ tm.kwh_punta }}</td>
-                    <td>{{ tm.tarifa_kwhp|floatformat:4 }}</td>
+        </tr>
+        <tr>
+            <td>Demanda facturable kW</td>
+            <td>{{ resultados.demanda_facturable }}</td>
+            <td>{{ resultados.tarifa_df|floatformat:4 }}</td>
 
-                </tr>
-                <tr>
-                    <td>Demanda facturable kW</td>
-                    <td>{{ tm.demanda_facturable }}</td>
-                    <td>{{ tm.tarifa_df|floatformat:4 }}</td>
-
-                </tr>
-                </tbody>
-            </table>
-        {% endfor %}
+        </tr>
+        </tbody>
+    </table>
+    {% elif tipo_tarifa.pk = 2 %}
+    <table id="function_period">
+        <thead>
+        <tr>
+            <th class="h82">Funci&oacute;n y Periodo</th>
+            <th class="h18">Totales</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>Energía KWH</td>
+            <td>{{ resultados.kwh_totales }}</td>
+        </tr>
+        <tr>
+            <td>Tarifa $/Kwh</td>
+            <td>{{ resultados.tarifa_kwh|floatformat:4 }}</td>
+        </tr>
+        <tr>
+            <td>Importe</td>
+            <td>{{ resultados.importe|floatformat:4 }}</td>
+        </tr>
+        <tr>
+            <td>Cargo Fijo Mensual</td>
+            <td>{{ resultados.tarifa_mes|floatformat:4 }}</td>
+        </tr>
+        </tbody>
+    </table>
     {% endif %}
 </div>
 <div id="right_col" class="fl inner_col">
     <div id="notes">
-        <span>Tarifa:</span><span>HM</span>
+        <span>Tarifa:</span><span>{{tipo_tarifa.electric_rate_name}}</span>
         <span>Carga conectada kW:</span><span>150</span>
         <span>Demanda contratada kW:</span><span>134</span>
         <span>Multiplicador:</span><span>240</span>

@@ -26,7 +26,39 @@ urlpatterns = patterns('',
     url(r'^editar_b_attr/(?P<id_b_attr>\d+)/', 'c_center.views.editar_b_attr'),
     url(r'^ver_b_attr/(?P<id_b_attr>\d+)/', 'c_center.views.ver_b_attr'),
 
+    url(r'^clusters/', 'c_center.views.view_cluster'),
+    url(r'^nuevo_cluster/', 'c_center.views.add_cluster'),
+    url(r'^editar_cluster/(?P<id_cluster>\d+)/', 'c_center.views.edit_cluster'),
+    url(r'^eliminar_cluster/(?P<id_cluster>\d+)', 'c_center.views.delete_cluster'),
+    url(r'^delete_batch_cluster/$', 'c_center.views.delete_batch_cluster'),
+    url(r'^ver_cluster/(?P<id_cluster>\d+)', 'c_center.views.see_cluster'),
 
+    url(r'^alta_modelo_medidor/', 'c_center.views.add_powermetermodel'),
+    url(r'^editar_modelo_medidor/(?P<id_powermetermodel>\d+)/', 'c_center.views.edit_powermetermodel'),
+    url(r'^modelos_medidor/', 'c_center.views.view_powermetermodels'),
+
+    url(r'^alta_medidor/', 'c_center.views.add_powermeter'),
+    url(r'^editar_medidor/(?P<id_powermeter>\d+)/', 'c_center.views.edit_powermeter'),
+    url(r'^medidores/', 'c_center.views.view_powermeter'),
+    url(r'^eliminar_medidor/(?P<id_powermeter>\d+)', 'c_center.views.delete_powermeter'),
+    url(r'^delete_batch_powermeter/$', 'c_center.views.delete_batch_powermeter'),
+    url(r'^status_medidor/(?P<id_powermeter>\d+)', 'c_center.views.status_powermeter'),
+    url(r'^ver_medidor/(?P<id_powermeter>\d+)', 'c_center.views.see_powermeter'),
+
+    url(r'^alta_tipo_equipo_electrico/', 'c_center.views.add_electric_device_type'),
+    url(r'^editar_tipo_equipo_electrico/(?P<id_edt>\d+)/', 'c_center.views.edit_electric_device_type'),
+    url(r'^tipos_equipo_electrico/', 'c_center.views.view_electric_device_type'),
+    url(r'^eliminar_tipo_equipo_electrico/(?P<id_edt>\d+)', 'c_center.views.delete_electric_device_type'),
+    url(r'^delete_batch_electrictypedevice/$', 'c_center.views.delete_batch_electric_device_type'),
+    url(r'^status_tipo_equipo_electrico/(?P<id_edt>\d+)', 'c_center.views.status_electric_device_type'),
+
+    url(r'^alta_empresa/', 'c_center.views.add_company'),
+    url(r'^editar_empresa/(?P<id_cpy>\d+)/', 'c_center.views.edit_company'),
+    url(r'^empresas/', 'c_center.views.view_companies'),
+    url(r'^eliminar_empresa/(?P<id_cpy>\d+)', 'c_center.views.delete_company'),
+    url(r'^delete_batch_companies/$', 'c_center.views.delete_batch_companies'),
+    url(r'^status_empresa/(?P<id_cpy>\d+)', 'c_center.views.status_company'),
+    url(r'^ver_empresa/(?P<id_cpy>\d+)', 'c_center.views.see_company'),
 
 
 )

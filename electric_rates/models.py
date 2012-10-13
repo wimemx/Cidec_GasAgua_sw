@@ -58,7 +58,6 @@ class Holydays(models.Model):
     class Meta:
         verbose_name_plural = "Holydays"
 
-
 class ElectricRatesDetail(models.Model):
     """Cuotas aplicables a las tarifa por periodo"""
     electric_rate = models.ForeignKey(ElectricRates, on_delete=models.PROTECT)

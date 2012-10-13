@@ -12,15 +12,41 @@
             if (typeof pagina == "object") {
                 pagina = "1";
             }
-            var url;
-            url=window.location.href;
-            url=url.split("/");
-            url=url[url.length-1];
-            url=url.replace("#",'');
-            url=url.replace(/&page=\d+/,'');
-            url+="&page="+pagina;
-            window.location = url;
 
+            var base_url = window.location.pathname;
+            base_url+="?page="+pagina;
+            base_url=append_page(base_url);
+            window.location = base_url;
+        }
+        function append_page(base_url){
+            var get = getUrlVars();
+            if(get.length>0){
+                if (get[0]!=window.location.protocol+"//"+window.location
+                        .host+window.location.pathname){
+                    for(var i=0; i<get.length; i++){
+                        if (get[i]!="msg" && get[i]!="ntype" && get[i]!="page"){
+                            base_url+="&"+get[i]+"="+get[get[i]];
+                        }
+                    }
+                }
+
+            }
+            return base_url
+        }
+        function append_get(base_url){
+            var get = getUrlVars();
+            if(get.length>0){
+                if (get[0]!=window.location.protocol+"//"+window.location
+                        .host+window.location.pathname){
+                    for(var i=0; i<get.length; i++){
+                        if (get[i]!="order_username" && get[i]!="order_name" && get[i]!="order_mail"){
+                            base_url+="&"+get[i]+"="+get[get[i]];
+                        }
+                    }
+                }
+
+            }
+            return base_url
         }
     </script>
 {% endblock %}
@@ -92,16 +118,7 @@
 
                 var base_url = window.location.pathname;
                 base_url+="?order_name="+$("#sort_name").attr("rel");
-                if(get.length>0){
-                    if (get[0]!=window.location.protocol+"//"+window.location
-                            .host+window.location.pathname){
-                        for(var i=0; i<get.length; i++){
-                            if (get[i]!="order_username" && get[i]!="order_name" && get[i]!="order_mail"){
-                                base_url+="&"+get[i]+"="+get[get[i]];
-                            }
-                        }
-                    }
-                }
+                base_url=append_get(base_url);
                 window.location = base_url;
             });
             $("#sort_username").click(function(e){
@@ -110,18 +127,7 @@
 
                 var base_url = window.location.pathname;
                 base_url+="?order_username="+$("#sort_username").attr("rel");
-                if(get.length>0){
-                    if (get[0]!=window.location.protocol+"//"+window.location
-                            .host+window.location.pathname){
-                        for(var i=0; i<get.length; i++){
-                            if (get[i]!="order_username" && get[i]!="order_name" && get[i]!="order_mail"){
-                                base_url+="&"+get[i]+"="+get[get[i]];
-                            }
-                        }
-                    }
-
-                }
-
+                base_url=append_get(base_url);
                 window.location = base_url;
             });
             $("#sort_email").click(function(e){
@@ -130,17 +136,7 @@
 
                 var base_url = window.location.pathname;
                 base_url+="?order_mail="+$("#sort_email").attr("rel");
-                if(get.length>0){
-                    if (get[0]!=window.location.protocol+"//"+window.location
-                            .host+window.location.pathname){
-                        for(var i=0; i<get.length; i++){
-                            if (get[i]!="order_username" && get[i]!="order_name" && get[i]!="order_mail"){
-                                base_url+="&"+get[i]+"="+get[get[i]];
-                            }
-                        }
-                    }
-                }
-
+                base_url=append_get(base_url);
                 window.location = base_url;
             });
 
@@ -165,7 +161,7 @@
         {% if message %}
             <span class="notif {{ msg_type }}">
                     {% autoescape off %}{{ message }}{% endautoescape %}
-                <a href="#" onclick="$(this).parent().remove();">X</a>
+                <a href="#" onclick="$(this).parent().remove(); history.replaceState({}, '', '?page=1');">X</a>
                 </span>
         {% endif %}
         <div id="form_container">

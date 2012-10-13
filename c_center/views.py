@@ -2,6 +2,12 @@
 #standard library imports
 from datetime import  timedelta, datetime
 from dateutil.relativedelta import relativedelta
+import Image
+import cStringIO
+import os
+from django.core.files import File
+import hashlib
+
 import re
 import time
 import calendar
@@ -18,11 +24,10 @@ from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 
-from c_center.calculations import tarifaHM_mensual, tarifaHM_total, obtenerHistorico, \
-    fechas_corte
-from c_center.models import ConsumerUnit, Building, ElectricDataTemp, ProfilePowermeter, \
-    Powermeter, PartOfBuilding, HierarchyOfPart, Cluster, ClusterCompany, Company, \
-    CompanyBuilding, BuildingAttributesType, BuildingAttributes, BuildingAttributesForBuilding
+from cidec_sw import settings
+from c_center.calculations import tarifaHM_mensual, tarifaHM_total, obtenerHistorico, obtenerHistoricoHM, \
+    fechas_corte, tarifaHM, tarifaDAC
+from c_center.models import *
 from electric_rates.models import ElectricRatesDetail
 from rbac.models import Operation, DataContextPermission
 from rbac.rbac_functions import  has_permission, get_buildings_context, graphs_permission
@@ -48,7 +53,7 @@ def week_of_month(datetime_variable):
     datetime_variable = the date
     returns the week number (int)
     """
-    first_day_of_month = datetime(year=datetime_variable.year,
+    first_day_of_month = datetime.datetime(year=datetime_variable.year,
         month=datetime_variable.month, day=1)
     first_day_first_week = first_day_of_month - timedelta(days=first_day_of_month.weekday())
     week_delta = timedelta(weeks = 1)
@@ -65,16 +70,16 @@ def get_intervals_1(get):
     by default we get the data from the last month
     returns f1_init, f1_end as datetime objects
     """
-    f1_init = datetime.today() - relativedelta( months = 1 )
-    f1_end = datetime.today()
+    f1_init = datetime.datetime.today() - relativedelta( months = 1 )
+    f1_end = datetime.datetime.today()
 
     if "f1_init" in get:
         if get["f1_init"] != '':
             f1_init = time.strptime(get['f1_init'], "%d/%m/%Y")
-            f1_init = datetime(f1_init.tm_year, f1_init.tm_mon, f1_init.tm_mday)
+            f1_init = datetime.datetime(f1_init.tm_year, f1_init.tm_mon, f1_init.tm_mday)
         if get["f1_end"] != '':
             f1_end = time.strptime(get['f1_end'], "%d/%m/%Y")
-            f1_end = datetime(f1_end.tm_year, f1_end.tm_mon, f1_end.tm_mday)
+            f1_end = datetime.datetime(f1_end.tm_year, f1_end.tm_mon, f1_end.tm_mday)
 
     return f1_init, f1_end
 
@@ -83,9 +88,9 @@ def get_intervals_fecha(get):
     by default we get the data from the last month
     returns f1_init, f1_end as formated strings
     """
-    f1_init = datetime.today() - relativedelta( months = 1 )
+    f1_init = datetime.datetime.today() - relativedelta( months = 1 )
     f1_init = str(f1_init.year)+"-"+str(f1_init.month)+"-"+str(f1_init.day)+" 00:00:00"
-    f1_end = datetime.today()
+    f1_end = datetime.datetime.today()
     f1_end = str(f1_end.year)+"-"+str(f1_end.month)+"-"+str(f1_end.day)+" 23:59:59"
 
 
@@ -241,6 +246,31 @@ def set_consumer_unit(request):
 
     return render_to_response("consumption_centers/choose_hierarchy.html", template_vars_template)
 
+def get_position_consumer_unit(id_c_u):
+    consumerUnit = get_object_or_404(ConsumerUnit, pk=id_c_u)
+    if consumerUnit.part_of_building:
+        #es el consumer_unit de una parte de un edificio
+        try:
+            tree_element = HierarchyOfPart.objects.get(part_of_building_leaf=consumerUnit.part_of_building)
+        except ObjectDoesNotExist:
+            #es el primer hijo de la jerarquia
+            pass
+        else:
+            if tree_element.ExistsPowermeter:
+                #se usa este consumer unit
+                pass
+            else:
+                #se hace el recorrido de sus hijos
+                pass
+
+    else:
+        #es un consumer unit de algún electric device
+        try:
+            tree_element = HierarchyOfPart.objects.get(consumer_unit_leaf=consumerUnit)
+        except ObjectDoesNotExist:
+            #es el primer hijo de la jerarquia
+            pass
+
 def set_default_consumer_unit(request, id_c_u):
     """Sets the consumer_unit for all the reports"""
     c_unit = ConsumerUnit.objects.get(pk=id_c_u)
@@ -274,52 +304,83 @@ def main_page(request):
         return render_to_response("generic_error.html", RequestContext(request))
 
 def cfe_bill(request):
-    """Just sends the main template for the CFE Bill """
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
     if has_permission(request.user, VIEW, "Consultar recibo CFE"):
         datacontext = get_buildings_context(request.user)
         set_default_session_vars(request, datacontext)
 
+        today = datetime.datetime.today().replace(hour=0,minute=0,second=0,tzinfo=timezone.get_current_timezone())
+        month = int(today.month)
+        year = int(today.year)
+        dict(one=1, two=2)
+        month_list = {1:'Enero', 2:'Febrero', 3:'Marzo', 4:'Abril', 5:'Mayo', 6:'Junio', 7:'Julio', 8:'Agosto',
+                       9:'Septiembre', 10:'Octubre', 11:'Noviembre', 12:'Diciembre' }
+        year_list = {2010:2010, 2011:2011, 2012:2012, 2013:2013}
+
         template_vars={"type":"cfe", "datacontext":datacontext,
                        'empresa':request.session['main_building'],
-                       'company': request.session['company'],
+                       'month':month, 'year':year, 'month_list':month_list, 'year_list':year_list
         }
-        #print template_vars
+
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/cfe.html", template_vars_template)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
+
 def cfe_calculations(request):
     """Renders the cfe bill and the historic data chart"""
-    template_vars = {}
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, VIEW, "Consultar recibo CFE"):
+        datacontext = get_buildings_context(request.user)
+        set_default_session_vars(request, datacontext)
 
-    if request.GET:
-        if request.method == "GET":
+        template_vars={"type":"cfe", "datacontext":datacontext,
+                       'empresa':request.session['main_building']
+        }
 
-            month = int(request.GET['month'])+1
-            year = int(request.GET['year'])
+        if request.GET:
+            if request.method == "GET":
+                month = int(request.GET['month'])
+                year = int(request.GET['year'])
 
-            powermeter = request.session['consumer_unit'].profile_powermeter.powermeter
+        else:
+        #Obtener la fecha actual
+            today = datetime.datetime.today().replace(hour=0,minute=0,second=0,tzinfo=timezone.get_current_timezone())
+            month = int(today.month)
+            year = int(today.year)
 
-            start_date, end_date = fechas_corte(request.session['main_building'].cutoff_day,
-                                                month, year)
-            t_hm=tarifaHM_mensual(powermeter, start_date, end_date,
-                                  request.session['main_building'].region,
-                                  request.session['main_building'].electric_rate)
-            totales_meses = t_hm['meses']
-            arr_historico=obtenerHistorico(powermeter, t_hm['ultima_tarifa'],
-                                           request.session['main_building'].region, 3,
-                                           request.session['main_building'].electric_rate)
+        powermeter = request.session['consumer_unit'].profile_powermeter.powermeter
 
-            template_vars['tarifaHM'] = t_hm
-            template_vars['totales_meses'] = totales_meses
-            template_vars['historico'] = arr_historico
+        #Se obtiene el tipo de tarifa del edificio (HM o DAC)
+        tipo_tarifa = request.session['main_building'].electric_rate
 
+
+        if tipo_tarifa.pk == 1: #Tarifa HM
+            resultado_mensual = tarifaHM(request.session['main_building'],powermeter,month,year)
+
+        elif tipo_tarifa.pk == 2: #Tarifa DAC
+            resultado_mensual = tarifaDAC(request.session['main_building'],powermeter,month,year)
+
+        if resultado_mensual['status'] == 'OK':
+            template_vars['resultados'] = resultado_mensual
+            template_vars['tipo_tarifa'] = tipo_tarifa
+
+
+            template_vars['historico'] = obtenerHistoricoHM
             template_vars_template = RequestContext(request, template_vars)
             return render_to_response("consumption_centers/graphs/cfe_bill.html",
                 template_vars_template)
+        if resultado_mensual['status'] == 'ERROR':
+            template_vars['mensaje'] = resultado_mensual['mensaje']
+            template_vars_template = RequestContext(request, template_vars)
+            return render_to_response("consumption_centers/graphs/cfe_bill_error.html",
+                template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
 
-    return HttpResponse(content="", content_type="text/html")
 
 
 def graficas(request):
@@ -365,7 +426,7 @@ def graficas(request):
                     template_vars_template)
             else:
                 template_vars['years'] = request.session['years']
-                ahora = datetime.now()
+                ahora = datetime.datetime.now()
                 template_vars['year'] = ahora.year
                 template_vars['month'] = ahora.month
                 template_vars['week'] = week_of_month(ahora)
@@ -1131,3 +1192,1403 @@ def ver_b_attr(request, id_b_attr):
         return render_to_response("consumption_centers/buildings/see_building_attr.html", template_vars_template)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
+
+#====
+
+def add_cluster(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, CREATE, "Alta de clusters"):
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+
+        #Se obtienen los sectores
+        sectores = SectoralType.objects.all()
+        template_vars = dict(datacontext=datacontext,
+            empresa=empresa,
+            sectores=sectores,
+        )
+
+        if request.method == "POST":
+            template_vars["post"] = request.POST
+            clustername = request.POST.get('clustername')
+            clusterdescription = request.POST.get('clusterdescription')
+            clustersector = request.POST.get('clustersector')
+
+            sector_type = SectoralType.objects.get(pk = clustersector)
+
+            newCluster = Cluster(
+                sectoral_type = sector_type,
+                cluster_description = clusterdescription,
+                cluster_name = clustername,
+            )
+            newCluster.save()
+
+            template_vars["message"] = "Cluster de Empresas creado exitosamente"
+            template_vars["type"] = "n_success"
+
+            if has_permission(request.user, VIEW, "Ver clusters"):
+                return HttpResponseRedirect("/buildings/clusters?msj=" +
+                                            template_vars["message"] +
+                                            "&ntype=n_success")
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/add_cluster.html", template_vars_template)
+
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def view_cluster(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, VIEW, "Ver cluster de empresas"):
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        if "search" in request.GET:
+            search = request.GET["search"]
+        else:
+            search = ''
+
+        order_name = 'asc'
+        order_sector = 'asc'
+        order = "cluster_name" #default order
+        if "order_name" in request.GET:
+            if request.GET["order_name"] == "desc":
+                order = "-cluster_name"
+                order_name = "asc"
+            else:
+                order_name = "desc"
+        else:
+
+            if "order_sector" in request.GET:
+                if request.GET["order_sector"] == "asc":
+                    order = "sectoral_type__sectorial_type_name"
+                    order_sector = "desc"
+                else:
+                    order = "-sectoral_type__sectorial_type_name"
+                    order_sector = "asc"
+
+        if search:
+            lista = Cluster.objects.filter(Q(cluster_name__icontains=request.GET['search'])|Q(
+                sectoral_type__sectorial_type_name__icontains=request.GET['search'])).exclude(cluster_status=2).order_by(order)
+
+        else:
+            lista = Cluster.objects.all().exclude(cluster_status=2).order_by(order)
+        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        template_vars = dict(order_name=order_name, order_sector=order_sector,
+            datacontext=datacontext, empresa=empresa)
+        # Make sure page request is an int. If not, deliver first page.
+        try:
+            page = int(request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+
+        # If page request (9999) is out of range, deliver last page of results.
+        try:
+            pag_user = paginator.page(page)
+        except (EmptyPage, InvalidPage):
+            pag_user = paginator.page(paginator.num_pages)
+
+        template_vars['paginacion']=pag_user
+
+        if 'msj' in request.GET:
+            template_vars['message'] = request.GET['msj']
+            template_vars['msg_type'] = request.GET['ntype']
+
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/clusters.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def delete_cluster(request, id_cluster):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, DELETE, "Baja de clusters"):
+        cluster = get_object_or_404(Cluster, pk=id_cluster)
+        cluster.cluster_status = 2
+        cluster.save()
+        mensaje = "El cluster ha sido dado de baja correctamente"
+        type="n_success"
+
+        return HttpResponseRedirect("/buildings/clusters/?msj=" + mensaje +
+                                    "&ntype="+type)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def delete_batch_cluster(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, DELETE, "Baja de clusters"):
+        if request.method == "GET":
+            raise Http404
+        if request.POST['actions'] == 'delete':
+            for key in request.POST:
+                if re.search('^cluster_\w+', key):
+                    r_id = int(key.replace("cluster_",""))
+                    cluster = get_object_or_404(Cluster, pk=r_id)
+                    cluster.cluster_status = 2
+                    cluster.save()
+
+            mensaje = "Los clusters seleccionados se han dado de baja"
+            return HttpResponseRedirect("/buildings/clusters/?msj=" + mensaje +
+                                        "&ntype=n_success")
+        else:
+            mensaje = "No se ha seleccionado una acción"
+            return HttpResponseRedirect("/buildings/clusters/?msj=" + mensaje +
+                                        "&ntype=n_success")
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+
+def edit_cluster(request, id_cluster):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, UPDATE, "Modificar cluster de empresas"):
+        cluster = get_object_or_404(Cluster, pk = id_cluster)
+
+        #Se obtienen los sectores
+        sectores = SectoralType.objects.all()
+
+        post = {'clustername': cluster.cluster_name, 'clusterdescription': cluster.cluster_description, 'clustersector': cluster.sectoral_type.pk}
+
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        message = ''
+        type = ''
+
+        if request.method == "POST":
+            post = request.POST
+            clustername = request.POST.get('clustername')
+            clusterdescription = request.POST.get('clusterdescription')
+            clustersector = request.POST.get('clustersector')
+            continuar = True
+            if clustername == '':
+                message = "El nombre del cluster no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+            if clustersector == '':
+                message = "El sector del cluster no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+
+            post = {'clustername': clustername, 'clusterdescription': clusterdescription ,'clustersector': clustersector}
+
+
+            if continuar:
+                sector_type = SectoralType.objects.get(pk = clustersector)
+
+                cluster.cluster_name = clustername
+                cluster.cluster_description = clusterdescription
+                cluster.sectoral_type = sector_type
+                cluster.save()
+
+                message = "Cluster editado exitosamente"
+                type = "n_success"
+                if has_permission(request.user, VIEW, "Ver cluster de empresas"):
+                    return HttpResponseRedirect("/buildings/clusters?msj=" +
+                                                message +
+                                                "&ntype=n_success")
+
+        template_vars = dict(datacontext=datacontext,
+            empresa=empresa,
+            sectores=sectores,
+            post=post,
+            operation="edit",
+            message=message,
+            type=type
+        )
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/add_cluster.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def see_cluster(request, id_cluster):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, VIEW, "Ver cluster de empresas"):
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+
+        cluster = Cluster.objects.get(pk = id_cluster)
+        cluster_companies = ClusterCompany.objects.filter(cluster=cluster)
+
+        template_vars = dict(
+            datacontext=datacontext,
+            cluster = cluster,
+            cluster_companies = cluster_companies,
+            empresa=empresa)
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/see_cluster.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+"""
+POWERMETER MODELS
+"""
+
+def add_powermetermodel(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, CREATE, "Alta de modelos de medidores eléctricos"):
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+
+        template_vars = dict(datacontext=datacontext,
+            empresa=empresa
+        )
+
+        if request.method == "POST":
+            template_vars["post"] = request.POST
+            pw_brand = request.POST.get('pw_brand')
+            pw_model = request.POST.get('pw_model')
+
+            newPowerMeterModel = PowermeterModel(
+                powermeter_brand = pw_brand,
+                powermeter_model = pw_model
+            )
+            newPowerMeterModel.save()
+
+            template_vars["message"] = "Modelo de Medidor creado exitosamente"
+            template_vars["type"] = "n_success"
+
+            if has_permission(request.user, VIEW, "Ver modelos de medidores eléctricos"):
+                return HttpResponseRedirect("/buildings/modelos_medidor?msj=" +
+                                            template_vars["message"] +
+                                            "&ntype=n_success")
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/add_powermetermodel.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def edit_powermetermodel(request, id_powermetermodel):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, UPDATE, "Modificar modelos de medidores eléctricos"):
+        powermetermodel = get_object_or_404(PowermeterModel, pk = id_powermetermodel)
+
+        post = {'pw_brand': powermetermodel.powermeter_brand, 'pw_model': powermetermodel.powermeter_model}
+
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        message = ''
+        type = ''
+
+        if request.method == "POST":
+            post = request.POST
+            powermeter_brand = request.POST.get('pw_brand')
+            powermeter_model = request.POST.get('pw_model')
+
+            continuar = True
+            if powermeter_brand == '':
+                message = "La marca del medidor no puede quedar vacía"
+                type = "n_notif"
+                continuar = False
+            if powermeter_model == '':
+                message = "El modelo del medidor no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+
+            post = {'pw_brand': powermetermodel.powermeter_brand, 'pw_model': powermetermodel.powermeter_model}
+
+            if continuar:
+                powermetermodel.powermeter_brand = powermeter_brand
+                powermetermodel.powermeter_model = powermeter_model
+                powermetermodel.save()
+
+                message = "Modelo de Medidor editado exitosamente"
+                type = "n_success"
+                if has_permission(request.user, VIEW, "Ver modelos de medidores eléctricos"):
+                    return HttpResponseRedirect("/buildings/modelos_medidor?msj=" +
+                                                message +
+                                                "&ntype=n_success")
+
+        template_vars = dict(datacontext=datacontext,
+            empresa=empresa,
+            post=post,
+            operation="edit",
+            message=message,
+            type=type
+        )
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/add_powermetermodel.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def view_powermetermodels(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, VIEW, "Ver modelos de medidores eléctricos"):
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        if "search" in request.GET:
+            search = request.GET["search"]
+        else:
+            search = ''
+
+        order_brand = 'asc'
+        order_model = 'asc'
+        order = "powermeter_brand" #default order
+        if "order_brand" in request.GET:
+            if request.GET["order_brand"] == "desc":
+                order = "-powermeter_brand"
+                order_brand = "asc"
+            else:
+                order_brand = "desc"
+        else:
+
+            if "order_model" in request.GET:
+                if request.GET["order_model"] == "asc":
+                    order = "powermeter_model"
+                    order_model = "desc"
+                else:
+                    order = "-powermeter_model"
+                    order_model = "asc"
+
+        if search:
+            lista = PowermeterModel.objects.filter(Q(powermeter_brand__icontains=request.GET['search'])|Q(
+                powermeter_model__icontains=request.GET['search'])).order_by(order)
+
+        else:
+            lista = PowermeterModel.objects.all().order_by(order)
+        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        template_vars = dict(order_brand=order_brand, order_model=order_model,
+            datacontext=datacontext, empresa=empresa)
+        # Make sure page request is an int. If not, deliver first page.
+        try:
+            page = int(request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+
+        # If page request (9999) is out of range, deliver last page of results.
+        try:
+            pag_user = paginator.page(page)
+        except (EmptyPage, InvalidPage):
+            pag_user = paginator.page(paginator.num_pages)
+
+        template_vars['paginacion']=pag_user
+
+        if 'msj' in request.GET:
+            template_vars['message'] = request.GET['msj']
+            template_vars['msg_type'] = request.GET['ntype']
+
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/powermetermodels.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def delete_powermetermodel(request, id_powermetermodel):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, DELETE, "Baja de clusters"):
+        powermetermodel = get_object_or_404(PowermeterModel, pk = id_powermetermodel)
+        #Change the status in here
+        powermetermodel.save()
+        mensaje = "El modelo ha sido dado de baja correctamente"
+        type="n_success"
+
+        return HttpResponseRedirect("/buildings/modelos_medidor/?msj=" + mensaje +
+                                    "&ntype="+type)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def delete_batch_powermetermodel(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, DELETE, "Baja de clusters"):
+        if request.method == "GET":
+            raise Http404
+        if request.POST['actions'] == 'delete':
+            for key in request.POST:
+                if re.search('^model_\w+', key):
+                    r_id = int(key.replace("model_",""))
+                    powermetermodel = get_object_or_404(PowermeterModel, pk = r_id)
+                    #Change the status in here
+                    powermetermodel.save()
+
+            mensaje = "Los modelos seleccionados se han dado de baja"
+            return HttpResponseRedirect("/buildings/modelos_medidor/?msj=" + mensaje +
+                                        "&ntype=n_success")
+        else:
+            mensaje = "No se ha seleccionado una acción"
+            return HttpResponseRedirect("/buildings/modelos_medidor/?msj=" + mensaje +
+                                        "&ntype=n_success")
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+"""
+POWERMETERS
+"""
+
+def add_powermeter(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, CREATE, "Alta de medidor electrico"):
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        post = ''
+        pw_models_list = PowermeterModel.objects.all().order_by("powermeter_brand")
+        template_vars = dict(datacontext=datacontext,
+            empresa=empresa,
+            modelos=pw_models_list,
+            post=post
+        )
+
+        if request.method == "POST":
+            template_vars["post"] = request.POST
+            pw_alias = request.POST.get('pw_alias')
+            pw_model = request.POST.get('pw_model')
+            pw_serial = request.POST.get('pw_serial')
+
+            continuar = True
+            if pw_alias == '':
+                message = "El Alias del medidor no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+            if pw_model == '':
+                message = "El modelo del medidor no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+            if pw_serial == '':
+                message = "El número serial del medidor no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+
+            post = {'pw_alias': pw_alias, 'pw_model': pw_model ,'pw_serial': pw_serial}
+
+
+            if continuar:
+
+                pw_model = PowermeterModel.objects.get(pk = pw_model)
+
+                newPowerMeter = Powermeter(
+                    powermeter_model = pw_model,
+                    powermeter_anotation = pw_alias,
+                    powermeter_serial = pw_serial
+
+                )
+                newPowerMeter.save()
+
+                template_vars["message"] = "Medidor creado exitosamente"
+                template_vars["type"] = "n_success"
+
+                if has_permission(request.user, VIEW, "Ver medidores eléctricos"):
+                    return HttpResponseRedirect("/buildings/medidores?msj=" +
+                                                template_vars["message"] +
+                                                "&ntype=n_success")
+            template_vars["post"] = post
+            template_vars["message"] = message
+            template_vars["type"] = type
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/add_powermeter.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def edit_powermeter(request, id_powermeter):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, UPDATE, "Modificar medidores eléctricos"):
+        powermeter = get_object_or_404(Powermeter, pk = id_powermeter)
+
+        pw_models_list = PowermeterModel.objects.all().order_by("powermeter_brand")
+
+        post = {'pw_alias': powermeter.powermeter_anotation, 'pw_model': powermeter.powermeter_model.pk,'pw_serial': powermeter.powermeter_serial}
+
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        message = ''
+        type = ''
+
+        if request.method == "POST":
+            post = request.POST
+            pw_alias = request.POST.get('pw_alias')
+            pw_model = request.POST.get('pw_model')
+            pw_serial = request.POST.get('pw_serial')
+
+            continuar = True
+            if pw_alias == '':
+                message = "El Alias del medidor no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+            if pw_model == '':
+                message = "El modelo del medidor no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+            if pw_serial == '':
+                message = "El número serial del medidor no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+
+            post = {'pw_alias': pw_alias, 'pw_model': pw_model ,'pw_serial': pw_serial}
+
+
+            if continuar:
+
+                pw_model = PowermeterModel.objects.get(pk = pw_model)
+
+                powermeter.powermeter_anotation = pw_alias
+                powermeter.powermeter_serial = pw_serial
+                powermeter.powermeter_model = pw_model
+                powermeter.save()
+
+                message = "Medidor editado exitosamente"
+                type = "n_success"
+                if has_permission(request.user, VIEW, "Ver medidores eléctricos"):
+                    return HttpResponseRedirect("/buildings/medidores?msj=" +
+                                                message +
+                                                "&ntype=n_success")
+
+        template_vars = dict(datacontext=datacontext,
+            empresa=empresa,
+            post=post,
+            modelos = pw_models_list,
+            operation="edit",
+            message=message,
+            type=type
+        )
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/add_powermeter.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def view_powermeter(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, VIEW, "Ver medidores eléctricos"):
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        if "search" in request.GET:
+            search = request.GET["search"]
+        else:
+            search = ''
+
+        order_alias = 'asc'
+        order_serial = 'asc'
+        order_model = 'asc'
+        order_status = 'asc'
+        order_installed = 'asc'
+        order = "powermeter_anotation" #default order
+        if "order_alias" in request.GET:
+            if request.GET["order_alias"] == "desc":
+                order = "-powermeter_anotation"
+                order_alias = "asc"
+            else:
+                order_alias = "desc"
+        else:
+            if "order_model" in request.GET:
+                if request.GET["order_model"] == "asc":
+                    order = "powermeter_model__powermeter_brand"
+                    order_model = "desc"
+                else:
+                    order = "-powermeter_model__powermeter_brand"
+                    order_model = "asc"
+
+            if "order_serial" in request.GET:
+                if request.GET["order_serial"] == "asc":
+                    order = "powermeter_serial"
+                    order_serial = "desc"
+                else:
+                    order = "-powermeter_serial"
+                    order_serial = "asc"
+
+            if "order_status" in request.GET:
+                if request.GET["order_status"] == "asc":
+                    order = "status"
+                    order_status = "desc"
+                else:
+                    order = "-status"
+                    order_status = "asc"
+
+        if search:
+
+
+            lista = Powermeter.objects.filter(Q(powermeter_anotation__icontains=request.GET['search'])|Q(
+                powermeter_model__powermeter_brand__icontains=request.GET['search'])|Q(
+                powermeter_model__powermeter_model__icontains=request.GET['search'])).exclude(status = 2).order_by(order)
+
+
+
+        else:
+            powermeter_objs = Powermeter.objects.all().exclude(status=2)
+            powermeter_ids = [pw.pk for pw in powermeter_objs]
+            profiles_pw_objs = ProfilePowermeter.objects.filter(powermeter__pk__in = powermeter_ids).filter(profile_powermeter_status = 1)
+
+            lista = Powermeter.objects.all().exclude(status = 2).order_by(order)
+
+
+        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        template_vars = dict(order_alias=order_alias, order_model=order_model, order_serial=order_serial, order_status=order_status,
+            datacontext=datacontext, empresa=empresa)
+        # Make sure page request is an int. If not, deliver first page.
+        try:
+            page = int(request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+
+        # If page request (9999) is out of range, deliver last page of results.
+        try:
+            pag_user = paginator.page(page)
+        except (EmptyPage, InvalidPage):
+            pag_user = paginator.page(paginator.num_pages)
+
+        template_vars['paginacion']=pag_user
+
+        if 'msj' in request.GET:
+            template_vars['message'] = request.GET['msj']
+            template_vars['msg_type'] = request.GET['ntype']
+
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/powermeters.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def delete_powermeter(request, id_powermeter):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, DELETE, "Baja de medidores eléctricos"):
+        powermeter = get_object_or_404(Powermeter, pk = id_powermeter )
+        powermeter.status = 2
+        powermeter.save()
+        mensaje = "El medidor ha sido dado de baja correctamente"
+        type="n_success"
+
+        return HttpResponseRedirect("/buildings/medidores/?msj=" + mensaje +
+                                    "&ntype="+type)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def delete_batch_powermeter(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, DELETE, "Baja de medidores eléctricos"):
+        if request.method == "GET":
+            raise Http404
+        if request.POST['actions'] == 'delete':
+            for key in request.POST:
+                if re.search('^powermeter_\w+', key):
+                    r_id = int(key.replace("powermeter_",""))
+                    powermeter = get_object_or_404(Powermeter, pk = r_id )
+                    powermeter.status = 2
+                    powermeter.save()
+
+            mensaje = "Los medidores seleccionados se han dado de baja"
+            return HttpResponseRedirect("/buildings/medidores/?msj=" + mensaje +
+                                        "&ntype=n_success")
+        else:
+            mensaje = "No se ha seleccionado una acción"
+            return HttpResponseRedirect("/buildings/medidores/?msj=" + mensaje +
+                                        "&ntype=n_success")
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def status_powermeter(request, id_powermeter):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, UPDATE, "Modificar medidores eléctricos"):
+        powermeter = get_object_or_404(Powermeter, pk = id_powermeter )
+        if powermeter.status == 0:
+            powermeter.status = 1
+            str_status = "Activo"
+        elif powermeter.status == 1:
+            powermeter.status = 0
+            str_status = "Inactivo"
+
+        powermeter.save()
+        mensaje = "El estatus del medidor "+powermeter.powermeter_anotation +" ha cambiado a "+str_status
+        type="n_success"
+
+        return HttpResponseRedirect("/buildings/medidores/?msj=" + mensaje +
+                                    "&ntype="+type)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def see_powermeter(request, id_powermeter):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, VIEW, "Ver medidores eléctricos"):
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+
+        location = ''
+        powermeter = Powermeter.objects.get(pk = id_powermeter)
+        profile_powermeter_objs = ProfilePowermeter.objects.filter(powermeter = powermeter).filter(profile_powermeter_status = 1)
+        if profile_powermeter_objs:
+            profile = profile_powermeter_objs[0]
+
+            consumer_unit_objs = ConsumerUnit.objects.filter(profile_powermeter = profile)
+            c_unit = consumer_unit_objs[0]
+            location = c_unit.building.building_name
+
+        template_vars = dict(
+            datacontext=datacontext,
+            powermeter = powermeter,
+            location = location,
+            empresa=empresa)
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/see_powermeter.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+"""
+Electric Device Types
+"""
+
+def add_electric_device_type(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, CREATE, "Alta de dispositivos y sistemas eléctricos"):
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        post = ''
+
+        template_vars = dict(datacontext=datacontext,
+            empresa=empresa,
+            post=post
+        )
+
+        if request.method == "POST":
+            template_vars["post"] = request.POST
+            edt_name = request.POST.get('devicetypename')
+            edt_description = request.POST.get('devicetypedescription')
+
+            continuar = True
+            if edt_name == '':
+                message = "El nombre del Tipo de Equipo Eléctrico no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+
+            post = {'devicetypename': edt_name, 'devicetypedescription': edt_description}
+
+
+            if continuar:
+
+                newElectricDeviceType = ElectricDeviceType(
+                    electric_device_type_name = edt_name,
+                    electric_device_type_description = edt_description
+                )
+                newElectricDeviceType.save()
+
+                template_vars["message"] = "Tipo de Equipo Eléctrico creado exitosamente"
+                template_vars["type"] = "n_success"
+
+                if has_permission(request.user, VIEW, "Ver medidores eléctricos"):
+                    return HttpResponseRedirect("/buildings/tipos_equipo_electrico?msj=" +
+                                                template_vars["message"] +
+                                                "&ntype=n_success")
+            template_vars["post"] = post
+            template_vars["message"] = message
+            template_vars["type"] = type
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/add_electricdevicetype.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def edit_electric_device_type(request, id_edt):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, UPDATE, "Modificar dispositivos y sistemas eléctricos"):
+        edt_obj = get_object_or_404(ElectricDeviceType, pk = id_edt)
+
+        post = {'devicetypename': edt_obj.electric_device_type_name, 'devicetypedescription': edt_obj.electric_device_type_description}
+
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        message = ''
+        type = ''
+
+        if request.method == "POST":
+            post = request.POST
+            edt_name = request.POST.get('devicetypename')
+            edt_description = request.POST.get('devicetypedescription')
+
+            continuar = True
+            if edt_name == '':
+                message = "El nombre del Tipo de Equipo Eléctrico no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+
+            post = {'devicetypename': edt_name, 'devicetypedescription': edt_description}
+
+            if continuar:
+                edt_obj.electric_device_type_name = edt_name
+                edt_obj.electric_device_type_description = edt_description
+                edt_obj.save()
+
+                message = "Tipo de Equipo Eléctrico editado exitosamente"
+                type = "n_success"
+                if has_permission(request.user, VIEW, "Ver dispositivos y sistemas eléctricos"):
+                    return HttpResponseRedirect("/buildings/tipos_equipo_electrico?msj=" +
+                                                message +
+                                                "&ntype=n_success")
+
+        template_vars = dict(datacontext=datacontext,
+            empresa=empresa,
+            post=post,
+            operation="edit",
+            message=message,
+            type=type
+        )
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/add_electricdevicetype.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def view_electric_device_type(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, VIEW, "Ver dispositivos y sistemas eléctricos"):
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        if "search" in request.GET:
+            search = request.GET["search"]
+        else:
+            search = ''
+
+        order_name = 'asc'
+        order_description = 'asc'
+        order_status = 'asc'
+        order = "electric_device_type_name" #default order
+        if "order_name" in request.GET:
+            if request.GET["order_name"] == "desc":
+                order = "-electric_device_type_name"
+                order_name = "asc"
+            else:
+                order_name = "desc"
+        else:
+            if "order_description" in request.GET:
+                if request.GET["order_description"] == "asc":
+                    order = "electric_device_type_description"
+                    order_description = "desc"
+                else:
+                    order = "-electric_device_type_description"
+                    order_description = "asc"
+            if "order_status" in request.GET:
+                if request.GET["order_status"] == "asc":
+                    order = "electric_device_type_status"
+                    order_status = "desc"
+                else:
+                    order = "-electric_device_type_status"
+                    order_status = "asc"
+
+        if search:
+            lista = ElectricDeviceType.objects.filter(Q(electric_device_type_name__icontains=request.GET['search'])|Q(
+                electric_device_type_description__icontains=request.GET['search'])).exclude(electric_device_type_status = 2).order_by(order)
+
+        else:
+            lista = ElectricDeviceType.objects.all().exclude(electric_device_type_status = 2).order_by(order)
+
+
+        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        template_vars = dict(order_name=order_name, order_description=order_description, order_status=order_status,
+            datacontext=datacontext, empresa=empresa)
+        # Make sure page request is an int. If not, deliver first page.
+        try:
+            page = int(request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+
+        # If page request (9999) is out of range, deliver last page of results.
+        try:
+            pag_user = paginator.page(page)
+        except (EmptyPage, InvalidPage):
+            pag_user = paginator.page(paginator.num_pages)
+
+        template_vars['paginacion']=pag_user
+
+        if 'msj' in request.GET:
+            template_vars['message'] = request.GET['msj']
+            template_vars['msg_type'] = request.GET['ntype']
+
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/electricdevicetype.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def delete_electric_device_type(request, id_edt):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, DELETE, "Baja de dispositivos y sistemas eléctricos"):
+        edt_obj = get_object_or_404(ElectricDeviceType, pk=id_edt)
+        edt_obj.electric_device_type_status = 2
+        edt_obj.save()
+        mensaje = "El Tipo de Equipo Eléctrico ha sido dado de baja correctamente"
+        type="n_success"
+
+        return HttpResponseRedirect("/buildings/tipos_equipo_electrico/?msj=" + mensaje +
+                                    "&ntype="+type)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def delete_batch_electric_device_type(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, DELETE, "Baja de dispositivos y sistemas eléctricos"):
+        if request.method == "GET":
+            raise Http404
+        if request.POST['actions'] == 'delete':
+            for key in request.POST:
+                if re.search('^edt_\w+', key):
+                    r_id = int(key.replace("edt_",""))
+                    edt_obj = get_object_or_404(ElectricDeviceType, pk=r_id)
+                    edt_obj.electric_device_type_status = 2
+                    edt_obj.save()
+
+            mensaje = "Los Tipos de Equipo Eléctrico han sido dado de baja correctamente"
+            return HttpResponseRedirect("/buildings/tipos_equipo_electrico/?msj=" + mensaje +
+                                        "&ntype=n_success")
+        else:
+            mensaje = "No se ha seleccionado una acción"
+            return HttpResponseRedirect("/buildings/tipos_equipo_electrico/?msj=" + mensaje +
+                                        "&ntype=n_success")
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def status_electric_device_type(request, id_edt):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, UPDATE, "Modificar dispositivos y sistemas eléctricos"):
+        edt_obj = get_object_or_404(ElectricDeviceType, pk=id_edt)
+        if edt_obj.electric_device_type_status == 0:
+            edt_obj.electric_device_type_status = 1
+            str_status = "Activo"
+        elif edt_obj.electric_device_type_status == 1:
+            edt_obj.electric_device_type_status = 0
+            str_status = "Inactivo"
+
+        edt_obj.save()
+        mensaje = "El estatus del tipo de equipo eléctrico ha cambiado a "+str_status
+        type="n_success"
+
+        return HttpResponseRedirect("/buildings/tipos_equipo_electrico/?msj=" + mensaje +
+                                    "&ntype="+type)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+"""
+Companies
+"""
+
+def add_company(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, CREATE, "Alta compañía"):
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        post = ''
+
+        #Get Clusters
+        clusters = Cluster.objects.all().exclude(cluster_status = 2)
+
+        #Get Sectors
+        sectors = SectoralType.objects.all().exclude(sectoral_type_status = 2)
+
+        template_vars = dict(datacontext=datacontext,
+            empresa=empresa,
+            post=post,
+            clusters=clusters,
+            sectors=sectors,
+        )
+
+        if request.method == "POST":
+            template_vars["post"] = request.POST
+            cmp_name = request.POST.get('company_name')
+            cmp_description = request.POST.get('company_description')
+            cmp_cluster = request.POST.get('company_cluster')
+            cmp_sector = request.POST.get('company_sector')
+
+            continuar = True
+            if cmp_name == '':
+                message = "El nombre de la empresa no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+
+            if cmp_cluster == '':
+                message = "La empresa debe pertenencer a un grupo de empresas"
+                type = "n_notif"
+                continuar = False
+
+            if cmp_sector == '':
+                message = "La empresa debe pertenencer a un sector"
+                type = "n_notif"
+                continuar = False
+
+            post = {'cmp_name': cmp_name, 'cmp_description': cmp_description, 'cmp_cluster': cmp_cluster, 'cmp_sector': cmp_sector}
+
+            if continuar:
+                #Se obtiene el objeto del sector
+                sectorObj = SectoralType.objects.get(pk=cmp_sector)
+
+                newCompany = Company(
+                    sectoral_type = sectorObj,
+                    company_name = cmp_name,
+                    company_description = cmp_description
+                )
+                newCompany.save()
+
+                #Se relaciona la empresa con el cluster
+                #Se obtiene el objeto del cluster
+                clusterObj = Cluster.objects.get(pk=cmp_cluster)
+
+                newCompanyCluster = ClusterCompany(
+                    cluster = clusterObj,
+                    company = newCompany
+                )
+                newCompanyCluster.save()
+
+                #Guarda la foto
+                if 'logo' in request.FILES:
+                    handle_company_logo(request.FILES['logo'], newCompany)
+
+
+                template_vars["message"] = "Empresa creada exitosamente"
+                template_vars["type"] = "n_success"
+
+                if has_permission(request.user, VIEW, "Ver empresas"):
+                    return HttpResponseRedirect("/buildings/empresas?msj=" +
+                                                template_vars["message"] +
+                                                "&ntype=n_success")
+            template_vars["post"] = post
+            template_vars["message"] = message
+            template_vars["type"] = type
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/add_company.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def edit_company(request, id_cpy):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, UPDATE, "Modificar empresas"):
+        company_clusters = ClusterCompany.objects.filter(id = id_cpy)
+
+        post = {'cmp_id': company_clusters[0].company.id,'cmp_name': company_clusters[0].company.company_name, 'cmp_description': company_clusters[0].company.company_description, 'cmp_cluster': company_clusters[0].cluster.pk, 'cmp_sector': company_clusters[0].company.sectoral_type.pk, 'cmp_logo': company_clusters[0].company.company_logo}
+
+        #Get Clusters
+        clusters = Cluster.objects.all().exclude(cluster_status = 2)
+
+        #Get Sectors
+        sectors = SectoralType.objects.all().exclude(sectoral_type_status = 2)
+
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        message = ''
+        type = ''
+
+        if request.method == "POST":
+            post = request.POST
+            cmp_name = request.POST.get('company_name')
+            cmp_description = request.POST.get('company_description')
+            cmp_cluster = request.POST.get('company_cluster')
+            cmp_sector = request.POST.get('company_sector')
+
+            continuar = True
+            if cmp_name == '':
+                message = "El nombre de la empresa no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+
+            if cmp_cluster == '':
+                message = "La empresa debe pertenencer a un grupo de empresas"
+                type = "n_notif"
+                continuar = False
+
+            if cmp_sector == '':
+                message = "La empresa debe pertenencer a un sector"
+                type = "n_notif"
+                continuar = False
+
+            post = {'cmp_id': company_clusters[0].company.id, 'cmp_name': cmp_name, 'cmp_description': cmp_description, 'cmp_cluster': cmp_cluster, 'cmp_sector': cmp_sector, 'cmp_logo': company_clusters[0].company.company_logo}
+
+            if continuar:
+                #Actualiza la empresa
+                companyObj = Company.objects.get(pk = company_clusters[0].company.pk)
+                companyObj.company_name = cmp_name
+                companyObj.company_description = cmp_description
+                #Se obtiene el objeto del sector
+                sectorObj = SectoralType.objects.get(pk=cmp_sector)
+                companyObj.sectoral_type = sectorObj
+                companyObj.save()
+
+                #Se relaciona la empresa con el cluster
+                ComCluster = ClusterCompany.objects.get(pk = company_clusters[0].pk)
+                ComCluster.delete()
+
+                #Se obtiene el objeto del cluster
+                clusterObj = Cluster.objects.get(pk=cmp_cluster)
+                newCompanyCluster = ClusterCompany(
+                    cluster = clusterObj,
+                    company = companyObj
+                )
+                newCompanyCluster.save()
+
+                #Guarda la foto
+                if 'logo' in request.FILES:
+                    handle_company_logo(request.FILES['logo'], companyObj)
+
+
+                message = "Empresa editada exitosamente"
+                type = "n_success"
+                if has_permission(request.user, VIEW, "Ver empresas"):
+                    return HttpResponseRedirect("/buildings/empresas?msj=" +
+                                                message +
+                                                "&ntype=n_success")
+
+        template_vars = dict(datacontext=datacontext,
+            empresa=empresa,
+            post=post,
+            operation="edit",
+            message=message,
+            clusters = clusters,
+            sectors = sectors,
+            type=type
+        )
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/add_company.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def view_companies(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, VIEW, "Ver empresas"):
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        if "search" in request.GET:
+            search = request.GET["search"]
+        else:
+            search = ''
+
+        order_company = 'asc'
+        order_cluster = 'asc'
+        order_sector = 'asc'
+        order_status = 'asc'
+        order = "company__company_name" #default order
+        if "order_company" in request.GET:
+            if request.GET["order_company"] == "desc":
+                order = "-company__company_name"
+                order_company = "asc"
+            else:
+                order_company = "desc"
+        else:
+            if "order_cluster" in request.GET:
+                if request.GET["order_cluster"] == "asc":
+                    order = "cluster__cluster_name"
+                    order_cluster = "desc"
+                else:
+                    order = "-cluster__cluster_name"
+                    order_cluster = "asc"
+            if "order_sector" in request.GET:
+                if request.GET["order_sector"] == "asc":
+                    order = "company__sectoral_type__sectorial_type_name"
+                    order_sector = "desc"
+                else:
+                    order = "-company__sectoral_type__sectorial_type_name"
+                    order_sector = "asc"
+            if "order_status" in request.GET:
+                if request.GET["order_status"] == "asc":
+                    order = "company__company_status"
+                    order_status = "desc"
+                else:
+                    order = "-company__company_status"
+                    order_status = "asc"
+
+        if search:
+            lista = ClusterCompany.objects.filter(Q(company__company_name__icontains=request.GET['search'])|Q(
+                company__company_description__icontains=request.GET['search'])|Q(cluster__cluster_name__icontains=request.GET['search'])|Q(
+                company__sectoral_type__sectorial_type_name__icontains=request.GET['search'])).exclude(company__company_status = 2).order_by(order)
+
+        else:
+            lista = ClusterCompany.objects.all().exclude(company__company_status = 2).order_by(order)
+
+        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        template_vars = dict(order_company=order_company, order_cluster=order_cluster, order_sector=order_sector, order_status=order_status,
+            datacontext=datacontext, empresa=empresa)
+        # Make sure page request is an int. If not, deliver first page.
+        try:
+            page = int(request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+
+        # If page request (9999) is out of range, deliver last page of results.
+        try:
+            pag_user = paginator.page(page)
+        except (EmptyPage, InvalidPage):
+            pag_user = paginator.page(paginator.num_pages)
+
+        template_vars['paginacion']=pag_user
+
+        if 'msj' in request.GET:
+            template_vars['message'] = request.GET['msj']
+            template_vars['msg_type'] = request.GET['ntype']
+
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/companies.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def delete_company(request, id_cpy):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, DELETE, "Baja de empresas"):
+        cpy_obj = get_object_or_404(Company, pk = id_cpy)
+        cpy_obj.company_status = 2
+        cpy_obj.save()
+        mensaje = "La empresa ha sido dada de baja correctamente"
+        type="n_success"
+
+        return HttpResponseRedirect("/buildings/empresas/?msj=" + mensaje +
+                                    "&ntype="+type)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def delete_batch_companies(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, DELETE, "Baja de empresas"):
+        if request.method == "GET":
+            raise Http404
+        if request.POST['actions'] == 'delete':
+            for key in request.POST:
+                if re.search('^cmpy_\w+', key):
+                    r_id = int(key.replace("cmpy_",""))
+                    cpy_obj = get_object_or_404(Company, pk = r_id)
+                    cpy_obj.company_status = 2
+                    cpy_obj.save()
+
+            mensaje = "Las empresas han sido dadas de baja correctamente"
+            return HttpResponseRedirect("/buildings/empresas/?msj=" + mensaje +
+                                        "&ntype=n_success")
+        else:
+            mensaje = "No se ha seleccionado una acción"
+            return HttpResponseRedirect("/buildings/empresas/?msj=" + mensaje +
+                                        "&ntype=n_success")
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def status_company(request, id_cpy):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, UPDATE, "Modificar empresas"):
+        company = get_object_or_404(Company, pk = id_cpy)
+        if company.company_status == 0:
+            company.company_status = 1
+            str_status = "Activo"
+        elif company.company_status == 1:
+            company.company_status = 0
+            str_status = "Inactivo"
+
+        company.save()
+        mensaje = "El estatus de la empresa " + company.company_name +" ha cambiado a "+str_status
+        type="n_success"
+
+        return HttpResponseRedirect("/buildings/empresas/?msj=" + mensaje +
+                                    "&ntype="+type)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def see_company(request, id_cpy):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, VIEW, "Ver empresas"):
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+
+        company_cluster_objs = ClusterCompany.objects.filter(company__pk = id_cpy)
+        company = company_cluster_objs[0]
+
+        template_vars = dict(
+            datacontext=datacontext,
+            company = company,
+            empresa=empresa)
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/see_company.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def scale_dimensions(width, height, longest_side):
+    """
+    para calcular la proporcion en la que se redimencionara la imagen
+    """
+    if width > height:
+        if width > longest_side:
+            ratio = longest_side*1./width
+            return (int(width*ratio), int(height*ratio))
+    elif height > longest_side:
+        ratio = longest_side*1./height
+        return (int(width*ratio), int(height*ratio))
+    return (width, height)
+
+
+def handle_company_logo(i, company):
+    dir_fd=os.open(os.path.join(settings.PROJECT_PATH, "templates/static/media/company_logos/"),os.O_RDONLY)
+    os.fchdir(dir_fd)
+    #Revisa si la carpeta de la empresa existe.
+    dir_name = 'templates/static/media/company_logos/company_'+str(company.pk)+'/'
+    dir_path = os.path.join(settings.PROJECT_PATH, dir_name)
+    if not os.path.isdir(dir_path):
+        os.mkdir("company_"+str(company.pk))
+    else:
+        dir_name = "company_" + str(company.pk)
+        dir_path = os.path.join(settings.PROJECT_PATH, 'templates/static/media/company_logos/')
+        files = os.listdir(dir_path+dir_name)
+        dir_fd = os.open(dir_path+dir_name, os.O_RDONLY)
+        os.fchdir(dir_fd)
+        for file in files:
+            if file==company.company_logo:
+                os.remove(file)
+        os.close(dir_fd)
+
+    dir_fd = os.open(os.path.join(settings.PROJECT_PATH, "templates/static/media/company_logos/"+"company_"+str(company.pk)),os.O_RDONLY)
+    os.fchdir(dir_fd)
+
+    imagefile  = cStringIO.StringIO(i.read())
+    imagefile.seek(0)
+    imageImage = Image.open(imagefile)
+
+    if imageImage.mode != "RGB":
+        imageImage = imageImage.convert("RGB")
+
+    (width, height) = imageImage.size
+    (width, height) = scale_dimensions(width, height, longest_side=128)
+
+    resizedImage = imageImage.resize((width, height))
+
+    imagefile = cStringIO.StringIO()
+    resizedImage.save(imagefile,'JPEG')
+    filename = hashlib.md5(imagefile.getvalue()).hexdigest()+'.jpg'
+
+    # #save to disk
+    imagefile = open(os.path.join('',filename), 'w')
+    resizedImage.save(imagefile,'JPEG')
+    company.company_logo=filename
+    company.save()
+    os.close(dir_fd)
+    return True

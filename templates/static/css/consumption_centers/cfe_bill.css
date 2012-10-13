@@ -97,10 +97,22 @@ h2{
     background-image: url(../images/bgs/main_content_bg.png),      -o-linear-gradient(top, #ffffff, #ededed); /* Opera 11.10+ */
     background-image: url(../images/bgs/main_content_bg.png),         linear-gradient(top, #ffffff, #ededed); /* W3C */
 }
+
 #datepicker_component{
     position: relative;
     float: right;
+    width: 350px;
+    margin-right: 20px;
 }
+
+.selector span{
+    width: 70px;
+}
+
+.selector select{
+    min-width: 105px;
+}
+
 #date_ranges{
     display: block;
     float: left;

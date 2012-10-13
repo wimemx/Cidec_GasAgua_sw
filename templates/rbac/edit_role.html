@@ -41,7 +41,11 @@
                     var operacion = $("#operation span").text().replace(/^\s+/,'').replace(/\s+$/,'');
 
                     var grupo = $("#group span").text().replace(/^\s+/,'').replace(/\s+$/,'');
-
+                    var grupo_tag = grupo.replace(/á/gi,"a");
+                    grupo_tag = grupo_tag.replace(/é/gi,"e");
+                    grupo_tag = grupo_tag.replace(/í/gi,"i");
+                    grupo_tag = grupo_tag.replace(/ó/gi,"o");
+                    grupo_tag = grupo_tag.replace(/ú/gi,"u");
                     var append = '<a href="#eliminar" class="delete hidden_icon" ' +
                             'title="eliminar permiso asignado"></a>' +
                             '<span class="permission">' +
@@ -53,7 +57,7 @@
                             '<span class="object">'+
                             added_objects +
                             '</span>' +
-                            '<input type="hidden" name="' + operacion + "_" +grupo +'" ' +
+                            '<input type="hidden" name="' + operacion + "_" +grupo_tag +'" ' +
                             'value="' +
                             added_objects_ids +
                             '"/>';
@@ -329,7 +333,7 @@
                     <div id="add_another_perm">
                         <div class="widgetField" id="operation">
                             <span class="legend">Operaci&oacute;n</span>
-                            <a href="#"></a>
+                            <a href="#">&nbsp;</a>
                             <ul id="operation_list" class="ddl">
                                 {% for operation in operations %}
                                     <li rel="{{ operation.pk }}">
@@ -341,7 +345,7 @@
 
                         <div class="widgetField" id="group">
                             <span class="legend">Grupo</span>
-                            <a href="#"></a>
+                            <a href="#">&nbsp;</a>
                             <ul id="group_list" class="ddl">
                                 <li></li>
                             </ul>
@@ -349,7 +353,7 @@
 
                         <div class="widgetField" id="object">
                             <span class="legend">Privilegio</span>
-                            <a href="#"></a>
+                            <a href="#">&nbsp;</a>
                             <ul id="object_list" class="ddl">
                                 <li>
                                 </li>

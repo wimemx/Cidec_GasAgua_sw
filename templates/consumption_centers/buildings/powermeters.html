@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+{% block titulo %}Ver Medidores{% endblock %}
+{% block externalcss %}
+<link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
+<link rel="stylesheet" href="/static/css/forms/rbac_user_list.css" type="text/css">
+<link rel="stylesheet" href="/static/css/forms/c_centers.css" type="text/css">
+<link href="/static/js/external/messi/messi.css" rel="stylesheet" type="text/css" media="screen" />
+{% endblock %}
+{% block externaljs %}
+<script src="/static/js/external/messi/messi.min.js"></script>
+<script type="text/javascript">
+    function search_submit(pagina){
+        if (typeof pagina == "object") {
+            pagina = "1";
+        }
+        var url;
+        url=window.location.href;
+        url=url.split("/");
+        url=url[url.length-1];
+        url=url.replace("#",'');
+        url=url.replace(/&page=\d+/,'');
+        url=url.replace(/\?page=\d+/,'');
+        if(url == ''){
+            url+="?page="+pagina;
+        }else{
+            url+="&page="+pagina;
+        }
+        window.location = url;
+
+    }
+</script>
+{% endblock %}
+{% block document_ready %}
+
+//custom select for sidebar
+$("#empresa").click(function(){
+$("#company_list").slideToggle();
+});
+$("#company_list li").click(function(){
+var texto=$(this).text().replace(/^\s*|\s*$/g,'');
+var texto1 = texto.substring(0,17) + "...";
+$("#empresa").text(texto1);
+$("#company_list").slideUp();
+
+$.ajax({
+url: "/reportes/set_default_building/" + $(this).attr("rel"),
+type: "GET",
+dataType: 'json',
+async: 'true',
+success: function(datos){
+console.log("changed");
+}
+});
+});
+$("a.del").click(function(event){
+event.preventDefault();
+var url="/buildings/eliminar_medidor/"+$(this).attr("rel")+"/";
+new Messi('&iquest;Est&aacute; seguro de que desea eliminar el medidor?',
+{title: 'Eliminar medidor', modal: true, buttons: [{id: 0,
+label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
+}],
+callback: function(val) {
+if(val=='Y'){
+document.location.href=url;
+} else return false; }
+});
+});
+$("#aplicar").click(function(e){
+e.preventDefault();
+if($("#actions").val()!="0"){
+new Messi('&iquest;Est&aacute; seguro de que desea eliminar los medidores' +
+' seleccionados?',
+{title: 'Eliminar medidores', modal: true, buttons: [{id: 0,
+label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
+}],
+callback: function(val) {
+if(val=='Y'){
+document.forms["operations_batch"].submit();
+} else return false; }
+});
+}else{
+return false;
+}
+
+});
+
+$("#sort_alias").click(function(e){
+e.preventDefault();
+var get = getUrlVars();
+
+var base_url = window.location.pathname;
+base_url+="?order_alias="+$("#sort_alias").attr("rel");
+if(get.length>0){
+if (get[0]!=window.location.protocol+"//"+window.location
+.host+window.location.pathname){
+for(var i=0; i<get.length; i++){
+if (get[i]!="order_alias" && get[i]!="order_model" && get[i]!="order_status" && get[i]!="order_serial"){
+base_url+="&"+get[i]+"="+get[get[i]];
+}
+}
+}
+}
+window.location = base_url;
+});
+$("#sort_model").click(function(e){
+e.preventDefault();
+var get = getUrlVars();
+
+var base_url = window.location.pathname;
+base_url+="?order_model="+$("#sort_model").attr("rel");
+if(get.length>0){
+if (get[0]!=window.location.protocol+"//"+window.location
+.host+window.location.pathname){
+for(var i=0; i<get.length; i++){
+if (get[i]!="order_alias" && get[i]!="order_model" && get[i]!="order_status" && get[i]!="order_serial"){
+base_url+="&"+get[i]+"="+get[get[i]];
+}
+}
+}
+
+}
+
+window.location = base_url;
+});
+
+$("#sort_status").click(function(e){
+e.preventDefault();
+var get = getUrlVars();
+
+var base_url = window.location.pathname;
+base_url+="?order_status="+$("#sort_status").attr("rel");
+if(get.length>0){
+if (get[0]!=window.location.protocol+"//"+window.location
+.host+window.location.pathname){
+for(var i=0; i<get.length; i++){
+if (get[i]!="order_alias" && get[i]!="order_model" && get[i]!="order_status" && get[i]!="order_serial"){
+base_url+="&"+get[i]+"="+get[get[i]];
+}
+}
+}
+
+}
+
+window.location = base_url;
+});
+
+$("#sort_serial").click(function(e){
+e.preventDefault();
+var get = getUrlVars();
+
+var base_url = window.location.pathname;
+base_url+="?order_serial="+$("#sort_serial").attr("rel");
+if(get.length>0){
+if (get[0]!=window.location.protocol+"//"+window.location
+.host+window.location.pathname){
+for(var i=0; i<get.length; i++){
+if (get[i]!="order_alias" && get[i]!="order_model" && get[i]!="order_status" && get[i]!="order_serial"){
+base_url+="&"+get[i]+"="+get[get[i]];
+}
+}
+}
+
+}
+
+window.location = base_url;
+});
+
+{% endblock %}
+
+
+{% block contenido %}
+<div id="bread_crumbs">
+    <ul>
+        <li><a href="/main/">Inicio</a></li>
+        <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
+        <li>Medidores</li>
+    </ul>
+
+</div>
+<div id="contenido_interno">
+    <h2 id="titulo_form" class="user_role">Ver Medidores</h2>
+
+
+    <div class="divider" id="divider_top">&nbsp;</div>
+    {% if message %}
+            <span class="notif {{ msg_type }}">
+                    {% autoescape off %}{{ message }}{% endautoescape %}
+                <a href="#" onclick="$(this).parent().remove();">X</a>
+                </span>
+    {% endif %}
+    <div id="form_container">
+
+        <p class="description">
+            Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
+            <br/>
+            Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
+        </p>
+
+        <div id="user_actions">
+
+            <a href="/buildings/alta_medidor/"><span class="plus"></span>
+                Nuevo Medidor
+            </a>
+            <span class="hz_divider"></span>
+            <form method="get" action=".">
+                <label class="input">
+                    <span>Inserte su texto aqu&iacute;</span>
+                    <input type="text" name="search" id="search"/>
+                </label>
+                <button class="aqua_btn">
+                    Buscar
+                </button>
+            </form>
+        </div>
+        <form id="operations_batch" action="/buildings/delete_batch_powermeter/" method="post">
+            {% csrf_token %}
+            <div id="grid_container">
+                <table>
+                    <thead>
+                    <tr>
+                        <th style="width: 20%;">
+                            <a href="#" id="sort_alias" rel="{{ order_alias }}">
+                                Alias
+                                <span class="sort"></span>
+                            </a>
+                        </th>
+                        <th style="width: 20%;">
+                            <a href="#" id="sort_model" rel="{{ order_model }}">
+                                Modelo
+                                <span class="sort"></span>
+                            </a>
+                        </th>
+                        <th style="width: 20%;">
+                            <a href="#" id="sort_serial" rel="{{ order_serial }}">
+                                Número de Serie
+                                <span class="sort"></span>
+                            </a>
+                        </th>
+                        <th style="width: 20%;">
+                            <a href="#" id="sort_status" rel="{{ order_status }}">
+                                Estatus
+                                <span class="sort"></span>
+                            </a>
+                        </th>
+                        <th style="width: 20%;">Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for powermeter in paginacion.object_list %}
+
+                    <tr class="{% cycle 'row1' 'row2' %}">
+                        <td>
+                            <input type="checkbox" id="powermeter_{{ powermeter.pk }}"
+                                   name="powermeter_{{ powermeter.pk }}"/>
+                            <label for="powermeter_{{ powermeter.pk }}">
+                                <a href="/buildings/ver_medidor/{{ powermeter.pk }}/">
+                                    {{ powermeter.powermeter_anotation }}
+                                </a>
+                            </label>
+                        </td>
+                        <td class="c">
+                            {{ powermeter.powermeter_model.powermeter_brand }}-{{ powermeter.powermeter_model.powermeter_model }}
+                        </td>
+                        <td class="c">
+                            {{ powermeter.powermeter_serial }}
+                        </td>
+                        <td class="c">
+                            {% if powermeter.status = 0 %}
+                                <span class="inactive_status">Inactivo</span>
+                            {% else %}
+                                <span class="active_status">Activo</span>
+                            {% endif %}
+                        </td>
+                        <td class="c">
+                            <a class="del" rel="{{ powermeter.pk }}"
+                               href="#"></a>
+                            <a class="delete"
+                               href="/buildings/status_medidor/{{ powermeter.pk }}/"></a>
+                            <a class="edit"
+                               href="/buildings/editar_medidor/{{ powermeter.pk }}/"></a>
+
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                <div id="table_footer">
+                    <select id="actions" name="actions">
+                        <option value="0">Elije una Acci&oacute;n</option>
+                        <option value="delete">Eliminar</option>
+                    </select>
+                    <button class="fl aqua_btn" id="aplicar">Aplicar a la
+                        selecci&oacute;n</button>
+
+                    <div class="pagination">
+                            <span class="step-links">
+                                {% if paginacion.has_previous %}
+                                    <a href="#" onclick="search_submit({{ paginacion.previous_page_number }})">Anterior</a> &ndash;
+                                {% endif %}
+
+                                <span class="current">
+                                    P&aacute;gina {{ paginacion.number }} de {{ paginacion.paginator.num_pages }}
+                                </span>
+
+                                {% if paginacion.has_next %}
+                                &ndash; <a href="#" onclick="search_submit({{ paginacion.next_page_number }})">Siguiente</a>
+                                {% endif %}
+                            </span>
+                    </div>
+
+                </div>
+            </div>
+        </form>
+
+
+
+
+    </div>
+
+
+</div>
+{% endblock %}
