@@ -7,7 +7,7 @@ import cStringIO
 import os
 from django.core.files import File
 import hashlib
-
+import csv
 import re
 import time
 import calendar
@@ -25,8 +25,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 
 from cidec_sw import settings
-from c_center.calculations import tarifaHM_mensual, tarifaHM_total, obtenerHistorico, obtenerHistoricoHM, \
-    fechas_corte, tarifaHM, tarifaDAC
+from c_center.calculations import *
 from c_center.models import *
 from electric_rates.models import ElectricRatesDetail
 from rbac.models import Operation, DataContextPermission
@@ -116,18 +115,24 @@ def set_default_session_vars(request, datacontext):
         try:
             building=Building.objects.get(pk=datacontext[0]['building_pk'])
             request.session['main_building'] = building
-        except ObjectDoesNotExist, KeyError:
+        except ObjectDoesNotExist:
             request.session['main_building'] = None
-    if "company" not in request.session:
+        except IndexError:
+            request.session['main_building'] = None
+    if "company" not in request.session and request.session['main_building']:
         c_b = CompanyBuilding.objects.get(building=request.session['main_building'])
         request.session['company'] = c_b.company
-    if 'consumer_unit' not in request.session:
+
+    if 'consumer_unit' not in request.session and request.session['main_building']:
         #sets the default ConsumerUnit (the first in ConsumerUnit for the main building)
         try:
             c_unit = ConsumerUnit.objects.filter(building=request.session['main_building'])
             request.session['consumer_unit'] = c_unit[0]
-        except ObjectDoesNotExist, KeyError:
+        except ObjectDoesNotExist:
             request.session['main_building'] = None
+        except IndexError:
+            request.session['main_building'] = None
+
 
 def set_default_building(request, id_building):
     """Sets the default building for reports"""
@@ -136,6 +141,7 @@ def set_default_building(request, id_building):
     request.session['company'] = c_b.company
     c_unit = ConsumerUnit.objects.filter(building=request.session['main_building'])
     request.session['consumer_unit'] = c_unit[0]
+
     dicc = dict(edificio=request.session['main_building'].building_name,
         electric_device_type=c_unit[0].electric_device_type.electric_device_type_name)
     data = simplejson.dumps( dicc )
@@ -194,7 +200,7 @@ def set_consumer_unit(request):
                      "<li>"\
                      "<a href='#' rel='" + str(main_cu.pk) + "'>"+\
                      building.building_name +\
-                     "</a>"
+                     "<br/>(Total)</a>"
 
     try:
         parents[0]
@@ -306,7 +312,7 @@ def main_page(request):
 def cfe_bill(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, VIEW, "Consultar recibo CFE"):
+    if has_permission(request.user, VIEW, "Consultar recibo CFE") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)
         set_default_session_vars(request, datacontext)
 
@@ -333,7 +339,7 @@ def cfe_calculations(request):
     """Renders the cfe bill and the historic data chart"""
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, VIEW, "Consultar recibo CFE"):
+    if has_permission(request.user, VIEW, "Consultar recibo CFE") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)
         set_default_session_vars(request, datacontext)
 
@@ -456,6 +462,37 @@ def grafica_datos(request):
     else:
         raise Http404
 
+def grafica_datoscsv(request):
+    f1_init, f1_end = get_intervals_1(request.GET)
+    buildings = []
+    profile=request.session['consumer_unit'].profile_powermeter
+    for key in request.GET:
+        if re.search('^building\d+', key):
+            building = get_object_or_404(Building, pk=int(request.GET[key]))
+            buildings.append(building)
+    if buildings:
+        data=simplejson.loads(get_json_data(buildings, f1_init, f1_end, request.GET['graph'],profile))
+        parameter_type = request.GET['graph']
+        building = request.session['main_building'].building_name
+        c_u = request.session['consumer_unit'].electric_device_type.electric_device_type_name
+
+
+        response = HttpResponse(mimetype='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="datos_'+ parameter_type +'.csv"'
+
+        writer = csv.writer(response)
+        for dato in data:
+            datostr = str(dato['meditions']).replace("[u'", "")
+            datostr = datostr.replace("']", '')+parameter_type
+            date = str(dato['labels']).replace("[u'", "")
+            date = date.replace("-05:00']", '')
+            writer.writerow([building, c_u, datostr, date])
+
+        return response
+
+
+    else:
+        raise Http404
 
 
 def get_pp_data(request):
@@ -804,7 +841,7 @@ def get_weekly_summary_for_parameter(year, month, week, type, profile):
     """
 
     weekly_summary = []
-    first_day_of_month = datetime(year=year, month=month, day=1)
+    first_day_of_month = datetime.datetime(year=year, month=month, day=1)
     first_day_first_week = first_day_of_month - timedelta(days=first_day_of_month.weekday())
     week_delta = timedelta(weeks=1)
     week_number = 1
@@ -931,7 +968,7 @@ def get_parts_of_building(request, id_building):
 def add_building_attr(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, CREATE, "Alta de atributos de edificios"):
+    if has_permission(request.user, CREATE, "Alta de atributos de edificios") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         company = request.session['company']
@@ -976,7 +1013,7 @@ def add_building_attr(request):
                 b_attr.save()
                 template_vars['message'] = "El atributo fue dado de alta correctamente"
                 template_vars['type'] = "n_success"
-                if has_permission(request.user, VIEW, "Ver atributos de edificios"):
+                if has_permission(request.user, VIEW, "Ver atributos de edificios") or request.user.is_superuser:
                     return HttpResponseRedirect("/buildings/atributos?msj=" +
                                                 template_vars["message"] +
                                                 "&ntype=n_success")
@@ -994,7 +1031,7 @@ def add_building_attr(request):
 def b_attr_list(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, VIEW, "Ver atributos de edificios"):
+    if has_permission(request.user, VIEW, "Ver atributos de edificios") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         company = request.session['company']
@@ -1075,7 +1112,7 @@ def b_attr_list(request):
 def delete_b_attr(request, id_b_attr):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Eliminar atributos de edificios"):
+    if has_permission(request.user, DELETE, "Eliminar atributos de edificios") or request.user.is_superuser:
         b_attr = get_object_or_404(BuildingAttributes, pk=id_b_attr)
         b_attr_for_b = BuildingAttributesForBuilding.objects.filter(building_attributes=b_attr)
         if b_attr_for_b:
@@ -1094,7 +1131,7 @@ def delete_b_attr(request, id_b_attr):
 def editar_b_attr(request, id_b_attr):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, VIEW, "Ver atributos de edificios"):
+    if has_permission(request.user, VIEW, "Ver atributos de edificios") or request.user.is_superuser:
         b_attr = get_object_or_404(BuildingAttributes, pk=id_b_attr)
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
@@ -1148,7 +1185,7 @@ def editar_b_attr(request, id_b_attr):
                 b_attr.save()
                 template_vars['message'] = "El atributo fue editado correctamente"
                 template_vars['type'] = "n_success"
-                if has_permission(request.user, VIEW, "Ver atributos de edificios"):
+                if has_permission(request.user, VIEW, "Ver atributos de edificios") or request.user.is_superuser:
                     return HttpResponseRedirect("/buildings/atributos?msj=" +
                                                 template_vars["message"] +
                                                 "&ntype=n_success")
@@ -1165,7 +1202,7 @@ def editar_b_attr(request, id_b_attr):
 def ver_b_attr(request, id_b_attr):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, VIEW, "Ver atributos de edificios"):
+    if has_permission(request.user, VIEW, "Ver atributos de edificios") or request.user.is_superuser:
         b_attr = get_object_or_404(BuildingAttributes, pk=id_b_attr)
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
@@ -1198,7 +1235,7 @@ def ver_b_attr(request, id_b_attr):
 def add_cluster(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, CREATE, "Alta de clusters"):
+    if has_permission(request.user, CREATE, "Alta de clusters") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
 
@@ -1227,7 +1264,7 @@ def add_cluster(request):
             template_vars["message"] = "Cluster de Empresas creado exitosamente"
             template_vars["type"] = "n_success"
 
-            if has_permission(request.user, VIEW, "Ver clusters"):
+            if has_permission(request.user, VIEW, "Ver clusters") or request.user.is_superuser:
                 return HttpResponseRedirect("/buildings/clusters?msj=" +
                                             template_vars["message"] +
                                             "&ntype=n_success")
@@ -1242,7 +1279,7 @@ def add_cluster(request):
 def view_cluster(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, VIEW, "Ver cluster de empresas"):
+    if has_permission(request.user, VIEW, "Ver cluster de empresas") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         if "search" in request.GET:
@@ -1305,7 +1342,7 @@ def view_cluster(request):
 def delete_cluster(request, id_cluster):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de clusters"):
+    if has_permission(request.user, DELETE, "Baja de clusters") or request.user.is_superuser:
         cluster = get_object_or_404(Cluster, pk=id_cluster)
         cluster.cluster_status = 2
         cluster.save()
@@ -1320,7 +1357,7 @@ def delete_cluster(request, id_cluster):
 def delete_batch_cluster(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de clusters"):
+    if has_permission(request.user, DELETE, "Baja de clusters") or request.user.is_superuser:
         if request.method == "GET":
             raise Http404
         if request.POST['actions'] == 'delete':
@@ -1346,7 +1383,7 @@ def delete_batch_cluster(request):
 def edit_cluster(request, id_cluster):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, UPDATE, "Modificar cluster de empresas"):
+    if has_permission(request.user, UPDATE, "Modificar cluster de empresas") or request.user.is_superuser:
         cluster = get_object_or_404(Cluster, pk = id_cluster)
 
         #Se obtienen los sectores
@@ -1387,7 +1424,7 @@ def edit_cluster(request, id_cluster):
 
                 message = "Cluster editado exitosamente"
                 type = "n_success"
-                if has_permission(request.user, VIEW, "Ver cluster de empresas"):
+                if has_permission(request.user, VIEW, "Ver cluster de empresas") or request.user.is_superuser:
                     return HttpResponseRedirect("/buildings/clusters?msj=" +
                                                 message +
                                                 "&ntype=n_success")
@@ -1409,7 +1446,7 @@ def edit_cluster(request, id_cluster):
 def see_cluster(request, id_cluster):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, VIEW, "Ver cluster de empresas"):
+    if has_permission(request.user, VIEW, "Ver cluster de empresas") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
 
@@ -1434,7 +1471,7 @@ POWERMETER MODELS
 def add_powermetermodel(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, CREATE, "Alta de modelos de medidores eléctricos"):
+    if has_permission(request.user, CREATE, "Alta de modelos de medidores eléctricos") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
 
@@ -1456,7 +1493,7 @@ def add_powermetermodel(request):
             template_vars["message"] = "Modelo de Medidor creado exitosamente"
             template_vars["type"] = "n_success"
 
-            if has_permission(request.user, VIEW, "Ver modelos de medidores eléctricos"):
+            if has_permission(request.user, VIEW, "Ver modelos de medidores eléctricos") or request.user.is_superuser:
                 return HttpResponseRedirect("/buildings/modelos_medidor?msj=" +
                                             template_vars["message"] +
                                             "&ntype=n_success")
@@ -1470,7 +1507,7 @@ def add_powermetermodel(request):
 def edit_powermetermodel(request, id_powermetermodel):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, UPDATE, "Modificar modelos de medidores eléctricos"):
+    if has_permission(request.user, UPDATE, "Modificar modelos de medidores eléctricos") or request.user.is_superuser:
         powermetermodel = get_object_or_404(PowermeterModel, pk = id_powermetermodel)
 
         post = {'pw_brand': powermetermodel.powermeter_brand, 'pw_model': powermetermodel.powermeter_model}
@@ -1504,7 +1541,7 @@ def edit_powermetermodel(request, id_powermetermodel):
 
                 message = "Modelo de Medidor editado exitosamente"
                 type = "n_success"
-                if has_permission(request.user, VIEW, "Ver modelos de medidores eléctricos"):
+                if has_permission(request.user, VIEW, "Ver modelos de medidores eléctricos") or request.user.is_superuser:
                     return HttpResponseRedirect("/buildings/modelos_medidor?msj=" +
                                                 message +
                                                 "&ntype=n_success")
@@ -1525,7 +1562,7 @@ def edit_powermetermodel(request, id_powermetermodel):
 def view_powermetermodels(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, VIEW, "Ver modelos de medidores eléctricos"):
+    if has_permission(request.user, VIEW, "Ver modelos de medidores eléctricos") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         if "search" in request.GET:
@@ -1588,7 +1625,7 @@ def view_powermetermodels(request):
 def delete_powermetermodel(request, id_powermetermodel):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de clusters"):
+    if has_permission(request.user, DELETE, "Baja de clusters") or request.user.is_superuser:
         powermetermodel = get_object_or_404(PowermeterModel, pk = id_powermetermodel)
         #Change the status in here
         powermetermodel.save()
@@ -1603,7 +1640,7 @@ def delete_powermetermodel(request, id_powermetermodel):
 def delete_batch_powermetermodel(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de clusters"):
+    if has_permission(request.user, DELETE, "Baja de clusters") or request.user.is_superuser:
         if request.method == "GET":
             raise Http404
         if request.POST['actions'] == 'delete':
@@ -1632,7 +1669,7 @@ POWERMETERS
 def add_powermeter(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, CREATE, "Alta de medidor electrico"):
+    if has_permission(request.user, CREATE, "Alta de medidor electrico") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         post = ''
@@ -1681,7 +1718,7 @@ def add_powermeter(request):
                 template_vars["message"] = "Medidor creado exitosamente"
                 template_vars["type"] = "n_success"
 
-                if has_permission(request.user, VIEW, "Ver medidores eléctricos"):
+                if has_permission(request.user, VIEW, "Ver medidores eléctricos") or request.user.is_superuser:
                     return HttpResponseRedirect("/buildings/medidores?msj=" +
                                                 template_vars["message"] +
                                                 "&ntype=n_success")
@@ -1698,7 +1735,7 @@ def add_powermeter(request):
 def edit_powermeter(request, id_powermeter):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, UPDATE, "Modificar medidores eléctricos"):
+    if has_permission(request.user, UPDATE, "Modificar medidores eléctricos") or request.user.is_superuser:
         powermeter = get_object_or_404(Powermeter, pk = id_powermeter)
 
         pw_models_list = PowermeterModel.objects.all().order_by("powermeter_brand")
@@ -1744,7 +1781,7 @@ def edit_powermeter(request, id_powermeter):
 
                 message = "Medidor editado exitosamente"
                 type = "n_success"
-                if has_permission(request.user, VIEW, "Ver medidores eléctricos"):
+                if has_permission(request.user, VIEW, "Ver medidores eléctricos") or request.user.is_superuser:
                     return HttpResponseRedirect("/buildings/medidores?msj=" +
                                                 message +
                                                 "&ntype=n_success")
@@ -1766,7 +1803,7 @@ def edit_powermeter(request, id_powermeter):
 def view_powermeter(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, VIEW, "Ver medidores eléctricos"):
+    if has_permission(request.user, VIEW, "Ver medidores eléctricos") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         if "search" in request.GET:
@@ -1858,7 +1895,7 @@ def view_powermeter(request):
 def delete_powermeter(request, id_powermeter):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de medidores eléctricos"):
+    if has_permission(request.user, DELETE, "Baja de medidores eléctricos") or request.user.is_superuser:
         powermeter = get_object_or_404(Powermeter, pk = id_powermeter )
         powermeter.status = 2
         powermeter.save()
@@ -1873,7 +1910,7 @@ def delete_powermeter(request, id_powermeter):
 def delete_batch_powermeter(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de medidores eléctricos"):
+    if has_permission(request.user, DELETE, "Baja de medidores eléctricos") or request.user.is_superuser:
         if request.method == "GET":
             raise Http404
         if request.POST['actions'] == 'delete':
@@ -1898,7 +1935,7 @@ def delete_batch_powermeter(request):
 def status_powermeter(request, id_powermeter):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, UPDATE, "Modificar medidores eléctricos"):
+    if has_permission(request.user, UPDATE, "Modificar medidores eléctricos") or request.user.is_superuser:
         powermeter = get_object_or_404(Powermeter, pk = id_powermeter )
         if powermeter.status == 0:
             powermeter.status = 1
@@ -1920,7 +1957,7 @@ def status_powermeter(request, id_powermeter):
 def see_powermeter(request, id_powermeter):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, VIEW, "Ver medidores eléctricos"):
+    if has_permission(request.user, VIEW, "Ver medidores eléctricos") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
 
@@ -1952,7 +1989,7 @@ Electric Device Types
 def add_electric_device_type(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, CREATE, "Alta de dispositivos y sistemas eléctricos"):
+    if has_permission(request.user, CREATE, "Alta de dispositivos y sistemas eléctricos") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         post = ''
@@ -1987,7 +2024,7 @@ def add_electric_device_type(request):
                 template_vars["message"] = "Tipo de Equipo Eléctrico creado exitosamente"
                 template_vars["type"] = "n_success"
 
-                if has_permission(request.user, VIEW, "Ver medidores eléctricos"):
+                if has_permission(request.user, VIEW, "Ver medidores eléctricos") or request.user.is_superuser:
                     return HttpResponseRedirect("/buildings/tipos_equipo_electrico?msj=" +
                                                 template_vars["message"] +
                                                 "&ntype=n_success")
@@ -2004,7 +2041,7 @@ def add_electric_device_type(request):
 def edit_electric_device_type(request, id_edt):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, UPDATE, "Modificar dispositivos y sistemas eléctricos"):
+    if has_permission(request.user, UPDATE, "Modificar dispositivos y sistemas eléctricos") or request.user.is_superuser:
         edt_obj = get_object_or_404(ElectricDeviceType, pk = id_edt)
 
         post = {'devicetypename': edt_obj.electric_device_type_name, 'devicetypedescription': edt_obj.electric_device_type_description}
@@ -2034,7 +2071,7 @@ def edit_electric_device_type(request, id_edt):
 
                 message = "Tipo de Equipo Eléctrico editado exitosamente"
                 type = "n_success"
-                if has_permission(request.user, VIEW, "Ver dispositivos y sistemas eléctricos"):
+                if has_permission(request.user, VIEW, "Ver dispositivos y sistemas eléctricos") or request.user.is_superuser:
                     return HttpResponseRedirect("/buildings/tipos_equipo_electrico?msj=" +
                                                 message +
                                                 "&ntype=n_success")
@@ -2055,7 +2092,7 @@ def edit_electric_device_type(request, id_edt):
 def view_electric_device_type(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, VIEW, "Ver dispositivos y sistemas eléctricos"):
+    if has_permission(request.user, VIEW, "Ver dispositivos y sistemas eléctricos") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         if "search" in request.GET:
@@ -2127,7 +2164,7 @@ def view_electric_device_type(request):
 def delete_electric_device_type(request, id_edt):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de dispositivos y sistemas eléctricos"):
+    if has_permission(request.user, DELETE, "Baja de dispositivos y sistemas eléctricos") or request.user.is_superuser:
         edt_obj = get_object_or_404(ElectricDeviceType, pk=id_edt)
         edt_obj.electric_device_type_status = 2
         edt_obj.save()
@@ -2142,7 +2179,7 @@ def delete_electric_device_type(request, id_edt):
 def delete_batch_electric_device_type(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de dispositivos y sistemas eléctricos"):
+    if has_permission(request.user, DELETE, "Baja de dispositivos y sistemas eléctricos") or request.user.is_superuser:
         if request.method == "GET":
             raise Http404
         if request.POST['actions'] == 'delete':
@@ -2167,7 +2204,7 @@ def delete_batch_electric_device_type(request):
 def status_electric_device_type(request, id_edt):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, UPDATE, "Modificar dispositivos y sistemas eléctricos"):
+    if has_permission(request.user, UPDATE, "Modificar dispositivos y sistemas eléctricos") or request.user.is_superuser:
         edt_obj = get_object_or_404(ElectricDeviceType, pk=id_edt)
         if edt_obj.electric_device_type_status == 0:
             edt_obj.electric_device_type_status = 1
@@ -2192,7 +2229,7 @@ Companies
 def add_company(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, CREATE, "Alta compañía"):
+    if has_permission(request.user, CREATE, "Alta compañía") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         post = ''
@@ -2264,7 +2301,7 @@ def add_company(request):
                 template_vars["message"] = "Empresa creada exitosamente"
                 template_vars["type"] = "n_success"
 
-                if has_permission(request.user, VIEW, "Ver empresas"):
+                if has_permission(request.user, VIEW, "Ver empresas") or request.user.is_superuser:
                     return HttpResponseRedirect("/buildings/empresas?msj=" +
                                                 template_vars["message"] +
                                                 "&ntype=n_success")
@@ -2281,7 +2318,7 @@ def add_company(request):
 def edit_company(request, id_cpy):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, UPDATE, "Modificar empresas"):
+    if has_permission(request.user, UPDATE, "Modificar empresas") or request.user.is_superuser:
         company_clusters = ClusterCompany.objects.filter(id = id_cpy)
 
         post = {'cmp_id': company_clusters[0].company.id,'cmp_name': company_clusters[0].company.company_name, 'cmp_description': company_clusters[0].company.company_description, 'cmp_cluster': company_clusters[0].cluster.pk, 'cmp_sector': company_clusters[0].company.sectoral_type.pk, 'cmp_logo': company_clusters[0].company.company_logo}
@@ -2351,7 +2388,7 @@ def edit_company(request, id_cpy):
 
                 message = "Empresa editada exitosamente"
                 type = "n_success"
-                if has_permission(request.user, VIEW, "Ver empresas"):
+                if has_permission(request.user, VIEW, "Ver empresas") or request.user.is_superuser:
                     return HttpResponseRedirect("/buildings/empresas?msj=" +
                                                 message +
                                                 "&ntype=n_success")
@@ -2374,7 +2411,7 @@ def edit_company(request, id_cpy):
 def view_companies(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, VIEW, "Ver empresas"):
+    if has_permission(request.user, VIEW, "Ver empresas") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         if "search" in request.GET:
@@ -2454,7 +2491,7 @@ def view_companies(request):
 def delete_company(request, id_cpy):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de empresas"):
+    if has_permission(request.user, DELETE, "Baja de empresas") or request.user.is_superuser:
         cpy_obj = get_object_or_404(Company, pk = id_cpy)
         cpy_obj.company_status = 2
         cpy_obj.save()
@@ -2469,7 +2506,7 @@ def delete_company(request, id_cpy):
 def delete_batch_companies(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de empresas"):
+    if has_permission(request.user, DELETE, "Baja de empresas") or request.user.is_superuser:
         if request.method == "GET":
             raise Http404
         if request.POST['actions'] == 'delete':
@@ -2494,7 +2531,7 @@ def delete_batch_companies(request):
 def status_company(request, id_cpy):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, UPDATE, "Modificar empresas"):
+    if has_permission(request.user, UPDATE, "Modificar empresas") or request.user.is_superuser:
         company = get_object_or_404(Company, pk = id_cpy)
         if company.company_status == 0:
             company.company_status = 1
@@ -2515,7 +2552,7 @@ def status_company(request, id_cpy):
 def see_company(request, id_cpy):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, VIEW, "Ver empresas"):
+    if has_permission(request.user, VIEW, "Ver empresas") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
 
@@ -2592,3 +2629,44 @@ def handle_company_logo(i, company):
     company.save()
     os.close(dir_fd)
     return True
+
+
+
+def c_center_structures(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, VIEW, "Ver empresas") or request.user.is_superuser:
+
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+
+        clustersObjs = Cluster.objects.all()
+        visualizacion = "<div class='hierarchy_container'>"
+        for clst in clustersObjs:
+            visualizacion += "<div class='hrchy_cluster'><span class='hrchy_cluster_label'>"+clst.cluster_name+"</span>"
+            companiesObjs = ClusterCompany.objects.filter(cluster = clst)
+            visualizacion += "<div>"
+            for comp in companiesObjs:
+                visualizacion += "<div class='hrchy_company'><span class='hrchy_company_label'>"+comp.company.company_name+"</span>"
+                buildingsObjs = CompanyBuilding.objects.filter(company = comp)
+                if buildingsObjs:
+                    visualizacion += "<div>"
+                    for bld in buildingsObjs:
+                        visualizacion += "<div class='hrchy_building'><span> - Edificio: " + bld.building.building_name + "</span></div>"
+                    visualizacion += "</div>"
+                visualizacion += "</div>"
+            visualizacion += "</div>"
+            visualizacion += "</div>"
+        visualizacion += "</div>"
+
+
+        template_vars = dict(
+            datacontext=datacontext,
+            visualizacion = visualizacion,
+            empresa=empresa, company=request.session['company'])
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/c_centers_structure.html", template_vars_template)
+
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))

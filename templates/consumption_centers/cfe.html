@@ -40,10 +40,12 @@
 
         function cfeReload(){
 
-            var month = $("#id_month").val();
+            var month = parseInt($("#id_month").val());
+            month++;
+
             var year = $("#id_year").val();
 
-            var url = '/reportes/cfe_calculos/'
+            var url = '/reportes/cfe_calculos/';
             url += '?month='+month+"&year="+year;
 
             //$("#cfe_container").append('<img src="/static/css/images/spinner.gif" id="spinner" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">');

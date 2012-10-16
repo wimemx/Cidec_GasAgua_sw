@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block titulo %}Ver Empresa{% endblock %}
+
+{% block externalcss %}
+<link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
+<link rel="stylesheet" href="/static/css/forms/rbac.css" type="text/css">
+<link rel="stylesheet" href="/static/css/forms/c_centers.css" type="text/css">
+<link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
+{% endblock %}
+{% block externaljs %}
+<script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+{% endblock %}
+{% block document_ready %}
+    $("#empresa").click(function(){
+    $("#company_list").slideToggle();
+    });
+    $("#company_list li").click(function(){
+    var texto=$(this).text().replace(/^\s*|\s*$/g,'');
+    var texto1 = texto.substring(0,17) + "...";
+    $("#empresa").text(texto1);
+    $("#company_list").slideUp();
+
+    $.ajax({
+    url: "/reportes/set_default_building/" + $(this).attr("rel"),
+    type: "GET",
+    dataType: 'json',
+    async: 'true',
+    success: function(datos){
+    console.log("changed");
+    }
+    });
+
+    });
+{% endblock %}
+
+
+{% block contenido %}
+<div id="bread_crumbs">
+    <ul>
+        <li><a href="/main/">Inicio</a></li>
+        <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
+        <li><a href="/buildings/empresas/">Empresas</a></li>
+        <li>Ver Jerarquía</li>
+    </ul>
+
+</div>
+<div id="contenido_interno" class="cluster_content">
+    <h2 id="titulo_form" class="company">
+        Jerarquía
+    </h2>
+
+
+    <div class="divider" id="divider_top">&nbsp;</div>
+    <div id="card_container">
+        <div id="cluster_img" class="fl">
+            <img src="/static/css/images/imgs_icns/place_holder_cluster.png" alt="Cluster"/>
+        </div>
+        <div id="user_data" class="fl">
+            {{visualizacion|safe}}
+        </div>
+
+    </div>
+
+
+</div>
+{% endblock %}

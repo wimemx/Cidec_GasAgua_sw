@@ -62,7 +62,7 @@ def add_role(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
 
-    if has_permission(request.user, CREATE, "crear rol"):
+    if has_permission(request.user, CREATE, "crear rol") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         company = request.session['company']
@@ -78,7 +78,7 @@ def add_role(request):
             else:
                 rol = Role(role_name=role, role_description=role_desc, role_importance="average" )
                 rol.save()
-                if has_permission(request.user, CREATE, "Asignacion de privilegios"):
+                if has_permission(request.user, CREATE, "Asignacion de privilegios") or request.user.is_superuser:
                     asignation = False
                     for key in request.POST:
                         objs_ids = request.POST[str(key)].split(",")
@@ -104,7 +104,7 @@ def add_role(request):
                 #if save_perm register the PermissionAsigment correctly
                 if not ntype:
                     ntype = "success"
-                if has_permission(request.user, VIEW, "Ver roles"):
+                if has_permission(request.user, VIEW, "Ver roles") or request.user.is_superuser:
                     return HttpResponseRedirect("/panel_de_control/roles?msj=" + mensaje +
                                                 "&ntype="+ntype)
                 else:
@@ -173,7 +173,7 @@ def update_role_privs(role, objs_ids, operation):
 def edit_role(request, id_role):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, UPDATE, "Modificar asignaciones de permisos a roles"):
+    if has_permission(request.user, UPDATE, "Modificar asignaciones de permisos a roles") or request.user.is_superuser:
         rol = get_object_or_404(Role, pk=id_role)
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
@@ -279,7 +279,7 @@ def edit_role(request, id_role):
 def see_role(request, id_role):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, VIEW, "Ver roles"):
+    if has_permission(request.user, VIEW, "Ver roles") or request.user.is_superuser:
         rol = get_object_or_404(Role, pk=id_role)
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
@@ -314,7 +314,7 @@ def see_role(request, id_role):
 def view_roles(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, VIEW, "Ver roles"):
+    if has_permission(request.user, VIEW, "Ver roles") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         company = request.session['company']
@@ -377,7 +377,7 @@ def view_roles(request):
 def delete_role(request, id_role):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Eliminar rol"):
+    if has_permission(request.user, DELETE, "Eliminar rol") or request.user.is_superuser:
         rol = get_object_or_404(Role, pk=id_role)
         user_r = UserRole.objects.filter(role=rol)
         if user_r:
@@ -399,7 +399,7 @@ def delete_role(request, id_role):
 def delete_batch(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Eliminar rol"):
+    if has_permission(request.user, DELETE, "Eliminar rol") or request.user.is_superuser:
         if request.method == "GET":
             raise Http404
         if request.POST['actions'] == 'delete':
@@ -530,7 +530,7 @@ def validate_user(post):
 def add_user(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, CREATE, "Alta de usuarios"):
+    if has_permission(request.user, CREATE, "Alta de usuarios") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         company = request.session['company']
@@ -586,7 +586,7 @@ def add_user(request):
 
                         template_vars["message"] = "Usuario creado exitosamente"
                         template_vars["type"] = "n_success"
-                        if has_permission(request.user, VIEW, "Ver usuarios"):
+                        if has_permission(request.user, VIEW, "Ver usuarios") or request.user.is_superuser:
                             return HttpResponseRedirect("/panel_de_control/usuarios?msj=" +
                                                         template_vars["message"] +
                                                         "&ntype=n_success")
@@ -603,7 +603,7 @@ def add_user(request):
 def view_users(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, VIEW, "Ver usuarios"):
+    if has_permission(request.user, VIEW, "Ver usuarios") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         company = request.session['company']
@@ -679,7 +679,7 @@ def view_users(request):
 def delete_user(request, id_user):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de usuarios"):
+    if has_permission(request.user, DELETE, "Baja de usuarios") or request.user.is_superuser:
         user = get_object_or_404(User, pk=id_user)
         if user.is_superuser:
             mensaje = "No puedes eliminar a un super usuario"
@@ -698,7 +698,7 @@ def delete_user(request, id_user):
 def edit_user(request, id_user):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, UPDATE, "Actualizar informacion de usuarios"):
+    if has_permission(request.user, UPDATE, "Actualizar informacion de usuarios") or request.user.is_superuser:
         user = get_object_or_404(User, pk=id_user)
         profile = UserProfile.objects.get(user=user)
         post = {'username': user.username, 'name': user.first_name,
@@ -752,7 +752,7 @@ def edit_user(request, id_user):
 
                     message = "Usuario editado exitosamente"
                     type = "n_success"
-                    if has_permission(request.user, VIEW, "Ver usuarios"):
+                    if has_permission(request.user, VIEW, "Ver usuarios") or request.user.is_superuser:
                         return HttpResponseRedirect("/panel_de_control/usuarios?msj=" +
                                                     message +
                                                     "&ntype=n_success")
@@ -777,7 +777,7 @@ def edit_user(request, id_user):
 def delete_batch_user(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de usuarios"):
+    if has_permission(request.user, DELETE, "Baja de usuarios") or request.user.is_superuser:
         if request.method == "GET":
             raise Http404
         if request.POST['actions'] == 'delete':
@@ -802,7 +802,7 @@ def delete_batch_user(request):
 def see_user(request, id_user):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, VIEW, "Ver usuarios"):
+    if has_permission(request.user, VIEW, "Ver usuarios") or request.user.is_superuser:
         user1 = get_object_or_404(User, pk=id_user)
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
@@ -824,7 +824,7 @@ def add_data_context_permissions(request):
     """
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, CREATE, "Asignar roles a usuarios"):
+    if has_permission(request.user, CREATE, "Asignar roles a usuarios") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         company = request.session['company']
@@ -956,7 +956,7 @@ def add_data_context_permissions(request):
 def added_data_context_permissions(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, VIEW, "Ver asignaciones de roles a usuarios"):
+    if has_permission(request.user, VIEW, "Ver asignaciones de roles a usuarios") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         company = request.session['company']
@@ -1042,7 +1042,7 @@ def added_data_context_permissions(request):
 def delete_data_context(request, id_data_context):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Eliminar asignaciones de roles a usuarios"):
+    if has_permission(request.user, DELETE, "Eliminar asignaciones de roles a usuarios") or request.user.is_superuser:
         data_c = get_object_or_404(DataContextPermission, pk=id_data_context)
         data_c.delete()
         mensaje = "La asignación se ha eliminado correctamente"
@@ -1054,7 +1054,7 @@ def delete_data_context(request, id_data_context):
 def delete_batch_data_context(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Eliminar asignaciones de roles a usuarios"):
+    if has_permission(request.user, DELETE, "Eliminar asignaciones de roles a usuarios") or request.user.is_superuser:
         if request.method == "GET":
             raise Http404
         if request.POST['actions'] == 'delete':

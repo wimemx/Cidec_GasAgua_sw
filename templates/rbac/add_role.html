@@ -163,6 +163,13 @@
             var operacion = $("#operation span").text().replace(/^\s+/,'').replace(/\s+$/,'');
 
             var grupo = $("#group span").text().replace(/^\s+/,'').replace(/\s+$/,'');
+            var grupo_tag = grupo.toLowerCase()
+            grupo_tag = grupo_tag.replace(/á/gi,"a");
+            grupo_tag = grupo_tag.replace(/é/gi,"e");
+            grupo_tag = grupo_tag.replace(/í/gi,"i");
+            grupo_tag = grupo_tag.replace(/ó/gi,"o");
+            grupo_tag = grupo_tag.replace(/ú/gi,"u");
+            grupo_tag = grupo_tag.replace(/\s/gi,"-");
 
             var append = '<a href="#eliminar" class="delete hidden_icon" ' +
                     'title="eliminar permiso asignado"></a>' +
@@ -175,14 +182,14 @@
                     '<span class="object">'+
                     added_objects +
                     '</span>' +
-                    '<input type="hidden" name="' + operacion + "_" +grupo +'" ' +
+                    '<input type="hidden" name="' + operacion + "_" +grupo_tag +'" ' +
                     'value="' +
                     added_objects_ids +
                     '"/>';
             var change=true;
             $("#add_permissions").find("input:hidden").each(function(){
 
-                if($(this).attr("name") == operacion + "_" +grupo){
+                if($(this).attr("name") == operacion + "_" +grupo_tag){
                     change = false;
                     $(this).parent().html(append);
                 }

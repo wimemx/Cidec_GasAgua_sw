@@ -107,3 +107,25 @@
 }
 
 
+.hrchy_cluster{
+    margin:20px 0px;
+}
+
+.hrchy_company{
+    margin:10px 30px;
+}
+
+.hrchy_building{
+    margin: 5px 30px;
+}
+
+.hrchy_cluster_label{
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.hrchy_company_label{
+    font-size: 14px;
+}
+
+

@@ -56,7 +56,7 @@ def graphs_permission(user):
             ob = Object.objects.get(object_name=object)
             permission = PermissionAsigment.objects.filter(object=ob,
                 role=u_role.role, operation=operation)
-            if permission:
+            if permission or user.is_superuser:
                 graphs.append(ob)
     if graphs:
         return graphs

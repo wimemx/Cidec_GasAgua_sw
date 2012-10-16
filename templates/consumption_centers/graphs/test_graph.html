@@ -61,6 +61,7 @@ for (var building_index = 0; building_index < buildings_number; building_index++
     buildings_str += "building" + building_index + "=" + buildings_json[building_index] + "&";
 }
 var url = "/reportes/grafica_datos/?graph={{ tipo }}&"+buildings_str+"f1_init="+fi+"&f1_end="+ff;
+var csv_url = "/reportes/grafica_datos_csv/?graph={{ tipo }}&"+buildings_str+"f1_init="+fi+"&f1_end="+ff;
 {% if fi2 %}
     var fi2 = encodeURIComponent("{{ fi2|date:"d/m/Y" }}");
     var ff2 = encodeURIComponent("{{ ff2|date:"d/m/Y" }}");
@@ -71,6 +72,7 @@ var url = "/reportes/grafica_datos/?graph={{ tipo }}&"+buildings_str+"f1_init="+
 var chart, control;
 var data = new google.visualization.DataTable();
 $(document).ready(function(){
+    $("#export_csv").attr("href",csv_url);
     $("select, input, input:checkbox, input:radio, input:file").uniform();
 
     $("#compare_interval li").each(function(){
@@ -150,7 +152,7 @@ $(document).ready(function(){
                         // Use the same chart area width as the control for axis alignment.
                         'chartArea': {'height': '80%', 'width': '90%'},
                         'hAxis': {'slantedText': false},
-                        'vAxis': {'viewWindow': {'min': 90, 'max': 260}, textPosition: 'in'},
+                        'vAxis': {'viewWindow': {'min': 90, 'max': 260}, textPosition: 'out'},
                         'legend': {position: 'top', textStyle: {color: '#1E90FF', fontSize: 16}}
                     },
                     'colors': ['#ccc','#000'],
@@ -259,12 +261,14 @@ $(document).ready(function(){
 </head>
 
 <body>
+
 <ul id="compare_interval" class="fr">
     <li id="hour">Hora</li>
     <li id="day">D&iacute;a</li>
     <li id="week" class="active">Semana</li>
     <li id="month">Mes</li>
 </ul>
+<a id="export_csv" class="fr" href="">Exportar datos en CSV</a>
 <div id="dashboard" class="fl">
     <div id="chart">
         <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">

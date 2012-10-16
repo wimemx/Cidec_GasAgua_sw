@@ -3,6 +3,7 @@ from django.conf.urls import patterns, url
 urlpatterns = patterns('',
     url(r'^graficas/', 'c_center.views.graficas'),
     url(r'^grafica_datos/', 'c_center.views.grafica_datos'),
+    url(r'^grafica_datos_csv/', 'c_center.views.grafica_datoscsv'),
 
     url(r'^medition_rate/', 'c_center.calculations.tag_reading'),
     url(r'^cfe/', 'c_center.views.cfe_bill'),
@@ -60,5 +61,5 @@ urlpatterns = patterns('',
     url(r'^status_empresa/(?P<id_cpy>\d+)', 'c_center.views.status_company'),
     url(r'^ver_empresa/(?P<id_cpy>\d+)', 'c_center.views.see_company'),
 
-
+    url(r'^estructura/$', 'c_center.views.c_center_structures'),
 )

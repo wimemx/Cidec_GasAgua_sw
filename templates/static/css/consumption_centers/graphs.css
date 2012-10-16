@@ -230,3 +230,8 @@ div.container{
 #check_compare{
     margin-top: 2px;
 }
+#export_csv{
+    color: #666;
+    font-weight: 700;
+    margin: 7px;
+}
