@@ -1,0 +1,226 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="/static/css/consumption_centers/graphs.css"/>
+        <link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
+        <link rel="stylesheet" href="/static/js/external/jqueryUniform/css/uniform.default.css" type="text/css" media="screen" charset="utf-8" />
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+        <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+        <script type="text/javascript" src="/static/js/external/jqueryUniform/jquery.uniform.min.js"></script>
+        <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+        <script type="text/javascript">
+            google.load('visualization', '1.1', {packages: ['corechart', 'controls']});
+        </script>
+        <script type="text/javascript">
+            $(document).ready(function(){
+                var text = $("#weekly_summary h1").text();
+                text = text.replace("_", " ");
+                $("#weekly_summary h1").text(text);
+                $('#weekly_report').click(function(e){
+                    e.preventDefault();
+                    var load_url = "/reportes/weekly_summary_kwh/?type={{ tipo }}";
+                    load_url += "&year01="+$('#year_01').val();
+                    load_url += "&month01="+$('#month_01').val();
+                    load_url += "&week01="+$('#week_01').val();
+                    if ($('#compare_week_report').is(':checked')){
+                        load_url += "&year02="+$('#year_02').val();
+                        load_url += "&month02="+$('#month_02').val();
+                        load_url += "&week02="+$('#week_02').val();
+
+                    }
+                    $('#report_div').html('<img src="/static/css/images/spinner.gif" id="spinner2" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">');
+                    $('#report_div').load(load_url, function(){$("#spinner2").remove();});
+
+                });
+                {% if tipo == "kwh" or tipo == "kvarh" or tipo == "kwh_consumido" or tipo == "kvarh_consumido" %}
+                    var load_url = "/reportes/weekly_summary_kwh/?type={{ tipo }}";
+                    load_url += "&year01={{ year }}";
+                    load_url += "&month01={{ month }}";
+                    load_url += "&week01={{ week }}";
+                    $('#report_div').load(load_url);
+                {% endif %}
+
+                $('#compare_week_report').click(function(){
+                    $("#compare_week_contrls").toggle();
+                });
+            });
+        </script>
+
+        <script type="text/javascript">
+            function drawVisualization() {
+                var dashboard = new google.visualization.Dashboard(
+                        document.getElementById('dashboard'));
+
+                var control = new google.visualization.ControlWrapper({
+                    'controlType': 'ChartRangeFilter',
+                    'containerId': 'control',
+                    'options': {
+                        // Filter by the date axis.
+                        'filterColumnIndex': 0,
+                        'ui': {
+                            'chartType': 'LineChart',
+                            'chartOptions': {
+                                'chartArea': {'width': '90%'},
+                                'hAxis': {'baselineColor': 'none'}
+                            },
+                            // Display a single series that shows the closing value of the stock.
+                            // Thus, this view has two columns: the date (axis) and the stock value (line series).
+                            'chartView': {
+                                'columns': [0, 1]
+                            },
+                            // 1 day in milliseconds = 24 * 60 * 60 * 1000 = 86,400,000
+                            //'minRangeSize': 86400000
+                            'minRangeSize':3600000
+                        }
+                    }
+                    // Initial range: 2012-02-09 to 2012-03-20.
+                    //'state': {'range': {'start': new Date(2012, 9, 8), 'end': new Date(2012, 9, 9)}}
+                });
+
+                var chart = new google.visualization.ChartWrapper({
+                    'chartType': 'LineChart',
+                    'containerId': 'chart',
+                    'options': {
+                        // Use the same chart area width as the control for axis alignment.
+                        'chartArea': {'height': '80%', 'width': '90%'},
+                        'hAxis': {'slantedText': false},
+                        'vAxis': {'viewWindow': {'min': {{ limits.min }}, 'max': {{ limits.max}} }},
+                        'legend': {'position': 'none'}
+                    }
+                });
+
+                var data = new google.visualization.DataTable();
+                {% for column in columns %}
+                    data.addColumn({type:'datetime', role:'domain'},
+                            "From {{ column.start_datetime_string }} To {{ column.end_datetime_string }}");
+                    data.addColumn('number', '{{ column.consumer_unit_string }}');
+                {% endfor %}
+
+                var rows_data = {% autoescape off %}{{ rows_data }}{% endautoescape %};
+                for(var row_index = 0; row_index < rows_data.length; row_index++){
+                    var row_data = rows_data[row_index];
+
+                    var row_array = new Array();
+                    for(var data_index = 0; data_index < row_data.length; data_index++){
+                        var data_object = row_data[data_index];
+                        var object_datetime = new Date();
+                        object_datetime.setTime((data_object['datetime']*1000) - 3600000);
+                        row_array.push(object_datetime);
+                        var object_electric_data = data_object['electric_data'];
+                        row_array.push(object_electric_data);
+                    }
+                    data.addRow(row_array);
+                }
+
+                dashboard.bind(control, chart);
+                dashboard.draw(data);
+            }
+
+
+            google.setOnLoadCallback(drawVisualization);
+        </script>
+    </head>
+
+    <body>
+        <ul id="compare_interval" class="fr">
+            <li id="hour">Hora</li>
+            <li id="day">D&iacute;a</li>
+            <li id="week" class="active">Semana</li>
+            <li id="month">Mes</li>
+        </ul>
+        <div id="dashboard" class="fl">
+            <div id="chart">
+                <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
+            </div>
+            <div id="control"></div>
+            <div id="slider-range" class="slider"></div>
+        </div>
+
+        {% if tipo == "kwh" or tipo == "kvarh" or tipo == "kwh_consumido" or tipo == "kvarh_consumido" %}
+
+            <div id="weekly_summary">
+                <h1>Resumen Semanal - {{ tipo }}</h1>
+
+                <div>
+                    <div id="main_week">
+                        <select id="year_01">
+                            {% for year in years %}
+                                <option value="{{ year }}">
+                                    {{ year }}
+                                </option>
+                            {% endfor %}
+                        </select>
+
+                        <select id="month_01">
+                            <option value="1">Enero</option>
+                            <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Mayo</option>
+                            <option value="6">Junio</option>
+                            <option value="7">Julio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+
+                        <select id="week_01">
+                            <option value="1">Semana 01</option>
+                            <option value="2">Semana 02</option>
+                            <option value="3">Semana 03</option>
+                            <option value="4">Semana 04</option>
+                            <option value="5">Semana 05</option>
+                            <option value="6">Semana 06</option>
+                        </select>
+                    </div>
+
+                    <div id="compare_week_contrls">
+                        <span class="vs_tag">VS</span>
+
+                        <select id="year_02">
+                            {% for year in years %}
+                                <option value="{{ year }}">
+                                    {{ year }}
+                                </option>
+                            {% endfor %}
+                        </select>
+
+                        <select id="month_02">
+                            <option value="1">Enero</option>
+                            <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Mayo</option>
+                            <option value="6">Junio</option>
+                            <option value="7">Julio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+
+                        <select id="week_02">
+                            <option value="1">Semana 01</option>
+                            <option value="2">Semana 02</option>
+                            <option value="3">Semana 03</option>
+                            <option value="4">Semana 04</option>
+                            <option value="5">Semana 05</option>
+                            <option value="6">Semana 06</option>
+                        </select>
+                    </div>
+
+                    <button name="weekly_report" id="weekly_report" class="aqua_btn">Reporte</button>
+                </div>
+                <div id="check_compare">
+                    <label>Comparar con datos anteriores</label><input type="checkbox" id="compare_week_report"/>
+                </div>
+
+                <div id="report_div">
+                    <img src="/static/css/images/spinner.gif" id="spinner2" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
+                </div>
+            </div>
+        {% endif %}
+    </body>
+</html>

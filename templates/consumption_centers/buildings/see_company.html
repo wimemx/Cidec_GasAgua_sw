@@ -29,30 +29,30 @@
     <div class="divider" id="divider_top">&nbsp;</div>
     <div id="card_container">
         <div id="user_img" class="fl">
-            {% if company.company.company_logo %}
-            <img src="/static/media/company_logos/company_{{company.company.pk}}/{{company.company.company_logo}}" alt="{{company.company.company_name}}_logo">
+            {% if companies.company.company_logo %}
+            <img src="/static/media/{{companies.company.company_logo}}" alt="{{companies.company.company_name}}_logo" width="200px">
             {% else %}
-            <img src="/static/css/images/imgs_icns/place_holder_user.png" alt="{{ user1.username }}"/>
+                <img src="/static/css/images/imgs_icns/place_holder_cluster.png" alt="{{ companies.company.company_name }}"/>
             {%endif%}
         </div>
         <div id="user_data" class="fl">
             <p>
                 <span class="strong label">Nombre:</span>
-                {{ company.company.company_name }}
+                {{ companies.company.company_name }}
             </p>
             <p>
                 <span class="strong label">Descripción:</span>
-                {{ company.company.company_description }}
+                {{ companies.company.company_description }}
             </p>
 
             <p>
                 <span class="strong label">Grupo de Empresas:</span>
-                {{ company.cluster.cluster_name }}
+                {{ companies.cluster.cluster_name }}
             </p>
 
             <p>
                 <span class="strong label">Sector:</span>
-                {{ company.company.sectoral_type.sectorial_type_name }}
+                {{ companies.company.sectoral_type.sectorial_type_name }}
             </p>
 
 

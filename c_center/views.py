@@ -1244,6 +1244,7 @@ def add_cluster(request):
         template_vars = dict(datacontext=datacontext,
             empresa=empresa,
             sectores=sectores,
+            company=request.session['company']
         )
 
         if request.method == "POST":
@@ -1314,7 +1315,7 @@ def view_cluster(request):
             lista = Cluster.objects.all().exclude(cluster_status=2).order_by(order)
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
         template_vars = dict(order_name=order_name, order_sector=order_sector,
-            datacontext=datacontext, empresa=empresa)
+            datacontext=datacontext, empresa=empresa, company=request.session['company'])
         # Make sure page request is an int. If not, deliver first page.
         try:
             page = int(request.GET.get('page', '1'))
@@ -1435,7 +1436,8 @@ def edit_cluster(request, id_cluster):
             post=post,
             operation="edit",
             message=message,
-            type=type
+            type=type,
+            company=request.session['company']
         )
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_cluster.html", template_vars_template)
@@ -1457,7 +1459,9 @@ def see_cluster(request, id_cluster):
             datacontext=datacontext,
             cluster = cluster,
             cluster_companies = cluster_companies,
-            empresa=empresa)
+            empresa=empresa,
+            company=request.session['company']
+        )
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/see_cluster.html", template_vars_template)
@@ -1476,7 +1480,8 @@ def add_powermetermodel(request):
         empresa = request.session['main_building']
 
         template_vars = dict(datacontext=datacontext,
-            empresa=empresa
+            empresa=empresa,
+            company=request.session['company']
         )
 
         if request.method == "POST":
@@ -1551,7 +1556,8 @@ def edit_powermetermodel(request, id_powermetermodel):
             post=post,
             operation="edit",
             message=message,
-            type=type
+            type=type,
+            company=request.session['company']
         )
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_powermetermodel.html", template_vars_template)
@@ -1677,7 +1683,8 @@ def add_powermeter(request):
         template_vars = dict(datacontext=datacontext,
             empresa=empresa,
             modelos=pw_models_list,
-            post=post
+            post=post,
+            company=request.session['company']
         )
 
         if request.method == "POST":
@@ -1792,7 +1799,8 @@ def edit_powermeter(request, id_powermeter):
             modelos = pw_models_list,
             operation="edit",
             message=message,
-            type=type
+            type=type,
+            company=request.session['company']
         )
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_powermeter.html", template_vars_template)
@@ -1867,7 +1875,7 @@ def view_powermeter(request):
 
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
         template_vars = dict(order_alias=order_alias, order_model=order_model, order_serial=order_serial, order_status=order_status,
-            datacontext=datacontext, empresa=empresa)
+            datacontext=datacontext, empresa=empresa, company=request.session['company'])
         # Make sure page request is an int. If not, deliver first page.
         try:
             page = int(request.GET.get('page', '1'))
@@ -1975,7 +1983,9 @@ def see_powermeter(request, id_powermeter):
             datacontext=datacontext,
             powermeter = powermeter,
             location = location,
-            empresa=empresa)
+            empresa=empresa,
+            company=request.session['company']
+        )
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/see_powermeter.html", template_vars_template)
@@ -1996,7 +2006,8 @@ def add_electric_device_type(request):
 
         template_vars = dict(datacontext=datacontext,
             empresa=empresa,
-            post=post
+            post=post,
+            company=request.session['company']
         )
 
         if request.method == "POST":
@@ -2081,7 +2092,8 @@ def edit_electric_device_type(request, id_edt):
             post=post,
             operation="edit",
             message=message,
-            type=type
+            type=type,
+            company=request.session['company']
         )
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_electricdevicetype.html", template_vars_template)
@@ -2136,7 +2148,7 @@ def view_electric_device_type(request):
 
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
         template_vars = dict(order_name=order_name, order_description=order_description, order_status=order_status,
-            datacontext=datacontext, empresa=empresa)
+            datacontext=datacontext, empresa=empresa, company=request.session['company'])
         # Make sure page request is an int. If not, deliver first page.
         try:
             page = int(request.GET.get('page', '1'))
@@ -2245,6 +2257,7 @@ def add_company(request):
             post=post,
             clusters=clusters,
             sectors=sectors,
+            company=request.session['company']
         )
 
         if request.method == "POST":
@@ -2395,6 +2408,7 @@ def edit_company(request, id_cpy):
 
         template_vars = dict(datacontext=datacontext,
             empresa=empresa,
+            company=request.session['company'],
             post=post,
             operation="edit",
             message=message,
@@ -2463,7 +2477,7 @@ def view_companies(request):
 
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
         template_vars = dict(order_company=order_company, order_cluster=order_cluster, order_sector=order_sector, order_status=order_status,
-            datacontext=datacontext, empresa=empresa)
+            datacontext=datacontext, empresa=empresa, company=request.session['company'])
         # Make sure page request is an int. If not, deliver first page.
         try:
             page = int(request.GET.get('page', '1'))
@@ -2561,7 +2575,8 @@ def see_company(request, id_cpy):
 
         template_vars = dict(
             datacontext=datacontext,
-            company = company,
+            companies = company,
+            company = request.session['company'],
             empresa=empresa)
 
         template_vars_template = RequestContext(request, template_vars)

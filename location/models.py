@@ -13,7 +13,7 @@ class Pais(models.Model):
 
 class Estado(models.Model):
 
-    estado_name = models.CharField(max_length=128)
+    estado_name = models.CharField(max_length=128, unique=True)
     def __unicode__(self):
         return self.estado_name
     @staticmethod
@@ -22,7 +22,7 @@ class Estado(models.Model):
 
 class Municipio(models.Model):
 
-    municipio_name = models.CharField(max_length=128)
+    municipio_name = models.CharField(max_length=128, unique=True)
     def __unicode__(self):
         return self.municipio_name
     @staticmethod
@@ -31,7 +31,7 @@ class Municipio(models.Model):
 
 class Colonia(models.Model):
 
-    colonia_name = models.CharField(max_length=128)
+    colonia_name = models.CharField(max_length=128, unique=True)
     def __unicode__(self):
         return self.colonia_name
     @staticmethod
@@ -40,7 +40,7 @@ class Colonia(models.Model):
 
 class Calle(models.Model):
 
-    calle_name = models.CharField(max_length=128)
+    calle_name = models.CharField(max_length=128, unique=True)
     def __unicode__(self):
         return self.calle_name
     @staticmethod

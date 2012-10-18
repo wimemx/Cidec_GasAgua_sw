@@ -4,7 +4,7 @@ from django.db import models
 
 ##########################################################################################
 #
-# Data warehouse Time-Dimension tables
+# Data Warehouse Dimension Tables
 #
 ##########################################################################################
 
@@ -15,7 +15,9 @@ class FiveMinuteInstant(models.Model):
 
     def __unicode__(self):
 
-        return u"Intervalo de 5 minutos - Instante: " + str(self.instant_datatime)
+        return u"Intervalo de una hora - Instante: " + str(self.instant_datetime.year) +\
+               u" - " + str(self.instant_datetime.month) + u" - " + str(self.instant_datetime.day) +\
+               u" " + (u"%02d:%02d" % (self.instant_datetime.hour, self.instant_datetime.minute))
 
 
 class HourInstant(models.Model):
@@ -25,7 +27,9 @@ class HourInstant(models.Model):
 
     def __unicode__(self):
 
-        return u"Intervalo de una hora - Instante: " + str(self.instant_datatime)
+        return u"Intervalo de una hora - Instante: " + str(self.instant_datetime.year) + \
+               u" - " + str(self.instant_datetime.month) + u" - " + str(self.instant_datetime.day) +\
+               u" " + (u"%02d:%02d" % (self.instant_datetime.hour, self.instant_datetime.minute))
 
 
 class DayInstant(models.Model):
@@ -35,7 +39,9 @@ class DayInstant(models.Model):
 
     def __unicode__(self):
 
-        return u"Intervalo de una hora - Instante: " + str(self.instant_datatime)
+        return u"Intervalo de una hora - Instante: " + str(self.instant_datetime.year) +\
+               u" - " + str(self.instant_datetime.month) + u" - " + str(self.instant_datetime.day) +\
+               u" " + (u"%02d:%02d" % (self.instant_datetime.hour, self.instant_datetime.minute))
 
 
 class WeekInstant(models.Model):
@@ -45,7 +51,9 @@ class WeekInstant(models.Model):
 
     def __unicode__(self):
 
-        return u"Intervalo de una semana - Instante: " + str(self.instant_datatime)
+        return u"Intervalo de una hora - Instante: " + str(self.instant_datetime.year) +\
+               u" - " + str(self.instant_datetime.month) + u" - " + str(self.instant_datetime.day) +\
+               u" " + (u"%02d:%02d" % (self.instant_datetime.hour, self.instant_datetime.minute))
 
 
 class ConsumerUnit(models.Model):
@@ -63,13 +71,15 @@ class ConsumerUnit(models.Model):
                                     verbose_name=u"Nombre del Tipo de Dispositivo Electrico")
 
     def __unicode__(self):
-        return self.building_name + u" - " + self.part_of_building_name + u" - " +\
-               self.electric_device_type_name
+
+        return self.building_name + u" - " +\
+               (self.part_of_building_name if self.part_of_building_name is not None else u"") +\
+               u" - " + self.electric_device_type_name
 
 
 ##########################################################################################
 #
-# Data warehouse Facts tables
+# Data Warehouse Facts Tables
 #
 ##########################################################################################
 
@@ -89,15 +99,20 @@ class ConsumerUnitFiveMinuteElectricData(models.Model):
 
     def __unicode__(self):
 
-        return self.building.building_name +\
-               u" - " +\
-               str(self.instant) +\
+        return self.consumer_unit.__unicode__() +\
+               u" -- " +\
+               self.instant.__unicode__() +\
                u"\nkW = " +\
-               str(kW) +\
+               str(self.kW) +\
                u"\nkvar = " +\
-               str(kvar) +\
+               str(self.kvar) +\
                u"\nPF = " +\
-               str(PF)
+               str(self.PF) +\
+               u"\nkWh = " +\
+               str(self.kWhIMPORT) +\
+               u"\nkvarh = " +\
+               str(self.kvarhIMPORT)
+
 
 class ConsumerUnitHourElectricData(models.Model):
 
@@ -115,15 +130,19 @@ class ConsumerUnitHourElectricData(models.Model):
 
     def __unicode__(self):
 
-        return self.building.building_name +\
-               u" - " +\
-               str(self.instant) +\
+        return self.consumer_unit.__unicode__() +\
+               u" -- " +\
+               self.instant.__unicode__() +\
                u"\nkW = " +\
-               str(kW) +\
+               str(self.kW) +\
                u"\nkvar = " +\
-               str(kvar) +\
+               str(self.kvar) +\
                u"\nPF = " +\
-               str(PF)
+               str(self.PF) +\
+               u"\nkWh = " +\
+               str(self.kWhIMPORT) +\
+               u"\nkvarh = " +\
+               str(self.kvarhIMPORT)
 
 
 class ConsumerUnitDayElectricData(models.Model):
@@ -142,15 +161,19 @@ class ConsumerUnitDayElectricData(models.Model):
 
     def __unicode__(self):
 
-        return self.building.building_name +\
-               u" - " +\
-               str(self.instant) +\
+        return self.consumer_unit.__unicode__() +\
+               u" -- " +\
+               self.instant.__unicode__() +\
                u"\nkW = " +\
-               str(kW) +\
+               str(self.kW) +\
                u"\nkvar = " +\
-               str(kvar) +\
+               str(self.kvar) +\
                u"\nPF = " +\
-               str(PF)
+               str(self.PF) +\
+               u"\nkWh = " +\
+               str(self.kWhIMPORT) +\
+               u"\nkvarh = " +\
+               str(self.kvarhIMPORT)
 
 
 class ConsumerUnitWeekElectricData(models.Model):
@@ -169,12 +192,16 @@ class ConsumerUnitWeekElectricData(models.Model):
 
     def __unicode__(self):
 
-        return self.building.building_name +\
-               u" - " +\
-               str(self.instant) +\
+        return self.consumer_unit.__unicode__() +\
+               u" -- " +\
+               self.instant.__unicode__() +\
                u"\nkW = " +\
-               str(kW) +\
+               str(self.kW) +\
                u"\nkvar = " +\
-               str(kvar) +\
+               str(self.kvar) +\
                u"\nPF = " +\
-               str(PF)
+               str(self.PF) +\
+               u"\nkWh = " +\
+               str(self.kWhIMPORT) +\
+               u"\nkvarh = " +\
+               str(self.kvarhIMPORT)

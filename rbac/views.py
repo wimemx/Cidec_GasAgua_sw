@@ -847,97 +847,103 @@ def add_data_context_permissions(request):
                           "e intente de nuevo"
                 type = "n_error"
             else:
-                if request.POST['building'] != "todos":
-                    try:
-                        building = Building.objects.get(pk=int(request.POST['building']))
-                    except ObjectDoesNotExist:
-                        message = "Ha ocurrido un error al seleccionar el edificio, por favor " \
-                                  "verifique e intente de nuevo"
-                        type = "n_error"
-                    else:
-                        if "part" in request.POST:
+                if request.POST['company'] != "todas":
+                    if request.POST['building'] != "todos":
+                        try:
+                            building = Building.objects.get(pk=int(request.POST['building']))
+                        except ObjectDoesNotExist:
+                            message = "Ha ocurrido un error al seleccionar el edificio, por favor " \
+                                      "verifique e intente de nuevo"
+                            type = "n_error"
+                        else:
+                            if "part" in request.POST:
 
-                            if request.POST['part'] != "todas":
-                                user_role, created = UserRole.objects.get_or_create(user=usuario,
-                                    role=rol)
-                                part = PartOfBuilding.objects.get(pk=request.POST['part'])
-                                data_context, created = DataContextPermission.objects.get_or_create(
-                                                        user_role=user_role,
-                                                        cluster=cluster,
-                                                        company=company,
-                                                        building=building,
-                                                        part_of_building=part
-                                                        )
-                                message = "El rol, sus permisos y asignaciones al edificio y " \
-                                          "sus partes, se ha guardado correctamente"
-                                type = "n_success"
-                            else:
-                                #alta de asignaciónd de roles/permisos para todas las partes de
-                                # un edificio
-                                partes = PartOfBuilding.objects.filter(building=building)
-                                user_role, created = UserRole.objects.get_or_create(user=usuario,
-                                                     role=rol)
-                                if partes:
-                                    for parte in partes:
+                                if request.POST['part'] != "todas":
+                                    user_role, created = UserRole.objects.get_or_create(user=usuario,
+                                        role=rol)
+                                    part = PartOfBuilding.objects.get(pk=request.POST['part'])
+                                    data_context, created = DataContextPermission.objects.get_or_create(
+                                                            user_role=user_role,
+                                                            cluster=cluster,
+                                                            company=company,
+                                                            building=building,
+                                                            part_of_building=part
+                                                            )
+                                    message = "El rol, sus permisos y asignaciones al edificio y " \
+                                              "sus partes, se ha guardado correctamente"
+                                    type = "n_success"
+                                else:
+                                    #alta de asignaciónd de roles/permisos para todas las partes de
+                                    # un edificio
+                                    partes = PartOfBuilding.objects.filter(building=building)
+                                    user_role, created = UserRole.objects.get_or_create(user=usuario,
+                                                         role=rol)
+                                    if partes:
+                                        for parte in partes:
+                                            data_context, created = DataContextPermission.objects.get_or_create(
+                                                user_role=user_role,
+                                                cluster=cluster,
+                                                company=company,
+                                                building=building,
+                                                part_of_building=parte
+                                            )
+                                    else:
                                         data_context, created = DataContextPermission.objects.get_or_create(
                                             user_role=user_role,
                                             cluster=cluster,
                                             company=company,
-                                            building=building,
-                                            part_of_building=parte
+                                            building=building
                                         )
-                                else:
-                                    data_context, created = DataContextPermission.objects.get_or_create(
-                                        user_role=user_role,
-                                        cluster=cluster,
-                                        company=company,
-                                        building=building
-                                    )
-                                message = "El rol, sus permisos y asignaciones al edificio y "\
-                                          "sus partes, se ha guardado correctamente"
-                                type = "n_success"
-                        else:
-                            user_role, created = UserRole.objects.get_or_create(user=usuario,
-                                                 role=rol)
-                            data_context, created = DataContextPermission.objects.get_or_create(
-                                user_role=user_role,
-                                cluster=cluster,
-                                company=company,
-                                building=building
-                            )
-                            message = "El rol, sus permisos y su asignación al edificio, se" \
-                                      " ha guardado correctamente"
-                            type = "n_success"
-                else:
-                    #alta de asignaciónd de roles/permisos para todas las partes de
-                    # todos los edificios de una empresa
-                    user_role, created = UserRole.objects.get_or_create(user=usuario,
-                                         role=rol)
-                    buildings = CompanyBuilding.objects.filter(company=company)
-                    for building_com in buildings:
-                        partes = PartOfBuilding.objects.filter(building=building_com.building)
-                        user_role, created = UserRole.objects.get_or_create(user=usuario,
-                            role=rol)
-                        if partes:
-                            for parte in partes:
+                                    message = "El rol, sus permisos y asignaciones al edificio y "\
+                                              "sus partes, se ha guardado correctamente"
+                                    type = "n_success"
+                            else:
+                                user_role, created = UserRole.objects.get_or_create(user=usuario,
+                                                     role=rol)
                                 data_context, created = DataContextPermission.objects.get_or_create(
                                     user_role=user_role,
                                     cluster=cluster,
                                     company=company,
-                                    building=building_com.building,
-                                    part_of_building=parte
+                                    building=building
                                 )
-                        else:
-                            data_context, created = DataContextPermission.objects.get_or_create(
-                                user_role=user_role,
-                                cluster=cluster,
-                                company=company,
-                                building=building_com.building
-                            )
+                                message = "El rol, sus permisos y su asignación al edificio, se" \
+                                          " ha guardado correctamente"
+                                type = "n_success"
+                    else:
+                        #alta de asignación de roles/permisos para todas las partes de
+                        # todos los edificios de una empresa
+                        user_role, created = UserRole.objects.get_or_create(user=usuario,
+                                             role=rol)
+                        buildings = CompanyBuilding.objects.filter(company=company)
+                        for building_com in buildings:
+                            partes = PartOfBuilding.objects.filter(building=building_com.building)
+                            user_role, created = UserRole.objects.get_or_create(user=usuario,
+                                role=rol)
+                            if partes:
+                                for parte in partes:
+                                    data_context, created = DataContextPermission.objects.get_or_create(
+                                        user_role=user_role,
+                                        cluster=cluster,
+                                        company=company,
+                                        building=building_com.building,
+                                        part_of_building=parte
+                                    )
+                            else:
+                                data_context, created = DataContextPermission.objects.get_or_create(
+                                    user_role=user_role,
+                                    cluster=cluster,
+                                    company=company,
+                                    building=building_com.building
+                                )
 
-                    message = "El rol, sus permisos y su asignación al edificio, se"\
-                              " ha guardado correctamente"
-                    type = "n_success"
+                        message = "El rol, sus permisos y su asignación al edificio, se"\
+                                  " ha guardado correctamente"
+                        type = "n_success"
+                else:
+                    #alta de asignación de roles/permisos para todas las partes de
+                    # todos los edificios de todas las empresas de un cluster
+                    pass
+
 
         template_vars = dict(
             datacontext=datacontext,

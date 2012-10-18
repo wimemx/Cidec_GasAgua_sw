@@ -24,27 +24,36 @@
         if (url.length > 1){
             //if url has get_vars
             var hash = url[1];
-            hash = hash.replace(/&{0,1}f1_init=\d{1,2}(\-|\/|\.|(%2F))\d{1,2}\1\d{4}&{0,1}/, '');
-            hash = hash.replace(/&{0,1}f1_end=\d{1,2}(\-|\/|\.|(%2F))\d{1,2}\1\d{4}&{0,1}/, '');
-            hash = hash.replace(/&{0,1}f2_init=\d{1,2}(\-|\/|\.|(%2F))\d{1,2}\1\d{4}&{0,1}/, '');
-            hash = hash.replace(/&{0,1}f2_end=\d{1,2}(\-|\/|\.|(%2F))\d{1,2}\1\d{4}&{0,1}/, '');
+            hash = hash.replace(/&{0,1}date-start01=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
+            hash = hash.replace(/&{0,1}date-end01=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
+            hash = hash.replace(/&{0,1}date-start02=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
+            hash = hash.replace(/&{0,1}date-end02=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
             //hash is equal to all the get vars but the dates
             url = url[0] + "?" + hash + "&";
         }else{
             url+="?";
         }
-        url += "f1_init=" + f1_init;
-        if(f1_end != ''){
-            url += "&f1_end=" + f1_end;
+
+        if(f1_init != ''){
+            url += "date-start01=" + f1_init;
+
         }else{
-            url += "&f1_end=" + encodeURIComponent(new Date().format("dd/mm/yyyy"));
+            var fecha_ini = new Date();
+            fecha_ini.setDate(fecha_ini.getDate()-30);
+            url += "date-start01=" + encodeURIComponent(fecha_ini.format("yyyy-mm-dd"));
         }
+        if(f1_end != ''){
+            url += "&date-end01=" + f1_end;
+        }else{
+            url += "&date-end01=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
+        }
+
         if(f2_init != ''){
-            url += "&f2_init=" + f2_init;
+            url += "&date-start02=" + f2_init;
             if(f2_end != ''){
-                url += "&f2_end=" + f2_end;
+                url += "&date-end02=" + f2_end;
             }else{
-                url += "&f2_end=" + encodeURIComponent(new Date().format("dd/mm/yyyy"));
+                url += "&date-end02=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
             }
         }
         return url;
@@ -62,25 +71,28 @@
 
             if (url.length > 1){
                 var hash = url[1];
-                hash = hash.replace(/&{0,1}f1_init=\d{1,2}(\-|\/|\.|(%2F))\d{1,2}\1\d{4}&{0,1}/, '');
-                hash = hash.replace(/&{0,1}f1_end=\d{1,2}(\-|\/|\.|(%2F))\d{1,2}\1\d{4}&{0,1}/, '');
-                hash = hash.replace(/&{0,1}f2_init=\d{1,2}(\-|\/|\.|(%2F))\d{1,2}\1\d{4}&{0,1}/, '');
-                hash = hash.replace(/&{0,1}f2_end=\d{1,2}(\-|\/|\.|(%2F))\d{1,2}\1\d{4}&{0,1}/, '');
+
+                hash = hash.replace(/&{0,1}date-start01=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}/, '');
+                hash = hash.replace(/&{0,1}date-end01=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}/, '');
+                hash = hash.replace(/&{0,1}date-start02=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}/, '');
+                hash = hash.replace(/&{0,1}date-end02=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}/, '');
                 url = url[0] + "?" + hash + "&";
 
 
-                url += "f1_init=" + f1_init;
+
+
+                url += "date-start01=" + f1_init;
                 if(f1_end != ''){
-                    url += "&f1_end=" + f1_end;
+                    url += "&date-end01=" + f1_end;
                 }else{
-                    url += "&f1_end=" + encodeURIComponent(new Date().format("dd/mm/yyyy"));
+                    url += "&date-end01=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
                 }
                 if(f2_init != ''){
-                    url += "&f2_init=" + f2_init;
+                    url += "&date-start02=" + f2_init;
                     if(f2_end != ''){
-                        url += "&f2_end=" + f2_end;
+                        url += "&date-end02=" + f2_end;
                     }else{
-                        url += "&f2_end=" + encodeURIComponent(new Date());
+                        url += "&date-end02=" + encodeURIComponent(new Date());
                     }
                 }
 
@@ -123,7 +135,7 @@
     var mul_date = false;
     $('#widgetCalendar').DatePicker({
         flat: true,
-        format: 'd/m/Y',
+        format: 'Y-m-d',
         date: [new Date(now3), new Date(now4)],
         calendars: 2,
         mode: 'range',
@@ -131,7 +143,6 @@
         onChange: function(formated) {
             $('#range1_init').val(formated[0]);
             $('#range1_end').val(formated[1]);
-    console.log(mul_date);
             if(!mul_date){
                 $('#widgetField span').css('font-size','16px');
                 $('#widgetField span').get(0).innerHTML = formated.join(' &ndash; ');
@@ -144,7 +155,7 @@
     $('#widgetCalendar2').DatePickerClear();
     $('#widgetCalendar2').DatePicker({
         flat: true,
-        format: 'd/m/Y',
+        format: 'Y-m-d',
         date: [new Date(now3), new Date(now4)],
         calendars: 2,
         mode: 'range',
@@ -196,14 +207,22 @@
                 {% endfor %}
             }
             var get_vars = $("#graphFrame").attr("src").split('?')[1]
+
+
             if(get_vars != undefined){
-                get_vars=get_vars.replace(/graph=\w*&/g,"");
-                src += "&" + get_vars;
+                get_vars=get_vars.replace(/&consumer\-unit01=\w*/g,"");
+                get_vars=get_vars.replace(/graph=\w*/g,"");
+                get_vars=get_vars.replace(/&granularity=\w*/g,"");
+
+
+                src += get_vars;
+
             }else{
-                console.log("concateno fechas");
                 src = clean_dates(src);
-                console.log(src);
+
             }
+            src+="&consumer-unit01="+{{ consumer_unit.pk }}+"&granularity=hour";
+
             makeIframe(src);
             //cambia la clase de la pestania
             $(this).addClass("active");

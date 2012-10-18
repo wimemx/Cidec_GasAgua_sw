@@ -1,0 +1,31 @@
+from django.conf.urls import patterns, url
+
+urlpatterns = patterns('location.views',
+    url(r'^agregar_estado/', 'add_state'),
+    url(r'^editar_estado/(?P<id_state_country>\d+)/', 'edit_state'),
+    url(r'^agregar_municipio/', 'add_municipality'),
+    url(r'^editar_municipio/(?P<id_edo_munip>\d+)/', 'edit_municipality'),
+    url(r'^agregar_colonia/', 'add_neighboorhood'),
+    url(r'^editar_colonia/(?P<id_munip_col>\d+)/', 'edit_neighboorhood'),
+    url(r'^agregar_calle/', 'add_street'),
+    url(r'^editar_calle/(?P<id_col_calle>\d+)/', 'edit_street'),
+    url(r'^ver_estados/', 'state_list'),
+    url(r'^ver_municipios/', 'municipality_list'),
+    url(r'^ver_colonias/', 'neighboorhood_list'),
+    url(r'^ver_calles/', 'street_list'),
+    url(r'^busca_pais/', 'search_country'),
+    url(r'^busca_estados/', 'search_state'),
+    url(r'^busca_municipios/', 'search_municipality'),
+    url(r'^busca_colonias/', 'search_neighboorhood'),
+    url(r'^busca_calles/', 'search_street'),
+
+    url(r'^eliminar_estado/(?P<id_state_country>\d+)/', 'delete_state_country'),
+    url(r'^eliminar_municipio/(?P<id_edo_munip>\d+)/', 'delete_municipality_state'),
+    url(r'^eliminar_colonia/(?P<id_munip_col>\d+)/', 'delete_neighboorhood_municipality'),
+    url(r'^eliminar_calle/(?P<id_col_calle>\d+)/', 'delete_street_neighboor'),
+
+    url(r'^eliminar_estado_batch/', 'delete_state_country_batch'),
+    url(r'^eliminar_municipio_batch/', 'delete_municipality_state_batch'),
+    url(r'^eliminar_colonia_batch/', 'delete_neighboorhood_municipality_batch'),
+    url(r'^eliminar_calle_batch/', 'delete_street_neighboor_batch'),
+)
