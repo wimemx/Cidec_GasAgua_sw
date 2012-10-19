@@ -13,7 +13,7 @@ class Pais(models.Model):
 
 class Estado(models.Model):
 
-    estado_name = models.CharField(max_length=128, unique=True)
+    estado_name = models.CharField(max_length=128)
     def __unicode__(self):
         return self.estado_name
     @staticmethod
@@ -22,7 +22,7 @@ class Estado(models.Model):
 
 class Municipio(models.Model):
 
-    municipio_name = models.CharField(max_length=128, unique=True)
+    municipio_name = models.CharField(max_length=128)
     def __unicode__(self):
         return self.municipio_name
     @staticmethod
@@ -31,7 +31,7 @@ class Municipio(models.Model):
 
 class Colonia(models.Model):
 
-    colonia_name = models.CharField(max_length=128, unique=True)
+    colonia_name = models.CharField(max_length=128)
     def __unicode__(self):
         return self.colonia_name
     @staticmethod
@@ -40,7 +40,7 @@ class Colonia(models.Model):
 
 class Calle(models.Model):
 
-    calle_name = models.CharField(max_length=128, unique=True)
+    calle_name = models.CharField(max_length=128)
     def __unicode__(self):
         return self.calle_name
     @staticmethod
@@ -61,7 +61,7 @@ class Region(models.Model):
 class PaisEstado(models.Model):
 
     pais = models.ForeignKey(Pais, on_delete=models.PROTECT)
-    estado = models.ForeignKey(Estado, on_delete=models.PROTECT)
+    estado = models.ForeignKey(Estado, on_delete=models.PROTECT, unique=True)
     def __unicode__(self):
         return self.pais.pais_name + " - " + self.estado.estado_name
 
@@ -70,7 +70,7 @@ class PaisEstado(models.Model):
 
 class EstadoMunicipio(models.Model):
     estado = models.ForeignKey(Estado, on_delete=models.PROTECT)
-    municipio = models.ForeignKey(Municipio, on_delete=models.PROTECT)
+    municipio = models.ForeignKey(Municipio, on_delete=models.PROTECT, unique=True)
     def __unicode__(self):
         return self.estado.estado_name + " - " + self.municipio.municipio_name
 
@@ -79,7 +79,7 @@ class EstadoMunicipio(models.Model):
 
 class MunicipioColonia(models.Model):
     municipio = models.ForeignKey(Municipio, on_delete=models.PROTECT)
-    colonia = models.ForeignKey(Colonia, on_delete=models.PROTECT)
+    colonia = models.ForeignKey(Colonia, on_delete=models.PROTECT, unique=True)
     def __unicode__(self):
         return self.municipio.municipio_name + " - " + self.colonia.colonia_name
 
@@ -88,7 +88,7 @@ class MunicipioColonia(models.Model):
 
 class ColoniaCalle(models.Model):
     colonia = models.ForeignKey(Colonia, on_delete=models.PROTECT)
-    calle = models.ForeignKey(Calle, on_delete=models.PROTECT)
+    calle = models.ForeignKey(Calle, on_delete=models.PROTECT, unique=True)
     def __unicode__(self):
         return self.colonia.colonia_name + " - " + self.calle.calle_name
 

@@ -42,8 +42,11 @@ def add_state(request):
         if request.method == "POST":
             valid = validate_add_state(request.POST)
             if not valid['error']:
-                PaisEstado(pais=valid['pais'], estado=valid['estado']).save()
-                message = "El Pais-Estado se ha agregado correctamente"
+                p_e, created = PaisEstado.objects.get_or_create(pais=valid['pais'], estado=valid['estado'])
+                if created:
+                    message = "El País-Estado se ha agregado correctamente"
+                else:
+                    message = "El país estado ya existe, no se aplicó ninguna operación"
                 return HttpResponseRedirect("/location/ver_estados?msj=" +
                                             message +
                                             "&ntype=n_success")
@@ -181,6 +184,7 @@ def neighboorhood_list(request):
         pass
     else:
         return render_to_response("generic_error.html", RequestContext(request))
+
 def street_list(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
@@ -190,7 +194,82 @@ def street_list(request):
             empresa=request.session['main_building'],
             company=request.session['company']
         )
-        pass
+
+        if "search" in request.GET:
+            search = request.GET["search"]
+            search=search.strip()
+        else:
+            search = ''
+
+        order_by = "calle" #default order
+        order_desc = False
+        if "order_calle" in request.GET:
+
+            if request.GET["order_calle"] == "desc":
+                order_desc = True
+        elif "order_colonia" in request.GET:
+
+            if request.GET["order_colonia"] == "asc":
+                order = "colonia"
+            else:
+                order = "colonia"
+                order_desc = True
+        elif "order_municipio" in request.GET:
+
+            if request.GET["order_municipio"] == "asc":
+                order = "municipio"
+            else:
+                order_desc = True
+        elif "order_estado" in request.GET:
+
+            if request.GET["order_estado"] == "asc":
+                order = "estado"
+            else:
+                order_desc = True
+        if search:
+            estados_m = EstadoMunicipio.objects.filter(Q(estado__estado_name__icontains=search)|Q(municipio_municipio_name__icontains=search))
+            muns = [em.municipio.pk for em in estados_m]
+            muns_col = MunicipioColonia.objects.filter(Q(municipio__pk__in=muns)|Q(colonia__colonia_name__icontains=search))
+            cols = [mc.colonia.pk for mc in muns_col]
+            c_calles = ColoniaCalle.objects.filter(Q(colonia__pk__in=cols)|Q(calle__callename__icontains="search"))
+
+        else:
+            c_calles = ColoniaCalle.objects.all()
+
+        lista=[]
+        for calle in c_calles:
+            col_mun = MunicipioColonia.objects.get(colonia=calle.colonia)
+            estado_m = EstadoMunicipio.objects.get(municipio=col_mun.municipio)
+            lista.append(dict(id_c_calle=calle.pk, calle=calle.calle.calle_name,
+                colonia=calle.colonia,
+                municipio=estado_m.municipio.municipio_name,
+                estado=estado_m.estado.estado_name)
+            )
+        lista = sorted(lista, key=lambda k: k['name'], reverse=order_desc)
+        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        template_vars = dict(order_name=order_name, order_username=order_username,
+            order_email=order_email, datacontext=datacontext, empresa=empresa, company=company)
+        # Make sure page request is an int. If not, deliver first page.
+        try:
+            page = int(request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+
+        # If page request (9999) is out of range, deliver last page of results.
+        try:
+            pag_user = paginator.page(page)
+        except (EmptyPage, InvalidPage):
+            pag_user = paginator.page(paginator.num_pages)
+
+        template_vars['paginacion']=pag_user
+
+        if 'msj' in request.GET:
+            template_vars['message'] = request.GET['msj']
+            template_vars['msg_type'] = request.GET['ntype']
+
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("rbac/user_list.html", template_vars_template)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
@@ -271,10 +350,133 @@ def search_street(request):
         raise Http404
 
 def delete_state_country(request, id_state_country):
-    pass
+    if request.user.is_superuser:
+        state_country = get_object_or_404(PaisEstado, pk=id_state_country)
+        state_country.delete()
+        mensaje = "Se ha eliminado correctamente la asociación entre el país y el estado"
+        return HttpResponseRedirect("/location/ver_estados/?msj=" + mensaje +
+                                    "&ntype=success")
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
 def delete_municipality_state(request, id_edo_munip):
-    pass
+    if request.user.is_superuser:
+        edo_munip = get_object_or_404(EstadoMunicipio, pk=id_edo_munip)
+        edo_munip.delete()
+        mensaje = "Se ha eliminado correctamente la asociación entre el estado y el municipio"
+        return HttpResponseRedirect("/location/ver_municipios?msj=" + mensaje +
+                                    "&ntype=success")
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
 def delete_neighboorhood_municipality(request, id_munip_col):
-    pass
+    if request.user.is_superuser:
+        munip_col = get_object_or_404(MunicipioColonia, pk=id_munip_col)
+        munip_col.delete()
+        mensaje = "Se ha eliminado correctamente la asociación entre el municipio y la colonia"
+        return HttpResponseRedirect("/location/ver_municipios?msj=" + mensaje +
+                                    "&ntype=success")
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
 def delete_street_neighboor(request, id_col_calle):
-    pass
+    if request.user.is_superuser:
+        col_calle = get_object_or_404(ColoniaCalle, pk=id_col_calle)
+        col_calle.delete()
+        mensaje = "Se ha eliminado correctamente la asociación entre la colonia y la calle"
+        return HttpResponseRedirect("/location/ver_municipios?msj=" + mensaje +
+                                    "&ntype=success")
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def delete_state_country_batch(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if request.user.is_superuser:
+        if request.method == "GET":
+            raise Http404
+        if request.POST['actions'] == 'delete':
+            for key in request.POST:
+                if re.search('^p_estado_\w+', key):
+                    r_id = int(key.replace("p_estado_",""))
+                    object = get_object_or_404(PaisEstado, pk=r_id)
+                    object.delete()
+            mensaje = "Las relaciones País-Estado han sido eliminadas"
+            return HttpResponseRedirect("/location/ver_estados/?msj=" + mensaje +
+                                        "&ntype=n_success")
+        else:
+            mensaje = "No se ha seleccionado una acción"
+            return HttpResponseRedirect("/location/ver_estados/?msj=" + mensaje +
+                                        "&ntype=n_success")
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def delete_municipality_state_batch(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if request.user.is_superuser:
+        if request.method == "GET":
+            raise Http404
+        if request.POST['actions'] == 'delete':
+            for key in request.POST:
+                if re.search('^e_municip_\w+', key):
+                    r_id = int(key.replace("e_municip_",""))
+                    object = get_object_or_404(EstadoMunicipio, pk=r_id)
+                    object.delete()
+            mensaje = "Las relaciones Estado-Municipio han sido eliminadas"
+            return HttpResponseRedirect("/location/ver_municipios/?msj=" + mensaje +
+                                        "&ntype=n_success")
+        else:
+            mensaje = "No se ha seleccionado una acción"
+            return HttpResponseRedirect("/location/ver_municipios/?msj=" + mensaje +
+                                        "&ntype=n_success")
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def delete_neighboorhood_municipality_batch(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if request.user.is_superuser:
+        if request.method == "GET":
+            raise Http404
+        if request.POST['actions'] == 'delete':
+            for key in request.POST:
+                if re.search('^m_col_\w+', key):
+                    r_id = int(key.replace("m_col_",""))
+                    object = get_object_or_404(MunicipioColonia, pk=r_id)
+                    object.delete()
+            mensaje = "Las relaciones Municipio-Colonia han sido eliminadas"
+            return HttpResponseRedirect("/location/ver_colonias/?msj=" + mensaje +
+                                        "&ntype=n_success")
+        else:
+            mensaje = "No se ha seleccionado una acción"
+            return HttpResponseRedirect("/location/ver_colonias/?msj=" + mensaje +
+                                        "&ntype=n_success")
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def delete_street_neighboor_batch(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if request.user.is_superuser:
+        if request.method == "GET":
+            raise Http404
+        if request.POST['actions'] == 'delete':
+            for key in request.POST:
+                if re.search('^c_calle_\w+', key):
+                    r_id = int(key.replace("c_calle_",""))
+                    object = get_object_or_404(ColoniaCalle, pk=r_id)
+                    object.delete()
+            mensaje = "Las relaciones Colonia-calle han sido eliminadas"
+            return HttpResponseRedirect("/location/ver_calles/?msj=" + mensaje +
+                                        "&ntype=n_success")
+        else:
+            mensaje = "No se ha seleccionado una acción"
+            return HttpResponseRedirect("/location/ver_calles/?msj=" + mensaje +
+                                        "&ntype=n_success")
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
