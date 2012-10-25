@@ -2,13 +2,14 @@
 {% block titulo %}{% if operation == "edit" %}Editar{% else %}Crear nuevo{% endif %} estado{% endblock %}
 {% block externalcss %}
     <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
-    <link rel="stylesheet" href="/static/css/forms/location.css" type="text/css">
+    <link rel="stylesheet" href="/static/css/forms/location_add_edit.css" type="text/css">
     <link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
 {% endblock %}
 {% block externaljs %}
     <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
     <script type="text/javascript">
         $(function() {
+            {% if operation != "edit" %}
             $("#asign").hide();
             $("#save").hide();
             $( "#pais" ).autocomplete({
@@ -26,16 +27,12 @@
                             $("#save").hide();
                         }
                     });
-            $( "#estado" ).autocomplete({
-                source: "/location/busca_estados/",
-                minLength: 2,
-                select: function( event, ui ) {
-                    $("#save").show();
-                }
-            }).keyup(function(){
+            {% endif %}
+            $( "#estado" ).keyup(function(){
                         if($.trim($(this).val())==''){
-                            $("#estado").val("");
                             $("#save").hide();
+                        }else{
+                            $("#save").show();
                         }
                     });
         });
@@ -78,18 +75,18 @@
 
                 <div class="fields_row g12">
                     <label for="pais" class="g2">
-                        Pa&iacute;s
+                        Pa&iacute;s:
                     </label>
-                    <input type="text" name="pais" id="pais" class="input_ac" autocomplete="off"/>
+                    <input type="text" name="pais" id="pais" class="input_ac" autocomplete="off" {% if operation == "edit" %}readonly="readonly" value="{{ pais }}" {% endif %}/>
                     <input type="hidden" name="country" id="country">
                 </div>
 
                 <div id="asign">
                     <div class="fields_row g12">
                         <label for="estado" class="g2">
-                            Selecciona un estado
+                            Estado:
                         </label>
-                        <input type="text" name="estado" id="estado" class="input_ac" autocomplete="off"/>
+                        <input type="text" name="estado" id="estado" class="input_ac" {% if operation == "edit" %}value="{{ estado }}" {% endif %}/>
                     </div>
 
                     <span class="g2">&nbsp;</span>
