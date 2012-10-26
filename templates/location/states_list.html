@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block titulo %}Ver Roles{% endblock %}
+{% block titulo %}Ver Estados{% endblock %}
 {% block externalcss %}
     <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
     <link rel="stylesheet" href="/static/css/forms/location.css" type="text/css">
@@ -24,7 +24,7 @@
                 if (get[0]!=window.location.protocol+"//"+window.location
                         .host+window.location.pathname){
                     for(var i=0; i<get.length; i++){
-                        if (get[i]!="msg" && get[i]!="ntype" && get[i]!="page"){
+                        if (get[i]!="msj" && get[i]!="ntype" && get[i]!="page"){
                             base_url+="&"+get[i]+"="+get[get[i]];
                         }
                     }

@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+{% block titulo %}
+{% if operation == "edit" %}Editar{% else %}Crear nueva{% endif %} Parte de Edificio
+{% endblock %}
+{% block externalcss %}
+<link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
+<link rel="stylesheet" href="/static/css/forms/rbac.css" type="text/css">
+<link rel="stylesheet" href="/static/css/forms/rbac_add_user.css" type="text/css">
+<link rel="stylesheet" href="/static/css/forms/c_centers.css" type="text/css">
+<link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
+{% endblock %}
+{% block externaljs %}
+<script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+<script type="text/javascript">
+    var form_valid = true;
+    $(document).ready(function(){
+        $("#b_part_name").focus();
+        $(".required").each(function(){
+            $(this).parent().next().blur(function(e){
+                var _span;
+
+                if(e.delegateTarget.value==''){
+                    _span = "incorrect";
+                    form_valid = false;
+                }else{
+                    _span = "correct";
+                    form_valid = true;
+                }
+
+                var n_span = $("#"+e.delegateTarget.id).next();
+                n_span.removeClass("incorrect");
+                n_span.removeClass("correct");
+                n_span.addClass(_span);
+            });
+        });
+        $("#save").click(function(){
+            return validate_form();
+        });
+    });
+    function validate_form(){
+        if (form_valid){
+            var _span;
+            var partbuilding_name = $("#b_part_name");
+            if(partbuilding_name.val()==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                _span = "correct";
+            }
+            partbuilding_name.next().removeClass("incorrect");
+            partbuilding_name.next().removeClass("correct");
+            partbuilding_name.next().addClass(_span);
+
+            var partbuilding_bld_id = $("#b_building_name");
+            if(partbuilding_bld_id.val()==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                _span = "correct";
+            }
+            partbuilding_bld_id.next().removeClass("incorrect");
+            partbuilding_bld_id.next().removeClass("correct");
+            partbuilding_bld_id.next().addClass(_span);
+
+
+            var partbuilding_mt2 = $("#b_part_mt2");
+            if(partbuilding_mt2.val()==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                _span = "correct";
+            }
+
+            partbuilding_mt2.next().removeClass("incorrect");
+            partbuilding_mt2.next().removeClass("correct");
+            partbuilding_mt2.next().addClass(_span);
+
+            var b_part_type = $("#b_part_type");
+            if(b_part_type.val()==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                _span = "correct";
+            }
+            $("#sel_type").removeClass("incorrect");
+            $("#sel_type").removeClass("correct");
+            $("#sel_type").addClass(_span);
+        }
+
+        return form_valid
+    }
+
+    $(function() {
+        $( "#b_building_name" ).autocomplete({
+            source: "/buildings/search_buildings/",
+            minLength: 2,
+            select: function( event, ui ) {
+                $("#b_building_id").val(ui.item.pk);
+            }
+        }).keyup(function(){
+                    if($.trim($(this).val())==''){
+                        $("#b_building_name").val();
+                        $("#b_building_id").val();
+                    }
+                });
+    });
+
+    function append_attribute(tipo_atributo_etiq,atributo_etiq,tipo_atributo,atributo,valor){
+
+        var append = '<div class="extra_attributes_div"><span class="delete_attr_icon">' +
+                '<a href="#eliminar" class="delete hidden_icon" ' +
+                'title="eliminar atributo"></a></span>' +
+                '<span class="tip_attribute_part">' +
+                tipo_atributo_etiq +
+                '</span>' +
+                '<span class="attribute_part">' +
+                atributo_etiq +
+                '</span>'+
+                '<span class="attribute_value_part">'+
+                valor +
+                '</span>' +
+                '<input type="hidden" name="atributo_' + tipo_atributo + "_" +atributo +'" ' +
+                'value="' + tipo_atributo +','+ atributo + ','+ valor +
+                '"/></div>';
+
+        $('#atributes_fields').before(append);
+    }
+
+</script>
+{% endblock %}
+
+{% block document_ready %}
+
+$(".extra_attributes_div").mouseenter(function(){
+$(this).find(".hidden_icon").css("visibility","visible");
+}).mouseleave(function(){
+$(this).find(".hidden_icon").css("visibility","hidden");
+});
+
+$(".delete").click(function(e){
+e.preventDefault();
+$(this).parent().parent().remove();
+});
+
+
+//custom select for sidebar
+$("#empresa").click(function(){
+$("#company_list").slideToggle();
+});
+$("#company_list li").click(function(){
+var texto=$(this).text().replace(/^\s*|\s*$/g,'');
+var texto1 = texto.substring(0,17) + "...";
+$("#empresa").text(texto1);
+$("#company_list").slideUp();
+
+$.ajax({
+url: "/reportes/set_default_building/" + $(this).attr("rel"),
+type: "GET",
+dataType: 'json',
+async: 'true',
+success: function(datos){
+console.log("changed");
+}
+});
+});
+
+$("#attributes_type").click(function(){
+$(this).find("ul.ddl").slideToggle();
+});
+
+$("#attributes_type_list li").click(function(){
+//Limpia los campos ocultos
+$("#attr_type_id_sel").val('');
+$("#attr_id_sel").val('');
+$("#attributes span").text('Atributo');
+
+$("#attribute_list, #object_list").html("").hide();
+var elemento = $(this);
+$("#attributes_type span").text(elemento.text());
+elemento.parent().slideUp().stop();
+var uri = elemento.attr("rel");
+$("#attr_type_id_sel").val(uri);
+var url = "/buildings/get_attributes/"+uri;
+$("#attribute_list").load(url, function(){
+$(this).slideDown();
+    $("#attribute_list li").click(function(){
+        var elemento = $(this);
+        $("#attributes span").text(elemento.text());
+        elemento.parent().slideUp();
+        $("#attr_id_sel").val(elemento.attr("rel"));
+    });
+
+});
+
+});
+
+
+$("#add_attributes").click(function(event){
+    event.preventDefault();
+    var attribute_value = $("#attr_value").val();
+    var attribute_type_id = $("#attr_type_id_sel").val();
+    var attribute_type_label = $("#attributes_type span").text();
+    var attribute_id = $("#attr_id_sel").val();
+    var attribute_label = $("#attributes span").text();
+
+    if (attribute_type_id != '' && attribute_id != '' && attribute_value != ''){
+        append_attribute(attribute_type_label,attribute_label,attribute_type_id,attribute_id,attribute_value);
+    }
+
+    $(".extra_attributes_div").mouseenter(function(){
+        $(this).find(".hidden_icon").css("visibility","visible");
+    }).mouseleave(function(){
+        $(this).find(".hidden_icon").css("visibility","hidden");
+    });
+
+    $(".delete").click(function(e){
+    e.preventDefault();
+    $(this).parent().parent().remove();
+    });
+
+    //Limpia las etiquetas de los combos
+    $("#attributes_type span").text('Tipos de Atributos');
+    $("#attributes span").text('Atributo');
+    $("#attr_value").val('');
+
+});
+
+
+$("a.back").click(function(e){e.preventDefault(); history.back();});
+
+{% endblock %}
+
+{% block contenido %}
+<div id="bread_crumbs">
+    <ul>
+        <li><a href="/main/">Inicio</a></li>
+        <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
+        <li><a href="/buildings/partes_edificio/">Partes de Edificio</a></li>
+        {% if operation == "edit" %}
+        <li>
+
+            Edici&oacute;n de parte de edificio
+
+        </li>
+        {% else %}
+        <li>Alta de nueva parte de edificio</li>
+        {% endif %}
+
+    </ul>
+
+</div>
+<div id="contenido_interno">
+    <h2 id="titulo_form" class="user_role">
+        {% if operation == "edit" %}Editar{% else %}Crear nueva{% endif %} parte de edificio
+    </h2>
+
+
+    <div class="divider" id="divider_top">&nbsp;</div>
+    <div id="form_container">
+        {% if message %}
+                <span class="notif {{ type }}">
+                    {% autoescape off %}{{ message }}{% endautoescape %}
+                    <a href="#" onclick="$(this).parent().remove();">X</a>
+                </span>
+        {% endif %}
+        <p class="description">
+            Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
+            <br/>
+            Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
+        </p>
+        <form method="post" action=".">
+            {% csrf_token %}
+            <h3 class="g12">Informaci&oacute;n de la Parte de Edificio</h3>
+            <div id="part_bld_fields">
+                <div class="fields_row g9">
+                    <label for="b_part_name" class="g2">Nombre<span class="required">*</span></label>
+                    <input type="text" name="b_part_name" id="b_part_name" class="g9"
+                           value="{{ post.b_part_name }}"
+                            />
+                    <span></span>
+                </div>
+                <div class="fields_row g9">
+                    <label for="b_part_description" class="g2">Descripci&oacute;n</label>
+                    <textarea rows="5" name="b_part_description" id="b_part_description" class="g9">{{ post.b_part_description }}</textarea>
+
+                    <span></span>
+                </div>
+                <div class="fields_row g9">
+                    <label for="b_part_type" class="g2">Tipo de Parte de Edificio</label>
+                    <select name="b_part_type" id="b_part_type" class="g9">
+                        <option value="">Selecciona un tipo de parte </option>
+                        {% if tipos_parte %}
+                        {% for tipo in tipos_parte %}
+                        <option value="{{tipo.id}}" {% if post.b_part_type == tipo.id %} selected {% endif %}>{{ tipo.part_of_building_type_name }}</option>
+                        {% endfor %}
+                        {% endif %}
+
+                    </select>
+                    <span id="sel_type"></span>
+                </div>
+                <div class="fields_row g9">
+                    <label for="b_building_name" class="g2">Edificio<span class="required">*</span></label>
+                    <input type="text" name="b_building_name" id="b_building_name" class="g9"
+                           value="{{ post.b_part_building_name }}"  autocomplete="off"
+                            />
+                    <span></span>
+                    <input type="hidden" name="b_building_id" id="b_building_id" value="{{post.b_part_building_id}}">
+
+                </div>
+                <div class="fields_row g9">
+                    <label for="b_part_mt2" class="g2">Mt2 Construidos<span class="required">*</span></label>
+                    <input type="text" name="b_part_mt2" id="b_part_mt2" class="g9"
+                           value="{{ post.b_part_mt2 }}"
+                            />
+                    <span></span>
+                </div>
+            </div>
+
+            <h3 class="g12">Atributos extra</h3>
+            {{post.b_part_attributes|safe}}
+
+            <div id="atributes_fields">
+                <div id="fields_row g9">
+                    <div class="widgetField" id="attributes_type">
+                        <span class="legend">Tipos de Atributos</span>
+                        <a href="#">&nbsp;</a>
+                        <ul id="attributes_type_list" class="ddl">
+                            {% for tipo_at in tipos_atributos %}
+                            <li rel="{{ tipo_at.pk }}">
+                                {{ tipo_at.building_attributes_type_name }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div class="widgetField" id="attributes">
+                        <span class="legend">Atributo</span>
+                        <a href="#">&nbsp;</a>
+                        <ul id="attribute_list" class="ddl">
+                            <li></li>
+                        </ul>
+                    </div>
+
+                    <div class="fields_row attribute_value_text_row g4">
+                        <input type="text" name="attr_value" id="attr_value" class="attribute_value_text g10"  placeholder="Valor"/>
+                    </div>
+
+                    <p class="buttons" id="">
+                        <button class="grey_btn fl" id="add_attributes">
+                            <span class="plus"></span>
+                            Agregar
+                        </button>
+                    </p>
+                    <input type="hidden" name="attr_type_id_sel" id="attr_type_id_sel" value="">
+                    <input type="hidden" name="attr_id_sel" id="attr_id_sel" value="">
+                </div>
+            </div>
+
+            <div class="buttons g12">
+                <button class="aqua_btn" id="save">
+                    Guardar
+                </button>
+            </div>
+        </form>
+
+    </div>
+
+</div>
+{% endblock %}

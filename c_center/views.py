@@ -27,6 +27,7 @@ from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from cidec_sw import settings
 from c_center.calculations import *
 from c_center.models import *
+from location.models import *
 from electric_rates.models import ElectricRatesDetail
 from rbac.models import Operation, DataContextPermission
 from rbac.rbac_functions import  has_permission, get_buildings_context, graphs_permission
@@ -195,7 +196,7 @@ def set_consumer_unit(request):
     parents = PartOfBuilding.objects.filter(building=building).exclude(pk__in=ids_hierarchy)
 
     main_cu = ConsumerUnit.objects.get(building=building,
-        electric_device_type__electric_device_type_name="Total")
+        electric_device_type__electric_device_type_name="Total Edificio")
     hierarchy_list = "<ul id='org'>"\
                      "<li>"\
                      "<a href='#' rel='" + str(main_cu.pk) + "'>"+\
@@ -216,7 +217,7 @@ def set_consumer_unit(request):
         #sacar el padre(ConsumerUnits que no son hijos de nadie)
         parents = ConsumerUnit.objects.filter(building=building).exclude(
                   Q(pk__in=ids_hierarchy)|
-                  Q(electric_device_type__electric_device_type_name="Total") )
+                  Q(electric_device_type__electric_device_type_name="Total Edificio") )
         try:
             parents[0]
         except IndexError:
@@ -238,7 +239,7 @@ def set_consumer_unit(request):
 
             c_unit_parent = ConsumerUnit.objects.filter(building=building,
                             part_of_building=parent).exclude(
-                            electric_device_type__electric_device_type_name="Total")
+                            electric_device_type__electric_device_type_name="Total Edificio")
 
             hierarchy_list += "<li> <a href='#' rel='" + str(c_unit_parent[0].pk) + "'>" + \
                               parent.part_of_building_name + "</a>"
@@ -252,30 +253,72 @@ def set_consumer_unit(request):
 
     return render_to_response("consumption_centers/choose_hierarchy.html", template_vars_template)
 
-def get_position_consumer_unit(id_c_u):
-    consumerUnit = get_object_or_404(ConsumerUnit, pk=id_c_u)
-    if consumerUnit.part_of_building:
-        #es el consumer_unit de una parte de un edificio
-        try:
-            tree_element = HierarchyOfPart.objects.get(part_of_building_leaf=consumerUnit.part_of_building)
-        except ObjectDoesNotExist:
-            #es el primer hijo de la jerarquia
-            pass
-        else:
-            if tree_element.ExistsPowermeter:
-                #se usa este consumer unit
-                pass
-            else:
-                #se hace el recorrido de sus hijos
-                pass
 
+def get_total_consumer_unit(consumerUnit, total):
+    """gets the sum of his sons"""
+    c_units = []
+    if not total:
+
+        if consumerUnit.part_of_building:
+            #es el consumer_unit de una parte de un edificio, saco sus hijos
+            leafs = HierarchyOfPart.objects.filter(part_of_building_composite =
+                                                   consumerUnit.part_of_building)
+
+        else:
+            #es un consumer unit de algún electric device, saco sus hijos
+            leafs = HierarchyOfPart.objects.filter(consumer_unit_composite = consumerUnit)
+
+
+        for leaf in leafs:
+            if leaf.part_of_building_leaf:
+                leaf_cu = ConsumerUnit.objects.get(part_of_building=leaf.part_of_building_leaf)
+            else:
+                leaf_cu = leaf.consumer_unit_leaf
+            if leaf.ExistsPowermeter:
+                c_units.append(leaf_cu)
+            else:
+                c_units_leaf=get_total_consumer_unit(leaf_cu, False)
+                c_units.extend(c_units_leaf)
+        return c_units
     else:
-        #es un consumer unit de algún electric device
-        try:
-            tree_element = HierarchyOfPart.objects.get(consumer_unit_leaf=consumerUnit)
-        except ObjectDoesNotExist:
-            #es el primer hijo de la jerarquia
-            pass
+        hierarchy = HierarchyOfPart.objects.filter(Q(part_of_building_composite__building=
+                                                    consumerUnit.building)
+                                                   |Q(consumer_unit_composite__building=
+                                                    consumerUnit.building))
+        ids_hierarchy = [] #arreglo donde guardo los hijos
+        ids_hierarchy_cu = [] #arreglo donde guardo los hijos (consumerunits)
+        for hy in hierarchy:
+            if hy.part_of_building_leaf:
+                ids_hierarchy.append(hy.part_of_building_leaf.pk)
+            if hy.consumer_unit_leaf:
+                ids_hierarchy_cu.append(hy.consumer_unit_leaf.pk)
+
+        #sacar los padres(partes de edificios y consumerUnits que no son hijos de nadie)
+        parents = PartOfBuilding.objects.filter(building=consumerUnit.building).exclude(
+                                                                        pk__in=ids_hierarchy)
+
+        for parent in parents:
+            par_cu=ConsumerUnit.objects.get(part_of_building=parent)
+            if par_cu.profile_powermeter.powermeter.powermeter_anotation == "Medidor Virtual":
+                c_units_leaf=get_total_consumer_unit(par_cu, False)
+                c_units.extend(c_units_leaf)
+            else:
+                c_units.append(par_cu)
+    return c_units
+
+
+
+def get_consumer_units(consumerUnit):
+    """ Gets an array of consumer units which sum equals the given consumerUnit"""
+    if consumerUnit.profile_powermeter.powermeter.powermeter_anotation == "Medidor Virtual":
+        if consumerUnit.electric_device_type.electric_device_type_name == "Total Edificio":
+            total = True
+        else:
+            total = False
+        c_units = get_total_consumer_unit(consumerUnit, total)
+    else:
+        c_units = [consumerUnit]
+    return c_units
 
 def set_default_consumer_unit(request, id_c_u):
     """Sets the consumer_unit for all the reports"""
@@ -2685,3 +2728,2111 @@ def c_center_structures(request):
 
     else:
         return render_to_response("generic_error.html", RequestContext(request))
+
+
+"""
+Building Type
+"""
+
+
+def add_buildingtype(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, CREATE, "Alta de tipos de edificios") or request.user.is_superuser:
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
+        post = ''
+
+
+        template_vars = dict(datacontext=datacontext,
+            empresa=empresa,
+            company=company,
+            post=post,
+        )
+
+        if request.method == "POST":
+            template_vars["post"] = request.POST
+            btype_name = request.POST.get('btype_name')
+            btype_description = request.POST.get('btype_description')
+
+            continuar = True
+            if btype_name == '':
+                message = "El nombre del tipo de edificio no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+
+            post = {'btype_name': btype_name, 'btype_description':btype_description}
+
+            if continuar:
+
+                newBuildingType = BuildingType(
+                    building_type_name = btype_name,
+                    building_type_description = btype_description
+                )
+                newBuildingType.save()
+
+                template_vars["message"] = "Tipo de Edificio creado exitosamente"
+                template_vars["type"] = "n_success"
+
+                if has_permission(request.user, VIEW, "Ver empresas") or request.user.is_superuser:
+                    return HttpResponseRedirect("/buildings/tipos_edificios?msj=" +
+                                                template_vars["message"] +
+                                                "&ntype=n_success")
+            template_vars["post"] = post
+            template_vars["message"] = message
+            template_vars["type"] = type
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/add_buildingtype.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def edit_buildingtype(request, id_btype):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, UPDATE, "Modificar tipo de edificio") or request.user.is_superuser:
+
+        building_type = BuildingType.objects.get(id = id_btype)
+
+        post = {'btype_name': building_type.building_type_name, 'btype_description':building_type.building_type_description}
+
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
+        message = ''
+        type = ''
+
+        if request.method == "POST":
+            post = request.POST
+            btype_name = request.POST.get('btype_name')
+            btype_description = request.POST.get('btype_description')
+
+            continuar = True
+            if btype_name == '':
+                message = "El nombre del tipo de edificio no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+
+            post = {'btype_name': btype_name, 'btype_description':btype_description}
+
+            if continuar:
+                building_type.building_type_name = btype_name
+                building_type.building_type_description = btype_description
+                building_type.save()
+
+                message = "Tipo de Edificio editado exitosamente"
+                type = "n_success"
+                if has_permission(request.user, VIEW, "Ver tipos de edificios") or request.user.is_superuser:
+                    return HttpResponseRedirect("/buildings/tipos_edificios?msj=" +
+                                                message +
+                                                "&ntype=n_success")
+
+        template_vars = dict(datacontext=datacontext,
+            empresa=empresa,
+            company=company,
+            post=post,
+            operation="edit",
+            message=message,
+            type=type
+        )
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/add_buildingtype.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def view_buildingtypes(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, VIEW, "Ver tipos de edificios") or request.user.is_superuser:
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
+
+        if "search" in request.GET:
+            search = request.GET["search"]
+        else:
+            search = ''
+
+        order_name = 'asc'
+        order_description = 'asc'
+        order_status = 'asc'
+        order = "building_type_name" #default order
+        if "order_name" in request.GET:
+            if request.GET["order_name"] == "desc":
+                order = "-building_type_name"
+                order_name = "asc"
+            else:
+                order_name = "desc"
+        else:
+            if "order_description" in request.GET:
+                if request.GET["order_description"] == "asc":
+                    order = "building_type_description"
+                    order_description = "desc"
+                else:
+                    order = "-building_type_description"
+
+            if "order_status" in request.GET:
+                if request.GET["order_status"] == "asc":
+                    order = "building_type_status"
+                    order_status = "desc"
+                else:
+                    order = "-building_type_status"
+                    order_status = "asc"
+
+        if search:
+            lista = BuildingType.objects.filter(Q(building_type_name__icontains=request.GET['search'])|Q(
+                building_type_description__icontains=request.GET['search'])).exclude(building_type_status = 2).order_by(order)
+
+        else:
+            lista = BuildingType.objects.all().exclude(building_type_status = 2).order_by(order)
+
+        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        template_vars = dict(order_name=order_name, order_description=order_description, order_status=order_status,
+            datacontext=datacontext, empresa=empresa, company=company)
+        # Make sure page request is an int. If not, deliver first page.
+        try:
+            page = int(request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+
+        # If page request (9999) is out of range, deliver last page of results.
+        try:
+            pag_user = paginator.page(page)
+        except (EmptyPage, InvalidPage):
+            pag_user = paginator.page(paginator.num_pages)
+
+        template_vars['paginacion']=pag_user
+
+        if 'msj' in request.GET:
+            template_vars['message'] = request.GET['msj']
+            template_vars['msg_type'] = request.GET['ntype']
+
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/buildingtype.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def delete_buildingtype(request, id_btype):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, DELETE, "Baja de tipos de edificios") or request.user.is_superuser:
+        btype_obj = get_object_or_404(BuildingType, pk = id_btype)
+        btype_obj.building_type_status = 2
+        btype_obj.save()
+
+        mensaje = "El tipo de edificio ha sido dado de baja correctamente"
+        type="n_success"
+
+        return HttpResponseRedirect("/buildings/tipos_edificios/?msj=" + mensaje +
+                                    "&ntype="+type)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def delete_batch_buildingtypes(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, DELETE, "Baja de tipos de edificios") or request.user.is_superuser:
+        if request.method == "GET":
+            raise Http404
+        if request.POST['actions'] == 'delete':
+            for key in request.POST:
+                if re.search('^btype_\w+', key):
+                    r_id = int(key.replace("btype_",""))
+                    btype_obj = get_object_or_404(BuildingType, pk = r_id)
+                    btype_obj.building_type_status = 2
+                    btype_obj.save()
+
+            mensaje = "Los tipos de edificios han sido dados de baja correctamente"
+            return HttpResponseRedirect("/buildings/tipos_edificios/?msj=" + mensaje +
+                                        "&ntype=n_success")
+        else:
+            mensaje = "No se ha seleccionado una acción"
+            return HttpResponseRedirect("/buildings/tipos_edificios/?msj=" + mensaje +
+                                        "&ntype=n_success")
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def status_buildingtype(request, id_btype):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, UPDATE, "Modificar tipo de edificio") or request.user.is_superuser:
+        building_type = get_object_or_404(BuildingType, pk = id_btype)
+        if building_type.building_type_status == 0:
+            building_type.building_type_status = 1
+            str_status = "Activo"
+        elif building_type.building_type_status == 1:
+            building_type.building_type_status = 0
+            str_status = "Activo"
+
+        building_type.save()
+        mensaje = "El estatus del tipo de edificio " + building_type.building_type_name +" ha cambiado a "+str_status
+        type="n_success"
+
+        return HttpResponseRedirect("/buildings/tipos_edificios/?msj=" + mensaje +
+                                    "&ntype="+type)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+
+"""
+Sectoral Type
+"""
+
+
+def add_sectoraltype(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, CREATE, "Alta de sectores") or request.user.is_superuser:
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
+        post = ''
+
+        template_vars = dict(datacontext=datacontext,
+            empresa=empresa,
+            company=company,
+            post=post,
+        )
+
+        if request.method == "POST":
+            template_vars["post"] = request.POST
+            stype_name = request.POST.get('stype_name')
+            stype_description = request.POST.get('stype_description')
+
+            continuar = True
+            if stype_name == '':
+                message = "El nombre del tipo de sector no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+
+            post = {'stype_name': stype_name, 'stype_description':stype_description}
+
+            if continuar:
+
+                newSectoralType = SectoralType(
+                    sectorial_type_name = stype_name,
+                    sectoral_type_description = stype_description
+                )
+                newSectoralType.save()
+
+                template_vars["message"] = "Tipo de Sector creado exitosamente"
+                template_vars["type"] = "n_success"
+
+                if has_permission(request.user, VIEW, "Ver tipos de sectores") or request.user.is_superuser:
+                    return HttpResponseRedirect("/buildings/tipos_sectores?msj=" +
+                                                template_vars["message"] +
+                                                "&ntype=n_success")
+            template_vars["post"] = post
+            template_vars["message"] = message
+            template_vars["type"] = type
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/add_sectoraltype.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def edit_sectoraltype(request, id_stype):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, UPDATE, "Modificar tipos de sectores") or request.user.is_superuser:
+
+        sectoral_type = SectoralType.objects.get(id = id_stype)
+
+        post = {'stype_name': sectoral_type.sectorial_type_name, 'stype_description': sectoral_type.sectoral_type_description}
+
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
+        message = ''
+        type = ''
+
+        if request.method == "POST":
+            post = request.POST
+            stype_name = request.POST.get('stype_name')
+            stype_description = request.POST.get('stype_description')
+
+            continuar = True
+            if stype_name == '':
+                message = "El nombre del tipo de sector no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+
+            post = {'stype_name': stype_name, 'stype_description':stype_description}
+
+            if continuar:
+                sectoral_type.sectorial_type_name = stype_name
+                sectoral_type.sectoral_type_description = stype_description
+                sectoral_type.save()
+
+                message = "Tipo de Sector editado exitosamente"
+                type = "n_success"
+                if has_permission(request.user, VIEW, "Ver tipos de sectores") or request.user.is_superuser:
+                    return HttpResponseRedirect("/buildings/tipos_sectores?msj=" +
+                                                message +
+                                                "&ntype=n_success")
+
+        template_vars = dict(datacontext=datacontext,
+            empresa=empresa,
+            company=company,
+            post=post,
+            operation="edit",
+            message=message,
+            type=type
+        )
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/add_sectoraltype.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def view_sectoraltypes(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, VIEW, "Ver tipos de sectores") or request.user.is_superuser:
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
+
+        if "search" in request.GET:
+            search = request.GET["search"]
+        else:
+            search = ''
+
+        order_name = 'asc'
+        order_description = 'asc'
+        order_status = 'asc'
+        order = "sectorial_type_name" #default order
+        if "order_name" in request.GET:
+            if request.GET["order_name"] == "desc":
+                order = "-sectorial_type_name"
+                order_name = "asc"
+            else:
+                order_name = "desc"
+        else:
+            if "order_description" in request.GET:
+                if request.GET["order_description"] == "asc":
+                    order = "sectoral_type_description"
+                    order_description = "desc"
+                else:
+                    order = "-sectoral_type_description"
+
+            if "order_status" in request.GET:
+                if request.GET["order_status"] == "asc":
+                    order = "sectoral_type_status"
+                    order_status = "desc"
+                else:
+                    order = "-sectoral_type_status"
+                    order_status = "asc"
+
+        if search:
+            lista = SectoralType.objects.filter(Q(sectorial_type_name__icontains=request.GET['search'])|Q(
+                sectoral_type_description__icontains=request.GET['search'])).exclude(sectoral_type_status = 2).order_by(order)
+        else:
+            lista = SectoralType.objects.all().exclude(sectoral_type_status = 2).order_by(order)
+
+        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        template_vars = dict(order_name=order_name, order_description=order_description, order_status=order_status,
+            datacontext=datacontext, empresa=empresa, company=company)
+        # Make sure page request is an int. If not, deliver first page.
+        try:
+            page = int(request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+
+        # If page request (9999) is out of range, deliver last page of results.
+        try:
+            pag_user = paginator.page(page)
+        except (EmptyPage, InvalidPage):
+            pag_user = paginator.page(paginator.num_pages)
+
+        template_vars['paginacion']=pag_user
+
+        if 'msj' in request.GET:
+            template_vars['message'] = request.GET['msj']
+            template_vars['msg_type'] = request.GET['ntype']
+
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/sectoraltype.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def delete_sectoraltype(request, id_stype):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, DELETE, "Baja de tipos de sectores") or request.user.is_superuser:
+        stype_obj = get_object_or_404(SectoralType, pk = id_stype)
+        stype_obj.sectoral_type_status = 2
+        stype_obj.save()
+
+        mensaje = "El tipo de sector ha sido dado de baja correctamente"
+        type="n_success"
+
+        return HttpResponseRedirect("/buildings/tipos_sectores/?msj=" + mensaje +
+                                    "&ntype="+type)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def delete_batch_sectoraltypes(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, DELETE, "Baja de tipos de sectores") or request.user.is_superuser:
+        if request.method == "GET":
+            raise Http404
+        if request.POST['actions'] == 'delete':
+            for key in request.POST:
+                if re.search('^stype_\w+', key):
+                    r_id = int(key.replace("stype_",""))
+                    stype_obj = get_object_or_404(SectoralType, pk = r_id)
+                    stype_obj.sectoral_type_status = 2
+                    stype_obj.save()
+
+            mensaje = "Los tipos de sectores han sido dados de baja correctamente"
+            return HttpResponseRedirect("/buildings/tipos_sectores/?msj=" + mensaje +
+                                        "&ntype=n_success")
+        else:
+            mensaje = "No se ha seleccionado una acción"
+            return HttpResponseRedirect("/buildings/tipos_sectores/?msj=" + mensaje +
+                                        "&ntype=n_success")
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def status_sectoraltype(request, id_stype):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, UPDATE, "Modificar tipos de sectores") or request.user.is_superuser:
+        sectoral_type = get_object_or_404(SectoralType, pk = id_stype)
+        if sectoral_type.sectoral_type_status == 0:
+            sectoral_type.sectoral_type_status = 1
+            str_status = "Activo"
+        elif sectoral_type.sectoral_type_status == 1:
+            sectoral_type.sectoral_type_status = 0
+            str_status = "Activo"
+
+        sectoral_type.save()
+        mensaje = "El estatus del sector " + sectoral_type.sectorial_type_name +" ha cambiado a "+str_status
+        type="n_success"
+
+        return HttpResponseRedirect("/buildings/tipos_sectores/?msj=" + mensaje +
+                                    "&ntype="+type)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+
+
+"""
+Building Attributes Type
+"""
+
+
+def add_b_attributes_type(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, CREATE, "Alta de tipos de atributos de edificios") or request.user.is_superuser:
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
+        post = ''
+
+        template_vars = dict(datacontext=datacontext,
+            empresa=empresa,
+            company=company,
+            post=post,
+        )
+
+        if request.method == "POST":
+            template_vars["post"] = request.POST
+            b_attr_type_name = request.POST.get('b_attr_type_name')
+            b_attr_type_description = request.POST.get('b_attr_type_description')
+
+            continuar = True
+            if b_attr_type_name == '':
+                message = "El nombre del tipo de atributo no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+
+            post = {'stype_name': b_attr_type_name, 'stype_description':b_attr_type_description}
+
+            if continuar:
+
+                newBuildingAttrType = BuildingAttributesType(
+                    building_attributes_type_name = b_attr_type_name,
+                    building_attributes_type_description = b_attr_type_description
+                )
+                newBuildingAttrType.save()
+
+                template_vars["message"] = "Tipo de Atributo de Edificio creado exitosamente"
+                template_vars["type"] = "n_success"
+
+                if has_permission(request.user, VIEW, "Ver tipos de atributos") or request.user.is_superuser:
+                    return HttpResponseRedirect("/buildings/tipos_atributos_edificios?msj=" +
+                                                template_vars["message"] +
+                                                "&ntype=n_success")
+            template_vars["post"] = post
+            template_vars["message"] = message
+            template_vars["type"] = type
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/add_buildingattributetype.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def edit_b_attributes_type(request, id_batype):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, UPDATE, "Modificar tipos de atributos de edificios") or request.user.is_superuser:
+
+        b_attr_typeObj = BuildingAttributesType.objects.get(id = id_batype)
+
+        post = {'batype_name': b_attr_typeObj.building_attributes_type_name, 'batype_description':b_attr_typeObj.building_attributes_type_description}
+
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
+        message = ''
+        type = ''
+
+        if request.method == "POST":
+            post = request.POST
+            b_attr_type_name = request.POST.get('b_attr_type_name')
+            b_attr_type_description = request.POST.get('b_attr_type_description')
+
+            continuar = True
+            if b_attr_type_name == '':
+                message = "El nombre del tipo de atributo no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+
+            post = {'batype_name':b_attr_type_name , 'batype_description':b_attr_type_description }
+
+            if continuar:
+                b_attr_typeObj.building_attributes_type_name = b_attr_type_name
+                b_attr_typeObj.building_attributes_type_description = b_attr_type_description
+                b_attr_typeObj.save()
+
+                message = "Tipo de Atributo de Edificio editado exitosamente"
+                type = "n_success"
+                if has_permission(request.user, VIEW, "Ver tipos de atributos") or request.user.is_superuser:
+                    return HttpResponseRedirect("/buildings/tipos_atributos_edificios?msj=" +
+                                                message +
+                                                "&ntype=n_success")
+
+        template_vars = dict(datacontext=datacontext,
+            empresa=empresa,
+            company=company,
+            post=post,
+            operation="edit",
+            message=message,
+            type=type
+        )
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/add_buildingattributetype.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def view_b_attributes_type(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, VIEW, "Ver tipos de atributos") or request.user.is_superuser:
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
+
+        if "search" in request.GET:
+            search = request.GET["search"]
+        else:
+            search = ''
+
+        order_name = 'asc'
+        order_description = 'asc'
+        order = "building_attributes_type_name" #default order
+        if "order_name" in request.GET:
+            if request.GET["order_name"] == "desc":
+                order = "-building_attributes_type_name"
+                order_name = "asc"
+            else:
+                order_name = "desc"
+        else:
+            if "order_description" in request.GET:
+                if request.GET["order_description"] == "asc":
+                    order = "building_attributes_type_description"
+                    order_description = "desc"
+                else:
+                    order = "-building_attributes_type_description"
+
+        if search:
+            lista = BuildingAttributesType.objects.filter(Q(building_attributes_type_name__icontains=request.GET['search'])|Q(
+                building_attributes_type_description__icontains=request.GET['search'])).\
+                exclude(building_attributes_type_status = 2).order_by(order)
+        else:
+            lista = BuildingAttributesType.objects.all().exclude(building_attributes_type_status = 2).order_by(order)
+
+        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        template_vars = dict(order_name=order_name, order_description=order_description,
+            datacontext=datacontext, empresa=empresa, company=company)
+        # Make sure page request is an int. If not, deliver first page.
+        try:
+            page = int(request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+
+        # If page request (9999) is out of range, deliver last page of results.
+        try:
+            pag_user = paginator.page(page)
+        except (EmptyPage, InvalidPage):
+            pag_user = paginator.page(paginator.num_pages)
+
+        template_vars['paginacion']=pag_user
+
+        if 'msj' in request.GET:
+            template_vars['message'] = request.GET['msj']
+            template_vars['msg_type'] = request.GET['ntype']
+
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/buildingattributetype.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+
+"""
+Part of Building Type
+"""
+
+
+def add_partbuildingtype(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, CREATE, "Alta de tipos de partes de edificio") or request.user.is_superuser:
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
+        post = ''
+
+        template_vars = dict(datacontext=datacontext,
+            empresa=empresa,
+            company=company,
+            post=post,
+        )
+
+        if request.method == "POST":
+            template_vars["post"] = request.POST
+            b_part_type_name = request.POST.get('b_part_type_name')
+            b_part_type_description = request.POST.get('b_part_type_description')
+
+            continuar = True
+            if b_part_type_name == '':
+                message = "El nombre del Tipo de Parte de Edificio no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+
+            post = {'b_part_type_name': b_part_type_name, 'b_part_type_description':b_part_type_description}
+
+            if continuar:
+
+                newPartBuildingType = PartOfBuildingType(
+                    part_of_building_type_name = b_part_type_name,
+                    part_of_building_type_description = b_part_type_description
+                )
+                newPartBuildingType.save()
+
+                template_vars["message"] = "Tipo de Parte de Edificio creado exitosamente"
+                template_vars["type"] = "n_success"
+
+                if has_permission(request.user, VIEW, "Ver tipos de partes de un edificio") or request.user.is_superuser:
+                    return HttpResponseRedirect("/buildings/tipos_partes_edificio?msj=" +
+                                                template_vars["message"] +
+                                                "&ntype=n_success")
+            template_vars["post"] = post
+            template_vars["message"] = message
+            template_vars["type"] = type
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/add_partbuilding_type.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def edit_partbuildingtype(request, id_pbtype):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, UPDATE, "Modificar tipos de atributos de edificios") or request.user.is_superuser:
+
+        building_part_type = PartOfBuildingType.objects.get(id=id_pbtype)
+
+        post = {'b_part_type_name': building_part_type.part_of_building_type_name, 'b_part_type_description': building_part_type.part_of_building_type_description}
+
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
+        message = ''
+        type = ''
+
+        if request.method == "POST":
+            post = request.POST
+            b_part_type_name = request.POST.get('b_part_type_name')
+            b_part_type_description = request.POST.get('b_part_type_description')
+
+            continuar = True
+            if b_part_type_name == '':
+                message = "El nombre del Tipo de Parte de Edificio no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+
+            post = {'b_part_type_name': building_part_type.part_of_building_type_name, 'b_part_type_description': building_part_type.part_of_building_type_description}
+
+            if continuar:
+                building_part_type.part_of_building_type_name = b_part_type_name
+                building_part_type.part_of_building_type_description = b_part_type_description
+                building_part_type.save()
+
+                message = "Tipo de Parte de Edificio editado exitosamente"
+                type = "n_success"
+                if has_permission(request.user, VIEW, "Ver tipos de partes de un edificio") or request.user.is_superuser:
+                    return HttpResponseRedirect("/buildings/tipos_partes_edificio?msj=" +
+                                                message +
+                                                "&ntype=n_success")
+
+        template_vars = dict(datacontext=datacontext,
+            empresa=empresa,
+            company=company,
+            post=post,
+            operation="edit",
+            message=message,
+            type=type
+        )
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/add_partbuilding_type.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def view_partbuildingtype(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, VIEW, "Ver tipos de partes de un edificio") or request.user.is_superuser:
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
+
+        if "search" in request.GET:
+            search = request.GET["search"]
+        else:
+            search = ''
+
+        order_name = 'asc'
+        order_description = 'asc'
+        order_status = 'asc'
+        order = "part_of_building_type_name" #default order
+        if "order_name" in request.GET:
+            if request.GET["order_name"] == "desc":
+                order = "-part_of_building_type_name"
+                order_name = "asc"
+            else:
+                order_name = "desc"
+        else:
+            if "order_description" in request.GET:
+                if request.GET["order_description"] == "asc":
+                    order = "part_of_building_type_description"
+                    order_description = "desc"
+                else:
+                    order = "-part_of_building_type_description"
+
+            if "order_status" in request.GET:
+                if request.GET["order_status"] == "asc":
+                    order = "part_of_building_type_status"
+                    order_status = "desc"
+                else:
+                    order = "-part_of_building_type_status"
+                    order_status = "asc"
+
+        if search:
+            lista = PartOfBuildingType.objects.filter(Q(part_of_building_type_name__icontains=request.GET['search'])|Q(
+                part_of_building_type_description__icontains=request.GET['search'])).exclude(part_of_building_type_status = 2).\
+                order_by(order)
+        else:
+            lista = PartOfBuildingType.objects.all().exclude(part_of_building_type_status = 2).order_by(order)
+
+        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        template_vars = dict(order_name=order_name, order_description=order_description, order_status=order_status,
+            datacontext=datacontext, empresa=empresa, company=company)
+        # Make sure page request is an int. If not, deliver first page.
+        try:
+            page = int(request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+
+        # If page request (9999) is out of range, deliver last page of results.
+        try:
+            pag_user = paginator.page(page)
+        except (EmptyPage, InvalidPage):
+            pag_user = paginator.page(paginator.num_pages)
+
+        template_vars['paginacion']=pag_user
+
+        if 'msj' in request.GET:
+            template_vars['message'] = request.GET['msj']
+            template_vars['msg_type'] = request.GET['ntype']
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/partofbuildingtype.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def delete_partbuildingtype(request, id_pbtype):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, DELETE, "Baja de tipos de partes de edificios") or request.user.is_superuser:
+
+        part_building_type = get_object_or_404(PartOfBuildingType, pk=id_pbtype)
+        part_building_type.part_of_building_type_status = 2
+        part_building_type.save()
+
+        mensaje = "El Tipo de Parte de Edificio ha sido dado de baja correctamente"
+        type="n_success"
+
+        return HttpResponseRedirect("/buildings/tipos_partes_edificio/?msj=" + mensaje +
+                                    "&ntype="+type)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def delete_batch_partbuildingtype(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, DELETE, "Baja de tipos de partes de edificios") or request.user.is_superuser:
+        if request.method == "GET":
+            raise Http404
+        if request.POST['actions'] == 'delete':
+            for key in request.POST:
+                if re.search('^pb_type_\w+', key):
+                    r_id = int(key.replace("pb_type_",""))
+                    part_building_type = get_object_or_404(PartOfBuildingType, pk=r_id)
+                    part_building_type.part_of_building_type_status = 2
+                    part_building_type.save()
+
+            mensaje = "Los Tipos de Partes de Edificio han sido dados de baja correctamente"
+            return HttpResponseRedirect("/buildings/tipos_partes_edificio/?msj=" + mensaje +
+                                        "&ntype=n_success")
+        else:
+            mensaje = "No se ha seleccionado una acción"
+            return HttpResponseRedirect("/buildings/tipos_partes_edificio/?msj=" + mensaje +
+                                        "&ntype=n_success")
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def status_partbuildingtype(request, id_pbtype):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, UPDATE, "Modificar tipos de atributos de edificios") or request.user.is_superuser:
+        part_building_type = get_object_or_404(PartOfBuildingType, pk = id_pbtype)
+
+        if part_building_type.part_of_building_type_status == 0:
+            part_building_type.part_of_building_type_status = 1
+            str_status = "Activo"
+        elif part_building_type.part_of_building_type_status == 1:
+            part_building_type.part_of_building_type_status = 0
+            str_status = "Activo"
+        part_building_type.save()
+
+        mensaje = "El estatus del tipo de edificio " + part_building_type.part_of_building_type_name +" ha cambiado a "+str_status
+        type="n_success"
+
+        return HttpResponseRedirect("/buildings/tipos_partes_edificio/?msj=" + mensaje +
+                                    "&ntype="+type)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+
+
+
+"""
+Part of Building
+"""
+
+
+def add_partbuilding(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, CREATE, "Alta de partes de edificio") or request.user.is_superuser:
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
+        post = ''
+
+        #Se obtienen los tipos de partes de edificios
+        tipos_parte = PartOfBuildingType.objects.all().exclude(part_of_building_type_status = 2).order_by('part_of_building_type_name')
+
+        #Se obtienen los tipos de atributos de edificios
+        tipos_atributos = BuildingAttributesType.objects.all().exclude(building_attributes_type_status = 2).order_by('building_attributes_type_name')
+
+        template_vars = dict(datacontext=datacontext,
+            empresa=empresa,
+            company=company,
+            post=post,
+            tipos_parte=tipos_parte,
+            tipos_atributos=tipos_atributos,
+        )
+
+        if request.method == "POST":
+            template_vars["post"] = request.POST
+            b_part_name = request.POST.get('b_part_name')
+            b_part_description = request.POST.get('b_part_description')
+            b_part_type_id = request.POST.get('b_part_type')
+            b_part_building_name = request.POST.get('b_building_name')
+            b_part_building_id = request.POST.get('b_building_id')
+            b_part_mt2 = request.POST.get('b_part_mt2')
+
+            continuar = True
+            if b_part_name == '':
+                message = "El nombre de la Parte de Edificio no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+
+            if b_part_type_id == '':
+                message = "Se debe seleccionar un tipo de parte de edificio"
+                type = "n_notif"
+                continuar = False
+
+            if b_part_building_id == '':
+                message = "Se debe seleccionar un edificio ya registrado"
+                type = "n_notif"
+                continuar = False
+
+            post = {'b_part_name': b_part_name, 'b_part_description':b_part_description, 'b_part_building_name': b_part_building_name, 'b_part_building_id': b_part_building_id, 'b_part_type':b_part_type_id ,'b_part_mt2':b_part_mt2}
+
+            if continuar:
+
+                #Se obtiene la instancia del edificio
+                buildingObj = get_object_or_404(Building, pk=b_part_building_id)
+
+                #Se obtiene la instancia del tipo de parte de edificio
+                part_building_type_obj = get_object_or_404(PartOfBuildingType, pk=b_part_type_id)
+
+
+                newPartBuilding = PartOfBuilding(
+                    building = buildingObj,
+                    part_of_building_type = part_building_type_obj,
+                    part_of_building_name = b_part_name,
+                    part_of_building_description = b_part_description,
+                    mts2_built = b_part_mt2
+                )
+                newPartBuilding.save()
+
+                for key in request.POST:
+                    if re.search('^atributo_\w+', key):
+                        atr_value_complete = request.POST.get(key)
+                        atr_value_arr = atr_value_complete.split(',')
+
+                        #Se obtiene el objeto tipo de atributo
+                        attribute_type_obj = BuildingAttributesType.objects.get(pk = atr_value_arr[0])
+
+                        #Se obtiene el objeto atributo
+                        attribute_obj = BuildingAttributes.objects.get(pk = atr_value_arr[1])
+
+                        newBldPartAtt = BuilAttrsForPartOfBuil(
+                            part_of_building = newPartBuilding,
+                            building_attributes = attribute_obj,
+                            building_attributes_value = atr_value_arr[2]
+                        )
+                        newBldPartAtt.save()
+
+
+                template_vars["message"] = "Parte de Edificio creado exitosamente"
+                template_vars["type"] = "n_success"
+
+                if has_permission(request.user, VIEW, "Ver partes de un edificio") or request.user.is_superuser:
+                    return HttpResponseRedirect("/buildings/partes_edificio?msj=" +
+                                                template_vars["message"] +
+                                                "&ntype=n_success")
+            template_vars["post"] = post
+            template_vars["message"] = message
+            template_vars["type"] = type
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/add_partbuilding.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def edit_partbuilding(request, id_bpart):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, UPDATE, "Modificar partes de un edificio") or request.user.is_superuser:
+
+        #Se obtienen los tipos de partes de edificios
+        tipos_parte = PartOfBuildingType.objects.all().exclude(part_of_building_type_status = 2).order_by('part_of_building_type_name')
+
+        #Se obtienen los tipos de atributos de edificios
+        tipos_atributos = BuildingAttributesType.objects.all().exclude(building_attributes_type_status = 2).order_by('building_attributes_type_name')
+
+        building_part = get_object_or_404(PartOfBuilding, pk=id_bpart)
+
+
+        #Se obtienen todos los atributos
+        building_part_attributes = BuilAttrsForPartOfBuil.objects.filter(part_of_building = building_part)
+        string_attributes = ''
+        if building_part_attributes:
+            for bp_att in building_part_attributes:
+
+                string_attributes += '<div  class="extra_attributes_div"><span class="delete_attr_icon"><a href="#eliminar" class="delete hidden_icon" ' + \
+                'title="eliminar atributo"></a></span>' + \
+                '<span class="tip_attribute_part">' + \
+                bp_att.building_attributes.building_attributes_type.building_attributes_type_name + \
+                '</span>' + \
+                '<span class="attribute_part">' +\
+                bp_att.building_attributes.building_attributes_name + \
+                '</span>'+ \
+                '<span class="attribute_value_part">'+\
+                str(bp_att.building_attributes_value) + \
+                '</span>' + \
+                '<input type="hidden" name="atributo_' + str(bp_att.building_attributes.building_attributes_type.pk) + \
+                '_' +str(bp_att.building_attributes.pk) +'" ' + \
+                'value="' + str(bp_att.building_attributes.building_attributes_type.pk) +','+ str(bp_att.building_attributes.pk) + ','+ str(bp_att.building_attributes_value) + \
+                '"/></div>';
+
+        post = {'b_part_name': building_part.part_of_building_name,
+                'b_part_description':building_part.part_of_building_description,
+                'b_part_building_name':building_part.building.building_name,
+                'b_part_building_id':str(building_part.building.pk),
+                'b_part_type':building_part.part_of_building_type.id,
+                'b_part_mt2':building_part.mts2_built,
+                'b_part_attributes':string_attributes,
+        }
+
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
+        message = ''
+        type = ''
+
+        if request.method == "POST":
+            post = request.POST
+
+            b_part_name = request.POST.get('b_part_name')
+            b_part_description = request.POST.get('b_part_description')
+            b_part_type_id = request.POST.get('b_part_type')
+            b_part_building_name = request.POST.get('b_building_name')
+            b_part_building_id = request.POST.get('b_building_id')
+            b_part_mt2 = request.POST.get('b_part_mt2')
+
+            continuar = True
+            if b_part_name == '':
+                message = "El nombre de la Parte de Edificio no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+
+            if b_part_type_id == '':
+                message = "Se debe seleccionar un tipo de parte de edificio"
+                type = "n_notif"
+                continuar = False
+
+            if b_part_building_id == '':
+                message = "Se debe seleccionar un edificio"
+                type = "n_notif"
+                continuar = False
+
+            post = {'b_part_name': b_part_name, 'b_part_description':b_part_description, 'b_part_building_name': b_part_building_name, 'b_part_building_id': b_part_building_id, 'b_part_type':b_part_type_id ,'b_part_mt2':b_part_mt2}
+
+
+            if continuar:
+                #Se obtiene la instancia del edificio
+                buildingObj = get_object_or_404(Building, pk=b_part_building_id)
+
+                #Se obtiene la instancia del tipo de parte de edificio
+                part_building_type_obj = get_object_or_404(PartOfBuildingType, pk=b_part_type_id)
+
+                building_part.building = buildingObj
+                building_part.part_of_building_name = b_part_name
+                building_part.part_of_building_description = b_part_description
+                building_part.part_of_building_type = part_building_type_obj
+                building_part.mts2_built = b_part_mt2
+                building_part.save()
+
+                #Se eliminan todos los atributos existentes
+                builAttrsElim = BuilAttrsForPartOfBuil.objects.filter(part_of_building = building_part)
+                builAttrsElim.delete()
+
+                #Se insertan los nuevos
+                for key in request.POST:
+                    if re.search('^atributo_\w+', key):
+
+                        atr_value_complete = request.POST.get(key)
+                        atr_value_arr = atr_value_complete.split(',')
+
+                        #Se obtiene el objeto atributo
+                        attribute_obj = BuildingAttributes.objects.get(pk = atr_value_arr[1])
+
+                        newBldPartAtt = BuilAttrsForPartOfBuil(
+                            part_of_building = building_part,
+                            building_attributes = attribute_obj,
+                            building_attributes_value = atr_value_arr[2]
+                        )
+                        newBldPartAtt.save()
+
+                message = "Parte de Edificio editado exitosamente"
+                type = "n_success"
+                if has_permission(request.user, VIEW, "Ver partes de un edificio") or request.user.is_superuser:
+                    return HttpResponseRedirect("/buildings/partes_edificio?msj=" +
+                                                message +
+                                                "&ntype=n_success")
+
+        template_vars = dict(datacontext=datacontext,
+            empresa=empresa,
+            company=company,
+            post=post,
+            tipos_parte=tipos_parte,
+            tipos_atributos=tipos_atributos,
+            operation="edit",
+            message=message,
+            type=type
+        )
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/add_partbuilding.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def view_partbuilding(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, VIEW, "Ver partes de un edificio") or request.user.is_superuser:
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
+
+        if "search" in request.GET:
+            search = request.GET["search"]
+        else:
+            search = ''
+
+        order_name = 'asc'
+        order_type = 'asc'
+        order_building = 'asc'
+        order = "part_of_building_name" #default order
+        if "order_name" in request.GET:
+            if request.GET["order_name"] == "desc":
+                order = "-part_of_building_name"
+                order_name = "asc"
+            else:
+                order_name = "desc"
+        else:
+            if "order_type" in request.GET:
+                if request.GET["order_type"] == "asc":
+                    order = "part_of_building_type__part_of_building_type_name"
+                    order_type = "desc"
+                else:
+                    order = "-part_of_building_type__part_of_building_type_name"
+
+            if "order_building" in request.GET:
+                if request.GET["order_building"] == "asc":
+                    order = "building__building_name"
+                    order_building = "desc"
+                else:
+                    order = "-building__building_name"
+                    order_building = "asc"
+
+        if search:
+            lista = PartOfBuilding.objects.filter(Q(part_of_building_name__icontains=request.GET['search'])|Q(
+                part_of_building_type__part_of_building_type_name__icontains=request.GET['search'])|Q(
+                building__building_name__icontains=request.GET['search'])).order_by(order)
+        else:
+            lista = PartOfBuilding.objects.all().order_by(order)
+
+        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        template_vars = dict(order_name=order_name, order_type=order_type, order_building=order_building,
+            datacontext=datacontext, empresa=empresa, company=company)
+        # Make sure page request is an int. If not, deliver first page.
+        try:
+            page = int(request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+
+        # If page request (9999) is out of range, deliver last page of results.
+        try:
+            pag_user = paginator.page(page)
+        except (EmptyPage, InvalidPage):
+            pag_user = paginator.page(paginator.num_pages)
+
+        template_vars['paginacion']=pag_user
+
+        if 'msj' in request.GET:
+            template_vars['message'] = request.GET['msj']
+            template_vars['msg_type'] = request.GET['ntype']
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/partofbuilding.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def search_buildings(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if "term" in request.GET:
+        term = request.GET['term']
+        buildings = Building.objects.filter(Q(building_name__icontains=term))
+        buildings_arr = []
+        for building in buildings:
+            buildings_arr.append(dict(value=building.building_name, pk=building.pk, label=building.building_name))
+
+        data=simplejson.dumps(buildings_arr)
+        return HttpResponse(content=data,content_type="application/json")
+    else:
+        raise Http404
+
+def get_select_attributes(request, id_attribute_type):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    print "ID Att:", id_attribute_type
+
+    building_attributes = BuildingAttributes.objects.filter(building_attributes_type__pk = id_attribute_type)
+    string_to_return=''
+    if building_attributes:
+        for b_attr in building_attributes:
+            string_to_return += """<li rel="%s">
+                                    %s
+                                </li>""" % (b_attr.pk, b_attr.building_attributes_name)
+    else:
+        string_to_return='<li rel="">Sin atributos</li>'
+
+    return HttpResponse(content=string_to_return, content_type="text/html")
+
+
+"""
+EDIFICIOS
+"""
+
+def location_objects(country_id, country_name, state_id, state_name, municipality_id,municipality_name,neighborhood_id,neighborhood_name,street_id,street_name):
+    #Se obtiene el objeto de Pais, sino esta Pais, se da de alta un pais nuevo.
+    if country_id:
+        countryObj = get_object_or_404(Pais, pk=country_id)
+    else:
+        countryObj = Pais(
+            pais_name = country_name
+        )
+        countryObj.save()
+
+    #Se obtiene el objeto de Estado, sino esta Estado, se da de alta un estado nuevo.
+    if state_id:
+        stateObj = get_object_or_404(Estado, pk=state_id)
+    else:
+        stateObj = Estado(
+            estado_name = state_name
+        )
+        stateObj.save()
+
+        #Se crea la relación Pais - Estado
+        country_stateObj = PaisEstado(
+            pais = countryObj,
+            estado = stateObj,
+        )
+        country_stateObj.save()
+
+    #Se obtiene el objeto de Municipio, sino esta Municipio, se da de alta un municipio nuevo.
+    if municipality_id:
+        municipalityObj = get_object_or_404(Municipio, pk=municipality_id)
+    else:
+        municipalityObj = Municipio(
+            municipio_name = municipality_name
+        )
+        municipalityObj.save()
+
+        #Se crea la relación Estado - Municipio
+        state_munObj = EstadoMunicipio(
+            estado = stateObj,
+            municipio = municipalityObj,
+        )
+        country_stateObj.save()
+
+    #Se obtiene el objeto de Colonia, sino esta Colonia, se da de alta una Colonia nueva.
+    if neighborhood_id:
+        neighborhoodObj = get_object_or_404(Colonia, pk=neighborhood_id)
+    else:
+        neighborhoodObj = Colonia(
+            colonia_name = neighborhood_name
+        )
+        neighborhoodObj.save()
+
+        #Se crea la relación Municipio - Colonia
+        mun_neighObj = MunicipioColonia(
+            municipio = municipalityObj,
+            colonia = neighborhoodObj,
+        )
+        mun_neighObj.save()
+
+    #Se obtiene el objeto de Calle, sino esta Calle, se da de alta una Calle nueva.
+    if street_id:
+        streetObj = get_object_or_404(Calle, pk=street_id)
+    else:
+        streetObj = Calle(
+            calle_name = street_name
+        )
+        streetObj.save()
+
+        #Se crea la relación Calle - Colonia
+        neigh_streetObj = ColoniaCalle(
+            colonia = neighborhoodObj,
+            calle = streetObj,
+        )
+        neigh_streetObj.save()
+
+    return countryObj, stateObj, municipalityObj, neighborhoodObj, streetObj
+
+
+
+def add_building(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, CREATE, "Alta de edificios") or request.user.is_superuser:
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
+        post = ''
+
+        #Se obtienen las empresas
+        empresas_lst = Company.objects.all().exclude(company_status=2).order_by('company_name')
+
+        #Se obtienen las tarifas
+        tarifas = ElectricRates.objects.all()
+
+        #Se obtienen los tipos de edificios
+        tipos_edificio_lst = BuildingType.objects.all().exclude(building_type_status = 2).order_by('building_type_name')
+
+        #Se obtienen las regiones
+        regiones_lst = Region.objects.all()
+
+        #Se obtienen los tipos de atributos de edificios
+        tipos_atributos = BuildingAttributesType.objects.all().exclude(building_attributes_type_status = 2).order_by('building_attributes_type_name')
+
+
+        template_vars = dict(datacontext=datacontext,
+            empresa=empresa,
+            company=company,
+            post=post,
+            empresas_lst=empresas_lst,
+            tipos_edificio_lst=tipos_edificio_lst,
+            tarifas=tarifas,
+            regiones_lst=regiones_lst,
+            tipos_atributos=tipos_atributos,
+        )
+
+        if request.method == "POST":
+            template_vars["post"] = request.POST
+            b_name = request.POST.get('b_name')
+            b_description = request.POST.get('b_description')
+            b_company = request.POST.get('b_company')
+            b_type_arr = request.POST.getlist('b_type')
+            b_mt2 = request.POST.get('b_mt2')
+            b_electric_rate_id = request.POST.get('b_electric_rate')
+            b_country_id = request.POST.get('b_country_id')
+            b_state_id = request.POST.get('b_state_id')
+            b_municipality_id = request.POST.get('b_municipality_id')
+            b_neighborhood_id = request.POST.get('b_neighborhood_id')
+            b_street_id = request.POST.get('b_street_id')
+            b_ext = request.POST.get('b_ext')
+            b_int = request.POST.get('b_int')
+            b_zip = request.POST.get('b_zip')
+            b_long = request.POST.get('b_longitude')
+            b_lat = request.POST.get('b_latitude')
+            b_region_id = request.POST.get('b_region')
+
+            continuar = True
+            if b_name == '':
+                message = "El nombre del Edificio no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+
+            if b_company == '':
+                message += " - Se debe seleccionar una empresa"
+                type = "n_notif"
+                continuar = False
+
+            if not b_type_arr:
+                message += " - El edificio debe ser al menos de un tipo"
+                type = "n_notif"
+                continuar = False
+
+            if b_electric_rate_id == '':
+                message += " - Se debe seleccionar un tipo de tarifa"
+                type = "n_notif"
+                continuar = False
+
+            if b_ext == '':
+                message += " - El edificio debe tener un número exterior"
+                type = "n_notif"
+                continuar = False
+
+            if b_zip == '':
+                message += " - El edificio debe tener un código postal"
+                type = "n_notif"
+                continuar = False
+
+            if b_long == '' and b_lat == '':
+                message += " - Debes ubicar el edificio en el mapa"
+                type = "n_notif"
+                continuar = False
+
+            if b_region_id == '':
+                message += " - El edificio debe pertenecer a una región"
+                type = "n_notif"
+                continuar = False
+
+            post = {
+                'b_name':b_name,
+                'b_description':b_description,
+                'b_company':b_company,
+                'b_type_arr':b_type_arr,
+                'b_mt2':b_mt2,
+                'b_electric_rate_id':b_electric_rate_id,
+                'b_country_id':b_country_id,
+                'b_state_id':b_state_id,
+                'b_municipality_id':b_municipality_id,
+                'b_neighborhood_id':b_neighborhood_id,
+                'b_street_id':b_street_id,
+                'b_ext':b_ext,
+                'b_int':b_int,
+                'b_zip':b_zip,
+                'b_long':b_long,
+                'b_lat':b_lat,
+                'b_region_id':b_region_id
+            }
+
+            if continuar:
+
+                #se obtiene el objeto de la tarifa
+                tarifaObj = get_object_or_404(ElectricRates, pk=b_electric_rate_id)
+
+                #Se obtiene la compañia
+                companyObj = get_object_or_404(Company, pk=b_company)
+
+                #Se obtiene el objeto de la region
+                regionObj = get_object_or_404(Region, pk=b_region_id)
+
+                countryObj, stateObj, municipalityObj, neighborhoodObj, streetObj = location_objects(b_country_id, request.POST.get('b_country'),
+                    b_state_id, request.POST.get('b_state'), b_municipality_id, request.POST.get('b_municipality'), b_neighborhood_id, request.POST.get('b_neighborhood'),
+                    b_street_id, request.POST.get('b_street'))
+
+                #Se crea la cadena con la direccion concatenada
+                formatted_address = streetObj.calle_name+" "+b_ext
+                if b_int:
+                    formatted_address += "-"+b_int
+                formatted_address += " Colonia: "+ neighborhoodObj.colonia_name + " "+municipalityObj.municipio_name
+                formatted_address += " " + stateObj.estado_name + " " + countryObj.pais_name +"C.P."+b_zip
+
+                #Se da de alta el edificio
+                newBuilding = Building(
+                    building_name = b_name,
+                    building_description = b_description,
+                    building_formatted_address = formatted_address,
+                    pais = countryObj,
+                    estado = stateObj,
+                    municipio = municipalityObj,
+                    colonia = neighborhoodObj,
+                    calle = streetObj,
+                    region = regionObj,
+                    building_external_number = b_ext,
+                    building_internal_number = b_int,
+                    building_code_zone = b_zip,
+                    building_long_address = b_long,
+                    building_lat_address = b_lat,
+                    electric_rate = tarifaObj,
+                    mts2_built = b_mt2,
+                )
+                newBuilding.save()
+
+                #Se relaciona la compania con el edificio
+                newBldComp = CompanyBuilding(
+                    company = companyObj,
+                    building = newBuilding,
+                )
+                newBldComp.save()
+
+                #Se dan de alta los tipos de edificio
+                for b_type in b_type_arr:
+                    #Se obtiene el objeto del tipo de edificio
+                    typeObj = get_object_or_404(BuildingType, pk=b_type)
+                    newBuildingTypeBuilding = BuildingTypeForBuilding(
+                        building = newBuilding,
+                        building_type = typeObj,
+                        building_type_for_building_name = newBuilding.building_name +" - " +typeObj.building_type_name
+                    )
+                    newBuildingTypeBuilding.save()
+
+
+                for key in request.POST:
+                    if re.search('^atributo_\w+', key):
+                        atr_value_complete = request.POST.get(key)
+                        atr_value_arr = atr_value_complete.split(',')
+
+                        #Se obtiene el objeto tipo de atributo
+                        attribute_type_obj = BuildingAttributesType.objects.get(pk = atr_value_arr[0])
+
+                        #Se obtiene el objeto atributo
+                        attribute_obj = BuildingAttributes.objects.get(pk = atr_value_arr[1])
+
+                        newBldAtt = BuildingAttributesForBuilding(
+                            building = newBuilding,
+                            building_attributes = attribute_obj,
+                            building_attributes_value = atr_value_arr[2]
+                        )
+                        newBldAtt.save()
+
+                template_vars["message"] = "Edificio creado exitosamente"
+                template_vars["type"] = "n_success"
+
+                if has_permission(request.user, VIEW, "Ver edificios") or request.user.is_superuser:
+                    return HttpResponseRedirect("/buildings/edificios?msj=" +
+                                                template_vars["message"] +
+                                                "&ntype=n_success")
+            template_vars["post"] = post
+            template_vars["message"] = message
+            template_vars["type"] = type
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/add_building.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def edit_building(request, id_bld):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, UPDATE, "Modificar edificios") or request.user.is_superuser:
+
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
+        message = ''
+        post = ''
+        type = ''
+
+        #Se obtienen las empresas
+        empresas_lst = Company.objects.all().exclude(company_status=2).order_by('company_name')
+
+        #Se obtienen las tarifas
+        tarifas = ElectricRates.objects.all()
+
+        #Se obtienen los tipos de edificios
+        tipos_edificio_lst = BuildingType.objects.all().exclude(building_type_status = 2).order_by('building_type_name')
+
+        #Se obtienen las regiones
+        regiones_lst = Region.objects.all()
+
+        #Se obtienen los tipos de atributos de edificios
+        tipos_atributos = BuildingAttributesType.objects.all().exclude(building_attributes_type_status = 2).order_by('building_attributes_type_name')
+
+
+        #Se obtiene la información del edificio
+        buildingObj = get_object_or_404(Building, pk=id_bld)
+
+        #Se obtiene la compañia
+        companyBld = CompanyBuilding.objects.filter(building = buildingObj)
+
+        #Se obtienen los tipos de edificio
+        b_types = BuildingTypeForBuilding.objects.filter(building = buildingObj)
+
+        #Se obtienen todos los atributos
+        building_attributes = BuildingAttributesForBuilding.objects.filter(building = buildingObj)
+        string_attributes = ''
+        if building_attributes:
+            for bp_att in building_attributes:
+                string_attributes += '<div  class="extra_attributes_div"><span class="delete_attr_icon"><a href="#eliminar" class="delete hidden_icon" ' +\
+                                     'title="eliminar atributo"></a></span>' +\
+                                     '<span class="tip_attribute_part">' +\
+                                        bp_att.building_attributes.building_attributes_type.building_attributes_type_name +\
+                                     '</span>' +\
+                                     '<span class="attribute_part">' +\
+                                        bp_att.building_attributes.building_attributes_name +\
+                                     '</span>'+\
+                                     '<span class="attribute_value_part">'+\
+                                        str(bp_att.building_attributes_value) +\
+                                     '</span>' +\
+                                     '<input type="hidden" name="atributo_' + str(bp_att.building_attributes.building_attributes_type.pk) +\
+                                     '_' +str(bp_att.building_attributes.pk) +'" ' +\
+                                     'value="' + str(bp_att.building_attributes.building_attributes_type.pk) +','+ str(bp_att.building_attributes.pk) + ','+ str(bp_att.building_attributes_value) +\
+                                     '"/></div>';
+
+        post = {
+            'b_name':buildingObj.building_name,
+            'b_description':buildingObj.building_description,
+            'b_company':companyBld[0].company.pk,
+            'b_type_arr':b_types,
+            'b_mt2':buildingObj.mts2_built,
+            'b_electric_rate_id':buildingObj.electric_rate.pk,
+            'b_country_id':buildingObj.pais_id,
+            'b_country':buildingObj.pais.pais_name,
+            'b_state_id':buildingObj.estado_id,
+            'b_state':buildingObj.estado.estado_name,
+            'b_municipality_id':buildingObj.municipio_id,
+            'b_municipality':buildingObj.municipio.municipio_name,
+            'b_neighborhood_id':buildingObj.colonia_id,
+            'b_neighborhood':buildingObj.colonia.colonia_name,
+            'b_street_id':buildingObj.calle_id,
+            'b_street':buildingObj.calle.calle_name,
+            'b_ext':buildingObj.building_external_number,
+            'b_int':buildingObj.building_internal_number,
+            'b_zip':buildingObj.building_code_zone,
+            'b_long':buildingObj.building_long_address,
+            'b_lat':buildingObj.building_lat_address,
+            'b_region_id':buildingObj.region_id,
+            'b_attributes':string_attributes
+        }
+
+        if request.method == "POST":
+            b_name = request.POST.get('b_name')
+            b_description = request.POST.get('b_description')
+            b_company = request.POST.get('b_company')
+            b_type_arr = request.POST.getlist('b_type')
+            b_mt2 = request.POST.get('b_mt2')
+            b_electric_rate_id = request.POST.get('b_electric_rate')
+            b_country_id = request.POST.get('b_country_id')
+            b_state_id = request.POST.get('b_state_id')
+            b_municipality_id = request.POST.get('b_municipality_id')
+            b_neighborhood_id = request.POST.get('b_neighborhood_id')
+            b_street_id = request.POST.get('b_street_id')
+            b_ext = request.POST.get('b_ext')
+            b_int = request.POST.get('b_int')
+            b_zip = request.POST.get('b_zip')
+            b_long = request.POST.get('b_longitude')
+            b_lat = request.POST.get('b_latitude')
+            b_region_id = request.POST.get('b_region')
+
+            continuar = True
+            if b_name == '':
+                message = "El nombre del Edificio no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+
+            if b_company == '':
+                message += " - Se debe seleccionar una empresa"
+                type = "n_notif"
+                continuar = False
+
+            if not b_type_arr:
+                message += " - El edificio debe ser al menos de un tipo"
+                type = "n_notif"
+                continuar = False
+
+            if b_electric_rate_id == '':
+                message += " - Se debe seleccionar un tipo de tarifa"
+                type = "n_notif"
+                continuar = False
+
+            if b_ext == '':
+                message += " - El edificio debe tener un número exterior"
+                type = "n_notif"
+                continuar = False
+
+            if b_zip == '':
+                message += " - El edificio debe tener un código postal"
+                type = "n_notif"
+                continuar = False
+
+            if b_long == '' and b_lat == '':
+                message += " - Debes ubicar el edificio en el mapa"
+                type = "n_notif"
+                continuar = False
+
+            if b_region_id == '':
+                message += " - El edificio debe pertenecer a una región"
+                type = "n_notif"
+                continuar = False
+
+            post = {
+                'b_name':buildingObj.building_name,'b_description':buildingObj.building_description,'b_company':companyBld[0].company.pk,
+                'b_type_arr':b_types,'b_mt2':buildingObj.mts2_built,'b_electric_rate_id':buildingObj.electric_rate.pk,
+                'b_country_id':buildingObj.pais_id,'b_country':buildingObj.pais.pais_name,'b_state_id':buildingObj.estado_id,
+                'b_state':buildingObj.estado.estado_name,'b_municipality_id':buildingObj.municipio_id,'b_municipality':buildingObj.municipio.municipio_name,
+                'b_neighborhood_id':buildingObj.colonia_id,'b_neighborhood':buildingObj.colonia.colonia_name,
+                'b_street_id':buildingObj.calle_id,'b_street':buildingObj.calle.calle_name,'b_ext':buildingObj.building_external_number,
+                'b_int':buildingObj.building_internal_number,'b_zip':buildingObj.building_code_zone,'b_long':buildingObj.building_long_address,
+                'b_lat':buildingObj.building_lat_address,'b_region_id':buildingObj.region_id
+            }
+
+            if continuar:
+
+                #se obtiene el objeto de la tarifa
+                tarifaObj = get_object_or_404(ElectricRates, pk=b_electric_rate_id)
+
+                #Se obtiene la compañia
+                companyObj = get_object_or_404(Company, pk=b_company)
+
+                #Se obtiene el objeto de la region
+                regionObj = get_object_or_404(Region, pk=b_region_id)
+
+                countryObj, stateObj, municipalityObj, neighborhoodObj, streetObj = location_objects(b_country_id, request.POST.get('b_country'),
+                b_state_id, request.POST.get('b_state'), b_municipality_id, request.POST.get('b_municipality'), b_neighborhood_id, request.POST.get('b_neighborhood'),
+                b_street_id, request.POST.get('b_street'))
+
+                #Se crea la cadena con la direccion concatenada
+                formatted_address = streetObj.calle_name+" "+b_ext
+                if b_int:
+                    formatted_address += "-"+b_int
+                formatted_address += " Colonia: "+ neighborhoodObj.colonia_name + " "+municipalityObj.municipio_name
+                formatted_address += " " + stateObj.estado_name + " " + countryObj.pais_name +"C.P."+b_zip
+
+                #Se edita la info el edificio
+                buildingObj.building_name = b_name
+                buildingObj.building_description = b_description
+                buildingObj.building_formatted_address = formatted_address
+                buildingObj.pais = countryObj
+                buildingObj.estado = stateObj
+                buildingObj.municipio = municipalityObj
+                buildingObj.colonia = neighborhoodObj
+                buildingObj.calle = streetObj
+                buildingObj.region = regionObj
+                buildingObj.building_external_number = b_ext
+                buildingObj.building_internal_number = b_int
+                buildingObj.building_code_zone = b_zip
+                buildingObj.building_long_address = b_long
+                buildingObj.building_lat_address = b_lat
+                buildingObj.electric_rate = tarifaObj
+                buildingObj.mts2_built = b_mt2
+                buildingObj.save()
+
+                #Se elimina la relacion compania - edificio
+                bld_comp = CompanyBuilding.objects.filter(building = buildingObj)
+                bld_comp.delete()
+
+                #Se relaciona la compania con el edificio
+                newBldComp = CompanyBuilding(
+                    company = companyObj,
+                    building = buildingObj,
+                )
+                newBldComp.save()
+
+                #Se eliminan todas las relaciones edificio - tipo
+                bld_type = BuildingTypeForBuilding.objects.filter(building = buildingObj)
+                bld_type.delete()
+
+                #Se dan de alta los tipos de edificio
+                for b_type in b_type_arr:
+                    #Se obtiene el objeto del tipo de edificio
+                    typeObj = get_object_or_404(BuildingType, pk=b_type)
+                    newBuildingTypeBuilding = BuildingTypeForBuilding(
+                        building = buildingObj,
+                        building_type = typeObj,
+                        building_type_for_building_name = buildingObj.building_name +" - " +typeObj.building_type_name
+                    )
+                    newBuildingTypeBuilding.save()
+
+                #Se eliminan los atributos del edificio y se dan de alta los nuevos
+
+                oldAtttributes = BuildingAttributesForBuilding.objects.filter(building=buildingObj)
+                oldAtttributes.delete()
+
+                for key in request.POST:
+                    if re.search('^atributo_\w+', key):
+                        atr_value_complete = request.POST.get(key)
+                        atr_value_arr = atr_value_complete.split(',')
+
+                        #Se obtiene el objeto tipo de atributo
+                        attribute_type_obj = BuildingAttributesType.objects.get(pk = atr_value_arr[0])
+
+                        #Se obtiene el objeto atributo
+                        attribute_obj = BuildingAttributes.objects.get(pk = atr_value_arr[1])
+
+                        newBldAtt = BuildingAttributesForBuilding(
+                            building = buildingObj,
+                            building_attributes = attribute_obj,
+                            building_attributes_value = atr_value_arr[2]
+                        )
+                        newBldAtt.save()
+
+                message = "Edificio editado exitosamente"
+                type = "n_success"
+                if has_permission(request.user, VIEW, "Ver edificios") or request.user.is_superuser:
+                    return HttpResponseRedirect("/buildings/edificios?msj=" +
+                                                message +
+                                                "&ntype=n_success")
+
+        template_vars = dict(datacontext=datacontext,
+            empresa=empresa,
+            company=company,
+            post=post,
+            empresas_lst=empresas_lst,
+            tipos_edificio_lst=tipos_edificio_lst,
+            tarifas=tarifas,
+            regiones_lst=regiones_lst,
+            tipos_atributos=tipos_atributos,
+            operation="edit",
+            message=message,
+            type=type
+        )
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/add_building.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def view_building(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, VIEW, "Ver edificios") or request.user.is_superuser:
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
+
+        if "search" in request.GET:
+            search = request.GET["search"]
+        else:
+            search = ''
+
+        order_name = 'asc'
+        order_state = 'asc'
+        order_municipality = 'asc'
+        order_company = 'asc'
+        order_status = 'asc'
+        order = "building__building_name" #default order
+        if "order_name" in request.GET:
+            if request.GET["order_name"] == "desc":
+                order = "-building__building_name"
+                order_name = "asc"
+            else:
+                order_name = "desc"
+        else:
+            if "order_state" in request.GET:
+                if request.GET["order_state"] == "asc":
+                    order = "building__estado__estado_name"
+                    order_state = "desc"
+                else:
+                    order = "-building__estado__estado_name"
+
+            if "order_municipality" in request.GET:
+                if request.GET["order_municipality"] == "asc":
+                    order = "building__municipio__municipio_name"
+                    order_municipality = "desc"
+                else:
+                    order = "-building__municipio__municipio_name"
+                    order_municipality = "asc"
+
+            if "order_company" in request.GET:
+                if request.GET["order_company"] == "asc":
+                    order = "company__company_name"
+                    order_company = "desc"
+                else:
+                    order = "-company__company_name"
+                    order_company = "asc"
+
+            if "order_status" in request.GET:
+                if request.GET["order_status"] == "asc":
+                    order = "building__building_status"
+                    order_status = "desc"
+                else:
+                    order = "-building__building_status"
+                    order_status = "asc"
+
+        if search:
+            lista = CompanyBuilding.objects.filter(Q(building__building_name__icontains=request.GET['search'])|Q(
+                building__estado__estado_name__icontains=request.GET['search'])|Q(
+                    building__municipio__municipio_name__icontains=request.GET['search'])|Q(
+                        company__company_name__icontains=request.GET['search'])).exclude(building__building_status = 2).order_by(order)
+
+        else:
+            lista = CompanyBuilding.objects.all().exclude(building__building_status = 2).order_by(order)
+
+        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        template_vars = dict(order_name=order_name, order_state=order_state, order_municipality=order_municipality, order_company=order_company, order_status=order_status,
+            datacontext=datacontext, empresa=empresa, company=company)
+        # Make sure page request is an int. If not, deliver first page.
+        try:
+            page = int(request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+
+        # If page request (9999) is out of range, deliver last page of results.
+        try:
+            pag_user = paginator.page(page)
+        except (EmptyPage, InvalidPage):
+            pag_user = paginator.page(paginator.num_pages)
+
+        template_vars['paginacion']=pag_user
+
+        if 'msj' in request.GET:
+            template_vars['message'] = request.GET['msj']
+            template_vars['msg_type'] = request.GET['ntype']
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/building.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def delete_building(request, id_bld):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, DELETE, "Baja de edificios") or request.user.is_superuser:
+
+        building_obj = get_object_or_404(Building, pk=id_bld)
+        building_obj.building_status = 2
+        building_obj.save()
+
+        mensaje = "El Edificio ha sido dado de baja correctamente"
+        type="n_success"
+
+        return HttpResponseRedirect("/buildings/edificios/?msj=" + mensaje +
+                                    "&ntype="+type)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def delete_batch_building(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, DELETE, "Baja de edificios") or request.user.is_superuser:
+        if request.method == "GET":
+            raise Http404
+        if request.POST['actions'] == 'delete':
+            for key in request.POST:
+                if re.search('^bld_\w+', key):
+                    r_id = int(key.replace("bld_",""))
+                    building = get_object_or_404(Building, pk=r_id)
+                    building.building_status = 2
+                    building.save()
+
+            mensaje = "Los Edificios han sido dados de baja correctamente"
+            return HttpResponseRedirect("/buildings/edificios/?msj=" + mensaje +
+                                        "&ntype=n_success")
+        else:
+            mensaje = "No se ha seleccionado una acción"
+            return HttpResponseRedirect("/buildings/edificios/?msj=" + mensaje +
+                                        "&ntype=n_success")
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def status_building(request, id_bld):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, UPDATE, "Modificar edificios") or request.user.is_superuser:
+        building = get_object_or_404(Building, pk = id_bld)
+
+        if building.building_status == 0:
+            building.building_status = 1
+            str_status = "Activo"
+        elif building.building_status == 1:
+            building.building_status = 0
+            str_status = "Activo"
+
+        building.save()
+
+        mensaje = "El estatus del edificio " + building.building_name +" ha cambiado a "+str_status
+        type="n_success"
+
+        return HttpResponseRedirect("/buildings/edificios/?msj=" + mensaje +
+                                    "&ntype="+type)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def search_bld_country(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if "term" in request.GET:
+        term = request.GET['term']
+        countries = Pais.objects.filter(Q(pais_name__icontains=term))
+        countries_arr = []
+        for country in countries:
+            countries_arr.append(dict(value=country.pais_name, pk=country.pk, label=country.pais_name))
+
+        data=simplejson.dumps(countries_arr)
+        return HttpResponse(content=data,content_type="application/json")
+    else:
+        raise Http404
+
+def search_bld_state(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if "term" in request.GET:
+        term = request.GET['term']
+
+        ctry_id = request.GET['country']
+        #Se obtiene el país
+        country = get_object_or_404(Pais, pk = ctry_id)
+
+        states = PaisEstado.objects.filter(pais=country).filter(Q(estado__estado_name__icontains=term))
+        states_arr = []
+        for sts in states:
+            states_arr.append(dict(value=sts.estado.estado_name, pk=sts.estado.pk, label=sts.estado.estado_name))
+
+        data=simplejson.dumps(states_arr)
+        return HttpResponse(content=data,content_type="application/json")
+    else:
+        raise Http404
+
+def search_bld_municipality(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if "term" in request.GET:
+        term = request.GET['term']
+
+        state_id = request.GET['state']
+        #Se obtiene el país
+        state = get_object_or_404(Estado, pk = state_id)
+
+        municipalities = EstadoMunicipio.objects.filter(estado=state).filter(Q(municipio__municipio_name__icontains=term))
+        mun_arr = []
+
+        for mnp in municipalities:
+            mun_arr.append(dict(value=mnp.municipio.municipio_name, pk=mnp.municipio.pk, label=mnp.municipio.municipio_name))
+
+        data=simplejson.dumps(mun_arr)
+        return HttpResponse(content=data,content_type="application/json")
+    else:
+        raise Http404
+
+
+def search_bld_neighborhood(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if "term" in request.GET:
+        term = request.GET['term']
+
+        mun_id = request.GET['municipality']
+        #Se obtiene el municipio
+        municipality = get_object_or_404(Municipio, pk=mun_id)
+
+        neighborhoods = MunicipioColonia.objects.filter(municipio=municipality).filter(Q(colonia__colonia_name__icontains=term))
+        ngh_arr = []
+
+        for ng in neighborhoods:
+            ngh_arr.append(dict(value=ng.colonia.colonia_name, pk=ng.colonia.pk, label=ng.colonia.colonia_name))
+
+        data=simplejson.dumps(ngh_arr)
+        return HttpResponse(content=data,content_type="application/json")
+    else:
+        raise Http404
+
+
+def search_bld_street(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if "term" in request.GET:
+        term = request.GET['term']
+
+        neigh_id = request.GET['neighborhood']
+        #Se obtiene la colonia
+
+        neighborhood = get_object_or_404(Colonia, pk=neigh_id)
+        streets = ColoniaCalle.objects.filter(colonia=neighborhood).filter(Q(calle__calle_name__icontains=term))
+
+        street_arr = []
+
+        for st in streets:
+            street_arr.append(dict(value=st.calle.calle_name, pk=st.calle.pk, label=st.calle.calle_name))
+
+        data=simplejson.dumps(street_arr)
+        return HttpResponse(content=data,content_type="application/json")
+    else:
+        raise Http404

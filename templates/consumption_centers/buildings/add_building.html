@@ -1,0 +1,657 @@
+{% extends "base.html" %}
+{% block titulo %}
+{% if operation == "edit" %}Editar{% else %}Crear nuevo{% endif %} Edificio
+{% endblock %}
+{% block externalcss %}
+<link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
+<link rel="stylesheet" href="/static/css/forms/rbac.css" type="text/css">
+<link rel="stylesheet" href="/static/css/forms/rbac_add_user.css" type="text/css">
+<link rel="stylesheet" href="/static/css/forms/c_centers.css" type="text/css">
+<link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
+{% endblock %}
+{% block externaljs %}
+<script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+<script src="https://maps.google.com/maps/api/js?sensor=false"></script>
+<script type="text/javascript">
+    var form_valid = true;
+
+    var mapBusiness;
+    var geocoder;
+    var marker;
+
+    var link_state = '';
+    $(document).ready(function(){
+        $("#b_name").focus();
+        $(".required").each(function(){
+            $(this).parent().next().blur(function(e){
+                var _span;
+
+                if(e.delegateTarget.value==''){
+                    _span = "incorrect";
+                    form_valid = false;
+                }else{
+                    _span = "correct";
+                    form_valid = true;
+                }
+
+                var n_span = $("#"+e.delegateTarget.id).next();
+                n_span.removeClass("incorrect");
+                n_span.removeClass("correct");
+                n_span.addClass(_span);
+            });
+        });
+        $("#save").click(function(){
+            return validate_form();
+        });
+    });
+    function validate_form(){
+        if (form_valid){
+            var _span;
+            var building_name = $("#b_name");
+            if(building_name.val()==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                _span = "correct";
+            }
+            building_name.next().removeClass("incorrect");
+            building_name.next().removeClass("correct");
+            building_name.next().addClass(_span);
+
+            var electric_rate = $("#b_electric_rate");
+            if(electric_rate.val()==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                _span = "correct";
+            }
+            $("#sel_electric").removeClass("incorrect");
+            $("#sel_electric").removeClass("correct");
+            $("#sel_electric").addClass(_span);
+
+            var tipo = $("#b_type");
+            if(tipo.val()==null){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                _span = "correct";
+            }
+            $("#sel_type").removeClass("incorrect");
+            $("#sel_type").removeClass("correct");
+            $("#sel_type").addClass(_span);
+
+            var company = $("#b_company");
+            if(company.val()==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                _span = "correct";
+            }
+            $("#sel_company").removeClass("incorrect");
+            $("#sel_company").removeClass("correct");
+            $("#sel_company").addClass(_span);
+
+            var region = $("#b_region");
+            if(region.val()==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                _span = "correct";
+            }
+            $("#sel_region").removeClass("incorrect");
+            $("#sel_region").removeClass("correct");
+            $("#sel_region").addClass(_span);
+        }
+
+        return form_valid
+    }
+
+    $(function() {
+
+        $("#b_state").focusin(function(){
+            $( "#b_state" ).autocomplete({
+                source: "/buildings/search_bld_state/?country=" + $("#b_country_id").val()
+            });
+
+        });
+
+        $("#b_municipality").focusin(function(){
+            $( "#b_municipality" ).autocomplete({
+                source: "/buildings/search_bld_municipality/?state=" + $("#b_state_id").val()
+            });
+        });
+
+        $("#b_neighborhood").focusin(function(){
+            $( "#b_neighborhood" ).autocomplete({
+                source: "/buildings/search_bld_neighborhood/?municipality=" + $("#b_municipality_id").val()
+            });
+        });
+
+        $("#b_street").focusin(function(){
+            $( "#b_street" ).autocomplete({
+                source: "/buildings/search_bld_street/?neighborhood=" + $("#b_neighborhood_id").val()
+            });
+        });
+
+
+        $( "#b_country" ).autocomplete({
+            source: "/buildings/search_bld_country/",
+            minLength: 2,
+            select: function( event, ui ) {
+                $("#b_country_id").val(ui.item.pk);
+            }
+        }).keyup(function(){
+                    if($.trim($(this).val())==''){
+                        $("#b_country").val();
+                        $("#b_country_id").val('');
+
+                        //Vaciar todos los campos
+                        $("#b_state").val('');
+                        $("#b_state_id").val('');
+
+                        $("#b_municipality").val('');
+                        $("#b_municipality_id").val('');
+
+                        $("#b_neighborhood").val('');
+                        $("#b_neighborhood_id").val('');
+
+                        $("#b_street").val('');
+                        $("#b_street_id").val('');
+
+                    }
+                });
+
+
+        $( "#b_state" ).autocomplete({
+            minLength: 2,
+            select: function( event, ui ) {
+                $("#b_state_id").val(ui.item.pk);
+            }
+        }).keyup(function(){
+                if($.trim($(this).val())==''){
+                    $("#b_state").val();
+                    $("#b_state_id").val('');
+
+                    //Vaciar todos los campos
+                    $("#b_municipality").val('');
+                    $("#b_municipality_id").val('');
+
+                    $("#b_neighborhood").val('');
+                    $("#b_neighborhood_id").val('');
+
+                    $("#b_street").val('');
+                    $("#b_street_id").val('');
+                }
+                });
+
+
+        $( "#b_municipality" ).autocomplete({
+            minLength: 2,
+            select: function( event, ui ) {
+                $("#b_municipality_id").val(ui.item.pk);
+            }
+        }).keyup(function(){
+                    if($.trim($(this).val())==''){
+                        $("#b_municipality").val();
+                        $("#b_municipality_id").val('');
+
+                        //Vaciar todos los campos
+                        $("#b_neighborhood").val('');
+                        $("#b_neighborhood_id").val('');
+
+                        $("#b_street").val('');
+                        $("#b_street_id").val('');
+                    }
+                });
+
+        $( "#b_neighborhood" ).autocomplete({
+            minLength: 2,
+            select: function( event, ui ) {
+                $("#b_neighborhood_id").val(ui.item.pk);
+
+            }
+        }).keyup(function(){
+                    if($.trim($(this).val())==''){
+                        $("#b_neighborhood").val();
+                        $("#b_neighborhood_id").val('');
+
+                        //Vaciar todos los campos
+                        $("#b_street").val('');
+                        $("#b_street_id").val('');
+                    }
+                });
+
+        $( "#b_street" ).autocomplete({
+            minLength: 2,
+            select: function( event, ui ) {
+                $("#b_street_id").val(ui.item.pk);
+            }
+        }).keyup(function(){
+                    if($.trim($(this).val())==''){
+                        $("#b_street").val();
+                        $("#b_street_id").val('');
+                    }
+                });
+
+     });
+
+
+    function append_attribute(tipo_atributo_etiq,atributo_etiq,tipo_atributo,atributo,valor){
+        var append = '<div  class="extra_attributes_div"><span class="delete_attr_icon">' +
+                '<a href="#eliminar" class="delete hidden_icon" ' +
+                'title="eliminar atributo"></a></span>' +
+                '<span class="tip_attribute_part">' +
+                tipo_atributo_etiq +
+                '</span>' +
+                '<span class="attribute_part">' +
+                atributo_etiq +
+                '</span>'+
+                '<span class="attribute_value_part">'+
+                valor +
+                '</span>' +
+                '<input type="hidden" name="atributo_' + tipo_atributo + "_" +atributo +'" ' +
+                'value="' + tipo_atributo +','+ atributo + ','+ valor +
+                '"/></div>';
+        $('#atributes_fields').before(append);
+    }
+
+    function initialize() {
+        var latlng = new google.maps.LatLng(20.593020, -100.392198);
+        var myOptions = {
+            zoom: 14,
+            center: latlng,
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+        mapBusiness = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+
+
+        //GEOCODER
+        geocoder = new google.maps.Geocoder();
+
+        marker = new google.maps.Marker({
+            map: mapBusiness,
+            draggable: true
+        });
+
+
+        if($('#b_latitude').val() != '' && $('#b_longitude').val() != '' ){
+            marker.setPosition(new google.maps.LatLng($('#b_latitude').val(), $('#b_longitude').val()));
+            mapBusiness.setCenter(marker.getPosition());
+        }
+    }
+
+    function locateMarker(location){
+        marker.setPosition(location);
+        $('#b_latitude').val(location.lat());
+        $('#b_longitude').val(location.lng());
+
+    }
+
+
+</script>
+{% endblock %}
+
+{% block document_ready %}
+
+$(".extra_attributes_div").mouseenter(function(){
+$(this).find(".hidden_icon").css("visibility","visible");
+}).mouseleave(function(){
+$(this).find(".hidden_icon").css("visibility","hidden");
+});
+
+$(".delete").click(function(e){
+e.preventDefault();
+$(this).parent().parent().remove();
+});
+
+
+//custom select for sidebar
+$("#empresa").click(function(){
+$("#company_list").slideToggle();
+});
+$("#company_list li").click(function(){
+var texto=$(this).text().replace(/^\s*|\s*$/g,'');
+var texto1 = texto.substring(0,17) + "...";
+$("#empresa").text(texto1);
+$("#company_list").slideUp();
+
+$.ajax({
+url: "/reportes/set_default_building/" + $(this).attr("rel"),
+type: "GET",
+dataType: 'json',
+async: 'true',
+success: function(datos){
+console.log("changed");
+}
+});
+});
+
+
+
+
+$("#attributes_type").click(function(){
+$(this).find("ul.ddl").slideToggle();
+});
+
+$("#attributes_type_list li").click(function(){
+//Limpia los campos ocultos
+$("#attr_type_id_sel").val('');
+$("#attr_id_sel").val('');
+$("#attributes span").text('Atributo');
+
+$("#attribute_list, #object_list").html("").hide();
+var elemento = $(this);
+$("#attributes_type span").text(elemento.text());
+elemento.parent().slideUp().stop();
+var uri = elemento.attr("rel");
+$("#attr_type_id_sel").val(uri);
+var url = "/buildings/get_attributes/"+uri;
+$("#attribute_list").load(url, function(){
+$(this).slideDown();
+$("#attribute_list li").click(function(){
+var elemento = $(this);
+$("#attributes span").text(elemento.text());
+elemento.parent().slideUp();
+$("#attr_id_sel").val(elemento.attr("rel"));
+});
+
+});
+
+});
+
+
+$("#add_attributes").click(function(event){
+event.preventDefault();
+var attribute_value = $("#attr_value").val();
+var attribute_type_id = $("#attr_type_id_sel").val();
+var attribute_type_label = $("#attributes_type span").text();
+var attribute_id = $("#attr_id_sel").val();
+var attribute_label = $("#attributes span").text();
+
+if (attribute_type_id != '' && attribute_id != '' && attribute_value != ''){
+append_attribute(attribute_type_label,attribute_label,attribute_type_id,attribute_id,attribute_value);
+}
+
+$(".extra_attributes_div").mouseenter(function(){
+$(this).find(".hidden_icon").css("visibility","visible");
+}).mouseleave(function(){
+$(this).find(".hidden_icon").css("visibility","hidden");
+});
+
+$(".delete").click(function(e){
+e.preventDefault();
+$(this).parent().parent().remove();
+});
+
+//Limpia las etiquetas de los combos
+$("#attributes_type span").text('Tipos de Atributos');
+$("#attributes span").text('Atributo');
+$("#attr_value").val('');
+
+});
+
+initialize();
+
+google.maps.event.addListener(mapBusiness, 'click', function(event){
+locateMarker(event.latLng);
+
+});
+
+
+google.maps.event.addListener(marker, 'drag', function() {
+geocoder.geocode({'latLng':marker.getPosition()}, function(results, status) {
+if(status == google.maps.GeocoderStatus.OK){
+if(results[0]){
+mapBusiness.setCenter(marker.getPosition());
+$('#b_latitude').val(results[0].geometry.location.lat());
+$('#b_longitude').val(results[0].geometry.location.lng());
+}
+}
+});
+});
+
+
+$("a.back").click(function(e){e.preventDefault(); history.back();});
+
+{% endblock %}
+
+{% block contenido %}
+<div id="bread_crumbs">
+    <ul>
+        <li><a href="/main/">Inicio</a></li>
+        <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
+        <li><a href="/buildings/edificios/">Edificios</a></li>
+        {% if operation == "edit" %}
+        <li>
+
+            Edici&oacute;n de edificio
+
+        </li>
+        {% else %}
+        <li>Alta de nuevo edificio</li>
+        {% endif %}
+
+    </ul>
+
+</div>
+<div id="contenido_interno">
+    <h2 id="titulo_form" class="user_role">
+        {% if operation == "edit" %}Editar{% else %}Crear nuevo{% endif %} edificio
+    </h2>
+
+
+    <div class="divider" id="divider_top">&nbsp;</div>
+    <div id="form_container">
+        {% if message %}
+                <span class="notif {{ type }}">
+                    {% autoescape off %}{{ message }}{% endautoescape %}
+                    <a href="#" onclick="$(this).parent().remove();">X</a>
+                </span>
+        {% endif %}
+        <p class="description">
+            Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
+            <br/>
+            Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
+        </p>
+        <form method="post" action=".">
+            {% csrf_token %}
+            <h3 class="g12">Informaci&oacute;n de Edificio</h3>
+            <div class="building_info">
+                <div class="building_column">
+                    <div class="fields_row g12">
+                        <label for="b_name" class="g3">Nombre<span class="required">*</span></label>
+                        <input type="text" name="b_name" id="b_name" class="g8"
+                               value="{{ post.b_name }}"
+                                />
+                        <span></span>
+                    </div>
+                    <div class="fields_row g12">
+                        <label for="b_description" class="g3">Descripci&oacute;n</label>
+                        <textarea rows="5" name="b_description" id="b_description" class="g8">{{ post.b_description }}</textarea>
+
+                        <span></span>
+                    </div>
+                    <div class="fields_row g12">
+                        <label for="b_company" class="g3">Empresa<span class="required">*</span></label>
+                        <select name="b_company" id="b_company" class="g8">
+                            <option value="">Selecciona una empresa</option>
+                            {% if empresas_lst %}
+                            {% for empr in empresas_lst %}
+                            <option value="{{empr.id}}" {% if post.b_company == empr.id %} selected {% endif %}>{{ empr.company_name }}</option>
+                            {% endfor %}
+                            {% endif %}
+
+                        </select>
+                        <span id="sel_company"></span>
+                    </div>
+                    <div class="fields_row g12">
+                        <label for="b_mt2" class="g3">Mt2 Construidos</label>
+                        <input type="text" name="b_mt2" id="b_mt2" class="g8"
+                               value="{{ post.b_mt2 }}"
+                                />
+                        <span></span>
+                    </div>
+                    <div class="fields_row g12">
+                        <label for="b_electric_rate" class="g3">Tarifa:<span class="required">*</span></label>
+                        <select name="b_electric_rate" id="b_electric_rate" class="g8">
+                            <option value="">Selecciona un tipo de tarifa</option>
+                            {% if tarifas %}
+                            {% for tarifa in tarifas %}
+                            <option value="{{tarifa.id}}" {% if post.b_electric_rate_id == tarifa.id %} selected {% endif %}>{{ tarifa.electric_rate_name }}</option>
+                            {% endfor %}
+                            {% endif %}
+                        </select>
+                        <span id="sel_electric"></span>
+                    </div>
+                </div>
+                <div class="building_column">
+                    <div class="fields_row g12">
+                        <label for="b_type" class="g3">Tipo de Edificio:<span class="required">*</span></label>
+                        <select multiple name="b_type" id="b_type" size="10" class="g8">
+                            {% if tipos_edificio_lst %}
+                            {% for tipo in tipos_edificio_lst %}
+                            <option value="{{tipo.id}}" {% for btype in post.b_type_arr %}{% if btype.building_type.pk == tipo.id %} selected {% endif %}{% endfor %}>{{ tipo.building_type_name }}</option>
+                            {% endfor %}
+                            {% endif %}
+                        </select>
+                        <span id="sel_type"></span>
+                    </div>
+                </div>
+            </div>
+            <h3 class="g12">Ubicaci&oacute;n</h3>
+            <div class="building_info">
+                <div class="building_column">
+                    <div class="fields_row g12">
+                        <label for="b_country" class="g3">Pa&iacute;s<span class="required">*</span></label>
+                        <input type="text" name="b_country" id="b_country" class="g8"
+                               value="{{ post.b_country }}"  autocomplete="off"
+                                />
+                        <span></span>
+                        <input type="hidden" name="b_country_id" id="b_country_id" value="{{post.b_country_id}}">
+                    </div>
+                    <div class="fields_row g12">
+                        <label for="b_state" class="g3">Estado<span class="required">*</span></label>
+                        <input type="text" name="b_state" id="b_state" class="g8"
+                               value="{{ post.b_state }}"  autocomplete="off"
+                                />
+                        <span></span>
+                        <input type="hidden" name="b_state_id" id="b_state_id" value="{{post.b_state_id}}">
+                    </div>
+                    <div class="fields_row g12">
+                        <label for="b_municipality" class="g3">Municipio<span class="required">*</span></label>
+                        <input type="text" name="b_municipality" id="b_municipality" class="g8"
+                               value="{{ post.b_municipality }}"  autocomplete="off"
+                                />
+                        <span></span>
+                        <input type="hidden" name="b_municipality_id" id="b_municipality_id" value="{{post.b_municipality_id}}">
+                    </div>
+                    <div class="fields_row g12">
+                        <label for="b_neighborhood" class="g3">Colonia<span class="required">*</span></label>
+                        <input type="text" name="b_neighborhood" id="b_neighborhood" class="g8"
+                               value="{{ post.b_neighborhood }}"  autocomplete="off"
+                                />
+                        <span></span>
+                        <input type="hidden" name="b_neighborhood_id" id="b_neighborhood_id" value="{{post.b_neighborhood_id}}">
+                    </div>
+                    <div class="fields_row g12">
+                        <label for="b_street" class="g3">Calle<span class="required">*</span></label>
+                        <input type="text" name="b_street" id="b_street" class="g8"
+                               value="{{ post.b_street }}"  autocomplete="off"
+                                />
+                        <span></span>
+                        <input type="hidden" name="b_street_id" id="b_street_id" value="{{post.b_street_id}}">
+                    </div>
+                    <div class="fields_row g12">
+                        <label for="b_ext" class="g3">Ext<span class="required">*</span></label>
+                        <input type="text" name="b_ext" id="b_ext" class="g8"
+                               value="{{ post.b_ext }}"
+                                />
+                        <span></span>
+                    </div>
+                    <div class="fields_row g12">
+                        <label for="b_int" class="g3">Int</label>
+                        <input type="text" name="b_int" id="b_int" class="g8"
+                               value="{{ post.b_int }}"
+                                />
+                        <span></span>
+                    </div>
+                    <div class="fields_row g12">
+                        <label for="b_zip" class="g3">C&oacute;digo Postal<span class="required">*</span></label>
+                        <input type="text" name="b_zip" id="b_zip" class="g8"
+                               value="{{ post.b_zip }}"
+                                />
+                        <span></span>
+                    </div>
+                    <div class="fields_row g12">
+                        <label for="b_region" class="g3">Regi&oacute;n<span class="required">*</span></label>
+                        <select name="b_region" id="b_region" class="g8">
+                            <option value="">Selecciona una región</option>
+                            {% if regiones_lst %}
+                            {% for rgn in regiones_lst %}
+                            <option value="{{rgn.id}}" {% if post.b_region_id == rgn.id %} selected {% endif %}>{{ rgn.region_name }}</option>
+                            {% endfor %}
+                            {% endif %}
+
+                        </select>
+                        <span id="sel_region"></span>
+                    </div>
+                </div>
+                <div class="building_column">
+                    <input type="hidden" id="b_latitude" name="b_latitude" value="{{post.b_lat}}"/>
+                    <input type="hidden" id="b_longitude" name="b_longitude" value="{{post.b_long}}"/>
+                    <div id="map_container">
+                        <div id="map_canvas" class="map_canvas"></div>
+                    </div>
+                </div>
+            </div>
+            <h3 class="g12">Atributos extra</h3>
+            {{post.b_attributes|safe}}
+
+            <div id="atributes_fields">
+                <div id="fields_row g9">
+                    <div class="widgetField" id="attributes_type">
+                        <span class="legend">Tipos de Atributos</span>
+                        <a href="#">&nbsp;</a>
+                        <ul id="attributes_type_list" class="ddl">
+                            {% for tipo_at in tipos_atributos %}
+                            <li rel="{{ tipo_at.pk }}">
+                                {{ tipo_at.building_attributes_type_name }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div class="widgetField" id="attributes">
+                        <span class="legend">Atributo</span>
+                        <a href="#">&nbsp;</a>
+                        <ul id="attribute_list" class="ddl">
+                            <li></li>
+                        </ul>
+                    </div>
+
+                    <div class="fields_row attribute_value_text_row g4">
+                        <input type="text" name="attr_value" id="attr_value" class="attribute_value_text g10"  placeholder="Valor"/>
+                    </div>
+
+                    <p class="buttons" id="">
+                        <button class="grey_btn fl" id="add_attributes">
+                            <span class="plus"></span>
+                            Agregar
+                        </button>
+                    </p>
+                    <input type="hidden" name="attr_type_id_sel" id="attr_type_id_sel" value="">
+                    <input type="hidden" name="attr_id_sel" id="attr_id_sel" value="">
+                </div>
+            </div>
+
+            <div class="buttons g12">
+                <button class="aqua_btn" id="save">
+                    Guardar
+                </button>
+            </div>
+        </form>
+
+    </div>
+
+</div>
+{% endblock %}

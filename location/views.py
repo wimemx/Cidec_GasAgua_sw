@@ -8,7 +8,7 @@ from django.template.context import RequestContext
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
-
+from django.db.models.deletion import ProtectedError
 from location.models import *
 from rbac.models import Operation
 from rbac.rbac_functions import  has_permission, get_buildings_context, graphs_permission
@@ -618,11 +618,17 @@ def street_list(request):
             else:
                 order_desc = True
         if search:
-            estados_m = EstadoMunicipio.objects.filter(Q(estado__estado_name__icontains=search)|Q(municipio__municipio_name__icontains=search))
+            estados_m = EstadoMunicipio.objects.filter(
+                                                Q(estado__estado_name__icontains=search)|
+                                                Q(municipio__municipio_name__icontains=search))
             muns = [em.municipio.pk for em in estados_m]
-            muns_col = MunicipioColonia.objects.filter(Q(municipio__pk__in=muns)|Q(colonia__colonia_name__icontains=search))
+            muns_col = MunicipioColonia.objects.filter(
+                                                    Q(municipio__pk__in=muns)|
+                                                    Q(colonia__colonia_name__icontains=search))
             cols = [mc.colonia.pk for mc in muns_col]
-            c_calles = ColoniaCalle.objects.filter(Q(colonia__pk__in=cols)|Q(calle__callename__icontains=search))
+            c_calles = ColoniaCalle.objects.filter(
+                                                Q(colonia__pk__in=cols)|
+                                                Q(calle__callename__icontains=search))
 
         else:
             c_calles = ColoniaCalle.objects.all()
@@ -749,12 +755,22 @@ def search_street(request):
 def delete_state_country(request, id_state_country):
     if request.user.is_superuser:
         state_country = get_object_or_404(PaisEstado, pk=id_state_country)
-        estado = state_country
+        estado = state_country.estado
+        pais = state_country.pais
         state_country.delete()
-        delete_municipalities(estado)
-        mensaje = "Se ha eliminado correctamente la asociación entre el país y el estado"
+        try:
+            delete_municipalities(estado)
+        except ProtectedError:
+            PaisEstado(pais=pais, estado=estado).save()
+            mensaje = "Ha ocurrido un error de integridad de datos, por favor revisa que no " \
+                      "haya ningún dato asociado al estado ni a sus municipios, colonias o " \
+                      "calles"
+            type = "error"
+        else:
+            mensaje = "Se ha eliminado correctamente la asociación entre el país y el estado"
+            type = "success"
         return HttpResponseRedirect("/location/ver_estados/?msj=" + mensaje +
-                                    "&ntype=success")
+                                    "&ntype="+type)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
@@ -763,11 +779,20 @@ def delete_municipality_state(request, id_edo_munip):
     if request.user.is_superuser:
         edo_munip = get_object_or_404(EstadoMunicipio, pk=id_edo_munip)
         munip = edo_munip.municipio
+        edo = edo_munip.estado
         edo_munip.delete()
-        delete_neigboorhoods(munip)
-        mensaje = "Se ha eliminado correctamente la asociación entre el estado y el municipio"
-        return HttpResponseRedirect("/location/ver_municipios?msj=" + mensaje +
-                                    "&ntype=success")
+        try:
+            delete_neigboorhoods(munip)
+        except ProtectedError:
+            EstadoMunicipio(estado=edo, municipio=munip).save()
+            mensaje = "Ha ocurrido un error de integridad de datos, por favor revisa que no " \
+                      "haya ningún dato asociado al municipio ni a sus colonias o calles"
+            type = "error"
+        else:
+            mensaje = "Se ha eliminado correctamente la asociación entre el estado y el " \
+                      "municipio"
+            type = "success"
+        return HttpResponseRedirect("/location/ver_municipios?msj=" + mensaje +"&ntype="+type)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
@@ -775,23 +800,42 @@ def delete_neighboorhood_municipality(request, id_munip_col):
     if request.user.is_superuser:
         munip_col = get_object_or_404(MunicipioColonia, pk=id_munip_col)
         colonia = munip_col.colonia
+        municipio = munip_col.municipio
         munip_col.delete()
-        delete_streets(colonia)
-        mensaje = "Se ha eliminado correctamente la asociación entre el municipio y la colonia"
-        return HttpResponseRedirect("/location/ver_municipios?msj=" + mensaje +
-                                    "&ntype=success")
+        try:
+            delete_streets(colonia)
+        except ProtectedError:
+            MunicipioColonia(municipio=municipio, colonia=colonia).save()
+            mensaje = "Ha ocurrido un error de integridad de datos, por favor revisa que no "\
+                      "haya ningún dato asociado a la colonia ni a sus calles"
+            type = "error"
+        else:
+            mensaje = "Se ha eliminado correctamente la asociación entre el municipio y la " \
+                      "colonia"
+            type = "success"
+        return HttpResponseRedirect("/location/ver_colonias?msj=" + mensaje + "&ntype=" + type)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
 def delete_street_neighboor(request, id_col_calle):
     if request.user.is_superuser:
         col_calle = get_object_or_404(ColoniaCalle, pk=id_col_calle)
-        calle=col_calle.calle
+        calle = col_calle.calle
+        colonia = col_calle
         col_calle.delete()
-        calle.delete()
-        mensaje = "Se ha eliminado correctamente la asociación entre la colonia y la calle"
-        return HttpResponseRedirect("/location/ver_municipios?msj=" + mensaje +
-                                    "&ntype=success")
+        try:
+            calle.delete()
+        except ProtectedError:
+            ColoniaCalle(colonia=colonia, calle=calle).save()
+            mensaje = "Ha ocurrido un error de integridad de datos, por favor revisa que no "\
+                      "haya ningún dato asociado a la calle"
+            type = "error"
+        else:
+            mensaje = "Se ha eliminado correctamente la asociación entre el colonia y la "\
+                      "calle"
+            type = "success"
+
+        return HttpResponseRedirect("/location/ver_municipios?msj=" + mensaje + "&ntype="+type)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
@@ -803,12 +847,21 @@ def delete_state_country_batch(request):
             raise Http404
         if request.POST['actions'] == 'delete':
             for key in request.POST:
-                if re.search('^p_estado_\w+', key):
-                    r_id = int(key.replace("p_estado_",""))
+                if re.search('^estado_\w+', key):
+                    r_id = int(key.replace("estado_",""))
                     object = get_object_or_404(PaisEstado, pk=r_id)
                     estado = object.estado
+                    pais = object.pais
                     object.delete()
-                    delete_municipalities(estado)
+                    try:
+                        delete_municipalities(estado)
+                    except ProtectedError:
+                        PaisEstado(estado=estado, pais=pais).save()
+                        mensaje = "Ha ocurrido un error de integridad de datos, por favor " \
+                                  "revisa que no haya ningún dato asociado al estado ni a " \
+                                  "sus municipios, colonias o calles"
+                        return HttpResponseRedirect("/location/ver_estados/?msj=" + mensaje +
+                                                    "&ntype=error")
             mensaje = "Las relaciones País-Estado han sido eliminadas"
             return HttpResponseRedirect("/location/ver_estados/?msj=" + mensaje +
                                         "&ntype=success")
@@ -828,12 +881,21 @@ def delete_municipality_state_batch(request):
             raise Http404
         if request.POST['actions'] == 'delete':
             for key in request.POST:
-                if re.search('^e_municip_\w+', key):
-                    r_id = int(key.replace("e_municip_",""))
+                if re.search('^municipio_\w+', key):
+                    r_id = int(key.replace("municipio_",""))
                     object = get_object_or_404(EstadoMunicipio, pk=r_id)
                     mun = object.municipio
+                    est = object.estado
                     object.delete()
-                    delete_neigboorhoods(mun)
+                    try:
+                        delete_neigboorhoods(mun)
+                    except ProtectedError:
+                        EstadoMunicipio(estado=est, municipio=mun).save()
+                        mensaje = "Ha ocurrido un error de integridad de datos, por favor "\
+                                  "revisa que no haya ningún dato asociado al municipio, " \
+                                  "colonias o calles"
+                        return HttpResponseRedirect("/location/ver_municipios/?msj=" +
+                                                    mensaje + "&ntype=error")
             mensaje = "Las relaciones Estado-Municipio han sido eliminadas"
             return HttpResponseRedirect("/location/ver_municipios/?msj=" + mensaje +
                                         "&ntype=success")
@@ -853,12 +915,21 @@ def delete_neighboorhood_municipality_batch(request):
             raise Http404
         if request.POST['actions'] == 'delete':
             for key in request.POST:
-                if re.search('^m_col_\w+', key):
-                    r_id = int(key.replace("m_col_",""))
+                if re.search('^colonia_\w+', key):
+                    r_id = int(key.replace("colonia_",""))
                     object = get_object_or_404(MunicipioColonia, pk=r_id)
-                    colonia=object.colonia
+                    colonia = object.colonia
+                    municipio = object.municipio
                     object.delete()
-                    delete_streets(colonia)
+                    try:
+                        delete_streets(colonia)
+                    except ProtectedError:
+                        MunicipioColonia(municipio=municipio, colonia=colonia).save()
+                        mensaje = "Ha ocurrido un error de integridad de datos, por favor "\
+                                  "revisa que no haya ningún dato asociado a la colonia, "\
+                                  "o sus calles"
+                        return HttpResponseRedirect("/location/ver_colonias/?msj=" +
+                                                    mensaje + "&ntype=error")
             mensaje = "Las relaciones Municipio-Colonia han sido eliminadas"
             return HttpResponseRedirect("/location/ver_colonias/?msj=" + mensaje +
                                         "&ntype=success")
@@ -877,8 +948,8 @@ def delete_street_neighboor_batch(request):
             raise Http404
         if request.POST['actions'] == 'delete':
             for key in request.POST:
-                if re.search('^c_calle_\w+', key):
-                    r_id = int(key.replace("c_calle_",""))
+                if re.search('^calle_\w+', key):
+                    r_id = int(key.replace("calle_",""))
                     object = get_object_or_404(ColoniaCalle, pk=r_id)
                     calle=object.calle
                     object.delete()#borro la relación

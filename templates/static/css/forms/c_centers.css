@@ -19,6 +19,22 @@
     background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
 }
 
+#part_bld_fields div.selector{
+    width: 487px;
+}
+
+#part_bld_fields div.selector select{
+    width: 490px;
+}
+
+#part_bld_fields div.selector span{
+    width: 460px;
+}
+
+#part_bld_fields textarea{
+    background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
+}
+
 .del, .delete, .edit{
     margin-right: 10px;
     margin-left: 0px;
@@ -126,6 +142,136 @@
 
 .hrchy_company_label{
     font-size: 14px;
+}
+
+
+.hz_divider_short{
+    float: left;
+    display: inline-block;
+    height: 27px;
+    margin: 4px 1.7em 0 1.7em;
+    border-right: solid 1px #9EBFC7;
+}
+
+#part_bld_fields{
+    height: 350px;
+    width: 100%;
+}
+
+#atributes_fields{
+    height: 170px;
+    width: 100%;
+    margin-top: 20px;
+}
+
+
+.extra_attributes_div{
+    margin-left: 30px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    width: 100%;
+    display: block;
+    float: left;
+}
+
+.tip_attribute_part{
+    width: 200px;
+    display: block;
+    float: left;
+    font-weight: bold;
+}
+
+.attribute_part{
+    width: 200px;
+    display: block;
+    float: left;
+}
+
+.attribute_value_part{
+    visibility: visible !important;
+    display: block;
+}
+
+.widgetField{
+    width: 220px;
+}
+
+.widgetField span.legend{
+    width: 180px;
+}
+
+.widgetField ul.ddl{
+    width: 100%;
+}
+
+.attribute_value_text_row{
+    margin: 0px;
+    padding: 0px;
+    width: 235px;
+    float: left;
+}
+
+.attribute_value_text{
+    height: 20px;
+}
+
+.delete_attr_icon{
+    float:left;
+}
+
+
+.building_info{
+    width: 100%;
+    overflow: auto;
+}
+
+.building_column{
+    width: 50%;
+    height: 100%;
+    float: left;
+}
+
+.map_canvas{
+    width: 100%;
+    height: 350px;
+}
+
+.building_column textarea{
+    background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
+}
+
+.building_column textarea:focus{
+    background-color: white;
+}
+
+.building_column div.selector{
+    width: 290px;
+}
+
+.building_column div.selector select{
+    width: 300px;
+}
+
+.building_column div.selector span{
+    width: 265px;
+}
+
+#b_type{
+    background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
+    height: 170px;
+    font-size: 12px;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: normal;
+    padding: 3px;
+    color: #777;
+    border-top: solid 1px #AAA;
+    border-left: solid 1px #AAA;
+    border-bottom: solid 1px #CCC;
+    border-right: solid 1px #CCC;
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
+    outline: 0;
 }
 
 

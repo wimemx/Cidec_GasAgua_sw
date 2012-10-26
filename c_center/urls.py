@@ -63,4 +63,49 @@ urlpatterns = patterns('',
     url(r'^ver_empresa/(?P<id_cpy>\d+)', 'c_center.views.see_company'),
 
     url(r'^estructura/$', 'c_center.views.c_center_structures'),
+
+    url(r'^alta_tipo_edificio/', 'c_center.views.add_buildingtype'),
+    url(r'^editar_tipo_edificio/(?P<id_btype>\d+)/', 'c_center.views.edit_buildingtype'),
+    url(r'^tipos_edificios/', 'c_center.views.view_buildingtypes'),
+    url(r'^eliminar_tipo_edificio/(?P<id_btype>\d+)', 'c_center.views.delete_buildingtype'),
+    url(r'^delete_batch_buildingtypes/$', 'c_center.views.delete_batch_buildingtypes'),
+    url(r'^status_tipo_edificio/(?P<id_btype>\d+)', 'c_center.views.status_buildingtype'),
+
+    url(r'^alta_tipo_sector/', 'c_center.views.add_sectoraltype'),
+    url(r'^editar_tipo_sector/(?P<id_stype>\d+)/', 'c_center.views.edit_sectoraltype'),
+    url(r'^tipos_sectores/', 'c_center.views.view_sectoraltypes'),
+    url(r'^eliminar_tipo_sector/(?P<id_stype>\d+)', 'c_center.views.delete_sectoraltype'),
+    url(r'^delete_batch_sectoraltypes/$', 'c_center.views.delete_batch_sectoraltypes'),
+    url(r'^status_tipo_sector/(?P<id_stype>\d+)', 'c_center.views.status_sectoraltype'),
+
+    url(r'^alta_tipo_atributo_edificio/', 'c_center.views.add_b_attributes_type'),
+    url(r'^editar_tipo_atributo_edificio/(?P<id_batype>\d+)/', 'c_center.views.edit_b_attributes_type'),
+    url(r'^tipos_atributos_edificios/', 'c_center.views.view_b_attributes_type'),
+
+    url(r'^alta_tipo_parte_edificio/', 'c_center.views.add_partbuildingtype'),
+    url(r'^editar_tipo_parte_edificio/(?P<id_pbtype>\d+)/', 'c_center.views.edit_partbuildingtype'),
+    url(r'^tipos_partes_edificio/', 'c_center.views.view_partbuildingtype'),
+    url(r'^eliminar_tipo_parte_edificio/(?P<id_pbtype>\d+)', 'c_center.views.delete_partbuildingtype'),
+    url(r'^delete_batch_partbuildingtype/$', 'c_center.views.delete_batch_partbuildingtype'),
+    url(r'^status_tipo_parte_edificio/(?P<id_pbtype>\d+)', 'c_center.views.status_partbuildingtype'),
+
+    url(r'^alta_parte_edificio/', 'c_center.views.add_partbuilding'),
+    url(r'^editar_parte_edificio/(?P<id_bpart>\d+)/', 'c_center.views.edit_partbuilding'),
+    url(r'^partes_edificio/', 'c_center.views.view_partbuilding'),
+
+    url(r'^search_buildings/', 'c_center.views.search_buildings'),
+    url(r'^get_attributes/(?P<id_attribute_type>\d+)', 'c_center.views.get_select_attributes'),
+
+    url(r'^alta_edificio/', 'c_center.views.add_building'),
+    url(r'^editar_edificio/(?P<id_bld>\d+)/', 'c_center.views.edit_building'),
+    url(r'^edificios/', 'c_center.views.view_building'),
+    url(r'^eliminar_edificio/(?P<id_bld>\d+)', 'c_center.views.delete_building'),
+    url(r'^delete_batch_building/$', 'c_center.views.delete_batch_building'),
+    url(r'^status_edificio/(?P<id_bld>\d+)', 'c_center.views.status_building'),
+
+    url(r'^search_bld_country/', 'c_center.views.search_bld_country'),
+    url(r'^search_bld_state/', 'c_center.views.search_bld_state'),
+    url(r'^search_bld_municipality/', 'c_center.views.search_bld_municipality'),
+    url(r'^search_bld_neighborhood/', 'c_center.views.search_bld_neighborhood'),
+    url(r'^search_bld_street/', 'c_center.views.search_bld_street'),
 )
