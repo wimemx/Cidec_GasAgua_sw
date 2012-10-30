@@ -110,6 +110,7 @@ class BuildingAttributesType(models.Model):
     building_attributes_type_name = models.CharField(max_length=128)
     building_attributes_type_description = models.TextField(max_length=256, null=True, blank=True)
     building_attributes_type_sequence = models.IntegerField(null=True, blank=True)
+    building_attributes_type_status = models.IntegerField("Estatus", choices=STATUS, default=1)
 
     def __unicode__(self):
         return self.building_attributes_type_name

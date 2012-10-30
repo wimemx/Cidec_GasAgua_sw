@@ -1,7 +1,6 @@
 from django.db.models.aggregates import Count
 from rbac.models import  PermissionAsigment, UserRole, DataContextPermission, Operation, Object
-GRAPHS =['Potencia Activa (KW)', 'Potencia Reactiva (KVar)', 'Factor de Potencia (PF)',
-         'kW Hora', 'kW Hora Consumido', 'kVAR Hora', 'kVAR Hora Consumido']
+from c_center.models import ConsumerUnit
 
 def check_roles_permission(object):
     """ Check the roles that have an allowed operation over an object
@@ -35,34 +34,6 @@ def has_permission(user, operation, object):
             return True
     return False
 
-def graphs_permission(user):
-    """ Checks if a user can see a certain graph for a
-
-    user.- django auth user object
-
-    returns an array of objects of permission, False if user is not allowed to see graphs
-
-    """
-    operation = Operation.objects.get(operation_name="Ver")
-    user_role = UserRole.objects.filter(user=user)
-
-    datacontext = DataContextPermission.objects.filter(user_role__user=user).values(
-        "building__building_name", "building").annotate(Count("building"))
-
-
-    graphs = []
-    for u_role in user_role:
-        for object in GRAPHS:
-            ob = Object.objects.get(object_name=object)
-            permission = PermissionAsigment.objects.filter(object=ob,
-                role=u_role.role, operation=operation)
-            if permission or user.is_superuser:
-                graphs.append(ob)
-    if graphs:
-        return graphs
-    else:
-        return False
-
 def get_buildings_context(user):
     """Gets and return a dict with the different buildings in the DataContextPermission
     for the active user
@@ -74,3 +45,13 @@ def get_buildings_context(user):
         buildings.append(dict(building_pk=building['building'],
             building_name=building['building__building_name']))
     return buildings
+
+def default_consumerUnit(user, building):
+    context = DataContextPermission.objects.filter(user_role__user=user, building=building)
+    context = context[0]
+    if not context.part_of_building:
+        cu = ConsumerUnit.objects.get(building=building, electric_device_type__electric_device_type_name="Total Edificio")
+        return cu
+    else:
+        cu = ConsumerUnit.objects.get(part_of_building=context.part_of_building)
+        return cu

@@ -29,8 +29,8 @@ from c_center.calculations import *
 from c_center.models import *
 from location.models import *
 from electric_rates.models import ElectricRatesDetail
-from rbac.models import Operation, DataContextPermission
-from rbac.rbac_functions import  has_permission, get_buildings_context, graphs_permission
+from rbac.models import Operation, DataContextPermission, UserRole, Object, PermissionAsigment
+from rbac.rbac_functions import  has_permission, get_buildings_context, default_consumerUnit
 
 import json as simplejson
 
@@ -43,10 +43,33 @@ UPDATE = Operation.objects.get(operation_name="Modificar")
 
 GRAPHS =['Potencia Activa (KW)', 'Potencia Reactiva (KVar)', 'Factor de Potencia (PF)',
          'kW Hora', 'kW Hora Consumido', 'kVAR Hora', 'kVAR Hora Consumido']
-
 #def call_celery_delay():
 #    add.delay()
 #    return "Task set to execute."
+
+def get_all_profiles_for_user(user):
+    context = DataContextPermission.objects.filter(user_role__user=user)
+    #cu, user, building
+    if consumerUnit.electric_device_type.electric_device_type_name == "Total Edificio":
+        context = DataContextPermission.objects.filter(user_role__user=user, building=building, part_of_building=None)
+        if context:
+            return True
+        else:
+            return False
+    else:
+        context = DataContextPermission.objects.filter(user_role__user=user, building=building)
+        for cntx in context:
+            if cntx.part_of_building:
+                #if the user has permission over a part of building, and the consumer unit is
+                #the cu for the part of building
+                if consumerUnit.part_of_building == cntx.part_of_building:
+                    return True
+                elif is_in_part_of_building(consumerUnit, cntx.part_of_building):
+                    return True
+            elif cntx.building == consumerUnit.building:
+                return True
+        return False
+
 
 def week_of_month(datetime_variable):
     """Get the week number of the month for a datetime
@@ -126,13 +149,14 @@ def set_default_session_vars(request, datacontext):
 
     if 'consumer_unit' not in request.session and request.session['main_building']:
         #sets the default ConsumerUnit (the first in ConsumerUnit for the main building)
-        try:
-            c_unit = ConsumerUnit.objects.filter(building=request.session['main_building'])
-            request.session['consumer_unit'] = c_unit[0]
-        except ObjectDoesNotExist:
-            request.session['main_building'] = None
-        except IndexError:
-            request.session['main_building'] = None
+        request.session['consumer_unit'] = default_consumerUnit(request.user, request.session['main_building'])
+        #try:
+        #    c_unit = ConsumerUnit.objects.filter(building=request.session['main_building'])
+        #    request.session['consumer_unit'] = c_unit[0]
+        #except ObjectDoesNotExist:
+        #    request.session['main_building'] = None
+        #except IndexError:
+        #    request.session['main_building'] = None
 
 
 def set_default_building(request, id_building):
@@ -152,7 +176,7 @@ def set_default_building(request, id_building):
     return HttpResponse(content=data,content_type="application/json")
 
 
-def get_sons(parent, part):
+def get_sons(parent, part, user, building):
     """ Gets a list of the direct sons of a given part, or consumer unit
     parent = instance of PartOfBuilding, or ConsumerUnit
     part = string, is the type of the parent
@@ -167,16 +191,20 @@ def get_sons(parent, part):
         for son in sons_of_parent:
             if son.part_of_building_leaf:
                 tag = son.part_of_building_leaf.part_of_building_name
-                sons = get_sons(son.part_of_building_leaf, "part")
+                sons = get_sons(son.part_of_building_leaf, "part", user, building)
                 cu = ConsumerUnit.objects.get(part_of_building=son.part_of_building_leaf)
                 _class = "part_of_building"
             else:
                 tag = son.consumer_unit_leaf.electric_device_type.electric_device_type_name
-                sons = get_sons(son.consumer_unit_leaf, "consumer")
+                sons = get_sons(son.consumer_unit_leaf, "consumer", user, building)
                 cu = son.consumer_unit_leaf
                 _class = "consumer_unit"
-            list += '<li><a href="#" rel="' + str(cu.pk) + '" class="' + _class + '">'
-            list +=  tag + '</a>' + sons
+            if allowed_cu(cu, user, building):
+                list += '<li><a href="#" rel="' + str(cu.pk) + '" class="' + _class + '">'
+                list +=  tag + '</a>' + sons
+            else:
+                list += '<li>'
+                list +=  tag + sons
             list += '</li>'
         list += '</ul>'
         return list
@@ -198,10 +226,13 @@ def set_consumer_unit(request):
     main_cu = ConsumerUnit.objects.get(building=building,
         electric_device_type__electric_device_type_name="Total Edificio")
     hierarchy_list = "<ul id='org'>"\
-                     "<li>"\
-                     "<a href='#' rel='" + str(main_cu.pk) + "'>"+\
-                     building.building_name +\
-                     "<br/>(Total)</a>"
+                     "<li>"
+    if allowed_cu(main_cu, request.user, building):
+        hierarchy_list += "<a href='#' rel='" + str(main_cu.pk) + "'>"+\
+                         building.building_name +\
+                         "<br/>(Total)</a>"
+    else:
+        hierarchy_list += building.building_name +"<br/>(Total)"
 
     try:
         parents[0]
@@ -226,11 +257,15 @@ def set_consumer_unit(request):
         else:
             hierarchy_list += "<ul>"
             for parent in parents:
-                hierarchy_list += "<li> <a href='#' rel='" + str(parent.pk) + "'>" +\
-                                  parent.electric_device_type.electric_device_type_name + \
-                                  "</a>"
+                if allowed_cu(parent, request.user, building):
+                    hierarchy_list += "<li> <a href='#' rel='" + str(parent.pk) + "'>" +\
+                                      parent.electric_device_type.electric_device_type_name + \
+                                      "</a>"
+                else:
+                    hierarchy_list += "<li>" +\
+                                      parent.electric_device_type.electric_device_type_name
                 #obtengo la jerarquia de cada rama del arbol
-                hierarchy_list += get_sons(parent, "consumer")
+                hierarchy_list += get_sons(parent, "consumer", request.user, building)
                 hierarchy_list +="</li>"
             hierarchy_list +="</ul>"
     else:
@@ -240,11 +275,14 @@ def set_consumer_unit(request):
             c_unit_parent = ConsumerUnit.objects.filter(building=building,
                             part_of_building=parent).exclude(
                             electric_device_type__electric_device_type_name="Total Edificio")
-
-            hierarchy_list += "<li> <a href='#' rel='" + str(c_unit_parent[0].pk) + "'>" + \
-                              parent.part_of_building_name + "</a>"
+            if allowed_cu(c_unit_parent[0], request.user, building):
+                hierarchy_list += "<li> <a href='#' rel='" + str(c_unit_parent[0].pk) + "'>" +\
+                                  parent.part_of_building_name + "</a>"
+            else:
+                hierarchy_list += "<li>" +\
+                                  parent.part_of_building_name
             #obtengo la jerarquia de cada rama del arbol
-            hierarchy_list += get_sons(parent, "part")
+            hierarchy_list += get_sons(parent, "part", request.user, building)
             hierarchy_list +="</li>"
         hierarchy_list +="</ul>"
     hierarchy_list +="</li></ul>"
@@ -255,7 +293,7 @@ def set_consumer_unit(request):
 
 
 def get_total_consumer_unit(consumerUnit, total):
-    """gets the sum of his sons"""
+    """gets the (physical)sons of a cu"""
     c_units = []
     if not total:
 
@@ -320,6 +358,117 @@ def get_consumer_units(consumerUnit):
         c_units = [consumerUnit]
     return c_units
 
+
+def allowed_cu(consumerUnit, user, building):
+    """returns true or false if the user has permission over the consumerUnit or not
+    consumerUnit = ConsumerUnit instance
+    user = auth.User instance
+    building = Building instance
+    """
+    if consumerUnit.electric_device_type.electric_device_type_name == "Total Edificio":
+        context = DataContextPermission.objects.filter(user_role__user=user, building=building, part_of_building=None)
+        if context:
+            return True
+        else:
+            return False
+    else:
+        context = DataContextPermission.objects.filter(user_role__user=user, building=building)
+        for cntx in context:
+            if cntx.part_of_building:
+                #if the user has permission over a part of building, and the consumer unit is
+                #the cu for the part of building
+                if consumerUnit.part_of_building == cntx.part_of_building:
+                    return True
+                elif is_in_part_of_building(consumerUnit, cntx.part_of_building):
+                    return True
+            elif cntx.building == consumerUnit.building:
+                return True
+        return False
+
+def is_in_part_of_building(consumerUnit, part_of_building):
+    """ checks if consumerUnit is part of the part_of_building
+    returns True if consumerUnit is inside the part
+    consumerUnit = ConsumerUnit instance *without part_of_building*
+    part_of_building = PartOfBuilding instance
+    """
+    part_parent = HierarchyOfPart.objects.filter(part_of_building_composite=part_of_building)
+    if part_parent:
+        for parent_part in part_parent:
+            if parent_part.consumer_unit_leaf:
+                if parent_part.consumer_unit_leaf == consumerUnit:
+                    return True
+                else:
+                    if is_in_consumer_unit(consumerUnit, parent_part.consumer_unit_leaf):
+                        return True
+            else:
+                if parent_part.part_of_building_leaf == consumerUnit.part_of_building:
+                    return True
+                elif is_in_part_of_building(consumerUnit, parent_part.part_of_building_leaf):
+                    return True
+        return False
+    else:
+        return False
+
+def is_in_consumer_unit(cunit, cuParent):
+    """ checks if consumerUnit is part of an electric system (another consumer unit)
+    returns True if consumerUnit is inside the system
+    cunit = ConsumerUnit instance *without part_of_building*
+    cuParent = ConsumerUnit instance
+    """
+    part_parent = HierarchyOfPart.objects.filter(consumer_unit_composite=cuParent)
+    if part_parent:
+        for parent_part in part_parent:
+            if parent_part.consumer_unit_leaf == cunit:
+                return True
+            else:
+                if is_in_consumer_unit(cunit, parent_part.consumer_unit_leaf):
+                    return True
+        return False
+    else:
+        return False
+
+
+def graphs_permission(user, consumer_unit):
+    """ Checks what kind of graphs can a user see for a consumer_unit
+    user.- django auth user object
+    consumer_unit.- ConsumerUnit object
+
+    returns an array of objects of permission, False if user is not allowed to see graphs
+
+    """
+    operation = Operation.objects.get(operation_name="Ver")
+
+    context = DataContextPermission.objects.filter(user_role__user=user,
+        building=consumer_unit.building)
+    contextos = []
+    for cntx in context:
+        if cntx.part_of_building:
+            #if the user has permission over a part of building, and the consumer unit is
+            #the cu for the part of building
+            if consumer_unit.part_of_building == cntx.part_of_building:
+                contextos.append(cntx)
+            elif is_in_part_of_building(consumer_unit, cntx.part_of_building):
+                contextos.append(cntx)
+        elif cntx.building == consumer_unit.building:
+            contextos.append(cntx)
+    user_roles = [cntx.user_role.pk for cntx in contextos]
+
+    user_role = UserRole.objects.filter(user=user, pk__in=user_roles)
+
+    graphs = []
+    for u_role in user_role:
+        for object in GRAPHS:
+            ob = Object.objects.get(object_name=object)
+            permission = PermissionAsigment.objects.filter(object=ob, role=u_role.role,
+                operation=operation)
+            if permission or user.is_superuser:
+                graphs.append(ob)
+    if graphs:
+        return graphs
+    else:
+        return False
+
+
 def set_default_consumer_unit(request, id_c_u):
     """Sets the consumer_unit for all the reports"""
     c_unit = ConsumerUnit.objects.get(pk=id_c_u)
@@ -334,7 +483,7 @@ def main_page(request):
     datacontext = get_buildings_context(request.user)
     set_default_session_vars(request, datacontext)
 
-    graphs = graphs_permission(request.user)
+    graphs = graphs_permission(request.user, request.session['consumer_unit'])
 
     if graphs:
 
