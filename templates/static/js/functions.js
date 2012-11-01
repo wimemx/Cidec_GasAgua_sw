@@ -15,6 +15,18 @@ function addCommas(nStr){
     return x1 + x2;
 }
 
+function isValidString(cadena){
+    /*
+     * Prueba si una cadena dada es una cadena válida (solo letras y espacios en blanco)
+     * isValidString("cadena válida");
+     * return true
+     *
+     * isValidEmailAddress("1ra cadena #3");
+     * return false;
+     * */
+    var pattern= new RegExp(/^([a-zA-ZáéíóúñÁÉÍÓÚÑ ]+)*$/);
+    return pattern.test(cadena);
+}
 
 function isValidEmailAddress(emailAddress) {
     /*

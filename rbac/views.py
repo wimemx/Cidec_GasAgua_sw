@@ -43,7 +43,7 @@ def save_perm(role, objs_ids, operation):
 
 
     for obj_id in objs_ids:
-        if obj_id != "all":
+        if obj_id != "all" and obj_id != "_":
             try:
                 object = Object.objects.get(pk=int(obj_id))
             except ObjectDoesNotExist:
@@ -56,6 +56,20 @@ def save_perm(role, objs_ids, operation):
                     object=object)
                 perm.save()
     return True, "El registro se completó exitosamente"
+
+def validate_role(post):
+    data = {}
+
+    if variety.validate_string(post["role"]):
+        data["role"] = post["role"].strip()
+    else:
+        return False
+    if post['role_desc']!='':
+        if variety.validate_string(post["role"]):
+            data[str(key)] = post[str(key)].strip()
+        else:
+            return False
+    return data
 
 def add_role(request):
     """Add role web form"""
@@ -70,12 +84,14 @@ def add_role(request):
             role = request.POST['role_name'].strip()
             role_desc = request.POST['role_desc'].strip()
             rol = Role.objects.filter(role_name__iexact=role)
+            datos=dict(role=role, role_desc=role_desc)
+            valid = validate_role(datos)
             mensaje = ''
             ntype = ''
             if rol:
                 asignation = False
                 mensaje = "El rol ya existe, por favor edita el existente o crea uno nuevo"
-            else:
+            elif valid:
                 rol = Role(role_name=role, role_description=role_desc, role_importance="average" )
                 rol.save()
                 if has_permission(request.user, CREATE, "Asignacion de privilegios") or request.user.is_superuser:
@@ -99,7 +115,10 @@ def add_role(request):
                     asignation = True
                     mensaje = "Debido a tus privilegios, solo se ha dado de alta el rol"
                     ntype = "notif"
-
+            else:
+                asignation = False
+                mensaje = 'error en la validaciónd de campos, por favor revise que no haya introducido caracteres inválidos'
+                ntype = 'error'
             if asignation:
                 #if save_perm register the PermissionAsigment correctly
                 if not ntype:
@@ -156,15 +175,13 @@ def update_role_privs(role, objs_ids, operation):
 
     objs_arr = []
     for obj_id in objs_ids:
-        if obj_id != "all":
+        if obj_id != "all" and obj_id != "_":
             try:
                 objs_arr.append(Object.objects.get(pk=int(obj_id)))
             except ObjectDoesNotExist:
                 mensaje = "El privilegio no existe, por favor seleccione nuevamente la "\
                           "operaci&oacute;n y el privilegio"
                 return False, mensaje
-
-    PermissionAsigment.objects.filter(role=role, operation=operation).delete()
     for object in objs_arr:
         perm=PermissionAsigment(role=role, operation=operation, object=object)
         perm.save()
@@ -184,95 +201,85 @@ def edit_role(request, id_role):
             valid = True
             if not variety.validate_string(request.POST['role_name']):
                 valid = False
-            if not variety.validate_string(request.POST['role_desc']):
-                valid = False
-
+            if request.POST['role_desc'] != '':
+                if not variety.validate_string(request.POST['role_desc']):
+                    valid = False
+            asignation = False
             if valid:
                 rol.role_name = request.POST['role_name']
                 rol.role_description = request.POST['role_desc']
                 rol.save()
-            asignation = False
-            ids_ver = []
-            ids_crear = []
-            ids_modificar = []
-            ids_eliminar = []
-            for key in request.POST:
-                objs_ids = request.POST[str(key)].split(",")
 
-                #checks the type of the allowed operation for the role
-                if re.search('^Ver_\w+', key):
-                    ids_ver.extend(objs_ids)
-                    #asignation, mensaje = save_perm(rol, objs_ids, "Ver")
+                ids_ver = []
+                ids_crear = []
+                ids_modificar = []
+                ids_eliminar = []
+                for key in request.POST:
+                    objs_ids = request.POST[str(key)].split(",")
 
-                elif re.search('^Crear_\w+', key):
-                    ids_crear.extend(objs_ids)
-                    #asignation, mensaje = save_perm(rol, objs_ids, "Crear")
+                    #checks the type of the allowed operation for the role
+                    if re.search('^Ver_\w+', key):
+                        ids_ver.extend(objs_ids)
+                        #asignation, mensaje = save_perm(rol, objs_ids, "Ver")
 
-                elif re.search('^Eliminar_\w+', key):
-                    ids_eliminar.extend(objs_ids)
-                    #asignation, mensaje = save_perm(rol, objs_ids, "Eliminar")
+                    elif re.search('^Crear_\w+', key):
+                        ids_crear.extend(objs_ids)
+                        #asignation, mensaje = save_perm(rol, objs_ids, "Crear")
 
-                elif re.search('^Modificar_\w+', key):
-                    ids_modificar.extend(objs_ids)
-                    #asignation, mensaje = save_perm(rol, objs_ids, "Modificar")
-            #guardo la totalidad de objetos, por operación, independientemente de su grupo
-            if ids_ver:
-                asignation, mensaje = update_role_privs(rol, ids_ver, "Ver")
-            if ids_crear:
-                asignation, mensaje = update_role_privs(rol, ids_crear, "Crear")
-            if ids_eliminar:
-                asignation, mensaje = update_role_privs(rol, ids_eliminar, "Eliminar")
-            if ids_modificar:
-                asignation, mensaje = update_role_privs(rol, ids_modificar, "Modificar")
-            if asignation:
-                #if save_perm register the PermissionAsigment correctly
-                if not ntype:
-                    ntype = "success"
+                    elif re.search('^Eliminar_\w+', key):
+                        ids_eliminar.extend(objs_ids)
+                        #asignation, mensaje = save_perm(rol, objs_ids, "Eliminar")
 
-                return HttpResponseRedirect("/panel_de_control/roles?msj=" + mensaje +
-                                            "&ntype="+ntype)
-            else:
-                #regresa al formulario de alta con el mensaje de error,
-                # borro el rol y los privilegios asociados
+                    elif re.search('^Modificar_\w+', key):
+                        ids_modificar.extend(objs_ids)
+                        #asignation, mensaje = save_perm(rol, objs_ids, "Modificar")
+                #guardo la totalidad de objetos, por operación, independientemente de su grupo
                 PermissionAsigment.objects.filter(role=rol).delete()
-                rol.delete()
+                if ids_ver:
+                    asignation, mensaje = update_role_privs(rol, ids_ver, "Ver")
+                if ids_crear:
+                    asignation, mensaje = update_role_privs(rol, ids_crear, "Crear")
+                if ids_eliminar:
+                    asignation, mensaje = update_role_privs(rol, ids_eliminar, "Eliminar")
+                if ids_modificar:
+                    asignation, mensaje = update_role_privs(rol, ids_modificar, "Modificar")
+                if asignation:
+                    #if save_perm register the PermissionAsigment correctly
+                    if not ntype:
+                        ntype = "success"
 
-                template_vars = dict(datacontext=datacontext,
-                    empresa=empresa,
-                    company=company,
-                    operations=Operation.objects.all(),
-                    message=mensaje,
-                    msg_type="fail",
-                    post=request.POST
-                )
-                template_vars_template = RequestContext(request, template_vars)
-                return render_to_response("rbac/add_role.html", template_vars_template)
-        else:
-            template_vars = dict(rol=rol,
-                                 datacontext=datacontext, empresa=empresa, company=company,
-                                 operations=Operation.objects.all())
-            permissions = PermissionAsigment.objects.filter(role=rol)
-            objects = [ob.object.pk for ob in permissions]
+                    return HttpResponseRedirect("/panel_de_control/roles?msj=" + mensaje +
+                                                "&ntype="+ntype)
+            else:
+                print "regresa al formulario de alta con el mensaje de error"
+                mensaje = "Ha ocurrido un error al validar el nombre o la descripción del rol. Por favor verifique"
+                ntype = "fail"
 
-            objs_group_perms = OperationForGroupObjects.objects.filter(group_object__object__pk__in=objects)
-            objs = {}
-            for gp in objs_group_perms:
-                key = gp.operation.operation_name+"-"+gp.group_object.group.group_name
-                if key in objs:
-                    objs[key].append(gp.group_object.object)
-                else:
-                    objs[key] = [gp.group_object.object,]
-            arr_ops=[]
+        template_vars = dict(rol=rol,
+                             datacontext=datacontext, empresa=empresa, company=company,
+                             operations=Operation.objects.all(), message=mensaje, ntype=ntype)
+        permissions = PermissionAsigment.objects.filter(role=rol)
+        objects = [ob.object.pk for ob in permissions]
 
-            for key in objs:
-                key_split = key.split("-")
-                operacion = key_split[0]
-                grupo = key_split[1]
-                arr_ops.append(dict(operacion=operacion, grupo=grupo, privs=objs[key]))
+        objs_group_perms = OperationForGroupObjects.objects.filter(group_object__object__pk__in=objects)
+        objs = {}
+        for gp in objs_group_perms:
+            key = gp.operation.operation_name+"-"+gp.group_object.group.group_name
+            if key in objs:
+                objs[key].append(gp.group_object.object)
+            else:
+                objs[key] = [gp.group_object.object,]
+        arr_ops=[]
 
-            template_vars['objs_group_perms'] = arr_ops
-            template_vars_template = RequestContext(request, template_vars)
-            return render_to_response("rbac/edit_role.html", template_vars_template)
+        for key in objs:
+            key_split = key.split("-")
+            operacion = key_split[0]
+            grupo = key_split[1]
+            arr_ops.append(dict(operacion=operacion, grupo=grupo, privs=objs[key]))
+
+        template_vars['objs_group_perms'] = arr_ops
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("rbac/edit_role.html", template_vars_template)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
@@ -434,10 +441,12 @@ def get_select_group(request, id_operation):
         return HttpResponseRedirect("/")
     operation_group = OperationForGroup.objects.filter(operation__pk=id_operation)
     string_to_return=''
+
     for operation in operation_group:
         string_to_return += """<li rel="%s">
                                 %s
                             </li>""" % (operation.group.pk, operation.group.group_name)
+
     return HttpResponse(content=string_to_return, content_type="text/html")
 
 def get_select_object(request, id_group):
@@ -736,7 +745,7 @@ def edit_user(request, id_user):
                 else:
                     #update user
                     if valid['pass']:
-                        user.set_password(password)
+                        user.set_password(valid['pass'])
                         user.save()
                     user.first_name = valid['name']
                     user.last_name = valid['last_name']
@@ -1008,9 +1017,9 @@ def added_data_context_permissions(request):
                         order_entity = "asc"
         if select_user != '0' or select_emp != '0':
             lista = DataContextPermission.objects.filter(Q(user_role__user__pk=int(select_user))|Q(
-                cluster__pk=int(select_emp))).order_by(order)
+                cluster__pk=int(select_emp))).filter(user_role__user__is_active=True).order_by(order)
         else:
-            lista = DataContextPermission.objects.all().order_by(order)
+            lista = DataContextPermission.objects.filter(user_role__user__is_active=True).order_by(order)
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
         template_vars = dict(order_role=order_role, order_username=order_username,
             order_entity=order_entity, datacontext=datacontext, empresa=empresa,

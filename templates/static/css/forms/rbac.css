@@ -66,7 +66,8 @@
     background: white;
     display: none;
     width: 148px;
-    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto !important;
 }
 #object_list{
     width: 301px;

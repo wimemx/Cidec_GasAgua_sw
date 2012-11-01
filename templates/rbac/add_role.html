@@ -22,7 +22,7 @@
                     dataType: 'json',
                     async: 'true',
                     success: function(datos){
-                        console.log("changed");
+
                     }
                 });
 
@@ -78,13 +78,22 @@
                         var url2 = elemento.attr("rel");
                         url2 = "/rbac/get_object/"+url2+"?operation="+uri;
                         $("#object_list").load(url2, function(){
+
                             var all = '<li><input type="checkbox" name="all" ' +
                                     'id="all"/>'+
                                     '<label for="all" >'+
                                     'Todos'+
                                     '</label></li>';
                             $(this).prepend(all).slideDown();
-                            $("#object_list input:checkbox").uniform();
+                            $("#object_list input:checkbox").each(function(){
+                                check_if_exists($(this));
+                            }).uniform();
+                            $("input[name*='object_']").change(function(){
+                                if($("#all").is(":checked")){
+                                    $("#all").prop("checked", false);
+                                    $.uniform.update();
+                                }
+                            });
                             $("#add_buttons").show();
                             $("#all").change(function(){
 
@@ -129,6 +138,36 @@
         {% endblock %}
 {% block externaljs %}
     <script type="text/javascript">
+    function check_if_exists(checkbox){
+
+        var id_check = parseInt(checkbox.attr("id"));
+        var operation_name = $("#operation span.legend").text();
+        operation_name = $.trim(operation_name);
+        var group_name = $("#group span.legend").text();
+        group_name = $.trim(group_name);
+        var grupo_tag = group_name.toLowerCase()
+        grupo_tag = grupo_tag.replace(/á/gi,"a");
+        grupo_tag = grupo_tag.replace(/é/gi,"e");
+        grupo_tag = grupo_tag.replace(/í/gi,"i");
+        grupo_tag = grupo_tag.replace(/ó/gi,"o");
+        grupo_tag = grupo_tag.replace(/ú/gi,"u");
+        grupo_tag = grupo_tag.replace(/ñ/gi,"n");
+        grupo_tag = grupo_tag.replace(/\s/gi,"-");
+        var input_name = operation_name + "_" + grupo_tag;
+
+        $("#add_permissions").find("input[type='hidden']").each(function(){
+            if($(this).attr('name') == input_name){
+                var valores = $(this).val();
+                valores = valores.split(",");
+                for(var i=0; i<valores.length; i++){
+                    if (valores[i] == "all" || parseInt(valores[i]) == id_check){
+                        checkbox.prop("checked", true);
+                    }
+
+                }
+            }
+        });
+    }
     function add_object(){
         var added_objects='';
         var added_objects_ids='';

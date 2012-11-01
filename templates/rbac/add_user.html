@@ -26,14 +26,6 @@
 
                     var valor = $.trim(e.delegateTarget.value);
 
-
-                    if(valor==''){
-                        _span = "incorrect";
-                        form_valid = false;
-                    }else{
-                        _span = "correct";
-                        form_valid = true;
-                    }
                     if (e.delegateTarget.id == "pass1"){
                         if (e.delegateTarget.value.length < 8){
                             _span = "incorrect";
@@ -42,8 +34,7 @@
                             _span = "correct";
                             form_valid = true;
                         }
-                    }
-                    if (e.delegateTarget.id == "pass2"){
+                    }else if (e.delegateTarget.id == "pass2"){
 
                         var pass1 = $("#pass1");
                         if(pass1.val() != $("#pass2").val()){
@@ -59,8 +50,7 @@
                             }
 
                         }
-                    }
-                    if (e.delegateTarget.id == "mail"){
+                    }else  if (e.delegateTarget.id == "mail"){
                         if(isValidEmailAddress(e.delegateTarget.value)){
                             _span = "correct";
                             form_valid = true;
@@ -68,6 +58,12 @@
                             _span = "incorrect";
                             form_valid = false;
                         }
+                    }else if(valor=='' || !isValidString(valor)){
+                        _span = "incorrect";
+                        form_valid = false;
+                    }else{
+                        _span = "correct";
+                        form_valid = true;
                     }
 
                     var n_span = $("#"+e.delegateTarget.id).next();
@@ -99,7 +95,7 @@
 
 
             var username = $("#username");
-            if($.trim(username.val())==''){
+            if($.trim(username.val())=='' || !isValidString(username.val())){
                 _span = "incorrect";
                 form_valid = false;
             }else{
@@ -131,7 +127,7 @@
             pass1.next().addClass(_span);
             {% endif %}
             var lastname = $("#last_name");
-            if($.trim(lastname.val())==''){
+            if($.trim(lastname.val())=='' || !isValidString(lastname.val())){
                 _span = "incorrect";
                 form_valid = false;
             }else{
@@ -141,8 +137,25 @@
             lastname.next().removeClass("correct");
             lastname.next().addClass(_span);
 
+            var surname = $("#surname");
+            if(surname.val()!=''){
+                if(!isValidString(surname.val())){
+                    _span = "incorrect";
+                    form_valid = false;
+                }else{
+                    _span = "correct";
+                }
+                surname.next().removeClass("incorrect");
+                surname.next().removeClass("correct");
+                surname.next().addClass(_span);
+            }else{
+                surname.next().removeClass("incorrect");
+                surname.next().removeClass("correct");
+            }
+
+
             var name = $("#name");
-            if($.trim(name.val())==''){
+            if($.trim(name.val())=='' || !isValidString(name.val())){
                 _span = "incorrect";
                 form_valid = false;
             }else{
@@ -268,6 +281,7 @@
                     <div class="fields_row g12">
                         <label for="surname" class="g2">Apellido Materno</label>
                         <input type="text" name="surname" id="surname" class="g9" value="{{ post.surname }}"/>
+                        <span></span>
                     </div>
                     <div class="fields_row g12">
                         <label for="mail" class="g2">Correo Electr&oacute;nico<span class="required">*</span></label>

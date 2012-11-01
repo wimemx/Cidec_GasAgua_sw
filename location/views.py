@@ -11,7 +11,8 @@ from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.db.models.deletion import ProtectedError
 from location.models import *
 from rbac.models import Operation
-from rbac.rbac_functions import  has_permission, get_buildings_context, graphs_permission
+from rbac.rbac_functions import  has_permission, get_buildings_context
+from c_center.views import graphs_permission
 
 VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")

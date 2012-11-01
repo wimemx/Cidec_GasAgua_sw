@@ -48,27 +48,25 @@ GRAPHS =['Potencia Activa (KW)', 'Potencia Reactiva (KVar)', 'Factor de Potencia
 #    return "Task set to execute."
 
 def get_all_profiles_for_user(user):
-    context = DataContextPermission.objects.filter(user_role__user=user)
-    #cu, user, building
-    if consumerUnit.electric_device_type.electric_device_type_name == "Total Edificio":
-        context = DataContextPermission.objects.filter(user_role__user=user, building=building, part_of_building=None)
-        if context:
-            return True
-        else:
-            return False
-    else:
-        context = DataContextPermission.objects.filter(user_role__user=user, building=building)
-        for cntx in context:
-            if cntx.part_of_building:
-                #if the user has permission over a part of building, and the consumer unit is
-                #the cu for the part of building
-                if consumerUnit.part_of_building == cntx.part_of_building:
-                    return True
-                elif is_in_part_of_building(consumerUnit, cntx.part_of_building):
-                    return True
-            elif cntx.building == consumerUnit.building:
-                return True
-        return False
+    contexts = DataContextPermission.objects.filter(user_role__user=user)
+    c_us = []
+    for context in contexts:
+        consumer_units = ConsumerUnit.objects.filter(building=context.building)
+        #cu, user, building
+        for consumerUnit in consumer_units:
+            if consumerUnit.profile_powermeter.powermeter.powermeter_anotation != "Medidor Virtual":
+                if context.part_of_building:
+                    #if the user has permission over a part of building, and the consumer unit is
+                    #the cu for the part of building
+                    if consumerUnit.part_of_building == context.part_of_building:
+                        c_us.append(consumerUnit)
+                    elif is_in_part_of_building(consumerUnit, context.part_of_building):
+                        c_us.append(consumerUnit)
+                elif context.building == consumerUnit.building:
+                    c_us.append(consumerUnit)
+
+    return c_us
+
 
 
 def week_of_month(datetime_variable):
