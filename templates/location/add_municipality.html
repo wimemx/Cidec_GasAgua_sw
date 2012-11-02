@@ -50,6 +50,7 @@
             }).parent().hide();
             {% endif %}
             $("#municipio").keyup(function(){
+
                 if($.trim($(this).val()) == ""){
                     $("#save").hide();
                 }else{
@@ -57,6 +58,20 @@
                 }
             });
         });
+    function valida(){
+        var valid = true;
+        var mun = $("#municipio");
+        var municipio = $.trim(mun.val());
+        mun.next().removeClass("correct").removeClass("incorrect");
+
+        if (municipio =='' || !isValidString(municipio)){
+            mun.next().addClass("incorrect");
+            valid = false;
+        }else{
+            mun.next().addClass("correct");
+        }
+        return valid;
+    }
     </script>
 {% endblock %}
 
@@ -91,7 +106,7 @@
                 <br/>
                 Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
             </p>
-            <form method="post" action=".">
+            <form method="post" action="." onsubmit="return valida();">
                 {% csrf_token %}
 
                 <div class="fields_row g12">
@@ -115,6 +130,7 @@
                             Municipio:
                         </label>
                         <input type="text" name="municipio" id="municipio" class="input_ac" {% if operation == "edit" %}value="{{ municipio }}" {% endif %}/>
+                        <span></span>
                     </div>
 
                     <span class="g2">&nbsp;</span>

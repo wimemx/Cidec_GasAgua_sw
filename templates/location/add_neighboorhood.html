@@ -79,6 +79,20 @@
                 }
             });
         });
+    function valida(){
+        var valid = true;
+        var col = $("#colonia");
+        var colonia = $.trim(col.val());
+        col.next().removeClass("correct").removeClass("incorrect");
+
+        if (colonia =='' || !isValidString(colonia)){
+            col.next().addClass("incorrect");
+            valid = false;
+        }else{
+            col.next().addClass("correct");
+        }
+        return valid;
+    }
     </script>
 {% endblock %}
 
@@ -113,7 +127,7 @@
                 <br/>
                 Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
             </p>
-            <form method="post" action=".">
+            <form method="post" action="." onsubmit="return valida();">
                 {% csrf_token %}
 
                 <div class="fields_row g12">
@@ -143,6 +157,7 @@
                             Colonia:
                         </label>
                         <input type="text" name="colonia" id="colonia" class="input_ac" {% if operation == "edit" %}value="{{ colonia }}" {% endif %}/>
+                        <span></span>
 
                     </div>
 

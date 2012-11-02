@@ -162,11 +162,10 @@ def set_default_building(request, id_building):
     request.session['main_building'] = Building.objects.get(pk=id_building)
     c_b = CompanyBuilding.objects.get(building=request.session['main_building'])
     request.session['company'] = c_b.company
-    c_unit = ConsumerUnit.objects.filter(building=request.session['main_building'])
-    request.session['consumer_unit'] = c_unit[0]
+    request.session['consumer_unit'] = default_consumerUnit(request.user, request.session['main_building'])
 
     dicc = dict(edificio=request.session['main_building'].building_name,
-        electric_device_type=c_unit[0].electric_device_type.electric_device_type_name)
+        electric_device_type=request.session['consumer_unit'].electric_device_type.electric_device_type_name)
     data = simplejson.dumps( dicc )
     if 'referer' in request.GET:
         if request.GET['referer'] == "cfe":

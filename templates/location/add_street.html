@@ -103,6 +103,20 @@
                 }
             });
         });
+        function valida(){
+            var valid = true;
+            var call = $("#calle");
+            var calle = $.trim(call.val());
+            call.next().removeClass("correct").removeClass("incorrect");
+
+            if (calle =='' || !isValidString(calle)){
+                call.next().addClass("incorrect");
+                valid = false;
+            }else{
+                call.next().addClass("correct");
+            }
+            return valid;
+        }
     </script>
 {% endblock %}
 
@@ -137,7 +151,7 @@
                 <br/>
                 Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
             </p>
-            <form method="post" action=".">
+            <form method="post" action="." onsubmit="return valida();">
                 {% csrf_token %}
 
                 <div class="fields_row g12">
@@ -174,8 +188,10 @@
                             Calle:
                         </label>
                         <input type="text" name="calle" id="calle" class="input_ac" {% if operation == "edit" %}value="{{ calle }}" {% endif %}/>
+                        <span></span>
 
                     </div>
+
 
                     <span class="g2">&nbsp;</span>
                     <div class="g9">

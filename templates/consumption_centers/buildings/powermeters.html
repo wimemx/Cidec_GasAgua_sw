@@ -272,13 +272,12 @@ window.location = base_url;
                             {% endif %}
                         </td>
                         <td class="c">
-                            <a class="del" rel="{{ powermeter.pk }}"
+                            <a class="del" rel="{{ powermeter.pk }}" title="Eliminar medidor"
                                href="#"></a>
-                            <a class="delete"
+                            <a class="delete" title="Desactivar medidor"
                                href="/buildings/status_medidor/{{ powermeter.pk }}/"></a>
-                            <a class="edit"
+                            <a class="edit" title="Editar medidor"
                                href="/buildings/editar_medidor/{{ powermeter.pk }}/"></a>
-
                         </td>
                     </tr>
                     {% endfor %}

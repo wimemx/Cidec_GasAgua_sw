@@ -35,7 +35,22 @@
                             $("#save").show();
                         }
                     });
+
         });
+    function valida(){
+        var valid = true;
+        var est = $("#estado");
+        var estado = $.trim(est.val());
+        est.next().removeClass("correct").removeClass("incorrect");
+
+        if (estado =='' || !isValidString(estado)){
+            est.next().addClass("incorrect");
+            valid = false;
+        }else{
+            est.next().addClass("correct");
+        }
+        return valid;
+    }
     </script>
 {% endblock %}
 
@@ -70,7 +85,7 @@
                 <br/>
                 Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
             </p>
-            <form method="post" action=".">
+            <form method="post" action="." onsubmit="return valida();">
                 {% csrf_token %}
 
                 <div class="fields_row g12">
@@ -87,6 +102,7 @@
                             Estado:
                         </label>
                         <input type="text" name="estado" id="estado" class="input_ac" {% if operation == "edit" %}value="{{ estado }}" {% endif %}/>
+                        <span></span>
                     </div>
 
                     <span class="g2">&nbsp;</span>

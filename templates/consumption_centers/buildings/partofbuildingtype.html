@@ -240,11 +240,11 @@ window.location = base_url;
                             {% endif %}
                         </td>
                         <td class="c">
-                            <a class="del" rel="{{ pbtype_obj.pk }}"
+                            <a class="del" rel="{{ pbtype_obj.pk }}" title="Eliminar tipo de parte de edificio"
                                href="#"></a>
-                            <a class="delete"
+                            <a class="delete" title="Desactivar tipo de parte de edificio"
                                href="/buildings/status_tipo_parte_edificio/{{ pbtype_obj.pk }}/"></a>
-                            <a class="edit"
+                            <a class="edit" title="Editar tipo de parte de edificio"
                                href="/buildings/editar_tipo_parte_edificio/{{ pbtype_obj.pk }}/"></a>
 
                         </td>

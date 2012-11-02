@@ -240,11 +240,11 @@ window.location = base_url;
                             {% endif %}
                         </td>
                         <td class="c">
-                            <a class="del" rel="{{ edt_obj.pk }}"
+                            <a class="del" rel="{{ edt_obj.pk }}" title="Eliminar tipo de equipo el&eacute;ctrico"
                                href="#"></a>
-                            <a class="delete"
+                            <a class="delete" title="Desactivar tipo de equipo el&eacute;ctrico"
                                href="/buildings/status_tipo_equipo_electrico/{{ edt_obj.pk }}/"></a>
-                            <a class="edit"
+                            <a class="edit" title="Editar tipo de equipo el&eacute;ctrico"
                                href="/buildings/editar_tipo_equipo_electrico/{{ edt_obj.pk }}/"></a>
 
                         </td>

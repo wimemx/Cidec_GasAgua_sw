@@ -272,11 +272,11 @@ window.location = base_url;
                             {% endif %}
                         </td>
                         <td class="c">
-                            <a class="del" rel="{{ company.company.pk }}"
+                            <a class="del" rel="{{ company.company.pk }}" title="Eliminar empresa"
                                href="#"></a>
-                            <a class="delete"
+                            <a class="delete" title="Desactivar Empresa"
                                href="/buildings/status_empresa/{{ company.company.pk }}/"></a>
-                            <a class="edit"
+                            <a class="edit" title="Editar empresa"
                                href="/buildings/editar_empresa/{{ company.pk }}/"></a>
 
                         </td>
