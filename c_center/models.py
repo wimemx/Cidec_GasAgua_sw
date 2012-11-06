@@ -133,6 +133,7 @@ class BuildingAttributes(models.Model):
     building_attributes_value_boolean = models.BooleanField(default=False)
     building_attributes_units_of_measurement = models.CharField(max_length=80, blank=True, null=True, default="")
     building_attributes_sequence = models.IntegerField(null=True, blank=True)
+    building_attributes_status = models.BooleanField(default=True)
 
     def __unicode__(self):
         return self.building_attributes_name
@@ -191,6 +192,7 @@ class PowermeterModel(models.Model):
     """
     powermeter_brand = models.CharField(max_length=128)
     powermeter_model = models.CharField(max_length=128)
+    status = models.BooleanField(default=True)
 
     def __unicode__(self):
         return self.powermeter_brand + " " + self.powermeter_model
@@ -218,6 +220,11 @@ class ProfilePowermeter(models.Model):
     """
     powermeter = models.OneToOneField(Powermeter, on_delete=models.PROTECT)
     profile_powermeter_status = models.IntegerField(choices=STATUS, default=1)
+    read_time_rate = models.IntegerField(default=300)
+    send_time_rate = models.IntegerField(default=300)
+    initial_send_time = models.TimeField(auto_now_add=True)
+    send_time_duration = models.IntegerField(default=300)
+    realtime = models.BooleanField(default=False)
 
     def __unicode__(self):
         return self.powermeter.powermeter_anotation
@@ -312,7 +319,7 @@ class PartOfBuilding(models.Model):
     part_of_building_name = models.CharField(max_length=128)
     part_of_building_description = models.TextField(max_length=256, null=True, blank=True)
     mts2_built = models.DecimalField(max_digits=6, decimal_places=2)
-
+    part_of_building_status = models.BooleanField(default=True)
     def __unicode__(self):
         return self.building.building_name + " - " + self.part_of_building_name
 
@@ -517,8 +524,20 @@ class IndustrialEquipment(models.Model):
     Almacena los equipos industriales (computadoras a las que se conectan los medidores electricos)
 
     """
-    indistrial_equipment_identifier = models.CharField(max_length=128)
+    alias = models.CharField(max_length=128)
     description = models.TextField(max_length=256, null=True, blank=True)
+    monitor_time_rate = models.IntegerField(default=120)
+    check_config_time_rate = models.IntegerField(default=120)
+    has_new_config = models.BooleanField(default=False)
+    new_config = models.TextField(blank=True, null=True)
+    has_new_alarm_config = models.BooleanField(default=False)
+    new_alarm_config = models.TextField(blank=True, null=True)
+    server = models.CharField(max_length=256, blank=True, null=True)
+    last_changed = models.DateTimeField(auto_now=True)
+    realtime = models.BooleanField(default=False)
+    status = models.BooleanField(default=False)
+    def __unicode__(self):
+        return self.alias
 
 class PowermeterForIndustrialEquipment(models.Model):
     """

@@ -76,6 +76,7 @@ class Role(models.Model):
     role_name = models.CharField(max_length=128)
     role_description = models.TextField(max_length=256, null=True, blank=True)
     role_importance = models.CharField(max_length=200)
+    status = models.BooleanField(default=True)
     def __unicode__(self):
         return self.role_name
 
@@ -97,6 +98,7 @@ class PermissionAsigment(models.Model):
 class UserRole(models.Model):
     user = models.ForeignKey(django.contrib.auth.models.User, on_delete=models.PROTECT)
     role = models.ForeignKey(Role, on_delete=models.PROTECT)
+    status = models.BooleanField(default=True)
     def __unicode__(self):
         return self.user.username + " - " + self.role.role_name
     class Meta:

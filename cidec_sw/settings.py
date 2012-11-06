@@ -43,7 +43,7 @@ MANAGERS = ADMINS
 DATABASES = {
 'default': {
     'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-    'NAME': 'audiwime_db',                      # Or path to database file if using sqlite3.
+    'NAME': 'satest_cidec',                      # Or path to database file if using sqlite3.
     'USER': 'root',                      # Not used with sqlite3.
     'PASSWORD': '',                  # Not used with sqlite3.
     'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
@@ -158,6 +158,7 @@ INSTALLED_APPS = (
     'electric_rates',
     'south',
     'data_warehouse',
+    'alarms',
     #'djcelery',
     'tareas',
 )
@@ -175,20 +176,44 @@ LOGGING = {
             '()': 'django.utils.log.RequireDebugFalse'
         }
     },
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+        },
     'handlers': {
         'mail_admins': {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler'
-        }
-    },
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': PROJECT_PATH + '/error_log.log',
+            'formatter': 'verbose'
+        },
+        'console':{
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        },
     'loggers': {
         'django.request': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
             'propagate': True,
-        },
-    }
+            },
+        'data_warehouse': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+            },
+        }
 }
 
 GRAPPELLI_ADMIN_TITLE = 'CIDEC'
