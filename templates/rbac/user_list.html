@@ -24,7 +24,7 @@
                 if (get[0]!=window.location.protocol+"//"+window.location
                         .host+window.location.pathname){
                     for(var i=0; i<get.length; i++){
-                        if (get[i]!="msg" && get[i]!="ntype" && get[i]!="page"){
+                        if (get[i]!="msj" && get[i]!="ntype" && get[i]!="page"){
                             base_url+="&"+get[i]+"="+get[get[i]];
                         }
                     }
@@ -39,7 +39,7 @@
                 if (get[0]!=window.location.protocol+"//"+window.location
                         .host+window.location.pathname){
                     for(var i=0; i<get.length; i++){
-                        if (get[i]!="order_username" && get[i]!="order_name" && get[i]!="order_mail"){
+                        if (get[i]!="order_username" && get[i]!="order_name" && get[i]!="order_mail" && get[i]!="order_status"){
                             base_url+="&"+get[i]+"="+get[get[i]];
                         }
                     }
@@ -68,15 +68,16 @@
                     dataType: 'json',
                     async: 'true',
                     success: function(datos){
-                        console.log("changed");
+                        window.location.reload();
                     }
                 });
             });
-            $("a.del").click(function(event){
+            $("a.switch").click(function(event){
                 event.preventDefault();
                 var url="/rbac/eliminar_usuario/"+$(this).attr("rel")+"/";
-                new Messi('&iquest;Est&aacute; seguro de que desea eliminar el usuario?',
-                        {title: 'Eliminar usuario', modal: true, buttons: [{id: 0,
+                var action = $(this).attr("title");
+                new Messi('&iquest;Est&aacute; seguro de que desea '+ action +' el usuario?',
+                        {title: action+' usuario', modal: true, buttons: [{id: 0,
                             label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
                         }],
                         callback: function(val) {
@@ -95,9 +96,10 @@
                         }
                     });
                     if(check){
-                    new Messi('&iquest;Est&aacute; seguro de que desea eliminar los usuarios' +
-                            'seleccionados?',
-                            {title: 'Eliminar usuarios', modal: true, buttons: [{id: 0,
+                    var action = $("#actions option:selected").text().toLowerCase();
+                    new Messi('&iquest;Est&aacute; seguro de que desea '+action+' los usuarios' +
+                            ' seleccionados?',
+                            {title: action+' usuarios', modal: true, buttons: [{id: 0,
                                 label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
                             }],
                                 callback: function(val) {
@@ -136,6 +138,15 @@
 
                 var base_url = window.location.pathname;
                 base_url+="?order_mail="+$("#sort_email").attr("rel");
+                base_url=append_get(base_url);
+                window.location = base_url;
+            });
+            $("#sort_status").click(function(e){
+                e.preventDefault();
+                var get = getUrlVars();
+
+                var base_url = window.location.pathname;
+                base_url+="?order_status="+$("#sort_status").attr("rel");
                 base_url=append_get(base_url);
                 window.location = base_url;
             });
@@ -195,25 +206,31 @@
                         <table>
                             <thead>
                             <tr>
-                                <th style="width: 25%;">
+                                <th style="width: 20%;">
                                     <a href="#" id="sort_username" rel="{{ order_username }}">
                                         Usuario
                                         <span class="sort"></span>
                                     </a>
                                 </th>
-                                <th style="width: 25%;">
+                                <th style="width: 20%;">
                                     <a href="#" id="sort_name" rel="{{ order_name }}">
                                         Nombre
                                         <span class="sort"></span>
                                     </a>
                                 </th>
-                                <th style="width: 25%;">
+                                <th style="width: 20%;">
                                     <a href="#" id="sort_email" rel="{{ order_email }}">
                                         Correo Electr&oacute;nico
                                         <span class="sort"></span>
                                     </a>
                                 </th>
-                                <th style="width: 25%;">Acciones</th>
+                                <th style="width: 25%;">
+                                    <a href="#" id="sort_status" rel="{{ order_status }}">
+                                        Status
+                                        <span class="sort"></span>
+                                    </a>
+                                </th>
+                                <th style="width: 20%;">Acciones</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -240,8 +257,10 @@
                                         </a>
                                     </td>
                                     <td class="c">
-                                        <a class="del" rel="{{ user.pk }}"
-                                           href="#" title="Eliminar usuario"></a>
+                                        <a href="#" rel="{{ user.pk }}" {% if user.is_active %}class="switch active_switch" title="desactivar"{% else %}class="switch inactive_switch" title="activar"{% endif %}>
+                                        </a>
+                                    </td>
+                                    <td class="c">
                                         <a class="edit"
                                            href="/panel_de_control/editar_usuario/{{ user.pk }}/"
                                            title="Editar usuario"></a>
@@ -253,7 +272,8 @@
                         <div id="table_footer">
                             <select id="actions" name="actions">
                                 <option value="0">Elije una Acci&oacute;n</option>
-                                <option value="delete">Eliminar</option>
+                                <option value="deactivate">Desactivar</option>
+                                <option value="activate">Activar</option>
                             </select>
                             <button class="fl aqua_btn" id="aplicar">Aplicar a la
                                 selecci&oacute;n</button>

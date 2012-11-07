@@ -1133,7 +1133,7 @@ def get_weekly_summary_comparison_kwh(request):
 
 def get_cluster_companies(request, id_cluster):
     cluster = get_object_or_404(Cluster, pk=id_cluster)
-    c_buildings= ClusterCompany.objects.filter(cluster=cluster)
+    c_buildings= ClusterCompany.objects.filter(cluster=cluster, company__company_status=1)
     companies = []
     for company in c_buildings:
         companies.append(dict(pk=company.company.pk, company=company.company.company_name))
@@ -1142,7 +1142,7 @@ def get_cluster_companies(request, id_cluster):
 
 def get_company_buildings(request, id_company):
     company = get_object_or_404(Company, pk=id_company)
-    c_buildings= CompanyBuilding.objects.filter(company=company)
+    c_buildings= CompanyBuilding.objects.filter(company=company, building__building_status=1)
     buildings = []
     for building in c_buildings:
         buildings.append(dict(pk=building.building.pk, building=building.building.building_name))

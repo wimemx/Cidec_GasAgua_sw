@@ -172,3 +172,14 @@ h2{
 .edit{
     background: url(../images/imgs_icns/edit_squere.png) no-repeat 50% 50%;
 }
+.inactive_switch, .active_switch{
+    display: inline-block;
+    width: 40px;
+    height: 18px;
+}
+.inactive_switch{
+    background: url(../images/imgs_icns/cidec_btn_off.png) no-repeat 50% 50%;
+}
+.active_switch{
+    background: url(../images/imgs_icns/cidec_btn_on.png) no-repeat 50% 50%;
+}

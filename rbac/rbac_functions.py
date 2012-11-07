@@ -35,6 +35,25 @@ def has_permission(user, operation, object):
             return True
     return False
 
+def get_allowed_clusters_for_operation(operation, permission, user):
+    """returns a list of clusters in wich the user has certain permission
+    operation.- Operation instance
+    permission.- Object name
+    user.- django.contrib.auth.models.User instance
+    """
+    if user.is_superuser:
+        return Cluster.objects.all()
+    else:
+        data_cntx = DataContextPermission.objects.filter(user_role__user=user, company=None, building=None, part_of_building=None)
+        roles_pks = [urol.role for urol in data_cntx]
+        clusters = []
+        for dc in data_cntx:
+            p_a = PermissionAsigment.objects.filter(role__pk__in=roles_pks, operation=operation, object__object_name=permission)
+            if p_a:
+                clusters.append(dc.cluster)
+        return clusters
+
+
 def is_allowed_operation_for_object(operation, permission, user, object, type):
         """returns true or false if the user has permission over the object or not
         operation = Operation class instance (ver, crear, modificar, etc)

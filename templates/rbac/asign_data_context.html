@@ -9,6 +9,26 @@
     <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
     <script type="text/javascript">
         $(function() {
+            //custom select for sidebar
+            $("#empresa").click(function(){
+                $("#company_list").slideToggle();
+            });
+            $("#company_list li").click(function(){
+                var texto=$(this).text().replace(/^\s*|\s*$/g,'');
+                var texto1 = texto.substring(0,17) + "...";
+                $("#empresa").text(texto1);
+                $("#company_list").slideUp();
+
+                $.ajax({
+                    url: "/reportes/set_default_building/" + $(this).attr("rel"),
+                    type: "GET",
+                    dataType: 'json',
+                    async: 'true',
+                    success: function(datos){
+                        window.location.reload();
+                    }
+                });
+            });
             $("#asign").hide();
             $("#agregar").hide();
             $( "#user" ).autocomplete({
@@ -37,14 +57,15 @@
                         async: 'true',
                         success: function(datos){
                             var append_text = '';
+                            $("#agregar").show();
                             if(datos.length >0){
                                 append_text = '<label for="company" class="g2">' +
                                         'Selecciona una empresa' +
                                         '</label>' +
                                         '<select name="company" id="company" class="g9">';
 
-                                append_text += '<option value="0">Seleccione ' +
-                                               'una empresa</option>';
+                                append_text += '<option value="todos">Todas las empresas (' +
+                                               datos.length+')</option>';
 
                                 for(var i=0; i<datos.length; i++){
                                     append_text+='<option value="' + datos[i].pk + '"> ' +
@@ -56,10 +77,10 @@
                                 $("#empresas").html(append_text);
                                 $("#edificios").html("");
                                 $("#partes").html("");
-                                $("#agregar").hide();
+
 
                                 $("#company").uniform().change(function(){
-                                    if ($(this).val()!="0" && $(this).val()!="todas"){
+                                    if ($(this).val()!="0" && $(this).val()!="todos"){
                                         $.ajax({
                                             url: "/buildings/get_company_buildings/"+$(this).val()+"/",
                                             type: "GET",
@@ -77,9 +98,6 @@
                                                     if(datos.length >1){
                                                         append_text += '<option value="todos">'+
                                                                 'Todos los edificios de la empresa('+datos.length+')</option>';
-                                                    }else{
-                                                        append_text += '<option value="0">Seleccione ' +
-                                                                'un edificio</option>';
                                                     }
 
                                                     for(var i=0; i<datos.length; i++){
@@ -125,18 +143,23 @@
                                                             });
                                                         }
                                                     });
-                                                }else{
-                                                    $("#agregar").hide();
-                                                    var append_text="<p class='c g12'>La empresa seleccionada no tiene edificios, por favor elija otra, o primer de de alta los edificios de la compa&ntilde;ia</p>";
-                                                    $("#edificios").html(append_text);
                                                 }
                                             }
                                         });
+                                    }else{
+                                        $("#edificios").html("");
+                                        $("#partes").html("");
                                     }
                                 });
                             }
                         }
                     });
+                }else{
+                    //si no selecciono cluster
+                    $("#empresas").html("");
+                    $("#edificios").html("");
+                    $("#partes").html("");
+                    $("#agregar").hide();
                 }
             });
         });
