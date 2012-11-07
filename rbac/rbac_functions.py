@@ -1,4 +1,5 @@
 from django.db.models.aggregates import Count
+from django.core.exceptions import ObjectDoesNotExist
 from rbac.models import  PermissionAsigment, UserRole, DataContextPermission, Operation, Object
 from c_center.models import ConsumerUnit
 
@@ -33,6 +34,55 @@ def has_permission(user, operation, object):
         if permission:
             return True
     return False
+
+def is_allowed_operation_for_object(operation, permission, user, object, type):
+        """returns true or false if the user has permission over the object or not
+        operation = Operation class instance (ver, crear, modificar, etc)
+        permission = Object class instance ("crear usuarios", "modificar roles", "etc")
+        user = auth.User instance
+        object = Cluster, Company, Building or PartOfBuilding instance
+        type = string, the type of the object
+        """
+        #Get the data context(s) in wich the user has a role
+        result = {
+                     'cluster': lambda : get_data_context_cluster(user, object),
+                     'company': lambda : get_data_context_company(user, object),
+                     'building': lambda : get_data_context_building(user, object),
+                     'part': lambda : get_data_context_part(user, object)
+                 }[type]()
+        if result:
+            for data_context in result:
+                rol = data_context.user_role.role
+                try:
+                    PermissionAsigment.objects.get(role=rol, operation=operation, object=permission)
+                except ObjectDoesNotExist:
+                    continue
+                else:
+                    return True
+            else:
+                return False
+        else:
+            return False
+
+def get_data_context_cluster(user, cluster):
+    dc = DataContextPermission.objects.filter(user_role__user=user, cluster=cluster,
+                                    company=None, building=None, part_of_building=None)
+    return dc
+
+def get_data_context_company(user, company):
+    dc = DataContextPermission.objects.filter(user_role__user=user, company=company,
+                                               building=None, part_of_building=None)
+    return dc
+
+def get_data_context_building(user, building):
+    dc = DataContextPermission.objects.filter(user_role__user=user, building=building,
+                                               part_of_building=None)
+    return dc
+
+def get_data_context_part(user, part):
+    dc = DataContextPermission.objects.filter(user_role__user=user, part_of_building=part)
+    return dc
+
 
 def get_buildings_context(user):
     """Gets and return a dict with the different buildings in the DataContextPermission

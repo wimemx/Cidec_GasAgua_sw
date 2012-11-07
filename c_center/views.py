@@ -48,6 +48,8 @@ GRAPHS =['Potencia Activa (KW)', 'Potencia Reactiva (KVar)', 'Factor de Potencia
 #    return "Task set to execute."
 
 def get_all_profiles_for_user(user):
+    """ returns an array of consumer_units in wich the user has access
+    """
     contexts = DataContextPermission.objects.filter(user_role__user=user)
     c_us = []
     for context in contexts:
@@ -381,6 +383,8 @@ def allowed_cu(consumerUnit, user, building):
             elif cntx.building == consumerUnit.building:
                 return True
         return False
+
+
 
 def is_in_part_of_building(consumerUnit, part_of_building):
     """ checks if consumerUnit is part of the part_of_building

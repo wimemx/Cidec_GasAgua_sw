@@ -113,13 +113,21 @@ class DataContextPermission(models.Model):
     """
     user_role = models.ForeignKey(UserRole, on_delete=models.PROTECT)
     cluster = models.ForeignKey(Cluster, on_delete=models.PROTECT)
-    company = models.ForeignKey(Company, on_delete=models.PROTECT)
-    building = models.ForeignKey(Building, on_delete=models.PROTECT)
-    part_of_building = models.ForeignKey(PartOfBuilding, on_delete=models.PROTECT, blank=True, null=True)
+    company = models.ForeignKey(Company, on_delete=models.PROTECT, blank=True, null=True, default=None)
+    building = models.ForeignKey(Building, on_delete=models.PROTECT, blank=True, null=True, default=None)
+    part_of_building = models.ForeignKey(PartOfBuilding, on_delete=models.PROTECT, blank=True, null=True, default=None)
 
     def __unicode__(self):
-        return self.user_role.user.username + " - " + \
-               self.building.building_name
+        s = self.user_role.user.username
+        if self.cluster:
+            s += " - " + self.cluster.cluster_name
+        if self.company:
+            s += " - " + self.company.company_name
+        if self.building:
+            s += " - " + self.building.building_name
+        if self.part_of_building:
+            s += " - " + self.part_of_building.part_of_building_name
+        return  s
 
 # ! ! ! NOTA: Los siguientes modelos solo son de referencia para el llenado de formularios,
 # para gestion de permisos se usaran los modelos especificados originalmente (arriba de esta
