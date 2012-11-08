@@ -1061,8 +1061,11 @@ def added_data_context_permissions(request):
         users_in_dc = DataContextPermission.objects.all()
         users_pks = [dc.user_role.user.pk for dc in users_in_dc]
         template_vars["usuarios"] = User.objects.filter(pk__in=users_pks)
-        #company_pks = [dc.company.pk for dc in users_in_dc]
-        #template_vars["empresas"] = Company.objects.filter(pk__in=company_pks)
+        company_pks = []
+        for dc in users_in_dc:
+            if dc.company:
+                company_pks.append(dc.company.pk)
+        template_vars["empresas"] = Company.objects.filter(pk__in=company_pks)
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("rbac/added_data_context.html", template_vars_template)
@@ -1110,7 +1113,7 @@ def search_users(request):
     if "term" in request.GET:
         term = request.GET['term']
         usuarios = User.objects.filter(Q(username__icontains=term)|Q(
-            first_name__icontains=term) | Q(last_name__icontains=term))
+            first_name__icontains=term) | Q(last_name__icontains=term)).exclude(is_active=False)
         users = []
         for usuario in usuarios:
             nombre = usuario.username + " - " + usuario.first_name + " " + usuario.last_name

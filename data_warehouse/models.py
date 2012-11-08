@@ -14,7 +14,7 @@ from django.db import models
 class FiveMinuteInstant(models.Model):
 
     instant_datetime = models.DateTimeField(primary_key=True,
-        verbose_name=u"Instante de Tiempo")
+                                            verbose_name=u"Instante de Tiempo")
 
     def __unicode__(self):
 
@@ -38,7 +38,7 @@ class FiveMinuteInterval(models.Model):
 class HourInstant(models.Model):
 
     instant_datetime = models.DateTimeField(primary_key=True,
-        verbose_name=u"Instante de Tiempo")
+                                            verbose_name=u"Instante de Tiempo")
 
     def __unicode__(self):
 
@@ -63,7 +63,7 @@ class HourInterval(models.Model):
 class DayInstant(models.Model):
 
     instant_datetime = models.DateTimeField(primary_key=True,
-        verbose_name=u"Instante de Tiempo")
+                                            verbose_name=u"Instante de Tiempo")
 
     def __unicode__(self):
 
@@ -88,7 +88,7 @@ class DayInterval(models.Model):
 class WeekInstant(models.Model):
 
     instant_datetime = models.DateTimeField(primary_key=True,
-        verbose_name=u"Instante de Tiempo")
+                                            verbose_name=u"Instante de Tiempo")
 
     def __unicode__(self):
 
@@ -116,14 +116,14 @@ class ConsumerUnit(models.Model):
     transactional_id = models.IntegerField(primary_key=True)
     building_name = models.CharField(max_length=128, verbose_name=u"Nombre de Edificio")
     part_of_building_name = models.CharField(max_length=128,
-        null=True,
-        blank=True,
-        default=u"",
-        verbose_name=u"Nombre de Parte del Edificio")
+                                             null=True,
+                                             blank=True,
+                                             default=u"",
+                                             verbose_name=u"Nombre de Parte del Edificio")
 
     electric_device_type_name = models.CharField(
-        max_length=128,
-        verbose_name=u"Nombre del Tipo de Dispositivo Electrico")
+                                    max_length=128,
+                                    verbose_name=u"Nombre del Tipo de Dispositivo Electrico")
 
     def __unicode__(self):
 
@@ -180,7 +180,6 @@ class ConsumerUnitFiveMinuteElectricData(models.Model):
     kvar_import_sliding_window_demand = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=None)
     kVA_sliding_window_demand = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=None)
     kvahTOTAL = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=None)
-    kvahTOTAL = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=None)
 
     class Meta:
 
@@ -191,6 +190,25 @@ class ConsumerUnitFiveMinuteElectricData(models.Model):
         return self.consumer_unit.__unicode__() +\
                u" -- " +\
                self.instant.__unicode__()
+
+
+class ConsumerUnitFiveMIntElectricData(models.Model):
+
+    consumer_unit = models.ForeignKey(ConsumerUnit, on_delete=models.PROTECT)
+    interval = models.ForeignKey(DayInterval, on_delete=models.PROTECT)
+    kWh = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=None)
+    kvarh = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=None)
+    kvah = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=None)
+
+    class Meta:
+
+        unique_together = ("consumer_unit", "interval")
+
+    def __unicode__(self):
+
+        return self.consumer_unit.__unicode__() +\
+               u" -- " +\
+               self.interval.__unicode__()
 
 
 class ConsumerUnitHourElectricData(models.Model):
@@ -247,6 +265,25 @@ class ConsumerUnitHourElectricData(models.Model):
                self.instant.__unicode__()
 
 
+class ConsumerUnitHourIntElectricData(models.Model):
+
+    consumer_unit = models.ForeignKey(ConsumerUnit, on_delete=models.PROTECT)
+    interval = models.ForeignKey(DayInterval, on_delete=models.PROTECT)
+    kWh = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=None)
+    kvarh = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=None)
+    kvah = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=None)
+
+    class Meta:
+
+        unique_together = ("consumer_unit", "interval")
+
+    def __unicode__(self):
+
+        return self.consumer_unit.__unicode__() +\
+               u" -- " +\
+               self.interval.__unicode__()
+
+
 class ConsumerUnitDayElectricData(models.Model):
 
     consumer_unit = models.ForeignKey(ConsumerUnit, on_delete=models.PROTECT)
@@ -301,6 +338,25 @@ class ConsumerUnitDayElectricData(models.Model):
                self.instant.__unicode__()
 
 
+class ConsumerUnitDayIntElectricData(models.Model):
+
+    consumer_unit = models.ForeignKey(ConsumerUnit, on_delete=models.PROTECT)
+    interval = models.ForeignKey(DayInterval, on_delete=models.PROTECT)
+    kWh = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=None)
+    kvarh = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=None)
+    kvah = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=None)
+
+    class Meta:
+
+        unique_together = ("consumer_unit", "interval")
+
+    def __unicode__(self):
+
+        return self.consumer_unit.__unicode__() +\
+               u" -- " +\
+               self.interval.__unicode__()
+
+
 class ConsumerUnitWeekElectricData(models.Model):
 
     consumer_unit = models.ForeignKey(ConsumerUnit, on_delete=models.PROTECT)
@@ -352,3 +408,22 @@ class ConsumerUnitWeekElectricData(models.Model):
         return self.consumer_unit.__unicode__() +\
                u" -- " +\
                self.instant.__unicode__()
+
+
+class ConsumerUnitWeekIntElectricData(models.Model):
+
+    consumer_unit = models.ForeignKey(ConsumerUnit, on_delete=models.PROTECT)
+    interval = models.ForeignKey(DayInterval, on_delete=models.PROTECT)
+    kWh = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=None)
+    kvarh = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=None)
+    kvah = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=None)
+
+    class Meta:
+
+        unique_together = ("consumer_unit", "interval")
+
+    def __unicode__(self):
+
+        return self.consumer_unit.__unicode__() +\
+               u" -- " +\
+               self.interval.__unicode__()
