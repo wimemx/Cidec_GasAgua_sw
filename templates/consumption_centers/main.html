@@ -19,6 +19,10 @@
         var f1_end = encodeURIComponent($("#range1_end").val());
         var f2_init = encodeURIComponent($("#range2_init").val());
         var f2_end = encodeURIComponent($("#range2_end").val());
+        var f3_init = encodeURIComponent($("#range3_init").val());
+        var f3_end = encodeURIComponent($("#range3_end").val());
+        var f4_init = encodeURIComponent($("#range4_init").val());
+        var f4_end = encodeURIComponent($("#range4_end").val());
 
         url=url.replace('#','').split("?");
         if (url.length > 1){
@@ -28,6 +32,10 @@
             hash = hash.replace(/&{0,1}date-end01=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
             hash = hash.replace(/&{0,1}date-start02=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
             hash = hash.replace(/&{0,1}date-end02=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
+            hash = hash.replace(/&{0,1}date-start03=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
+            hash = hash.replace(/&{0,1}date-end03=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
+            hash = hash.replace(/&{0,1}date-start04=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
+            hash = hash.replace(/&{0,1}date-end04=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
             //hash is equal to all the get vars but the dates
             url = url[0] + "?" + hash + "&";
         }else{
@@ -56,9 +64,54 @@
                 url += "&date-end02=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
             }
         }
+        if(f3_init != ''){
+            url += "&date-start03=" + f3_init;
+            if(f3_end != ''){
+                url += "&date-end03=" + f3_end;
+            }else{
+                url += "&date-end03=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
+            }
+        }
+        if(f4_init != ''){
+            url += "&date-start04=" + f4_init;
+            if(f4_end != ''){
+                url += "&date-end04=" + f4_end;
+            }else{
+                url += "&date-end04=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
+            }
+        }
         return url;
     }
+    function append_parameters(base_url){
+        var get = getUrlVars();
+        if(get.length>0){
+            if (get[0]!=window.location.protocol+"//"+window.location
+                    .host+window.location.pathname){
+                for(var i=0; i<get.length; i++){
+                    if (get[i]!="date-start01" || get[i]!="date-start02" || get[i]!="date-start03" || get[i]!="date-start04" || get[i]!="consumer-unit01" || get[i]!="consumer-unit02" || get[i]!="consumer-unit03" || get[i]!="consumer-unit04" ){
+                        base_url+="&"+get[i]+"="+get[get[i]];
+                    }
+                }
+            }
 
+        }
+        return base_url
+    }
+    function append_parameters2(base_url){
+        var get = getUrlVars();
+        if(get.length>0){
+            if (get[0]!=window.location.protocol+"//"+window.location
+                    .host+window.location.pathname){
+                for(var i=0; i<get.length; i++){
+                    if (get[i]!="graph" || get[i]!="granularity" ){
+                        base_url+="&"+get[i]+"="+get[get[i]];
+                    }
+                }
+            }
+
+        }
+        return base_url
+    }
     function graphsReload(){
         /* Takes the date in the range inputs and reloads the graph data */
 
@@ -66,37 +119,55 @@
         var f1_end = encodeURIComponent($("#range1_end").val());
         var f2_init = encodeURIComponent($("#range2_init").val());
         var f2_end = encodeURIComponent($("#range2_end").val());
+        var f3_init = encodeURIComponent($("#range3_init").val());
+        var f3_end = encodeURIComponent($("#range3_end").val());
+        var f4_init = encodeURIComponent($("#range4_init").val());
+        var f4_end = encodeURIComponent($("#range4_end").val());
         if(f1_init!=''){
-            var url = $("#graphFrame").attr("src").replace('#','').split("?");
-
+            var url = $("#graphFrame").attr("src").replace('#','').split("&");
+            var base_url=url[0];
+            console.log(base_url);
+            base_url+='&consumer-unit01={{ consumer_unit.pk }}';
             if (url.length > 1){
-                var hash = url[1];
 
-                hash = hash.replace(/&{0,1}date-start01=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}/, '');
-                hash = hash.replace(/&{0,1}date-end01=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}/, '');
-                hash = hash.replace(/&{0,1}date-start02=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}/, '');
-                hash = hash.replace(/&{0,1}date-end02=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}/, '');
-                url = url[0] + "?" + hash + "&";
-
-
-
-
-                url += "date-start01=" + f1_init;
+                base_url += "&date-start01=" + f1_init;
                 if(f1_end != ''){
-                    url += "&date-end01=" + f1_end;
+                    base_url += "&date-end01=" + f1_end;
                 }else{
-                    url += "&date-end01=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
+                    base_url += "&date-end01=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
                 }
                 if(f2_init != ''){
-                    url += "&date-start02=" + f2_init;
+                    base_url += "&date-start02=" + f2_init;
                     if(f2_end != ''){
-                        url += "&date-end02=" + f2_end;
+                        base_url += "&date-end02=" + f2_end;
                     }else{
-                        url += "&date-end02=" + encodeURIComponent(new Date());
-                    }
-                }
+                        base_url += "&date-end02=" + encodeURIComponent(new Date());
 
-                makeIframe(url);
+                    }
+                    base_url += "&consumer-unit02={{ consumer_unit.pk }}"
+                }
+                if(f3_init != ''){
+                    base_url += "&date-start03=" + f3_init;
+                    if(f3_end != ''){
+                        base_url += "&date-end03=" + f3_end;
+                    }else{
+                        base_url += "&date-end03=" + encodeURIComponent(new Date());
+
+                    }
+                    base_url += "&consumer-unit03={{ consumer_unit.pk }}"
+                }
+                if(f4_init != ''){
+                    base_url += "&date-start04=" + f4_init;
+                    if(f4_end != ''){
+                        base_url += "&date-end04=" + f4_end;
+                    }else{
+                        base_url += "&date-end04=" + encodeURIComponent(new Date());
+
+                    }
+                    base_url += "&consumer-unit04={{ consumer_unit.pk }}"
+                }
+                base_url=append_parameters(base_url)+"&granularity=day";
+                makeIframe(base_url);
             }else{
                 $("#graph_container").html("<h2>Por favor, " +
                         "primero seleccione el tipo de gr&aacute;fica a mostrar</h2>" +
@@ -125,14 +196,10 @@
     var url = window.location.href;
     window.history.replaceState(url,"Reporte el&eacute;ctrico", url);
 
-
-
-
-
     var now3 = new Date();
     now3.addDays(-4);
     var now4 = new Date();
-    var mul_date = false;
+    var mul_date, mul_date3, mul_date4 = false;
     $('#widgetCalendar').DatePicker({
         flat: true,
         format: 'Y-m-d',
@@ -152,7 +219,6 @@
         }
     });
     $('#widgetCalendar').DatePickerClear();
-    $('#widgetCalendar2').DatePickerClear();
     $('#widgetCalendar2').DatePicker({
         flat: true,
         format: 'Y-m-d',
@@ -170,6 +236,49 @@
         }
     });
     $('#widgetCalendar2').DatePickerClear();
+
+    //-----3rd and 4th calendars-------
+    $('#widgetCalendar3').DatePicker({
+        flat: true,
+        format: 'Y-m-d',
+        date: [new Date(now3), new Date(now4)],
+        calendars: 2,
+        mode: 'range',
+        starts: 1,
+        onChange: function(formated) {
+            $('#range3_init').val(formated[0]);
+            $('#range3_end').val(formated[1]);
+            if(!mul_date){
+                $('#widgetField span').css('font-size','16px');
+                $('#widgetField span').get(0).innerHTML = formated.join(' &ndash; ');
+            }else{
+                var inner_text='';
+                inner_text= $('#range1_init').val() + " &ndash; " + $('#range1_end').val() + " contra: " + $('#range2_init').val() + " &ndash; " + $('#range2_end').val();
+                inner_text+= " contra "+$('#range3_init').val() + " &ndash; " + $('#range3_end').val();
+                $('#widgetField span').get(0).innerHTML = inner_text;
+            }
+    }
+    });
+    $('#widgetCalendar3').DatePickerClear();
+    $('#widgetCalendar4').DatePicker({
+        flat: true,
+        format: 'Y-m-d',
+        date: [new Date(now3), new Date(now4)],
+        calendars: 2,
+        mode: 'range',
+        starts: 1,
+        onChange: function(formated) {
+            $('#range4_init').val(formated[0]);
+            $('#range4_end').val(formated[1]);
+            var inner_text = '';
+            inner_text= $('#range1_init').val() + " &ndash; " + $('#range1_end').val() + " contra: " + $('#range2_init').val() + " &ndash; " + $('#range2_end').val();
+            inner_text+= " contra "+$('#range3_init').val() + " &ndash; " + $('#range3_end').val() + " contra: " + $('#range4_init').val() + " &ndash; " + $('#range4_end').val();
+            $('#widgetField span').get(0).innerHTML = inner_text;
+            $('#widgetField span').css('font-size','11px');
+        }
+    });
+    $('#widgetCalendar4').DatePickerClear();
+
     var state = false;
     $('#widgetField').click(function(){
         $('#datepicker').slideToggle();
@@ -194,6 +303,36 @@
         $("#widgetCalendar2").slideToggle();
     });
 
+    $("#prev_dates3").click(function(){
+        //maneja la visibilidad del calendario del rango adicional
+        if($("#widgetCalendar3").is(":visible")){
+            mul_date3 = false;
+            $('#range3_init').val("");
+            $('#range3_end').val("");
+            var span_content=$('#widgetField span').html().split(" contra: ")
+            $('#widgetField span').html(span_content[0]+" contra: "+span_content[1]);
+            $('#widgetCalendar3').DatePickerClear();
+        }else{
+            mul_date = true;
+        }
+        $("#widgetCalendar3").slideToggle();
+    });
+
+    $("#prev_dates4").click(function(){
+        //maneja la visibilidad del calendario del rango adicional
+        if($("#widgetCalendar4").is(":visible")){
+            mul_date4 = false;
+            $('#range4_init').val("");
+            $('#range4_end').val("");
+            var span_content=$('#widgetField span').html().split(" contra: ")
+            $('#widgetField span').html(span_content[0]+" contra: "+span_content[1]+" contra: "+span_content[2]);
+            $('#widgetCalendar4').DatePickerClear();
+        }else{
+            mul_date = true;
+        }
+        $("#widgetCalendar4").slideToggle();
+    });
+
     $("#types_graphs ul li").each(function(){
         // Carga el iframe de la grafica correspondiente,
         $(this).click(function(){
@@ -206,30 +345,37 @@
                     break;
                 {% endfor %}
             }
-            var get_vars = $("#graphFrame").attr("src").split('?')[1]
 
 
-            if(get_vars != undefined){
-                get_vars=get_vars.replace(/&consumer\-unit01=\w*/g,"");
-                get_vars=get_vars.replace(/graph=\w*/g,"");
-                get_vars=get_vars.replace(/&granularity=\w*/g,"");
+            //var get_vars = $("#graphFrame").attr("src").split('?')[1]
 
 
-                src += get_vars;
 
-            }else{
-                src = clean_dates(src);
+                src+='&granularity=day';
+                src=append_parameters2(src);
 
-            }
-            src+="&consumer-unit01="+{{ consumer_unit.pk }}+"&granularity=hour";
+                src+="&consumer-unit01="+{{ consumer_unit.pk }};
+                if ($("#range2_init").val()!=''){
+                    src+="&consumer-unit02="+{{ consumer_unit.pk }};
+                }
+                if ($("#range3_init").val()!=''){
+                    src+="&consumer-unit03="+{{ consumer_unit.pk }};
+                }
+                if ($("#range4_init").val()!=''){
+                    src+="&consumer-unit04="+{{ consumer_unit.pk }};
+                }
 
-            makeIframe(src);
-            //cambia la clase de la pestania
-            $(this).addClass("active");
+                //makeIframe(src);
+                src=clean_dates(src)
+                makeIframe(src);
+                //cambia la clase de la pestania
+                $(this).addClass("active");
+
+
 
         });
     });
-    $("#compare_to").change(function(){
+    /*$("#compare_to").change(function(){
         //agrega y refresca los datos para ser comparados contra otra entidad
         var compared_companies=$("#evaluated_companies").val().split(",");
         if($(this).val()!=0 && compared_companies.length < 4){
@@ -255,7 +401,7 @@
                 $("#evaluated_companies").val($("#evaluated_companies").val() + "," + $(this).val());
             }
         }
-    });
+    });*/
 
     refresh_iframe_height();
 
@@ -263,6 +409,7 @@
     $("#empresa").click(function(){
         $("#company_list").slideToggle();
     });
+
     $("#company_list li").click(function(){
         var texto=$(this).text().replace(/^\s*|\s*$/g,'');
         var texto1 = texto.substring(0,17) + "...";
@@ -361,9 +508,40 @@
                     <label for="range2_end">Hasta</label>
                     <input type="text" name="range2_end" id="range2_end" readonly="readonly"/>
                 </div>
+
+                <label id="compare_prev_date3"><input type="checkbox" id="prev_dates3">Comparar con fechas previas</label>
+                <div>
+                    <label for="range3_init">Desde</label>
+                    <input type="text" name="range3_init" id="range3_init" readonly="readonly"/>
+                </div>
+                <span>&ndash;</span>
+                <div>
+                    <label for="range3_end">Hasta</label>
+                    <input type="text" name="range3_end" id="range3_end" readonly="readonly"/>
+                </div>
+                <label id="compare_prev_date4"><input type="checkbox" id="prev_dates4">Comparar con fechas previas</label>
+                <div>
+                    <label for="range4_init">Desde</label>
+                    <input type="text" name="range2_init" id="range4_init" readonly="readonly"/>
+                </div>
+                <span>&ndash;</span>
+                <div>
+                    <label for="range4_end">Hasta</label>
+                    <input type="text" name="range2_end" id="range4_end" readonly="readonly"/>
+                </div>
+
+
                 <a href="#" class="aqua_btn">Aplicar</a>
             </div>
             <div id="widgetCalendar2">
+
+            </div>
+
+            <div id="widgetCalendar3">
+
+            </div>
+
+            <div id="widgetCalendar4">
 
             </div>
         </div>

@@ -1,7 +1,8 @@
 from django.db.models.aggregates import Count
 from django.core.exceptions import ObjectDoesNotExist
 from rbac.models import  PermissionAsigment, UserRole, DataContextPermission, Operation, Object
-from c_center.models import ConsumerUnit
+from c_center.models import ConsumerUnit, Cluster, CompanyBuilding, Company, ClusterCompany, Building
+from variety import unique_from_array
 
 def check_roles_permission(object):
     """ Check the roles that have an allowed operation over an object
@@ -35,7 +36,7 @@ def has_permission(user, operation, object):
             return True
     return False
 
-def get_allowed_clusters_for_operation(operation, permission, user):
+def get_all_clusters_for_operation(operation, permission, user):
     """returns a list of clusters in wich the user has certain permission
     operation.- Operation instance
     permission.- Object name
@@ -52,7 +53,7 @@ def get_allowed_clusters_for_operation(operation, permission, user):
                 clusters.append(dc.cluster)
         return clusters
 
-def get_allowed_companies_for_operation(operation, permission, user):
+def get_all_companies_for_operation(operation, permission, user):
     """returns a list of clusters in wich the user has certain permission
     operation.- Operation instance
     permission.- Object name
@@ -127,21 +128,35 @@ def get_data_context_part(user, part):
 def get_buildings_context(user):
     """Gets and return a dict with the different buildings in the DataContextPermission
     for the active user
+    todo get ordered to show:
+    -company
+    --building1
+    --building2
+    -company2
+    --building3
     """
-    datacontext = DataContextPermission.objects.filter(user_role__user=user).values(
-        "building__building_name", "building").annotate(Count("building"))
+    datacontext = DataContextPermission.objects.filter(user_role__user=user)
     buildings=[]
-    for building in datacontext:
-        buildings.append(dict(building_pk=building['building'],
-            building_name=building['building__building_name']))
+    for dc in datacontext:
+        if dc.building:
+            buildings.append(dict(building_pk=dc.building.pk,
+                building_name=dc.building.building_name))
+        elif dc.company:
+            building_comp = CompanyBuilding.objects.filter(company=dc.company)
+            for bc in building_comp:
+                buildings.append(dict(building_pk=bc.building.pk,
+                    building_name=bc.building.building_name))
+        elif dc.cluster:
+            clust_comp = ClusterCompany.objects.filter(cluster=dc.cluster)
+            for cc in clust_comp:
+                building_comp = CompanyBuilding.objects.filter(company=cc.company)
+                for bc in building_comp:
+                    buildings.append(dict(building_pk=bc.building.pk,
+                        building_name=bc.building.building_name))
+    buildings = unique_from_array(buildings)
+
     return buildings
 
 def default_consumerUnit(user, building):
-    context = DataContextPermission.objects.filter(user_role__user=user, building=building)
-    context = context[0]
-    if not context.part_of_building:
-        cu = ConsumerUnit.objects.get(building=building, electric_device_type__electric_device_type_name="Total Edificio")
-        return cu
-    else:
-        cu = ConsumerUnit.objects.get(part_of_building=context.part_of_building)
-        return cu
+    cu = ConsumerUnit.objects.get(building=building, electric_device_type__electric_device_type_name="Total Edificio")
+    return cu

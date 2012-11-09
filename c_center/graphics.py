@@ -6,6 +6,7 @@
 import datetime
 from datetime import timedelta
 import json
+import string
 import sys
 
 #
@@ -129,6 +130,7 @@ def normalize_electric_data_list(electric_data_list):
         if not is_prepare_electric_data_successful:
             return 0
 
+    return minimum_length
 
 def prepare_electric_data(electric_data_values):
 
@@ -236,16 +238,12 @@ def consumed_graph(request):
             number_intervals = delta_days.days / 7
 
         fin = inicio + delta
-
-
         electric_data_values = data_warehouse.views.get_consumer_unit_electric_data(
-            electric_data,
-            granularity,
-            id,
-            inicio,
-            fin)
-
-        print electric_data_values
+                                   electric_data,
+                                   granularity,
+                                   id,
+                                   inicio,
+                                   fin)
 
         electric_data_list.append(electric_data_values)
 
@@ -280,22 +278,31 @@ def consumed_graph(request):
         "consumption_centers/graphs/graphics.html",
         template_context)
 
+
 def render_graphics(request):
 
     if request.method == "GET":
         try:
             electric_data = request.GET['graph']
             granularity = request.GET['granularity']
-            if electric_data == "TotalkWhIMPORT":
-                electric_data = "kWhIMPORT"
-            if electric_data == "TotalkvarhIMPORT":
-                electric_data = "kvarhIMPORT"
+
         except KeyError:
             return django.http.HttpResponse("")
 
-        if electric_data == "kwh_consumido" or electric_data == "kvarh_consumido" :
-            return consumed_graph(request)
         template_variables = dict()
+        suffix_consumed = "_consumido"
+        interval_graphic = False
+        suffix_index = string.find(electric_data, suffix_consumed)
+        if suffix_index >= 0:
+            electric_data = electric_data[:suffix_index]
+            interval_graphic = True
+
+        print "electric_data"
+        print electric_data
+
+#        if electric_data == "kwh_consumido" or electric_data == "kvarh_consumido" :
+#            return consumed_graph(request)
+
         data = []
         consumer_unit_counter = 1
         consumer_unit_get_key = "consumer-unit%02d" % consumer_unit_counter
@@ -326,13 +333,23 @@ def render_graphics(request):
         electric_data_list = []
         consumer_unit_and_time_interval_information_list = []
         for id, start, end in data:
-            electric_data_values = data_warehouse.views.get_consumer_unit_electric_data(
-                                     electric_data,
-                                     granularity,
-                                     id,
-                                     start,
-                                     end)
+            if interval_graphic:
+                electric_data_values =\
+                    data_warehouse.views.get_consumer_unit_electric_data_interval(
+                        electric_data,
+                        granularity,
+                        id,
+                        start,
+                        end)
 
+            else:
+                electric_data_values =\
+                    data_warehouse.views.get_consumer_unit_electric_data(
+                        electric_data,
+                        granularity,
+                        id,
+                        start,
+                        end)
 
             electric_data_list.append(electric_data_values)
 
@@ -359,6 +376,7 @@ def render_graphics(request):
 
         template_variables['columns'] = consumer_unit_and_time_interval_information_list
         template_variables['limits'] = limits
+        template_variables['granularity'] = granularity
 
         template_context = django.template.context.RequestContext(request,
                                                                   template_variables)
@@ -380,8 +398,7 @@ def render_graphics_json(request):
             consumer_unit01 = request.GET['consumer-unit01']
 
         except KeyError:
-            raise django.http.HttpResponse(status=500)
-            raise django.http.HttpResponse(status=500)
+            return django.http.HttpResponse(status=500)
 
     else:
-        raise django.http.Http404
+        return django.http.Http404

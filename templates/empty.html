@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block titulo %}Sin acciones disponibles{% endblock %}
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/consumption_centers/main.css" type="text/css">
+
+{% endblock %}
+{% block externaljs %}
+{% endblock %}
+{% block document_ready %}
+    //custom select for sidebar
+    $("#empresa").click(function(){
+        $("#company_list").slideToggle();
+    });
+    $("#company_list li").click(function(){
+        var texto=$(this).text().replace(/^\s*|\s*$/g,'');
+        var texto1 = texto.substring(0,17) + "...";
+        $("#empresa").text(texto1);
+        $("#company_list").slideUp();
+
+        $.ajax({
+            url: "/reportes/set_default_building/" + $(this).attr("rel"),
+            type: "GET",
+            dataType: 'json',
+            async: 'true',
+            success: function(datos){
+            window.location.reload();
+            }
+        });
+    });
+    var url = window.location.href;
+    window.history.replaceState(url,"Reporte el&eacute;ctrico", url);
+{% endblock %}
+{% block contenido %}
+    <div id="bread_crumbs">
+        <ul>
+            <li><a href="/main/">Inicio</a></li>
+            <li><a href="/main/">Reportes</a></li>
+        </ul>
+
+    </div>
+    <div id="contenido_interno">
+        <h2 id="titulo_reporte">Bienvenido</h2>
+
+
+        <div class="divider" id="divider_top">&nbsp;</div>
+
+        <p>
+            Por el momento no hemos encontrado unidades de consumo para tu esquema de permisos.
+            Por favor contacta con tu adminsitrador para resolver esto.
+        </p>
+
+
+        <div id="graphs_container">
+
+
+        </div>
+
+
+    </div>
+{% endblock %}

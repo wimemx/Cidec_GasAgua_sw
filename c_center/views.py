@@ -146,10 +146,17 @@ def set_default_session_vars(request, datacontext):
     if "company" not in request.session and request.session['main_building']:
         c_b = CompanyBuilding.objects.get(building=request.session['main_building'])
         request.session['company'] = c_b.company
-
-    if 'consumer_unit' not in request.session and request.session['main_building']:
+    elif request.session['company'] and request.session['main_building']:
+        c_b = CompanyBuilding.objects.get(building=request.session['main_building'])
+        request.session['company'] = c_b.company
+    else:
+        request.session['company']= None
+    if ('consumer_unit' not in request.session and request.session['main_building']) or \
+       (request.session['consumer_unit']and request.session['main_building']):
         #sets the default ConsumerUnit (the first in ConsumerUnit for the main building)
         request.session['consumer_unit'] = default_consumerUnit(request.user, request.session['main_building'])
+    else:
+        request.session['consumer_unit'] = None
         #try:
         #    c_unit = ConsumerUnit.objects.filter(building=request.session['main_building'])
         #    request.session['consumer_unit'] = c_unit[0]
@@ -166,12 +173,16 @@ def set_default_building(request, id_building):
     request.session['company'] = c_b.company
     request.session['consumer_unit'] = default_consumerUnit(request.user, request.session['main_building'])
 
-    dicc = dict(edificio=request.session['main_building'].building_name,
-        electric_device_type=request.session['consumer_unit'].electric_device_type.electric_device_type_name)
-    data = simplejson.dumps( dicc )
-    if 'referer' in request.GET:
-        if request.GET['referer'] == "cfe":
-            return HttpResponseRedirect("/reportes/cfe/")
+    if request.session['consumer_unit']:
+
+        dicc = dict(edificio=request.session['main_building'].building_name,
+            electric_device_type=request.session['consumer_unit'].electric_device_type.electric_device_type_name)
+        data = simplejson.dumps( dicc )
+        if 'referer' in request.GET:
+            if request.GET['referer'] == "cfe":
+                return HttpResponseRedirect("/reportes/cfe/")
+    else:
+        data = ""
     return HttpResponse(content=data,content_type="application/json")
 
 
@@ -482,31 +493,36 @@ def main_page(request):
     sets the session variables needed to show graphs
     """
     datacontext = get_buildings_context(request.user)
+
     set_default_session_vars(request, datacontext)
+    #print request.session['consumer_unit'], request.session['main_building'], request.session['company']
+    if request.session['consumer_unit'] and request.session['main_building']:# and request.session['company']:
+        graphs = graphs_permission(request.user, request.session['consumer_unit'])
+        if graphs:
+            #valid years for reporting
+            request.session['years'] = [__date.year for __date in
+                                        ElectricDataTemp.objects.all().dates('medition_date', 'year')]
 
-    graphs = graphs_permission(request.user, request.session['consumer_unit'])
-
-    if graphs:
-
-        #valid years for reporting
-        request.session['years'] = [__date.year for __date in
-                                    ElectricDataTemp.objects.all().dates('medition_date', 'year')]
-
-        template_vars = {"graphs":graphs, "datacontext":datacontext,
-                         'empresa': request.session['main_building'],
-                         'company': request.session['company'],
-                         'consumer_unit': request.session['consumer_unit'],
-                         }
-        template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("consumption_centers/main.html", template_vars_template)
+            template_vars = {"graphs":graphs, "datacontext":datacontext,
+                             'empresa': request.session['main_building'],
+                             'company': request.session['company'],
+                             'consumer_unit': request.session['consumer_unit'],
+                             }
+            template_vars_template = RequestContext(request, template_vars)
+            return render_to_response("consumption_centers/main.html", template_vars_template)
+        else:
+            return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        template_vars = {"datacontext":datacontext}
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("empty.html", template_vars_template)
 
 def cfe_bill(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
+    datacontext = get_buildings_context(request.user)
     if has_permission(request.user, VIEW, "Consultar recibo CFE") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
+
         set_default_session_vars(request, datacontext)
 
         today = datetime.datetime.today().replace(hour=0,minute=0,second=0,tzinfo=timezone.get_current_timezone())
@@ -525,15 +541,15 @@ def cfe_bill(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/cfe.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def cfe_calculations(request):
     """Renders the cfe bill and the historic data chart"""
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
+    datacontext = get_buildings_context(request.user)
     if has_permission(request.user, VIEW, "Consultar recibo CFE") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
         set_default_session_vars(request, datacontext)
 
         template_vars={"type":"cfe", "datacontext":datacontext,
@@ -578,7 +594,7 @@ def cfe_calculations(request):
             return render_to_response("consumption_centers/graphs/cfe_bill_error.html",
                 template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 
@@ -1131,38 +1147,11 @@ def get_weekly_summary_comparison_kwh(request):
     else:
         raise Http404
 
-def get_cluster_companies(request, id_cluster):
-    cluster = get_object_or_404(Cluster, pk=id_cluster)
-    c_buildings= ClusterCompany.objects.filter(cluster=cluster, company__company_status=1)
-    companies = []
-    for company in c_buildings:
-        companies.append(dict(pk=company.company.pk, company=company.company.company_name))
-    data=simplejson.dumps(companies)
-    return HttpResponse(content=data,content_type="application/json")
-
-def get_company_buildings(request, id_company):
-    company = get_object_or_404(Company, pk=id_company)
-    c_buildings= CompanyBuilding.objects.filter(company=company, building__building_status=1)
-    buildings = []
-    for building in c_buildings:
-        buildings.append(dict(pk=building.building.pk, building=building.building.building_name))
-    data=simplejson.dumps(buildings)
-    return HttpResponse(content=data,content_type="application/json")
-
-def get_parts_of_building(request, id_building):
-    building = get_object_or_404(Building, pk=id_building)
-    p_buildings= PartOfBuilding.objects.filter(building=building)
-    parts = []
-    for part in p_buildings:
-        parts.append(dict(pk=part.pk, part=part.part_of_building_name))
-    data=simplejson.dumps(parts)
-    return HttpResponse(content=data,content_type="application/json")
-
 def add_building_attr(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
+    datacontext = get_buildings_context(request.user)
     if has_permission(request.user, CREATE, "Alta de atributos de edificios") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         company = request.session['company']
         type = ""
@@ -1219,13 +1208,13 @@ def add_building_attr(request):
         return render_to_response("consumption_centers/buildings/add_building_attr.html",
                template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 def b_attr_list(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
+    datacontext = get_buildings_context(request.user)
     if has_permission(request.user, VIEW, "Ver atributos de edificios") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         company = request.session['company']
         if "search" in request.GET:
@@ -1300,11 +1289,12 @@ def b_attr_list(request):
         return render_to_response("consumption_centers/buildings/building_attr_list.html",
                template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 def delete_b_attr(request, id_b_attr):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
+    datacontext = get_buildings_context(request.user)
     if has_permission(request.user, DELETE, "Eliminar atributos de edificios") or request.user.is_superuser:
         b_attr = get_object_or_404(BuildingAttributes, pk=id_b_attr)
         b_attr_for_b = BuildingAttributesForBuilding.objects.filter(building_attributes=b_attr)
@@ -1319,14 +1309,14 @@ def delete_b_attr(request, id_b_attr):
         return HttpResponseRedirect("/buildings/atributos/?msj=" + mensaje +
                                     "&ntype="+type)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 def editar_b_attr(request, id_b_attr):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
+    datacontext = get_buildings_context(request.user)
     if has_permission(request.user, VIEW, "Ver atributos de edificios") or request.user.is_superuser:
         b_attr = get_object_or_404(BuildingAttributes, pk=id_b_attr)
-        datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         company = request.session['company']
         if b_attr.building_attributes_value_boolean:
@@ -1390,14 +1380,14 @@ def editar_b_attr(request, id_b_attr):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_building_attr.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 def ver_b_attr(request, id_b_attr):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
+    datacontext = get_buildings_context(request.user)
     if has_permission(request.user, VIEW, "Ver atributos de edificios") or request.user.is_superuser:
         b_attr = get_object_or_404(BuildingAttributes, pk=id_b_attr)
-        datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         company = request.session['company']
         if b_attr.building_attributes_value_boolean:
@@ -1421,15 +1411,15 @@ def ver_b_attr(request, id_b_attr):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/see_building_attr.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 #====
 
 def add_cluster(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
+    datacontext = get_buildings_context(request.user)
     if has_permission(request.user, CREATE, "Alta de clusters") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
 
         #Se obtienen los sectores
@@ -1467,14 +1457,14 @@ def add_cluster(request):
         return render_to_response("consumption_centers/buildings/add_cluster.html", template_vars_template)
 
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def view_cluster(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
+    datacontext = get_buildings_context(request.user)
     if has_permission(request.user, VIEW, "Ver cluster de empresas") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         if "search" in request.GET:
             search = request.GET["search"]
@@ -1531,7 +1521,7 @@ def view_cluster(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/clusters.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 def delete_cluster(request, id_cluster):
     if not request.user.is_authenticated():
@@ -1546,7 +1536,8 @@ def delete_cluster(request, id_cluster):
         return HttpResponseRedirect("/buildings/clusters/?msj=" + mensaje +
                                     "&ntype="+type)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 def delete_batch_cluster(request):
     if not request.user.is_authenticated():
@@ -1570,13 +1561,15 @@ def delete_batch_cluster(request):
             return HttpResponseRedirect("/buildings/clusters/?msj=" + mensaje +
                                         "&ntype=n_success")
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 
 def edit_cluster(request, id_cluster):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
+    datacontext = get_buildings_context(request.user)
     if has_permission(request.user, UPDATE, "Modificar cluster de empresas") or request.user.is_superuser:
         cluster = get_object_or_404(Cluster, pk = id_cluster)
 
@@ -1585,7 +1578,6 @@ def edit_cluster(request, id_cluster):
 
         post = {'clustername': cluster.cluster_name, 'clusterdescription': cluster.cluster_description, 'clustersector': cluster.sectoral_type.pk}
 
-        datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         message = ''
         type = ''
@@ -1635,14 +1627,14 @@ def edit_cluster(request, id_cluster):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_cluster.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def see_cluster(request, id_cluster):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
+    datacontext = get_buildings_context(request.user)
     if has_permission(request.user, VIEW, "Ver cluster de empresas") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
 
         cluster = Cluster.objects.get(pk = id_cluster)
@@ -1659,7 +1651,7 @@ def see_cluster(request, id_cluster):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/see_cluster.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 """
 POWERMETER MODELS
@@ -1668,8 +1660,8 @@ POWERMETER MODELS
 def add_powermetermodel(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
+    datacontext = get_buildings_context(request.user)
     if has_permission(request.user, CREATE, "Alta de modelos de medidores eléctricos") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
 
         template_vars = dict(datacontext=datacontext,
@@ -1699,18 +1691,16 @@ def add_powermetermodel(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_powermetermodel.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def edit_powermetermodel(request, id_powermetermodel):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
+    datacontext = get_buildings_context(request.user)
     if has_permission(request.user, UPDATE, "Modificar modelos de medidores eléctricos") or request.user.is_superuser:
         powermetermodel = get_object_or_404(PowermeterModel, pk = id_powermetermodel)
-
         post = {'pw_brand': powermetermodel.powermeter_brand, 'pw_model': powermetermodel.powermeter_model}
-
-        datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         message = ''
         type = ''
@@ -1755,14 +1745,14 @@ def edit_powermetermodel(request, id_powermetermodel):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_powermetermodel.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def view_powermetermodels(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
+    datacontext = get_buildings_context(request.user)
     if has_permission(request.user, VIEW, "Ver modelos de medidores eléctricos") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         if "search" in request.GET:
             search = request.GET["search"]
@@ -1819,7 +1809,7 @@ def view_powermetermodels(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/powermetermodels.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 def delete_powermetermodel(request, id_powermetermodel):
     if not request.user.is_authenticated():
@@ -1834,7 +1824,8 @@ def delete_powermetermodel(request, id_powermetermodel):
         return HttpResponseRedirect("/buildings/modelos_medidor/?msj=" + mensaje +
                                     "&ntype="+type)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 def delete_batch_powermetermodel(request):
     if not request.user.is_authenticated():
@@ -1858,7 +1849,8 @@ def delete_batch_powermetermodel(request):
             return HttpResponseRedirect("/buildings/modelos_medidor/?msj=" + mensaje +
                                         "&ntype=n_success")
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 """
@@ -1868,8 +1860,8 @@ POWERMETERS
 def add_powermeter(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
+    datacontext = get_buildings_context(request.user)
     if has_permission(request.user, CREATE, "Alta de medidor electrico") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         post = ''
         pw_models_list = PowermeterModel.objects.all().order_by("powermeter_brand")
@@ -1929,12 +1921,14 @@ def add_powermeter(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_powermeter.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def edit_powermeter(request, id_powermeter):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
+    datacontext = get_buildings_context(request.user)
     if has_permission(request.user, UPDATE, "Modificar medidores eléctricos") or request.user.is_superuser:
         powermeter = get_object_or_404(Powermeter, pk = id_powermeter)
 
@@ -1942,7 +1936,6 @@ def edit_powermeter(request, id_powermeter):
 
         post = {'pw_alias': powermeter.powermeter_anotation, 'pw_model': powermeter.powermeter_model.pk,'pw_serial': powermeter.powermeter_serial}
 
-        datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         message = ''
         type = ''
@@ -1998,14 +1991,14 @@ def edit_powermeter(request, id_powermeter):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_powermeter.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def view_powermeter(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
+    datacontext = get_buildings_context(request.user)
     if has_permission(request.user, VIEW, "Ver medidores eléctricos") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         if "search" in request.GET:
             search = request.GET["search"]
@@ -2091,7 +2084,7 @@ def view_powermeter(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/powermeters.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 def delete_powermeter(request, id_powermeter):
     if not request.user.is_authenticated():
@@ -2106,7 +2099,8 @@ def delete_powermeter(request, id_powermeter):
         return HttpResponseRedirect("/buildings/medidores/?msj=" + mensaje +
                                     "&ntype="+type)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 def delete_batch_powermeter(request):
     if not request.user.is_authenticated():
@@ -2130,7 +2124,8 @@ def delete_batch_powermeter(request):
             return HttpResponseRedirect("/buildings/medidores/?msj=" + mensaje +
                                         "&ntype=n_success")
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def status_powermeter(request, id_powermeter):
@@ -2152,7 +2147,8 @@ def status_powermeter(request, id_powermeter):
         return HttpResponseRedirect("/buildings/medidores/?msj=" + mensaje +
                                     "&ntype="+type)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def see_powermeter(request, id_powermeter):
@@ -2183,7 +2179,8 @@ def see_powermeter(request, id_powermeter):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/see_powermeter.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 """
 Electric Device Types
@@ -2239,7 +2236,8 @@ def add_electric_device_type(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_electricdevicetype.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def edit_electric_device_type(request, id_edt):
@@ -2291,7 +2289,8 @@ def edit_electric_device_type(request, id_edt):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_electricdevicetype.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def view_electric_device_type(request):
@@ -2364,7 +2363,8 @@ def view_electric_device_type(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/electricdevicetype.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 def delete_electric_device_type(request, id_edt):
     if not request.user.is_authenticated():
@@ -2379,7 +2379,8 @@ def delete_electric_device_type(request, id_edt):
         return HttpResponseRedirect("/buildings/tipos_equipo_electrico/?msj=" + mensaje +
                                     "&ntype="+type)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 def delete_batch_electric_device_type(request):
     if not request.user.is_authenticated():
@@ -2403,7 +2404,8 @@ def delete_batch_electric_device_type(request):
             return HttpResponseRedirect("/buildings/tipos_equipo_electrico/?msj=" + mensaje +
                                         "&ntype=n_success")
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def status_electric_device_type(request, id_edt):
@@ -2425,7 +2427,8 @@ def status_electric_device_type(request, id_edt):
         return HttpResponseRedirect("/buildings/tipos_equipo_electrico/?msj=" + mensaje +
                                     "&ntype="+type)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 """
 Companies
@@ -2518,7 +2521,8 @@ def add_company(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_company.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def edit_company(request, id_cpy):
@@ -2612,7 +2616,8 @@ def edit_company(request, id_cpy):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_company.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def view_companies(request):
@@ -2693,7 +2698,8 @@ def view_companies(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/companies.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 def delete_company(request, id_cpy):
     if not request.user.is_authenticated():
@@ -2708,7 +2714,8 @@ def delete_company(request, id_cpy):
         return HttpResponseRedirect("/buildings/empresas/?msj=" + mensaje +
                                     "&ntype="+type)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 def delete_batch_companies(request):
     if not request.user.is_authenticated():
@@ -2732,7 +2739,8 @@ def delete_batch_companies(request):
             return HttpResponseRedirect("/buildings/empresas/?msj=" + mensaje +
                                         "&ntype=n_success")
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def status_company(request, id_cpy):
@@ -2754,7 +2762,8 @@ def status_company(request, id_cpy):
         return HttpResponseRedirect("/buildings/empresas/?msj=" + mensaje +
                                     "&ntype="+type)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 def see_company(request, id_cpy):
     if not request.user.is_authenticated():
@@ -2775,7 +2784,8 @@ def see_company(request, id_cpy):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/see_company.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def scale_dimensions(width, height, longest_side):
@@ -2877,7 +2887,8 @@ def c_center_structures(request):
         return render_to_response("consumption_centers/buildings/c_centers_structure.html", template_vars_template)
 
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 """
@@ -2936,7 +2947,8 @@ def add_buildingtype(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_buildingtype.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def edit_buildingtype(request, id_btype):
@@ -2990,7 +3002,8 @@ def edit_buildingtype(request, id_btype):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_buildingtype.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def view_buildingtypes(request):
@@ -3064,7 +3077,9 @@ def view_buildingtypes(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/buildingtype.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+
 
 def delete_buildingtype(request, id_btype):
     if not request.user.is_authenticated():
@@ -3080,7 +3095,8 @@ def delete_buildingtype(request, id_btype):
         return HttpResponseRedirect("/buildings/tipos_edificios/?msj=" + mensaje +
                                     "&ntype="+type)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 def delete_batch_buildingtypes(request):
     if not request.user.is_authenticated():
@@ -3104,7 +3120,8 @@ def delete_batch_buildingtypes(request):
             return HttpResponseRedirect("/buildings/tipos_edificios/?msj=" + mensaje +
                                         "&ntype=n_success")
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def status_buildingtype(request, id_btype):
@@ -3126,7 +3143,8 @@ def status_buildingtype(request, id_btype):
         return HttpResponseRedirect("/buildings/tipos_edificios/?msj=" + mensaje +
                                     "&ntype="+type)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 
@@ -3185,7 +3203,8 @@ def add_sectoraltype(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_sectoraltype.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def edit_sectoraltype(request, id_stype):
@@ -3239,7 +3258,8 @@ def edit_sectoraltype(request, id_stype):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_sectoraltype.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def view_sectoraltypes(request):
@@ -3312,7 +3332,8 @@ def view_sectoraltypes(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/sectoraltype.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 def delete_sectoraltype(request, id_stype):
     if not request.user.is_authenticated():
@@ -3328,7 +3349,8 @@ def delete_sectoraltype(request, id_stype):
         return HttpResponseRedirect("/buildings/tipos_sectores/?msj=" + mensaje +
                                     "&ntype="+type)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 def delete_batch_sectoraltypes(request):
     if not request.user.is_authenticated():
@@ -3352,7 +3374,8 @@ def delete_batch_sectoraltypes(request):
             return HttpResponseRedirect("/buildings/tipos_sectores/?msj=" + mensaje +
                                         "&ntype=n_success")
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def status_sectoraltype(request, id_stype):
@@ -3374,7 +3397,8 @@ def status_sectoraltype(request, id_stype):
         return HttpResponseRedirect("/buildings/tipos_sectores/?msj=" + mensaje +
                                     "&ntype="+type)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 
@@ -3434,7 +3458,8 @@ def add_b_attributes_type(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_buildingattributetype.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def edit_b_attributes_type(request, id_batype):
@@ -3488,7 +3513,8 @@ def edit_b_attributes_type(request, id_batype):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_buildingattributetype.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def view_b_attributes_type(request):
@@ -3553,7 +3579,8 @@ def view_b_attributes_type(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/buildingattributetype.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 
@@ -3612,7 +3639,8 @@ def add_partbuildingtype(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_partbuilding_type.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def edit_partbuildingtype(request, id_pbtype):
@@ -3666,7 +3694,8 @@ def edit_partbuildingtype(request, id_pbtype):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_partbuilding_type.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def view_partbuildingtype(request):
@@ -3739,7 +3768,9 @@ def view_partbuildingtype(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/partofbuildingtype.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+
 
 def delete_partbuildingtype(request, id_pbtype):
     if not request.user.is_authenticated():
@@ -3756,7 +3787,8 @@ def delete_partbuildingtype(request, id_pbtype):
         return HttpResponseRedirect("/buildings/tipos_partes_edificio/?msj=" + mensaje +
                                     "&ntype="+type)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 def delete_batch_partbuildingtype(request):
     if not request.user.is_authenticated():
@@ -3780,7 +3812,8 @@ def delete_batch_partbuildingtype(request):
             return HttpResponseRedirect("/buildings/tipos_partes_edificio/?msj=" + mensaje +
                                         "&ntype=n_success")
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def status_partbuildingtype(request, id_pbtype):
@@ -3803,7 +3836,8 @@ def status_partbuildingtype(request, id_pbtype):
         return HttpResponseRedirect("/buildings/tipos_partes_edificio/?msj=" + mensaje +
                                     "&ntype="+type)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 
@@ -3915,7 +3949,8 @@ def add_partbuilding(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_partbuilding.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def edit_partbuilding(request, id_bpart):
@@ -4053,7 +4088,8 @@ def edit_partbuilding(request, id_bpart):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_partbuilding.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def view_partbuilding(request):
@@ -4126,7 +4162,8 @@ def view_partbuilding(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/partofbuilding.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 def search_buildings(request):
     if not request.user.is_authenticated():
@@ -4454,7 +4491,8 @@ def add_building(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_building.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 def edit_building(request, id_bld):
     if not request.user.is_authenticated():
@@ -4725,7 +4763,8 @@ def edit_building(request, id_bld):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_building.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 def view_building(request):
     if not request.user.is_authenticated():
@@ -4817,7 +4856,8 @@ def view_building(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/building.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def delete_building(request, id_bld):
@@ -4835,7 +4875,8 @@ def delete_building(request, id_bld):
         return HttpResponseRedirect("/buildings/edificios/?msj=" + mensaje +
                                     "&ntype="+type)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 def delete_batch_building(request):
     if not request.user.is_authenticated():
@@ -4859,7 +4900,8 @@ def delete_batch_building(request):
             return HttpResponseRedirect("/buildings/edificios/?msj=" + mensaje +
                                         "&ntype=n_success")
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def status_building(request, id_bld):
@@ -4883,7 +4925,8 @@ def status_building(request, id_bld):
         return HttpResponseRedirect("/buildings/edificios/?msj=" + mensaje +
                                     "&ntype="+type)
     else:
-        return render_to_response("generic_error.html", RequestContext(request))
+        datacontext = get_buildings_context(request.user)
+        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
 
 
 def search_bld_country(request):

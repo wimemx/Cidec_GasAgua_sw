@@ -57,22 +57,30 @@
                         async: 'true',
                         success: function(datos){
                             var append_text = '';
-                            $("#agregar").show();
-                            if(datos.length >0){
+                            var first_option = '';
+                            if(datos[0].all){
+                                $("#agregar").show();
+                                first_option='<option value="todos">'+
+                                        'Todas las empresas('+datos.length+')</option>';
+                            }else{
+                                $("#agregar").hide();
+                                first_option='<option value="0">'+
+                                        'Selecciona una empresa</option>';
+                            }
+                            if(datos[0].company != undefined){
                                 append_text = '<label for="company" class="g2">' +
                                         'Selecciona una empresa' +
                                         '</label>' +
                                         '<select name="company" id="company" class="g9">';
 
-                                append_text += '<option value="todos">Todas las empresas (' +
-                                               datos.length+')</option>';
+                                append_text += first_option;
 
                                 for(var i=0; i<datos.length; i++){
                                     append_text+='<option value="' + datos[i].pk + '"> ' +
                                                  datos[i].company +
                                                  '</option>';
                                 }
-                                append_text += "</select>"
+                                append_text += "</select>";
 
                                 $("#empresas").html(append_text);
                                 $("#edificios").html("");
@@ -89,16 +97,25 @@
                                             success: function(datos){
 
                                                 var append_text = '';
-                                                if(datos.length >0){
+                                                var first_option = '';
+                                                if(datos[0].all){
                                                     $("#agregar").show();
+                                                    first_option='<option value="todos">'+
+                                                            'Todos los edificios de la empresa('+datos.length+')</option>';
+                                                }else{
+                                                    $("#agregar").hide();
+                                                    first_option='<option value="0">'+
+                                                            'Selecciona un edificio</option>';
+                                                }
+                                                if(datos[0].building != undefined){
+
                                                     append_text = '<label for="building" class="g2">' +
                                                             'Selecciona un edificio' +
                                                             '</label>' +
                                                             '<select name="building" id="building" class="g9">';
-                                                    if(datos.length >1){
-                                                        append_text += '<option value="todos">'+
-                                                                'Todos los edificios de la empresa('+datos.length+')</option>';
-                                                    }
+
+                                                    append_text += first_option;
+
 
                                                     for(var i=0; i<datos.length; i++){
                                                         append_text+='<option value="' + datos[i].pk + '"> ' +
@@ -119,15 +136,24 @@
                                                                 async: 'true',
                                                                 success: function(datos){
                                                                     var append_text = '';
-                                                                    if(datos.length >0){
+                                                                    var first_option='';
+                                                                    if(datos[0].all){
+                                                                        $("#agregar").show();
+                                                                        first_option='<option value="todas">'+
+                                                                                'Todas las partes del edificio('+datos.length+')</option>';
+
+                                                                    }else{
+                                                                        $("#agregar").hide();
+                                                                        first_option='<option value="0">'+
+                                                                                'elije una parte del edificio</option>';
+                                                                    }
+                                                                    if(datos[0].part != undefined){
                                                                         append_text = '<label for="part" class="g2">' +
                                                                                 'Selecciona una parte del edificio' +
                                                                                 '</label>' +
                                                                                 '<select name="part" id="part" class="g9">';
-                                                                        if(datos.length >1){
-                                                                            append_text += '<option value="todas">'+
-                                                                                    'Todas las partes del edificio('+datos.length+')</option>';
-                                                                        }
+
+                                                                        append_text += first_option;
 
                                                                         for(var i=0; i<datos.length; i++){
                                                                             append_text+='<option value="' + datos[i].pk + '"> ' +
@@ -137,7 +163,11 @@
                                                                         append_text += "</select>";
 
                                                                         $("#partes").html(append_text);
-                                                                        $("#part").uniform();
+                                                                        $("#part").uniform().change(function(){
+                                                                            if ($(this).val()!="0"){
+                                                                                $("#agregar").show();
+                                                                            }
+                                                                        });
                                                                     }
                                                                 }
                                                             });

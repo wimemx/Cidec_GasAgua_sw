@@ -18,9 +18,9 @@ urlpatterns = patterns('',
     url(r'^weekly_summary_kwh/', 'c_center.views.get_weekly_summary_comparison_kwh'),
     url(r'^cfe_calculos/', 'c_center.views.cfe_calculations'),
 
-    url(r'^get_cluster_companies/(?P<id_cluster>\d+)/', 'c_center.views.get_cluster_companies'),
-    url(r'^get_company_buildings/(?P<id_company>\d+)/', 'c_center.views.get_company_buildings'),
-    url(r'^get_parts_of_building/(?P<id_building>\d+)/', 'c_center.views.get_parts_of_building'),
+    url(r'^get_cluster_companies/(?P<id_cluster>\d+)/', 'c_center.c_center_functions.get_cluster_companies'),
+    url(r'^get_company_buildings/(?P<id_company>\d+)/', 'c_center.c_center_functions.get_company_buildings'),
+    url(r'^get_parts_of_building/(?P<id_building>\d+)/', 'c_center.c_center_functions.get_parts_of_building'),
 
     url(r'^agregar_atributo/', 'c_center.views.add_building_attr'),
     url(r'^atributos/', 'c_center.views.b_attr_list'),

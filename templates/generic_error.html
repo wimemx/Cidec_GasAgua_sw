@@ -1,24 +1,35 @@
-<!DOCTYPE html>
-<html>
+{% extends "base.html" %}
+{% block titulo %}Sin acciones disponibles{% endblock %}
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/consumption_centers/main.css" type="text/css">
+    <link rel="stylesheet" href="/static/css/login.css" type="text/css">
 
-<head>
-    <title>Permisos Insuficientes</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <link rel="stylesheet" href="/static/css/theme.css">
-    <link rel="stylesheet" href="/static/js/external/jqueryUniform/css/uniform.default.css" type="text/css" media="screen" charset="utf-8" />
-    <link rel="stylesheet" href="/static/css/login.css">
+{% endblock %}
+{% block externaljs %}
+{% endblock %}
+{% block document_ready %}
+    //custom select for sidebar
+    $("#empresa").click(function(){
+    $("#company_list").slideToggle();
+    });
+    $("#company_list li").click(function(){
+    var texto=$(this).text().replace(/^\s*|\s*$/g,'');
+    var texto1 = texto.substring(0,17) + "...";
+    $("#empresa").text(texto1);
+    $("#company_list").slideUp();
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-    <script type="text/javascript" src="/static/js/external/labels.js"></script>
-    <script type="text/javascript" src="/static/js/external/jqueryUniform/jquery.uniform.min.js"></script>
-    <script type="text/javascript">
-        $(document).ready(function(){
-            $("input").uniform();
-        });
-    </script>
-</head>
-<body>
-{% if error %}<span class="notif_error">{% autoescape off %}{{ error }}{% endautoescape %}</span>{% endif %}
+    $.ajax({
+    url: "/reportes/set_default_building/" + $(this).attr("rel"),
+    type: "GET",
+    dataType: 'json',
+    async: 'true',
+    success: function(datos){
+    window.location.reload();
+    }
+    });
+    });
+{% endblock %}
+{% block contenido %}
 <div id="login_div">
 
     <div id="title">
@@ -33,8 +44,4 @@
     </p>
 
 </div>
-<footer>
-
-</footer>
-</body>
-</html>
+{% endblock %}

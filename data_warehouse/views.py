@@ -869,9 +869,9 @@ def populate_consumer_unit_electric_data_interval(
 
 def interpolate_electric_data():
 
-    consumer_unit = ConsumerUnitTransactional.objects.get(pk=7)
+    consumer_unit = ConsumerUnitTransactional.objects.get(pk=31)
     from_datetime = datetime(year=2012, month=9, day=1, hour=0, tzinfo=utc)
-    to_datetime = datetime(year=2012, month=9, day=10, hour=0, tzinfo=utc)
+    to_datetime = datetime(year=2012, month=10, day=25, hour=0, tzinfo=utc)
     granularity="day"
     populate_consumer_unit_electric_data(consumer_unit,
                                          from_datetime,
@@ -917,7 +917,13 @@ def get_consumer_unit_and_time_interval_information(
                 end_datetime_string=end_datetime_string)
 
 
-def get_consumer_unit_electric_data(electric_data, granularity, consumer_unit_id, from_datetime, to_datetime):
+def get_consumer_unit_electric_data(
+        electric_data,
+        granularity,
+        consumer_unit_id,
+        from_datetime,
+        to_datetime
+):
 
     try:
         consumer_unit = ConsumerUnit.objects.get(pk=consumer_unit_id)
@@ -928,7 +934,6 @@ def get_consumer_unit_electric_data(electric_data, granularity, consumer_unit_id
     electric_data_values = []
     electric_data_class = FACTS_INSTANT_CLASSES[granularity]
     time_instant_class = TIME_INSTANTS_CLASSES[granularity]
-
     time_instants = time_instant_class.objects.filter(
                         instant_datetime__gte=from_datetime,
                         instant_datetime__lte=to_datetime)
@@ -941,6 +946,7 @@ def get_consumer_unit_electric_data(electric_data, granularity, consumer_unit_id
 
         if len(electric_data_values_dictionary) == 1 and\
            electric_data_values_dictionary[0][electric_data] is not None:
+
             electric_data_value = float(electric_data_values_dictionary[0][electric_data])
 
         else:
@@ -949,6 +955,49 @@ def get_consumer_unit_electric_data(electric_data, granularity, consumer_unit_id
 
         electric_data_values.append(dict(datetime=int(time.mktime(time_instant.instant_datetime.timetuple())),
                                          electric_data=electric_data_value))
+
+
+    return electric_data_values
+
+
+def get_consumer_unit_electric_data_interval(
+        electric_data,
+        granularity,
+        consumer_unit_id,
+        from_datetime,
+        to_datetime
+):
+
+    try:
+        consumer_unit = ConsumerUnit.objects.get(pk=consumer_unit_id)
+
+    except ConsumerUnit.DoesNotExist:
+        return []
+
+    electric_data_values = []
+    electric_data_class = FACTS_INTERVAL_CLASSES[granularity]
+    time_instant_class = TIME_INTERVALS_CLASSES[granularity]
+    time_intervals = time_instant_class.objects.filter(
+                         start_datetime__gte=from_datetime,
+                         start_datetime__lte=to_datetime)
+
+    for time_interval in time_intervals:
+        electric_data_values_dictionary = electric_data_class.objects.filter(
+            consumer_unit=consumer_unit,
+            interval=time_interval
+        ).values(electric_data)
+
+        if len(electric_data_values_dictionary) == 1 and\
+           electric_data_values_dictionary[0][electric_data] is not None:
+
+            electric_data_value = float(electric_data_values_dictionary[0][electric_data])
+
+        else:
+            electric_data_value = None
+
+
+        electric_data_values.append(dict(datetime=int(time.mktime(time_interval.start_datetime.timetuple())),
+            electric_data=electric_data_value))
 
 
     return electric_data_values
