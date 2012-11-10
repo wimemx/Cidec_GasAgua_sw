@@ -18,12 +18,17 @@
             $(this).parent().next().blur(function(e){
                 var _span;
 
-                if(e.delegateTarget.value==''){
+                if($.trim(e.delegateTarget.value)==''){
                     _span = "incorrect";
                     form_valid = false;
                 }else{
-                    _span = "correct";
-                    form_valid = true;
+                    if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ ]+$/.test(e.delegateTarget.value)){
+                        _span = "correct";
+                        form_valid = true;
+                    }else{
+                        _span = "incorrect";
+                        form_valid = false;
+                    }
                 }
 
                 var n_span = $("#"+e.delegateTarget.id).next();
@@ -87,7 +92,7 @@ console.log("changed");
     <ul>
         <li><a href="/main/">Inicio</a></li>
         <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
-        <li><a href="/buildings/tipos_equipo_electrico/">Tipos de Edificios</a></li>
+        <li><a href="/buildings/tipos_edificios/">Tipos de Edificios</a></li>
         {% if operation == "edit" %}
         <li>
 

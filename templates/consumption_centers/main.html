@@ -211,7 +211,7 @@
             $('#range1_init').val(formated[0]);
             $('#range1_end').val(formated[1]);
             if(!mul_date){
-                $('#widgetField span').css('font-size','16px');
+                $('#widgetField span').css({'font-size':'16px', 'height':'26px'});
                 $('#widgetField span').get(0).innerHTML = formated.join(' &ndash; ');
             }else{
                 $('#widgetField span').get(0).innerHTML = $('#range1_init').val() + " &ndash; " + $('#range1_end').val() + " contra: " + $('#range2_init').val() + " &ndash; " + $('#range2_end').val();
@@ -248,15 +248,12 @@
         onChange: function(formated) {
             $('#range3_init').val(formated[0]);
             $('#range3_end').val(formated[1]);
-            if(!mul_date){
-                $('#widgetField span').css('font-size','16px');
-                $('#widgetField span').get(0).innerHTML = formated.join(' &ndash; ');
-            }else{
-                var inner_text='';
-                inner_text= $('#range1_init').val() + " &ndash; " + $('#range1_end').val() + " contra: " + $('#range2_init').val() + " &ndash; " + $('#range2_end').val();
-                inner_text+= " contra "+$('#range3_init').val() + " &ndash; " + $('#range3_end').val();
-                $('#widgetField span').get(0).innerHTML = inner_text;
-            }
+
+            var inner_text='';
+            inner_text= $('#range1_init').val() + " &ndash; " + $('#range1_end').val() + " contra: " + $('#range2_init').val() + " &ndash; " + $('#range2_end').val();
+            inner_text+= " contra "+$('#range3_init').val() + " &ndash; " + $('#range3_end').val();
+            $('#widgetField span').get(0).innerHTML = inner_text;
+            $('#widgetField').css({'font-size':'11px', 'height': '52px' });
     }
     });
     $('#widgetCalendar3').DatePickerClear();
@@ -272,9 +269,9 @@
             $('#range4_end').val(formated[1]);
             var inner_text = '';
             inner_text= $('#range1_init').val() + " &ndash; " + $('#range1_end').val() + " contra: " + $('#range2_init').val() + " &ndash; " + $('#range2_end').val();
-            inner_text+= " contra "+$('#range3_init').val() + " &ndash; " + $('#range3_end').val() + " contra: " + $('#range4_init').val() + " &ndash; " + $('#range4_end').val();
+            inner_text+= " contra: "+$('#range3_init').val() + " &ndash; " + $('#range3_end').val() + " contra: " + $('#range4_init').val() + " &ndash; " + $('#range4_end').val();
             $('#widgetField span').get(0).innerHTML = inner_text;
-            $('#widgetField span').css('font-size','11px');
+            $('#widgetField').css({'font-size':'11px', 'height': '52px', 'width': '362px' });
         }
     });
     $('#widgetCalendar4').DatePickerClear();

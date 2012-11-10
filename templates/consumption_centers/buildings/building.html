@@ -48,18 +48,17 @@ type: "GET",
 dataType: 'json',
 async: 'true',
 success: function(datos){
-console.log("changed");
+window.location.reload();
 }
 });
 });
 
-
-
-$("a.del").click(function(event){
+$("a.switch").click(function(event){
 event.preventDefault();
-var url="/buildings/eliminar_edificio/"+$(this).attr("rel")+"/";
-new Messi('&iquest;Est&aacute; seguro de que desea eliminar el edificio?',
-{title: 'Eliminar Edificio', modal: true, buttons: [{id: 0,
+var url="/buildings/status_edificio/"+$(this).attr("rel")+"/";
+var action = $(this).attr("title");
+new Messi('&iquest;Est&aacute; seguro de que desea '+ action +' este edificio?',
+{title: action+' usuario', modal: true, buttons: [{id: 0,
 label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
 }],
 callback: function(val) {
@@ -68,12 +67,13 @@ document.location.href=url;
 } else return false; }
 });
 });
+
+
 $("#aplicar").click(function(e){
 e.preventDefault();
 if($("#actions").val()!="0"){
-new Messi('&iquest;Est&aacute; seguro de que desea eliminar los edificios' +
-' seleccionados?',
-{title: 'Eliminar edificios', modal: true, buttons: [{id: 0,
+new Messi('&iquest;Est&aacute; seguro que desea cambiar el status de estos edificios?',
+{title: 'Cambiar estatus', modal: true, buttons: [{id: 0,
 label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
 }],
 callback: function(val) {
@@ -241,7 +241,7 @@ window.location = base_url;
                 </button>
             </form>
         </div>
-        <form id="operations_batch" action="/buildings/delete_batch_building/" method="post">
+        <form id="operations_batch" action="/buildings/status_batch_building/" method="post">
             {% csrf_token %}
             <div id="grid_container">
                 <table>
@@ -301,17 +301,11 @@ window.location = base_url;
                             {{ bld_obj.company.company_name }}
                         </td>
                         <td class="c">
-                            {% if bld_obj.building.building_status == 0 %}
-                            <span class="inactive_status">Inactivo</span>
-                            {% else %}
-                            <span class="active_status">Activo</span>
-                            {% endif %}
+                            <a href="#" rel="{{ bld_obj.building.pk }}" {% if bld_obj.building.building_status = 1 %}class="switch active_switch" title="desactivar"{% else %}class="switch inactive_switch" title="activar"{% endif %}>
+                            </a>
                         </td>
+
                         <td class="c">
-                            <a class="del" rel="{{ bld_obj.building.pk }}"
-                               href="#"></a>
-                            <a class="delete" rel="{{ bld_obj.building.pk }}" title="Eliminar edificio"
-                               href="/buildings/status_edificio/{{ bld_obj.building.pk }}/"></a>
                             <a class="edit" title="Editar edificio"
                                href="/buildings/editar_edificio/{{ bld_obj.building.pk }}/"></a>
                         </td>
@@ -322,7 +316,7 @@ window.location = base_url;
                 <div id="table_footer">
                     <select id="actions" name="actions">
                         <option value="0">Elije una Acci&oacute;n</option>
-                        <option value="delete">Eliminar</option>
+                        <option value="status">Habilitar/Deshabilitar</option>
                     </select>
                     <button class="fl aqua_btn" id="aplicar">Aplicar a la
                         selecci&oacute;n</button>

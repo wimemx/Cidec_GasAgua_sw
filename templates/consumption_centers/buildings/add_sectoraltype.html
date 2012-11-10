@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block titulo %}
-{% if operation == "edit" %}Editar{% else %}Crear nuevo{% endif %} Tipo de Sector
+{% if operation == "edit" %}Editar{% else %}Crear{% endif %} Tipo de Sector
 {% endblock %}
 {% block externalcss %}
 <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
@@ -18,12 +18,17 @@
             $(this).parent().next().blur(function(e){
                 var _span;
 
-                if(e.delegateTarget.value==''){
+                if($.trim(e.delegateTarget.value)==''){
                     _span = "incorrect";
                     form_valid = false;
                 }else{
-                    _span = "correct";
-                    form_valid = true;
+                    if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ ]+$/.test(e.delegateTarget.value)){
+                        _span = "correct";
+                        form_valid = true;
+                    }else{
+                        _span = "incorrect";
+                        form_valid = false;
+                    }
                 }
 
                 var n_span = $("#"+e.delegateTarget.id).next();
@@ -95,7 +100,7 @@ console.log("changed");
 
         </li>
         {% else %}
-        <li>Alta de nuevo tipo de sector</li>
+        <li>Alta de tipo de sector</li>
         {% endif %}
 
     </ul>
@@ -103,7 +108,7 @@ console.log("changed");
 </div>
 <div id="contenido_interno">
     <h2 id="titulo_form" class="user_role">
-        {% if operation == "edit" %}Editar{% else %}Crear nuevo{% endif %} tipo de sector
+        {% if operation == "edit" %}Editar{% else %}Crear{% endif %} tipo de sector
     </h2>
 
 

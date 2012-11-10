@@ -66,8 +66,8 @@ def validate_role(post):
     else:
         return False
     if post['role_desc']!='':
-        if variety.validate_string(post["role"]):
-            data[str(key)] = post[str(key)].strip()
+        if variety.validate_string(post["role_desc"]):
+            data["role_desc"] = post["role_desc"].strip()
         else:
             return False
     return data
@@ -158,7 +158,10 @@ def add_role(request):
             return render_to_response("rbac/add_role.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 def update_role_privs(role, objs_ids, operation):
     """Update a  list of PermissionAsigments for a given role
@@ -284,7 +287,10 @@ def edit_role(request, id_role):
         return render_to_response("rbac/edit_role.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 def see_role(request, id_role):
     if not request.user.is_authenticated():
@@ -320,7 +326,10 @@ def see_role(request, id_role):
         return render_to_response("rbac/edit_role.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 def view_roles(request):
     if not request.user.is_authenticated():
@@ -392,7 +401,10 @@ def view_roles(request):
         return render_to_response("rbac/role_list.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 def delete_role(request, id_role):
     if not request.user.is_authenticated():
@@ -411,7 +423,10 @@ def delete_role(request, id_role):
                                     "&ntype=success")
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def delete_batch(request):
@@ -447,7 +462,10 @@ def delete_batch(request):
                                         "&ntype=success")
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 def get_select_group(request, id_operation):
     if not request.user.is_authenticated():
@@ -621,7 +639,10 @@ def add_user(request):
         return render_to_response("rbac/add_user.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 def view_users(request):
     if not request.user.is_authenticated():
@@ -703,7 +724,10 @@ def view_users(request):
         return render_to_response("rbac/user_list.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 def delete_user(request, id_user):
     if not request.user.is_authenticated():
@@ -728,7 +752,10 @@ def delete_user(request, id_user):
                                     "&ntype="+type)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def edit_user(request, id_user):
@@ -809,7 +836,10 @@ def edit_user(request, id_user):
         return render_to_response("rbac/add_user.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 def delete_batch_user(request):
     if not request.user.is_authenticated():
@@ -844,7 +874,10 @@ def delete_batch_user(request):
                                         "&ntype=n_success")
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def see_user(request, id_user):
@@ -864,7 +897,10 @@ def see_user(request, id_user):
         return render_to_response("rbac/see_user.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 def add_data_context_permissions(request):
     """Permission Asigments
@@ -890,41 +926,41 @@ def add_data_context_permissions(request):
                           "e intente de nuevo"
                 type = "n_error"
             else:
-                if request.POST['company'] != "todos":
-                    try:
-                        company = Company.objects.get(pk=int(request.POST['company']))
-                    except ObjectDoesNotExist:
-                        message = "Ha ocurrido un error al seleccionar la empresa, por favor "\
-                                  "verifique e intente de nuevo"
-                        type = "n_error"
-                    else:
-                        if request.POST['building'] != "todos":
-                            try:
-                                building = Building.objects.get(pk=int(request.POST['building']))
-                            except ObjectDoesNotExist:
-                                message = "Ha ocurrido un error al seleccionar el edificio, por favor " \
-                                          "verifique e intente de nuevo"
-                                type = "n_error"
-                            else:
-                                if "part" in request.POST:
-
-                                    if request.POST['part'] != "todas":
-                                        user_role, created = UserRole.objects.get_or_create(user=usuario,
-                                            role=rol)
-                                        part = PartOfBuilding.objects.get(pk=int(request.POST['part']))
-                                        data_context, created = DataContextPermission.objects.get_or_create(
-                                                                user_role=user_role,
-                                                                cluster=cluster,
-                                                                company=company,
-                                                                building=building,
-                                                                part_of_building=part
-                                                                )
-                                        message = "El rol, sus permisos y asignaciones al edificio y " \
-                                                  "sus partes, se ha guardado correctamente"
-                                        type = "n_success"
+                if "company" in request.POST:
+                    if request.POST['company'] != "todos":
+                        try:
+                            company = Company.objects.get(pk=int(request.POST['company']))
+                        except ObjectDoesNotExist:
+                            message = "Ha ocurrido un error al seleccionar la empresa, por favor "\
+                                      "verifique e intente de nuevo"
+                            type = "n_error"
+                        else:
+                            if "building" in request.POST:
+                                if request.POST['building'] != "todos":
+                                    try:
+                                        building = Building.objects.get(pk=int(request.POST['building']))
+                                    except ObjectDoesNotExist:
+                                        message = "Ha ocurrido un error al seleccionar el edificio, por favor " \
+                                                  "verifique e intente de nuevo"
+                                        type = "n_error"
                                     else:
-                                        #alta de asignaciónd de roles/permisos para todas las partes de
-                                        # un edificio
+                                        if "part" in request.POST:
+
+                                            if request.POST['part'] != "todas":
+                                                user_role, created = UserRole.objects.get_or_create(user=usuario,
+                                                    role=rol)
+                                                part = PartOfBuilding.objects.get(pk=int(request.POST['part']))
+                                                data_context, created = DataContextPermission.objects.get_or_create(
+                                                                        user_role=user_role,
+                                                                        cluster=cluster,
+                                                                        company=company,
+                                                                        building=building,
+                                                                        part_of_building=part
+                                                                        )
+                                                message = "El rol, sus permisos y asignaciones al edificio y " \
+                                                          "sus partes, se ha guardado correctamente"
+                                                type = "n_success"
+
                                         user_role, created = UserRole.objects.get_or_create(user=usuario,
                                                              role=rol)
                                         data_context, created = DataContextPermission.objects.get_or_create(
@@ -933,22 +969,10 @@ def add_data_context_permissions(request):
                                             company=company,
                                             building=building
                                         )
-                                        message = "El rol, sus permisos y asignaciones al edificio y "\
-                                                  "sus partes, se ha guardado correctamente"
+                                        message = "El rol, sus permisos y su asignación al edificio, se" \
+                                                  " ha guardado correctamente"
                                         type = "n_success"
-                                else:
-                                    user_role, created = UserRole.objects.get_or_create(user=usuario,
-                                                         role=rol)
-                                    data_context, created = DataContextPermission.objects.get_or_create(
-                                        user_role=user_role,
-                                        cluster=cluster,
-                                        company=company,
-                                        building=building
-                                    )
-                                    message = "El rol, sus permisos y su asignación al edificio, se" \
-                                              " ha guardado correctamente"
-                                    type = "n_success"
-                        else:
+
                             #alta de asignación de roles/permisos para todas las partes de
                             # todos los edificios de una empresa
                             try:
@@ -970,18 +994,18 @@ def add_data_context_permissions(request):
                                 message = "El rol, sus permisos y su asignación a los edificios" \
                                           "de la empresa se han guardado correctamente"
                                 type = "n_success"
-                else:
-                    #alta de asignación de roles/permisos para todas los edificios de todas
-                    # las empresas de un cluster
-                    user_role, created = UserRole.objects.get_or_create(user=usuario,
-                                         role=rol)
-                    data_context, created = DataContextPermission.objects.get_or_create(
-                        user_role=user_role,
-                        cluster=cluster
-                    )
-                    message = "El rol, sus permisos y asignaciones al cluster y "\
-                              "sus empresas, se ha guardado correctamente"
-                    type = "n_success"
+
+                #alta de asignación de roles/permisos para todas los edificios de todas
+                # las empresas de un cluster
+                user_role, created = UserRole.objects.get_or_create(user=usuario,
+                                     role=rol)
+                data_context, created = DataContextPermission.objects.get_or_create(
+                    user_role=user_role,
+                    cluster=cluster
+                )
+                message = "El rol, sus permisos y asignaciones al cluster y "\
+                          "sus empresas, se ha guardado correctamente"
+                type = "n_success"
             if type == "n_success" and (has_permission(request.user, VIEW, "Ver asignaciones de roles a usuarios") or request.user.is_superuser):
                 return HttpResponseRedirect("/panel_de_control/roles_asignados/?msj=" + message +
                                             "&ntype=n_success")
@@ -999,7 +1023,10 @@ def add_data_context_permissions(request):
         return render_to_response("rbac/asign_data_context.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 def added_data_context_permissions(request):
     if not request.user.is_authenticated():
@@ -1080,15 +1107,21 @@ def added_data_context_permissions(request):
         template_vars["usuarios"] = User.objects.filter(pk__in=users_pks)
         company_pks = []
         for dc in users_in_dc:
-            if dc.company:
-                company_pks.append(dc.company.pk)
+            try:
+                if dc.company:
+                    company_pks.append(dc.company.pk)
+            except ObjectDoesNotExist:
+                continue
         template_vars["empresas"] = Company.objects.filter(pk__in=company_pks)
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("rbac/added_data_context.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def delete_data_context(request, id_data_context):
@@ -1102,7 +1135,10 @@ def delete_data_context(request, id_data_context):
                                     "&ntype=n_success")
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 def delete_batch_data_context(request):
     if not request.user.is_authenticated():
@@ -1125,7 +1161,10 @@ def delete_batch_data_context(request):
                                         "&ntype=n_success")
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 def search_users(request):
     if not request.user.is_authenticated():

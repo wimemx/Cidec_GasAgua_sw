@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block titulo %}
-{% if operation == "edit" %}Editar{% else %}Crear nuevo{% endif %} Tipo de Atributo de Edificio
+{% if operation == "edit" %}Editar{% else %}Crear{% endif %} Tipo de Atributo de Edificio
 {% endblock %}
 {% block externalcss %}
 <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
@@ -18,12 +18,17 @@
             $(this).parent().next().blur(function(e){
                 var _span;
 
-                if(e.delegateTarget.value==''){
+                if($.trim(e.delegateTarget.value)==''){
                     _span = "incorrect";
                     form_valid = false;
                 }else{
-                    _span = "correct";
-                    form_valid = true;
+                    if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ ]+$/.test(e.delegateTarget.value)){
+                        _span = "correct";
+                        form_valid = true;
+                    }else{
+                        _span = "incorrect";
+                        form_valid = false;
+                    }
                 }
 
                 var n_span = $("#"+e.delegateTarget.id).next();
@@ -87,7 +92,7 @@ console.log("changed");
     <ul>
         <li><a href="/main/">Inicio</a></li>
         <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
-        <li><a href="/buildings/tipos_atributos_edificio/">Tipos de Atributos de Edificio</a></li>
+        <li><a href="/buildings/tipos_atributos_edificios/">Tipos de Atributos de Edificio</a></li>
         {% if operation == "edit" %}
         <li>
 
@@ -95,7 +100,7 @@ console.log("changed");
 
         </li>
         {% else %}
-        <li>Alta de nuevo tipo de atributo de edificio</li>
+        <li>Alta de tipo de atributo de edificio</li>
         {% endif %}
 
     </ul>
@@ -103,7 +108,7 @@ console.log("changed");
 </div>
 <div id="contenido_interno">
     <h2 id="titulo_form" class="user_role">
-        {% if operation == "edit" %}Editar{% else %}Crear nuevo{% endif %} tipo de atributo de edificio
+        {% if operation == "edit" %}Editar{% else %}Crear{% endif %} tipo de atributo de edificio
     </h2>
 
 

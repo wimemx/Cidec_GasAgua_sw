@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block titulo %}
-{% if operation == "edit" %}Editar{% else %}Crear nuevo{% endif %} Edificio
+{% if operation == "edit" %}Editar{% else %}Crear{% endif %} Edificio
 {% endblock %}
 {% block externalcss %}
 <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
@@ -23,22 +23,44 @@
     $(document).ready(function(){
         $("#b_name").focus();
         $(".required").each(function(){
-            $(this).parent().next().blur(function(e){
-                var _span;
+            var _span;
+            if ($(this).parent().next()[0].nodeName.toLowerCase() == 'input'){
+                $(this).parent().next().blur(function(e){
+                    if($.trim(e.delegateTarget.value)==''){
+                        _span = "incorrect";
+                        form_valid = false;
+                    }else{
+                        if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ ]+$/.test(e.delegateTarget.value)){
+                            _span = "correct";
+                            form_valid = true;
+                        }else{
+                            _span = "incorrect";
+                            form_valid = false;
+                        }
+                    }
 
-                if(e.delegateTarget.value==''){
-                    _span = "incorrect";
-                    form_valid = false;
-                }else{
-                    _span = "correct";
-                    form_valid = true;
-                }
+                    var n_span = $("#"+e.delegateTarget.id).next();
+                    n_span.removeClass("incorrect");
+                    n_span.removeClass("correct");
+                    n_span.addClass(_span);
+                });
+            }else if ($(this).parent().next()[0].nodeName.toLowerCase() == 'select'){
+                var id_select = $(this).parent().next().attr('id')
+                $("#"+id_select).change(function(e){
+                    if($.trim(e.delegateTarget.value)==''){
+                        _span = "incorrect";
+                        form_valid = false;
+                    }else{
+                        _span = "correct";
+                        form_valid = true;
+                    }
 
-                var n_span = $("#"+e.delegateTarget.id).next();
-                n_span.removeClass("incorrect");
-                n_span.removeClass("correct");
-                n_span.addClass(_span);
-            });
+                    var n_span =  $("#"+id_select).parent().next();
+                    n_span.removeClass("incorrect");
+                    n_span.removeClass("correct");
+                    n_span.addClass(_span);
+                });
+            }
         });
         $("#save").click(function(){
             return validate_form();
@@ -48,15 +70,132 @@
         if (form_valid){
             var _span;
             var building_name = $("#b_name");
-            if(building_name.val()==''){
+            if($.trim(building_name.val())==''){
                 _span = "incorrect";
                 form_valid = false;
             }else{
-                _span = "correct";
+                if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ. ]+$/.test(building_name.val())){
+                    _span = "correct";
+                }else{
+                    _span = "incorrect";
+                    form_valid = false;
+                }
             }
             building_name.next().removeClass("incorrect");
             building_name.next().removeClass("correct");
             building_name.next().addClass(_span);
+
+            var building_country = $("#b_country");
+            if($.trim(building_country.val())==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ. ]+$/.test(building_country.val())){
+                    _span = "correct";
+                }else{
+                    _span = "incorrect";
+                    form_valid = false;
+                }
+            }
+            building_country.next().removeClass("incorrect");
+            building_country.next().removeClass("correct");
+            building_country.next().addClass(_span);
+
+            var building_state = $("#b_state");
+            if($.trim(building_state.val())==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ. ]+$/.test(building_state.val())){
+                    _span = "correct";
+                }else{
+                    _span = "incorrect";
+                    form_valid = false;
+                }
+            }
+            building_state.next().removeClass("incorrect");
+            building_state.next().removeClass("correct");
+            building_state.next().addClass(_span);
+
+            var building_mun= $("#b_municipality");
+            if($.trim(building_mun.val())==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ. ]+$/.test(building_mun.val())){
+                    _span = "correct";
+                }else{
+                    _span = "incorrect";
+                    form_valid = false;
+                }
+            }
+            building_mun.next().removeClass("incorrect");
+            building_mun.next().removeClass("correct");
+            building_mun.next().addClass(_span);
+
+            var building_col= $("#b_neighborhood");
+            if($.trim(building_col.val())==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ. ]+$/.test(building_col.val())){
+                    _span = "correct";
+                }else{
+                    _span = "incorrect";
+                    form_valid = false;
+                }
+            }
+            building_col.next().removeClass("incorrect");
+            building_col.next().removeClass("correct");
+            building_col.next().addClass(_span);
+
+            var building_street= $("#b_street");
+            if($.trim(building_street.val())==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ. ]+$/.test(building_street.val())){
+                    _span = "correct";
+                }else{
+                    _span = "incorrect";
+                    form_valid = false;
+                }
+            }
+            building_street.next().removeClass("incorrect");
+            building_street.next().removeClass("correct");
+            building_street.next().addClass(_span);
+
+            var building_ext= $("#b_ext");
+            if($.trim(building_ext.val())==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ. ]+$/.test(building_ext.val())){
+                    _span = "correct";
+                }else{
+                    _span = "incorrect";
+                    form_valid = false;
+                }
+            }
+            building_ext.next().removeClass("incorrect");
+            building_ext.next().removeClass("correct");
+            building_ext.next().addClass(_span);
+
+            var building_zip= $("#b_zip");
+            if($.trim(building_zip.val())==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ. ]+$/.test(building_zip.val())){
+                    _span = "correct";
+                }else{
+                    _span = "incorrect";
+                    form_valid = false;
+                }
+            }
+            building_zip.next().removeClass("incorrect");
+            building_zip.next().removeClass("correct");
+            building_zip.next().addClass(_span);
 
             var electric_rate = $("#b_electric_rate");
             if(electric_rate.val()==''){
@@ -419,7 +558,6 @@ $("a.back").click(function(e){e.preventDefault(); history.back();});
 <div id="bread_crumbs">
     <ul>
         <li><a href="/main/">Inicio</a></li>
-        <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
         <li><a href="/buildings/edificios/">Edificios</a></li>
         {% if operation == "edit" %}
         <li>
@@ -428,7 +566,7 @@ $("a.back").click(function(e){e.preventDefault(); history.back();});
 
         </li>
         {% else %}
-        <li>Alta de nuevo edificio</li>
+        <li>Alta de edificio</li>
         {% endif %}
 
     </ul>
@@ -436,7 +574,7 @@ $("a.back").click(function(e){e.preventDefault(); history.back();});
 </div>
 <div id="contenido_interno">
     <h2 id="titulo_form" class="user_role">
-        {% if operation == "edit" %}Editar{% else %}Crear nuevo{% endif %} edificio
+        {% if operation == "edit" %}Editar{% else %}Crear {% endif %} edificio
     </h2>
 
 
@@ -510,7 +648,7 @@ $("a.back").click(function(e){e.preventDefault(); history.back();});
                         <select multiple name="b_type" id="b_type" size="10" class="g8">
                             {% if tipos_edificio_lst %}
                             {% for tipo in tipos_edificio_lst %}
-                            <option value="{{tipo.id}}" {% for btype in post.b_type_arr %}{% if btype.building_type.pk == tipo.id %} selected {% endif %}{% endfor %}>{{ tipo.building_type_name }}</option>
+                            <option value="{{tipo.id}}" {% for btype in post.b_type_arr %}{% if btype|slugify == tipo.id|slugify %} selected {% endif %}{% endfor %}>{{ tipo.building_type_name }}</option>
                             {% endfor %}
                             {% endif %}
                         </select>

@@ -17,6 +17,7 @@ from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from c_center.models import ProfilePowermeter, ElectricData, ElectricDataTemp
 from c_center.views import main_page
+from rbac.models import DataContextPermission, Object, PermissionAsigment, UserRole
 
 from django.shortcuts import redirect, render
 
@@ -134,6 +135,9 @@ def _login(request):
 def index(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
+    data_context = DataContextPermission.objects.filter(user_role__user=request.user)
+    roles = [dc.user_role.role.pk for dc in data_context]
+    pa = PermissionAsigment.objects.filter(role__pk__in=roles).exclude()
     return main_page(request)
 
 def logout_page(request):

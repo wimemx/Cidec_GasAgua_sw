@@ -14,6 +14,8 @@ import calendar
 #related third party imports
 import variety
 
+from PIL import *
+
 #local application/library specific imports
 from django.shortcuts import render_to_response, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect, Http404
@@ -134,7 +136,14 @@ def get_intervals_2(get):
 
 def set_default_session_vars(request, datacontext):
     """Sets the default building and consumer unit """
+    #todo revisar bien estos callbacks, seguramente cambiaran cuando haya un landing page
+    if not datacontext:
+        request.session['main_building'] = None
+        request.session['company']= None
+        request.session['consumer_unit'] = None
+
     if 'main_building' not in request.session:
+        print "144"
         #sets the default building (the first in DataContextPermission)
         try:
             building=Building.objects.get(pk=datacontext[0]['building_pk'])
@@ -144,19 +153,25 @@ def set_default_session_vars(request, datacontext):
         except IndexError:
             request.session['main_building'] = None
     if "company" not in request.session and request.session['main_building']:
+        print "154"
         c_b = CompanyBuilding.objects.get(building=request.session['main_building'])
         request.session['company'] = c_b.company
     elif request.session['company'] and request.session['main_building']:
+        print "158"
         c_b = CompanyBuilding.objects.get(building=request.session['main_building'])
         request.session['company'] = c_b.company
     else:
+        print "162"
         request.session['company']= None
     if ('consumer_unit' not in request.session and request.session['main_building']) or \
-       (request.session['consumer_unit']and request.session['main_building']):
+       (not request.session['consumer_unit'] and request.session['main_building']):
+        print "166"
         #sets the default ConsumerUnit (the first in ConsumerUnit for the main building)
         request.session['consumer_unit'] = default_consumerUnit(request.user, request.session['main_building'])
     else:
-        request.session['consumer_unit'] = None
+        if not request.session['consumer_unit'] or 'consumer_unit' not in request.session:
+            print "171"
+            request.session['consumer_unit'] = None
         #try:
         #    c_unit = ConsumerUnit.objects.filter(building=request.session['main_building'])
         #    request.session['consumer_unit'] = c_unit[0]
@@ -395,8 +410,6 @@ def allowed_cu(consumerUnit, user, building):
                 return True
         return False
 
-
-
 def is_in_part_of_building(consumerUnit, part_of_building):
     """ checks if consumerUnit is part of the part_of_building
     returns True if consumerUnit is inside the part
@@ -493,7 +506,9 @@ def main_page(request):
     sets the session variables needed to show graphs
     """
     datacontext = get_buildings_context(request.user)
-
+    if not datacontext:
+        request.session['consumer_unit'] = None
+        print "set consumer unit to none"
     set_default_session_vars(request, datacontext)
     #print request.session['consumer_unit'], request.session['main_building'], request.session['company']
     if request.session['consumer_unit'] and request.session['main_building']:# and request.session['company']:
@@ -513,7 +528,9 @@ def main_page(request):
         else:
             return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
     else:
-        template_vars = {"datacontext":datacontext}
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext":datacontext}
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("empty.html", template_vars_template)
 
@@ -549,7 +566,14 @@ def cfe_calculations(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
     datacontext = get_buildings_context(request.user)
-    if has_permission(request.user, VIEW, "Consultar recibo CFE") or request.user.is_superuser:
+    if has_permission(request.user, VIEW, "Consultar recibo CFE") or request.user.is_superuser :
+        if not request.session['consumer_unit']:
+            context={}
+            if datacontext:
+                context = {"datacontext":datacontext}
+            return HttpResponse(content="<h2 style='font-family: helvetica; color: #878787; font-size:14px;' text-align: center;>No hay unidades de consumo asignadas, por favor ponte en contacto con el administrador para remediar esta situaci&oacute;n</h2>")
+            #return render_to_response("empty.html", RequestContext(request, context))
+
         set_default_session_vars(request, datacontext)
 
         template_vars={"type":"cfe", "datacontext":datacontext,
@@ -594,7 +618,10 @@ def cfe_calculations(request):
             return render_to_response("consumption_centers/graphs/cfe_bill_error.html",
                 template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 
@@ -692,10 +719,10 @@ def grafica_datoscsv(request):
         writer = csv.writer(response)
         for dato in data:
             datostr = str(dato['meditions']).replace("[u'", "")
-            datostr = datostr.replace("']", '')+parameter_type
+            datostr = datostr.replace("']", '')
             date = str(dato['labels']).replace("[u'", "")
             date = date.replace("-05:00']", '')
-            writer.writerow([building, c_u, datostr, date])
+            writer.writerow([building, c_u, datostr,parameter_type, date])
 
         return response
 
@@ -1208,7 +1235,10 @@ def add_building_attr(request):
         return render_to_response("consumption_centers/buildings/add_building_attr.html",
                template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 def b_attr_list(request):
     if not request.user.is_authenticated():
@@ -1289,7 +1319,10 @@ def b_attr_list(request):
         return render_to_response("consumption_centers/buildings/building_attr_list.html",
                template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 def delete_b_attr(request, id_b_attr):
     if not request.user.is_authenticated():
@@ -1309,7 +1342,10 @@ def delete_b_attr(request, id_b_attr):
         return HttpResponseRedirect("/buildings/atributos/?msj=" + mensaje +
                                     "&ntype="+type)
     else:
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 def editar_b_attr(request, id_b_attr):
     if not request.user.is_authenticated():
@@ -1380,7 +1416,10 @@ def editar_b_attr(request, id_b_attr):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_building_attr.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 def ver_b_attr(request, id_b_attr):
     if not request.user.is_authenticated():
@@ -1411,7 +1450,10 @@ def ver_b_attr(request, id_b_attr):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/see_building_attr.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 #====
 
@@ -1421,9 +1463,9 @@ def add_cluster(request):
     datacontext = get_buildings_context(request.user)
     if has_permission(request.user, CREATE, "Alta de clusters") or request.user.is_superuser:
         empresa = request.session['main_building']
-
+        post = ''
         #Se obtienen los sectores
-        sectores = SectoralType.objects.all()
+        sectores = SectoralType.objects.filter(sectoral_type_status = 1)
         template_vars = dict(datacontext=datacontext,
             empresa=empresa,
             sectores=sectores,
@@ -1432,32 +1474,66 @@ def add_cluster(request):
 
         if request.method == "POST":
             template_vars["post"] = request.POST
-            clustername = request.POST.get('clustername')
-            clusterdescription = request.POST.get('clusterdescription')
+            clustername = request.POST.get('clustername').strip()
+            clusterdescription = request.POST.get('clusterdescription').strip()
             clustersector = request.POST.get('clustersector')
 
-            sector_type = SectoralType.objects.get(pk = clustersector)
+            continuar = True
+            if clustername == '':
+                message = "El nombre del Cluster no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+            elif not variety.validate_string(clustername):
+                message = "El nombre del Cluster contiene caracteres inválidos"
+                type = "n_notif"
+                clustername = ""
+                continuar = False
 
-            newCluster = Cluster(
-                sectoral_type = sector_type,
-                cluster_description = clusterdescription,
-                cluster_name = clustername,
-            )
-            newCluster.save()
+            if clustersector == '':
+                message = "El Cluster debe pertenecer a un tipo de sector"
+                type = "n_notif"
+                continuar = False
 
-            template_vars["message"] = "Cluster de Empresas creado exitosamente"
-            template_vars["type"] = "n_success"
 
-            if has_permission(request.user, VIEW, "Ver clusters") or request.user.is_superuser:
-                return HttpResponseRedirect("/buildings/clusters?msj=" +
-                                            template_vars["message"] +
-                                            "&ntype=n_success")
+            #Valida por si le da muchos clics al boton
+            clusterValidate = Cluster.objects.filter(cluster_name = clustername)
+            if clusterValidate:
+                message = "Ya existe un cluster con ese nombre"
+                type = "n_notif"
+                continuar = False
 
+            post = {'clustername': clustername, 'clusterdescription': clusterdescription, 'clustersector': int(clustersector)}
+            template_vars['post'] = post
+
+            if continuar:
+                sector_type = SectoralType.objects.get(pk = clustersector)
+
+                newCluster = Cluster(
+                    sectoral_type = sector_type,
+                    cluster_description = clusterdescription,
+                    cluster_name = clustername,
+                )
+                newCluster.save()
+
+                template_vars["message"] = "Cluster de Empresas creado exitosamente"
+                template_vars["type"] = "n_success"
+
+                if has_permission(request.user, VIEW, "Ver clusters") or request.user.is_superuser:
+                    return HttpResponseRedirect("/buildings/clusters?msj=" +
+                                                template_vars["message"] +
+                                                "&ntype=n_success")
+
+            template_vars["post"] = post
+            template_vars["message"] = message
+            template_vars["type"] = type
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_cluster.html", template_vars_template)
 
     else:
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def view_cluster(request):
@@ -1473,6 +1549,7 @@ def view_cluster(request):
 
         order_name = 'asc'
         order_sector = 'asc'
+        order_status = 'asc'
         order = "cluster_name" #default order
         if "order_name" in request.GET:
             if request.GET["order_name"] == "desc":
@@ -1489,6 +1566,13 @@ def view_cluster(request):
                 else:
                     order = "-sectoral_type__sectorial_type_name"
                     order_sector = "asc"
+            if "order_status" in request.GET:
+                if request.GET["order_status"] == "asc":
+                    order = "cluster_status"
+                    order_status = "desc"
+                else:
+                    order = "-cluster_status"
+                    order_status = "asc"
 
         if search:
             lista = Cluster.objects.filter(Q(cluster_name__icontains=request.GET['search'])|Q(
@@ -1497,7 +1581,7 @@ def view_cluster(request):
         else:
             lista = Cluster.objects.all().exclude(cluster_status=2).order_by(order)
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
-        template_vars = dict(order_name=order_name, order_sector=order_sector,
+        template_vars = dict(order_name=order_name, order_sector=order_sector, order_status=order_status,
             datacontext=datacontext, empresa=empresa, company=request.session['company'])
         # Make sure page request is an int. If not, deliver first page.
         try:
@@ -1521,39 +1605,53 @@ def view_cluster(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/clusters.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
-def delete_cluster(request, id_cluster):
+def status_cluster(request, id_cluster):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de clusters") or request.user.is_superuser:
+    if has_permission(request.user, UPDATE, "Modificar cluster de empresas") or request.user.is_superuser:
         cluster = get_object_or_404(Cluster, pk=id_cluster)
-        cluster.cluster_status = 2
+        if cluster.cluster_status == 1:
+            cluster.cluster_status = 0
+            action = "inactivo"
+        elif cluster.cluster_status == 0:
+            cluster.cluster_status = 1
+            action = "activo"
         cluster.save()
-        mensaje = "El cluster ha sido dado de baja correctamente"
+        mensaje = "El estatus del cluster " + cluster.cluster_name + " ha cambiado a "+ action
         type="n_success"
 
         return HttpResponseRedirect("/buildings/clusters/?msj=" + mensaje +
                                     "&ntype="+type)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
-def delete_batch_cluster(request):
+def status_batch_cluster(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de clusters") or request.user.is_superuser:
+    if has_permission(request.user, UPDATE, "Modificar cluster de empresas") or request.user.is_superuser:
         if request.method == "GET":
             raise Http404
-        if request.POST['actions'] == 'delete':
+        if request.POST['actions'] == 'status':
             for key in request.POST:
                 if re.search('^cluster_\w+', key):
                     r_id = int(key.replace("cluster_",""))
                     cluster = get_object_or_404(Cluster, pk=r_id)
-                    cluster.cluster_status = 2
+                    if cluster.cluster_status == 1:
+                        cluster.cluster_status = 0
+                    elif cluster.cluster_status == 0:
+                        cluster.cluster_status = 1
                     cluster.save()
 
-            mensaje = "Los clusters seleccionados se han dado de baja"
+            mensaje = "Los clusters seleccionados han cambiado su status correctamente"
             return HttpResponseRedirect("/buildings/clusters/?msj=" + mensaje +
                                         "&ntype=n_success")
         else:
@@ -1562,7 +1660,10 @@ def delete_batch_cluster(request):
                                         "&ntype=n_success")
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 
@@ -1574,10 +1675,11 @@ def edit_cluster(request, id_cluster):
         cluster = get_object_or_404(Cluster, pk = id_cluster)
 
         #Se obtienen los sectores
-        sectores = SectoralType.objects.all()
+        sectores = SectoralType.objects.filter(sectoral_type_status = 1)
 
         post = {'clustername': cluster.cluster_name, 'clusterdescription': cluster.cluster_description, 'clustersector': cluster.sectoral_type.pk}
 
+        datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         message = ''
         type = ''
@@ -1592,13 +1694,27 @@ def edit_cluster(request, id_cluster):
                 message = "El nombre del cluster no puede quedar vacío"
                 type = "n_notif"
                 continuar = False
+            elif not variety.validate_string(clustername):
+                message = "El nombre del Cluster contiene caracteres inválidos"
+                type = "n_notif"
+                clustername = ""
+                continuar = False
+
             if clustersector == '':
                 message = "El sector del cluster no puede quedar vacío"
                 type = "n_notif"
                 continuar = False
 
-            post = {'clustername': clustername, 'clusterdescription': clusterdescription ,'clustersector': clustersector}
+            #Valida el nombre (para el caso de los repetidos)
+            if cluster.cluster_name != clustername:
+                #Valida por si le da muchos clics al boton
+                clusterValidate = Cluster.objects.filter(cluster_name = clustername)
+                if clusterValidate:
+                    message = "Ya existe un cluster con ese nombre"
+                    type = "n_notif"
+                    continuar = False
 
+            post = {'clustername': cluster.cluster_name, 'clusterdescription': clusterdescription ,'clustersector': int(clustersector)}
 
             if continuar:
                 sector_type = SectoralType.objects.get(pk = clustersector)
@@ -1627,7 +1743,10 @@ def edit_cluster(request, id_cluster):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_cluster.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def see_cluster(request, id_cluster):
@@ -1651,7 +1770,10 @@ def see_cluster(request, id_cluster):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/see_cluster.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 """
 POWERMETER MODELS
@@ -1671,27 +1793,66 @@ def add_powermetermodel(request):
 
         if request.method == "POST":
             template_vars["post"] = request.POST
-            pw_brand = request.POST.get('pw_brand')
-            pw_model = request.POST.get('pw_model')
+            pw_brand = request.POST.get('pw_brand').strip()
+            pw_model = request.POST.get('pw_model').strip()
 
-            newPowerMeterModel = PowermeterModel(
-                powermeter_brand = pw_brand,
-                powermeter_model = pw_model
-            )
-            newPowerMeterModel.save()
+            continuar = True
 
-            template_vars["message"] = "Modelo de Medidor creado exitosamente"
-            template_vars["type"] = "n_success"
+            if pw_brand == '':
+                message = "El nombre de la Marca no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+            elif not variety.validate_string(pw_brand):
+                message = "El nombre de la Marca contiene caracteres inválidos"
+                type = "n_notif"
+                pw_brand = ""
+                continuar = False
 
-            if has_permission(request.user, VIEW, "Ver modelos de medidores eléctricos") or request.user.is_superuser:
-                return HttpResponseRedirect("/buildings/modelos_medidor?msj=" +
-                                            template_vars["message"] +
-                                            "&ntype=n_success")
+            if pw_model == '':
+                message = "El nombre del Modelo no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+            elif not variety.validate_string(pw_model):
+                message = "El nombre del Modelo contiene caracteres inválidos"
+                type = "n_notif"
+                pw_model = ""
+                continuar = False
+
+            #Valida no puede haber empresas con el mismo nombre
+            p_modelValidate = PowermeterModel.objects.filter(powermeter_brand = pw_brand).filter(powermeter_model = pw_model)
+            if p_modelValidate:
+                message = "Ya existe una Marca y un Modelo con esos datos"
+                type = "n_notif"
+                continuar = False
+
+            post = {'pw_brand': pw_brand, 'pw_model': pw_model}
+
+            if continuar:
+                newPowerMeterModel = PowermeterModel(
+                    powermeter_brand = pw_brand,
+                    powermeter_model = pw_model
+                )
+                newPowerMeterModel.save()
+
+                template_vars["message"] = "Modelo de Medidor creado exitosamente"
+                template_vars["type"] = "n_success"
+
+                if has_permission(request.user, VIEW, "Ver modelos de medidores eléctricos") or request.user.is_superuser:
+                    return HttpResponseRedirect("/buildings/modelos_medidor?msj=" +
+                                                template_vars["message"] +
+                                                "&ntype=n_success")
+
+            template_vars['post'] = post
+            template_vars["message"] = message
+            template_vars["type"] = type
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_powermetermodel.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def edit_powermetermodel(request, id_powermetermodel):
@@ -1700,31 +1861,53 @@ def edit_powermetermodel(request, id_powermetermodel):
     datacontext = get_buildings_context(request.user)
     if has_permission(request.user, UPDATE, "Modificar modelos de medidores eléctricos") or request.user.is_superuser:
         powermetermodel = get_object_or_404(PowermeterModel, pk = id_powermetermodel)
+
         post = {'pw_brand': powermetermodel.powermeter_brand, 'pw_model': powermetermodel.powermeter_model}
+
+        datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         message = ''
         type = ''
 
         if request.method == "POST":
             post = request.POST
-            powermeter_brand = request.POST.get('pw_brand')
-            powermeter_model = request.POST.get('pw_model')
+            pw_brand = request.POST.get('pw_brand')
+            pw_model = request.POST.get('pw_model')
 
             continuar = True
-            if powermeter_brand == '':
-                message = "La marca del medidor no puede quedar vacía"
+            if pw_brand == '':
+                message = "El nombre de la Marca no puede quedar vacío"
                 type = "n_notif"
                 continuar = False
-            if powermeter_model == '':
-                message = "El modelo del medidor no puede quedar vacío"
+            elif not variety.validate_string(pw_brand):
+                message = "El nombre de la Marca contiene caracteres inválidos"
                 type = "n_notif"
+                pw_brand = ""
                 continuar = False
 
-            post = {'pw_brand': powermetermodel.powermeter_brand, 'pw_model': powermetermodel.powermeter_model}
+            if pw_model == '':
+                message = "El nombre del Modelo no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+            elif not variety.validate_string(pw_model):
+                message = "El nombre del Modelo contiene caracteres inválidos"
+                type = "n_notif"
+                pw_model = ""
+                continuar = False
+
+            #Valida el nombre (para el caso de los repetidos)
+            if powermetermodel.powermeter_brand != pw_brand or powermetermodel.powermeter_model != pw_model:
+                p_modelValidate = PowermeterModel.objects.filter(powermeter_brand = pw_brand).filter(powermeter_model = pw_model)
+                if p_modelValidate:
+                    message = "Ya existe una Marca y un Modelo con esos datos"
+                    type = "n_notif"
+                    continuar = False
+
+            post = {'pw_brand': pw_brand, 'pw_model': pw_model}
 
             if continuar:
-                powermetermodel.powermeter_brand = powermeter_brand
-                powermetermodel.powermeter_model = powermeter_model
+                powermetermodel.powermeter_brand = pw_brand
+                powermetermodel.powermeter_model = pw_model
                 powermetermodel.save()
 
                 message = "Modelo de Medidor editado exitosamente"
@@ -1745,7 +1928,10 @@ def edit_powermetermodel(request, id_powermetermodel):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_powermetermodel.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def view_powermetermodels(request):
@@ -1754,6 +1940,7 @@ def view_powermetermodels(request):
     datacontext = get_buildings_context(request.user)
     if has_permission(request.user, VIEW, "Ver modelos de medidores eléctricos") or request.user.is_superuser:
         empresa = request.session['main_building']
+        company = request.session['company']
         if "search" in request.GET:
             search = request.GET["search"]
         else:
@@ -1761,6 +1948,7 @@ def view_powermetermodels(request):
 
         order_brand = 'asc'
         order_model = 'asc'
+        order_status = 'asc'
         order = "powermeter_brand" #default order
         if "order_brand" in request.GET:
             if request.GET["order_brand"] == "desc":
@@ -1778,6 +1966,14 @@ def view_powermetermodels(request):
                     order = "-powermeter_model"
                     order_model = "asc"
 
+            if "order_status" in request.GET:
+                if request.GET["order_status"] == "asc":
+                    order = "status"
+                    order_status = "desc"
+                else:
+                    order = "-status"
+                    order_status = "asc"
+
         if search:
             lista = PowermeterModel.objects.filter(Q(powermeter_brand__icontains=request.GET['search'])|Q(
                 powermeter_model__icontains=request.GET['search'])).order_by(order)
@@ -1785,8 +1981,8 @@ def view_powermetermodels(request):
         else:
             lista = PowermeterModel.objects.all().order_by(order)
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
-        template_vars = dict(order_brand=order_brand, order_model=order_model,
-            datacontext=datacontext, empresa=empresa)
+        template_vars = dict(order_brand=order_brand, order_model=order_model, order_status=order_status,
+            datacontext=datacontext, empresa=empresa, company=company)
         # Make sure page request is an int. If not, deliver first page.
         try:
             page = int(request.GET.get('page', '1'))
@@ -1809,39 +2005,30 @@ def view_powermetermodels(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/powermetermodels.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
-def delete_powermetermodel(request, id_powermetermodel):
+
+def status_batch_powermetermodel(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de clusters") or request.user.is_superuser:
-        powermetermodel = get_object_or_404(PowermeterModel, pk = id_powermetermodel)
-        #Change the status in here
-        powermetermodel.save()
-        mensaje = "El modelo ha sido dado de baja correctamente"
-        type="n_success"
-
-        return HttpResponseRedirect("/buildings/modelos_medidor/?msj=" + mensaje +
-                                    "&ntype="+type)
-    else:
-        datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
-
-def delete_batch_powermetermodel(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de clusters") or request.user.is_superuser:
+    if has_permission(request.user, UPDATE, "Modificar modelos de medidores eléctricos") or request.user.is_superuser:
         if request.method == "GET":
             raise Http404
-        if request.POST['actions'] == 'delete':
+        if request.POST['actions'] == 'status':
             for key in request.POST:
                 if re.search('^model_\w+', key):
                     r_id = int(key.replace("model_",""))
                     powermetermodel = get_object_or_404(PowermeterModel, pk = r_id)
-                    #Change the status in here
+                    if powermetermodel.status == 0:
+                        powermetermodel.status = 1
+                    elif powermetermodel.status == 1:
+                        powermetermodel.status = 0
                     powermetermodel.save()
 
-            mensaje = "Los modelos seleccionados se han dado de baja"
+            mensaje = "Los modelos seleccionados han cambiado su estatus correctamente"
             return HttpResponseRedirect("/buildings/modelos_medidor/?msj=" + mensaje +
                                         "&ntype=n_success")
         else:
@@ -1850,8 +2037,31 @@ def delete_batch_powermetermodel(request):
                                         "&ntype=n_success")
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
+def status_powermetermodel(request, id_powermetermodel):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, UPDATE, "Modificar modelos de medidores eléctricos") or request.user.is_superuser:
+        powermetermodel = get_object_or_404(PowermeterModel, pk = id_powermetermodel)
+        if powermetermodel.status == 0:
+            powermetermodel.status = 1
+            str_status = "Activo"
+        elif powermetermodel.status == 1:
+            powermetermodel.status = 0
+            str_status = "Inactivo"
+        powermetermodel.save()
+
+        mensaje = "El estatus del modelo ha cambiado a "+str_status
+        type="n_success"
+
+        return HttpResponseRedirect("/buildings/modelos_medidor/?msj=" + mensaje +
+                                    "&ntype="+type)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
 
 """
 POWERMETERS
@@ -1864,7 +2074,7 @@ def add_powermeter(request):
     if has_permission(request.user, CREATE, "Alta de medidor electrico") or request.user.is_superuser:
         empresa = request.session['main_building']
         post = ''
-        pw_models_list = PowermeterModel.objects.all().order_by("powermeter_brand")
+        pw_models_list = PowermeterModel.objects.all().exclude(status=0).order_by("powermeter_brand")
         template_vars = dict(datacontext=datacontext,
             empresa=empresa,
             modelos=pw_models_list,
@@ -1874,26 +2084,39 @@ def add_powermeter(request):
 
         if request.method == "POST":
             template_vars["post"] = request.POST
-            pw_alias = request.POST.get('pw_alias')
+            pw_alias = request.POST.get('pw_alias').strip()
             pw_model = request.POST.get('pw_model')
-            pw_serial = request.POST.get('pw_serial')
+            pw_serial = request.POST.get('pw_serial').strip()
 
             continuar = True
             if pw_alias == '':
                 message = "El Alias del medidor no puede quedar vacío"
                 type = "n_notif"
                 continuar = False
+            elif not variety.validate_string(pw_alias):
+                message = "El Alias del medidor contiene caracteres inválidos"
+                type = "n_notif"
+                pw_alias = ""
+                continuar = False
+
             if pw_model == '':
                 message = "El modelo del medidor no puede quedar vacío"
                 type = "n_notif"
                 continuar = False
+
             if pw_serial == '':
                 message = "El número serial del medidor no puede quedar vacío"
                 type = "n_notif"
                 continuar = False
 
-            post = {'pw_alias': pw_alias, 'pw_model': pw_model ,'pw_serial': pw_serial}
+            #Valida por si le da muchos clics al boton
+            pwValidate = Powermeter.objects.filter(powermeter_model__pk = pw_model).filter(powermeter_serial = pw_serial)
+            if pwValidate:
+                message = "Ya existe un Medidor con ese Modelo y ese Número de Serie"
+                type = "n_notif"
+                continuar = False
 
+            post = {'pw_alias': pw_alias, 'pw_model': int(pw_model),'pw_serial': pw_serial}
 
             if continuar:
 
@@ -1922,7 +2145,10 @@ def add_powermeter(request):
         return render_to_response("consumption_centers/buildings/add_powermeter.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def edit_powermeter(request, id_powermeter):
@@ -1932,7 +2158,7 @@ def edit_powermeter(request, id_powermeter):
     if has_permission(request.user, UPDATE, "Modificar medidores eléctricos") or request.user.is_superuser:
         powermeter = get_object_or_404(Powermeter, pk = id_powermeter)
 
-        pw_models_list = PowermeterModel.objects.all().order_by("powermeter_brand")
+        pw_models_list = PowermeterModel.objects.all().exclude(status=0).order_by("powermeter_brand")
 
         post = {'pw_alias': powermeter.powermeter_anotation, 'pw_model': powermeter.powermeter_model.pk,'pw_serial': powermeter.powermeter_serial}
 
@@ -1942,15 +2168,21 @@ def edit_powermeter(request, id_powermeter):
 
         if request.method == "POST":
             post = request.POST
-            pw_alias = request.POST.get('pw_alias')
+            pw_alias = request.POST.get('pw_alias').strip()
             pw_model = request.POST.get('pw_model')
-            pw_serial = request.POST.get('pw_serial')
+            pw_serial = request.POST.get('pw_serial').strip()
 
             continuar = True
             if pw_alias == '':
                 message = "El Alias del medidor no puede quedar vacío"
                 type = "n_notif"
                 continuar = False
+            elif not variety.validate_string(pw_alias):
+                message = "El Alias del medidor contiene caracteres inválidos"
+                type = "n_notif"
+                pw_alias = ""
+                continuar = False
+
             if pw_model == '':
                 message = "El modelo del medidor no puede quedar vacío"
                 type = "n_notif"
@@ -1960,7 +2192,16 @@ def edit_powermeter(request, id_powermeter):
                 type = "n_notif"
                 continuar = False
 
-            post = {'pw_alias': pw_alias, 'pw_model': pw_model ,'pw_serial': pw_serial}
+            #Valida el nombre (para el caso de los repetidos)
+            if powermeter.powermeter_model_id != pw_model and powermeter.powermeter_serial != pw_serial:
+                #Valida por si le da muchos clics al boton
+                pwValidate = Powermeter.objects.filter(powermeter_model__pk = pw_model).filter(powermeter_serial = pw_serial)
+                if pwValidate:
+                    message = "Ya existe un Medidor con ese Modelo y ese Número de Serie"
+                    type = "n_notif"
+                    continuar = False
+
+            post = {'pw_alias': pw_alias, 'pw_model': int(pw_model) ,'pw_serial': pw_serial}
 
 
             if continuar:
@@ -1991,7 +2232,10 @@ def edit_powermeter(request, id_powermeter):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_powermeter.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def view_powermeter(request):
@@ -2047,16 +2291,16 @@ def view_powermeter(request):
 
             lista = Powermeter.objects.filter(Q(powermeter_anotation__icontains=request.GET['search'])|Q(
                 powermeter_model__powermeter_brand__icontains=request.GET['search'])|Q(
-                powermeter_model__powermeter_model__icontains=request.GET['search'])).exclude(status = 2).order_by(order)
+                powermeter_model__powermeter_model__icontains=request.GET['search'])).order_by(order)
 
 
 
         else:
-            powermeter_objs = Powermeter.objects.all().exclude(status=2)
+            powermeter_objs = Powermeter.objects.all()
             powermeter_ids = [pw.pk for pw in powermeter_objs]
             profiles_pw_objs = ProfilePowermeter.objects.filter(powermeter__pk__in = powermeter_ids).filter(profile_powermeter_status = 1)
 
-            lista = Powermeter.objects.all().exclude(status = 2).order_by(order)
+            lista = Powermeter.objects.all().order_by(order)
 
 
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
@@ -2084,39 +2328,29 @@ def view_powermeter(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/powermeters.html", template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
-def delete_powermeter(request, id_powermeter):
+def status_batch_powermeter(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de medidores eléctricos") or request.user.is_superuser:
-        powermeter = get_object_or_404(Powermeter, pk = id_powermeter )
-        powermeter.status = 2
-        powermeter.save()
-        mensaje = "El medidor ha sido dado de baja correctamente"
-        type="n_success"
-
-        return HttpResponseRedirect("/buildings/medidores/?msj=" + mensaje +
-                                    "&ntype="+type)
-    else:
-        datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
-
-def delete_batch_powermeter(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de medidores eléctricos") or request.user.is_superuser:
+    if has_permission(request.user, UPDATE, "Modificar medidores eléctricos") or request.user.is_superuser:
         if request.method == "GET":
             raise Http404
-        if request.POST['actions'] == 'delete':
+        if request.POST['actions'] == 'status':
             for key in request.POST:
                 if re.search('^powermeter_\w+', key):
                     r_id = int(key.replace("powermeter_",""))
                     powermeter = get_object_or_404(Powermeter, pk = r_id )
-                    powermeter.status = 2
+                    if powermeter.status == 0:
+                        powermeter.status = 1
+                    elif powermeter.status == 1:
+                        powermeter.status = 0
                     powermeter.save()
 
-            mensaje = "Los medidores seleccionados se han dado de baja"
+            mensaje = "Los medidores seleccionados han cambiado su estatus correctamente"
             return HttpResponseRedirect("/buildings/medidores/?msj=" + mensaje +
                                         "&ntype=n_success")
         else:
@@ -2125,7 +2359,10 @@ def delete_batch_powermeter(request):
                                         "&ntype=n_success")
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def status_powermeter(request, id_powermeter):
@@ -2148,7 +2385,10 @@ def status_powermeter(request, id_powermeter):
                                     "&ntype="+type)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def see_powermeter(request, id_powermeter):
@@ -2180,7 +2420,10 @@ def see_powermeter(request, id_powermeter):
         return render_to_response("consumption_centers/buildings/see_powermeter.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 """
 Electric Device Types
@@ -2202,12 +2445,24 @@ def add_electric_device_type(request):
 
         if request.method == "POST":
             template_vars["post"] = request.POST
-            edt_name = request.POST.get('devicetypename')
-            edt_description = request.POST.get('devicetypedescription')
+            edt_name = request.POST.get('devicetypename').strip()
+            edt_description = request.POST.get('devicetypedescription').strip()
 
             continuar = True
             if edt_name == '':
                 message = "El nombre del Tipo de Equipo Eléctrico no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+            elif not variety.validate_string(edt_name):
+                message = "El nombre del Tipo de Equipo Eléctrico contiene caracteres inválidos"
+                type = "n_notif"
+                edt_name = ""
+                continuar = False
+
+            #Valida por si le da muchos clics al boton
+            b_electric_typeValidate = ElectricDeviceType.objects.filter(electric_device_type_name = edt_name)
+            if b_electric_typeValidate:
+                message = "Ya existe un Tipo de Equipo Eléctrico con ese nombre"
                 type = "n_notif"
                 continuar = False
 
@@ -2237,7 +2492,10 @@ def add_electric_device_type(request):
         return render_to_response("consumption_centers/buildings/add_electricdevicetype.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def edit_electric_device_type(request, id_edt):
@@ -2255,14 +2513,28 @@ def edit_electric_device_type(request, id_edt):
 
         if request.method == "POST":
             post = request.POST
-            edt_name = request.POST.get('devicetypename')
-            edt_description = request.POST.get('devicetypedescription')
+            edt_name = request.POST.get('devicetypename').strip()
+            edt_description = request.POST.get('devicetypedescription').strip()
 
             continuar = True
             if edt_name == '':
                 message = "El nombre del Tipo de Equipo Eléctrico no puede quedar vacío"
                 type = "n_notif"
                 continuar = False
+            elif not variety.validate_string(edt_name):
+                message = "El nombre del Tipo de Equipo Eléctrico contiene caracteres inválidos"
+                type = "n_notif"
+                edt_name = ""
+                continuar = False
+
+            #Valida el nombre (para el caso de los repetidos)
+            if edt_obj.electric_device_type_name != edt_name:
+                #Valida por si le da muchos clics al boton
+                e_typeValidate = ElectricDeviceType.objects.filter(electric_device_type_name = edt_name)
+                if e_typeValidate:
+                    message = "Ya existe un Tipo de Equipo Eléctrico con ese nombre"
+                    type = "n_notif"
+                    continuar = False
 
             post = {'devicetypename': edt_name, 'devicetypedescription': edt_description}
 
@@ -2290,7 +2562,10 @@ def edit_electric_device_type(request, id_edt):
         return render_to_response("consumption_centers/buildings/add_electricdevicetype.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def view_electric_device_type(request):
@@ -2364,39 +2639,29 @@ def view_electric_device_type(request):
         return render_to_response("consumption_centers/buildings/electricdevicetype.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
-
-def delete_electric_device_type(request, id_edt):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de dispositivos y sistemas eléctricos") or request.user.is_superuser:
-        edt_obj = get_object_or_404(ElectricDeviceType, pk=id_edt)
-        edt_obj.electric_device_type_status = 2
-        edt_obj.save()
-        mensaje = "El Tipo de Equipo Eléctrico ha sido dado de baja correctamente"
-        type="n_success"
-
-        return HttpResponseRedirect("/buildings/tipos_equipo_electrico/?msj=" + mensaje +
-                                    "&ntype="+type)
-    else:
-        datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 def delete_batch_electric_device_type(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de dispositivos y sistemas eléctricos") or request.user.is_superuser:
+    if has_permission(request.user, UPDATE, "Modificar dispositivos y sistemas eléctricos") or request.user.is_superuser:
         if request.method == "GET":
             raise Http404
-        if request.POST['actions'] == 'delete':
+        if request.POST['actions'] == 'status':
             for key in request.POST:
                 if re.search('^edt_\w+', key):
                     r_id = int(key.replace("edt_",""))
                     edt_obj = get_object_or_404(ElectricDeviceType, pk=r_id)
-                    edt_obj.electric_device_type_status = 2
+                    if edt_obj.electric_device_type_status == 0:
+                        edt_obj.electric_device_type_status = 1
+                    elif edt_obj.electric_device_type_status == 1:
+                        edt_obj.electric_device_type_status = 0
                     edt_obj.save()
 
-            mensaje = "Los Tipos de Equipo Eléctrico han sido dado de baja correctamente"
+            mensaje = "Los Tipos de Equipo Eléctrico han cambiado su estatus correctamente"
             return HttpResponseRedirect("/buildings/tipos_equipo_electrico/?msj=" + mensaje +
                                         "&ntype=n_success")
         else:
@@ -2405,8 +2670,37 @@ def delete_batch_electric_device_type(request):
                                         "&ntype=n_success")
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
+def status_batch_electric_device_type(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, UPDATE, "Modificar dispositivos y sistemas eléctricos") or request.user.is_superuser:
+        if request.method == "GET":
+            raise Http404
+        if request.POST['actions'] == 'status':
+            for key in request.POST:
+                if re.search('^edt_\w+', key):
+                    r_id = int(key.replace("edt_",""))
+                    edt_obj = get_object_or_404(ElectricDeviceType, pk=r_id)
+                    if edt_obj.electric_device_type_status == 0:
+                        edt_obj.electric_device_type_status = 1
+                    elif edt_obj.electric_device_type_status == 1:
+                        edt_obj.electric_device_type_status = 0
+                    edt_obj.save()
+
+            mensaje = "Los Tipos de Equipo Eléctrico han cambiado su estatus correctamente"
+            return HttpResponseRedirect("/buildings/tipos_equipo_electrico/?msj=" + mensaje +
+                                        "&ntype=n_success")
+        else:
+            mensaje = "No se ha seleccionado una acción"
+            return HttpResponseRedirect("/buildings/tipos_equipo_electrico/?msj=" + mensaje +
+                                        "&ntype=n_success")
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
 
 def status_electric_device_type(request, id_edt):
     if not request.user.is_authenticated():
@@ -2428,7 +2722,10 @@ def status_electric_device_type(request, id_edt):
                                     "&ntype="+type)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 """
 Companies
@@ -2458,8 +2755,8 @@ def add_company(request):
 
         if request.method == "POST":
             template_vars["post"] = request.POST
-            cmp_name = request.POST.get('company_name')
-            cmp_description = request.POST.get('company_description')
+            cmp_name = request.POST.get('company_name').strip()
+            cmp_description = request.POST.get('company_description').strip()
             cmp_cluster = request.POST.get('company_cluster')
             cmp_sector = request.POST.get('company_sector')
 
@@ -2467,6 +2764,11 @@ def add_company(request):
             if cmp_name == '':
                 message = "El nombre de la empresa no puede quedar vacío"
                 type = "n_notif"
+                continuar = False
+            elif not variety.validate_string(cmp_name):
+                message = "El nombre de la empresa contiene caracteres inválidos"
+                type = "n_notif"
+                cmp_name = ""
                 continuar = False
 
             if cmp_cluster == '':
@@ -2479,7 +2781,14 @@ def add_company(request):
                 type = "n_notif"
                 continuar = False
 
-            post = {'cmp_name': cmp_name, 'cmp_description': cmp_description, 'cmp_cluster': cmp_cluster, 'cmp_sector': cmp_sector}
+            #Valida no puede haber empresas con el mismo nombre
+            companyValidate = Company.objects.filter(company_name = cmp_name)
+            if companyValidate:
+                message = "Ya existe una empresa con ese nombre"
+                type = "n_notif"
+                continuar = False
+
+            post = {'cmp_name': cmp_name, 'cmp_description': cmp_description, 'cmp_cluster': int(cmp_cluster), 'cmp_sector': int(cmp_sector)}
 
             if continuar:
                 #Se obtiene el objeto del sector
@@ -2504,7 +2813,7 @@ def add_company(request):
 
                 #Guarda la foto
                 if 'logo' in request.FILES:
-                    handle_company_logo(request.FILES['logo'], newCompany)
+                    handle_company_logo(request.FILES['logo'], newCompany, True)
 
 
                 template_vars["message"] = "Empresa creada exitosamente"
@@ -2522,7 +2831,10 @@ def add_company(request):
         return render_to_response("consumption_centers/buildings/add_company.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def edit_company(request, id_cpy):
@@ -2546,8 +2858,8 @@ def edit_company(request, id_cpy):
 
         if request.method == "POST":
             post = request.POST
-            cmp_name = request.POST.get('company_name')
-            cmp_description = request.POST.get('company_description')
+            cmp_name = request.POST.get('company_name').strip()
+            cmp_description = request.POST.get('company_description').strip()
             cmp_cluster = request.POST.get('company_cluster')
             cmp_sector = request.POST.get('company_sector')
 
@@ -2555,6 +2867,11 @@ def edit_company(request, id_cpy):
             if cmp_name == '':
                 message = "El nombre de la empresa no puede quedar vacío"
                 type = "n_notif"
+                continuar = False
+            elif not variety.validate_string(cmp_name):
+                message = "El nombre de la empresa contiene caracteres inválidos"
+                type = "n_notif"
+                cmp_name = ""
                 continuar = False
 
             if cmp_cluster == '':
@@ -2567,7 +2884,15 @@ def edit_company(request, id_cpy):
                 type = "n_notif"
                 continuar = False
 
-            post = {'cmp_id': company_clusters[0].company.id, 'cmp_name': cmp_name, 'cmp_description': cmp_description, 'cmp_cluster': cmp_cluster, 'cmp_sector': cmp_sector, 'cmp_logo': company_clusters[0].company.company_logo}
+            #Valida el nombre (para el caso de los repetidos)
+            if company_clusters[0].company.company_name != cmp_name:
+                companyValidate = Company.objects.filter(company_name = cmp_name)
+                if companyValidate:
+                    message = "Ya existe una empresa con ese nombre"
+                    type = "n_notif"
+                    continuar = False
+
+            post = {'cmp_id': company_clusters[0].company.id, 'cmp_name': cmp_name, 'cmp_description': cmp_description, 'cmp_cluster': int(cmp_cluster), 'cmp_sector': int(cmp_sector), 'cmp_logo': company_clusters[0].company.company_logo}
 
             if continuar:
                 #Actualiza la empresa
@@ -2593,7 +2918,7 @@ def edit_company(request, id_cpy):
 
                 #Guarda la foto
                 if 'logo' in request.FILES:
-                    handle_company_logo(request.FILES['logo'], companyObj)
+                    handle_company_logo(request.FILES['logo'], companyObj, False)
 
 
                 message = "Empresa editada exitosamente"
@@ -2617,7 +2942,10 @@ def edit_company(request, id_cpy):
         return render_to_response("consumption_centers/buildings/add_company.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def view_companies(request):
@@ -2699,39 +3027,29 @@ def view_companies(request):
         return render_to_response("consumption_centers/buildings/companies.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
-def delete_company(request, id_cpy):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de empresas") or request.user.is_superuser:
-        cpy_obj = get_object_or_404(Company, pk = id_cpy)
-        cpy_obj.company_status = 2
-        cpy_obj.save()
-        mensaje = "La empresa ha sido dada de baja correctamente"
-        type="n_success"
-
-        return HttpResponseRedirect("/buildings/empresas/?msj=" + mensaje +
-                                    "&ntype="+type)
-    else:
-        datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
-
-def delete_batch_companies(request):
+def status_batch_companies(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
     if has_permission(request.user, DELETE, "Baja de empresas") or request.user.is_superuser:
         if request.method == "GET":
             raise Http404
-        if request.POST['actions'] == 'delete':
+        if request.POST['actions'] == 'status':
             for key in request.POST:
                 if re.search('^cmpy_\w+', key):
                     r_id = int(key.replace("cmpy_",""))
                     cpy_obj = get_object_or_404(Company, pk = r_id)
-                    cpy_obj.company_status = 2
+                    if cpy_obj.company_status == 0:
+                        cpy_obj.company_status = 1
+                    elif cpy_obj.company_status == 1:
+                        cpy_obj.company_status = 0
                     cpy_obj.save()
 
-            mensaje = "Las empresas han sido dadas de baja correctamente"
+            mensaje = "Las empresas seleccionadas han cambiado su estatus correctamente"
             return HttpResponseRedirect("/buildings/empresas/?msj=" + mensaje +
                                         "&ntype=n_success")
         else:
@@ -2740,7 +3058,10 @@ def delete_batch_companies(request):
                                         "&ntype=n_success")
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def status_company(request, id_cpy):
@@ -2763,7 +3084,10 @@ def status_company(request, id_cpy):
                                     "&ntype="+type)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 def see_company(request, id_cpy):
     if not request.user.is_authenticated():
@@ -2785,7 +3109,10 @@ def see_company(request, id_cpy):
         return render_to_response("consumption_centers/buildings/see_company.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def scale_dimensions(width, height, longest_side):
@@ -2801,27 +3128,23 @@ def scale_dimensions(width, height, longest_side):
         return (int(width*ratio), int(height*ratio))
     return (width, height)
 
-
-def handle_company_logo(i, company):
-    dir_fd=os.open(os.path.join(settings.PROJECT_PATH, "templates/static/media/company_logos/"),os.O_RDONLY)
+def handle_company_logo(i, company, is_new):
+    dir_fd=os.open(os.path.join(settings.PROJECT_PATH, "templates/static/media/logotipos/"),os.O_RDONLY)
     os.fchdir(dir_fd)
     #Revisa si la carpeta de la empresa existe.
     dir_name = 'templates/static/media/company_logos/company_'+str(company.pk)+'/'
     dir_path = os.path.join(settings.PROJECT_PATH, dir_name)
-    if not os.path.isdir(dir_path):
-        os.mkdir("company_"+str(company.pk))
-    else:
-        dir_name = "company_" + str(company.pk)
-        dir_path = os.path.join(settings.PROJECT_PATH, 'templates/static/media/company_logos/')
-        files = os.listdir(dir_path+dir_name)
-        dir_fd = os.open(dir_path+dir_name, os.O_RDONLY)
+    if not is_new:
+        dir_path = os.path.join(settings.PROJECT_PATH, 'templates/static/media/logotipos/')
+        files = os.listdir(dir_path)
+        dir_fd = os.open(dir_path, os.O_RDONLY)
         os.fchdir(dir_fd)
         for file in files:
             if file==company.company_logo:
                 os.remove(file)
         os.close(dir_fd)
 
-    dir_fd = os.open(os.path.join(settings.PROJECT_PATH, "templates/static/media/company_logos/"+"company_"+str(company.pk)),os.O_RDONLY)
+    dir_fd=os.open(os.path.join(settings.PROJECT_PATH, "templates/static/media/logotipos/"),os.O_RDONLY)
     os.fchdir(dir_fd)
 
     imagefile  = cStringIO.StringIO(i.read())
@@ -2843,11 +3166,10 @@ def handle_company_logo(i, company):
     # #save to disk
     imagefile = open(os.path.join('',filename), 'w')
     resizedImage.save(imagefile,'JPEG')
-    company.company_logo=filename
+    company.company_logo="logotipos/"+filename
     company.save()
     os.close(dir_fd)
     return True
-
 
 
 def c_center_structures(request):
@@ -2888,7 +3210,10 @@ def c_center_structures(request):
 
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 """
@@ -2914,12 +3239,24 @@ def add_buildingtype(request):
 
         if request.method == "POST":
             template_vars["post"] = request.POST
-            btype_name = request.POST.get('btype_name')
-            btype_description = request.POST.get('btype_description')
+            btype_name = request.POST.get('btype_name').strip()
+            btype_description = request.POST.get('btype_description').strip()
 
             continuar = True
             if btype_name == '':
-                message = "El nombre del tipo de edificio no puede quedar vacío"
+                message = "El nombre del Tipo de Edificio no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+            elif not variety.validate_string(btype_name):
+                message = "El nombre del Tipo de Edificio contiene caracteres inválidos"
+                type = "n_notif"
+                btype_name = ""
+                continuar = False
+
+            #Valida por si le da muchos clics al boton
+            b_typeValidate = BuildingType.objects.filter(building_type_name = btype_name)
+            if b_typeValidate:
+                message = "Ya existe un Tipo de Edificio con ese nombre"
                 type = "n_notif"
                 continuar = False
 
@@ -2948,7 +3285,10 @@ def add_buildingtype(request):
         return render_to_response("consumption_centers/buildings/add_buildingtype.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def edit_buildingtype(request, id_btype):
@@ -2973,9 +3313,23 @@ def edit_buildingtype(request, id_btype):
 
             continuar = True
             if btype_name == '':
-                message = "El nombre del tipo de edificio no puede quedar vacío"
+                message = "El nombre del Tipo de Edificio no puede quedar vacío"
                 type = "n_notif"
                 continuar = False
+            elif not variety.validate_string(btype_name):
+                message = "El nombre del Tipo de Edificio contiene caracteres inválidos"
+                type = "n_notif"
+                btype_name = ""
+                continuar = False
+
+            #Valida el nombre (para el caso de los repetidos)
+            if building_type.building_type_name != btype_name:
+                #Valida por si le da muchos clics al boton
+                b_typeValidate = BuildingType.objects.filter(building_type_name = btype_name)
+                if b_typeValidate:
+                    message = "Ya existe un Tipo de Edificio con ese nombre"
+                    type = "n_notif"
+                    continuar = False
 
             post = {'btype_name': btype_name, 'btype_description':btype_description}
 
@@ -3003,7 +3357,10 @@ def edit_buildingtype(request, id_btype):
         return render_to_response("consumption_centers/buildings/add_buildingtype.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def view_buildingtypes(request):
@@ -3078,41 +3435,30 @@ def view_buildingtypes(request):
         return render_to_response("consumption_centers/buildings/buildingtype.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
-def delete_buildingtype(request, id_btype):
+def status_batch_buildingtypes(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de tipos de edificios") or request.user.is_superuser:
-        btype_obj = get_object_or_404(BuildingType, pk = id_btype)
-        btype_obj.building_type_status = 2
-        btype_obj.save()
-
-        mensaje = "El tipo de edificio ha sido dado de baja correctamente"
-        type="n_success"
-
-        return HttpResponseRedirect("/buildings/tipos_edificios/?msj=" + mensaje +
-                                    "&ntype="+type)
-    else:
-        datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
-
-def delete_batch_buildingtypes(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de tipos de edificios") or request.user.is_superuser:
+    if has_permission(request.user, UPDATE, "Modificar tipo de edificio") or request.user.is_superuser:
         if request.method == "GET":
             raise Http404
-        if request.POST['actions'] == 'delete':
+        if request.POST['actions'] == 'status':
             for key in request.POST:
                 if re.search('^btype_\w+', key):
                     r_id = int(key.replace("btype_",""))
                     btype_obj = get_object_or_404(BuildingType, pk = r_id)
-                    btype_obj.building_type_status = 2
+                    if btype_obj.building_type_status == 0:
+                        btype_obj.building_type_status = 1
+                    elif btype_obj.building_type_status == 1:
+                        btype_obj.building_type_status = 0
                     btype_obj.save()
 
-            mensaje = "Los tipos de edificios han sido dados de baja correctamente"
+            mensaje = "Los tipos de edificios han cambiado su estatus correctamente"
             return HttpResponseRedirect("/buildings/tipos_edificios/?msj=" + mensaje +
                                         "&ntype=n_success")
         else:
@@ -3121,7 +3467,10 @@ def delete_batch_buildingtypes(request):
                                         "&ntype=n_success")
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def status_buildingtype(request, id_btype):
@@ -3144,7 +3493,10 @@ def status_buildingtype(request, id_btype):
                                     "&ntype="+type)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 
@@ -3179,6 +3531,19 @@ def add_sectoraltype(request):
                 type = "n_notif"
                 continuar = False
 
+            if not variety.validate_string(stype_name):
+                message = "El nombre del tipo de sector contiene caracteres inválidos"
+                type = "n_notif"
+                stype_name = ""
+                continuar = False
+
+            #Valida por si le da muchos clics al boton
+            sectorValidate = SectoralType.objects.filter(sectorial_type_name = stype_name)
+            if sectorValidate:
+                message = "Ya existe un tipo de sector con ese nombre"
+                type = "n_notif"
+                continuar = False
+
             post = {'stype_name': stype_name, 'stype_description':stype_description}
 
             if continuar:
@@ -3204,7 +3569,10 @@ def add_sectoraltype(request):
         return render_to_response("consumption_centers/buildings/add_sectoraltype.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def edit_sectoraltype(request, id_stype):
@@ -3233,6 +3601,21 @@ def edit_sectoraltype(request, id_stype):
                 type = "n_notif"
                 continuar = False
 
+            if not variety.validate_string(stype_name):
+                message = "El nombre del tipo de sector contiene caracteres inválidos"
+                type = "n_notif"
+                stype_name = ""
+                continuar = False
+
+            #Valida el nombre (para el caso de los repetidos)
+            if sectoral_type.sectorial_type_name != stype_name:
+                #Valida por si le da muchos clics al boton
+                sectorValidate = SectoralType.objects.filter(sectorial_type_name = stype_name)
+                if sectorValidate:
+                    message = "Ya existe un tipo de sector con ese nombre"
+                    type = "n_notif"
+                    continuar = False
+
             post = {'stype_name': stype_name, 'stype_description':stype_description}
 
             if continuar:
@@ -3259,7 +3642,10 @@ def edit_sectoraltype(request, id_stype):
         return render_to_response("consumption_centers/buildings/add_sectoraltype.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def view_sectoraltypes(request):
@@ -3333,40 +3719,29 @@ def view_sectoraltypes(request):
         return render_to_response("consumption_centers/buildings/sectoraltype.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
-def delete_sectoraltype(request, id_stype):
+def status_batch_sectoraltypes(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de tipos de sectores") or request.user.is_superuser:
-        stype_obj = get_object_or_404(SectoralType, pk = id_stype)
-        stype_obj.sectoral_type_status = 2
-        stype_obj.save()
-
-        mensaje = "El tipo de sector ha sido dado de baja correctamente"
-        type="n_success"
-
-        return HttpResponseRedirect("/buildings/tipos_sectores/?msj=" + mensaje +
-                                    "&ntype="+type)
-    else:
-        datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
-
-def delete_batch_sectoraltypes(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de tipos de sectores") or request.user.is_superuser:
+    if has_permission(request.user, UPDATE, "Modificar tipos de sectores") or request.user.is_superuser:
         if request.method == "GET":
             raise Http404
-        if request.POST['actions'] == 'delete':
+        if request.POST['actions'] == 'status':
             for key in request.POST:
                 if re.search('^stype_\w+', key):
                     r_id = int(key.replace("stype_",""))
                     stype_obj = get_object_or_404(SectoralType, pk = r_id)
-                    stype_obj.sectoral_type_status = 2
+                    if stype_obj.sectoral_type_status == 0:
+                        stype_obj.sectoral_type_status = 1
+                    else:
+                        stype_obj.sectoral_type_status = 0
                     stype_obj.save()
 
-            mensaje = "Los tipos de sectores han sido dados de baja correctamente"
+            mensaje = "Los tipos de sectores seleccionados han cambiado su status correctamente"
             return HttpResponseRedirect("/buildings/tipos_sectores/?msj=" + mensaje +
                                         "&ntype=n_success")
         else:
@@ -3375,7 +3750,10 @@ def delete_batch_sectoraltypes(request):
                                         "&ntype=n_success")
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def status_sectoraltype(request, id_stype):
@@ -3388,7 +3766,7 @@ def status_sectoraltype(request, id_stype):
             str_status = "Activo"
         elif sectoral_type.sectoral_type_status == 1:
             sectoral_type.sectoral_type_status = 0
-            str_status = "Activo"
+            str_status = "Inactivo"
 
         sectoral_type.save()
         mensaje = "El estatus del sector " + sectoral_type.sectorial_type_name +" ha cambiado a "+str_status
@@ -3398,7 +3776,10 @@ def status_sectoraltype(request, id_stype):
                                     "&ntype="+type)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 
@@ -3406,7 +3787,6 @@ def status_sectoraltype(request, id_stype):
 """
 Building Attributes Type
 """
-
 
 def add_b_attributes_type(request):
     if not request.user.is_authenticated():
@@ -3425,12 +3805,24 @@ def add_b_attributes_type(request):
 
         if request.method == "POST":
             template_vars["post"] = request.POST
-            b_attr_type_name = request.POST.get('b_attr_type_name')
-            b_attr_type_description = request.POST.get('b_attr_type_description')
+            b_attr_type_name = request.POST.get('b_attr_type_name').strip()
+            b_attr_type_description = request.POST.get('b_attr_type_description').strip()
 
             continuar = True
             if b_attr_type_name == '':
                 message = "El nombre del tipo de atributo no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+            elif not variety.validate_string(b_attr_type_name):
+                message = "El nombre del Tipo de Atributo contiene caracteres inválidos"
+                type = "n_notif"
+                b_attr_type_name = ""
+                continuar = False
+
+            #Valida por si le da muchos clics al boton
+            b_attribute_typeValidate = BuildingAttributesType.objects.filter(building_attributes_type_name = b_attr_type_name)
+            if b_attribute_typeValidate:
+                message = "Ya existe un Tipo de Atributo con ese nombre"
                 type = "n_notif"
                 continuar = False
 
@@ -3459,7 +3851,10 @@ def add_b_attributes_type(request):
         return render_to_response("consumption_centers/buildings/add_buildingattributetype.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def edit_b_attributes_type(request, id_batype):
@@ -3479,14 +3874,28 @@ def edit_b_attributes_type(request, id_batype):
 
         if request.method == "POST":
             post = request.POST
-            b_attr_type_name = request.POST.get('b_attr_type_name')
-            b_attr_type_description = request.POST.get('b_attr_type_description')
+            b_attr_type_name = request.POST.get('b_attr_type_name').strip()
+            b_attr_type_description = request.POST.get('b_attr_type_description').strip()
 
             continuar = True
             if b_attr_type_name == '':
                 message = "El nombre del tipo de atributo no puede quedar vacío"
                 type = "n_notif"
                 continuar = False
+            elif not variety.validate_string(b_attr_type_name):
+                message = "El nombre del Tipo de Atributo contiene caracteres inválidos"
+                type = "n_notif"
+                b_attr_type_name = ""
+                continuar = False
+
+            #Valida el nombre (para el caso de los repetidos)
+            if b_attr_typeObj.building_attributes_type_name != b_attr_type_name:
+                #Valida por si le da muchos clics al boton
+                b_attribute_typeValidate = BuildingAttributesType.objects.filter(building_attributes_type_name = b_attr_type_name)
+                if b_attribute_typeValidate:
+                    message = "Ya existe un Tipo de Atributo con ese nombre"
+                    type = "n_notif"
+                    continuar = False
 
             post = {'batype_name':b_attr_type_name , 'batype_description':b_attr_type_description }
 
@@ -3514,7 +3923,10 @@ def edit_b_attributes_type(request, id_batype):
         return render_to_response("consumption_centers/buildings/add_buildingattributetype.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def view_b_attributes_type(request):
@@ -3532,6 +3944,7 @@ def view_b_attributes_type(request):
 
         order_name = 'asc'
         order_description = 'asc'
+        order_status = 'asc'
         order = "building_attributes_type_name" #default order
         if "order_name" in request.GET:
             if request.GET["order_name"] == "desc":
@@ -3547,6 +3960,13 @@ def view_b_attributes_type(request):
                 else:
                     order = "-building_attributes_type_description"
 
+            if "order_status" in request.GET:
+                if request.GET["order_status"] == "asc":
+                    order = "building_attributes_type_status"
+                    order_status = "desc"
+                else:
+                    order = "-building_attributes_type_status"
+
         if search:
             lista = BuildingAttributesType.objects.filter(Q(building_attributes_type_name__icontains=request.GET['search'])|Q(
                 building_attributes_type_description__icontains=request.GET['search'])).\
@@ -3555,7 +3975,7 @@ def view_b_attributes_type(request):
             lista = BuildingAttributesType.objects.all().exclude(building_attributes_type_status = 2).order_by(order)
 
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
-        template_vars = dict(order_name=order_name, order_description=order_description,
+        template_vars = dict(order_name=order_name, order_description=order_description, order_status=order_status,
             datacontext=datacontext, empresa=empresa, company=company)
         # Make sure page request is an int. If not, deliver first page.
         try:
@@ -3580,8 +4000,60 @@ def view_b_attributes_type(request):
         return render_to_response("consumption_centers/buildings/buildingattributetype.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
+
+def status_b_attributes_type(request, id_batype):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, UPDATE, "Modificar tipos de atributos de edificios") or request.user.is_superuser:
+        b_att_type = get_object_or_404(BuildingAttributesType, pk = id_batype)
+        if b_att_type.building_attributes_type_status == 0:
+            b_att_type.building_attributes_type_status = 1
+            str_status = "Activo"
+        elif b_att_type.building_attributes_type_status == 1:
+            b_att_type.building_attributes_type_status = 0
+            str_status = "Inactivo"
+        b_att_type.save()
+
+        mensaje = "El estatus del Tipo de Atributo " + b_att_type.building_attributes_type_name +" ha cambiado a "+str_status
+        type="n_success"
+
+        return HttpResponseRedirect("/buildings/tipos_atributos_edificios/?msj=" + mensaje +
+                                    "&ntype="+type)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def status_batch_b_attributes_type(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, UPDATE, "Modificar tipos de atributos de edificios") or request.user.is_superuser:
+        if request.method == "GET":
+            raise Http404
+        if request.POST['actions'] == 'status':
+            for key in request.POST:
+                if re.search('^batype_\w+', key):
+                    r_id = int(key.replace("batype_",""))
+                    b_att_type = get_object_or_404(BuildingAttributesType, pk = r_id)
+                    if b_att_type.building_attributes_type_status == 0:
+                        b_att_type.building_attributes_type_status = 1
+                    elif b_att_type.building_attributes_type_status == 1:
+                        b_att_type.building_attributes_type_status = 0
+                    b_att_type.save()
+
+            mensaje = "Los Tipos de Atributos seleccionados han cambiado su status correctamente"
+            return HttpResponseRedirect("/buildings/tipos_atributos_edificios/?msj=" + mensaje +
+                                        "&ntype=n_success")
+        else:
+            mensaje = "No se ha seleccionado una acción"
+            return HttpResponseRedirect("/buildings/tipos_atributos_edificios/?msj=" + mensaje +
+                                        "&ntype=n_success")
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
 
 
 """
@@ -3606,12 +4078,24 @@ def add_partbuildingtype(request):
 
         if request.method == "POST":
             template_vars["post"] = request.POST
-            b_part_type_name = request.POST.get('b_part_type_name')
-            b_part_type_description = request.POST.get('b_part_type_description')
+            b_part_type_name = request.POST.get('b_part_type_name').strip()
+            b_part_type_description = request.POST.get('b_part_type_description').strip()
 
             continuar = True
             if b_part_type_name == '':
                 message = "El nombre del Tipo de Parte de Edificio no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+            elif not variety.validate_string(b_part_type_name):
+                message = "El nombre del Tipo de Parte de Edificio contiene caracteres inválidos"
+                type = "n_notif"
+                b_part_type_name = ""
+                continuar = False
+
+            #Valida por si le da muchos clics al boton
+            partTypeValidate = PartOfBuildingType.objects.filter(part_of_building_type_name = b_part_type_name)
+            if partTypeValidate:
+                message = "Ya existe un Tipo de Parte de Edificio con ese nombre"
                 type = "n_notif"
                 continuar = False
 
@@ -3640,7 +4124,10 @@ def add_partbuildingtype(request):
         return render_to_response("consumption_centers/buildings/add_partbuilding_type.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def edit_partbuildingtype(request, id_pbtype):
@@ -3660,14 +4147,23 @@ def edit_partbuildingtype(request, id_pbtype):
 
         if request.method == "POST":
             post = request.POST
-            b_part_type_name = request.POST.get('b_part_type_name')
-            b_part_type_description = request.POST.get('b_part_type_description')
+            b_part_type_name = request.POST.get('b_part_type_name').strip()
+            b_part_type_description = request.POST.get('b_part_type_description').strip()
 
             continuar = True
             if b_part_type_name == '':
                 message = "El nombre del Tipo de Parte de Edificio no puede quedar vacío"
                 type = "n_notif"
                 continuar = False
+
+            #Valida el nombre (para el caso de los repetidos)
+            if building_part_type.part_of_building_type_name != b_part_type_name:
+                #Valida por si le da muchos clics al boton
+                partTypeValidate = PartOfBuildingType.objects.filter(part_of_building_type_name = b_part_type_name)
+                if partTypeValidate:
+                    message = "Ya existe un Tipo de Parte de Edificio con ese nombre"
+                    type = "n_notif"
+                    continuar = False
 
             post = {'b_part_type_name': building_part_type.part_of_building_type_name, 'b_part_type_description': building_part_type.part_of_building_type_description}
 
@@ -3695,7 +4191,10 @@ def edit_partbuildingtype(request, id_pbtype):
         return render_to_response("consumption_centers/buildings/add_partbuilding_type.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def view_partbuildingtype(request):
@@ -3769,42 +4268,29 @@ def view_partbuildingtype(request):
         return render_to_response("consumption_centers/buildings/partofbuildingtype.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
-
-def delete_partbuildingtype(request, id_pbtype):
+def status_batch_partbuildingtype(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de tipos de partes de edificios") or request.user.is_superuser:
-
-        part_building_type = get_object_or_404(PartOfBuildingType, pk=id_pbtype)
-        part_building_type.part_of_building_type_status = 2
-        part_building_type.save()
-
-        mensaje = "El Tipo de Parte de Edificio ha sido dado de baja correctamente"
-        type="n_success"
-
-        return HttpResponseRedirect("/buildings/tipos_partes_edificio/?msj=" + mensaje +
-                                    "&ntype="+type)
-    else:
-        datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
-
-def delete_batch_partbuildingtype(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de tipos de partes de edificios") or request.user.is_superuser:
+    if has_permission(request.user, UPDATE, "Modificar tipos de atributos de edificios") or request.user.is_superuser:
         if request.method == "GET":
             raise Http404
-        if request.POST['actions'] == 'delete':
+        if request.POST['actions'] == 'status':
             for key in request.POST:
                 if re.search('^pb_type_\w+', key):
                     r_id = int(key.replace("pb_type_",""))
                     part_building_type = get_object_or_404(PartOfBuildingType, pk=r_id)
-                    part_building_type.part_of_building_type_status = 2
+                    if part_building_type.part_of_building_type_status == 0:
+                        part_building_type.part_of_building_type_status = 1
+                    elif part_building_type.part_of_building_type_status == 1:
+                        part_building_type.part_of_building_type_status = 0
                     part_building_type.save()
 
-            mensaje = "Los Tipos de Partes de Edificio han sido dados de baja correctamente"
+            mensaje = "Los Tipos de Partes de Edificio han cambiado su estatus correctamente"
             return HttpResponseRedirect("/buildings/tipos_partes_edificio/?msj=" + mensaje +
                                         "&ntype=n_success")
         else:
@@ -3813,7 +4299,10 @@ def delete_batch_partbuildingtype(request):
                                         "&ntype=n_success")
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def status_partbuildingtype(request, id_pbtype):
@@ -3827,7 +4316,7 @@ def status_partbuildingtype(request, id_pbtype):
             str_status = "Activo"
         elif part_building_type.part_of_building_type_status == 1:
             part_building_type.part_of_building_type_status = 0
-            str_status = "Activo"
+            str_status = "Inactivo"
         part_building_type.save()
 
         mensaje = "El estatus del tipo de edificio " + part_building_type.part_of_building_type_name +" ha cambiado a "+str_status
@@ -3837,7 +4326,10 @@ def status_partbuildingtype(request, id_pbtype):
                                     "&ntype="+type)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 
@@ -3858,10 +4350,10 @@ def add_partbuilding(request):
         post = ''
 
         #Se obtienen los tipos de partes de edificios
-        tipos_parte = PartOfBuildingType.objects.all().exclude(part_of_building_type_status = 2).order_by('part_of_building_type_name')
+        tipos_parte = PartOfBuildingType.objects.all().exclude(part_of_building_type_status = 0).order_by('part_of_building_type_name')
 
         #Se obtienen los tipos de atributos de edificios
-        tipos_atributos = BuildingAttributesType.objects.all().exclude(building_attributes_type_status = 2).order_by('building_attributes_type_name')
+        tipos_atributos = BuildingAttributesType.objects.all().exclude(building_attributes_type_status = 0).order_by('building_attributes_type_name')
 
         template_vars = dict(datacontext=datacontext,
             empresa=empresa,
@@ -3873,12 +4365,12 @@ def add_partbuilding(request):
 
         if request.method == "POST":
             template_vars["post"] = request.POST
-            b_part_name = request.POST.get('b_part_name')
-            b_part_description = request.POST.get('b_part_description')
+            b_part_name = request.POST.get('b_part_name').strip()
+            b_part_description = request.POST.get('b_part_description').strip()
             b_part_type_id = request.POST.get('b_part_type')
-            b_part_building_name = request.POST.get('b_building_name')
+            b_part_building_name = request.POST.get('b_building_name').strip()
             b_part_building_id = request.POST.get('b_building_id')
-            b_part_mt2 = request.POST.get('b_part_mt2')
+            b_part_mt2 = request.POST.get('b_part_mt2').strip()
 
             continuar = True
             if b_part_name == '':
@@ -3896,7 +4388,14 @@ def add_partbuilding(request):
                 type = "n_notif"
                 continuar = False
 
-            post = {'b_part_name': b_part_name, 'b_part_description':b_part_description, 'b_part_building_name': b_part_building_name, 'b_part_building_id': b_part_building_id, 'b_part_type':b_part_type_id ,'b_part_mt2':b_part_mt2}
+            #Valida por si le da muchos clics al boton
+            partValidate = PartOfBuilding.objects.filter(part_of_building_name = b_part_name).filter(part_of_building_type__pk = b_part_type_id).filter(building__pk = b_part_building_id)
+            if partValidate:
+                message = "Ya existe una Parte de Edificio con ese nombre, ese tipo de parte y en ese edificio"
+                type = "n_notif"
+                continuar = False
+
+            post = {'b_part_name': b_part_name, 'b_part_description':b_part_description, 'b_part_building_name': b_part_building_name, 'b_part_building_id': b_part_building_id, 'b_part_type':int(b_part_type_id) ,'b_part_mt2':b_part_mt2}
 
             if continuar:
 
@@ -3950,7 +4449,10 @@ def add_partbuilding(request):
         return render_to_response("consumption_centers/buildings/add_partbuilding.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def edit_partbuilding(request, id_bpart):
@@ -3959,13 +4461,12 @@ def edit_partbuilding(request, id_bpart):
     if has_permission(request.user, UPDATE, "Modificar partes de un edificio") or request.user.is_superuser:
 
         #Se obtienen los tipos de partes de edificios
-        tipos_parte = PartOfBuildingType.objects.all().exclude(part_of_building_type_status = 2).order_by('part_of_building_type_name')
+        tipos_parte = PartOfBuildingType.objects.all().exclude(part_of_building_type_status = 0).order_by('part_of_building_type_name')
 
         #Se obtienen los tipos de atributos de edificios
-        tipos_atributos = BuildingAttributesType.objects.all().exclude(building_attributes_type_status = 2).order_by('building_attributes_type_name')
+        tipos_atributos = BuildingAttributesType.objects.all().exclude(building_attributes_type_status = 0).order_by('building_attributes_type_name')
 
         building_part = get_object_or_404(PartOfBuilding, pk=id_bpart)
-
 
         #Se obtienen todos los atributos
         building_part_attributes = BuilAttrsForPartOfBuil.objects.filter(part_of_building = building_part)
@@ -4007,12 +4508,12 @@ def edit_partbuilding(request, id_bpart):
         if request.method == "POST":
             post = request.POST
 
-            b_part_name = request.POST.get('b_part_name')
-            b_part_description = request.POST.get('b_part_description')
+            b_part_name = request.POST.get('b_part_name').strip()
+            b_part_description = request.POST.get('b_part_description').strip()
             b_part_type_id = request.POST.get('b_part_type')
-            b_part_building_name = request.POST.get('b_building_name')
+            b_part_building_name = request.POST.get('b_building_name').strip()
             b_part_building_id = request.POST.get('b_building_id')
-            b_part_mt2 = request.POST.get('b_part_mt2')
+            b_part_mt2 = request.POST.get('b_part_mt2').strip()
 
             continuar = True
             if b_part_name == '':
@@ -4030,8 +4531,15 @@ def edit_partbuilding(request, id_bpart):
                 type = "n_notif"
                 continuar = False
 
-            post = {'b_part_name': b_part_name, 'b_part_description':b_part_description, 'b_part_building_name': b_part_building_name, 'b_part_building_id': b_part_building_id, 'b_part_type':b_part_type_id ,'b_part_mt2':b_part_mt2}
+            if building_part.part_of_building_name != b_part_name and building_part.building_id != b_part_building_id and building_part.part_of_building_type_id != b_part_type_id:
+                #Valida por si le da muchos clics al boton
+                partValidate = PartOfBuilding.objects.filter(part_of_building_name = b_part_name).filter(part_of_building_type__pk = b_part_type_id).filter(building__pk = b_part_building_id)
+                if partValidate:
+                    message = "Ya existe una Parte de Edificio con ese nombre, ese tipo de parte y en ese edificio"
+                    type = "n_notif"
+                    continuar = False
 
+            post = {'b_part_name': b_part_name, 'b_part_description':b_part_description, 'b_part_building_name': b_part_building_name, 'b_part_building_id': b_part_building_id, 'b_part_type':int(b_part_type_id) ,'b_part_mt2':b_part_mt2}
 
             if continuar:
                 #Se obtiene la instancia del edificio
@@ -4089,7 +4597,10 @@ def edit_partbuilding(request, id_bpart):
         return render_to_response("consumption_centers/buildings/add_partbuilding.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def view_partbuilding(request):
@@ -4108,6 +4619,7 @@ def view_partbuilding(request):
         order_name = 'asc'
         order_type = 'asc'
         order_building = 'asc'
+        order_status = 'asc'
         order = "part_of_building_name" #default order
         if "order_name" in request.GET:
             if request.GET["order_name"] == "desc":
@@ -4131,6 +4643,14 @@ def view_partbuilding(request):
                     order = "-building__building_name"
                     order_building = "asc"
 
+            if "order_status" in request.GET:
+                if request.GET["order_status"] == "asc":
+                    order = "part_of_building_status"
+                    order_status = "desc"
+                else:
+                    order = "-part_of_building_status"
+                    order_status = "asc"
+
         if search:
             lista = PartOfBuilding.objects.filter(Q(part_of_building_name__icontains=request.GET['search'])|Q(
                 part_of_building_type__part_of_building_type_name__icontains=request.GET['search'])|Q(
@@ -4139,7 +4659,7 @@ def view_partbuilding(request):
             lista = PartOfBuilding.objects.all().order_by(order)
 
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
-        template_vars = dict(order_name=order_name, order_type=order_type, order_building=order_building,
+        template_vars = dict(order_name=order_name, order_type=order_type, order_building=order_building, order_status=order_status,
             datacontext=datacontext, empresa=empresa, company=company)
         # Make sure page request is an int. If not, deliver first page.
         try:
@@ -4163,14 +4683,72 @@ def view_partbuilding(request):
         return render_to_response("consumption_centers/buildings/partofbuilding.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
+
+
+def status_batch_partofbuilding(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, UPDATE, "Modificar partes de un edificio") or request.user.is_superuser:
+        if request.method == "GET":
+            raise Http404
+        if request.POST['actions'] == 'status':
+            for key in request.POST:
+                if re.search('^pb_\w+', key):
+                    r_id = int(key.replace("pb_",""))
+                    building_part = get_object_or_404(PartOfBuilding, pk = r_id)
+
+                    if building_part.part_of_building_status == 0:
+                        building_part.part_of_building_status = 1
+                    elif building_part.part_of_building_status == 1:
+                        building_part.part_of_building_status = 0
+
+                    building_part.save()
+
+            mensaje = "Las Partes de Edificios han cambiado su estatus correctamente"
+            return HttpResponseRedirect("/buildings/partes_edificio/?msj=" + mensaje +
+                                        "&ntype=n_success")
+        else:
+            mensaje = "No se ha seleccionado una acción"
+            return HttpResponseRedirect("/buildings/partes_edificio/?msj=" + mensaje +
+                                        "&ntype=n_success")
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def status_partofbuilding(request, id_bpart):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, UPDATE, "Modificar partes de un edificio") or request.user.is_superuser:
+        building_part = get_object_or_404(PartOfBuilding, pk = id_bpart)
+
+        if building_part.part_of_building_status == 0:
+            building_part.part_of_building_status = 1
+            str_status = "Activo"
+        elif building_part.part_of_building_status == 1:
+            building_part.part_of_building_status = 0
+            str_status = "Inactivo"
+
+        building_part.save()
+
+        mensaje = "El estatus de la Parte de Edificio " + building_part.part_of_building_name +" ha cambiado a "+str_status
+        type="n_success"
+
+        return HttpResponseRedirect("/buildings/partes_edificio/?msj=" + mensaje +
+                                    "&ntype="+type)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
 
 def search_buildings(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
     if "term" in request.GET:
         term = request.GET['term']
-        buildings = Building.objects.filter(Q(building_name__icontains=term))
+        buildings = Building.objects.filter(Q(building_name__icontains=term)).exclude(building_status = 0)
         buildings_arr = []
         for building in buildings:
             buildings_arr.append(dict(value=building.building_name, pk=building.pk, label=building.building_name))
@@ -4242,7 +4820,7 @@ def location_objects(country_id, country_name, state_id, state_name, municipalit
             estado = stateObj,
             municipio = municipalityObj,
         )
-        country_stateObj.save()
+        state_munObj.save()
 
     #Se obtiene el objeto de Colonia, sino esta Colonia, se da de alta una Colonia nueva.
     if neighborhood_id:
@@ -4288,21 +4866,22 @@ def add_building(request):
         empresa = request.session['main_building']
         company = request.session['company']
         post = ''
+        message = ''
 
         #Se obtienen las empresas
-        empresas_lst = Company.objects.all().exclude(company_status=2).order_by('company_name')
+        empresas_lst = Company.objects.all().exclude(company_status=0).order_by('company_name')
 
         #Se obtienen las tarifas
         tarifas = ElectricRates.objects.all()
 
         #Se obtienen los tipos de edificios
-        tipos_edificio_lst = BuildingType.objects.all().exclude(building_type_status = 2).order_by('building_type_name')
+        tipos_edificio_lst = BuildingType.objects.all().exclude(building_type_status = 0).order_by('building_type_name')
 
         #Se obtienen las regiones
         regiones_lst = Region.objects.all()
 
         #Se obtienen los tipos de atributos de edificios
-        tipos_atributos = BuildingAttributesType.objects.all().exclude(building_attributes_type_status = 2).order_by('building_attributes_type_name')
+        tipos_atributos = BuildingAttributesType.objects.all().exclude(building_attributes_type_status = 0).order_by('building_attributes_type_name')
 
 
         template_vars = dict(datacontext=datacontext,
@@ -4318,28 +4897,38 @@ def add_building(request):
 
         if request.method == "POST":
             template_vars["post"] = request.POST
-            b_name = request.POST.get('b_name')
-            b_description = request.POST.get('b_description')
+            b_name = request.POST.get('b_name').strip()
+            b_description = request.POST.get('b_description').strip()
             b_company = request.POST.get('b_company')
             b_type_arr = request.POST.getlist('b_type')
-            b_mt2 = request.POST.get('b_mt2')
+            b_mt2 = request.POST.get('b_mt2').strip()
             b_electric_rate_id = request.POST.get('b_electric_rate')
             b_country_id = request.POST.get('b_country_id')
+            b_country_name = request.POST.get('b_country').strip()
             b_state_id = request.POST.get('b_state_id')
+            b_state_name = request.POST.get('b_state').strip()
             b_municipality_id = request.POST.get('b_municipality_id')
+            b_municipality_name = request.POST.get('b_municipality').strip()
             b_neighborhood_id = request.POST.get('b_neighborhood_id')
+            b_neighborhood_name = request.POST.get('b_neighborhood').strip()
             b_street_id = request.POST.get('b_street_id')
-            b_ext = request.POST.get('b_ext')
-            b_int = request.POST.get('b_int')
-            b_zip = request.POST.get('b_zip')
+            b_street_name = request.POST.get('b_street').strip()
+            b_ext = request.POST.get('b_ext').strip()
+            b_int = request.POST.get('b_int').strip()
+            b_zip = request.POST.get('b_zip').strip()
             b_long = request.POST.get('b_longitude')
             b_lat = request.POST.get('b_latitude')
             b_region_id = request.POST.get('b_region')
 
             continuar = True
             if b_name == '':
-                message = "El nombre del Edificio no puede quedar vacío"
+                message += "El nombre del Edificio no puede quedar vacío"
                 type = "n_notif"
+                continuar = False
+            elif not variety.validate_string(b_name):
+                message += "El nombre del Edificio contiene caracteres inválidos"
+                type = "n_notif"
+                b_name = ""
                 continuar = False
 
             if b_company == '':
@@ -4377,24 +4966,38 @@ def add_building(request):
                 type = "n_notif"
                 continuar = False
 
+            #Valida por si le da muchos clics al boton
+            buildingValidate = Building.objects.filter(building_name = b_name)
+            if buildingValidate:
+                message = "Ya existe un Edificio con ese nombre"
+                type = "n_notif"
+                continuar = False
+
+
+
             post = {
                 'b_name':b_name,
                 'b_description':b_description,
-                'b_company':b_company,
+                'b_company':int(b_company),
                 'b_type_arr':b_type_arr,
                 'b_mt2':b_mt2,
-                'b_electric_rate_id':b_electric_rate_id,
+                'b_electric_rate_id':int(b_electric_rate_id),
                 'b_country_id':b_country_id,
+                'b_country':b_country_name,
                 'b_state_id':b_state_id,
+                'b_state':b_state_name,
                 'b_municipality_id':b_municipality_id,
+                'b_municipality':b_municipality_name,
                 'b_neighborhood_id':b_neighborhood_id,
+                'b_neighborhood':b_neighborhood_name,
                 'b_street_id':b_street_id,
+                'b_street':b_street_name,
                 'b_ext':b_ext,
                 'b_int':b_int,
                 'b_zip':b_zip,
                 'b_long':b_long,
                 'b_lat':b_lat,
-                'b_region_id':b_region_id
+                'b_region_id':int(b_region_id)
             }
 
             if continuar:
@@ -4408,9 +5011,9 @@ def add_building(request):
                 #Se obtiene el objeto de la region
                 regionObj = get_object_or_404(Region, pk=b_region_id)
 
-                countryObj, stateObj, municipalityObj, neighborhoodObj, streetObj = location_objects(b_country_id, request.POST.get('b_country'),
-                    b_state_id, request.POST.get('b_state'), b_municipality_id, request.POST.get('b_municipality'), b_neighborhood_id, request.POST.get('b_neighborhood'),
-                    b_street_id, request.POST.get('b_street'))
+                countryObj, stateObj, municipalityObj, neighborhoodObj, streetObj = location_objects(b_country_id, b_country_name,
+                    b_state_id, b_state_name, b_municipality_id, b_municipality_name, b_neighborhood_id, b_neighborhood_name,
+                    b_street_id, b_street_name)
 
                 #Se crea la cadena con la direccion concatenada
                 formatted_address = streetObj.calle_name+" "+b_ext
@@ -4492,7 +5095,10 @@ def add_building(request):
         return render_to_response("consumption_centers/buildings/add_building.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 def edit_building(request, id_bld):
     if not request.user.is_authenticated():
@@ -4507,20 +5113,19 @@ def edit_building(request, id_bld):
         type = ''
 
         #Se obtienen las empresas
-        empresas_lst = Company.objects.all().exclude(company_status=2).order_by('company_name')
+        empresas_lst = Company.objects.all().exclude(company_status=0).order_by('company_name')
 
         #Se obtienen las tarifas
         tarifas = ElectricRates.objects.all()
 
         #Se obtienen los tipos de edificios
-        tipos_edificio_lst = BuildingType.objects.all().exclude(building_type_status = 2).order_by('building_type_name')
+        tipos_edificio_lst = BuildingType.objects.all().exclude(building_type_status = 0).order_by('building_type_name')
 
         #Se obtienen las regiones
         regiones_lst = Region.objects.all()
 
         #Se obtienen los tipos de atributos de edificios
-        tipos_atributos = BuildingAttributesType.objects.all().exclude(building_attributes_type_status = 2).order_by('building_attributes_type_name')
-
+        tipos_atributos = BuildingAttributesType.objects.all().exclude(building_attributes_type_status = 0).order_by('building_attributes_type_name')
 
         #Se obtiene la información del edificio
         buildingObj = get_object_or_404(Building, pk=id_bld)
@@ -4530,6 +5135,7 @@ def edit_building(request, id_bld):
 
         #Se obtienen los tipos de edificio
         b_types = BuildingTypeForBuilding.objects.filter(building = buildingObj)
+        b_type_arr = [b_tp.building_type.pk for b_tp in b_types]
 
         #Se obtienen todos los atributos
         building_attributes = BuildingAttributesForBuilding.objects.filter(building = buildingObj)
@@ -4556,7 +5162,7 @@ def edit_building(request, id_bld):
             'b_name':buildingObj.building_name,
             'b_description':buildingObj.building_description,
             'b_company':companyBld[0].company.pk,
-            'b_type_arr':b_types,
+            'b_type_arr':b_type_arr,
             'b_mt2':buildingObj.mts2_built,
             'b_electric_rate_id':buildingObj.electric_rate.pk,
             'b_country_id':buildingObj.pais_id,
@@ -4579,20 +5185,20 @@ def edit_building(request, id_bld):
         }
 
         if request.method == "POST":
-            b_name = request.POST.get('b_name')
-            b_description = request.POST.get('b_description')
-            b_company = request.POST.get('b_company')
+            b_name = request.POST.get('b_name').strip()
+            b_description = request.POST.get('b_description').strip()
+            b_company = request.POST.get('b_company').strip()
             b_type_arr = request.POST.getlist('b_type')
-            b_mt2 = request.POST.get('b_mt2')
+            b_mt2 = request.POST.get('b_mt2').strip()
             b_electric_rate_id = request.POST.get('b_electric_rate')
             b_country_id = request.POST.get('b_country_id')
             b_state_id = request.POST.get('b_state_id')
             b_municipality_id = request.POST.get('b_municipality_id')
             b_neighborhood_id = request.POST.get('b_neighborhood_id')
             b_street_id = request.POST.get('b_street_id')
-            b_ext = request.POST.get('b_ext')
-            b_int = request.POST.get('b_int')
-            b_zip = request.POST.get('b_zip')
+            b_ext = request.POST.get('b_ext').strip()
+            b_int = request.POST.get('b_int').strip()
+            b_zip = request.POST.get('b_zip').strip()
             b_long = request.POST.get('b_longitude')
             b_lat = request.POST.get('b_latitude')
             b_region_id = request.POST.get('b_region')
@@ -4601,6 +5207,11 @@ def edit_building(request, id_bld):
             if b_name == '':
                 message = "El nombre del Edificio no puede quedar vacío"
                 type = "n_notif"
+                continuar = False
+            elif not variety.validate_string(b_name):
+                message = "El nombre del Edificio contiene caracteres inválidos"
+                type = "n_notif"
+                b_name = ""
                 continuar = False
 
             if b_company == '':
@@ -4638,9 +5249,19 @@ def edit_building(request, id_bld):
                 type = "n_notif"
                 continuar = False
 
+            #Valida el nombre (para el caso de los repetidos)
+
+            if buildingObj.building_name != b_name:
+                #Valida por si le da muchos clics al boton
+                buildingValidate = Building.objects.filter(building_name = b_name)
+                if buildingValidate:
+                    message = "Ya existe un Edificio con ese nombre"
+                    type = "n_notif"
+                    continuar = False
+
             post = {
                 'b_name':buildingObj.building_name,'b_description':buildingObj.building_description,'b_company':companyBld[0].company.pk,
-                'b_type_arr':b_types,'b_mt2':buildingObj.mts2_built,'b_electric_rate_id':buildingObj.electric_rate.pk,
+                'b_type_arr':b_type_arr,'b_mt2':buildingObj.mts2_built,'b_electric_rate_id':buildingObj.electric_rate.pk,
                 'b_country_id':buildingObj.pais_id,'b_country':buildingObj.pais.pais_name,'b_state_id':buildingObj.estado_id,
                 'b_state':buildingObj.estado.estado_name,'b_municipality_id':buildingObj.municipio_id,'b_municipality':buildingObj.municipio.municipio_name,
                 'b_neighborhood_id':buildingObj.colonia_id,'b_neighborhood':buildingObj.colonia.colonia_name,
@@ -4764,7 +5385,10 @@ def edit_building(request, id_bld):
         return render_to_response("consumption_centers/buildings/add_building.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 def view_building(request):
     if not request.user.is_authenticated():
@@ -4857,42 +5481,29 @@ def view_building(request):
         return render_to_response("consumption_centers/buildings/building.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
-
-def delete_building(request, id_bld):
+def status_batch_building(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de edificios") or request.user.is_superuser:
-
-        building_obj = get_object_or_404(Building, pk=id_bld)
-        building_obj.building_status = 2
-        building_obj.save()
-
-        mensaje = "El Edificio ha sido dado de baja correctamente"
-        type="n_success"
-
-        return HttpResponseRedirect("/buildings/edificios/?msj=" + mensaje +
-                                    "&ntype="+type)
-    else:
-        datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
-
-def delete_batch_building(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    if has_permission(request.user, DELETE, "Baja de edificios") or request.user.is_superuser:
+    if has_permission(request.user, UPDATE, "Modificar edificios") or request.user.is_superuser:
         if request.method == "GET":
             raise Http404
-        if request.POST['actions'] == 'delete':
+        if request.POST['actions'] == 'status':
             for key in request.POST:
                 if re.search('^bld_\w+', key):
                     r_id = int(key.replace("bld_",""))
                     building = get_object_or_404(Building, pk=r_id)
-                    building.building_status = 2
+                    if building.building_status == 0:
+                        building.building_status = 1
+                    elif building.building_status == 1:
+                        building.building_status = 0
                     building.save()
 
-            mensaje = "Los Edificios han sido dados de baja correctamente"
+            mensaje = "Los Edificios han cambiado su estatus correctamente"
             return HttpResponseRedirect("/buildings/edificios/?msj=" + mensaje +
                                         "&ntype=n_success")
         else:
@@ -4901,7 +5512,10 @@ def delete_batch_building(request):
                                         "&ntype=n_success")
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request))
 
 
 def status_building(request, id_bld):
@@ -4915,7 +5529,7 @@ def status_building(request, id_bld):
             str_status = "Activo"
         elif building.building_status == 1:
             building.building_status = 0
-            str_status = "Activo"
+            str_status = "Inactivo"
 
         building.save()
 
@@ -4926,7 +5540,10 @@ def status_building(request, id_bld):
                                     "&ntype="+type)
     else:
         datacontext = get_buildings_context(request.user)
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
+        context={}
+        if datacontext:
+            context = {"datacontext":datacontext}
+        return render_to_response("generic_error.html", RequestContext(request, context))
 
 
 def search_bld_country(request):

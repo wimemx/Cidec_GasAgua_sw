@@ -13,17 +13,22 @@
 <script type="text/javascript">
     var form_valid = true;
     $(document).ready(function(){
-        $("#clustername").focus();
+        $("#pw_brand").focus();
         $(".required").each(function(){
             $(this).parent().next().blur(function(e){
                 var _span;
 
-                if(e.delegateTarget.value==''){
+                if($.trim(e.delegateTarget.value)==''){
                     _span = "incorrect";
                     form_valid = false;
                 }else{
-                    _span = "correct";
-                    form_valid = true;
+                    if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ ]+$/.test(e.delegateTarget.value)){
+                        _span = "correct";
+                        form_valid = true;
+                    }else{
+                        _span = "incorrect";
+                        form_valid = false;
+                    }
                 }
 
                 var n_span = $("#"+e.delegateTarget.id).next();
@@ -40,26 +45,38 @@
         if (form_valid){
             var _span;
             var pw_brand = $("#pw_brand");
-            if(pw_brand.val()==''){
+            if($.trim(pw_brand.val())==''){
                 _span = "incorrect";
                 form_valid = false;
             }else{
-                _span = "correct";
+                if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ ]+$/.test(pw_brand.val())){
+                    _span = "correct";
+                    form_valid = true;
+                }else{
+                    _span = "incorrect";
+                    form_valid = false;
+                }
             }
-            clustername.next().removeClass("incorrect");
-            clustername.next().removeClass("correct");
-            clustername.next().addClass(_span);
+            pw_brand.next().removeClass("incorrect");
+            pw_brand.next().removeClass("correct");
+            pw_brand.next().addClass(_span);
 
             var pw_model = $("#pw_model");
-            if(pw_model.val()==''){
+            if($.trim(pw_model.val())==''){
                 _span = "incorrect";
                 form_valid = false;
             }else{
-                _span = "correct";
+                if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ ]+$/.test(pw_model.val())){
+                    _span = "correct";
+                    form_valid = true;
+                }else{
+                    _span = "incorrect";
+                    form_valid = false;
+                }
             }
-            clustername.next().removeClass("incorrect");
-            clustername.next().removeClass("correct");
-            clustername.next().addClass(_span);
+            pw_model.next().removeClass("incorrect");
+            pw_model.next().removeClass("correct");
+            pw_model.next().addClass(_span);
 
         }
 
@@ -82,7 +99,7 @@
 
         </li>
         {% else %}
-        <li>Alta de nuevo modelo de medidor</li>
+        <li>Alta de modelo de medidor</li>
         {% endif %}
 
     </ul>
@@ -90,7 +107,7 @@
 </div>
 <div id="contenido_interno">
     <h2 id="titulo_form" class="user_role">
-        {% if operation == "edit" %}Editar{% else %}Crear nuevo{% endif %} modelo de medidor
+        {% if operation == "edit" %}Editar{% else %}Crear{% endif %} modelo de medidor
     </h2>
 
 

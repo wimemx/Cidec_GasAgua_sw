@@ -137,24 +137,29 @@ def get_buildings_context(user):
     """
     datacontext = DataContextPermission.objects.filter(user_role__user=user)
     buildings=[]
-    for dc in datacontext:
-        if dc.building:
-            buildings.append(dict(building_pk=dc.building.pk,
-                building_name=dc.building.building_name))
-        elif dc.company:
-            building_comp = CompanyBuilding.objects.filter(company=dc.company)
-            for bc in building_comp:
-                buildings.append(dict(building_pk=bc.building.pk,
-                    building_name=bc.building.building_name))
-        elif dc.cluster:
-            clust_comp = ClusterCompany.objects.filter(cluster=dc.cluster)
-            for cc in clust_comp:
-                building_comp = CompanyBuilding.objects.filter(company=cc.company)
+
+    for dcontext in datacontext:
+        try:
+            if dcontext.building:
+                buildings.append(dict(building_pk=dcontext.building.pk,
+                    building_name=dcontext.building.building_name))
+            elif dcontext.company:
+                building_comp = CompanyBuilding.objects.filter(company=dcontext.company)
                 for bc in building_comp:
                     buildings.append(dict(building_pk=bc.building.pk,
                         building_name=bc.building.building_name))
-    buildings = unique_from_array(buildings)
+            else:
+                clust_comp = ClusterCompany.objects.filter(cluster=dcontext.cluster)
+                for cc in clust_comp:
+                    building_comp = CompanyBuilding.objects.filter(company=cc.company)
+                    for bc in building_comp:
+                        buildings.append(dict(building_pk=bc.building.pk,
+                            building_name=bc.building.building_name))
+        except ObjectDoesNotExist:
+            continue
 
+        else:
+            buildings = unique_from_array(buildings)
     return buildings
 
 def default_consumerUnit(user, building):

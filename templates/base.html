@@ -67,7 +67,10 @@
             });
             $(".desp").click(function(){
                 $(".sidebarsub_op").each(function(){$(this).slideUp();});
-                $(this).next().slideDown();
+                var prox = $(this).next();
+                if (!prox.is(":visible")){
+                    prox.slideDown();
+                }
             });
             {% block document_ready %}{% endblock %}
             $("#user_menu li a[title]").tooltip({effect: 'slide'}).dynamic({ bottom: { direction: 'down', bounce: true } });

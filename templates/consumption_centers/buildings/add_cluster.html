@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block titulo %}
-{% if operation == "edit" %}Editar{% else %}Crear nuevo{% endif %} Cluster de Empresas
+{% if operation == "edit" %}Editar{% else %}Crear{% endif %} Cluster de Empresas
 {% endblock %}
 {% block externalcss %}
 <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
@@ -15,22 +15,46 @@
     $(document).ready(function(){
         $("#clustername").focus();
         $(".required").each(function(){
-            $(this).parent().next().blur(function(e){
-                var _span;
+            var _span;
+            if ($(this).parent().next()[0].nodeName.toLowerCase() == 'input'){
+                $(this).parent().next().blur(function(e){
 
-                if(e.delegateTarget.value==''){
-                    _span = "incorrect";
-                    form_valid = false;
-                }else{
-                    _span = "correct";
-                    form_valid = true;
-                }
+                    if($.trim(e.delegateTarget.value)==''){
 
-                var n_span = $("#"+e.delegateTarget.id).next();
-                n_span.removeClass("incorrect");
-                n_span.removeClass("correct");
-                n_span.addClass(_span);
-            });
+                        _span = "incorrect";
+                        form_valid = false;
+                    }else{
+                        if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ ]+$/.test(e.delegateTarget.value)){
+                            _span = "correct";
+                            form_valid = true;
+                        }else{
+                            _span = "incorrect";
+                            form_valid = false;
+                        }
+                    }
+
+                    var n_span = $("#"+e.delegateTarget.id).next();
+                    n_span.removeClass("incorrect");
+                    n_span.removeClass("correct");
+                    n_span.addClass(_span);
+                });
+            }else if ($(this).parent().next()[0].nodeName.toLowerCase() == 'select'){
+                var id_select = $(this).parent().next().attr('id')
+                $("#"+id_select).change(function(e){
+                    if($.trim(e.delegateTarget.value)==''){
+                        _span = "incorrect";
+                        form_valid = false;
+                    }else{
+                        _span = "correct";
+                        form_valid = true;
+                    }
+
+                    var n_span =  $("#"+id_select).parent().next();
+                    n_span.removeClass("incorrect");
+                    n_span.removeClass("correct");
+                    n_span.addClass(_span);
+                });
+            }
         });
         $("#save").click(function(){
             return validate_form();
@@ -52,6 +76,17 @@
 
             }
 
+            var sector = $("#clustersector");
+            if(sector.val()==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                _span = "correct";
+            }
+            $("#sel_sector").removeClass("incorrect");
+            $("#sel_sector").removeClass("correct");
+            $("#sel_sector").addClass(_span);
+
             return form_valid
         }
 </script>
@@ -62,7 +97,6 @@
 <div id="bread_crumbs">
     <ul>
         <li><a href="/main/">Inicio</a></li>
-        <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
         <li><a href="/buildings/clusters/">Clusters</a></li>
         {% if operation == "edit" %}
         <li>
@@ -71,7 +105,7 @@
 
         </li>
         {% else %}
-        <li>Alta de nuevo cluster de empresas</li>
+        <li>Alta de cluster de empresas</li>
         {% endif %}
 
     </ul>
@@ -79,7 +113,7 @@
 </div>
 <div id="contenido_interno">
     <h2 id="titulo_form" class="cluster">
-        {% if operation == "edit" %}Editar{% else %}Crear nuevo{% endif %} cluster de empresas
+        {% if operation == "edit" %}Editar{% else %}Crear{% endif %} cluster de empresas
     </h2>
 
 
@@ -116,7 +150,7 @@
                     <span></span>
                 </div>
                 <div class="fields_row g9">
-                    <label for="clustersector" class="g2">Sector</label>
+                    <label for="clustersector" class="g2">Sector<span class="required">*</span></label>
                     <select name="clustersector" id="clustersector" class="g9">
                         <option value="">Selecciona un sector </option>
                         {% if sectores %}
@@ -126,7 +160,7 @@
                         {% endif %}
 
                     </select>
-                    <span></span>
+                    <span id="sel_sector"></span>
                 </div>
 
             </div>

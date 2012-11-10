@@ -47,15 +47,17 @@ type: "GET",
 dataType: 'json',
 async: 'true',
 success: function(datos){
-console.log("changed");
+window.location.reload();
 }
 });
 });
-$("a.del").click(function(event){
+
+$("a.switch").click(function(event){
 event.preventDefault();
-var url="/buildings/eliminar_modelomedidor/"+$(this).attr("rel")+"/";
-new Messi('&iquest;Est&aacute; seguro de que desea eliminar este modelo?',
-{title: 'Eliminar modelo', modal: true, buttons: [{id: 0,
+var url="/buildings/status_modelomedidor/"+$(this).attr("rel")+"/";
+var action = $(this).attr("title");
+new Messi('&iquest;Est&aacute; seguro de que desea '+ action +' este modelo de medidor?',
+{title: action+' modelo de medidor', modal: true, buttons: [{id: 0,
 label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
 }],
 callback: function(val) {
@@ -64,12 +66,13 @@ document.location.href=url;
 } else return false; }
 });
 });
+
 $("#aplicar").click(function(e){
 e.preventDefault();
 if($("#actions").val()!="0"){
 new Messi('&iquest;Est&aacute; seguro de que desea eliminar los modelos' +
 ' seleccionados?',
-{title: 'Eliminar modelos', modal: true, buttons: [{id: 0,
+{title: 'Cambiar status', modal: true, buttons: [{id: 0,
 label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
 }],
 callback: function(val) {
@@ -93,7 +96,7 @@ if(get.length>0){
 if (get[0]!=window.location.protocol+"//"+window.location
 .host+window.location.pathname){
 for(var i=0; i<get.length; i++){
-if (get[i]!="order_brand" && get[i]!="order_model"){
+if (get[i]!="order_brand" && get[i]!="order_model" && get[i]!="order_status"){
 base_url+="&"+get[i]+"="+get[get[i]];
 }
 }
@@ -111,7 +114,7 @@ if(get.length>0){
 if (get[0]!=window.location.protocol+"//"+window.location
 .host+window.location.pathname){
 for(var i=0; i<get.length; i++){
-if (get[i]!="order_brand" && get[i]!="order_model"){
+if (get[i]!="order_brand" && get[i]!="order_model" && get[i]!="order_status"){
 base_url+="&"+get[i]+"="+get[get[i]];
 }
 }
@@ -121,6 +124,28 @@ base_url+="&"+get[i]+"="+get[get[i]];
 
 window.location = base_url;
 });
+
+$("#sort_status").click(function(e){
+e.preventDefault();
+var get = getUrlVars();
+
+var base_url = window.location.pathname;
+base_url+="?order_status="+$("#sort_status").attr("rel");
+if(get.length>0){
+if (get[0]!=window.location.protocol+"//"+window.location
+.host+window.location.pathname){
+for(var i=0; i<get.length; i++){
+if (get[i]!="order_brand" && get[i]!="order_model" && get[i]!="order_status"){
+base_url+="&"+get[i]+"="+get[get[i]];
+}
+}
+}
+
+}
+
+window.location = base_url;
+});
+
 
 {% endblock %}
 
@@ -169,7 +194,7 @@ window.location = base_url;
                 </button>
             </form>
         </div>
-        <form id="operations_batch" action="/buildings/delete_batch_powermetermodel/" method="post">
+        <form id="operations_batch" action="/buildings/status_batch_powermetermodel/" method="post">
             {% csrf_token %}
             <div id="grid_container">
                 <table>
@@ -181,13 +206,19 @@ window.location = base_url;
                                 <span class="sort"></span>
                             </a>
                         </th>
-                        <th style="width: 50%;">
+                        <th style="width: 45%;">
                             <a href="#" id="sort_model" rel="{{ order_model }}">
                                 Modelo
                                 <span class="sort"></span>
                             </a>
                         </th>
-                        <th style="width: 25%;">Acciones</th>
+                        <th style="width: 15%;">
+                            <a href="#" id="sort_status" rel="{{ order_status }}">
+                                Estatus
+                                <span class="sort"></span>
+                            </a>
+                        </th>
+                        <th style="width: 15%;">Acciones</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -209,6 +240,10 @@ window.location = base_url;
                             </a>
                         </td>
                         <td class="c">
+                            <a href="#" rel="{{ models.pk }}" {% if models.status = 1 %}class="switch active_switch" title="desactivar"{% else %}class="switch inactive_switch" title="activar"{% endif %}>
+                            </a>
+                        </td>
+                        <td class="c">
                             <a class="edit" title="Editar modelo de medidor"
                                href="/buildings/editar_modelo_medidor/{{ models.pk }}/"></a>
                         </td>
@@ -219,6 +254,7 @@ window.location = base_url;
                 <div id="table_footer">
                     <select id="actions" name="actions">
                         <option value="0">Elije una Acci&oacute;n</option>
+                        <option value="status">Habilitar/Deshabilitar</option>
                     </select>
                     <button class="fl aqua_btn" id="aplicar">Aplicar a la
                         selecci&oacute;n</button>
@@ -242,12 +278,6 @@ window.location = base_url;
                 </div>
             </div>
         </form>
-
-
-
-
     </div>
-
-
 </div>
 {% endblock %}

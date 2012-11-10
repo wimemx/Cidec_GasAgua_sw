@@ -110,7 +110,7 @@ h2{
 }
 #date_ranges{
     display: block;
-    float: left;
+    float: right;
     width: 200px;
     color: #666;
 }
@@ -146,17 +146,22 @@ h2{
     height: 26px;
     float: right;
     line-height: 26px;
-    background: url(../images/bgs/datepicker_select_bg.png) repeat-x;
+    background: url(../images/bgs/datepicker_select_bg.png) repeat-x #fff;
     border: solid 1px #BDBDBD;
     border-radius: 5px;
     -webkit-border-radius: 5px;
     -moz-border-radius: 5px;
+}
+#widgetField span{
+    width: 90%;
+    display: inline-block;
 }
 #widgetField a{
     float: right;
     width: 21px;
     background: url(../images/imgs_icns/arrow_down_sm_gray.png) no-repeat 0 50%;
     display: inline-block;
+    text-decoration: none;
 }
 #datepicker{
     z-index: 2;
@@ -172,12 +177,12 @@ h2{
     background: whiteSmoke;
     display: none;
 }
-#widgetCalendar,#widgetCalendar2{
+#widgetCalendar,#widgetCalendar2, #widgetCalendar3,#widgetCalendar4{
     float: left;
     width: 392px;
     height: 170px;
 }
-#widgetCalendar2{
+#widgetCalendar2,#widgetCalendar3,#widgetCalendar4{
     display: none;
 }
 #divider_top.divider{

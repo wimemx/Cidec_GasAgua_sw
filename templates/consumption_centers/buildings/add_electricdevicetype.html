@@ -18,12 +18,17 @@
             $(this).parent().next().blur(function(e){
                 var _span;
 
-                if(e.delegateTarget.value==''){
+                if($.trim(e.delegateTarget.value)==''){
                     _span = "incorrect";
                     form_valid = false;
                 }else{
-                    _span = "correct";
-                    form_valid = true;
+                    if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ ]+$/.test(e.delegateTarget.value)){
+                        _span = "correct";
+                        form_valid = true;
+                    }else{
+                        _span = "incorrect";
+                        form_valid = false;
+                    }
                 }
 
                 var n_span = $("#"+e.delegateTarget.id).next();
@@ -40,11 +45,17 @@
         if (form_valid){
             var _span;
             var devicetype_name = $("#devicetypename");
-            if(devicetype_name.val()==''){
+            if($.trim(devicetype_name.val())==''){
                 _span = "incorrect";
                 form_valid = false;
             }else{
-                _span = "correct";
+                if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ ]+$/.test(devicetype_name.val())){
+                    _span = "correct";
+                    form_valid = true;
+                }else{
+                    _span = "incorrect";
+                    form_valid = false;
+                }
             }
             devicetype_name.next().removeClass("incorrect");
             devicetype_name.next().removeClass("correct");
@@ -71,7 +82,7 @@
 
         </li>
         {% else %}
-        <li>Alta de nuevo tipo de equipo eléctrico</li>
+        <li>Alta de tipo de equipo eléctrico</li>
         {% endif %}
 
     </ul>
@@ -79,7 +90,7 @@
 </div>
 <div id="contenido_interno">
     <h2 id="titulo_form" class="user_role">
-        {% if operation == "edit" %}Editar{% else %}Crear nuevo{% endif %} tipo de equipo eléctrico
+        {% if operation == "edit" %}Editar{% else %}Crear {% endif %} tipo de equipo eléctrico
     </h2>
 
 

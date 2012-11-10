@@ -56,7 +56,7 @@
                 {% for company in cluster_companies %}
                     {% if company.company.company_logo %}
                         <div class="logos_in_cluster">
-                            <a href="/buildings/ver_empresa/{{ company.company.pk }}/"><img src="/static/media/company_logos/company_{{company.company.pk}}/{{company.company.company_logo}}"></a>
+                            <a href="/buildings/ver_empresa/{{ company.company.pk }}/"><img src="/static/media/{{company.company.company_logo}}"></a>
                         </div>
                     {% endif %}
                 {% endfor %}

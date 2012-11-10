@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block titulo %}
-{% if operation == "edit" %}Editar{% else %}Crear nuevo{% endif %} Medidor
+{% if operation == "edit" %}Editar{% else %}Crear{% endif %} Medidor
 {% endblock %}
 {% block externalcss %}
 <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
@@ -13,24 +13,48 @@
 <script type="text/javascript">
     var form_valid = true;
     $(document).ready(function(){
-        $("#clustername").focus();
+        $("#pw_alias").focus();
         $(".required").each(function(){
-            $(this).parent().next().blur(function(e){
-                var _span;
+            var _span;
+            if ($(this).parent().next()[0].nodeName.toLowerCase() == 'input'){
+                $(this).parent().next().blur(function(e){
 
-                if(e.delegateTarget.value==''){
-                    _span = "incorrect";
-                    form_valid = false;
-                }else{
-                    _span = "correct";
-                    form_valid = true;
-                }
+                    if($.trim(e.delegateTarget.value)==''){
 
-                var n_span = $("#"+e.delegateTarget.id).next();
-                n_span.removeClass("incorrect");
-                n_span.removeClass("correct");
-                n_span.addClass(_span);
-            });
+                        _span = "incorrect";
+                        form_valid = false;
+                    }else{
+                        if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ ]+$/.test(e.delegateTarget.value)){
+                            _span = "correct";
+                            form_valid = true;
+                        }else{
+                            _span = "incorrect";
+                            form_valid = false;
+                        }
+                    }
+
+                    var n_span = $("#"+e.delegateTarget.id).next();
+                    n_span.removeClass("incorrect");
+                    n_span.removeClass("correct");
+                    n_span.addClass(_span);
+                });
+            }else if ($(this).parent().next()[0].nodeName.toLowerCase() == 'select'){
+                var id_select = $(this).parent().next().attr('id')
+                $("#"+id_select).change(function(e){
+                    if($.trim(e.delegateTarget.value)==''){
+                        _span = "incorrect";
+                        form_valid = false;
+                    }else{
+                        _span = "correct";
+                        form_valid = true;
+                    }
+
+                    var n_span =  $("#"+id_select).parent().next();
+                    n_span.removeClass("incorrect");
+                    n_span.removeClass("correct");
+                    n_span.addClass(_span);
+                });
+            }
         });
         $("#save").click(function(){
             return validate_form();
@@ -40,27 +64,48 @@
         if (form_valid){
             var _span;
             var powermeter_alias = $("#pw_alias");
-            if(powermeter_alias.val()==''){
+            if($.trim(powermeter_alias.val())==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ ]+$/.test(powermeter_alias.val())){
+                    _span = "correct";
+                }else{
+                    _span = "incorrect";
+                    form_valid = false;
+                }
+            }
+            powermeter_alias.next().removeClass("incorrect");
+            powermeter_alias.next().removeClass("correct");
+            powermeter_alias.next().addClass(_span);
+
+            var modelo = $("#pw_model");
+            if(modelo.val()==""){
                 _span = "incorrect";
                 form_valid = false;
             }else{
                 _span = "correct";
             }
-            clustername.next().removeClass("incorrect");
-            clustername.next().removeClass("correct");
-            clustername.next().addClass(_span);
+            $("#sel_model").removeClass("incorrect");
+            $("#sel_model").removeClass("correct");
+            $("#sel_model").addClass(_span);
 
             var powermeter_serial = $("#pw_serial");
             if(powermeter_serial.val()==''){
                 _span = "incorrect";
                 form_valid = false;
             }else{
-                _span = "correct";
-            }
-            clustername.next().removeClass("incorrect");
-            clustername.next().removeClass("correct");
-            clustername.next().addClass(_span);
+                if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ ]+$/.test(powermeter_serial.val())){
+                    _span = "correct";
 
+                }else{
+                    _span = "incorrect";
+                    form_valid = false;
+                }
+            }
+            powermeter_serial.next().removeClass("incorrect");
+            powermeter_serial.next().removeClass("correct");
+            powermeter_serial.next().addClass(_span);
         }
 
         return form_valid
@@ -82,7 +127,7 @@
 
         </li>
         {% else %}
-        <li>Alta de nuevo medidor</li>
+        <li>Alta de medidor</li>
         {% endif %}
 
     </ul>
@@ -90,7 +135,7 @@
 </div>
 <div id="contenido_interno">
     <h2 id="titulo_form" class="user_role">
-        {% if operation == "edit" %}Editar{% else %}Crear nuevo{% endif %} medidor
+        {% if operation == "edit" %}Editar{% else %}Crear{% endif %} medidor
     </h2>
 
 
@@ -120,9 +165,9 @@
                 </div>
 
                 <div class="fields_row g9">
-                    <label for="pw_model" class="g2">Modelo</label>
+                    <label for="pw_model" class="g2">Modelo<span class="required">*</span></label>
                     <select name="pw_model" id="pw_model" class="g9">
-                        <option value="">Selecciona un modelo </option>
+                        <option value="" selected>Selecciona un modelo </option>
                         {% if modelos %}
                         {% for modelo in modelos %}
                         <option value="{{modelo.id}}" {% if post.pw_model == modelo.id %} selected {% endif %}>{{ modelo.powermeter_brand }} - {{ modelo.powermeter_model }}</option>
@@ -130,7 +175,7 @@
                         {% endif %}
 
                     </select>
-                    <span></span>
+                    <span id="sel_model"></span>
                 </div>
                 <div class="fields_row g9">
                     <label for="pw_serial" class="g2">Número Serial<span class="required">*</span></label>
