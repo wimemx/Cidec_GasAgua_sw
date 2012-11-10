@@ -95,10 +95,10 @@ h2{
     margin-top: 5px;
 }
 .sidebarsub_op li{
+    margin-left: 10px;
     display: block;
-    color: #fff;
-    margin-left: 25%;
-    height: 20px;
+    color: white;
+    height: 25px;
 }
 .sidebarsub_op li a{
     color: #fff;
