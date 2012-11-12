@@ -16,7 +16,7 @@ UPDATE = Operation.objects.get(operation_name="Modificar")
 def get_clusters_for_operation(permission, operation, user):
     """Obtains a queryset for all the clusters that exists in a datacontext for a user,
      if the user is super_user returns all active clusters
-     returns a tuple containing the queryset, and a boolean, indicating if returns all the objects
+     returns a the queryset
 
      permission.- string, the name of the permission object
      operation.- operation object, (VIEW, CREATE, etc)
@@ -72,6 +72,14 @@ def get_companies_for_operation(permission, operation, user, cluster):
                     compnies_pks.append(data_c.company.pk)
             return Company.objects.filter(pk__in=compnies_pks, company_status=1), False
 
+def get_all_companies_for_operation(permission, operation, user):
+    clusters = get_clusters_for_operation(permission, operation, user)
+    companies_array = []
+    for cluster in clusters:
+        companies, all = get_companies_for_operation(permission, operation, user, cluster)
+        companies_array.extend(companies)
+    return companies_array
+
 def get_all_active_buildings_for_company(company):
     c_buildings = CompanyBuilding.objects.filter(company=company)
     buildings_pks = [cb.building.pk for cb in c_buildings]
@@ -109,6 +117,15 @@ def get_buildings_for_operation(permission, operation, user, company):
                 else:
                     buildings_pks.append(data_c.building.pk)
             return Building.objects.filter(pk__in=buildings_pks, building_status=1), False
+
+def get_all_buildings_for_operation(permission, operation, user):
+    companies = get_all_companies_for_operation(permission, operation, user)
+    buildings_arr = []
+    for company in companies:
+        building, all = get_buildings_for_operation(permission, operation, user, company)
+
+        buildings_arr.extend(building)
+    return buildings_arr
 
 def get_all_active_parts_for_building(building):
     return PartOfBuilding.objects.filter(building=building, part_of_building_status=True)

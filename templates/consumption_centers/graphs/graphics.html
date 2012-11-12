@@ -13,6 +13,10 @@
         </script>
         <script type="text/javascript">
             $(document).ready(function(){
+                var csv_url = window.location.href.slice(window.location.href.indexOf('?') + 1);
+                csv_url = "/reportes/grafica_datos_csv/?"+csv_url
+                $("#export_csv").attr("href",csv_url);
+
                 var text = $("#weekly_summary h1").text();
                 text = text.replace("_", " ");
                 $("#weekly_summary h1").text(text);
@@ -150,6 +154,7 @@
             <li id="day" {% if granularity == "day" %} class="active" {% endif %}>D&iacute;a</li>
             <li id="week" {% if granularity == "week" %} class="active" {% endif %}>Semana</li>
         </ul>
+        <a id="export_csv" class="fr" href="">Exportar datos en CSV</a>
         <div id="dashboard" class="fl">
             <div id="chart">
                 <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">

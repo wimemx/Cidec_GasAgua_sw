@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #standard library imports
 import os
 import csv
@@ -18,8 +19,12 @@ from django.template.context import RequestContext
 from c_center.models import ProfilePowermeter, ElectricData, ElectricDataTemp
 from c_center.views import main_page
 from rbac.models import DataContextPermission, Object, PermissionAsigment, UserRole
+from variety import unique_from_array
 
 from django.shortcuts import redirect, render
+
+GRAPHS =['Potencia Activa (KW)', 'Potencia Reactiva (KVar)', 'Factor de Potencia (PF)',
+         'kW Hora', 'kW Hora Consumido', 'kVAR Hora', 'kVAR Hora Consumido']
 
 def set_timezone(request):
     if request.method == 'POST':
@@ -122,6 +127,7 @@ def _login(request):
         if user is not None:
             if user.is_active:
                 login(request, user)
+                request.session.set_expiry(0)
                 return HttpResponseRedirect("/main/")
             else:
                 error = "Tu cuenta ha sido desactivada, por favor ponete en contacto con tu administrador!"
@@ -135,9 +141,19 @@ def _login(request):
 def index(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    data_context = DataContextPermission.objects.filter(user_role__user=request.user)
-    roles = [dc.user_role.role.pk for dc in data_context]
-    pa = PermissionAsigment.objects.filter(role__pk__in=roles).exclude()
+    if request.user.is_superuser:
+        pa = PermissionAsigment.objects.all().exclude(object__object_access_point="/")
+    else:
+        data_context = DataContextPermission.objects.filter(user_role__user=request.user)
+        roles = [dc.user_role.role.pk for dc in data_context]
+        pa = PermissionAsigment.objects.filter(role__pk__in=roles).exclude(object__object_access_point="/")
+    sidebar_options=[]
+    for permission in pa:
+        if permission.object.object_name not in GRAPHS and permission.object.object_name != "Consultar recibo CFE" and permission.object.object_name != "Perfil de carga":
+            sidebar_options.append(dict(uri=permission.object.object_access_point, name=permission.object.object_name))
+    request.session['sidebar'] = unique_from_array(sidebar_options)
+    if request.user.is_superuser:
+        request.session['sidebar'].append(dict(uri="/buildings/estructura/", name="Ver organización empresas"))
     return main_page(request)
 
 def logout_page(request):

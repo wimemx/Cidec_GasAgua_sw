@@ -195,7 +195,7 @@ class ConsumerUnitFiveMinuteElectricData(models.Model):
 class ConsumerUnitFiveMIntElectricData(models.Model):
 
     consumer_unit = models.ForeignKey(ConsumerUnit, on_delete=models.PROTECT)
-    interval = models.ForeignKey(DayInterval, on_delete=models.PROTECT)
+    interval = models.ForeignKey(FiveMinuteInterval, on_delete=models.PROTECT)
     kWh = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=None)
     kvarh = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=None)
     kvah = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=None)
@@ -268,7 +268,7 @@ class ConsumerUnitHourElectricData(models.Model):
 class ConsumerUnitHourIntElectricData(models.Model):
 
     consumer_unit = models.ForeignKey(ConsumerUnit, on_delete=models.PROTECT)
-    interval = models.ForeignKey(DayInterval, on_delete=models.PROTECT)
+    interval = models.ForeignKey(HourInterval, on_delete=models.PROTECT)
     kWh = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=None)
     kvarh = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=None)
     kvah = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=None)
@@ -413,7 +413,7 @@ class ConsumerUnitWeekElectricData(models.Model):
 class ConsumerUnitWeekIntElectricData(models.Model):
 
     consumer_unit = models.ForeignKey(ConsumerUnit, on_delete=models.PROTECT)
-    interval = models.ForeignKey(DayInterval, on_delete=models.PROTECT)
+    interval = models.ForeignKey(WeekInterval, on_delete=models.PROTECT)
     kWh = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=None)
     kvarh = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=None)
     kvah = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=None)

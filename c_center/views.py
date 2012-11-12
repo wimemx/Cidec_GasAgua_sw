@@ -14,7 +14,7 @@ import calendar
 #related third party imports
 import variety
 
-from PIL import *
+#from PIL import *
 
 #local application/library specific imports
 from django.shortcuts import render_to_response, get_object_or_404
@@ -33,6 +33,13 @@ from location.models import *
 from electric_rates.models import ElectricRatesDetail
 from rbac.models import Operation, DataContextPermission, UserRole, Object, PermissionAsigment
 from rbac.rbac_functions import  has_permission, get_buildings_context, default_consumerUnit
+from c_center_functions import *
+
+from c_center.graphics import *
+from data_warehouse.views import get_consumer_unit_electric_data_csv,\
+    get_consumer_unit_electric_data_interval_csv,\
+    DataWarehouseInformationRetrieveException,\
+    get_consumer_unit_by_id as get_data_warehouse_consumer_unit_by_id
 
 import json as simplejson
 
@@ -522,6 +529,7 @@ def main_page(request):
                              'empresa': request.session['main_building'],
                              'company': request.session['company'],
                              'consumer_unit': request.session['consumer_unit'],
+                             'sidebar': request.session['sidebar']
                              }
             template_vars_template = RequestContext(request, template_vars)
             return render_to_response("consumption_centers/main.html", template_vars_template)
@@ -531,6 +539,7 @@ def main_page(request):
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("empty.html", template_vars_template)
 
@@ -552,7 +561,8 @@ def cfe_bill(request):
 
         template_vars={"type":"cfe", "datacontext":datacontext,
                        'empresa':request.session['main_building'],
-                       'month':month, 'year':year, 'month_list':month_list, 'year_list':year_list
+                       'month':month, 'year':year, 'month_list':month_list, 'year_list':year_list,
+                       'sidebar': request.session['sidebar']
         }
 
         template_vars_template = RequestContext(request, template_vars)
@@ -572,7 +582,7 @@ def cfe_calculations(request):
             if datacontext:
                 context = {"datacontext":datacontext}
             return HttpResponse(content="<h2 style='font-family: helvetica; color: #878787; font-size:14px;' text-align: center;>No hay unidades de consumo asignadas, por favor ponte en contacto con el administrador para remediar esta situaci&oacute;n</h2>")
-            #return render_to_response("empty.html", RequestContext(request, context))
+
 
         set_default_session_vars(request, datacontext)
 
@@ -618,10 +628,12 @@ def cfe_calculations(request):
             return render_to_response("consumption_centers/graphs/cfe_bill_error.html",
                 template_vars_template)
     else:
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 
@@ -699,36 +711,85 @@ def grafica_datos(request):
         raise Http404
 
 def grafica_datoscsv(request):
-    f1_init, f1_end = get_intervals_1(request.GET)
-    buildings = []
-    profile=request.session['consumer_unit'].profile_powermeter
-    for key in request.GET:
-        if re.search('^building\d+', key):
-            building = get_object_or_404(Building, pk=int(request.GET[key]))
-            buildings.append(building)
-    if buildings:
-        data=simplejson.loads(get_json_data(buildings, f1_init, f1_end, request.GET['graph'],profile))
-        parameter_type = request.GET['graph']
-        building = request.session['main_building'].building_name
-        c_u = request.session['consumer_unit'].electric_device_type.electric_device_type_name
+    if request.method == "GET":
 
+        electric_data = ""
+        granularity = "day"
+        try:
+            electric_data = request.GET['graph']
+            granularity = request.GET['granularity']
+
+        except KeyError:
+            return Http404
 
         response = HttpResponse(mimetype='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="datos_'+ parameter_type +'.csv"'
-
+        response['Content-Disposition'] = 'attachment; filename="datos_'+ electric_data +'.csv"'
         writer = csv.writer(response)
-        for dato in data:
-            datostr = str(dato['meditions']).replace("[u'", "")
-            datostr = datostr.replace("']", '')
-            date = str(dato['labels']).replace("[u'", "")
-            date = date.replace("-05:00']", '')
-            writer.writerow([building, c_u, datostr,parameter_type, date])
+
+        suffix_consumed = "_consumido"
+        is_interval = False
+        suffix_index = string.find(electric_data, suffix_consumed)
+        if suffix_index >= 0:
+            electric_data = electric_data[:suffix_index]
+            is_interval = True
+
+        data = []
+        consumer_unit_counter = 1
+        consumer_unit_get_key = "consumer-unit%02d" % consumer_unit_counter
+        date_start_get_key = "date-start%02d" % consumer_unit_counter
+        date_end_get_key = "date-end%02d" % consumer_unit_counter
+        while request.GET.has_key(consumer_unit_get_key):
+            consumer_unit_id = request.GET[consumer_unit_get_key]
+
+            if request.GET.has_key(date_start_get_key) and\
+               request.GET.has_key(date_end_get_key):
+
+                datetime_start = datetime.datetime.strptime(
+                    request.GET[date_start_get_key],
+                    "%Y-%m-%d")
+
+                datetime_end = datetime.datetime.strptime(request.GET[date_end_get_key],
+                    "%Y-%m-%d")
+
+            else:
+                datetime_start = get_default_datetime_start()
+                datetime_end = get_default_datetime_end()
+
+            try:
+                consumer_unit = get_data_warehouse_consumer_unit_by_id(consumer_unit_id)
+
+            except DataWarehouseInformationRetrieveException as consumer_unit_information_exception:
+                print str(consumer_unit_information_exception)
+                continue
+
+            if is_interval:
+                electric_data_csv_rows = get_consumer_unit_electric_data_interval_csv(
+                    electric_data,
+                    granularity,
+                    consumer_unit,
+                    datetime_start,
+                    datetime_end)
+            else:
+                electric_data_csv_rows = get_consumer_unit_electric_data_csv(
+                    electric_data,
+                    granularity,
+                    consumer_unit,
+                    datetime_start,
+                    datetime_end)
+
+            data.extend(electric_data_csv_rows)
+            consumer_unit_counter += 1
+            consumer_unit_get_key = "consumer-unit%02d" % consumer_unit_counter
+            date_start_get_key = "date-start%02d" % consumer_unit_counter
+            date_end_get_key = "date-end%02d" % consumer_unit_counter
+
+        for data_item in data:
+            writer.writerow(data_item)
 
         return response
 
-
     else:
-        raise Http404
+        return Http404
 
 
 def get_pp_data(request):
@@ -1186,7 +1247,7 @@ def add_building_attr(request):
         attributes = BuildingAttributesType.objects.all().order_by(
                      "building_attributes_type_sequence")
         template_vars = dict(datacontext=datacontext, empresa=empresa, company=company,
-                             type=type, message=message, attributes=attributes)
+                             type=type, message=message, attributes=attributes, sidebar=request.session['sidebar'])
         if request.method == "POST":
             template_vars['post'] = variety.get_post_data(request.POST)
 
@@ -1235,10 +1296,12 @@ def add_building_attr(request):
         return render_to_response("consumption_centers/buildings/add_building_attr.html",
                template_vars_template)
     else:
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def b_attr_list(request):
     if not request.user.is_authenticated():
@@ -1296,7 +1359,7 @@ def b_attr_list(request):
         template_vars = dict(roles=paginator, order_attrname=order_attrname,
                              order_type=order_type, order_units=order_units,
                              order_sequence=order_sequence, empresa=empresa, company=company,
-                             datacontext=datacontext)
+                             datacontext=datacontext, sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
             page = int(request.GET.get('page', '1'))
@@ -1319,10 +1382,12 @@ def b_attr_list(request):
         return render_to_response("consumption_centers/buildings/building_attr_list.html",
                template_vars_template)
     else:
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def delete_b_attr(request, id_b_attr):
     if not request.user.is_authenticated():
@@ -1342,10 +1407,12 @@ def delete_b_attr(request, id_b_attr):
         return HttpResponseRedirect("/buildings/atributos/?msj=" + mensaje +
                                     "&ntype="+type)
     else:
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def editar_b_attr(request, id_b_attr):
     if not request.user.is_authenticated():
@@ -1370,7 +1437,7 @@ def editar_b_attr(request, id_b_attr):
                      "building_attributes_type_sequence")
         template_vars = dict(datacontext=datacontext, empresa=empresa, message=message,
                              post=post,type=type, operation="edit", company=company,
-                             attributes=attributes)
+                             attributes=attributes, sidebar=request.session['sidebar'])
         if request.method == "POST":
             template_vars['post'] = variety.get_post_data(request.POST)
 
@@ -1416,10 +1483,12 @@ def editar_b_attr(request, id_b_attr):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_building_attr.html", template_vars_template)
     else:
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def ver_b_attr(request, id_b_attr):
     if not request.user.is_authenticated():
@@ -1444,16 +1513,18 @@ def ver_b_attr(request, id_b_attr):
             "building_attributes_type_sequence")
         template_vars = dict(datacontext=datacontext, empresa=empresa, message=message,
                              company=company, post=post,type=type, operation="edit",
-                             attributes=attributes)
+                             attributes=attributes, sidebar=request.session['sidebar'])
 
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/see_building_attr.html", template_vars_template)
     else:
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 #====
 
@@ -1469,7 +1540,7 @@ def add_cluster(request):
         template_vars = dict(datacontext=datacontext,
             empresa=empresa,
             sectores=sectores,
-            company=request.session['company']
+            company=request.session['company'], sidebar=request.session['sidebar']
         )
 
         if request.method == "POST":
@@ -1530,10 +1601,12 @@ def add_cluster(request):
         return render_to_response("consumption_centers/buildings/add_cluster.html", template_vars_template)
 
     else:
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def view_cluster(request):
@@ -1582,7 +1655,7 @@ def view_cluster(request):
             lista = Cluster.objects.all().exclude(cluster_status=2).order_by(order)
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
         template_vars = dict(order_name=order_name, order_sector=order_sector, order_status=order_status,
-            datacontext=datacontext, empresa=empresa, company=request.session['company'])
+            datacontext=datacontext, empresa=empresa, company=request.session['company'], sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
             page = int(request.GET.get('page', '1'))
@@ -1605,10 +1678,12 @@ def view_cluster(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/clusters.html", template_vars_template)
     else:
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def status_cluster(request, id_cluster):
     if not request.user.is_authenticated():
@@ -1629,10 +1704,12 @@ def status_cluster(request, id_cluster):
                                     "&ntype="+type)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def status_batch_cluster(request):
     if not request.user.is_authenticated():
@@ -1660,10 +1737,12 @@ def status_batch_cluster(request):
                                         "&ntype=n_success")
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 
@@ -1738,15 +1817,17 @@ def edit_cluster(request, id_cluster):
             operation="edit",
             message=message,
             type=type,
-            company=request.session['company']
+            company=request.session['company'], sidebar=request.session['sidebar']
         )
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_cluster.html", template_vars_template)
     else:
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def see_cluster(request, id_cluster):
@@ -1764,16 +1845,18 @@ def see_cluster(request, id_cluster):
             cluster = cluster,
             cluster_companies = cluster_companies,
             empresa=empresa,
-            company=request.session['company']
+            company=request.session['company'], sidebar=request.session['sidebar']
         )
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/see_cluster.html", template_vars_template)
     else:
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 """
 POWERMETER MODELS
@@ -1788,7 +1871,7 @@ def add_powermetermodel(request):
 
         template_vars = dict(datacontext=datacontext,
             empresa=empresa,
-            company=request.session['company']
+            company=request.session['company'], sidebar=request.session['sidebar']
         )
 
         if request.method == "POST":
@@ -1849,10 +1932,12 @@ def add_powermetermodel(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_powermetermodel.html", template_vars_template)
     else:
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def edit_powermetermodel(request, id_powermetermodel):
@@ -1923,15 +2008,17 @@ def edit_powermetermodel(request, id_powermetermodel):
             operation="edit",
             message=message,
             type=type,
-            company=request.session['company']
+            company=request.session['company'], sidebar=request.session['sidebar']
         )
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_powermetermodel.html", template_vars_template)
     else:
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def view_powermetermodels(request):
@@ -1982,7 +2069,7 @@ def view_powermetermodels(request):
             lista = PowermeterModel.objects.all().order_by(order)
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
         template_vars = dict(order_brand=order_brand, order_model=order_model, order_status=order_status,
-            datacontext=datacontext, empresa=empresa, company=company)
+            datacontext=datacontext, empresa=empresa, company=company, sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
             page = int(request.GET.get('page', '1'))
@@ -2005,10 +2092,12 @@ def view_powermetermodels(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/powermetermodels.html", template_vars_template)
     else:
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def status_batch_powermetermodel(request):
@@ -2037,10 +2126,12 @@ def status_batch_powermetermodel(request):
                                         "&ntype=n_success")
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def status_powermetermodel(request, id_powermetermodel):
     if not request.user.is_authenticated():
@@ -2079,7 +2170,7 @@ def add_powermeter(request):
             empresa=empresa,
             modelos=pw_models_list,
             post=post,
-            company=request.session['company']
+            company=request.session['company'], sidebar=request.session['sidebar']
         )
 
         if request.method == "POST":
@@ -2145,10 +2236,12 @@ def add_powermeter(request):
         return render_to_response("consumption_centers/buildings/add_powermeter.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def edit_powermeter(request, id_powermeter):
@@ -2227,15 +2320,17 @@ def edit_powermeter(request, id_powermeter):
             operation="edit",
             message=message,
             type=type,
-            company=request.session['company']
+            company=request.session['company'], sidebar=request.session['sidebar']
         )
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_powermeter.html", template_vars_template)
     else:
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def view_powermeter(request):
@@ -2305,7 +2400,7 @@ def view_powermeter(request):
 
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
         template_vars = dict(order_alias=order_alias, order_model=order_model, order_serial=order_serial, order_status=order_status,
-            datacontext=datacontext, empresa=empresa, company=request.session['company'])
+            datacontext=datacontext, empresa=empresa, company=request.session['company'], sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
             page = int(request.GET.get('page', '1'))
@@ -2328,10 +2423,12 @@ def view_powermeter(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/powermeters.html", template_vars_template)
     else:
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def status_batch_powermeter(request):
     if not request.user.is_authenticated():
@@ -2359,10 +2456,12 @@ def status_batch_powermeter(request):
                                         "&ntype=n_success")
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def status_powermeter(request, id_powermeter):
@@ -2385,10 +2484,12 @@ def status_powermeter(request, id_powermeter):
                                     "&ntype="+type)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def see_powermeter(request, id_powermeter):
@@ -2413,17 +2514,19 @@ def see_powermeter(request, id_powermeter):
             powermeter = powermeter,
             location = location,
             empresa=empresa,
-            company=request.session['company']
+            company=request.session['company'], sidebar=request.session['sidebar']
         )
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/see_powermeter.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 """
 Electric Device Types
@@ -2440,7 +2543,7 @@ def add_electric_device_type(request):
         template_vars = dict(datacontext=datacontext,
             empresa=empresa,
             post=post,
-            company=request.session['company']
+            company=request.session['company'], sidebar=request.session['sidebar']
         )
 
         if request.method == "POST":
@@ -2492,10 +2595,12 @@ def add_electric_device_type(request):
         return render_to_response("consumption_centers/buildings/add_electricdevicetype.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def edit_electric_device_type(request, id_edt):
@@ -2556,16 +2661,18 @@ def edit_electric_device_type(request, id_edt):
             operation="edit",
             message=message,
             type=type,
-            company=request.session['company']
+            company=request.session['company'], sidebar=request.session['sidebar']
         )
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_electricdevicetype.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def view_electric_device_type(request):
@@ -2615,7 +2722,7 @@ def view_electric_device_type(request):
 
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
         template_vars = dict(order_name=order_name, order_description=order_description, order_status=order_status,
-            datacontext=datacontext, empresa=empresa, company=request.session['company'])
+            datacontext=datacontext, empresa=empresa, company=request.session['company'], sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
             page = int(request.GET.get('page', '1'))
@@ -2639,10 +2746,12 @@ def view_electric_device_type(request):
         return render_to_response("consumption_centers/buildings/electricdevicetype.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def delete_batch_electric_device_type(request):
     if not request.user.is_authenticated():
@@ -2670,10 +2779,12 @@ def delete_batch_electric_device_type(request):
                                         "&ntype=n_success")
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def status_batch_electric_device_type(request):
     if not request.user.is_authenticated():
@@ -2722,10 +2833,12 @@ def status_electric_device_type(request, id_edt):
                                     "&ntype="+type)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 """
 Companies
@@ -2738,9 +2851,12 @@ def add_company(request):
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         post = ''
+        message = ''
+        type = ''
 
         #Get Clusters
-        clusters = Cluster.objects.all().exclude(cluster_status = 2)
+        clusters = get_clusters_for_operation("Alta compañía", CREATE, request.user)
+        #clusters = Cluster.objects.all().exclude(cluster_status = 2)
 
         #Get Sectors
         sectors = SectoralType.objects.all().exclude(sectoral_type_status = 2)
@@ -2750,7 +2866,7 @@ def add_company(request):
             post=post,
             clusters=clusters,
             sectors=sectors,
-            company=request.session['company']
+            company=request.session['company'], sidebar=request.session['sidebar']
         )
 
         if request.method == "POST":
@@ -2831,10 +2947,12 @@ def add_company(request):
         return render_to_response("consumption_centers/buildings/add_company.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def edit_company(request, id_cpy):
@@ -2936,16 +3054,18 @@ def edit_company(request, id_cpy):
             message=message,
             clusters = clusters,
             sectors = sectors,
-            type=type
+            type=type, sidebar=request.session['sidebar']
         )
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_company.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def view_companies(request):
@@ -3003,7 +3123,7 @@ def view_companies(request):
 
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
         template_vars = dict(order_company=order_company, order_cluster=order_cluster, order_sector=order_sector, order_status=order_status,
-            datacontext=datacontext, empresa=empresa, company=request.session['company'])
+            datacontext=datacontext, empresa=empresa, company=request.session['company'], sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
             page = int(request.GET.get('page', '1'))
@@ -3027,10 +3147,12 @@ def view_companies(request):
         return render_to_response("consumption_centers/buildings/companies.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def status_batch_companies(request):
     if not request.user.is_authenticated():
@@ -3058,10 +3180,12 @@ def status_batch_companies(request):
                                         "&ntype=n_success")
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def status_company(request, id_cpy):
@@ -3084,10 +3208,12 @@ def status_company(request, id_cpy):
                                     "&ntype="+type)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def see_company(request, id_cpy):
     if not request.user.is_authenticated():
@@ -3103,16 +3229,18 @@ def see_company(request, id_cpy):
             datacontext=datacontext,
             companies = company,
             company = request.session['company'],
-            empresa=empresa)
+            empresa=empresa, sidebar=request.session['sidebar'])
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/see_company.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def scale_dimensions(width, height, longest_side):
@@ -3203,17 +3331,19 @@ def c_center_structures(request):
         template_vars = dict(
             datacontext=datacontext,
             visualizacion = visualizacion,
-            empresa=empresa, company=request.session['company'])
+            empresa=empresa, company=request.session['company'], sidebar=request.session['sidebar'])
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/c_centers_structure.html", template_vars_template)
 
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 """
@@ -3234,7 +3364,7 @@ def add_buildingtype(request):
         template_vars = dict(datacontext=datacontext,
             empresa=empresa,
             company=company,
-            post=post,
+            post=post, sidebar=request.session['sidebar']
         )
 
         if request.method == "POST":
@@ -3285,10 +3415,12 @@ def add_buildingtype(request):
         return render_to_response("consumption_centers/buildings/add_buildingtype.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def edit_buildingtype(request, id_btype):
@@ -3351,16 +3483,18 @@ def edit_buildingtype(request, id_btype):
             post=post,
             operation="edit",
             message=message,
-            type=type
+            type=type, sidebar=request.session['sidebar']
         )
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_buildingtype.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def view_buildingtypes(request):
@@ -3411,7 +3545,7 @@ def view_buildingtypes(request):
 
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
         template_vars = dict(order_name=order_name, order_description=order_description, order_status=order_status,
-            datacontext=datacontext, empresa=empresa, company=company)
+            datacontext=datacontext, empresa=empresa, company=company, sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
             page = int(request.GET.get('page', '1'))
@@ -3435,10 +3569,12 @@ def view_buildingtypes(request):
         return render_to_response("consumption_centers/buildings/buildingtype.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def status_batch_buildingtypes(request):
@@ -3467,10 +3603,12 @@ def status_batch_buildingtypes(request):
                                         "&ntype=n_success")
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def status_buildingtype(request, id_btype):
@@ -3493,10 +3631,12 @@ def status_buildingtype(request, id_btype):
                                     "&ntype="+type)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 
@@ -3517,7 +3657,7 @@ def add_sectoraltype(request):
         template_vars = dict(datacontext=datacontext,
             empresa=empresa,
             company=company,
-            post=post,
+            post=post, sidebar=request.session['sidebar']
         )
 
         if request.method == "POST":
@@ -3569,10 +3709,12 @@ def add_sectoraltype(request):
         return render_to_response("consumption_centers/buildings/add_sectoraltype.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def edit_sectoraltype(request, id_stype):
@@ -3636,16 +3778,18 @@ def edit_sectoraltype(request, id_stype):
             post=post,
             operation="edit",
             message=message,
-            type=type
+            type=type, sidebar=request.session['sidebar']
         )
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_sectoraltype.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def view_sectoraltypes(request):
@@ -3695,7 +3839,7 @@ def view_sectoraltypes(request):
 
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
         template_vars = dict(order_name=order_name, order_description=order_description, order_status=order_status,
-            datacontext=datacontext, empresa=empresa, company=company)
+            datacontext=datacontext, empresa=empresa, company=company, sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
             page = int(request.GET.get('page', '1'))
@@ -3719,10 +3863,12 @@ def view_sectoraltypes(request):
         return render_to_response("consumption_centers/buildings/sectoraltype.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def status_batch_sectoraltypes(request):
     if not request.user.is_authenticated():
@@ -3750,10 +3896,12 @@ def status_batch_sectoraltypes(request):
                                         "&ntype=n_success")
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def status_sectoraltype(request, id_stype):
@@ -3776,10 +3924,12 @@ def status_sectoraltype(request, id_stype):
                                     "&ntype="+type)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 
@@ -3800,7 +3950,7 @@ def add_b_attributes_type(request):
         template_vars = dict(datacontext=datacontext,
             empresa=empresa,
             company=company,
-            post=post,
+            post=post, sidebar=request.session['sidebar']
         )
 
         if request.method == "POST":
@@ -3851,10 +4001,12 @@ def add_b_attributes_type(request):
         return render_to_response("consumption_centers/buildings/add_buildingattributetype.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def edit_b_attributes_type(request, id_batype):
@@ -3917,16 +4069,18 @@ def edit_b_attributes_type(request, id_batype):
             post=post,
             operation="edit",
             message=message,
-            type=type
+            type=type, sidebar=request.session['sidebar']
         )
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_buildingattributetype.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def view_b_attributes_type(request):
@@ -3976,7 +4130,7 @@ def view_b_attributes_type(request):
 
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
         template_vars = dict(order_name=order_name, order_description=order_description, order_status=order_status,
-            datacontext=datacontext, empresa=empresa, company=company)
+            datacontext=datacontext, empresa=empresa, company=company, sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
             page = int(request.GET.get('page', '1'))
@@ -4000,10 +4154,12 @@ def view_b_attributes_type(request):
         return render_to_response("consumption_centers/buildings/buildingattributetype.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def status_b_attributes_type(request, id_batype):
@@ -4073,7 +4229,7 @@ def add_partbuildingtype(request):
         template_vars = dict(datacontext=datacontext,
             empresa=empresa,
             company=company,
-            post=post,
+            post=post, sidebar=request.session['sidebar']
         )
 
         if request.method == "POST":
@@ -4124,10 +4280,12 @@ def add_partbuildingtype(request):
         return render_to_response("consumption_centers/buildings/add_partbuilding_type.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def edit_partbuildingtype(request, id_pbtype):
@@ -4185,16 +4343,18 @@ def edit_partbuildingtype(request, id_pbtype):
             post=post,
             operation="edit",
             message=message,
-            type=type
+            type=type, sidebar=request.session['sidebar']
         )
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_partbuilding_type.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def view_partbuildingtype(request):
@@ -4245,7 +4405,7 @@ def view_partbuildingtype(request):
 
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
         template_vars = dict(order_name=order_name, order_description=order_description, order_status=order_status,
-            datacontext=datacontext, empresa=empresa, company=company)
+            datacontext=datacontext, empresa=empresa, company=company, sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
             page = int(request.GET.get('page', '1'))
@@ -4268,10 +4428,12 @@ def view_partbuildingtype(request):
         return render_to_response("consumption_centers/buildings/partofbuildingtype.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def status_batch_partbuildingtype(request):
     if not request.user.is_authenticated():
@@ -4299,10 +4461,12 @@ def status_batch_partbuildingtype(request):
                                         "&ntype=n_success")
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def status_partbuildingtype(request, id_pbtype):
@@ -4326,10 +4490,12 @@ def status_partbuildingtype(request, id_pbtype):
                                     "&ntype="+type)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 
@@ -4360,7 +4526,7 @@ def add_partbuilding(request):
             company=company,
             post=post,
             tipos_parte=tipos_parte,
-            tipos_atributos=tipos_atributos,
+            tipos_atributos=tipos_atributos, sidebar=request.session['sidebar']
         )
 
         if request.method == "POST":
@@ -4371,6 +4537,8 @@ def add_partbuilding(request):
             b_part_building_name = request.POST.get('b_building_name').strip()
             b_part_building_id = request.POST.get('b_building_id')
             b_part_mt2 = request.POST.get('b_part_mt2').strip()
+            message = ""
+            type = ""
 
             continuar = True
             if b_part_name == '':
@@ -4449,10 +4617,12 @@ def add_partbuilding(request):
         return render_to_response("consumption_centers/buildings/add_partbuilding.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def edit_partbuilding(request, id_bpart):
@@ -4591,16 +4761,18 @@ def edit_partbuilding(request, id_bpart):
             tipos_atributos=tipos_atributos,
             operation="edit",
             message=message,
-            type=type
+            type=type, sidebar=request.session['sidebar']
         )
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_partbuilding.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def view_partbuilding(request):
@@ -4660,7 +4832,7 @@ def view_partbuilding(request):
 
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
         template_vars = dict(order_name=order_name, order_type=order_type, order_building=order_building, order_status=order_status,
-            datacontext=datacontext, empresa=empresa, company=company)
+            datacontext=datacontext, empresa=empresa, company=company, sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
             page = int(request.GET.get('page', '1'))
@@ -4683,10 +4855,12 @@ def view_partbuilding(request):
         return render_to_response("consumption_centers/buildings/partofbuilding.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def status_batch_partofbuilding(request):
@@ -4744,11 +4918,29 @@ def status_partofbuilding(request, id_bpart):
 
 
 def search_buildings(request):
+    """ recieves three parameters in request.GET:
+    term = string, the name of the building to search
+    perm = string, the complete name of the operation we want to check if the user has permission
+    op = string, the operation to check the permission (view, create, update, delete)
+    """
+
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if "term" in request.GET:
+    if "term" in request.GET and "perm" in request.GET and "op" in request.GET:
+        operation = {
+                        'view': VIEW,
+                        'create': CREATE,
+                        'update': UPDATE,
+                        'delete': DELETE
+                    }
+
+        op =  operation[request.GET['op']]
         term = request.GET['term']
-        buildings = Building.objects.filter(Q(building_name__icontains=term)).exclude(building_status = 0)
+        perm = request.GET['perm']
+
+        buildings = get_all_buildings_for_operation(perm, op, request.user)
+        b_pks = [b.pk for b in buildings]
+        buildings = Building.objects.filter(building_name__icontains=term, pk__in=b_pks).exclude(building_status = 0)
         buildings_arr = []
         for building in buildings:
             buildings_arr.append(dict(value=building.building_name, pk=building.pk, label=building.building_name))
@@ -4867,10 +5059,9 @@ def add_building(request):
         company = request.session['company']
         post = ''
         message = ''
-
         #Se obtienen las empresas
-        empresas_lst = Company.objects.all().exclude(company_status=0).order_by('company_name')
-
+        #empresas_lst = Company.objects.all().exclude(company_status=0).order_by('company_name')
+        empresas_lst = get_all_companies_for_operation("Alta de edificios", CREATE, request.user)
         #Se obtienen las tarifas
         tarifas = ElectricRates.objects.all()
 
@@ -4892,7 +5083,7 @@ def add_building(request):
             tipos_edificio_lst=tipos_edificio_lst,
             tarifas=tarifas,
             regiones_lst=regiones_lst,
-            tipos_atributos=tipos_atributos,
+            tipos_atributos=tipos_atributos, sidebar=request.session['sidebar']
         )
 
         if request.method == "POST":
@@ -5095,10 +5286,12 @@ def add_building(request):
         return render_to_response("consumption_centers/buildings/add_building.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def edit_building(request, id_bld):
     if not request.user.is_authenticated():
@@ -5378,17 +5571,19 @@ def edit_building(request, id_bld):
             tipos_atributos=tipos_atributos,
             operation="edit",
             message=message,
-            type=type
+            type=type, sidebar=request.session['sidebar']
         )
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/add_building.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def view_building(request):
     if not request.user.is_authenticated():
@@ -5458,7 +5653,7 @@ def view_building(request):
 
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
         template_vars = dict(order_name=order_name, order_state=order_state, order_municipality=order_municipality, order_company=order_company, order_status=order_status,
-            datacontext=datacontext, empresa=empresa, company=company)
+            datacontext=datacontext, empresa=empresa, company=company, sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
             page = int(request.GET.get('page', '1'))
@@ -5481,10 +5676,12 @@ def view_building(request):
         return render_to_response("consumption_centers/buildings/building.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def status_batch_building(request):
     if not request.user.is_authenticated():
@@ -5540,10 +5737,12 @@ def status_building(request, id_bld):
                                     "&ntype="+type)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def search_bld_country(request):

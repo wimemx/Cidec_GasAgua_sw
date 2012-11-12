@@ -130,7 +130,7 @@ def add_role(request):
                 else:
                     #regresa al formulario de alta
 
-                    template_vars = dict(datacontext=datacontext, company=company,
+                    template_vars = dict(sidebar=request.session['sidebar'], datacontext=datacontext, company=company,
                         empresa=empresa, operations=Operation.objects.all(), message=mensaje,
                         msg_type=ntype
                     )
@@ -142,7 +142,7 @@ def add_role(request):
                 PermissionAsigment.objects.filter(role=rol).delete()
                 rol.delete()
 
-                template_vars = dict(datacontext=datacontext, empresa=empresa,
+                template_vars = dict(sidebar=request.session['sidebar'], datacontext=datacontext, empresa=empresa,
                     operations=Operation.objects.all(), company=company,
                     message=mensaje,
                     msg_type="fail",
@@ -152,16 +152,18 @@ def add_role(request):
                 return render_to_response("rbac/add_role.html", template_vars_template)
 
         else:
-            template_vars = dict(datacontext=datacontext, empresa=empresa,company=company,
+            template_vars = dict(sidebar=request.session['sidebar'], datacontext=datacontext, empresa=empresa,company=company,
                                  operations=Operation.objects.all())
             template_vars_template = RequestContext(request, template_vars)
             return render_to_response("rbac/add_role.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def update_role_privs(role, objs_ids, operation):
     """Update a  list of PermissionAsigments for a given role
@@ -260,7 +262,7 @@ def edit_role(request, id_role):
                 mensaje = "Ha ocurrido un error al validar el nombre o la descripción del rol. Por favor verifique"
                 ntype = "fail"
 
-        template_vars = dict(rol=rol,
+        template_vars = dict(sidebar=request.session['sidebar'], rol=rol,
                              datacontext=datacontext, empresa=empresa, company=company,
                              operations=Operation.objects.all(), message=mensaje, ntype=ntype)
         permissions = PermissionAsigment.objects.filter(role=rol)
@@ -287,10 +289,12 @@ def edit_role(request, id_role):
         return render_to_response("rbac/edit_role.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def see_role(request, id_role):
     if not request.user.is_authenticated():
@@ -300,7 +304,7 @@ def see_role(request, id_role):
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         company = request.session['company']
-        template_vars = dict(rol=rol, datacontext=datacontext, empresa=empresa,
+        template_vars = dict(sidebar=request.session['sidebar'], rol=rol, datacontext=datacontext, empresa=empresa,
                              company=company, operations=Operation.objects.all())
         permissions = PermissionAsigment.objects.filter(role=rol)
         objects = [ob.object.pk for ob in permissions]
@@ -326,10 +330,12 @@ def see_role(request, id_role):
         return render_to_response("rbac/edit_role.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def view_roles(request):
     if not request.user.is_authenticated():
@@ -375,7 +381,7 @@ def view_roles(request):
         else:
             lista = Role.objects.all().order_by(order)
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
-        template_vars = dict(roles=paginator, order_name=order_name, order_desc=order_desc,
+        template_vars = dict(sidebar=request.session['sidebar'], roles=paginator, order_name=order_name, order_desc=order_desc,
                              order_status=order_status, empresa=empresa, company=company,
                              datacontext=datacontext)
         # Make sure page request is an int. If not, deliver first page.
@@ -401,10 +407,12 @@ def view_roles(request):
         return render_to_response("rbac/role_list.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def delete_role(request, id_role):
     if not request.user.is_authenticated():
@@ -423,10 +431,12 @@ def delete_role(request, id_role):
                                     "&ntype=success")
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def delete_batch(request):
@@ -462,10 +472,12 @@ def delete_batch(request):
                                         "&ntype=success")
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def get_select_group(request, id_operation):
     if not request.user.is_authenticated():
@@ -574,7 +586,7 @@ def add_user(request):
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         company = request.session['company']
-        template_vars = dict(datacontext=datacontext,
+        template_vars = dict(sidebar=request.session['sidebar'], datacontext=datacontext,
             empresa=empresa, company=company
         )
         if request.method == "POST":
@@ -639,10 +651,12 @@ def add_user(request):
         return render_to_response("rbac/add_user.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def view_users(request):
     if not request.user.is_authenticated():
@@ -698,7 +712,7 @@ def view_users(request):
         else:
             lista = User.objects.all().order_by(order)
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
-        template_vars = dict(order_name=order_name, order_username=order_username,
+        template_vars = dict(sidebar=request.session['sidebar'], order_name=order_name, order_username=order_username,
             order_email=order_email, order_status=order_status, datacontext=datacontext,
             empresa=empresa, company=company)
         # Make sure page request is an int. If not, deliver first page.
@@ -724,10 +738,12 @@ def view_users(request):
         return render_to_response("rbac/user_list.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def delete_user(request, id_user):
     if not request.user.is_authenticated():
@@ -752,10 +768,12 @@ def delete_user(request, id_user):
                                     "&ntype="+type)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def edit_user(request, id_user):
@@ -824,7 +842,7 @@ def edit_user(request, id_user):
                           "favor revise que no haya caracteres inv&aacute;lidos"
                 type = "n_notif"
 
-        template_vars = dict(datacontext=datacontext,
+        template_vars = dict(sidebar=request.session['sidebar'], datacontext=datacontext,
             empresa=empresa,
             company=company,
             post=post,
@@ -836,10 +854,12 @@ def edit_user(request, id_user):
         return render_to_response("rbac/add_user.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def delete_batch_user(request):
     if not request.user.is_authenticated():
@@ -874,10 +894,12 @@ def delete_batch_user(request):
                                         "&ntype=n_success")
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def see_user(request, id_user):
@@ -890,17 +912,19 @@ def see_user(request, id_user):
         company = request.session['company']
         profile = UserProfile.objects.get(user=user1)
         age = int((date.today() - profile.user_profile_birth_dates).days/365.25)
-        template_vars = dict(user1=user1, company=company, profile=profile,
+        template_vars = dict(sidebar=request.session['sidebar'], user1=user1, company=company, profile=profile,
             datacontext=datacontext, age = age, empresa=empresa)
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("rbac/see_user.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def add_data_context_permissions(request):
     """Permission Asigments
@@ -1010,7 +1034,7 @@ def add_data_context_permissions(request):
                 return HttpResponseRedirect("/panel_de_control/roles_asignados/?msj=" + message +
                                             "&ntype=n_success")
 
-        template_vars = dict(
+        template_vars = dict(sidebar=request.session['sidebar'], 
             datacontext=datacontext,
             roles=roles,
             clusters=clusters,
@@ -1023,10 +1047,12 @@ def add_data_context_permissions(request):
         return render_to_response("rbac/asign_data_context.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def added_data_context_permissions(request):
     if not request.user.is_authenticated():
@@ -1081,7 +1107,7 @@ def added_data_context_permissions(request):
         else:
             lista = DataContextPermission.objects.filter(user_role__user__is_active=True).order_by(order)
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
-        template_vars = dict(order_role=order_role, order_username=order_username,
+        template_vars = dict(sidebar=request.session['sidebar'], order_role=order_role, order_username=order_username,
             order_entity=order_entity, datacontext=datacontext, empresa=empresa,
             company=company)
         # Make sure page request is an int. If not, deliver first page.
@@ -1118,10 +1144,12 @@ def added_data_context_permissions(request):
         return render_to_response("rbac/added_data_context.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 
 def delete_data_context(request, id_data_context):
@@ -1135,10 +1163,12 @@ def delete_data_context(request, id_data_context):
                                     "&ntype=n_success")
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def delete_batch_data_context(request):
     if not request.user.is_authenticated():
@@ -1161,10 +1191,12 @@ def delete_batch_data_context(request):
                                         "&ntype=n_success")
     else:
         datacontext = get_buildings_context(request.user)
-        context={}
+        template_vars = {}
         if datacontext:
-            context = {"datacontext":datacontext}
-        return render_to_response("generic_error.html", RequestContext(request, context))
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def search_users(request):
     if not request.user.is_authenticated():
