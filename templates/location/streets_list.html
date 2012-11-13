@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block titulo %}Ver Calles{% endblock %}
 {% block externalcss %}
-    <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
-    <link rel="stylesheet" href="/static/css/forms/location.css" type="text/css">
+    <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/forms/location.css" type="text/css" />
     <link href="/static/js/external/messi/messi.css" rel="stylesheet" type="text/css" media="screen" />
 {% endblock %}
 {% block externaljs %}
@@ -169,7 +169,7 @@
         {% if message %}
             <span class="notif {% if msg_type == "success" %}n_success{% else %}n_notif{% endif %}">
                     {% autoescape off %}{{ message }}{% endautoescape %}
-                <a href="#" onclick="$(this).parent().remove(); history.replaceState({}, '', '?page=1');">X</a>
+                <a href="#" onclick="$(this).parent().remove(); History.replaceState({}, '', '?page=1');">X</a>
                 </span>
         {% endif %}
         <div id="form_container">

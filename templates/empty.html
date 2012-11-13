@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block titulo %}Sin acciones disponibles{% endblock %}
 {% block externalcss %}
-    <link rel="stylesheet" href="/static/css/consumption_centers/main.css" type="text/css">
+    <link rel="stylesheet" href="/static/css/consumption_centers/main.css" type="text/css" />
 
 {% endblock %}
 {% block externaljs %}
@@ -28,7 +28,7 @@
         });
     });
     var url = window.location.href;
-    window.history.replaceState(url,"Reporte el&eacute;ctrico", url);
+    History.replaceState(url,"Reporte electrico", url);
 {% endblock %}
 {% block contenido %}
     <div id="bread_crumbs">

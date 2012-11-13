@@ -4,18 +4,19 @@
 <head>
     <title>Inicio de Sesión</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <link rel="stylesheet" href="/static/css/theme.css">
+    <link rel="stylesheet" href="/static/css/theme.css" />
     <link rel="stylesheet" href="/static/js/external/jqueryUniform/css/uniform.default.css" type="text/css" media="screen" charset="utf-8" />
-    <link rel="stylesheet" href="/static/css/login.css">
+    <link rel="stylesheet" href="/static/css/login.css" />
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/js/external/history/jquery.history.js"></script>
     <script type="text/javascript" src="/static/js/external/labels.js"></script>
     <script type="text/javascript" src="/static/js/external/jqueryUniform/jquery.uniform.min.js"></script>
     <script type="text/javascript" src="/static/js/functions.js"></script>
     <script type="text/javascript">
-        window.history.forward();
+        History.forward();
         window.onbeforeunload = function () {
-            window.history.forward();
+            History.forward();
         }
         $(document).ready(function(){
             $("input").uniform();

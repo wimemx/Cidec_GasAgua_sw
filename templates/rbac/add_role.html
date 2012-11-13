@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block titulo %}Alta de Rol{% endblock %}
 {% block externalcss %}
-    <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
-    <link rel="stylesheet" href="/static/css/forms/rbac.css" type="text/css">
+    <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/forms/rbac.css" type="text/css" />
 {% endblock %}
 
     {% block document_ready %}
@@ -133,7 +133,7 @@
                     $("#save_btn button").click();
                 });
             });
-            $("a.back").click(function(e){e.preventDefault(); history.back();});
+            $("a.back").click(function(e){e.preventDefault(); History.back();});
 
         {% endblock %}
 {% block externaljs %}

@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block titulo %}Ver Usuarios{% endblock %}
 {% block externalcss %}
-    <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
-    <link rel="stylesheet" href="/static/css/forms/rbac_user_list.css" type="text/css">
+    <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/forms/rbac_user_list.css" type="text/css" />
     <link href="/static/js/external/messi/messi.css" rel="stylesheet" type="text/css" media="screen" />
 {% endblock %}
 {% block externaljs %}
@@ -172,7 +172,7 @@
         {% if message %}
             <span class="notif {{ msg_type }}">
                     {% autoescape off %}{{ message }}{% endautoescape %}
-                <a href="#" onclick="$(this).parent().remove(); history.replaceState({}, '', '?page=1');">X</a>
+                <a href="#" onclick="$(this).parent().remove(); History.replaceState({}, '', '?page=1');">X</a>
                 </span>
         {% endif %}
         <div id="form_container">

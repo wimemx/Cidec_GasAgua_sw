@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block titulo %}Reportes{% endblock %}
 {% block externalcss %}
-    <link rel="stylesheet" href="/static/css/consumption_centers/main.css" type="text/css">
+    <link rel="stylesheet" href="/static/css/consumption_centers/main.css" type="text/css" />
     <link rel="stylesheet" href="/static/date_picker/css/datepicker.css" type="text/css" />
     <link rel="stylesheet" href="/static/js/external/fancybox/jquery.fancybox.css" type="text/css" />
 {% endblock %}
@@ -13,7 +13,7 @@
         google.load('visualization', '1.1', {packages: ['corechart', 'controls']});
     </script>
     <script type="text/javascript">
-
+    //<![CDATA[
     function clean_dates(url){
         var f1_init = encodeURIComponent($("#range1_init").val());
         var f1_end = encodeURIComponent($("#range1_end").val());
@@ -189,12 +189,13 @@
         $("#graph_container").html(graphFrame);
         refresh_iframe_height();
     }
+    //]]>
     </script>
 {% endblock %}
 {% block document_ready %}
 
     var url = window.location.href;
-    window.history.replaceState(url,"Reporte el&eacute;ctrico", url);
+    History.replaceState(url,"Reporte electrico", url);
 
     var now3 = new Date();
     now3.addDays(-4);
@@ -495,7 +496,7 @@
                     <label for="range1_end">Hasta</label>
                     <input type="text" name="range1_end" id="range1_end" readonly="readonly"/>
                 </div>
-                <label id="compare_prev_date"><input type="checkbox" id="prev_dates">Comparar con fechas previas</label>
+                <label id="compare_prev_date"><input type="checkbox" id="prev_dates"/>Comparar con fechas previas</label>
                 <div>
                     <label for="range2_init">Desde</label>
                     <input type="text" name="range2_init" id="range2_init" readonly="readonly"/>
@@ -506,7 +507,7 @@
                     <input type="text" name="range2_end" id="range2_end" readonly="readonly"/>
                 </div>
 
-                <label id="compare_prev_date3"><input type="checkbox" id="prev_dates3">Comparar con fechas previas</label>
+                <label id="compare_prev_date3"><input type="checkbox" id="prev_dates3"/>Comparar con fechas previas</label>
                 <div>
                     <label for="range3_init">Desde</label>
                     <input type="text" name="range3_init" id="range3_init" readonly="readonly"/>
@@ -516,7 +517,7 @@
                     <label for="range3_end">Hasta</label>
                     <input type="text" name="range3_end" id="range3_end" readonly="readonly"/>
                 </div>
-                <label id="compare_prev_date4"><input type="checkbox" id="prev_dates4">Comparar con fechas previas</label>
+                <label id="compare_prev_date4"><input type="checkbox" id="prev_dates4"/>Comparar con fechas previas</label>
                 <div>
                     <label for="range4_init">Desde</label>
                     <input type="text" name="range2_init" id="range4_init" readonly="readonly"/>

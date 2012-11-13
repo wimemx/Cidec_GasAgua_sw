@@ -186,7 +186,7 @@ body{
     min-width: 870px;
     width: 100%;
 }
-header{
+#header{
     position: absolute;
     top: 0;
     width: 100%;
@@ -363,10 +363,10 @@ a.aqua_btn:hover, a.grey_btn:hover{
     color: #424242;
     font-size: 12px;
 }
-footer{
+#footer{
     margin-top: 10px;
 }
-footer span{
+#footer span{
     display: block;
     text-align: center;
     color: #d0d0d0;

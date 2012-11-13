@@ -3,10 +3,10 @@
 {% if operation == "edit" %}Editar{% else %}Crear{% endif %} Edificio
 {% endblock %}
 {% block externalcss %}
-<link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
-<link rel="stylesheet" href="/static/css/forms/rbac.css" type="text/css">
-<link rel="stylesheet" href="/static/css/forms/rbac_add_user.css" type="text/css">
-<link rel="stylesheet" href="/static/css/forms/c_centers.css" type="text/css">
+<link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
+<link rel="stylesheet" href="/static/css/forms/rbac.css" type="text/css" />
+<link rel="stylesheet" href="/static/css/forms/rbac_add_user.css" type="text/css" />
+<link rel="stylesheet" href="/static/css/forms/c_centers.css" type="text/css" />
 <link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
 {% endblock %}
 {% block externaljs %}
@@ -550,7 +550,7 @@ $('#b_longitude').val(results[0].geometry.location.lng());
 });
 
 
-$("a.back").click(function(e){e.preventDefault(); history.back();});
+$("a.back").click(function(e){e.preventDefault(); History.back();});
 
 {% endblock %}
 
