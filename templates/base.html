@@ -17,6 +17,7 @@
     <script src="/static/js/functions.js"></script>
 
     <!-- all Third Party Plugins -->
+    <script type="text/javascript" src="/static/js/external/history/jquery.history.js"></script>
     <script type="text/javascript" src="/static/js/external/labels.js"></script>
     <script type="text/javascript" src="/static/js/external/jqueryUniform/jquery.uniform.min.js"></script>
     {% block externaljs %}{% endblock %}
@@ -43,7 +44,7 @@
             };
             $("#salir").click(function(e){
                 e.preventDefault();
-                history.replaceState({}, '', '/');
+                History.replaceState({}, '', '/');
                 window.location = "/logout/";
             });
             $("select, input, input:checkbox, input:radio, input:file, textarea").uniform();

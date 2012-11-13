@@ -126,7 +126,7 @@
         if(f1_init!=''){
             var url = $("#graphFrame").attr("src").replace('#','').split("&");
             var base_url=url[0];
-            console.log(base_url);
+
             base_url+='&consumer-unit01={{ consumer_unit.pk }}';
             if (url.length > 1){
 
