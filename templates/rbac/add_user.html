@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block titulo %}
-    {% if operation == "edit" %}Editar{% else %}Crear nuevo{% endif %} usuario
+    {% if operation == "edit" %}Editar{% else %}Alta de{% endif %} usuario
 {% endblock %}
 {% block externalcss %}
     <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
@@ -20,7 +20,17 @@
 
             $( "#dob" ).mask("99-99-9999").datepicker({ monthNames: ["Enero","Febrero","Marzo","Abril","Mayo",
                 "Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"],
-                                     dateFormat: "dd-mm-yy"});
+                                     dateFormat: "dd-mm-yy", onSelect: function(){
+                                    var _span;
+                                    if($(this).val()=='__-__-____'){
+                                        _span = "incorrect";
+                                        form_valid = false;
+                                    }else{
+                                        _span = "correct";
+                                        form_valid = true;
+                                    }
+                                    $(this).next().removeClass("incorrect").removeClass("correct").addClass(_span);
+                }});
             $(".required").each(function(){
                 $(this).parent().next().blur(function(e){
                     var _span;
@@ -59,6 +69,8 @@
                             _span = "incorrect";
                             form_valid = false;
                         }
+                    }else  if (e.delegateTarget.id == "dob"){
+
                     }else if(valor=='' || !isValidString(valor)){
                         _span = "incorrect";
                         form_valid = false;
@@ -209,7 +221,7 @@
 
                 </li>
             {% else %}
-                <li>Alta de nuevo usuario</li>
+                <li>Alta de usuario</li>
             {% endif %}
 
         </ul>
@@ -217,7 +229,7 @@
     </div>
     <div id="contenido_interno">
         <h2 id="titulo_form" class="user_role">
-            {% if operation == "edit" %}Editar{% else %}Crear nuevo{% endif %} usuario
+            {% if operation == "edit" %}Edici&oacute;n de{% else %}Alta de{% endif %} usuario
         </h2>
 
 

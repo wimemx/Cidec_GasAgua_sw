@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block titulo %}
-    {% if operation == "edit" %}Editar un {% else %}Crear un nuevo {% endif %}atributo de edificio
+    {% if operation == "edit" %}Editar un {% else %}Alta de {% endif %}atributo de edificio
 {% endblock %}
 {% block externalcss %}
     <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
@@ -124,14 +124,14 @@
                     Editar un atributo de edificio
                 </li>
             {% else %}
-                <li>Crear un nuevo atributo de edificio</li>
+                <li>Alta de atributo de edificio</li>
             {% endif %}
         </ul>
 
     </div>
     <div id="contenido_interno">
         <h2 id="titulo_form" class="building_attr">
-            {% if operation == "edit" %}Editar un {% else %}Crear un nuevo {% endif %}atributo de edificio
+            {% if operation == "edit" %}Editar un {% else %}Alta de {% endif %}atributo de edificio
         </h2>
 
 

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block titulo %}
-{% if operation == "edit" %}Editar{% else %}Crear{% endif %} Parte de Edificio
+{% if operation == "edit" %}Editar{% else %}Alta de{% endif %} Parte de Edificio
 {% endblock %}
 {% block externalcss %}
 <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
@@ -11,10 +11,14 @@
 {% endblock %}
 {% block externaljs %}
 <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/external/maskedinput.js"></script>
 <script type="text/javascript">
     var form_valid = true;
     var send_form = 0;
     $(document).ready(function(){
+        $("#b_part_mt2").mask("999");
+        $("#attr_value").mask("99");
+
         $("#b_part_name").focus();
         $(".required").each(function(){
             var _span;

@@ -88,7 +88,7 @@ def add_role(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
 
-    if has_permission(request.user, CREATE, "crear rol") or request.user.is_superuser:
+    if has_permission(request.user, CREATE, "Alta de rol") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         company = request.session['company']
@@ -1029,18 +1029,18 @@ def add_data_context_permissions(request):
                                 message = "El rol, sus permisos y su asignación a los edificios" \
                                           "de la empresa se han guardado correctamente"
                                 type = "n_success"
-
-                #alta de asignación de roles/permisos para todas los edificios de todas
-                # las empresas de un cluster
-                user_role, created = UserRole.objects.get_or_create(user=usuario,
-                                     role=rol)
-                data_context, created = DataContextPermission.objects.get_or_create(
-                    user_role=user_role,
-                    cluster=cluster
-                )
-                message = "El rol, sus permisos y asignaciones al cluster y "\
-                          "sus empresas, se ha guardado correctamente"
-                type = "n_success"
+                else:
+                    #alta de asignación de roles/permisos para todas los edificios de todas
+                    # las empresas de un cluster
+                    user_role, created = UserRole.objects.get_or_create(user=usuario,
+                                         role=rol)
+                    data_context, created = DataContextPermission.objects.get_or_create(
+                        user_role=user_role,
+                        cluster=cluster
+                    )
+                    message = "El rol, sus permisos y asignaciones al cluster y "\
+                              "sus empresas, se ha guardado correctamente"
+                    type = "n_success"
             if type == "n_success" and (has_permission(request.user, VIEW, "Ver asignaciones de roles a usuarios") or request.user.is_superuser):
                 return HttpResponseRedirect("/panel_de_control/roles_asignados/?msj=" + message +
                                             "&ntype=n_success")

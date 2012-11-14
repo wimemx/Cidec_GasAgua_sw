@@ -76,7 +76,7 @@
                 event.preventDefault();
                 var url="/rbac/eliminar_asignacion_rol/"+$(this).attr("rel")+"/";
                 new Messi('&iquest;Est&aacute; seguro de que desea eliminar la asignaci&oacute;n Rol-Usuario?',
-                        {title: 'Eliminar usuario', modal: true, buttons: [{id: 0,
+                        {title: 'Eliminar asignaci&oacute;n', modal: true, buttons: [{id: 0,
                             label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
                         }],
                         callback: function(val) {

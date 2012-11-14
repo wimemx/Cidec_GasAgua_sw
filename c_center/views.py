@@ -2520,7 +2520,7 @@ def status_powermeter(request, id_powermeter):
         if powermeter.status == 0:
             powermeter.status = 1
             str_status = "Activo"
-        elif powermeter.status == 1:
+        else:
             powermeter.status = 0
             str_status = "Inactivo"
 
