@@ -37,6 +37,7 @@
                     });
 
         });
+    var send_form = 0;
     function valida(){
         var valid = true;
         var est = $("#estado");
@@ -49,7 +50,10 @@
         }else{
             est.next().addClass("correct");
         }
-        return valid;
+        if(valid){
+            send_form++;
+        }
+        return send_form == 1;
     }
     </script>
 {% endblock %}

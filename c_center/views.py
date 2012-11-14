@@ -1255,12 +1255,16 @@ def add_building_attr(request):
             attr_name = template_vars['post']['attr_name']
             attr = get_object_or_404(BuildingAttributesType, pk=template_vars['post']['attr_type'])
             desc = template_vars['post']['description']
-            if not variety.validate_string(desc) or not variety.validate_string(attr_name):
+            if not variety.validate_string(attr_name):
                 valid = False
                 template_vars['message'] = "Por favor solo ingrese caracteres v&aacute;lidos"
+            if desc !='':
+                if not variety.validate_string(desc):
+                    valid = False
+                    template_vars['message'] = "Por favor solo ingrese caracteres v&aacute;lidos"
 
 
-            if template_vars['post']['value_boolean'] == 1:
+            if int(template_vars['post']['value_boolean']) == 1:
                 bool = True
                 unidades = template_vars['post']['unidades']
                 if not unidades:

@@ -31,15 +31,24 @@
             $("#add_permission").click(function(e){
                 e.preventDefault();
                 var rol = $("#role_name");
-                if($.trim(rol.val()) != ''){
-                    rol.val($.trim(rol.val()));
-                    $("#basic_rol_info").hide();
-                    $("#rolename").text(rol.val());
-                    $("#role_description").text($("#role_desc").val());
-                    $("#add_permissions").show();
-                    if(rol.parent().find("span.g1").hasClass("incorrect")){
-                        rol.parent().find("span.g1").removeClass("incorrect");
-                        rol.parent().find("span.g1").addClass("correct");
+                var desc = $("#role_desc");
+                if(isValidString($.trim(rol.val())) && $.trim(rol.val())!= ''){
+                    if(isValidString($.trim(desc.val()))){
+                        rol.val($.trim(rol.val()));
+                        $("#basic_rol_info").hide();
+                        $("#rolename").text(rol.val());
+                        $("#role_description").text($("#role_desc").val());
+                        $("#add_permissions").show();
+                        if(rol.parent().find("span.g1").hasClass("incorrect")){
+                            rol.parent().find("span.g1").removeClass("incorrect");
+                            rol.parent().find("span.g1").addClass("correct");
+                        }
+                        if(desc.parent().find("span.g1").hasClass("incorrect")){
+                            desc.parent().find("span.g1").removeClass("incorrect");
+                            desc.parent().find("span.g1").addClass("correct");
+                        }
+                    }else{
+                        desc.parent().find("span.g1").addClass("incorrect");
                     }
                 }else{
                     rol.parent().find("span.g1").addClass("incorrect");
@@ -265,6 +274,11 @@
             }
         }
     }
+    var send_form = 0;
+    function valida(){
+        send_form++;
+        return send_form == 1;
+    }
     </script>
 {% endblock %}
 
@@ -275,13 +289,13 @@
             <li><a href="/main/">Inicio</a></li>
             <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
             <li><a href="/panel_de_control/roles/">Roles</a></li>
-            <li>Nuevo rol</li>
+            <li>{% if role %}Modificar rol{% else %}Nuevo rol{% endif %}</li>
         </ul>
 
     </div>
     <div id="contenido_interno">
         <h2 id="titulo_form" class="user_role">
-            {% if role %}Modificar rol{% else %}Crear un nuevo rol{% endif %}
+            {% if role %}Modificar rol{% else %}Nuevo rol{% endif %}
         </h2>
 
 
@@ -298,7 +312,7 @@
                 <br/>
                 Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
             </p>
-            <form method="post" action=".">
+            <form method="post" action="." onsubmit="return valida();">
                 {% csrf_token %}
                 <div id="basic_rol_info">
                     <label class="input">
@@ -311,6 +325,7 @@
                     <label class="input">
                         <span>Descripcion del rol</span>
                         <input type="text" name="role_desc" id="role_desc" value="{{  post.role_desc }}"/>
+                        <span class="g1"></span>
                     </label>
                     <p class="buttons">
                         <button class="aqua_btn" id="add_permission">

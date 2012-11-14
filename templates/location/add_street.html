@@ -103,6 +103,7 @@
                 }
             });
         });
+        var send_form = 0;
         function valida(){
             var valid = true;
             var call = $("#calle");
@@ -115,7 +116,10 @@
             }else{
                 call.next().addClass("correct");
             }
-            return valid;
+            if(valid){
+                send_form++;
+            }
+            return send_form == 1;
         }
     </script>
 {% endblock %}

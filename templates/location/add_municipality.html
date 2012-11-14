@@ -58,6 +58,7 @@
                 }
             });
         });
+    var send_form = 0;
     function valida(){
         var valid = true;
         var mun = $("#municipio");
@@ -70,7 +71,10 @@
         }else{
             mun.next().addClass("correct");
         }
-        return valid;
+        if(valid){
+            send_form++;
+        }
+        return send_form == 1;
     }
     </script>
 {% endblock %}

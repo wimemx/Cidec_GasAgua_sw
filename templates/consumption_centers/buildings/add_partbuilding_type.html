@@ -12,6 +12,7 @@
 <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
 <script type="text/javascript">
     var form_valid = true;
+    var send_form = 0;
     $(document).ready(function(){
         $("#b_part_type_name").focus();
         $(".required").each(function(){
@@ -38,7 +39,8 @@
             });
         });
         $("#save").click(function(){
-            return validate_form();
+            validate_form();
+            return send_form == 1;
         });
     });
     function validate_form(){
@@ -56,7 +58,9 @@
             partbuildingtype_name.next().addClass(_span);
 
         }
-
+        if(form_valid){
+           send_form++;
+        }
         return form_valid
     }
 </script>

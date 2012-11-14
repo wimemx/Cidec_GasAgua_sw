@@ -193,6 +193,11 @@
                 }
             });
         });
+    var send_form = 0;
+    function valida(){
+        send_form++;
+        return send_form == 1;
+    }
     </script>
 {% endblock %}
 
@@ -228,7 +233,7 @@
                 <br/>
                 Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
             </p>
-            <form method="post" action=".">
+            <form method="post" action="." onsubmit="return valida();">
                 {% csrf_token %}
 
                 <div class="fields_row g12">
