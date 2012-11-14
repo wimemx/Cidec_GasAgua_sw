@@ -2903,7 +2903,7 @@ def add_company(request):
         #clusters = Cluster.objects.all().exclude(cluster_status = 2)
 
         #Get Sectors
-        sectors = SectoralType.objects.all().exclude(sectoral_type_status = 2)
+        sectors = SectoralType.objects.filter(sectoral_type_status = 1)
 
         template_vars = dict(datacontext=datacontext,
             empresa=empresa,
@@ -3931,7 +3931,7 @@ def status_batch_sectoraltypes(request):
                         stype_obj.sectoral_type_status = 0
                     stype_obj.save()
 
-            mensaje = "Los tipos de sectores seleccionados han cambiado su status correctamente"
+            mensaje = "Los tipos de sectores seleccionados han cambiado su estatus correctamente"
             return HttpResponseRedirect("/buildings/tipos_sectores/?msj=" + mensaje +
                                         "&ntype=n_success")
         else:
@@ -4245,7 +4245,7 @@ def status_batch_b_attributes_type(request):
                         b_att_type.building_attributes_type_status = 0
                     b_att_type.save()
 
-            mensaje = "Los Tipos de Atributos seleccionados han cambiado su status correctamente"
+            mensaje = "Los Tipos de Atributos seleccionados han cambiado su estatus correctamente"
             return HttpResponseRedirect("/buildings/tipos_atributos_edificios/?msj=" + mensaje +
                                         "&ntype=n_success")
         else:
@@ -5154,6 +5154,12 @@ def add_building(request):
             b_long = request.POST.get('b_longitude')
             b_lat = request.POST.get('b_latitude')
             b_region_id = request.POST.get('b_region')
+
+            if not bool(b_int):
+                b_int='0'
+            if not bool(b_mt2):
+                b_mt2='0'
+
 
             continuar = True
             if b_name == '':

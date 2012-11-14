@@ -14,6 +14,7 @@
 <script src="https://maps.google.com/maps/api/js?sensor=false"></script>
 <script type="text/javascript">
     var form_valid = true;
+    var send_form = 0;
 
     var mapBusiness;
     var geocoder;
@@ -63,10 +64,14 @@
             }
         });
         $("#save").click(function(){
-            return validate_form();
+
+            validate_form();
+            return send_form == 1;
+
         });
     });
     function validate_form(){
+
         if (form_valid){
             var _span;
             var building_name = $("#b_name");
@@ -241,7 +246,9 @@
             $("#sel_region").removeClass("correct");
             $("#sel_region").addClass(_span);
         }
-
+        if (form_valid){
+            send_form++;
+        }
         return form_valid
     }
 

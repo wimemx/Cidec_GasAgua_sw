@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block titulo %}Ver Clusters{% endblock %}
+{% block titulo %}Ver grupos de empresas{% endblock %}
 {% block externalcss %}
 <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
 <link rel="stylesheet" href="/static/css/forms/rbac_user_list.css" type="text/css" />
@@ -77,8 +77,8 @@ document.location.href=url;
 $("#aplicar").click(function(e){
 e.preventDefault();
 if($("#actions").val()!="0"){
-new Messi('&iquest;Est&aacute; seguro que desea cambiar el status de estos clusters?',
-{title: 'Cambiar Status', modal: true, buttons: [{id: 0,
+new Messi('&iquest;Est&aacute; seguro que desea cambiar el estatus de estos clusters?',
+{title: 'Cambiar estatus', modal: true, buttons: [{id: 0,
 label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
 }],
 callback: function(val) {
@@ -159,12 +159,12 @@ window.location = base_url;
     <ul>
         <li><a href="/main/">Inicio</a></li>
         <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
-        <li>Clusters</li>
+        <li>Grupos de empresas</li>
     </ul>
 
 </div>
 <div id="contenido_interno">
-    <h2 id="titulo_form" class="cluster">Clusters</h2>
+    <h2 id="titulo_form" class="cluster">Grupos de Empresas</h2>
 
 
     <div class="divider" id="divider_top">&nbsp;</div>
