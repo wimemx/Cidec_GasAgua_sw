@@ -11,6 +11,7 @@
 {% endblock %}
 {% block externaljs %}
 <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/external/maskedinput.js"></script>
 <script src="https://maps.google.com/maps/api/js?sensor=false"></script>
 <script type="text/javascript">
     var form_valid = true;
@@ -22,6 +23,11 @@
 
     var link_state = '';
     $(document).ready(function(){
+        $("#b_mt2").mask("9999");
+        $("#attr_value").mask("99");
+        $("#b_zip").mask("99999");
+
+
         $("#b_name").focus();
         $(".required").each(function(){
             var _span;
@@ -31,13 +37,25 @@
                         _span = "incorrect";
                         form_valid = false;
                     }else{
-                        if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ ]+$/.test(e.delegateTarget.value)){
-                            _span = "correct";
-                            form_valid = true;
+                        if(e.delegateTarget.id == "b_country" || e.delegateTarget.id == "b_state" || e.delegateTarget.id == "b_municipality" || e.delegateTarget.id == "b_neighborhood" || e.delegateTarget.id == "b_street"){
+                            if(/^[A-Za-zÁÉÍÓÚáéíóuñÑ ]+$/.test(e.delegateTarget.value)){
+                                _span = "correct";
+                                form_valid = true;
+                            }else{
+                                _span = "incorrect";
+                                form_valid = false;
+                            }
                         }else{
-                            _span = "incorrect";
-                            form_valid = false;
+                            if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ ]+$/.test(e.delegateTarget.value)){
+                                _span = "correct";
+                                form_valid = true;
+                            }else{
+                                _span = "incorrect";
+                                form_valid = false;
+                            }
                         }
+
+
                     }
 
                     var n_span = $("#"+e.delegateTarget.id).next();
@@ -578,7 +596,7 @@ $("a.back").click(function(e){e.preventDefault(); History.back();});
 
 </div>
 <div id="contenido_interno">
-    <h2 id="titulo_form" class="user_role">
+    <h2 id="titulo_form" class="company">
         {% if operation == "edit" %}Edici&oacute;n de{% else %}Alta de{% endif %} edificio
     </h2>
 

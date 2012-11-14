@@ -186,7 +186,7 @@
                 <div class="fields_row g12">
                     <label for="company_sector" class="g2">Sector<span class="required">*</span></label>
                     <select name="company_sector" id="company_sector" class="g9">
-                        <option value="">Selecciona un sector </option>
+                        <option value="">Selecciona un tipo de sector </option>
                         {% if sectors %}
                         {% for sector in sectors %}
                         <option value="{{sector.id}}" {% if post.cmp_sector == sector.id %} selected {% endif %}>{{ sector.sectorial_type_name }}</option>
