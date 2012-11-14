@@ -75,21 +75,29 @@ document.location.href=url;
 });
 
 $("#aplicar").click(function(e){
-e.preventDefault();
-if($("#actions").val()!="0"){
-new Messi('&iquest;Est&aacute; seguro de que desea cambiar el estatus a los medidores seleccionados?',
-{title: 'Cambiar estatus', modal: true, buttons: [{id: 0,
-label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
-}],
-callback: function(val) {
-if(val=='Y'){
-document.forms["operations_batch"].submit();
-} else return false; }
-});
-}else{
-return false;
-}
-
+    e.preventDefault();
+    if($("#actions").val()!="0"){
+        var check = false;
+        $("tbody input:checkbox").each(function(){
+            if($(this).is(":checked")){
+            check = true;
+            }
+        });
+        if(check){
+            new Messi('&iquest;Est&aacute; seguro de que desea cambiar el estatus a los medidores seleccionados?',
+                {title: 'Cambiar estatus', modal: true, buttons: [{id: 0,
+                label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
+                }],
+                callback: function(val) {
+                    if(val=='Y'){
+                        document.forms["operations_batch"].submit();
+                    } else return false;
+                }
+            });
+        }
+    }else{
+        return false;
+    }
 });
 
 $("#sort_alias").click(function(e){
