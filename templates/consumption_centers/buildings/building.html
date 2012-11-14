@@ -13,20 +13,26 @@
         if (typeof pagina == "object") {
             pagina = "1";
         }
-        var url;
-        url=window.location.href;
-        url=url.split("/");
-        url=url[url.length-1];
-        url=url.replace("#",'');
-        url=url.replace(/&page=\d+/,'');
-        url=url.replace(/\?page=\d+/,'');
-        if(url == ''){
-            url+="?page="+pagina;
-        }else{
-            url+="&page="+pagina;
-        }
-        window.location = url;
 
+        var base_url = window.location.pathname;
+        base_url+="?page="+pagina;
+        base_url=append_page(base_url);
+        window.location = base_url;
+    }
+    function append_page(base_url){
+        var get = getUrlVars();
+        if(get.length>0){
+            if (get[0]!=window.location.protocol+"//"+window.location
+                    .host+window.location.pathname){
+                for(var i=0; i<get.length; i++){
+                    if (get[i]!="msj" && get[i]!="ntype" && get[i]!="page"){
+                        base_url+="&"+get[i]+"="+get[get[i]];
+                    }
+                }
+            }
+
+        }
+        return base_url
     }
 </script>
 {% endblock %}
@@ -34,57 +40,64 @@
 
 //custom select for sidebar
 $("#empresa").click(function(){
-$("#company_list").slideToggle();
+    $("#company_list").slideToggle();
 });
 $("#company_list li").click(function(){
-var texto=$(this).text().replace(/^\s*|\s*$/g,'');
-var texto1 = texto.substring(0,17) + "...";
-$("#empresa").text(texto1);
-$("#company_list").slideUp();
+    var texto=$(this).text().replace(/^\s*|\s*$/g,'');
+    var texto1 = texto.substring(0,17) + "...";
+    $("#empresa").text(texto1);
+    $("#company_list").slideUp();
 
-$.ajax({
-url: "/reportes/set_default_building/" + $(this).attr("rel"),
-type: "GET",
-dataType: 'json',
-async: 'true',
-success: function(datos){
-window.location.reload();
-}
-});
+    $.ajax({
+        url: "/reportes/set_default_building/" + $(this).attr("rel"),
+        type: "GET",
+        dataType: 'json',
+        async: 'true',
+        success: function(datos){
+            window.location.reload();
+        }
+    });
 });
 
 $("a.switch").click(function(event){
-event.preventDefault();
-var url="/buildings/status_edificio/"+$(this).attr("rel")+"/";
-var action = $(this).attr("title");
-new Messi('&iquest;Est&aacute; seguro de que desea '+ action +' este edificio?',
-{title: action+' usuario', modal: true, buttons: [{id: 0,
-label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
-}],
-callback: function(val) {
-if(val=='Y'){
-document.location.href=url;
-} else return false; }
-});
+    event.preventDefault();
+    var url="/buildings/status_edificio/"+$(this).attr("rel")+"/";
+    var action = $(this).attr("title");
+    new Messi('&iquest;Est&aacute; seguro de que desea '+ action +' este edificio?',
+        {title: action+' usuario', modal: true, buttons: [{id: 0,
+        label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
+        }],
+        callback: function(val) {
+            if(val=='Y'){
+                document.location.href=url;
+            } else return false; }
+    });
 });
 
 
 $("#aplicar").click(function(e){
-e.preventDefault();
-if($("#actions").val()!="0"){
-new Messi('&iquest;Est&aacute; seguro que desea cambiar el status de estos edificios?',
-{title: 'Cambiar estatus', modal: true, buttons: [{id: 0,
-label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
-}],
-callback: function(val) {
-if(val=='Y'){
-document.forms["operations_batch"].submit();
-} else return false; }
-});
-}else{
-return false;
-}
-
+    e.preventDefault();
+    if($("#actions").val()!="0"){
+        var check = false;
+        $("tbody input:checkbox").each(function(){
+            if($(this).is(":checked")){
+                check = true;
+            }
+        });
+        if(check){
+            new Messi('&iquest;Est&aacute; seguro que desea cambiar el status de estos edificios?',
+                {title: 'Cambiar estatus', modal: true, buttons: [{id: 0,
+                label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
+                }],
+                callback: function(val) {
+                if(val=='Y'){
+                    document.forms["operations_batch"].submit();
+                } else return false; }
+            });
+        }
+    }else{
+        return false;
+    }
 });
 
 
@@ -207,14 +220,14 @@ window.location = base_url;
 
 </div>
 <div id="contenido_interno">
-    <h2 id="titulo_form" class="user_role">Ver Edificios</h2>
+    <h2 id="titulo_form" class="user_role">Edificios</h2>
 
 
     <div class="divider" id="divider_top">&nbsp;</div>
     {% if message %}
             <span class="notif {{ msg_type }}">
                     {% autoescape off %}{{ message }}{% endautoescape %}
-                <a href="#" onclick="$(this).parent().remove();">X</a>
+                <a href="#" onclick="$(this).parent().remove(); History.replaceState({}, '', '?page=1');">X</a>
                 </span>
     {% endif %}
     <div id="form_container">

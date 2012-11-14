@@ -1318,6 +1318,7 @@ def b_attr_list(request):
         order_type = 'asc'
         order_units = 'asc'
         order_sequence = 'asc'
+        order_status = 'asc'
         order = "building_attributes_name" #default order
         if "order_attrname" in request.GET:
             if request.GET["order_attrname"] == "desc":
@@ -1347,6 +1348,13 @@ def b_attr_list(request):
             else:
                 order = "-building_attributes_sequence"
                 order_sequence = "asc"
+        elif "order_status" in request.GET:
+            if request.GET["order_status"] == "asc":
+                order = "building_attributes_status"
+                order_status = "desc"
+            else:
+                order = "-building_attributes_status"
+                order_status = "asc"
 
         if search:
             lista = BuildingAttributes.objects.filter(
@@ -1358,7 +1366,8 @@ def b_attr_list(request):
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
         template_vars = dict(roles=paginator, order_attrname=order_attrname,
                              order_type=order_type, order_units=order_units,
-                             order_sequence=order_sequence, empresa=empresa, company=company,
+                             order_sequence=order_sequence, empresa=empresa,
+                             order_status=order_status, company=company,
                              datacontext=datacontext, sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
@@ -1395,15 +1404,16 @@ def delete_b_attr(request, id_b_attr):
     datacontext = get_buildings_context(request.user)
     if has_permission(request.user, DELETE, "Eliminar atributos de edificios") or request.user.is_superuser:
         b_attr = get_object_or_404(BuildingAttributes, pk=id_b_attr)
-        b_attr_for_b = BuildingAttributesForBuilding.objects.filter(building_attributes=b_attr)
-        if b_attr_for_b:
-            mensaje = "Para eliminar un atributo, primero se tienen que eliminar las " \
-                      "asignaciones de atributos a edificios"
-            type = "n_notif"
+
+        if b_attr.building_attributes_status:
+            b_attr.building_attributes_status = False
         else:
-            b_attr.delete()
-            mensaje = "El atributo se ha dado de baja correctamente"
-            type="n_success"
+            b_attr.building_attributes_status = True
+
+        b_attr.save()
+
+        mensaje = "El atributo ha cambiado de status correctamente"
+        type="n_success"
         return HttpResponseRedirect("/buildings/atributos/?msj=" + mensaje +
                                     "&ntype="+type)
     else:
@@ -1519,6 +1529,40 @@ def ver_b_attr(request, id_b_attr):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/buildings/see_building_attr.html", template_vars_template)
     else:
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext":datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
+
+def status_batch_building_attr(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if has_permission(request.user, UPDATE, "Modificar atributos de edificios") or request.user.is_superuser:
+        if request.method == "GET":
+            raise Http404
+        if request.POST['actions'] != '0':
+            for key in request.POST:
+                if re.search('^attr_\w+', key):
+                    r_id = int(key.replace("attr_",""))
+                    atributo = get_object_or_404(BuildingAttributes, pk = r_id)
+
+                    if request.POST['actions'] == "activate":
+                        atributo.building_attributes_status = True
+                    else:
+                        atributo.building_attributes_status = False
+                    atributo.save()
+
+            mensaje = "Los atributos seleccionados han cambiado su estatus correctamente"
+            return HttpResponseRedirect("/buildings/atributos/?msj=" + mensaje +
+                                        "&ntype=n_success")
+        else:
+            mensaje = "No se ha seleccionado una acción"
+            return HttpResponseRedirect("/buildings/atributos/?msj=" + mensaje +
+                                        "&ntype=n_success")
+    else:
+        datacontext = get_buildings_context(request.user)
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext":datacontext}

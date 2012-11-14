@@ -337,3 +337,10 @@ ul#partes li a{
 ul#partes li a:hover{
     color: #505e68;
 }
+
+ul#permissions li a{
+    text-decoration: none;
+    line-height: 125%;
+    font-weight: 700;
+    color: #666;
+}

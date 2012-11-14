@@ -27,6 +27,17 @@ CREATE = Operation.objects.get(operation_name="Crear")
 DELETE = Operation.objects.get(operation_name="Eliminar")
 UPDATE = Operation.objects.get(operation_name="Modificar")
 
+def control_panel(request):
+    template_vars = dict(
+        sidebar=request.session['sidebar'],
+        datacontext=get_buildings_context(request.user),
+        empresa=request.session['main_building'],
+        operations=Operation.objects.all(),
+        company=request.session['company'],
+    )
+    template_vars_template = RequestContext(request, template_vars)
+    return render_to_response("panel_de_control.html", template_vars_template)
+
 def save_perm(role, objs_ids, operation):
     """Add a PermissionAsigment for a given role
     role = a Role instance

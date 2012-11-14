@@ -24,7 +24,7 @@
                 if (get[0]!=window.location.protocol+"//"+window.location
                         .host+window.location.pathname){
                     for(var i=0; i<get.length; i++){
-                        if (get[i]!="msg" && get[i]!="ntype" && get[i]!="page"){
+                        if (get[i]!="msj" && get[i]!="ntype" && get[i]!="page"){
                             base_url+="&"+get[i]+"="+get[get[i]];
                         }
                     }
@@ -72,18 +72,19 @@
                     }
                 });
             });
-            $("a.del").click(function(event){
+            $("a.switch").click(function(event){
                 event.preventDefault();
                 var url="/buildings/eliminar_b_attr/"+$(this).attr("rel")+"/";
-                new Messi('&iquest;Est&aacute; seguro de que desea eliminar el atributo?',
-                        {title: 'Eliminar atributo', modal: true, buttons: [{id: 0,
-                            label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
-                        }],
-                        callback: function(val) {
-                            if(val=='Y'){
-                                document.location.href=url;
-                            } else return false; }
-                        });
+                var action = $(this).attr("title");
+                new Messi('&iquest;Est&aacute; seguro de que desea '+action+' el atributo?',
+                    {title: action+' atributo', modal: true, buttons: [{id: 0,
+                    label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
+                    }],
+                    callback: function(val) {
+                    if(val=='Y'){
+                        document.location.href=url;
+                    } else return false; }
+                });
             });
             $("#aplicar").click(function(e){
                 e.preventDefault();
@@ -95,9 +96,10 @@
                         }
                     });
                     if(check){
-                    new Messi('&iquest;Est&aacute; seguro de que desea eliminar los atributos' +
+                    var action = $("#actions option:selected").text().toLowerCase();
+                    new Messi('&iquest;Est&aacute; seguro de que desea '+action+' los atributos' +
                             'seleccionados?',
-                            {title: 'Eliminar atributos', modal: true, buttons: [{id: 0,
+                            {title: action+' atributos', modal: true, buttons: [{id: 0,
                                 label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
                             }],
                                 callback: function(val) {
@@ -155,7 +157,7 @@
 
     </div>
     <div id="contenido_interno">
-        <h2 id="titulo_form" class="building_attr">Ver atributos de edificio</h2>
+        <h2 id="titulo_form" class="building_attr">Atributos de edificio</h2>
 
 
         <div class="divider" id="divider_top">&nbsp;</div>
@@ -190,7 +192,7 @@
                         </button>
                     </form>
                 </div>
-                <form id="operations_batch" action="/buildings/delete_batch_building_attr/" method="post">
+                <form id="operations_batch" action="/buildings/status_batch_building_attr/" method="post">
                     {% csrf_token %}
                     <div id="grid_container">
                         <table>
@@ -214,9 +216,15 @@
                                         <span class="sort"></span>
                                     </a>
                                 </th>
-                                <th style="width: 20%;">
+                                <!--<th style="width: 20%;">
                                     <a href="#" id="order_sequence" rel="{{ order_sequence }}">
                                         orden
+                                        <span class="sort"></span>
+                                    </a>
+                                </th>-->
+                                <th style="width: 20%;">
+                                    <a href="#" id="order_status" rel="{{ order_status }}">
+                                        status
                                         <span class="sort"></span>
                                     </a>
                                 </th>
@@ -247,17 +255,19 @@
                                         </a>
                                     </td>
 
-                                    <td class="c">
+                                    <!--<td class="c">
                                         <a href="/building/ver_b_attr/{{ attr.pk }}/">
                                             {% if attr.building_attributes_sequence %}
                                                 {{ attr.building_attributes_sequence }}
                                             {% endif %}
 
                                         </a>
+                                    </td>-->
+                                    <td class="c">
+                                        <a href="#" rel="{{ attr.pk }}" {% if attr.building_attributes_status %}class="switch active_switch" title="desactivar"{% else %}class="switch inactive_switch" title="activar"{% endif %}>
+                                        </a>
                                     </td>
                                     <td class="c">
-                                        <a class="del" rel="{{ attr.pk }}"
-                                           title="Eliminar atributo" href="#"></a>
                                         <a class="edit" title="Editar atributo"
                                            href="/buildings/editar_b_attr/{{ attr.pk }}/"></a>
                                     </td>
@@ -268,7 +278,8 @@
                         <div id="table_footer">
                             <select id="actions" name="actions">
                                 <option value="0">Elije una Acci&oacute;n</option>
-                                <option value="delete">Eliminar</option>
+                                <option value="deactivate">Desactivar</option>
+                                <option value="activate">Activar</option>
                             </select>
                             <button class="fl aqua_btn" id="aplicar">Aplicar a la
                                 selecci&oacute;n</button>

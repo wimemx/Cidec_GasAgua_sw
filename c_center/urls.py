@@ -27,6 +27,7 @@ urlpatterns = patterns('',
     url(r'^eliminar_b_attr/(?P<id_b_attr>\d+)/', 'c_center.views.delete_b_attr'),
     url(r'^editar_b_attr/(?P<id_b_attr>\d+)/', 'c_center.views.editar_b_attr'),
     url(r'^ver_b_attr/(?P<id_b_attr>\d+)/', 'c_center.views.ver_b_attr'),
+    url(r'^status_batch_building_attr/', 'c_center.views.status_batch_building_attr'),
 
     url(r'^clusters/', 'c_center.views.view_cluster'),
     url(r'^nuevo_cluster/', 'c_center.views.add_cluster'),

@@ -13,20 +13,26 @@
         if (typeof pagina == "object") {
             pagina = "1";
         }
-        var url;
-        url=window.location.href;
-        url=url.split("/");
-        url=url[url.length-1];
-        url=url.replace("#",'');
-        url=url.replace(/&page=\d+/,'');
-        url=url.replace(/\?page=\d+/,'');
-        if(url == ''){
-            url+="?page="+pagina;
-        }else{
-            url+="&page="+pagina;
-        }
-        window.location = url;
 
+        var base_url = window.location.pathname;
+        base_url+="?page="+pagina;
+        base_url=append_page(base_url);
+        window.location = base_url;
+    }
+    function append_page(base_url){
+        var get = getUrlVars();
+        if(get.length>0){
+            if (get[0]!=window.location.protocol+"//"+window.location
+                    .host+window.location.pathname){
+                for(var i=0; i<get.length; i++){
+                    if (get[i]!="msj" && get[i]!="ntype" && get[i]!="page"){
+                        base_url+="&"+get[i]+"="+get[get[i]];
+                    }
+                }
+            }
+
+        }
+        return base_url
     }
 </script>
 {% endblock %}
@@ -180,14 +186,14 @@ window.location = base_url;
 
 </div>
 <div id="contenido_interno">
-    <h2 id="titulo_form" class="company">Ver Empresas</h2>
+    <h2 id="titulo_form" class="company">Empresas</h2>
 
 
     <div class="divider" id="divider_top">&nbsp;</div>
     {% if message %}
             <span class="notif {{ msg_type }}">
                     {% autoescape off %}{{ message }}{% endautoescape %}
-                <a href="#" onclick="$(this).parent().remove();">X</a>
+                <a href="#" onclick="$(this).parent().remove(); History.replaceState({}, '', '?page=1');">X</a>
                 </span>
     {% endif %}
     <div id="form_container">

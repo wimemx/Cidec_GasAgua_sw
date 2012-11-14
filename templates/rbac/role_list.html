@@ -77,7 +77,7 @@
                 var url="/rbac/eliminar_rol/"+$(this).attr("rel")+"/";
                 var action = $(this).attr("title");
                 new Messi('&iquest;Est&aacute; seguro de que desea '+action+' el rol?',
-                        {title: 'Eliminar rol', modal: true, buttons: [{id: 0,
+                        {title: action+' rol', modal: true, buttons: [{id: 0,
                             label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
                         }],
                         callback: function(val) {

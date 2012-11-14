@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block titulo %}Panel de Control{% endblock %}
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/consumption_centers/main.css" type="text/css" />
+
+{% endblock %}
+{% block externaljs %}
+{% endblock %}
+{% block document_ready %}
+    //custom select for sidebar
+    $("#empresa").click(function(){
+    $("#company_list").slideToggle();
+    });
+    $("#company_list li").click(function(){
+    var texto=$(this).text().replace(/^\s*|\s*$/g,'');
+    var texto1 = texto.substring(0,17) + "...";
+    $("#empresa").text(texto1);
+    $("#company_list").slideUp();
+
+    $.ajax({
+    url: "/reportes/set_default_building/" + $(this).attr("rel"),
+    type: "GET",
+    dataType: 'json',
+    async: 'true',
+    success: function(datos){
+    window.location.reload();
+    }
+    });
+    });
+
+
+{% endblock %}
+{% block contenido %}
+    <div id="bread_crumbs">
+        <ul>
+            <li><a href="/main/">Inicio</a></li>
+            <li>Panel de control</li>
+        </ul>
+
+    </div>
+    <div id="contenido_interno">
+        <h2 id="titulo_reporte">Panel de control</h2>
+
+
+        <div class="divider" id="divider_top">&nbsp;</div>
+
+        <ul id="permissions">
+            {% for option in sidebar %}
+                <li><a href="{{ option.uri }}">{{ option.name }}</a></li>
+            {% endfor %}
+        </ul>
+
+
+    </div>
+{% endblock %}

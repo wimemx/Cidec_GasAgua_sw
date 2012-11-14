@@ -1,6 +1,7 @@
 from django.conf.urls import patterns, url
 
 urlpatterns = patterns('',
+    url(r'^$', 'rbac.views.control_panel'),
     url(r'^add_permissions/', 'rbac.views.add_data_context_permissions'),
     url(r'^nuevo_rol/', 'rbac.views.add_role'),
     url(r'^editar_rol/(?P<id_role>\d+)/', 'rbac.views.edit_role'),
