@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 import variety
+import re
 import json as simplejson
 #local application/library specific imports
 from django.shortcuts import render_to_response, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.template.context import RequestContext
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.db.models.deletion import ProtectedError
@@ -26,8 +27,12 @@ def validate_add_state(post):
     else:
         valid['pais'] = get_object_or_404(Pais, pk=int(post['country']))
         if variety.validate_string(post['estado']):
-            valid['estado'] = Estado(estado_name=post['estado'].strip())
-            valid['estado'].save()
+            pa_es = PaisEstado.objects.filter(pais=valid['pais'], estado__estado_name=post['estado'])
+            if not pa_es:
+                valid['estado'] = Estado(estado_name=post['estado'].strip())
+                valid['estado'].save()
+            else:
+                valid['error'] = True
         else:
             valid['error'] = True
     return valid
@@ -39,8 +44,12 @@ def validate_add_municipality(post):
     else:
         valid['estado'] = get_object_or_404(Estado, pk=int(post['state']))
         if variety.validate_string(post['municipio']):
-            valid['municipio'] = Municipio(municipio_name=post['municipio'].strip())
-            valid['municipio'].save()
+            es_mun = EstadoMunicipio.objects.filter(estado=valid['estado'], municipio__municipio_name=post['municipio'])
+            if not es_mun:
+                valid['municipio'] = Municipio(municipio_name=post['municipio'].strip())
+                valid['municipio'].save()
+            else:
+                valid['error'] = True
         else:
             valid['error'] = True
     return valid
@@ -52,8 +61,12 @@ def validate_add_neighboorhood(post):
     else:
         valid['municipio'] = get_object_or_404(Municipio, pk=int(post['municipality']))
         if variety.validate_string(post['colonia']):
-            valid['colonia'] = Colonia(colonia_name=post['colonia'].strip())
-            valid['colonia'].save()
+            m_col = MunicipioColonia.objects.filter(municipio=valid['municipio'], colonia__colonia_name=post['colonia'])
+            if not m_col:
+                valid['colonia'] = Colonia(colonia_name=post['colonia'].strip())
+                valid['colonia'].save()
+            else:
+                valid['error'] = True
         else:
             valid['error'] = True
     return valid
@@ -64,9 +77,13 @@ def validate_add_street(post):
         valid['error'] = True
     else:
         valid['colonia'] = get_object_or_404(Colonia, pk=int(post['neighboorhood']))
-        if variety.validate_string(post['colonia']):
-            valid['calle'] = Calle(calle_name=post['calle'].strip())
-            valid['calle'].save()
+        if variety.validate_string(post['calle']):
+            c_col = ColoniaCalle.objects.filter(colonia=valid['colonia'], calle__calle_name=post['calle'])
+            if not c_col:
+                valid['calle'] = Calle(calle_name=post['calle'].strip())
+                valid['calle'].save()
+            else:
+                valid['error'] = True
         else:
             valid['error'] = True
     return valid
@@ -1000,3 +1017,411 @@ def delete_municipalities(state):
         delete_neigboorhoods(mun)
     state.delete()
     return True
+
+"""
+Regiones
+"""
+
+def add_region(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if request.user.is_superuser:
+
+        #Se obtienen los estados que ya estan completamente ocupados
+        #Primero obtengo todos los e
+        #estados_exc = [regiones_estados.estado_id for regiones_estados in RegionEstado.objects.filter(municipio = None)]
+        estados_exc = []
+
+        #Se obtienen todos los estados de la tabla RegionEstado
+        r_states = RegionEstado.objects.values('estado').annotate(dstates = Count('estado'))
+        for rs in r_states:
+            region_states = RegionEstado.objects.filter(estado__pk = rs['estado']).filter(municipio = None)
+            #Significa que es un estado con todos sus municipios y se agrega por completo a la lista de excepcion de estados
+            if region_states:
+                estados_exc.append(rs['estado'])
+            else:
+                region_states = RegionEstado.objects.filter(estado__pk = rs['estado']).filter(~Q(municipio = None))
+                #Se cuentan cuantos municipios ya estan registrados dentro de la tabla RegionEstado
+                reg_mun = len(region_states)
+
+                #Se obtienen el numero total de municipios de un estado
+                mun_estate = EstadoMunicipio.objects.filter(estado__pk = rs['estado'])
+                est_mun = len(mun_estate)
+
+                #Si ambos numeros son iguales indica que ya todos los municipios de ese estado estan registrado y por lo tanto no debe aparecer en la lista
+                if reg_mun == est_mun:
+                    estados_exc.append(rs['estado'])
+
+        estados = Estado.objects.all().exclude(pk__in = estados_exc).order_by('estado_name')
+
+        template_vars = dict(
+            datacontext=get_buildings_context(request.user),
+            empresa=request.session['main_building'],
+            company=request.session['company'],
+            sidebar=request.session['sidebar'],
+            operation="add",
+            estados=estados,
+        )
+
+        post = {'region_id': 0}
+
+        if request.method == "POST":
+            template_vars["post"] = request.POST
+            region_name = request.POST.get('region_name').strip()
+            region_description = request.POST.get('region_description').strip()
+
+            continuar = True
+            if region_name == '':
+                message = "El nombre de la Región no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+            elif not variety.validate_string(region_name):
+                message = "El nombre de la Región contiene caracteres inválidos"
+                type = "n_notif"
+                region_name = ""
+                continuar = False
+
+
+            #Valida por si le da muchos clics al boton
+            regionValidate = Region.objects.filter(region_name = region_name)
+            if regionValidate:
+                message = "Ya existe una Región con ese nombre"
+                type = "n_notif"
+                continuar = False
+
+            post = {'region_name': region_name, 'region_description': region_description}
+            template_vars['post'] = post
+
+            if continuar:
+
+                newRegion = Region(
+                    region_name = region_name,
+                    region_description = region_description
+                )
+                newRegion.save()
+
+                for state_id in request.POST:
+                    if re.search('^r_state_\w+', state_id):
+                        s_id = int(state_id.replace("r_state_",""))
+                        atr_value_complete = request.POST.get(state_id)
+                        atr_value_arr = atr_value_complete.split(',')
+
+                        #Se obtiene el objeto de estado
+                        state_obj = get_object_or_404(Estado, pk = s_id)
+
+                        #Se obtienen el número de municipios que tiene el estado
+                        state_mun = EstadoMunicipio.objects.filter(estado__pk = s_id)
+
+                        if len(state_mun) != len(atr_value_arr):
+                            for id_mun in atr_value_arr:
+                                #Se obtiene el objeto de municipio
+                                mun_obj = get_object_or_404(Municipio, pk=id_mun)
+
+                                newRegionEstado = RegionEstado(
+                                    region = newRegion,
+                                    estado = state_obj,
+                                    municipio = mun_obj,
+                                )
+                                newRegionEstado.save()
+                        else:
+                            newRegionEstado = RegionEstado(
+                                region = newRegion,
+                                estado = state_obj,
+                            )
+                            newRegionEstado.save()
+
+                template_vars["message"] = "Región creada exitosamente"
+                template_vars["type"] = "n_success"
+
+                if request.user.is_superuser:
+                    return HttpResponseRedirect("/location/ver_regiones?msj=" +
+                                                template_vars["message"] +
+                                                "&ntype=n_success")
+
+
+            template_vars["message"] = message
+            template_vars["type"] = type
+        template_vars["post"] = post
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("location/add_region.html", template_vars_template)
+
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def edit_region(request, id_region):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if request.user.is_superuser:
+        regionObj = get_object_or_404(Region, pk = id_region)
+
+        #Se obtienen los estados que ya tienen todos sus municipios registrados
+        estados_exc = [regiones_estados.estado_id for regiones_estados in RegionEstado.objects.filter(municipio = None).exclude(region = regionObj)]
+
+        estados = Estado.objects.all().exclude(id__in = estados_exc).order_by('estado_name')
+
+        html_string_inputs = ''
+        html_string_tags = ''
+        string_municipios = ''
+        multiple = False
+        rs_cont = 0;
+
+        r_states = RegionEstado.objects.filter(region = regionObj).values('estado').annotate(dstates = Count('estado'))
+        for rs in r_states:
+            region_states = RegionEstado.objects.filter(region = regionObj).filter(estado__pk = rs['estado']).filter(municipio = None)
+            if region_states:
+                estados_municipios = EstadoMunicipio.objects.filter(estado__pk = rs['estado'])
+                if estados_municipios:
+                    for emun in estados_municipios:
+                        string_municipios += str(emun.municipio.pk) +","
+
+                html_string_tags += "<div class='tag'><span class='delete_icon'><a href='#eliminar' rel='"+str(estados_municipios[0].estado_id)+"' class='del del_icn' title='Eliminar Estado'></a></span><span class='tag_label'><a href='#' id='s_tag_"+str(estados_municipios[0].estado_id)+"' onclick='getMun("+ str(estados_municipios[0].estado_id) +");' class='state_tag'>"+estados_municipios[0].estado.estado_name+" ("+ str(len(estados_municipios)) +")"+"</a></span></div>"
+                html_string_inputs += "<div><input type='hidden' name='r_state_" + str(estados_municipios[0].estado_id) +"' id='r_state_" + str(estados_municipios[0].estado_id)  + "' value='" + string_municipios[:-1] + "'/></div>"
+                string_municipios = ''
+            else:
+                region_states = RegionEstado.objects.filter(region = regionObj).filter(estado__pk = rs['estado']).filter(~Q(municipio = None))
+                for rst in region_states:
+                    string_municipios += str(rst.municipio.pk)+','
+
+                html_string_tags += "<div class='tag'><span class='delete_icon'><a href='#eliminar' rel='"+str(rst.estado_id)+"' class='del del_icn' title='Eliminar Estado'></a></span><span class='tag_label'><a href='#' id='s_tag_"+str(rst.estado_id)+"' onclick='getMun("+ str(rst.estado_id) +");' class='state_tag'>"+rst.estado.estado_name+" ("+ str(len(region_states)) +")"+"</a></span></div>"
+                html_string_inputs += "<div><input type='hidden' name='r_state_" + str(rst.estado_id) +"' id='r_state_" + str(rst.estado_id)  + "' value='" + string_municipios[:-1] + "'/></div>"
+                string_municipios = ''
+
+        post = {'region_id':regionObj.pk, 'region_name': regionObj.region_name, 'region_description': regionObj.region_description, 'region_tags':html_string_tags, 'region_inputs':html_string_inputs}
+
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        message = ''
+        type = ''
+
+        if request.method == "POST":
+            region_name = request.POST.get('region_name').strip()
+            region_description = request.POST.get('region_description').strip()
+
+            continuar = True
+            if region_name == '':
+                message = "El nombre de la Región no puede quedar vacío"
+                type = "n_notif"
+                continuar = False
+            elif not variety.validate_string(region_name):
+                message = "El nombre de la Región contiene caracteres inválidos"
+                type = "n_notif"
+                region_name = ""
+                continuar = False
+
+            #Valida por si le da muchos clics al boton
+            if regionObj.region_name != region_name:
+                regionValidate = Region.objects.filter(region_name = region_name)
+                if regionValidate:
+                    message = "Ya existe una Región con ese nombre"
+                    type = "n_notif"
+                    continuar = False
+
+            if continuar:
+
+                regionObj.region_name = region_name
+                regionObj.region_description = region_description
+                regionObj.save()
+
+                #Borrar todos los estados-municipios para esta region
+                region_mun_delete = RegionEstado.objects.filter(region = regionObj)
+                region_mun_delete.delete()
+
+                for state_id in request.POST:
+                    if re.search('^r_state_\w+', state_id):
+                        s_id = int(state_id.replace("r_state_",""))
+                        atr_value_complete = request.POST.get(state_id)
+                        atr_value_arr = atr_value_complete.split(',')
+
+                        #Se obtiene el objeto de estado
+                        state_obj = get_object_or_404(Estado, pk = s_id)
+
+                        #Se obtienen el número de municipios que tiene el estado
+                        state_mun = EstadoMunicipio.objects.filter(estado__pk = s_id)
+
+                        if len(state_mun) != len(atr_value_arr):
+                            for id_mun in atr_value_arr:
+                                #Se obtiene el objeto de municipio
+                                mun_obj = get_object_or_404(Municipio, pk=id_mun)
+
+                                newRegionEstado = RegionEstado(
+                                    region = regionObj,
+                                    estado = state_obj,
+                                    municipio = mun_obj,
+                                )
+                                newRegionEstado.save()
+                        else:
+                            newRegionEstado = RegionEstado(
+                                region = regionObj,
+                                estado = state_obj,
+                            )
+                            newRegionEstado.save()
+
+                message = "Región editada exitosamente"
+                type = "n_success"
+
+                if request.user.is_superuser:
+                    return HttpResponseRedirect("/location/ver_regiones?msj=" +
+                                                message +
+                                                "&ntype=n_success")
+
+        template_vars = dict(datacontext=datacontext,
+            empresa=empresa,
+            estados=estados,
+            post=post,
+            sidebar=request.session['sidebar'],
+            operation="edit",
+            message=message,
+            type=type,
+            company=request.session['company']
+        )
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("location/add_region.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+
+def view_regions(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if request.user.is_superuser:
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
+        if "search" in request.GET:
+            search = request.GET["search"]
+        else:
+            search = ''
+
+        order_name = 'asc'
+        order_description = 'asc'
+        order = "region_name" #default order
+        if "order_name" in request.GET:
+            if request.GET["order_name"] == "desc":
+                order = "-region_name"
+                order_name = "asc"
+            else:
+                order_name = "desc"
+        else:
+            if "order_description" in request.GET:
+                if request.GET["order_description"] == "asc":
+                    order = "region_description"
+                    order_description = "desc"
+                else:
+                    order = "-region_description"
+                    order_description = "asc"
+        if search:
+            lista = Region.objects.filter(Q(region_name__icontains=request.GET['search'])|Q(
+                region_description__icontains=request.GET['search'])).order_by(order)
+
+        else:
+            lista = Region.objects.all().order_by(order)
+        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        template_vars = dict(order_name=order_name, order_description=order_description,
+            datacontext=datacontext, empresa=empresa, company=company,sidebar=request.session['sidebar'])
+        # Make sure page request is an int. If not, deliver first page.
+        try:
+            page = int(request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+
+        # If page request (9999) is out of range, deliver last page of results.
+        try:
+            pag_user = paginator.page(page)
+        except (EmptyPage, InvalidPage):
+            pag_user = paginator.page(paginator.num_pages)
+
+        template_vars['paginacion']=pag_user
+
+        if 'msj' in request.GET:
+            template_vars['message'] = request.GET['msj']
+            template_vars['msg_type'] = request.GET['ntype']
+
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("location/regions.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def see_region(request, id_region):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if request.user.is_superuser:
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+
+        region = get_object_or_404(Region, pk = id_region)
+
+        lista_estados = []
+
+        r_states = RegionEstado.objects.filter(region = region).values('estado').annotate(dstates = Count('estado'))
+        for rs in r_states:
+            region_states = RegionEstado.objects.filter(region = region).filter(estado__pk = rs['estado']).filter(municipio = None)
+            if region_states:
+                estados_municipios = EstadoMunicipio.objects.filter(estado__pk = rs['estado'])
+                if estados_municipios:
+                    lista_estados.append("<a class='fbox' data-fancybox-type='iframe'  href='/location/municipios_estado/"+str(region_states[0].region_id)+"/"+str(rs['estado'])+"/'>"+estados_municipios[0].estado.estado_name + ' ('+str(len(estados_municipios))+')'+"</a>")
+            else:
+                region_states = RegionEstado.objects.filter(region = region).filter(estado__pk = rs['estado']).filter(~Q(municipio = None))
+                if region_states:
+                    lista_estados.append("<a class='fbox' data-fancybox-type='iframe'  href='/location/municipios_estado/"+str(region_states[0].region_id)+"/"+str(rs['estado'])+"/'>"+region_states[0].estado.estado_name + ' ('+str(len(estados_municipios))+')'+"</a>")
+
+        template_vars = dict(
+            datacontext=datacontext,
+            region = region,
+            region_estados = lista_estados,
+            empresa=empresa,
+            sidebar=request.session['sidebar'],
+            company=request.session['company']
+        )
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("location/see_region.html", template_vars_template)
+    else:
+        return render_to_response("generic_error.html", RequestContext(request))
+
+def region_municipalities(request, id_region, id_state):
+
+    municipios = []
+    r_states = RegionEstado.objects.filter(region__pk = id_region).filter(estado__pk = id_state)
+
+    region_name = r_states[0].region.region_name
+    estado_name = r_states[0].estado.estado_name
+
+    for rs in r_states:
+        if not rs.municipio:
+            estados_municipios = EstadoMunicipio.objects.filter(estado__pk = id_state)
+            for mn in estados_municipios:
+                municipios.append(mn.municipio.municipio_name)
+        else:
+            municipios.append(rs.municipio.municipio_name)
+
+    template_vars = dict(
+        region_name = region_name,
+        estado_name = estado_name,
+        municipios = municipios,
+    )
+
+    template_vars_template = RequestContext(request, template_vars)
+    return render_to_response("location/region_municipalities.html", template_vars_template)
+
+def get_select_municipalities(request, id_state, id_region):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+
+    #Obtiene los municipios de ese estado que ya estan asignados a una region
+    reg_est_exc = RegionEstado.objects.filter(estado__pk = id_state).exclude(region__pk = id_region)
+    list_exception = []
+    if reg_est_exc:
+        for rg_ex in reg_est_exc:
+            list_exception.append(rg_ex.municipio.pk)
+
+    municipalities = EstadoMunicipio.objects.filter(estado__pk = id_state).exclude(municipio__pk__in = list_exception).order_by('municipio__municipio_name')
+
+    string_to_return=''
+    if municipalities:
+        for mun in municipalities:
+            string_to_return += """<option value="%s">
+                                    %s
+                                    </option>""" % (mun.municipio.pk, mun.municipio.municipio_name)
+
+    return HttpResponse(content=string_to_return, content_type="text/html")

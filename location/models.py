@@ -51,7 +51,6 @@ class Region(models.Model):
 
     region_name = models.CharField(max_length=128)
     region_description = models.TextField(blank=True, null=True)
-    date = models.DateField()
     def __unicode__(self):
         return self.region_name
     @staticmethod
@@ -103,4 +102,4 @@ class RegionEstado(models.Model):
         return self.region.region_name + " - " + self.estado.estado_name
 
     class Meta:
-        unique_together = ('region', 'estado')
+        unique_together = ('region', 'estado', 'municipio')

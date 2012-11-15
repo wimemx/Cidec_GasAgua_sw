@@ -1,0 +1,22 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <title></title>
+    <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
+    <link rel="stylesheet" href="/static/css/forms/location.css" type="text/css">
+</head>
+<body>
+<div id="reg_mun_cont">
+    <h1 id="title_lb">{{region_name}}</h1>
+    <p id="notice">
+        <span id="reg_estado">Municipios de {{estado_name}}</span>
+    </p>
+    {% if municipios %}
+        {% for mun in municipios %}
+            <div class="reg_municipio">{{mun}}</div>
+        {% endfor %}
+    {% endif %}
+</div>
+</body>
+</html>

@@ -19,6 +19,13 @@ urlpatterns = patterns('location.views',
     url(r'^busca_colonias/', 'search_neighboorhood'),
     url(r'^busca_calles/', 'search_street'),
 
+    url(r'^alta_regiones/', 'add_region'),
+    url(r'^editar_region/(?P<id_region>\d+)/', 'edit_region'),
+    url(r'^region/(?P<id_region>\d+)/', 'see_region'),
+    url(r'^ver_regiones/', 'view_regions'),
+    url(r'^municipios_estado/(?P<id_region>\d+)/(?P<id_state>\d+)','region_municipalities'),
+    url(r'^get_municipalities/(?P<id_state>\d+)/(?P<id_region>\d+)', 'get_select_municipalities'),
+
     url(r'^eliminar_estado/(?P<id_state_country>\d+)/', 'delete_state_country'),
     url(r'^eliminar_municipio/(?P<id_edo_munip>\d+)/', 'delete_municipality_state'),
     url(r'^eliminar_colonia/(?P<id_munip_col>\d+)/', 'delete_neighboorhood_municipality'),

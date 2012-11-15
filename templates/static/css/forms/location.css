@@ -272,3 +272,80 @@ label.input span.incorrect,label.input span.correct{
     right: -34px;
     top: 10px;
 }
+
+.region_mun_select{
+    background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
+    height: 260px;
+    font-size: 12px;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: normal;
+    padding: 3px;
+    color: #777;
+    border-top: solid 1px #AAA;
+    border-left: solid 1px #AAA;
+    border-bottom: solid 1px #CCC;
+    border-right: solid 1px #CCC;
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
+    outline: 0;
+}
+
+#state_tags{
+    text-align: center;
+}
+
+.tag{
+    background-color: #DEDEDE;
+    height: 19px;
+    width: 150px;
+    margin: 0 auto;
+    margin-top: 5px;
+    -webkit-border-radius: 15px;
+    -moz-border-radius: 15px;
+    padding-top: 6px;
+}
+
+.tag a, .tag a:active{
+    color: #6C6C6C;
+}
+
+.tag_label{
+    float: right;
+    margin-right: 27px;
+    width: 115px;
+    text-align: center;
+}
+
+.delete_icon{
+    float: right;
+    position: relative;
+}
+
+.del_icn{
+    position: absolute;
+    top: -3px;
+    right: 0px;
+}
+
+#reg_mun_cont{
+    font-size: 14px;
+    font-family: 'Droid Sans',Helvetica,sans-serif;
+}
+
+#reg_mun_cont h1{
+    color: #6E6E6E;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.reg_municipio{
+    margin-left: 10px;
+    margin-bottom: 5px;
+}
+
+#reg_estado{
+    color: #878787;
+    font-weight: 700;
+    font-size: 14px;
+}

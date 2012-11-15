@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block titulo %}Ver Regi&oacute;n{% endblock %}
+
+{% block externalcss %}
+<link rel="stylesheet" href="/static/css/forms/main.css" type="text/css">
+<link rel="stylesheet" href="/static/css/forms/rbac.css" type="text/css">
+<link rel="stylesheet" href="/static/css/forms/c_centers.css" type="text/css">
+
+<link rel="stylesheet" href="/static/js/external/fancybox/jquery.fancybox.css" type="text/css" />
+{% endblock %}
+
+{% block externaljs %}
+
+<script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
+
+{% endblock %}
+
+{% block document_ready %}
+
+$("a.fbox").fancybox({
+    maxWidth	: 400,
+    maxHeight	: 400,
+    fitToView	: false,
+    width		: '70%',
+    height		: '70%',
+    autoSize	: false,
+    closeClick	: false,
+    openEffect	: 'none',
+    closeEffect	: 'none'
+});
+{% endblock %}
+
+{% block contenido %}
+<div id="bread_crumbs">
+    <ul>
+        <li><a href="/main/">Inicio</a></li>
+        <li><a href="/location/ver_regiones/">Regiones</a></li>
+        <li>Ver Region</li>
+    </ul>
+
+</div>
+<div id="contenido_interno" class="cluster_content">
+    <h2 id="titulo_form" class="cluster">
+        {{region.region_name}}
+    </h2>
+
+    <div class="divider" id="divider_top">&nbsp;</div>
+    <div id="card_container">
+        <div id="cluster_data" class="fl">
+            <div>
+                <p>
+                    <span class="strong label">Nombre:</span>
+                    {{ region.region_name }}
+                </p>
+                <p>
+                    <span class="strong label">Descripción:</span>
+                    {% if region.region_description %}
+                    {{ region.region_description }}
+                    {% endif %}
+                </p>
+                <p>
+                    <span class="strong label">Estados:</span>
+                </p>
+                <div id="clusters_companies_list">
+                {% if region_estados %}
+                    {% for estado in region_estados %}
+                        <p>{{estado|safe}}</p>
+                    {% endfor %}
+                {% endif %}
+                </div>
+            </div>
+
+            <p>
+                <a href="/location/ver_regiones/" id="go_back">Volver al listado</a>
+            </p>
+        </div>
+
+    </div>
+
+
+</div>
+{% endblock %}

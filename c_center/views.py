@@ -31,7 +31,7 @@ from c_center.calculations import *
 from c_center.models import *
 from location.models import *
 from electric_rates.models import ElectricRatesDetail
-from rbac.models import Operation, DataContextPermission, UserRole, Object, PermissionAsigment
+from rbac.models import Operation, DataContextPermission, UserRole, Object, PermissionAsigment, GroupObject
 from rbac.rbac_functions import  has_permission, get_buildings_context, default_consumerUnit
 from c_center_functions import *
 
@@ -50,8 +50,16 @@ CREATE = Operation.objects.get(operation_name="Crear")
 DELETE = Operation.objects.get(operation_name="Eliminar")
 UPDATE = Operation.objects.get(operation_name="Modificar")
 
-GRAPHS =['Potencia Activa (KW)', 'Potencia Reactiva (KVar)', 'Factor de Potencia (PF)',
-         'kW Hora', 'kW Hora Consumido', 'kVAR Hora', 'kVAR Hora Consumido']
+#GRAPHS =['Potencia Activa (KW)', 'Potencia Reactiva (KVar)', 'Factor de Potencia (PF)',
+#         'kW Hora', 'kW Hora Consumido', 'kVAR Hora', 'kVAR Hora Consumido']
+#GRAPHS = ['Potencia Activa (KW)', 'Kw Fase1', 'Kw Fase2', 'Kw Fase3', 'Kw/H acumulado',
+#          'Kw/h/h', 'I1', 'I2', 'I3', 'V1', 'V2', 'V3', 'PF']
+GRAPHS_ENERGY = [ob.object for ob in GroupObject.objects.filter(group__group_name="Energía")] #['Potencia Activa (KW)', 'Kw Fase1', 'Kw Fase2', 'Kw Fase3', 'Kw/H acumulado', 'Kw/h/h']
+GRAPHS_I = [ob.object for ob in GroupObject.objects.filter(group__group_name="Corriente")] #['I1', 'I2', 'I3']
+GRAPHS_V = [ob.object for ob in GroupObject.objects.filter(group__group_name="Voltaje")] #['V1', 'V2', 'V3']
+GRAPHS_PF = [ob.object for ob in GroupObject.objects.filter(group__group_name="Factor de Potencia")] #['PF',]
+
+GRAPHS = dict(energia=GRAPHS_ENERGY, corriente=GRAPHS_I, voltaje=GRAPHS_V, factor_potencia=GRAPHS_PF)
 #def call_celery_delay():
 #    add.delay()
 #    return "Task set to execute."
@@ -460,7 +468,7 @@ def is_in_consumer_unit(cunit, cuParent):
         return False
 
 
-def graphs_permission(user, consumer_unit):
+def graphs_permission(user, consumer_unit, graphs_type):
     """ Checks what kind of graphs can a user see for a consumer_unit
     user.- django auth user object
     consumer_unit.- ConsumerUnit object
@@ -489,12 +497,12 @@ def graphs_permission(user, consumer_unit):
 
     graphs = []
     for u_role in user_role:
-        for object in GRAPHS:
-            ob = Object.objects.get(object_name=object)
-            permission = PermissionAsigment.objects.filter(object=ob, role=u_role.role,
+        for object in graphs_type:
+            #ob = Object.objects.get(object_name=object)
+            permission = PermissionAsigment.objects.filter(object=object, role=u_role.role,
                 operation=operation)
             if permission or user.is_superuser:
-                graphs.append(ob)
+                graphs.append(object)
     if graphs:
         return graphs
     else:
@@ -519,7 +527,14 @@ def main_page(request):
     set_default_session_vars(request, datacontext)
     #print request.session['consumer_unit'], request.session['main_building'], request.session['company']
     if request.session['consumer_unit'] and request.session['main_building']:# and request.session['company']:
-        graphs = graphs_permission(request.user, request.session['consumer_unit'])
+        if "g_type" not in request.GET:
+            graphs_type = GRAPHS['energia']
+        else:
+            try:
+                graphs_type = GRAPHS[request.GET['g_type']]
+            except KeyError:
+                graphs_type = GRAPHS['energia']
+        graphs = graphs_permission(request.user, request.session['consumer_unit'], graphs_type)
         if graphs:
             #valid years for reporting
             request.session['years'] = [__date.year for __date in

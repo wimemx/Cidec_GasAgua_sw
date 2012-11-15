@@ -18,13 +18,21 @@ from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from c_center.models import ProfilePowermeter, ElectricData, ElectricDataTemp
 from c_center.views import main_page
-from rbac.models import DataContextPermission, Object, PermissionAsigment, UserRole
+from rbac.models import DataContextPermission, Object, PermissionAsigment, UserRole, GroupObject
 from variety import unique_from_array
 
 from django.shortcuts import redirect, render
 
 GRAPHS =['Potencia Activa (KW)', 'Potencia Reactiva (KVar)', 'Factor de Potencia (PF)',
          'kW Hora', 'kW Hora Consumido', 'kVAR Hora', 'kVAR Hora Consumido']
+GRAPHS_ENERGY = [ob.object.object_name for ob in GroupObject.objects.filter(group__group_name="Energía")] #['Potencia Activa (KW)', 'Kw Fase1', 'Kw Fase2', 'Kw Fase3', 'Kw/H acumulado', 'Kw/h/h']
+GRAPHS_I = [ob.object.object_name for ob in GroupObject.objects.filter(group__group_name="Corriente")] #['I1', 'I2', 'I3']
+GRAPHS_V = [ob.object.object_name for ob in GroupObject.objects.filter(group__group_name="Voltaje")] #['V1', 'V2', 'V3']
+GRAPHS_PF = [ob.object.object_name for ob in GroupObject.objects.filter(group__group_name="Factor de Potencia")] #['PF',]
+GRAPHS.extend(GRAPHS_ENERGY)
+GRAPHS.extend(GRAPHS_I)
+GRAPHS.extend(GRAPHS_V)
+GRAPHS.extend(GRAPHS_PF)
 
 def set_timezone(request):
     if request.method == 'POST':
@@ -153,7 +161,9 @@ def index(request):
             sidebar_options.append(dict(uri=permission.object.object_access_point, name=permission.object.object_name))
     request.session['sidebar'] = unique_from_array(sidebar_options)
     if request.user.is_superuser:
-        request.session['sidebar'].append(dict(uri="/buildings/estructura/", name="Ver organización empresas"))
+        request.session['sidebar'].append(dict(uri="/buildings/estructura/", name="Ver Organización Empresas"))
+        request.session['sidebar'].append(dict(uri="/location/ver_regiones/", name="Ver Regiones"))
+        request.session['sidebar'].append(dict(uri="/location/alta_regiones/", name="Alta de Regiones"))
     return main_page(request)
 
 def logout_page(request):
