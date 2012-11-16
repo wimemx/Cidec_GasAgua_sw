@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block titulo %}
-{% if operation == "edit" %}Editar{% else %}Alta de{% endif %} Cluster de Empresas
+{% if operation == "edit" %}Editar{% else %}Alta de{% endif %} Grupo de Empresas
 {% endblock %}
 {% block externalcss %}
 <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
@@ -103,10 +103,10 @@
         <li><a href="/buildings/clusters/">Grupos de empresas</a></li>
         {% if operation == "edit" %}
         <li>
-            Editar cluster de empresas
+            Editar grupo de empresas
         </li>
         {% else %}
-        <li>Alta de cluster de empresas</li>
+        <li>Alta de grupo de empresas</li>
         {% endif %}
 
     </ul>
@@ -114,7 +114,7 @@
 </div>
 <div id="contenido_interno">
     <h2 id="titulo_form" class="cluster">
-        {% if operation == "edit" %}Editar{% else %}Alta de{% endif %} cluster de empresas
+        {% if operation == "edit" %}Editar{% else %}Alta de{% endif %} grupo de empresas
     </h2>
 
 
@@ -133,7 +133,7 @@
         </p>
         <form method="post" action=".">
             {% csrf_token %}
-            <h3 class="g12">Informaci&oacute;n del Cluster</h3>
+            <h3 class="g12">Informaci&oacute;n del Grupo de Empresas</h3>
             <div id="cluster_fields">
                 <div class="fields_row g9">
                     <label for="clustername" class="g2">Nombre<span class="required">*</span></label>

@@ -27,7 +27,7 @@
                     <td>{{ electric_data_percentage|floatformat:2 }}%</td>
                     <td>
                         <div class="container" width="200">
-                            <div style="width:{{ electric_data_percentage|floatformat:2 }}%;background-color:#CC0000;height:10px;"></div>
+                            <div id="bar{{ forloop.counter }}" class="bar" style="width:{{ electric_data_percentage|floatformat:2 }}%;background-color:#CC0000;height:10px;"></div>
                         </div>
                     </td>
                 </tr>
@@ -35,6 +35,4 @@
 
         {% endfor %}
     </tbody>
-
-
 </table>
