@@ -39,7 +39,8 @@ from c_center.graphics import *
 from data_warehouse.views import get_consumer_unit_electric_data_csv,\
     get_consumer_unit_electric_data_interval_csv,\
     DataWarehouseInformationRetrieveException,\
-    get_consumer_unit_by_id as get_data_warehouse_consumer_unit_by_id
+    get_consumer_unit_by_id as get_data_warehouse_consumer_unit_by_id,\
+    get_consumer_unit_electric_data_interval_tuple_list
 
 import json as simplejson
 
@@ -1217,6 +1218,98 @@ def get_weekly_summary_for_parameter(year, month, week, type, profile):
         datetime_to = datetime_from + day_delta
 
     return weekly_summary, week_measure
+
+
+def render_cumulative_comparison_in_week(request):
+    if request.GET:
+        try:
+            electric_data = request.GET['electric-data']
+
+        except KeyError:
+            return HttpResponse("")
+
+    consumer_unit_counter = 1
+    consumer_units_data_tuple_list = []
+    consumer_unit_get_key = "consumer-unit%02d" % consumer_unit_counter
+    year_get_key = "year%02d" % consumer_unit_counter
+    month_get_key = "month%02d" % consumer_unit_counter
+    week_get_key = "week%02d" % consumer_unit_counter
+    while request.GET.has_key(consumer_unit_get_key):
+        consumer_unit_id_current = request.GET[consumer_unit_get_key]
+        if request.GET.has_key(year_get_key) and request.GET.has_key(month_get_key) and\
+           request.GET.has_key(week_get_key):
+
+            year_current = int(request.GET[year_get_key])
+            month_current = int(request.GET[month_get_key])
+            week_current = int(request.GET[week_get_key])
+            start_datetime, end_datetime = variety.get_week_start_and_end_datetime(
+                                               year_current,
+                                               month_current,
+                                               week_current)
+
+            try:
+                consumer_unit_current = get_data_warehouse_consumer_unit_by_id(
+                                            consumer_unit_id_current)
+
+            except DataWarehouseInformationRetrieveException:
+                return HttpResponse("")
+
+            consumer_unit_electric_data_tuple_list_current =\
+            get_consumer_unit_electric_data_interval_tuple_list(electric_data,
+                                                                "day",
+                                                                consumer_unit_current,
+                                                                start_datetime,
+                                                                end_datetime)
+
+            if len(consumer_unit_electric_data_tuple_list_current) == 7:
+                consumer_units_data_tuple_list.append(
+                    (consumer_unit_current,
+                     consumer_unit_electric_data_tuple_list_current))
+
+            consumer_unit_counter += 1
+            consumer_unit_get_key = "consumer-unit%02d" % consumer_unit_counter
+            year_get_key = "year%02d" % consumer_unit_counter
+            month_get_key = "month%02d" % consumer_unit_counter
+            week_get_key = "week%02d" % consumer_unit_counter
+
+    week_days_data_tuple_list = [("Lunes", []),
+                                ("Martes", []),
+                                ("Miercoles", []),
+                                ("Jueves", []),
+                                ("Viernes", []),
+                                ("Sabado", []),
+                                ("Domingo", [])]
+
+    consumer_unit_electric_data_total_tuple_list = []
+    for consumer_unit, electric_data_tuple_list in consumer_units_data_tuple_list:
+        consumer_unit_total =\
+        reduce(lambda x, y: x + y,
+            [electric_data for time_interval, electric_data in electric_data_tuple_list])
+
+        consumer_unit_electric_data_total_tuple_list.append((consumer_unit,
+                                                             consumer_unit_total))
+
+        week_day_index = 0
+        for time_interval, electric_data in electric_data_tuple_list:
+            electric_data_percentage =\
+            0 if consumer_unit_total == 0 else electric_data / consumer_unit_total * Decimal(100.0)
+
+            week_days_data_tuple_list[week_day_index][1].append((consumer_unit,
+                                                                 time_interval,
+                                                                 electric_data,
+                                                                 electric_data_percentage))
+
+            week_day_index += 1
+
+    template_variables = dict()
+    template_variables["week_days_data_tuple_list"] = week_days_data_tuple_list
+    template_variables["consumer_unit_electric_data_total_tuple_list"] =\
+    consumer_unit_electric_data_total_tuple_list
+
+    template_context = RequestContext(request, template_variables)
+    return render_to_response('consumption_centers/graphs/week_comparison.html',
+                              template_context)
+
 
 def get_weekly_summary_comparison_kwh(request):
     template_variables = {}

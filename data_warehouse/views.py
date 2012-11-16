@@ -1101,3 +1101,32 @@ def get_consumer_unit_electric_data_interval_csv(
             electric_data_rows.append(electric_data_row)
 
     return electric_data_rows
+
+
+def get_consumer_unit_electric_data_interval_tuple_list(
+        electric_data,
+        granularity,
+        consumer_unit,
+        from_datetime,
+        to_datetime
+):
+    electric_data_list = []
+    electric_data_class = FACTS_INTERVAL_CLASSES[granularity]
+    time_instant_class = TIME_INTERVALS_CLASSES[granularity]
+    time_intervals = time_instant_class.objects.filter(
+        start_datetime__gte=from_datetime,
+        start_datetime__lt=to_datetime)
+
+    for time_interval in time_intervals:
+        electric_data_values_dictionary = electric_data_class.objects.filter(
+            consumer_unit=consumer_unit,
+            interval=time_interval
+        ).values(electric_data)
+
+        if len(electric_data_values_dictionary) == 1 and\
+           electric_data_values_dictionary[0][electric_data] is not None:
+
+            electric_data_value = electric_data_values_dictionary[0][electric_data]
+            electric_data_list.append((time_interval, electric_data_value))
+
+    return electric_data_list

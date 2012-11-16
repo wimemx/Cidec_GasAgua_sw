@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from decimal import Decimal
 import decimal
 from decimal import InvalidOperation
@@ -6,12 +7,38 @@ import string
 import re
 from urlparse import urlparse
 from django.core.validators import email_re
+from django.utils import timezone
 
 #-----libs for write_pdf
 #import cgi
 #import StringIO
 #from django.template.loader import get_template
 #from xhtml2pdf import pisa
+
+def get_week_start_and_end_datetime(
+        year,
+        month,
+        week
+):
+    first_day_of_month = datetime(year=year, month=month, day=1)
+    first_day_of_first_week = first_day_of_month - timedelta(days=first_day_of_month.weekday())
+    week_delta = timedelta(weeks=1)
+    week_number = 1
+    first_day_of_week = first_day_of_first_week
+    while (first_day_of_week + week_delta).year <= year and\
+          (first_day_of_week + week_delta).month <= month and\
+          week_number < week:
+
+        week_number += 1
+        first_day_of_week += week_delta
+
+    week_start = first_day_of_week.replace(hour=0,
+                                           minute=0,
+                                           second=0,
+                                           tzinfo=timezone.get_current_timezone())
+
+    week_end = week_start + week_delta
+    return week_start, week_end
 
 def random_string_generator(size=6, chars=string.ascii_uppercase + string.digits):
     """Random String Generator

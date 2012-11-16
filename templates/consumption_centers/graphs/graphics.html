@@ -22,11 +22,14 @@
                 $("#weekly_summary h1").text(text);
                 $('#weekly_report').click(function(e){
                     e.preventDefault();
-                    var load_url = "/reportes/weekly_summary_kwh/?type={{ tipo }}";
+                    var load_url = "/reportes/week_comparison/?electric-data={{ electric_data }}";
+                    var consumer_unit_id = {{ consumer_unit_id }};
+                    load_url += "&consumer-unit01="+consumer_unit_id;
                     load_url += "&year01="+$('#year_01').val();
                     load_url += "&month01="+$('#month_01').val();
                     load_url += "&week01="+$('#week_01').val();
                     if ($('#compare_week_report').is(':checked')){
+                        load_url += "&consumer-unit02="+consumer_unit_id;
                         load_url += "&year02="+$('#year_02').val();
                         load_url += "&month02="+$('#month_02').val();
                         load_url += "&week02="+$('#week_02').val();
@@ -36,11 +39,14 @@
                     $('#report_div').load(load_url, function(){$("#spinner2").remove();});
 
                 });
-                {% if tipo == "kwh" or tipo == "kvarh" or tipo == "kwh_consumido" or tipo == "kvarh_consumido" %}
-                    var load_url = "/reportes/weekly_summary_kwh/?type={{ tipo }}";
-                    load_url += "&year01={{ year }}";
-                    load_url += "&month01={{ month }}";
-                    load_url += "&week01={{ week }}";
+                {% if is_cumulative_electric_data %}
+                    var load_url = "/reportes/week_comparison/?electric-data={{ electric_data }}";
+                    var consumer_unit_id = {{ consumer_unit_id }};
+                    load_url += "&consumer-unit01="+consumer_unit_id;
+                    load_url += "&year01="+$('#year_01').val();
+                    load_url += "&month01="+$('#month_01').val();
+                    load_url += "&week01="+$('#week_01').val();
+                    alert(load_url);
                     $('#report_div').load(load_url);
                 {% endif %}
 
@@ -163,7 +169,7 @@
             <div id="slider-range" class="slider"></div>
         </div>
 
-        {% if tipo == "kwh" or tipo == "kvarh" or tipo == "kwh_consumido" or tipo == "kvarh_consumido" %}
+        {% if is_cumulative_electric_data %}
 
             <div id="weekly_summary">
                 <h1>Resumen Semanal - {{ tipo }}</h1>

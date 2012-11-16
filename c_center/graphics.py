@@ -290,6 +290,7 @@ def render_graphics(request):
             return django.http.HttpResponse("")
 
         template_variables = dict()
+        cumulative_electric_data = ("TotalkWhIMPORT", "TotalkvarhIMPORT", "kWh", "kvarh")
         suffix_consumed = "_consumido"
         interval_graphic = False
         suffix_index = string.find(electric_data, suffix_consumed)
@@ -297,11 +298,10 @@ def render_graphics(request):
             electric_data = electric_data[:suffix_index]
             interval_graphic = True
 
-        print "electric_data"
-        print electric_data
+        template_variables["is_cumulative_electric_data"] =\
+            electric_data in cumulative_electric_data
 
-#        if electric_data == "kwh_consumido" or electric_data == "kvarh_consumido" :
-#            return consumed_graph(request)
+        template_variables['electric_data'] = electric_data
 
         data = []
         consumer_unit_counter = 1
@@ -310,6 +310,7 @@ def render_graphics(request):
         date_end_get_key = "date-end%02d" % consumer_unit_counter
         while request.GET.has_key(consumer_unit_get_key):
             consumer_unit_id = request.GET[consumer_unit_get_key]
+            template_variables['consumer_unit_id'] = consumer_unit_id
             if request.GET.has_key(date_start_get_key) and\
                request.GET.has_key(date_end_get_key):
 
@@ -377,6 +378,7 @@ def render_graphics(request):
         template_variables['columns'] = consumer_unit_and_time_interval_information_list
         template_variables['limits'] = limits
         template_variables['granularity'] = granularity
+        template_variables['years'] = request.session['years']
 
         template_context = django.template.context.RequestContext(request,
                                                                   template_variables)
