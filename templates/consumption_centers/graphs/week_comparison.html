@@ -1,0 +1,40 @@
+<table>
+    <thead>
+        <tr>
+            <th width="15%">Unidad de Consumo</th>
+            <th width="15%">Día</th>
+            <th width="5%">Total de {{ type }}</th>
+            <th width="5%">Porcentaje</th>
+            <th width="60%"></th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for week_day, week_day_data_tuple_list in week_days_data_tuple_list %}
+            <tr class="bg_gray">
+                <td>{{ week_day }}</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td  width="200"></td>
+            </tr>
+
+            {% for consumer_unit, time_interval, electric_data, electric_data_percentage in week_day_data_tuple_list %}
+                <tr>
+                    <td>{{ consumer_unit.building_name }}</td>
+                    <td>{{ time_interval.start_datetime }}</td>
+                    <td>{{ electric_data|floatformat:2 }}</td>
+                    <td>{{ electric_data_percentage|floatformat:2 }}%</td>
+                    <td>
+                        <div class="container" width="200">
+                            <div style="width:{{ electric_data_percentage|floatformat:2 }}%;background-color:#d41314;height:10px;"></div>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+
+        {% endfor %}
+    </tbody>
+
+
+</table>
