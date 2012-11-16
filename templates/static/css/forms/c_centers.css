@@ -278,4 +278,10 @@
     outline: 0;
 }
 
-
+.hz_divider {
+    float: left;
+    display: inline-block;
+    height: 27px;
+    margin: 4px 1.3em 0 1.3em;
+    border-right: solid 1px #9EBFC7;
+}

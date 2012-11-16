@@ -169,24 +169,22 @@ def set_default_session_vars(request, datacontext):
         except IndexError:
             request.session['main_building'] = None
     if "company" not in request.session and request.session['main_building']:
-        print "154"
         c_b = CompanyBuilding.objects.get(building=request.session['main_building'])
         request.session['company'] = c_b.company
     elif request.session['company'] and request.session['main_building']:
-        print "158"
         c_b = CompanyBuilding.objects.get(building=request.session['main_building'])
         request.session['company'] = c_b.company
     else:
-        print "162"
+        print "177"
         request.session['company']= None
     if ('consumer_unit' not in request.session and request.session['main_building']) or \
        (not request.session['consumer_unit'] and request.session['main_building']):
-        print "166"
+        print "181"
         #sets the default ConsumerUnit (the first in ConsumerUnit for the main building)
         request.session['consumer_unit'] = default_consumerUnit(request.user, request.session['main_building'])
     else:
         if not request.session['consumer_unit'] or 'consumer_unit' not in request.session:
-            print "171"
+            print "186"
             request.session['consumer_unit'] = None
         #try:
         #    c_unit = ConsumerUnit.objects.filter(building=request.session['main_building'])
@@ -499,6 +497,7 @@ def graphs_permission(user, consumer_unit, graphs_type):
     graphs = []
     for u_role in user_role:
         for object in graphs_type:
+
             #ob = Object.objects.get(object_name=object)
             permission = PermissionAsigment.objects.filter(object=object, role=u_role.role,
                 operation=operation)
@@ -1688,7 +1687,7 @@ def add_cluster(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
     datacontext = get_buildings_context(request.user)
-    if has_permission(request.user, CREATE, "Alta de clusters") or request.user.is_superuser:
+    if has_permission(request.user, CREATE, "Alta de grupos de empresas") or request.user.is_superuser:
         empresa = request.session['main_building']
         post = ''
         #Se obtienen los sectores
@@ -1769,7 +1768,7 @@ def view_cluster(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
     datacontext = get_buildings_context(request.user)
-    if has_permission(request.user, VIEW, "Ver cluster de empresas") or request.user.is_superuser:
+    if has_permission(request.user, VIEW, "Ver grupos de empresas") or request.user.is_superuser:
         empresa = request.session['main_building']
         if "search" in request.GET:
             search = request.GET["search"]
@@ -1961,7 +1960,7 @@ def edit_cluster(request, id_cluster):
 
                 message = "Cluster editado exitosamente"
                 type = "n_success"
-                if has_permission(request.user, VIEW, "Ver cluster de empresas") or request.user.is_superuser:
+                if has_permission(request.user, VIEW, "Ver grupos de empresas") or request.user.is_superuser:
                     return HttpResponseRedirect("/buildings/clusters?msj=" +
                                                 message +
                                                 "&ntype=n_success")
@@ -1990,7 +1989,7 @@ def see_cluster(request, id_cluster):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
     datacontext = get_buildings_context(request.user)
-    if has_permission(request.user, VIEW, "Ver cluster de empresas") or request.user.is_superuser:
+    if has_permission(request.user, VIEW, "Ver grupos de empresas") or request.user.is_superuser:
         empresa = request.session['main_building']
 
         cluster = Cluster.objects.get(pk = id_cluster)
@@ -3003,7 +3002,7 @@ Companies
 def add_company(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    if has_permission(request.user, CREATE, "Alta compañía") or request.user.is_superuser:
+    if has_permission(request.user, CREATE, "Alta de empresas") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         post = ''
@@ -3011,7 +3010,7 @@ def add_company(request):
         type = ''
 
         #Get Clusters
-        clusters = get_clusters_for_operation("Alta compañía", CREATE, request.user)
+        clusters = get_clusters_for_operation("Alta de empresas", CREATE, request.user)
         #clusters = Cluster.objects.all().exclude(cluster_status = 2)
 
         #Get Sectors
@@ -3120,10 +3119,10 @@ def edit_company(request, id_cpy):
         post = {'cmp_id': company_clusters[0].company.id,'cmp_name': company_clusters[0].company.company_name, 'cmp_description': company_clusters[0].company.company_description, 'cmp_cluster': company_clusters[0].cluster.pk, 'cmp_sector': company_clusters[0].company.sectoral_type.pk, 'cmp_logo': company_clusters[0].company.company_logo}
 
         #Get Clusters
-        clusters = Cluster.objects.all().exclude(cluster_status = 2)
-
+        #clusters = Cluster.objects.all().exclude(cluster_status = 2)
+        clusters = get_clusters_for_operation("Modificar empresas", UPDATE, request.user)
         #Get Sectors
-        sectors = SectoralType.objects.all().exclude(sectoral_type_status = 2)
+        sectors = SectoralType.objects.filter(sectoral_type_status = 1)
 
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
@@ -5038,7 +5037,7 @@ def status_batch_partofbuilding(request):
 
                     building_part.save()
 
-            mensaje = "Las Partes de Edificios han cambiado su estatus correctamente"
+            mensaje = "Las partes de edificios han cambiado su estatus correctamente"
             return HttpResponseRedirect("/buildings/partes_edificio/?msj=" + mensaje +
                                         "&ntype=n_success")
         else:
@@ -5057,14 +5056,14 @@ def status_partofbuilding(request, id_bpart):
 
         if building_part.part_of_building_status == 0:
             building_part.part_of_building_status = 1
-            str_status = "Activo"
+            str_status = "activo"
         elif building_part.part_of_building_status == 1:
             building_part.part_of_building_status = 0
-            str_status = "Inactivo"
+            str_status = "inactivo"
 
         building_part.save()
 
-        mensaje = "El estatus de la Parte de Edificio " + building_part.part_of_building_name +" ha cambiado a "+str_status
+        mensaje = "El estatus de la parte de edificio " + building_part.part_of_building_name +" ha cambiado a "+str_status
         type="n_success"
 
         return HttpResponseRedirect("/buildings/partes_edificio/?msj=" + mensaje +
@@ -5222,13 +5221,13 @@ def add_building(request):
         tarifas = ElectricRates.objects.all()
 
         #Se obtienen los tipos de edificios
-        tipos_edificio_lst = BuildingType.objects.all().exclude(building_type_status = 0).order_by('building_type_name')
+        tipos_edificio_lst = BuildingType.objects.filter(building_type_status = 1).order_by('building_type_name')
 
         #Se obtienen las regiones
         regiones_lst = Region.objects.all()
 
         #Se obtienen los tipos de atributos de edificios
-        tipos_atributos = BuildingAttributesType.objects.all().exclude(building_attributes_type_status = 0).order_by('building_attributes_type_name')
+        tipos_atributos = BuildingAttributesType.objects.filter(building_attributes_type_status = 1).order_by('building_attributes_type_name')
 
 
         template_vars = dict(datacontext=datacontext,
@@ -5468,19 +5467,20 @@ def edit_building(request, id_bld):
         type = ''
 
         #Se obtienen las empresas
-        empresas_lst = Company.objects.all().exclude(company_status=0).order_by('company_name')
+        #empresas_lst = Company.objects.all().exclude(company_status=0).order_by('company_name')
+        empresas_lst = get_all_companies_for_operation("Modificar edificios", UPDATE, request.user)
 
         #Se obtienen las tarifas
         tarifas = ElectricRates.objects.all()
 
         #Se obtienen los tipos de edificios
-        tipos_edificio_lst = BuildingType.objects.all().exclude(building_type_status = 0).order_by('building_type_name')
+        tipos_edificio_lst = BuildingType.objects.filter(building_type_status = 1).order_by('building_type_name')
 
         #Se obtienen las regiones
         regiones_lst = Region.objects.all()
 
         #Se obtienen los tipos de atributos de edificios
-        tipos_atributos = BuildingAttributesType.objects.all().exclude(building_attributes_type_status = 0).order_by('building_attributes_type_name')
+        tipos_atributos = BuildingAttributesType.objects.filter(building_attributes_type_status = 1).order_by('building_attributes_type_name')
 
         #Se obtiene la información del edificio
         buildingObj = get_object_or_404(Building, pk=id_bld)

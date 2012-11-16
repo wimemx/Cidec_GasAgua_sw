@@ -27,7 +27,7 @@
                     <td>{{ electric_data_percentage|floatformat:2 }}%</td>
                     <td>
                         <div class="container" width="200">
-                            <div style="width:{{ electric_data_percentage|floatformat:2 }}%;background-color:#d41314;height:10px;"></div>
+                            <div style="width:{{ electric_data_percentage|floatformat:2 }}%;background-color:{% cycle '#9ebfc6' '#d41314' %};height:10px;"></div>
                         </div>
                     </td>
                 </tr>
