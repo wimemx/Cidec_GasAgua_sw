@@ -36,7 +36,9 @@
 
                     }
                     $('#report_div').html('<img src="/static/css/images/spinner.gif" id="spinner2" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">');
-                    $('#report_div').load(load_url, function(){$("#spinner2").remove();});
+                    $('#report_div').load(load_url, function(){$("#spinner2").remove();
+                        update_bars_color();
+                    });
 
                 });
                 {% if is_cumulative_electric_data %}
@@ -46,8 +48,8 @@
                     load_url += "&year01="+$('#year_01').val();
                     load_url += "&month01="+$('#month_01').val();
                     load_url += "&week01="+$('#week_01').val();
-
                     $('#report_div').load(load_url);
+                    update_bars_color();
                 {% endif %}
 
                 $('#compare_week_report').click(function(){
@@ -60,10 +62,21 @@
                     base_url=append_parameters(base_url);
                     window.location = base_url;
                 });
+
             });
         </script>
 
         <script type="text/javascript">
+            function update_bars_color(){
+                var colors_css = ["#7d979e", "a10f0f", "#5aa550", "#b38619"];
+                $('.bar').each(function(){
+                    var bar_class = $(this).attr("id").split()[0].replace("bar", "");
+                    var bar_class_number = parseInt(bar_class);
+                    var color_css = colors_css[(bar_class_number-1) % colors_css.length];
+                    $(this).css("background-color", color_css);
+                });
+            }
+
             function append_parameters(base_url){
                 var get = getUrlVars();
                 if(get.length>0){

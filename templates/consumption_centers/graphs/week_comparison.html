@@ -19,7 +19,7 @@
                 <td  width="200"></td>
             </tr>
 
-            {% for consumer_unit, time_interval, electric_data, electric_data_percentage in week_day_data_tuple_list %}
+            {% for consumer_unit, time_interval, electric_data, electric_data_percentage, color_css in week_day_data_tuple_list %}
                 <tr>
                     <td>{{ consumer_unit.building_name }}</td>
                     <td>{{ time_interval.start_datetime }}</td>
@@ -27,7 +27,7 @@
                     <td>{{ electric_data_percentage|floatformat:2 }}%</td>
                     <td>
                         <div class="container" width="200">
-                            <div style="width:{{ electric_data_percentage|floatformat:2 }}%;background-color:{% cycle '#9ebfc6' '#d41314' %};height:10px;"></div>
+                            <div id="bar{{ forloop.counter }}" class="bar" style="width:{{ electric_data_percentage|floatformat:2 }}%;background-color:#CC0000;height:10px;"></div>
                         </div>
                     </td>
                 </tr>
@@ -35,6 +35,4 @@
 
         {% endfor %}
     </tbody>
-
-
 </table>

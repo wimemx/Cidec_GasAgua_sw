@@ -299,13 +299,13 @@ def update_consumer_units():
             continue
 
         consumer_unit_data_warehouse.building_name =\
-        get_consumer_unit_building_name(consumer_unit)
+            get_consumer_unit_building_name(consumer_unit)
 
         consumer_unit_data_warehouse.part_of_building_name =\
-        get_consumer_unit_part_of_building_name(consumer_unit)
+            get_consumer_unit_part_of_building_name(consumer_unit)
 
         consumer_unit_data_warehouse.electric_device_type_name =\
-        get_consumer_unit_electric_device_type_name(consumer_unit)
+            get_consumer_unit_electric_device_type_name(consumer_unit)
 
         try:
             consumer_unit_data_warehouse.full_clean()
@@ -536,6 +536,7 @@ def save_electric_data(
         granularity
 ):
 
+    fields_percentage = ["PFL1", "PFL2", "PFL3", "PF"]
     interpolation_values = {}
     for key in independent_data.keys():
         if interpolation_functions.has_key(key):
@@ -572,6 +573,13 @@ def save_electric_data(
 
     for electric_data_name, interpolation_value  in interpolation_values.iteritems():
         if hasattr(electric_data_new, electric_data_name):
+            #
+            # When a value should be in the interval [-1, 1]
+            #
+            if electric_data_name in fields_percentage:
+                if interpolation_value is not None and abs(interpolation_value) > 1.0:
+                    interpolation_value /= interpolation_value
+
             setattr(electric_data_new, electric_data_name, interpolation_value)
 
         else:
@@ -591,6 +599,13 @@ def save_electric_data(
 
         for electric_data_name, interpolation_value  in interpolation_values.iteritems():
             if hasattr(electric_data_update, electric_data_name):
+                #
+                # When a value should be in the interval [-1, 1]
+                #
+                if electric_data_name in fields_percentage:
+                    if interpolation_value is not None and abs(interpolation_value) > 1.0:
+                        interpolation_value /= interpolation_value
+
                 setattr(electric_data_update, electric_data_name, interpolation_value)
 
             else:
@@ -886,14 +901,14 @@ def populate_consumer_unit_electric_data_interval(
 
 def interpolate_electric_data():
 
-    consumer_unit = ConsumerUnitTransactional.objects.get(pk=31)
-    from_datetime = datetime(year=2012, month=9, day=1, hour=0, tzinfo=utc)
-    to_datetime = datetime(year=2012, month=10, day=25, hour=0, tzinfo=utc)
+    consumer_unit = ConsumerUnitTransactional.objects.get(pk=7)
+    from_datetime = datetime(year=2012, month=10, day=22, hour=0, tzinfo=utc)
+    to_datetime = datetime(year=2012, month=10, day=26, hour=0, tzinfo=utc)
     granularity="day"
     populate_consumer_unit_electric_data(consumer_unit,
-        from_datetime,
-        to_datetime,
-        granularity)
+                                         from_datetime,
+                                         to_datetime,
+                                         granularity)
 
 
 def interpolate_electric_data_interval():
