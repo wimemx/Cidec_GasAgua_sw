@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block titulo %}
-{% if operation == "edit" %}Editar{% else %}Alta de{% endif %} Tipo de Equipo Eléctrico
+{% if operation == "edit" %}Editar{% else %}Alta de{% endif %} Dispositivos y Sistemas El&eacute;ctricos
 {% endblock %}
 {% block externalcss %}
 <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
@@ -80,15 +80,15 @@
     <ul>
         <li><a href="/main/">Inicio</a></li>
         <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
-        <li><a href="/buildings/tipos_equipo_electrico/">Tipos Equipo Eléctrico</a></li>
+        <li><a href="/buildings/tipos_equipo_electrico/">Dispositivos y Sistemas El&eacute;ctricos</a></li>
         {% if operation == "edit" %}
         <li>
 
-            Edici&oacute;n de tipo de equipo eléctrico
+            Edici&oacute;n de dispositivos y sistemas el&eacute;ctricos
 
         </li>
         {% else %}
-        <li>Alta de tipo de equipo eléctrico</li>
+        <li>Alta de dispositivos y sistemas el&eacute;ctricos</li>
         {% endif %}
 
     </ul>
@@ -96,7 +96,7 @@
 </div>
 <div id="contenido_interno">
     <h2 id="titulo_form" class="building_attr">
-        {% if operation == "edit" %}Edici&oacute;n de{% else %}Alta de{% endif %} tipo de equipo eléctrico
+        {% if operation == "edit" %}Edici&oacute;n de{% else %}Alta de{% endif %} Dispositivos y Sistemas El&eacute;ctricos
     </h2>
 
 
