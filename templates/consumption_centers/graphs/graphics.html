@@ -124,7 +124,11 @@
             });
 
             var chart = new google.visualization.ChartWrapper({
+                {% if electric_data == "kWh" %}
+                    'chartType': 'ColumnChart',
+                {% else %}
                 'chartType': 'LineChart',
+                {% endif %}
                 'containerId': 'chart',
                 'options': {
                     // Use the same chart area width as the control for axis alignment.

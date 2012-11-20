@@ -457,6 +457,7 @@ def delete_batch(request):
         if request.method == "GET":
             raise Http404
         if request.POST['actions'] == 'deactivate':
+            mensaje = ""
             for key in request.POST:
                 if re.search('^rol_\w+', key):
                     r_id = int(key.replace("rol_",""))
