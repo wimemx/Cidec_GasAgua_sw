@@ -1291,7 +1291,7 @@ def render_cumulative_comparison_in_week(request):
         week_day_index = 0
         for time_interval, electric_data in electric_data_tuple_list:
             electric_data_percentage =\
-            0 if consumer_unit_total == 0 else electric_data / consumer_unit_total * Decimal(100.0)
+            0 if consumer_unit_total == 0 else electric_data / consumer_unit_total * Decimal(100)
 
             week_days_data_tuple_list[week_day_index][1].append((consumer_unit,
                                                                  time_interval,

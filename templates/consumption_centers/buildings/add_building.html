@@ -25,10 +25,10 @@
 
     var link_state = '';
     $(document).ready(function(){
-        $("#b_mt2").mask("9999");
-        $('#b_mt2').autoNumeric({asep:','});
-        $("#attr_value").mask("99");
-        $('#attr_value').autoNumeric({asep:','});
+
+        $('#b_mt2').autoNumeric({asep:',', vMin: "0.00", vMax: "999.99"});
+
+        $('#attr_value').autoNumeric({asep:',', vMin: "0.00", vMax: "999.99"});
         $("#b_zip").mask("99999");
 
 
@@ -651,7 +651,7 @@ $("a.back").click(function(e){e.preventDefault(); History.back();});
                     </div>
                     <div class="fields_row g12">
                         <label for="b_mt2" class="g3">Mt2 Construidos</label>
-                        <input type="text" name="b_mt2" id="b_mt2" class="g8"
+                        <input type="text" name="b_mt2" id="b_mt2" class="g8" maxlength="3"
                                value="{{ post.b_mt2 }}"
                                 />
                         <span></span>
@@ -795,7 +795,7 @@ $("a.back").click(function(e){e.preventDefault(); History.back();});
                     </div>
 
                     <div class="fields_row attribute_value_text_row g4">
-                        <input type="text" name="attr_value" id="attr_value" class="attribute_value_text g10"  placeholder="Valor"/>
+                        <input type="text" name="attr_value" id="attr_value" class="attribute_value_text g10"  placeholder="Valor" maxlength="3"/>
                     </div>
 
                     <p class="buttons" id="">
