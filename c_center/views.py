@@ -456,10 +456,11 @@ def graphs_permission(user, consumer_unit, graphs_type):
     returns an array of objects of permission, False if user is not allowed to see graphs
 
     """
-    operation = Operation.objects.get(operation_name="Ver")
-
+    operation = VIEW
+    company = CompanyBuilding.objects.get(building=consumer_unit.building)
+    cluster = ClusterCompany.objects.get(company=company.company)
     context = DataContextPermission.objects.filter(user_role__user=user,
-        building=consumer_unit.building)
+        cluster=cluster.cluster)
     contextos = []
     for cntx in context:
         if cntx.part_of_building:
@@ -469,7 +470,7 @@ def graphs_permission(user, consumer_unit, graphs_type):
                 contextos.append(cntx)
             elif is_in_part_of_building(consumer_unit, cntx.part_of_building):
                 contextos.append(cntx)
-        elif cntx.building == consumer_unit.building:
+        else: #if cntx.building == consumer_unit.building:
             contextos.append(cntx)
     user_roles = [cntx.user_role.pk for cntx in contextos]
 
