@@ -4150,29 +4150,29 @@ def add_partbuilding(request):
             type = ""
 
             continuar = True
-            if b_part_name == '':
+            if not b_part_name:
                 message = "El nombre de la Parte de Edificio no puede quedar vacío"
                 type = "n_notif"
                 continuar = False
 
-            if b_part_type_id == '':
+            if not b_part_type_id:
                 message = "Se debe seleccionar un tipo de parte de edificio"
                 type = "n_notif"
                 continuar = False
 
-            if b_part_building_id == '':
+            if not b_part_building_id:
                 message = "Se debe seleccionar un edificio ya registrado"
                 type = "n_notif"
                 continuar = False
+            if continuar:
+                #Valida por si le da muchos clics al boton
+                partValidate = PartOfBuilding.objects.filter(part_of_building_name = b_part_name).filter(part_of_building_type__pk = b_part_type_id).filter(building__pk = b_part_building_id)
+                if partValidate:
+                    message = "Ya existe una Parte de Edificio con ese nombre, ese tipo de parte y en ese edificio"
+                    type = "n_notif"
+                    continuar = False
 
-            #Valida por si le da muchos clics al boton
-            partValidate = PartOfBuilding.objects.filter(part_of_building_name = b_part_name).filter(part_of_building_type__pk = b_part_type_id).filter(building__pk = b_part_building_id)
-            if partValidate:
-                message = "Ya existe una Parte de Edificio con ese nombre, ese tipo de parte y en ese edificio"
-                type = "n_notif"
-                continuar = False
-
-            post = {'b_part_name': b_part_name, 'b_part_description':b_part_description, 'b_part_building_name': b_part_building_name, 'b_part_building_id': b_part_building_id, 'b_part_type':int(b_part_type_id) ,'b_part_mt2':b_part_mt2}
+                post = {'b_part_name': b_part_name, 'b_part_description':b_part_description, 'b_part_building_name': b_part_building_name, 'b_part_building_id': b_part_building_id, 'b_part_type':int(b_part_type_id) ,'b_part_mt2':b_part_mt2}
 
             if continuar:
 
@@ -4719,8 +4719,11 @@ def add_building(request):
 
             if not bool(b_int):
                 b_int='0'
+
             if not bool(b_mt2):
-                b_mt2='0'
+                b_mt2 = '0'
+            else:
+                b_mt2 = b_mt2.replace(",","")
 
 
             continuar = True

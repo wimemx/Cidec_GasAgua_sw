@@ -26,7 +26,7 @@
     var link_state = '';
     $(document).ready(function(){
 
-        $('#b_mt2').autoNumeric({asep:',', vMin: "0.00", vMax: "999.99"});
+        $('#b_mt2').autoNumeric({asep:',', vMin: "0.00", vMax: "9999.99"});
 
         $('#attr_value').autoNumeric({asep:',', vMin: "0.00", vMax: "999.99"});
         $("#b_zip").mask("99999");
@@ -41,7 +41,7 @@
                         _span = "incorrect";
                         form_valid = false;
                     }else{
-                        if(e.delegateTarget.id == "b_country" || e.delegateTarget.id == "b_state" || e.delegateTarget.id == "b_municipality" || e.delegateTarget.id == "b_neighborhood" || e.delegateTarget.id == "b_street"){
+                        if(e.delegateTarget.id == "b_country" || e.delegateTarget.id == "b_state" || e.delegateTarget.id == "b_municipality"){
                             if(/^[A-Za-zÁÉÍÓÚáéíóuñÑ ]+$/.test(e.delegateTarget.value)){
                                 _span = "correct";
                                 form_valid = true;
