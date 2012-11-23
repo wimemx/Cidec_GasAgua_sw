@@ -2,6 +2,7 @@ from celery import task
 from celery.task.schedules import crontab
 from celery.decorators import periodic_task
 from c_center.models import ElectricData
+from tareas.models import test_tasks
 
 @task()
 def add():
@@ -11,6 +12,12 @@ def add():
         if dat.kWhIMPORT > max:
             max = dat.kWhIMPORT
     return max
+
+@task(name="tasks.add2")
+def add2(x,y):
+    test = test_tasks(task="add2", value=str(x+y))
+    test.save()
+    return x + y
 
 # this will run every minute, see http://celeryproject.org/docs/reference/celery.task.schedules.html#celery.task.schedules.crontab
 @periodic_task(run_every=crontab(hour="*", minute="*", day_of_week="*"))

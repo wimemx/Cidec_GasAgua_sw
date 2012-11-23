@@ -44,7 +44,7 @@ from data_warehouse.views import get_consumer_unit_electric_data_csv,\
 
 import json as simplejson
 
-#from tareas.tasks import add
+from tareas.tasks import add2
 
 VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
@@ -61,9 +61,10 @@ GRAPHS_V = [ob.object for ob in GroupObject.objects.filter(group__group_name="Vo
 GRAPHS_PF = [ob.object for ob in GroupObject.objects.filter(group__group_name="Factor de Potencia")] #['PF',]
 
 GRAPHS = dict(energia=GRAPHS_ENERGY, corriente=GRAPHS_I, voltaje=GRAPHS_V, factor_potencia=GRAPHS_PF)
-#def call_celery_delay():
-#    add.delay()
-#    return "Task set to execute."
+def call_celery_delay(request):
+
+    add2.delay(int(request.GET['uno']), int(request.GET['dos']))
+    return HttpResponse(content="celery task set",content_type="text/html")
 
 def get_all_profiles_for_user(user):
     """ returns an array of consumer_units in wich the user has access
@@ -140,7 +141,7 @@ def set_default_session_vars(request, datacontext):
         request.session['consumer_unit'] = None
 
     if 'main_building' not in request.session:
-        print "144"
+        #print "144"
         #sets the default building (the first in DataContextPermission)
         try:
             building=Building.objects.get(pk=datacontext[0]['building_pk'])
@@ -156,16 +157,16 @@ def set_default_session_vars(request, datacontext):
         c_b = CompanyBuilding.objects.get(building=request.session['main_building'])
         request.session['company'] = c_b.company
     else:
-        print "177"
+        #print "177"
         request.session['company']= None
     if ('consumer_unit' not in request.session and request.session['main_building']) or \
        (not request.session['consumer_unit'] and request.session['main_building']):
-        print "181"
+        #print "181"
         #sets the default ConsumerUnit (the first in ConsumerUnit for the main building)
         request.session['consumer_unit'] = default_consumerUnit(request.user, request.session['main_building'])
     else:
         if not request.session['consumer_unit'] or 'consumer_unit' not in request.session:
-            print "186"
+            #print "186"
             request.session['consumer_unit'] = None
         #try:
         #    c_unit = ConsumerUnit.objects.filter(building=request.session['main_building'])
@@ -4558,7 +4559,7 @@ def search_buildings(request):
 def get_select_attributes(request, id_attribute_type):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
-    print "ID Att:", id_attribute_type
+    #print "ID Att:", id_attribute_type
 
     building_attributes = BuildingAttributes.objects.filter(building_attributes_type__pk = id_attribute_type)
     string_to_return=''
