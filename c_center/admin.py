@@ -326,3 +326,4 @@ class ElectricRateForElectricDataAdmin(admin.ModelAdmin):
     search_fields = ['electric_data__profile_powermeter__powermeter__powermeter_serial',
                      'electric_data__profile_powermeter__powermeter__powermeter_anotation']
 admin.site.register(c_center.models.ElectricRateForElectricData, ElectricRateForElectricDataAdmin)
+admin.site.register(c_center.models.MonthlyCutDates)

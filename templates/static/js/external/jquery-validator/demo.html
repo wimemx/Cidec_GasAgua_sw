@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>Super plugin :)</title>
+    <link rel="stylesheet" type="text/css" href="css/validator.css">
+    <script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
+    <script type="text/javascript" src="js/validator.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $("#form1").validate();
+        });
+        
+    </script>
+</head>
+
+<body>
+
+<form name="form1" id="form1" action="" method="GET" enctype="application/x-www-form-urlencoded">
+    <input type="text" name="text1" id="text1" class="validate url"/>
+    <input type="text" name="text2" id="text2"/>
+    
+    <select name="select1" id="select1" class="validate notnull">
+        <option value="0">escoje</option>
+        <option value="1">opcion 1</option>
+        <option value="2">opcion 2</option>
+    </select>
+    
+    <select name="select2" id="select2">
+        <option value="0">escoje</option>
+        <option value="1">opcion 1</option>
+        <option value="2">opcion 2</option>
+    </select>
+    
+    
+    <input type="submit"/><input type="reset"/>
+</form>
+
+</body>
+</html>

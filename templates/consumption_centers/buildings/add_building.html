@@ -12,6 +12,8 @@
 {% block externaljs %}
 <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/external/maskedinput.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/external/autoNumeric-1.7.4.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/external/jquery.metadata.js"></script>
 <script src="https://maps.google.com/maps/api/js?sensor=false"></script>
 <script type="text/javascript">
     var form_valid = true;
@@ -23,8 +25,10 @@
 
     var link_state = '';
     $(document).ready(function(){
-        $("#b_mt2").mask("9999");
-        $("#attr_value").mask("99");
+
+        $('#b_mt2').autoNumeric({asep:',', vMin: "0.00", vMax: "9999.99"});
+
+        $('#attr_value').autoNumeric({asep:',', vMin: "0.00", vMax: "999.99"});
         $("#b_zip").mask("99999");
 
 
@@ -37,7 +41,7 @@
                         _span = "incorrect";
                         form_valid = false;
                     }else{
-                        if(e.delegateTarget.id == "b_country" || e.delegateTarget.id == "b_state" || e.delegateTarget.id == "b_municipality" || e.delegateTarget.id == "b_neighborhood" || e.delegateTarget.id == "b_street"){
+                        if(e.delegateTarget.id == "b_country" || e.delegateTarget.id == "b_state" || e.delegateTarget.id == "b_municipality"){
                             if(/^[A-Za-zÁÉÍÓÚáéíóuñÑ ]+$/.test(e.delegateTarget.value)){
                                 _span = "correct";
                                 form_valid = true;
@@ -647,7 +651,7 @@ $("a.back").click(function(e){e.preventDefault(); History.back();});
                     </div>
                     <div class="fields_row g12">
                         <label for="b_mt2" class="g3">Mt2 Construidos</label>
-                        <input type="text" name="b_mt2" id="b_mt2" class="g8"
+                        <input type="text" name="b_mt2" id="b_mt2" class="g8" maxlength="3"
                                value="{{ post.b_mt2 }}"
                                 />
                         <span></span>
@@ -791,7 +795,7 @@ $("a.back").click(function(e){e.preventDefault(); History.back();});
                     </div>
 
                     <div class="fields_row attribute_value_text_row g4">
-                        <input type="text" name="attr_value" id="attr_value" class="attribute_value_text g10"  placeholder="Valor"/>
+                        <input type="text" name="attr_value" id="attr_value" class="attribute_value_text g10"  placeholder="Valor" maxlength="3"/>
                     </div>
 
                     <p class="buttons" id="">

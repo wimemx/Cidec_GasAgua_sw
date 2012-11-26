@@ -40,6 +40,23 @@ def get_week_start_and_end_datetime(
     week_end = week_start + week_delta
     return week_start, week_end
 
+def week_of_month(datetime_variable):
+    """Get the week number of the month for a datetime
+    datetime_variable = the date
+    returns the week number (int)
+    """
+    first_day_of_month = datetime(year=datetime_variable.year,
+        month=datetime_variable.month, day=1)
+    first_day_first_week = first_day_of_month - timedelta(days=first_day_of_month.weekday())
+    week_delta = timedelta(weeks = 1)
+    datetime_next = first_day_first_week + week_delta
+    week_number = 1
+    while datetime_next <= datetime_variable:
+        week_number += 1
+        datetime_next += week_delta
+
+    return week_number
+
 def random_string_generator(size=6, chars=string.ascii_uppercase + string.digits):
     """Random String Generator
 
@@ -112,7 +129,7 @@ def get_post_data(post):
         except InvalidOperation:
             datos_post[str(postdata)]=post[str(postdata)]
         else:
-            if(dato%1 == 0): #si es un numero entero
+            if dato%1 == 0: #si es un numero entero
                 datos_post[str(postdata)]=long(dato)
             else: #si tiene decimales
                 datos_post[str(postdata)]=float(dato)
