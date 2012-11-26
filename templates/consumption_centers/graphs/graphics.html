@@ -93,6 +93,12 @@
                 return base_url
             }
 
+            {% if is_interval_graphic %}
+                var chart_type = 'ColumnChart';
+            {% else %}
+                var chart_type = 'LineChart';
+            {% endif %}
+
             function drawVisualization() {
                 var dashboard = new google.visualization.Dashboard(
                         document.getElementById('dashboard'));
@@ -104,7 +110,7 @@
                         // Filter by the date axis.
                         'filterColumnIndex': 0,
                         'ui': {
-                            'chartType': 'LineChart',
+                            'chartType': chart_type,
                             'chartOptions': {
                                 'chartArea': {'width': '90%'},
                                 'hAxis': {'baselineColor': 'none'}
@@ -124,7 +130,7 @@
                 });
 
                 var chart = new google.visualization.ChartWrapper({
-                    'chartType': 'LineChart',
+                    'chartType': chart_type,
                     'containerId': 'chart',
                     'options': {
                         // Use the same chart area width as the control for axis alignment.
@@ -140,6 +146,7 @@
                     data.addColumn({type:'datetime', role:'domain'},
                             "From {{ column.start_datetime_string }} To {{ column.end_datetime_string }}");
                     data.addColumn('number', '{{ column.consumer_unit_string }}');
+                    data.addColumn({type:'boolean', role:'certainty'});
                 {% endfor %}
 
                 var rows_data = {% autoescape off %}{{ rows_data }}{% endautoescape %};
@@ -154,6 +161,8 @@
                         row_array.push(object_datetime);
                         var object_electric_data = data_object['electric_data'];
                         row_array.push(object_electric_data);
+                        var object_certainty = data_object['certainty'];
+                        row_array.push(object_certainty);
                     }
                     data.addRow(row_array);
                 }

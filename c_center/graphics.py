@@ -4,6 +4,7 @@
 # Python imports
 #
 import datetime
+import time
 from datetime import timedelta
 import json
 import string
@@ -20,6 +21,7 @@ import django.template.context
 #
 # cidec imports
 #
+import c_center.models
 import data_warehouse.views
 import variety
 
@@ -55,8 +57,54 @@ def build_electric_data_json(consumer_units_ids, electric_data, granularity, fro
                          from_datetime,
                          to_datetime)
 
-        if len(data_array) > 0:
+        if data_array is not None and len(data_array) > 0:
             data_arrays.append(data_array)
+
+
+def get_consumer_unit_electric_data_raw(
+        electric_data_name,
+        id,
+        start,
+        end
+):
+
+    electric_data_raw = []
+    try:
+        consumer_unit = c_center.models.ConsumerUnit.objects.get(pk=id)
+
+    except c_center.models.ConsumerUnit.DoesNotExist:
+        return electric_data_raw
+
+    electric_data_values = c_center.models.ElectricDataTemp.objects.filter(
+                               profile_powermeter=consumer_unit.profile_powermeter,
+                               medition_date__gte=start,
+                               medition_date__lte=end
+                           ).values('medition_date', electric_data_name)
+
+    for electric_data_value in electric_data_values:
+        electric_data = electric_data_value[electric_data_name]
+        medition_date = electric_data_value['medition_date']
+        electric_data_raw.append(
+            dict(datetime=int(time.mktime(medition_date.timetuple())),
+                 electric_data=electric_data,
+                 certainty=True))
+
+    return electric_data_raw
+
+
+def get_consumer_unit_electric_data_interval_raw(
+        electric_data_name,
+        id,
+        start,
+        end
+):
+    electric_data_raw = []
+    try:
+        consumer_unit = c_center.models.ConsumerUnit.objects.get(pk=id)
+
+    except c_center.models.ConsumerUnit.DoesNotExist:
+        return electric_data_raw
+    return electric_data_raw
 
 
 def cut_electric_data_list_values(electric_data_list, data_values_length):
@@ -93,9 +141,12 @@ def get_electric_data_list_json(electric_data_list, limits = None):
         for domain_index in range(0, domains_number):
             current_datetime = electric_data_list[domain_index][row_index]["datetime"]
             current_electric_data =\
-                electric_data_list[domain_index][row_index]["electric_data"]
+                float(electric_data_list[domain_index][row_index]["electric_data"])
+
+            current_certainty = electric_data_list[domain_index][row_index]["certainty"]
             row_data.append(dict(datetime=current_datetime,
-                                 electric_data=current_electric_data))
+                                 electric_data=current_electric_data,
+                                 certainty=current_certainty))
 
             if electric_data_max_value < current_electric_data:
                 electric_data_max_value = current_electric_data
@@ -111,8 +162,14 @@ def get_electric_data_list_json(electric_data_list, limits = None):
         electric_data_min_value = -100.0
 
     if limits is not None:
-        limits['max'] = electric_data_max_value
-        limits['min'] = electric_data_min_value
+        electric_data_max_min_delta_value =\
+            float(electric_data_max_value - electric_data_min_value)
+
+        limits['max'] =\
+            float(electric_data_max_value) + (electric_data_max_min_delta_value * 0.1)
+
+        limits['min'] =\
+            float(electric_data_min_value) - (electric_data_max_min_delta_value * 0.1)
 
     return json.dumps(rows)
 
@@ -131,6 +188,7 @@ def normalize_electric_data_list(electric_data_list):
             return 0
 
     return minimum_length
+
 
 def prepare_electric_data(electric_data_values):
 
@@ -292,14 +350,16 @@ def render_graphics(request):
         template_variables = dict()
         cumulative_electric_data = ("TotalkWhIMPORT", "TotalkvarhIMPORT", "kWh", "kvarh")
         suffix_consumed = "_consumido"
-        interval_graphic = False
+        is_interval_graphic = False
         suffix_index = string.find(electric_data, suffix_consumed)
         if suffix_index >= 0:
             electric_data = electric_data[:suffix_index]
-            interval_graphic = True
+            is_interval_graphic = True
 
         template_variables["is_cumulative_electric_data"] =\
             electric_data in cumulative_electric_data
+
+        template_variables["is_interval_graphic"] = is_interval_graphic
 
         template_variables['electric_data'] = electric_data
 
@@ -334,7 +394,7 @@ def render_graphics(request):
         electric_data_list = []
         consumer_unit_and_time_interval_information_list = []
         for id, start, end in data:
-            if interval_graphic:
+            if is_interval_graphic:
                 electric_data_values =\
                     data_warehouse.views.get_consumer_unit_electric_data_interval(
                         electric_data,
@@ -342,6 +402,13 @@ def render_graphics(request):
                         id,
                         start,
                         end)
+
+                if electric_data_values is None:
+                    electric_data_values = get_consumer_unit_electric_data_interval_raw(
+                                               electric_data,
+                                               id,
+                                               start,
+                                               end)
 
             else:
                 electric_data_values =\
@@ -352,8 +419,16 @@ def render_graphics(request):
                         start,
                         end)
 
-            electric_data_list.append(electric_data_values)
+                if electric_data_values is None:
+                    electric_data_values = get_consumer_unit_electric_data_raw(
+                                               electric_data,
+                                               id,
+                                               start,
+                                               end)
 
+
+
+            electric_data_list.append(electric_data_values)
             consumer_unit_and_time_interval_information =\
                 data_warehouse.views.get_consumer_unit_and_time_interval_information(
                     id,
