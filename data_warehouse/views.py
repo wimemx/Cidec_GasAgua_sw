@@ -27,7 +27,10 @@ from c_center.models import Building, ConsumerUnit as ConsumerUnitTransactional,
 CUMULATIVE_ELECTRIC_DATA = {
     "TotalkWhIMPORT":"kWh",
     "TotalkvarhIMPORT":"kvarh",
-    "kvahTOTAL":"kvah"
+    "kvahTOTAL":"kvah",
+    "kWh":"kWh",
+    "kvarh":"kvarh",
+    "kvah":"kvah"
 }
 
 FACTS_INSTANT_CLASSES = {
@@ -518,8 +521,8 @@ def interpolation_functions_dictionary(independent_data, dependent_data, points_
         try:
             if is_valid_points_count(points_count_dictionary[key]):
                 interpolation_functions[key] = interpolate.interp1d(independent_data[key],
-                    dependent_data[key],
-                    'cubic')
+                                                                    dependent_data[key],
+                                                                    'cubic')
 
         except KeyError as interpolation_functions_key_error:
             logger.error(Error.KEY_ERROR + "\n\t" + str(interpolation_functions_key_error))
@@ -656,16 +659,21 @@ def interpolate_consumer_unit_electric_data_instant(
     dict((attribute.name, {'previous': 0, 'next': 0})
         for attribute in FactsClass._meta.fields if attribute.null)
 
+    day_delta = timedelta(days=1)
     #
     # Update and validate independent and dependent data dictionaries with points (at most
     # 5) that have a medition_date before instant_datetime
     #
     previous_electric_data_set = ElectricDataTemp.objects.filter(
         profile_powermeter=profile_powermeter.id,
-        medition_date__lt=instant_datetime\
+        medition_date__lt=instant_datetime,
+        medition_date__gt=(instant_datetime - day_delta)
     ).order_by('medition_date')
 
-    is_update_data_successful = update_data_dictionaries(electric_data_independent,
+    print "previous_electric_data_set"
+    print previous_electric_data_set
+    is_update_data_successful = update_data_dictionaries(
+        electric_data_independent,
         electric_data_dependent,
         previous_electric_data_set,
         instant_datetime,
@@ -688,10 +696,14 @@ def interpolate_consumer_unit_electric_data_instant(
     #
     next_electric_data_set = ElectricDataTemp.objects.filter(
         profile_powermeter=profile_powermeter.id,
-        medition_date__gte=instant_datetime\
+        medition_date__gte=instant_datetime,
+        medition_date__lte=(instant_datetime + day_delta)
     ).order_by('medition_date')
 
-    is_update_data_successful = update_data_dictionaries(electric_data_independent,
+    print "next_electric_data_set"
+    print next_electric_data_set
+    is_update_data_successful = update_data_dictionaries(
+        electric_data_independent,
         electric_data_dependent,
         next_electric_data_set,
         instant_datetime,
@@ -708,7 +720,8 @@ def interpolate_consumer_unit_electric_data_instant(
     if not is_update_points_count_successful:
         return False
 
-    interpolation_functions = interpolation_functions_dictionary(electric_data_independent,
+    interpolation_functions = interpolation_functions_dictionary(
+        electric_data_independent,
         electric_data_dependent,
         electric_data_points_count)
 
@@ -732,7 +745,8 @@ def populate_consumer_unit_electric_data(
 ):
 
     try:
-        profile_powermeter = ProfilePowermeter.objects.get(pk=consumer_unit.profile_powermeter.pk)
+        profile_powermeter = ProfilePowermeter.objects.get(
+                                 pk=consumer_unit.profile_powermeter.pk)
 
     except ProfilePowermeter.DoesNotExist as profile_powermeter_does_not_exist:
         logger.error(Error.PROFILE_POWERMETER_DOES_NOT_EXIST + "\n\t" +
@@ -741,7 +755,8 @@ def populate_consumer_unit_electric_data(
         return False
 
     try:
-        consumer_unit_data_warehouse = ConsumerUnit.objects.get(transactional_id=consumer_unit.pk)
+        consumer_unit_data_warehouse = ConsumerUnit.objects.get(
+                                           transactional_id=consumer_unit.pk)
 
     except ConsumerUnit.DoesNotExist as consumer_unit_does_not_exist:
         logger.error(Error.CONSUMER_UNIT_DOES_NOT_EXIST + "\n\t" +
@@ -802,7 +817,8 @@ def populate_consumer_unit_electric_data_interval(
         granularity
 ):
     try:
-        consumer_unit_data_warehouse = ConsumerUnit.objects.get(transactional_id=consumer_unit.pk)
+        consumer_unit_data_warehouse = ConsumerUnit.objects.get(
+                                           transactional_id=consumer_unit.pk)
 
     except ConsumerUnit.DoesNotExist as consumer_unit_does_not_exist:
         logger.error(Error.CONSUMER_UNIT_DOES_NOT_EXIST + "\n\t" +
@@ -902,8 +918,8 @@ def populate_consumer_unit_electric_data_interval(
 def interpolate_electric_data():
 
     consumer_unit = ConsumerUnitTransactional.objects.get(pk=7)
-    from_datetime = datetime(year=2012, month=10, day=22, hour=0, tzinfo=utc)
-    to_datetime = datetime(year=2012, month=10, day=26, hour=0, tzinfo=utc)
+    from_datetime = datetime(year=2012, month=10, day=28, hour=0, tzinfo=utc)
+    to_datetime = datetime(year=2012, month=11, day=19, hour=0, tzinfo=utc)
     granularity="day"
     populate_consumer_unit_electric_data(consumer_unit,
                                          from_datetime,
@@ -914,8 +930,8 @@ def interpolate_electric_data():
 def interpolate_electric_data_interval():
 
     consumer_unit = ConsumerUnitTransactional.objects.get(pk=7)
-    from_datetime = datetime(year=2012, month=9, day=1, hour=0, tzinfo=utc)
-    to_datetime = datetime(year=2012, month=10, day=25, hour=0, tzinfo=utc)
+    from_datetime = datetime(year=2012, month=8, day=28, hour=0, tzinfo=utc)
+    to_datetime = datetime(year=2012, month=11, day=20, hour=0, tzinfo=utc)
     granularity="day"
     populate_consumer_unit_electric_data_interval(consumer_unit,
         from_datetime,
@@ -964,8 +980,13 @@ def get_consumer_unit_electric_data(
         return []
 
     electric_data_values = []
-    electric_data_class = FACTS_INSTANT_CLASSES[granularity]
-    time_instant_class = TIME_INSTANTS_CLASSES[granularity]
+    try:
+        electric_data_class = FACTS_INSTANT_CLASSES[granularity]
+        time_instant_class = TIME_INSTANTS_CLASSES[granularity]
+
+    except KeyError:
+        return None
+
     time_instants = time_instant_class.objects.filter(
         instant_datetime__gte=from_datetime,
         instant_datetime__lte=to_datetime)
@@ -984,9 +1005,11 @@ def get_consumer_unit_electric_data(
         else:
             electric_data_value = None
 
-
-        electric_data_values.append(dict(datetime=int(time.mktime(time_instant.instant_datetime.timetuple())),
-            electric_data=electric_data_value))
+        certainty = electric_data_value is not None
+        electric_data_values.append(
+            dict(datetime=int(time.mktime(time_instant.instant_datetime.timetuple())),
+                 electric_data=electric_data_value,
+                 certainty=certainty))
 
 
     return electric_data_values
@@ -1048,8 +1071,13 @@ def get_consumer_unit_electric_data_interval(
         return []
 
     electric_data_values = []
-    electric_data_class = FACTS_INTERVAL_CLASSES[granularity]
-    time_instant_class = TIME_INTERVALS_CLASSES[granularity]
+    try:
+        electric_data_class = FACTS_INTERVAL_CLASSES[granularity]
+        time_instant_class = TIME_INTERVALS_CLASSES[granularity]
+
+    except KeyError:
+        return None
+
     time_intervals = time_instant_class.objects.filter(
         start_datetime__gte=from_datetime,
         start_datetime__lte=to_datetime)
@@ -1069,8 +1097,10 @@ def get_consumer_unit_electric_data_interval(
             electric_data_value = None
 
 
+        certainty = electric_data_value is not None
         electric_data_values.append(dict(datetime=int(time.mktime(time_interval.start_datetime.timetuple())),
-            electric_data=electric_data_value))
+                                         electric_data=electric_data_value,
+                                         certainty=certainty))
 
 
     return electric_data_values
@@ -1132,16 +1162,22 @@ def get_consumer_unit_electric_data_interval_tuple_list(
         start_datetime__gte=from_datetime,
         start_datetime__lt=to_datetime)
 
+    try:
+        electric_data_name = CUMULATIVE_ELECTRIC_DATA[electric_data]
+
+    except KeyError:
+        return electric_data_list
+
     for time_interval in time_intervals:
         electric_data_values_dictionary = electric_data_class.objects.filter(
             consumer_unit=consumer_unit,
             interval=time_interval
-        ).values(electric_data)
+        ).values(electric_data_name)
 
         if len(electric_data_values_dictionary) == 1 and\
-           electric_data_values_dictionary[0][electric_data] is not None:
+           electric_data_values_dictionary[0][electric_data_name] is not None:
 
-            electric_data_value = electric_data_values_dictionary[0][electric_data]
+            electric_data_value = electric_data_values_dictionary[0][electric_data_name]
             electric_data_list.append((time_interval, electric_data_value))
 
     return electric_data_list

@@ -505,8 +505,10 @@ class ElectricDataTemp(models.Model):
     kVA_sliding_window_demand = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True, default=0)
     kvahTOTAL = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
     def __unicode__(self):
-        return self.profile_powermeter.powermeter.powermeter_anotation +\
-               " " + str(self.medition_date)
+        return "\n" + self.profile_powermeter.powermeter.powermeter_anotation +\
+               " " + str(self.medition_date) + "\nkWL1 = " + str(self.kWL1) +\
+               "\nkWL2 = " + str(self.kWL2) +\
+               "\nkWL3 = " + str(self.kWL3)
     class Meta:
         verbose_name = "Electric Data"
 
