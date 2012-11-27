@@ -43,8 +43,9 @@ from data_warehouse.views import get_consumer_unit_electric_data_csv,\
     get_consumer_unit_electric_data_interval_tuple_list
 
 import json as simplejson
-
-from tareas.tasks import add2
+import sys
+from celery import current_app
+from tareas.tasks import add2, run
 
 VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
@@ -63,7 +64,10 @@ GRAPHS_PF = [ob.object for ob in GroupObject.objects.filter(group__group_name="F
 GRAPHS = dict(energia=GRAPHS_ENERGY, corriente=GRAPHS_I, voltaje=GRAPHS_V, factor_potencia=GRAPHS_PF)
 def call_celery_delay(request):
 
-    add2.delay(int(request.GET['uno']), int(request.GET['dos']))
+    #print "-------------------------------------------------------------\n", current_app.tasks
+    #print "-------------------------------------------------------------"
+    run.delay(request.GET['age'])
+    #add2.delay(int(request.GET['uno']), int(request.GET['dos']))
     return HttpResponse(content="celery task set",content_type="text/html")
 
 def get_all_profiles_for_user(user):

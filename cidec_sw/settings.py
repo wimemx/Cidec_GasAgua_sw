@@ -2,12 +2,16 @@
 import djcelery
 djcelery.setup_loader()
 import os
-BROKER_HOST = "one.cloudwime.com"
-BROKER_PORT = "5672"
-BROKER_USER = "guest"
-BROKER_PASSWORD = "guest"
-BROKER_VHOST = '/'
+
 CELERY_RESULT_BACKEND = "amqp"
+
+BROKER_URL = 'amqp://guest:guest@one.cloudwime.com:5672//'
+#BROKER_HOST = "one.cloudwime.com"
+#BROKER_PORT = "5672"
+#BROKER_USER = "guest"
+#BROKER_PASSWORD = "guest"
+#BROKER_VHOST = '/'
+
 CELERY_IMPORTS = ('tareas',)
 
 PROJECT_PATH = os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(__file__)), os.path.pardir))

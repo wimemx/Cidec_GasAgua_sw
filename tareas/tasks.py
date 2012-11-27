@@ -1,12 +1,36 @@
 from celery import task
 from celery.task.schedules import crontab
 from celery.decorators import periodic_task
-from c_center.models import ElectricData
+
+from c_center.models import ElectricDataTemp
+from rbac.models import UserProfile
+from django.contrib.auth.models import User
 from tareas.models import test_tasks
+
+from datetime import date
+
+@task()
+def run(person_id):
+    print "Running determine_can_drink task for person %s" % person_id
+
+    person = User.objects.get(pk=person_id)
+    profile = UserProfile.objects.get(user=person)
+    now = date.today()
+    diff = now - profile.user_profile_birth_dates
+    # i know, i know, this doesn't account for leap year
+    age = diff.days / 365
+    if age >= 21:
+        test = test_tasks(task=person.username+" mayor de 21", value=str(age))
+        test.save()
+    else:
+        test = test_tasks(task=person.username+" menor de 21", value=str(age))
+        test.save()
+    return age
+
 
 @task()
 def add():
-    data=ElectricData.objects.all()
+    data=ElectricDataTemp.objects.all()
     max = -300000
     for dat in data:
         if dat.kWhIMPORT > max:
