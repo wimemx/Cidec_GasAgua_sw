@@ -2,54 +2,48 @@ from celery import task
 from celery.task.schedules import crontab
 from celery.decorators import periodic_task
 
-from c_center.models import ElectricDataTemp
-from rbac.models import UserProfile
-from django.contrib.auth.models import User
-from tareas.models import test_tasks
+from data_warehouse.views import *
 
 from datetime import date
 
-@task()
-def run(person_id):
-    print "Running determine_can_drink task for person %s" % person_id
+@task(ignore_result=True)
+def datawarehouse_run(
+        fill_instants=None,
+        fill_intervals=None,
+        _update_consumer_units=None,
+        populate_instant_facts=None,
+        populate_interval_facts=None
 
-    person = User.objects.get(pk=person_id)
-    profile = UserProfile.objects.get(user=person)
-    now = date.today()
-    diff = now - profile.user_profile_birth_dates
-    # i know, i know, this doesn't account for leap year
-    age = diff.days / 365
-    if age >= 21:
-        test = test_tasks(task=person.username+" mayor de 21", value=str(age))
-        test.save()
-    else:
-        test = test_tasks(task=person.username+" menor de 21", value=str(age))
-        test.save()
-    return age
+):
+    populate_data_warehouse(
+        fill_instants,
+        fill_intervals,
+        _update_consumer_units,
+        populate_instant_facts,
+        populate_interval_facts
+    )
 
-
-@task()
-def add():
-    data=ElectricDataTemp.objects.all()
-    max = -300000
-    for dat in data:
-        if dat.kWhIMPORT > max:
-            max = dat.kWhIMPORT
-    return max
-
-@task(name="tasks.add2")
-def add2(x,y):
-    test = test_tasks(task="add2", value=str(x+y))
-    test.save()
-    return x + y
+@task(ignore_result=True)
+def calculate_dw(granularity):
+    data_warehouse_update(granularity)
 
 # this will run every minute, see http://celeryproject.org/docs/reference/celery.task.schedules.html#celery.task.schedules.crontab
-@periodic_task(run_every=crontab(hour="*", minute="*", day_of_week="*"))
-def test_one_minute():
-    add.delay()
-    print "firing test task"
+@periodic_task(run_every=crontab(minute='*/60'))
+def data_warehouse_one_hour():
+    calculate_dw.delay("hour")
+    print "firing periodic task - DW Hour"
+
+@periodic_task(run_every=crontab(minute=0, hour=0))
+def data_warehouse_one_day():
+    calculate_dw.delay("day")
+    print "firing periodic task - DW Day"
+
+@periodic_task(run_every=crontab(minute=0, hour=0, day_of_week='sun'))
+def data_warehouse_one_week():
+    calculate_dw.delay("week")
+    print "firing periodic task - DW week"
 
 # this will run every minute, see http://celeryproject.org/docs/reference/celery.task.schedules.html#celery.task.schedules.crontab
-@periodic_task(run_every=crontab(hour="*", minute="*/2", day_of_week="*"))
-def test_two_minute():
-    print "firing another test"
+#@periodic_task(run_every=crontab(hour="*", minute="*/2", day_of_week="*"))
+#def test_two_minute():
+#    print "firing another test"

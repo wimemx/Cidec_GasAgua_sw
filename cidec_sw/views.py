@@ -12,6 +12,7 @@ import pytz #for timezone support
 import datetime
 from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse, HttpResponseRedirect
+from collections import defaultdict
 
 #local application/library specific imports
 from django.shortcuts import render_to_response
@@ -155,15 +156,38 @@ def index(request):
         data_context = DataContextPermission.objects.filter(user_role__user=request.user)
         roles = [dc.user_role.role.pk for dc in data_context]
         pa = PermissionAsigment.objects.filter(role__pk__in=roles).exclude(object__object_access_point="/")
-    sidebar_options=[]
+
+    d = defaultdict(list)
     for permission in pa:
         if permission.object.object_name not in GRAPHS and permission.object.object_name != "Consultar recibo CFE" and permission.object.object_name != "Perfil de carga":
-            sidebar_options.append(dict(uri=permission.object.object_access_point, name=permission.object.object_name))
-    request.session['sidebar'] = unique_from_array(sidebar_options)
+            gObject = GroupObject.objects.get(object__object_name = permission.object.object_name)
+            d[gObject.group.group_name].append(gObject.object)
+
+    groups = d.keys()
+    menu_option_str = ""
+    for gp in groups:
+        sd_opts = d[gp]
+        sd_opts = unique_from_array(sd_opts)
+        if gp == 'Unidades de consumo':
+            gp = 'U. de consumo'
+        menu_option_str += "<span class='sidebar_option desp'>"\
+                           "<span>"+ gp +"</span></span>"\
+                                         "<ul class='sidebarsub_op'>"
+        for option in sd_opts:
+            menu_option_str += "<li><a href='"+option.object_access_point+"'>"+option.object_name+"</a></li>"
+        if gp == 'Empresas':
+            menu_option_str += "<li><a href='/buildings/estructura/'>Organizaci&oacute;n Empresas</a></li>"
+        menu_option_str += "</ul>"
+
     if request.user.is_superuser:
-        request.session['sidebar'].append(dict(uri="/buildings/estructura/", name="Ver Organización Empresas"))
-        request.session['sidebar'].append(dict(uri="/location/ver_regiones/", name="Ver Regiones"))
-        request.session['sidebar'].append(dict(uri="/location/alta_regiones/", name="Alta de Regiones"))
+        menu_option_str += "<span class='sidebar_option desp'>"\
+                           "<span>Regiones</span></span>"\
+                           "<ul class='sidebarsub_op'>"\
+                           "<li><a href='/location/ver_regiones/'>Ver Regiones</a></li>"\
+                           "</ul>"
+
+    request.session['sidebar'] = menu_option_str
+
     return main_page(request)
 
 def logout_page(request):

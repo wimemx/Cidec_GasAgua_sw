@@ -17,56 +17,7 @@
             </li>
         {% endfor %}
     </ul>
-    <span class="sidebar_option first desp">
-        <span>Panel de Control</span>
-    </span>
-    <ul class="sidebarsub_op">
-        <!-- TODO: fill with allowed operations -->
-        {% for option in sidebar %}
-            <li><a href="{{ option.uri }}">{{ option.name }}</a></li>
-        {% endfor %}
-        <!--
-        <li><a href="/panel_de_control/usuarios/">Ver usuarios</a></li>
-        <li><a href="/panel_de_control/add_user/">Nuevo Usuario</a></li>
-        <li><a href="/panel_de_control/roles/">Ver roles</a></li>
-        <li><a href="/panel_de_control/nuevo_rol/">Nuevo Rol</a></li>
-        <li><a href="/panel_de_control/asignar_roles/">Asignar Roles</a></li>
-        <li><a href="/panel_de_control/roles_asignados/">Ver roles asignados</a></li>
-        <li><a href="/buildings/clusters/">Ver Clusters</a></li>
-        <li><a href="/buildings/nuevo_cluster/">Nuevo Cluster</a></li>
-        <li><a href="/buildings/modelos_medidor/">Modelos de Medidor</a></li>
-        <li><a href="/buildings/alta_modelo_medidor/">Nuevo M. de Medidor</a></li>
-        <li><a href="/buildings/alta_medidor/">Nuevo Medidor</a></li>
-        <li><a href="/buildings/medidores/">Medidores</a></li>
-        <li><a href="/buildings/alta_tipo_equipo_electrico/">Nuevo Tipo E.E.</a></li>
-        <li><a href="/buildings/tipos_equipo_electrico/">T. Equipo Elec.</a></li>
-        <li><a href="/buildings/alta_empresa/">Nueva Empresas</a></li>
-        <li><a href="/buildings/empresas/">Empresas</a></li>
-        <li><a href="/buildings/estructura/">Jerarquía Empresas</a></li>
-        <li><a href="/buildings/alta_tipo_edificio/">Nuevo T. Edificio</a></li>
-        <li><a href="/buildings/tipos_edificios/">Tipos Edificios</a></li>
-        <li><a href="/buildings/alta_tipo_sector/">Nuevo T. Sector</a></li>
-        <li><a href="/buildings/tipos_sectores/">Tipos Sectores</a></li>
-        <li><a href="/buildings/alta_tipo_atributo_edificio/">Nuevo T. Atr. Edif.</a></li>
-        <li><a href="/buildings/tipos_atributos_edificios/">Tipos Atr. Edif</a></li>
-        <li><a href="/buildings/alta_tipo_parte_edificio/">Nuevo T. Parte. Edif.</a></li>
-        <li><a href="/buildings/tipos_partes_edificio/">Tipos Parte Edif</a></li>
-        <li><a href="/buildings/alta_parte_edificio/">Nueva Parte. Edif.</a></li>
-        <li><a href="/buildings/partes_edificio/">Partes Edificio</a></li>
-        <li><a href="/buildings/alta_edificio/">Nuevo Edificio</a></li>
-        <li><a href="/buildings/edificios/">Edificios</a></li>
-
-        <li><a href="/location/agregar_estado/">Agregar Estado</a></li>
-        <li><a href="/location/ver_estados/">Ver Estados</a></li>
-        <li><a href="/location/agregar_municipio/">Agregar Municipio</a></li>
-        <li><a href="/location/ver_municipios/">Ver Municipios</a></li>
-        <li><a href="/location/agregar_colonia/">Agregar Colonia</a></li>
-        <li><a href="/location/ver_colonias/">Ver Colonias</a></li>
-        <li><a href="/location/agregar_calle/">Agregar Calle</a></li>
-        <li><a href="/location/ver_calles/">Ver Calles</a></li>
-        -->
-
-    </ul>
+    {{ sidebar|safe }}
     <span class="sidebar_option desp">
         <span>Reportes</span>
     </span>

@@ -32,37 +32,37 @@ CUMULATIVE_ELECTRIC_DATA = {
     "kvarh":"kvarh",
     "kvah":"kvah"
 }
+CUMULATIVE_ELECTRIC_DATA_INVERSE = {
+    "kWh":"TotalkWhIMPORT",
+    "kvarh":"TotalkvarhIMPORT",
+    "kvah":"kvahTOTAL"
+}
 
 FACTS_INSTANT_CLASSES = {
-    "five-minute":ConsumerUnitFiveMinuteElectricData,
     "hour":ConsumerUnitHourElectricData,
     "day":ConsumerUnitDayElectricData,
     "week":ConsumerUnitWeekElectricData
 }
 
 FACTS_INTERVAL_CLASSES = {
-    "five-minute":ConsumerUnitFiveMIntElectricData,
     "hour":ConsumerUnitHourIntElectricData,
     "day":ConsumerUnitDayIntElectricData,
     "week":ConsumerUnitWeekIntElectricData
 }
 
 TIME_INSTANTS_CLASSES = {
-    "five-minute":FiveMinuteInstant,
     "hour":HourInstant,
     "day":DayInstant,
     "week":WeekInstant
 }
 
 TIME_INTERVALS_CLASSES = {
-    "five-minute":FiveMinuteInterval,
     "hour":HourInterval,
     "day":DayInterval,
     "week":WeekInterval
 }
 
 TIME_INSTANTS_TIME_DELTA = {
-    "five-minute":timedelta(minutes=5),
     "hour":timedelta(hours=1),
     "day":timedelta(days=1),
     "week":timedelta(weeks=1)
@@ -135,30 +135,149 @@ class DataWarehouseInformationRetrieveException(DataWarehouseException):
         return "\nDataWarehouseInformationRetrieveException " +\
                super(DataWarehouseInformationRetrieveException, self).__str__()
 
+##########################################################################################
+#
+# Data Warehouse Fill Scripts
+#
+##########################################################################################
+
+def populate_data_warehouse(
+        fill_instants=None,
+        fill_intervals=None,
+        _update_consumer_units=None,
+        populate_instant_facts=None,
+        populate_interval_facts=None
+
+):
+
+    #
+    # Fill instants tables
+    #
+    if fill_instants:
+        logger.info("FILL INSTANTS TABLES START")
+        instant_start = datetime(year=2012, month=1, day=1, tzinfo=utc)
+        instant_end = datetime(year=2015, month=12, day=31, tzinfo=utc)
+        for instant_key in TIME_INSTANTS_CLASSES.keys():
+            fill_instants_table(instant_start, instant_end, instant_key)
+
+        logger.info("FILL INSTANTS TABLES END")
+    #
+    # Fill intervals tables
+    #
+    if fill_intervals:
+        logger.info("FILL INTERVALS TABLES START")
+        interval_start = datetime(year=2012, month=1, day=1, tzinfo=utc)
+        interval_end = datetime(year=2015, month=12, day=31, tzinfo=utc)
+        for interval_key in TIME_INTERVALS_CLASSES.keys():
+            fill_intervals_table(interval_start, interval_end, interval_key)
+
+        logger.info("FILL INTERVALS TABLES END")
+
+    #
+    # Update consumer units
+    #
+    if _update_consumer_units:
+        logger.info("UPDATE CONSUMER UNITS START")
+        update_consumer_units()
+        logger.info("UPDATE CONSUMER UNITS END")
+
+    #
+    # Get all consumer units
+    #
+    logger.info("GET CONSUMER UNITS START")
+    consumer_units = ConsumerUnitTransactional.objects.all()
+    logger.info("GET CONSUMER UNITS END")
+
+    #
+    # Populate instant facts tables
+    #
+    if populate_instant_facts:
+        logger.info("POPULATE INSTANT FACTS TABLES START")
+        instant_facts_start = datetime(year=2012, month=8, day=28, tzinfo=utc)
+        instant_facts_end = datetime.utcnow()
+        for consumer_unit in consumer_units:
+            logger.info("Populate Consumer Unit: " + str(consumer_unit.pk))
+            for fact_instant_granularity in FACTS_INSTANT_CLASSES.keys():
+                logger.info("Granularity: " + fact_instant_granularity)
+                populate_consumer_unit_electric_data(consumer_unit,
+                                                     instant_facts_start,
+                                                     instant_facts_end,
+                                                     fact_instant_granularity)
+        logger.info("POPULATE INSTANT FACTS TABLES END")
+
+    #
+    # Populate interval facts tables
+    #
+    if populate_interval_facts:
+        logger.info("POPULATE INTERVALS FACTS TABLES START")
+        interval_facts_start = datetime(year=2012, month=8, day=28, tzinfo=utc)
+        interval_facts_end = datetime.utcnow()
+        for consumer_unit in consumer_units:
+            logger.info("Populate Consumer Unit: " + str(consumer_unit.pk))
+            for fact_interval_granularity in FACTS_INTERVAL_CLASSES.keys():
+                logger.info("Granularity: " + fact_interval_granularity)
+                populate_consumer_unit_electric_data_interval(consumer_unit,
+                                                              interval_facts_start,
+                                                              interval_facts_end,
+                                                              fact_interval_granularity)
+        logger.info("POPULATE INTERVALS FACTS TABLES END")
+
+
+def data_warehouse_update(
+        granularity
+):
+    #
+    # Get time delta
+    #
+    try:
+        update_time_delta = TIME_INSTANTS_TIME_DELTA[granularity]
+
+    except KeyError as update_time_delta_key_error:
+        logger.error(str(update_time_delta_key_error))
+        return
+
+    #
+    # Get all consumer units
+    #
+    logger.info("GET CONSUMER UNITS START")
+    consumer_units = ConsumerUnitTransactional.objects.all()
+    logger.info("GET CONSUMER UNITS END")
+
+    #
+    # Update instants facts tables
+    #
+    logger.info("UPDATE INSTANTS FACTS TABLES START")
+    update_instants_start = datetime.utcnow() - (2 * update_time_delta)
+    update_instants_end = datetime.utcnow()
+    for consumer_unit in consumer_units:
+        logger.info("Populate Consumer Unit: " + str(consumer_unit.pk))
+        populate_consumer_unit_electric_data(consumer_unit,
+                                             update_instants_start,
+                                             update_instants_end,
+                                             granularity)
+
+    logger.info("UPDATE INSTANTS FACTS TABLES END")
+
+    #
+    # Update intervals facts tables
+    #
+    logger.info("UPDATE INTERVALS FACTS TABLES START")
+    update_intervals_start = datetime.utcnow() - (2 * update_time_delta)
+    update_intervals_end = datetime.utcnow()
+    for consumer_unit in consumer_units:
+        logger.info("Populate Consumer Unit: " + str(consumer_unit.pk))
+        populate_consumer_unit_electric_data_interval(consumer_unit,
+                                                      update_instants_start,
+                                                      update_instants_end,
+                                                      granularity)
+
+    logger.info("UPDATE INTERVALS FACTS TABLES END")
 
 ##########################################################################################
 #
 # Dimension Tables Fill Scripts
 #
 ##########################################################################################
-
-def fill_instants(
-        instants_type
-):
-
-    from_datetime = datetime(year=2010, month=1, day=1, tzinfo=utc)
-    to_datetime = datetime(year=2010, month=1, day=2, tzinfo=utc)
-    fill_instants_table(from_datetime, to_datetime, instants_type)
-
-
-def fill_intervals(
-        intervals_type
-):
-
-    from_datetime = datetime(year=2012, month=1, day=1, tzinfo=utc)
-    to_datetime = datetime(year=2012, month=12, day=31, tzinfo=utc)
-    fill_intervals_table(from_datetime, to_datetime, intervals_type)
-
 
 def fill_instants_table(
         from_datetime,
@@ -669,9 +788,6 @@ def interpolate_consumer_unit_electric_data_instant(
         medition_date__lt=instant_datetime,
         medition_date__gt=(instant_datetime - day_delta)
     ).order_by('medition_date')
-
-    print "previous_electric_data_set"
-    print previous_electric_data_set
     is_update_data_successful = update_data_dictionaries(
         electric_data_independent,
         electric_data_dependent,
@@ -700,8 +816,6 @@ def interpolate_consumer_unit_electric_data_instant(
         medition_date__lte=(instant_datetime + day_delta)
     ).order_by('medition_date')
 
-    print "next_electric_data_set"
-    print next_electric_data_set
     is_update_data_successful = update_data_dictionaries(
         electric_data_independent,
         electric_data_dependent,
@@ -854,9 +968,16 @@ def populate_consumer_unit_electric_data_interval(
 
         interpolate_facts_instant = True
         if are_facts_valid:
-            if is_cumulative_electric_data_valid(facts_instant_start) and\
-               is_cumulative_electric_data_valid(facts_instant_end):
+            try:
+                is_facts_instant_start_valid = is_cumulative_electric_data_valid(facts_instant_start)
+                is_facts_instant_end_valid = is_cumulative_electric_data_valid(facts_instant_end)
 
+            except DataWarehouseInformationRetrieveException as cumulative_electric_data_ire:
+                logger.error(str(cumulative_electric_data_ire))
+                is_facts_instant_start_valid = False
+                is_facts_instant_end_valid = False
+
+            if is_facts_instant_end_valid and is_facts_instant_start_valid:
                 interpolate_facts_instant = False
 
         if interpolate_facts_instant:

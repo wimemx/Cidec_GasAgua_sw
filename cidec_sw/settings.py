@@ -1,4 +1,5 @@
 # Django settings for cidec_sw project.
+from datetime import timedelta
 import djcelery
 djcelery.setup_loader()
 import os

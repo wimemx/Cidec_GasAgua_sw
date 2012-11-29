@@ -45,7 +45,7 @@ from data_warehouse.views import get_consumer_unit_electric_data_csv,\
 import json as simplejson
 import sys
 from celery import current_app
-from tareas.tasks import add2, run
+from tareas.tasks import datawarehouse_run
 
 VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
@@ -62,13 +62,47 @@ GRAPHS_V = [ob.object for ob in GroupObject.objects.filter(group__group_name="Vo
 GRAPHS_PF = [ob.object for ob in GroupObject.objects.filter(group__group_name="Factor de Potencia")] #['PF',]
 
 GRAPHS = dict(energia=GRAPHS_ENERGY, corriente=GRAPHS_I, voltaje=GRAPHS_V, factor_potencia=GRAPHS_PF)
-def call_celery_delay(request):
 
-    #print "-------------------------------------------------------------\n", current_app.tasks
-    #print "-------------------------------------------------------------"
-    run.delay(request.GET['age'])
-    #add2.delay(int(request.GET['uno']), int(request.GET['dos']))
-    return HttpResponse(content="celery task set",content_type="text/html")
+def call_celery_delay(request):
+    if request.user.is_superuser:
+        text = 'Se calcular&aacute;n: <br/>'
+        if "instantes" in request.GET:
+            fill_instants=True
+            text+="instantes<br/>"
+        else:
+            fill_instants=None
+        if "intervalos" in request.GET:
+            fill_intervals=True
+            text+="intervalos<br/>"
+        else:
+            fill_intervals=None
+        if "consumer_units" in request.GET:
+            _update_consumer_units=True
+            text+="consumer_units<br/>"
+        else:
+            _update_consumer_units=None
+        if "instant_facts" in request.GET:
+            populate_instant_facts=True
+            text+="instant_facts<br/>"
+        else:
+            populate_instant_facts=None
+        if "interval_facts" in request.GET:
+            populate_interval_facts=True
+            text+="interval_facts<br/>"
+        else:
+            populate_interval_facts=None
+
+        datawarehouse_run.delay(
+            fill_instants,
+            fill_intervals,
+            _update_consumer_units,
+            populate_instant_facts,
+            populate_interval_facts
+        )
+        text = "celery task set - "+text
+    else:
+        raise Http404
+    return HttpResponse(content=text, content_type="text/html")
 
 def get_all_profiles_for_user(user):
     """ returns an array of consumer_units in wich the user has access
@@ -390,6 +424,14 @@ def allowed_cu(consumerUnit, user, building):
     user = auth.User instance
     building = Building instance
     """
+    if user.is_superuser:
+        return True
+    company = CompanyBuilding.objects.get(building=building)
+    context1 = DataContextPermission.objects.filter(user_role__user=user, company=company.company, building=None, part_of_building=None)
+    cluster = ClusterCompany.objects.get(company=company.company)
+    context2 = DataContextPermission.objects.filter(user_role__user=user, cluster=cluster.cluster, company=None, building=None, part_of_building=None)
+    if context1 or context2:
+        return True
     if consumerUnit.electric_device_type.electric_device_type_name == "Total Edificio":
         context = DataContextPermission.objects.filter(user_role__user=user, building=building, part_of_building=None)
         if context:
@@ -5374,7 +5416,6 @@ def search_bld_country(request):
         countries_arr = []
         for country in countries:
             countries_arr.append(dict(value=country.pais_name, pk=country.pk, label=country.pais_name))
-
         data=simplejson.dumps(countries_arr)
         return HttpResponse(content=data,content_type="application/json")
     else:
@@ -5387,14 +5428,18 @@ def search_bld_state(request):
         term = request.GET['term']
 
         ctry_id = request.GET['country']
-        #Se obtiene el país
-        country = get_object_or_404(Pais, pk = ctry_id)
+        try:
+            ctry_id = int(ctry_id)
+        except ValueError:
+            states_arr = []
+        else:
+            #Se obtiene el país
+            country = get_object_or_404(Pais, pk = ctry_id)
 
-        states = PaisEstado.objects.filter(pais=country).filter(Q(estado__estado_name__icontains=term))
-        states_arr = []
-        for sts in states:
-            states_arr.append(dict(value=sts.estado.estado_name, pk=sts.estado.pk, label=sts.estado.estado_name))
-
+            states = PaisEstado.objects.filter(pais=country).filter(Q(estado__estado_name__icontains=term))
+            states_arr = []
+            for sts in states:
+                states_arr.append(dict(value=sts.estado.estado_name, pk=sts.estado.pk, label=sts.estado.estado_name))
         data=simplejson.dumps(states_arr)
         return HttpResponse(content=data,content_type="application/json")
     else:
@@ -5407,14 +5452,19 @@ def search_bld_municipality(request):
         term = request.GET['term']
 
         state_id = request.GET['state']
-        #Se obtiene el país
-        state = get_object_or_404(Estado, pk = state_id)
+        try:
+            state_id = int(state_id)
+        except ValueError:
+            mun_arr = []
+        else:
+            #Se obtiene el país
+            state = get_object_or_404(Estado, pk = state_id)
 
-        municipalities = EstadoMunicipio.objects.filter(estado=state).filter(Q(municipio__municipio_name__icontains=term))
-        mun_arr = []
+            municipalities = EstadoMunicipio.objects.filter(estado=state).filter(Q(municipio__municipio_name__icontains=term))
+            mun_arr = []
 
-        for mnp in municipalities:
-            mun_arr.append(dict(value=mnp.municipio.municipio_name, pk=mnp.municipio.pk, label=mnp.municipio.municipio_name))
+            for mnp in municipalities:
+                mun_arr.append(dict(value=mnp.municipio.municipio_name, pk=mnp.municipio.pk, label=mnp.municipio.municipio_name))
 
         data=simplejson.dumps(mun_arr)
         return HttpResponse(content=data,content_type="application/json")
@@ -5429,14 +5479,19 @@ def search_bld_neighborhood(request):
         term = request.GET['term']
 
         mun_id = request.GET['municipality']
-        #Se obtiene el municipio
-        municipality = get_object_or_404(Municipio, pk=mun_id)
+        try:
+            mun_id = int(mun_id)
+        except ValueError:
+            ngh_arr = []
+        else:
+            #Se obtiene el municipio
+            municipality = get_object_or_404(Municipio, pk=mun_id)
 
-        neighborhoods = MunicipioColonia.objects.filter(municipio=municipality).filter(Q(colonia__colonia_name__icontains=term))
-        ngh_arr = []
+            neighborhoods = MunicipioColonia.objects.filter(municipio=municipality).filter(Q(colonia__colonia_name__icontains=term))
+            ngh_arr = []
 
-        for ng in neighborhoods:
-            ngh_arr.append(dict(value=ng.colonia.colonia_name, pk=ng.colonia.pk, label=ng.colonia.colonia_name))
+            for ng in neighborhoods:
+                ngh_arr.append(dict(value=ng.colonia.colonia_name, pk=ng.colonia.pk, label=ng.colonia.colonia_name))
 
         data=simplejson.dumps(ngh_arr)
         return HttpResponse(content=data,content_type="application/json")
@@ -5451,15 +5506,20 @@ def search_bld_street(request):
         term = request.GET['term']
 
         neigh_id = request.GET['neighborhood']
-        #Se obtiene la colonia
+        try:
+            neigh_id = int(neigh_id)
+        except ValueError:
+            street_arr = []
+        else:
+            #Se obtiene la colonia
 
-        neighborhood = get_object_or_404(Colonia, pk=neigh_id)
-        streets = ColoniaCalle.objects.filter(colonia=neighborhood).filter(Q(calle__calle_name__icontains=term))
+            neighborhood = get_object_or_404(Colonia, pk=neigh_id)
+            streets = ColoniaCalle.objects.filter(colonia=neighborhood).filter(Q(calle__calle_name__icontains=term))
 
-        street_arr = []
+            street_arr = []
 
-        for st in streets:
-            street_arr.append(dict(value=st.calle.calle_name, pk=st.calle.pk, label=st.calle.calle_name))
+            for st in streets:
+                street_arr.append(dict(value=st.calle.calle_name, pk=st.calle.pk, label=st.calle.calle_name))
 
         data=simplejson.dumps(street_arr)
         return HttpResponse(content=data,content_type="application/json")

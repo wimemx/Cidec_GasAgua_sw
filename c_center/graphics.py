@@ -18,6 +18,7 @@ import django.shortcuts
 import django.utils.timezone
 import django.template.context
 
+
 #
 # cidec imports
 #
@@ -79,7 +80,11 @@ def get_consumer_unit_electric_data_raw(
                                profile_powermeter=consumer_unit.profile_powermeter,
                                medition_date__gte=start,
                                medition_date__lte=end
-                           ).values('medition_date', electric_data_name)
+                           ).order_by(
+                               'medition_date'
+                           ).values(
+                               'medition_date',
+                               electric_data_name)
 
     for electric_data_value in electric_data_values:
         electric_data = electric_data_value[electric_data_name]
@@ -100,10 +105,65 @@ def get_consumer_unit_electric_data_interval_raw(
 ):
     electric_data_raw = []
     try:
+        electric_data_name_local =\
+            data_warehouse.views.CUMULATIVE_ELECTRIC_DATA_INVERSE[electric_data_name]
+
+    except KeyError as electric_data_name_key_error:
+        return  electric_data_raw
+
+    try:
         consumer_unit = c_center.models.ConsumerUnit.objects.get(pk=id)
 
     except c_center.models.ConsumerUnit.DoesNotExist:
         return electric_data_raw
+
+    hour_delta = timedelta(hours=1)
+    current_datetime = datetime.datetime(year=start.year,
+                                         month=start.month,
+                                         day=start.day,
+                                         hour=start.hour)
+
+    while current_datetime <= end:
+        electric_data_values_prev = \
+            c_center.models.ElectricDataTemp.objects.filter(
+                profile_powermeter=consumer_unit.profile_powermeter,
+                medition_date__gte=current_datetime - (hour_delta / 2),
+                medition_date__lte=current_datetime
+            ).order_by(
+                'medition_date'
+            ).reverse().values(
+                'medition_date',
+                electric_data_name_local
+            )[:1]
+
+        electric_data_values_next =\
+            c_center.models.ElectricDataTemp.objects.filter(
+                profile_powermeter=consumer_unit.profile_powermeter,
+                medition_date__gte=current_datetime,
+                medition_date__lte=current_datetime + (hour_delta / 2)
+            ).order_by(
+                'medition_date'
+            ).values(
+                'medition_date',
+                electric_data_name_local
+            )[:1]
+
+        if len(electric_data_values_prev) <= 0 or len(electric_data_values_next) <= 0:
+            electric_data = 0
+            continue
+
+        electric_data =\
+            electric_data_values_next[0][electric_data_name_local] - \
+            electric_data_values_prev[0][electric_data_name_local]
+
+        medition_date = current_datetime
+        electric_data_raw.append(
+            dict(datetime=int(time.mktime(medition_date.timetuple())),
+                 electric_data=electric_data,
+                 certainty=True))
+
+        current_datetime += hour_delta
+
     return electric_data_raw
 
 

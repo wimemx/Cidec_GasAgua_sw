@@ -304,7 +304,7 @@ def obtenerTipoPeriodo(fecha, region, tarifa, catalogo_grupos):
     return electric_type[0].period_type
 
 
-def obtenerTipoPeriodoObj(fecha, region, tarifa):
+def obtenerTipoPeriodoObj(fecha, region):
     """
     Se obtiene el tipo de periodo de una lectura, en base a la fecha y hora en que fue tomada, región y tarifa.
 
@@ -313,7 +313,7 @@ def obtenerTipoPeriodoObj(fecha, region, tarifa):
     grupo_id = obtenerGrupo(catalogo_grupos, fecha)
     horario_ver_inv = [date.pk for date in DateIntervals.objects.filter(date_init__lte= datetime.date(fecha.year,fecha.month,fecha.day)).filter(date_end__gte = datetime.date(fecha.year,fecha.month,fecha.day))]#.filter(region = region)
 
-    electric_type = ElectricRatesPeriods.objects.filter(region = region).filter(electric_rate = tarifa).filter(date_interval__in = horario_ver_inv).filter(groupdays = grupo_id).filter(time_init__lte = datetime.time(fecha.hour,fecha.minute)).filter(time_end__gte = datetime.time(fecha.hour,fecha.minute))
+    electric_type = ElectricRatesPeriods.objects.filter(region = region).filter(date_interval__in = horario_ver_inv).filter(groupdays = grupo_id).filter(time_init__lte = datetime.time(fecha.hour,fecha.minute)).filter(time_end__gte = datetime.time(fecha.hour,fecha.minute))
 
     return electric_type[0]
 
@@ -1483,7 +1483,7 @@ def tag_reading_batch():
                     #Obtiene el periodo de la lectura actual
                     fecha_zhor = readingObj.medition_date.astimezone(tz=timezone.get_current_timezone())
                     #reading_period_type = obtenerTipoPeriodoObj(readingObj.medition_date, buildingObj.region, buildingObj.electric_rate)
-                    reading_period_type = obtenerTipoPeriodoObj(fecha_zhor, buildingObj.region, buildingObj.electric_rate)
+                    reading_period_type = obtenerTipoPeriodoObj(fecha_zhor, buildingObj.region)
 
                     #Obtiene las ultimas lecturas de ese medidor
                     last_reading = ElectricRateForElectricData.objects.filter(electric_data__profile_powermeter = readingObj.profile_powermeter).order_by("-electric_data__medition_date")
@@ -1557,7 +1557,7 @@ def tag_reading(request):
                     #Obtiene el periodo de la lectura actual
                     fecha_zhor = readingObj.medition_date.astimezone(tz=timezone.get_current_timezone())
                     #reading_period_type = obtenerTipoPeriodoObj(readingObj.medition_date, buildingObj.region, buildingObj.electric_rate)
-                    reading_period_type = obtenerTipoPeriodoObj(fecha_zhor, buildingObj.region, buildingObj.electric_rate)
+                    reading_period_type = obtenerTipoPeriodoObj(fecha_zhor, buildingObj.region)
 
                     #Obtiene las ultimas lecturas de ese medidor
                     last_reading = ElectricRateForElectricData.objects.filter(electric_data__profile_powermeter = readingObj.profile_powermeter).order_by("-electric_data__medition_date")
