@@ -996,52 +996,19 @@ def add_data_context_permissions(request):
                                                 message = "El rol, sus permisos y asignaciones al edificio y " \
                                                           "sus partes, se ha guardado correctamente"
                                                 type = "n_success"
-
-                                        user_role, created = UserRole.objects.get_or_create(user=usuario,
-                                                             role=rol)
-                                        data_context, created = DataContextPermission.objects.get_or_create(
-                                            user_role=user_role,
-                                            cluster=cluster,
-                                            company=company,
-                                            building=building
-                                        )
-                                        message = "El rol, sus permisos y su asignación al edificio, se" \
-                                                  " ha guardado correctamente"
-                                        type = "n_success"
-
-                            #alta de asignación de roles/permisos para todas las partes de
-                            # todos los edificios de una empresa
-                            try:
-                                company = Company.objects.get(pk=int(request.POST['company']))
-                            except ObjectDoesNotExist:
-                                message = "Ha ocurrido un error al seleccionar la empresa, por favor "\
-                                          "verifique e intente de nuevo"
-                                type = "n_error"
+                                            else:
+                                                message, type = add_permission_to_parts(usuario, rol, cluster, company, building)
+                                        else:
+                                            message, type = add_permission_to_parts(usuario, rol, cluster, company, building)
+                                else:
+                                    message, type = add_permission_to_buildings(usuario, rol, cluster, request.POST['company'])
                             else:
-                                user_role, created = UserRole.objects.get_or_create(user=usuario,
-                                                     role=rol)
-
-                                data_context, created = DataContextPermission.objects.get_or_create(
-                                    user_role=user_role,
-                                    cluster=cluster,
-                                    company=company
-                                )
-
-                                message = "El rol, sus permisos y su asignación a los edificios" \
-                                          "de la empresa se han guardado correctamente"
-                                type = "n_success"
+                                message, type = add_permission_to_buildings(usuario, rol, cluster, request.POST['company'])
+                    else:
+                        message, type = add_permission_to_companies(usuario, rol, cluster)
                 else:
-                    #alta de asignación de roles/permisos para todas los edificios de todas
-                    # las empresas de un cluster
-                    user_role, created = UserRole.objects.get_or_create(user=usuario,
-                                         role=rol)
-                    data_context, created = DataContextPermission.objects.get_or_create(
-                        user_role=user_role,
-                        cluster=cluster
-                    )
-                    message = "El rol, sus permisos y asignaciones al cluster y "\
-                              "sus empresas, se ha guardado correctamente"
-                    type = "n_success"
+                    message, type = add_permission_to_companies(usuario, rol, cluster)
+
             if type == "n_success" and (has_permission(request.user, VIEW, "Ver asignaciones de roles a usuarios") or request.user.is_superuser):
                 return HttpResponseRedirect("/panel_de_control/roles_asignados/?msj=" + message +
                                             "&ntype=n_success")
@@ -1065,6 +1032,74 @@ def add_data_context_permissions(request):
         template_vars["sidebar"] = request.session['sidebar']
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
+
+def add_permission_to_parts(usuario, rol, cluster, company, building):
+    """Asigns the role 'rol' for all the parts in the building 'building'
+     usuario = django UserAuth object
+     cluster =  Cluster object
+     company = Company object
+     building = Building object
+     only returns messages
+    """
+    user_role, created = UserRole.objects.get_or_create(user=usuario,
+        role=rol)
+    data_context, created = DataContextPermission.objects.get_or_create(
+        user_role=user_role,
+        cluster=cluster,
+        company=company,
+        building=building
+    )
+    message = "El rol, sus permisos y su asignación al edificio, se"\
+              " ha guardado correctamente"
+    type = "n_success"
+    return message, type
+
+def add_permission_to_buildings(usuario, rol, cluster, company_pk):
+    """Asigns the role 'rol' for all the buildings in 'company_pk'
+     usuario = django UserAuth object
+     cluster =  Cluster object
+     company = Company object
+     only returns messages
+    """
+    try:
+        company = Company.objects.get(pk=int(company_pk))
+    except ObjectDoesNotExist:
+        message = "Ha ocurrido un error al seleccionar la empresa, por favor "\
+                  "verifique e intente de nuevo"
+        type = "n_error"
+    else:
+        user_role, created = UserRole.objects.get_or_create(user=usuario,
+            role=rol)
+
+        data_context, created = DataContextPermission.objects.get_or_create(
+            user_role=user_role,
+            cluster=cluster,
+            company=company
+        )
+
+        message = "El rol, sus permisos y su asignación a los edificios"\
+                  "de la empresa se han guardado correctamente"
+        type = "n_success"
+    return message, type
+
+def add_permission_to_companies(usuario, rol, cluster):
+    """Asigns the role 'rol' for all the companies in the cluster 'cluster'
+     usuario = django UserAuth object
+     cluster =  Cluster object
+     company = Company object
+     only returns messages
+    """
+    user_role, created = UserRole.objects.get_or_create(user=usuario,
+        role=rol)
+    data_context, created = DataContextPermission.objects.get_or_create(
+        user_role=user_role,
+        cluster=cluster
+    )
+    message = "El rol, sus permisos y asignaciones al cluster y "\
+              "sus empresas, se ha guardado correctamente"
+    type = "n_success"
+
+    return message, type
 
 def added_data_context_permissions(request):
     if not request.user.is_authenticated():

@@ -44,8 +44,7 @@ from data_warehouse.views import get_consumer_unit_electric_data_csv,\
 
 import json as simplejson
 import sys
-from celery import current_app
-from tareas.tasks import datawarehouse_run
+#from tareas.tasks import datawarehouse_run
 
 VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
@@ -65,44 +64,59 @@ GRAPHS = dict(energia=GRAPHS_ENERGY, corriente=GRAPHS_I, voltaje=GRAPHS_V, facto
 
 def call_celery_delay(request):
     if request.user.is_superuser:
-        text = 'Se calcular&aacute;n: <br/>'
-        if "instantes" in request.GET:
-            fill_instants=True
-            text+="instantes<br/>"
-        else:
-            fill_instants=None
-        if "intervalos" in request.GET:
-            fill_intervals=True
-            text+="intervalos<br/>"
-        else:
-            fill_intervals=None
-        if "consumer_units" in request.GET:
-            _update_consumer_units=True
-            text+="consumer_units<br/>"
-        else:
-            _update_consumer_units=None
-        if "instant_facts" in request.GET:
-            populate_instant_facts=True
-            text+="instant_facts<br/>"
-        else:
-            populate_instant_facts=None
-        if "interval_facts" in request.GET:
-            populate_interval_facts=True
-            text+="interval_facts<br/>"
-        else:
-            populate_interval_facts=None
 
-        datawarehouse_run.delay(
-            fill_instants,
-            fill_intervals,
-            _update_consumer_units,
-            populate_instant_facts,
-            populate_interval_facts
-        )
-        text = "celery task set - "+text
+        if request.method == "POST":
+            text = '<h3>Se calcular&aacute;n: </h3>'
+            almenosuno = False
+            if "instantes" in request.POST:
+                fill_instants=True
+                text+="instantes<br/>"
+                almenosuno = True
+            else:
+                fill_instants=None
+            if "intervalos" in request.POST:
+                fill_intervals=True
+                text+="intervalos<br/>"
+                almenosuno = True
+            else:
+                fill_intervals=None
+            if "consumer_units" in request.POST:
+                _update_consumer_units=True
+                text+="consumer_units<br/>"
+                almenosuno = True
+            else:
+                _update_consumer_units=None
+            if "instant_facts" in request.POST:
+                populate_instant_facts=True
+                text+="instant_facts<br/>"
+                almenosuno = True
+            else:
+                populate_instant_facts=None
+            if "interval_facts" in request.POST:
+                populate_interval_facts=True
+                text+="interval_facts<br/>"
+                almenosuno = True
+            else:
+                populate_interval_facts=None
+            if almenosuno:
+                #datawarehouse_run.delay(
+                #    fill_instants,
+                #    fill_intervals,
+                #    _update_consumer_units,
+                #    populate_instant_facts,
+                #    populate_interval_facts
+                #)
+                pass
+            else:
+                text="No se realizar&aacute; ninguna acci&oacute;n"
+        else:
+            text = ''
+        template_vars=dict(text=text)
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("tasks/datawarehouse_populate.html", template_vars_template)
     else:
         raise Http404
-    return HttpResponse(content=text, content_type="text/html")
+
 
 def get_all_profiles_for_user(user):
     """ returns an array of consumer_units in wich the user has access
@@ -4233,6 +4247,10 @@ def add_partbuilding(request):
                 #Se obtiene la instancia del tipo de parte de edificio
                 part_building_type_obj = get_object_or_404(PartOfBuildingType, pk=b_part_type_id)
 
+                if not bool(b_part_mt2):
+                    b_part_mt2 = '0'
+                else:
+                    b_part_mt2 = b_part_mt2.replace(",","")
 
                 newPartBuilding = PartOfBuilding(
                     building = buildingObj,
@@ -4340,6 +4358,11 @@ def edit_partbuilding(request, id_bpart):
             b_part_building_name = request.POST.get('b_building_name').strip()
             b_part_building_id = request.POST.get('b_building_id')
             b_part_mt2 = request.POST.get('b_part_mt2').strip()
+
+            if not bool(b_part_mt2):
+                b_part_mt2 = '0'
+            else:
+                b_part_mt2 = b_part_mt2.replace(",","")
 
             continuar = True
             if b_part_name == '':

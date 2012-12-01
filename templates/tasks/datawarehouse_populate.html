@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block titulo %}Reportes{% endblock %}
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/consumption_centers/main.css" type="text/css" />
+{% endblock %}
+{% block contenido %}
+    <div id="bread_crumbs">
+        <ul>
+            <li><a href="/main/">Inicio</a></li>
+            <li><a href="/main/">Reportes</a></li>
+        </ul>
+
+    </div>
+    <div id="contenido_interno">
+        <h2 id="titulo_reporte">Data Warehouse</h2>
+        <div class="divider" id="divider_top">&nbsp;</div>
+        {% if text %}
+            <span class="posted">
+                    {% autoescape off %}{{ text }}{% endautoescape %}
+            </span>
+        {% endif %}
+        <div id="graphs_container">
+            <form action="." method="post">
+                {% csrf_token %}
+                <p class="g12">
+                    <label class="g2" for="instantes">Generar Instantes
+                    </label>
+                    <input type="checkbox" name="instantes" id="instantes"/>
+                </p>
+                <p class="g12">
+                    <label class="g2" for="intervalos">Calcular Int&eacute;rvalos
+                    </label>
+                    <input type="checkbox" name="intervalos" id="intervalos"/>
+                </p>
+                <p class="g12">
+                    <label class="g2" for="consumer_units">Calcular Consumer Units
+                    </label>
+                    <input type="checkbox" name="consumer_units" id="consumer_units"/>
+                </p>
+                <p class="g12">
+                    <label class="g2" for="instant_facts">Calcular Instant Facts
+                    </label>
+                    <input type="checkbox" name="instant_facts" id="instant_facts"/>
+                </p>
+                <p class="g12">
+                    <label class="g2" for="interval_facts">Calcular Interval Facts
+                    </label>
+                    <input type="checkbox" name="interval_facts" id="interval_facts"/>
+                </p>
+                <p class="g12">
+                    <button type="submit" class="aqua_btn c">Actualizar DW</button>
+                </p>
+
+            </form>
+        </div>
+
+
+    </div>
+{% endblock %}

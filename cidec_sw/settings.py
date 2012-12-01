@@ -1,7 +1,7 @@
 # Django settings for cidec_sw project.
 from datetime import timedelta
-import djcelery
-djcelery.setup_loader()
+#import djcelery
+#djcelery.setup_loader()
 import os
 
 CELERY_RESULT_BACKEND = "amqp"
@@ -165,8 +165,8 @@ INSTALLED_APPS = (
     'electric_rates',
     #'south',
     'data_warehouse',
-    'djcelery',
-    'tareas',
+    #'djcelery',
+    #'tareas',
 )
 
 # A sample logging configuration. The only tangible logging

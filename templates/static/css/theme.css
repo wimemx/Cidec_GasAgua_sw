@@ -291,6 +291,7 @@ body{
 /* ----- Buttons -----*/
 button{
     height: 31px;
+    min-width: 103px;
 }
 a.aqua_btn:hover, a.grey_btn:hover{
     text-decoration: none;

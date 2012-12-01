@@ -1,39 +1,98 @@
-<!DOCTYPE html>
-
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <title>Super plugin :)</title>
+    <title>jQuery-validator Demo</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <link rel="stylesheet" type="text/css" href="css/validator.css">
-    <script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
-    <script type="text/javascript" src="js/validator.js"></script>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <script type="text/javascript" src="js/validator.min.js"></script>
     <script type="text/javascript">
-        $(document).ready(function(){
+        $(document).on("ready", function(){
             $("#form1").validate();
         });
-        
     </script>
 </head>
 
 <body>
+<h1>jQuery Validator</h1>
+<p>
+    jQuery Validator es un plugin para jQuery que te permite validar de manera sencilla campos de texto y selects en tu formulario de HTML,
+    su uso es bastante sencillo, y permite cierta personalización.
+</p>
+<h2>Instalación</h2>
+<p>
+    Solo necesitas jQuery, y lo incluido en este plugin, agr&eacute;galo en el head de tu página y ya puedes usarlo:
+    <xmp>
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+        <script type="text/javascript" src="js/validator.min.js"></script>
+    </xmp>
+</p>
+<h2>&iquest;Como se usa?</h2>
+<p>
+    Su uso es bastante sencillo, solo tienes que llamarlo al inicio con el id del o los formularios a validar.
+    <pre>
+        $(document).on("ready", function(){
+            $("#form1").validate();
+        });
+    </pre>
+</p>
+<p>
+    Para los campos de nuestro formulario que deseamos validar solo agregamos la clase &quot;validate&quot; junto con el tipo de validaci&oacute;n que deseamos.<br/>
+    Las opciones para los input de tipo son:
+</p>
+<dl>
+    <dt>alphanumeric</dt>
+    <dd>Lo necesario para validar campos de texto, acepta letras, numeros, acentos, puntos y comas</dd>
+
+    <dt>alpha</dt>
+    <dd>Igual que el anterior, solo que no admite valores numéricos</dd>
+
+    <dt>numeric</dt>
+    <dd>Solo admite valores numéricos, con separador de miles por comas y decimales opcionales</dd>
+
+    <dt>email</dt>
+    <dd>Revisa que el campo contenga una direcci&oacute;n de correo electr&oacute;nico v&aacute;lido</dd>
+
+    <dt>url</dt>
+    <dd>valida que el campo contenga una url v&aacute;lida, iniciando con ftp://, http:// o https:// </dd>
+</dl>
+<p>
+    Para los campos de tipo select, solo necesitamos la clase validate, que revisará que la opción seleccionada no sea &quot;&quot; ni &quot;0&quot;
+</p>
+<h2>Personalizaci&oacute;n</h2>
+<p>
+    Podemos personalizar jQuery Validate de una manera muy sencilla, por default las opciones del plugin son
+    <pre>
+    $("#form").validate({
+      class_: ".validate",
+      maxlength: 300,
+      correct_img: "imgs/correct.png", //ruta relativa a este documento
+      incorrect_img: "imgs/incorrect.png" //ruta relativa a este documento
+    });
+    </pre>
+    Podemos personalizar f&aacute;cilmente la clase que tienen los campos a validar, su longitud m&aacute;xima, y las im&aacute;genes de estado correcto o incorrecto.
+</p>
 
 <form name="form1" id="form1" action="" method="GET" enctype="application/x-www-form-urlencoded">
-    <input type="text" name="text1" id="text1" class="validate url"/>
-    <input type="text" name="text2" id="text2"/>
-    
-    <select name="select1" id="select1" class="validate notnull">
-        <option value="0">escoje</option>
-        <option value="1">opcion 1</option>
-        <option value="2">opcion 2</option>
-    </select>
-    
-    <select name="select2" id="select2">
-        <option value="0">escoje</option>
-        <option value="1">opcion 1</option>
-        <option value="2">opcion 2</option>
-    </select>
-    
-    
-    <input type="submit"/><input type="reset"/>
+    <p>
+        <label for="text1">Input opcional, validado</label>
+        <input type="text" name="text1" id="text1" class="validate url"/>
+    </p>
+    <p>
+        <label for="text2">Input obligatorio</label>
+        <input type="text" name="text2" id="text2" class="validate notnull numeric"/>
+    </p>
+    <p>
+        <label for="select1">Validaci&oacute;n de select</label>
+        <select name="select1" id="select1" class="validate">
+            <option value="0">escoje</option>
+            <option value="1">opcion 1</option>
+            <option value="2">opcion 2</option>
+        </select>
+    </p>
+    <p>
+        <button>Enviar !</button>
+    </p>
 </form>
 
 </body>

@@ -247,7 +247,7 @@ def data_warehouse_update(
     # Update instants facts tables
     #
     logger.info("UPDATE INSTANTS FACTS TABLES START")
-    update_instants_start = datetime.utcnow() - (2 * update_time_delta)
+    update_instants_start = datetime.utcnow() - (4 * update_time_delta)
     update_instants_end = datetime.utcnow()
     for consumer_unit in consumer_units:
         logger.info("Populate Consumer Unit: " + str(consumer_unit.pk))

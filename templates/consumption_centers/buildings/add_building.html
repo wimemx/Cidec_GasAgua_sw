@@ -442,7 +442,7 @@
         });
 
 
-        if($('#b_latitude').val() != '' && $('#b_longitude').val() != '' ){
+        if($('#b_latitude').val() != '0' && $('#b_longitude').val() != '0' ){
             marker.setPosition(new google.maps.LatLng($('#b_latitude').val(), $('#b_longitude').val()));
             mapBusiness.setCenter(marker.getPosition());
         }
@@ -762,8 +762,8 @@ $("a.back").click(function(e){e.preventDefault(); History.back();});
                     </div>
                 </div>
                 <div class="building_column">
-                    <input type="hidden" id="b_latitude" name="b_latitude" value="{{post.b_lat}}"/>
-                    <input type="hidden" id="b_longitude" name="b_longitude" value="{{post.b_long}}"/>
+                    <input type="hidden" id="b_latitude" name="b_latitude" value="{% if post.b_lat %}{{post.b_lat}}{% else %}0{% endif %}"/>
+                    <input type="hidden" id="b_longitude" name="b_longitude" value="{% if post.b_long %}{{post.b_long}}{% else %}0{% endif %}"/>
                     <div id="map_container">
                         <div id="map_canvas" class="map_canvas"></div>
                     </div>

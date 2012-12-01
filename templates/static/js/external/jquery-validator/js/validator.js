@@ -3,7 +3,6 @@
    var defaults = {
       class_: ".validate",
       maxlength: 300,
-      //allow: "alphanumeric", //numeric, alpha, email, url, notnull
       correct_img: "imgs/correct.png",
       incorrect_img: "imgs/incorrect.png"
    };
@@ -27,23 +26,45 @@
        else if (element.hasClass("url")) {
            regexp = new RegExp(/^(ht|f)tps?:\/\/[a-z0-9-\.]+\.[a-z]{2,4}\/?([^\s<>#%",\{\}\\|\\\^\[\]`]+)?$/);
        }
-       if ($.trim(element_value) != '') {
-           if (regexp.test(element_value)) {
-               back_ = back_correct;
-           } else {
+       if(element.hasClass("notnull")){
+           if ($.trim(element_value) == '') {
                back_ = back_incorrect;
                valid_form = false;
+           }else{
+               if (regexp.test(element_value)) {
+                   back_ = back_correct;
+               } else {
+                   back_ = back_incorrect;
+                   valid_form = false;
+               }
            }
-       } else {
-           back_ = back_incorrect;
-           valid_form = false;
+       }else{
+           if ($.trim(element_value) != '') {
+               if (regexp.test(element_value)) {
+                   back_ = back_correct;
+               } else {
+                   back_ = back_incorrect;
+                   valid_form = false;
+               }
+           }
        }
        element.next().css("background", back_);
+       return valid_form;
+   };
+   var validate_option = function(element, element_value){
+       var back_;
+       if(element_value=='0' || element_value==''){
+           back_ = back_incorrect;
+           valid_form = false;
+       }else{
+           back_ = back_correct;
+       }
+       element.next().css("background", back_);
+       return valid_form;
    };
 
    return this.each(function() {
       var obj = $(this);//form
-      var valid_form = true;
       obj.find(options.class_).each(function(){
          var obj_=$(this);
          obj_.after("<span class='status'></span>");
@@ -56,29 +77,40 @@
             var element = $("#"+e.delegateTarget.id);
             var element_value = $.trim(element.val());
             var element_type = e.delegateTarget.nodeName.toLowerCase();
-            var back_;
+
             if(element_type == "input"){
                validate_input(element, element_value);
             }else{
-               //validar option
+                //validate option
+                validate_option(element, element_value);
             }
-            
-            
          });
       });
       obj.submit(function() {
-         valid_form = function(){
-            
-            };
-         if(valid_form){
+         var valid_f = function(){
+            valid_form = true;
+            obj.find(options.class_).each(function(){
+                var element = $(this);
+                var element_value = $.trim(element.val());
+                var element_type = element[0].tagName.toLowerCase();
+                if(element_type == "input"){
+                    valid_form = validate_input(element, element_value);
+                }else{
+                    //validate option
+                    valid_form = validate_option(element, element_value);
+                }
+            });
+            return valid_form;
+         };
+         if(valid_f()){
             send++;
          }
-         if(send == 1){
-            return valid_form;
+
+         if(send === 1){
+            return true;
          }else{
             return false;
          }
-         
       });
    });
  };
