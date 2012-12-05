@@ -118,10 +118,10 @@ def get_consumer_unit_electric_data_interval_raw(
         return electric_data_raw
 
     hour_delta = timedelta(hours=1)
-    current_datetime = datetime.datetime(year=start.year,
-                                         month=start.month,
-                                         day=start.day,
-                                         hour=start.hour)
+    current_datetime = django.utils.timezone.localtime(datetime.datetime(year=start.year,
+        month=start.month,
+        day=start.day,
+        hour=start.hour))
 
     while current_datetime <= end:
         electric_data_values_prev = \

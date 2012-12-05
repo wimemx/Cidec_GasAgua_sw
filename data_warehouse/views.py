@@ -12,7 +12,7 @@ import time
 #
 from django.utils.timezone import utc
 from django.core.exceptions import ValidationError
-
+from django.utils import timezone
 #
 # Application Specific Imports
 #
@@ -247,8 +247,8 @@ def data_warehouse_update(
     # Update instants facts tables
     #
     logger.info("UPDATE INSTANTS FACTS TABLES START")
-    update_instants_start = datetime.utcnow() - (4 * update_time_delta)
-    update_instants_end = datetime.utcnow()
+    update_instants_start = datetime.now(tz=utc) - (5 * update_time_delta)
+    update_instants_end = datetime.now(tz=utc)
     for consumer_unit in consumer_units:
         logger.info("Populate Consumer Unit: " + str(consumer_unit.pk))
         populate_consumer_unit_electric_data(consumer_unit,
@@ -262,8 +262,8 @@ def data_warehouse_update(
     # Update intervals facts tables
     #
     logger.info("UPDATE INTERVALS FACTS TABLES START")
-    update_intervals_start = datetime.utcnow() - (2 * update_time_delta)
-    update_intervals_end = datetime.utcnow()
+    update_intervals_start = datetime.now(tz=utc) - (5 * update_time_delta)
+    update_intervals_end = datetime.now(tz=utc)
     for consumer_unit in consumer_units:
         logger.info("Populate Consumer Unit: " + str(consumer_unit.pk))
         populate_consumer_unit_electric_data_interval(consumer_unit,
@@ -1128,7 +1128,7 @@ def get_consumer_unit_electric_data(
 
         certainty = electric_data_value is not None
         electric_data_values.append(
-            dict(datetime=int(time.mktime(time_instant.instant_datetime.timetuple())),
+            dict(datetime=int(time.mktime(timezone.localtime(time_instant.instant_datetime).timetuple())),
                  electric_data=electric_data_value,
                  certainty=certainty))
 

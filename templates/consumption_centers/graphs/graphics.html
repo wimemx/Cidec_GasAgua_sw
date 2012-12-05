@@ -4,10 +4,10 @@
     <link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
     <link rel="stylesheet" href="/static/js/external/jqueryUniform/css/uniform.default.css" type="text/css" media="screen" charset="utf-8" />
     <link href="/static/js/external/messi/messi.css" rel="stylesheet" type="text/css" media="screen" />
-    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/js/external/jquery.tools.min.js"></script>
     <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
     <script type="text/javascript" src="/static/js/external/jqueryUniform/jquery.uniform.min.js"></script>
-    <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+    <script type="text/javascript" src="/static/js/external/jsapi.js"></script>
     <script type="text/javascript" src="/static/js/functions.js"></script>
     <script src="/static/js/external/messi/messi.min.js"></script>
     <script type="text/javascript">
@@ -176,9 +176,9 @@
                     for(var data_index = 0; data_index < row_data.length; data_index++){
                         var data_object = row_data[data_index];
                         var object_datetime = new Date();
-                        object_datetime.setTime((data_object['datetime']*1000) - 3600000);
+                        object_datetime.setTime((data_object['datetime']*1000) - 3600000*5);
                         row_array.push(object_datetime);
-                        var object_electric_data = data_object['electric_data'];
+                        var object_electric_data = Math.abs(data_object['electric_data']);
                         row_array.push(object_electric_data);
                         var object_certainty = data_object['certainty'];
                         row_array.push(object_certainty);
