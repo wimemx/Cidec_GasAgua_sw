@@ -1219,7 +1219,7 @@ def get_consumer_unit_electric_data_interval(
 
 
         certainty = electric_data_value is not None
-        electric_data_values.append(dict(datetime=int(time.mktime(time_interval.start_datetime.timetuple())),
+        electric_data_values.append(dict(datetime=int(time.mktime(timezone.localtime(time_interval.start_datetime).timetuple())),
                                          electric_data=electric_data_value,
                                          certainty=certainty))
 

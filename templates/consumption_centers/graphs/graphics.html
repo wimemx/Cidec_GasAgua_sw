@@ -176,7 +176,7 @@
                     for(var data_index = 0; data_index < row_data.length; data_index++){
                         var data_object = row_data[data_index];
                         var object_datetime = new Date();
-                        object_datetime.setTime((data_object['datetime']*1000) - 3600000*5);
+                        object_datetime.setTime((data_object['datetime']*1000));
                         row_array.push(object_datetime);
                         var object_electric_data = Math.abs(data_object['electric_data']);
                         row_array.push(object_electric_data);

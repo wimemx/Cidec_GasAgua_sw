@@ -90,7 +90,7 @@ def get_consumer_unit_electric_data_raw(
         electric_data = electric_data_value[electric_data_name]
         medition_date = electric_data_value['medition_date']
         electric_data_raw.append(
-            dict(datetime=int(time.mktime(medition_date.timetuple())),
+            dict(datetime=int(time.mktime(django.utils.timezone.localtime(medition_date).timetuple())),
                  electric_data=electric_data,
                  certainty=True))
 
@@ -158,7 +158,7 @@ def get_consumer_unit_electric_data_interval_raw(
 
         medition_date = current_datetime
         electric_data_raw.append(
-            dict(datetime=int(time.mktime(medition_date.timetuple())),
+            dict(datetime=int(time.mktime(django.utils.timezone.localtime(medition_date).timetuple())),
                  electric_data=electric_data,
                  certainty=True))
 
