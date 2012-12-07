@@ -700,7 +700,7 @@ def save_electric_data(
             #
             if electric_data_name in fields_percentage:
                 if interpolation_value is not None and abs(interpolation_value) > 1.0:
-                    interpolation_value /= interpolation_value
+                    interpolation_value = 1.0
 
             setattr(electric_data_new, electric_data_name, interpolation_value)
 
@@ -788,6 +788,7 @@ def interpolate_consumer_unit_electric_data_instant(
         medition_date__lt=instant_datetime,
         medition_date__gt=(instant_datetime - day_delta)
     ).order_by('medition_date')
+
     is_update_data_successful = update_data_dictionaries(
         electric_data_independent,
         electric_data_dependent,
@@ -959,7 +960,7 @@ def populate_consumer_unit_electric_data_interval(
                 granularity)
 
         except DataWarehouseInformationRetrieveException as\
-        interval_instants_information_retrieve_exception:
+                   interval_instants_information_retrieve_exception:
 
             logger.error(str(interval_instants_information_retrieve_exception))
             are_facts_valid = False
