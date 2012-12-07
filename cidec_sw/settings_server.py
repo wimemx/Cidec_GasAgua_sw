@@ -1,12 +1,19 @@
 # Django settings for cidec_sw project.
+from datetime import timedelta
 #import djcelery
 #djcelery.setup_loader()
 import os
-BROKER_HOST = "myhost"
-BROKER_PORT = "5672"
-BROKER_USER = "cidec_user"
-BROKER_PASSWORD = "a8d32e08"
-BROKER_VHOST = 'cidec_vhost'
+
+CELERY_RESULT_BACKEND = "amqp"
+
+BROKER_URL = 'amqp://guest:guest@one.cloudwime.com:5672//'
+#BROKER_HOST = "one.cloudwime.com"
+#BROKER_PORT = "5672"
+#BROKER_USER = "guest"
+#BROKER_PASSWORD = "guest"
+#BROKER_VHOST = '/'
+
+CELERY_IMPORTS = ('tareas',)
 
 PROJECT_PATH = os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(__file__)), os.path.pardir))
 
@@ -19,7 +26,7 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-"""DATABASES = {
+DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
         'NAME': 'audiwime_db',                      # Or path to database file if using sqlite3.
@@ -28,7 +35,7 @@ MANAGERS = ADMINS
         'HOST': 'audiwime.wimelabs.com',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     }
-}"""
+}
 """DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
@@ -40,16 +47,16 @@ MANAGERS = ADMINS
         # sqlite3.
     }
 }"""
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'audiwime_db',                      # Or path to database file if using sqlite3.
-        'USER': 'root',                      # Not used with sqlite3.
-        'PASSWORD': '',                  # Not used with sqlite3.
-        'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
-    }
+"""DATABASES = {
+'default': {
+    'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+    'NAME': 'audiwime_db',                      # Or path to database file if using sqlite3.
+    'USER': 'root',                      # Not used with sqlite3.
+    'PASSWORD': '',                  # Not used with sqlite3.
+    'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
+    'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
 }
+}"""
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -90,7 +97,7 @@ MEDIA_URL = '/static/media/'
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-#STATIC_ROOT = ''
+STATIC_ROOT = os.path.join(PROJECT_PATH, 'templates/static/')
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
@@ -101,7 +108,7 @@ STATICFILES_DIRS = (
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    os.path.join(PROJECT_PATH, 'templates/static/'),
+    #os.path.join(PROJECT_PATH, 'templates/static/'),
 )
 
 # List of finder classes that know how to find static files in
@@ -156,11 +163,10 @@ INSTALLED_APPS = (
     'c_center',
     'rbac',
     'electric_rates',
-    'south',
+    #'south',
     'data_warehouse',
-    'alarms',
-    'djcelery',
-    'tareas',
+    #'djcelery',
+    #'tareas',
 )
 
 # A sample logging configuration. The only tangible logging
@@ -183,7 +189,7 @@ LOGGING = {
         'simple': {
             'format': '%(levelname)s %(message)s'
         },
-        },
+    },
     'handlers': {
         'mail_admins': {
             'level': 'ERROR',
@@ -201,19 +207,19 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple'
         },
-        },
+    },
     'loggers': {
         'django.request': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
             'propagate': True,
-            },
+        },
         'data_warehouse': {
             'handlers': ['file', 'console'],
             'level': 'INFO',
             'propagate': True,
-            },
-        }
+        },
+    }
 }
 
 GRAPPELLI_ADMIN_TITLE = 'CIDEC'
