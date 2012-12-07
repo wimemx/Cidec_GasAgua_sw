@@ -30,8 +30,9 @@ def calculate_dw(granularity):
 # this will run every minute, see http://celeryproject.org/docs/reference/celery.task.schedules.html#celery.task.schedules.crontab
 @periodic_task(run_every=crontab(minute='*/60'))
 def data_warehouse_one_hour():
-    calculate_dw.delay("hour")
-    print "firing periodic task - DW Hour"
+    #calculate_dw.delay("hour")
+    data_warehouse_update("hour")
+    print "firing periodic task - DW Hour, :)"
 
 @periodic_task(run_every=crontab(minute=0, hour=0))
 def data_warehouse_one_day():

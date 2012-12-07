@@ -201,7 +201,18 @@ def is_number(number):
             dato=float(dato)
         return dato
 
-
-
 def is_valid_email(email):
     return True if email_re.match(email) else False
+
+def scale_dimensions(width, height, longest_side):
+    """ Calculates image ratio given a longest side
+    returns a tupple with ajusted width, height
+    """
+    if width > height:
+        if width > longest_side:
+            ratio = longest_side*1./width
+            return int(width*ratio), int(height*ratio)
+    elif height > longest_side:
+        ratio = longest_side*1./height
+        return int(width*ratio), int(height*ratio)
+    return width, height

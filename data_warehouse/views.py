@@ -161,7 +161,7 @@ def populate_data_warehouse(
             fill_instants_table(instant_start, instant_end, instant_key)
 
         logger.info("FILL INSTANTS TABLES END")
-    #
+        #
     # Fill intervals tables
     #
     if fill_intervals:
@@ -200,9 +200,9 @@ def populate_data_warehouse(
             for fact_instant_granularity in FACTS_INSTANT_CLASSES.keys():
                 logger.info("Granularity: " + fact_instant_granularity)
                 populate_consumer_unit_electric_data(consumer_unit,
-                                                     instant_facts_start,
-                                                     instant_facts_end,
-                                                     fact_instant_granularity)
+                    instant_facts_start,
+                    instant_facts_end,
+                    fact_instant_granularity)
         logger.info("POPULATE INSTANT FACTS TABLES END")
 
     #
@@ -217,9 +217,9 @@ def populate_data_warehouse(
             for fact_interval_granularity in FACTS_INTERVAL_CLASSES.keys():
                 logger.info("Granularity: " + fact_interval_granularity)
                 populate_consumer_unit_electric_data_interval(consumer_unit,
-                                                              interval_facts_start,
-                                                              interval_facts_end,
-                                                              fact_interval_granularity)
+                    interval_facts_start,
+                    interval_facts_end,
+                    fact_interval_granularity)
         logger.info("POPULATE INTERVALS FACTS TABLES END")
 
 
@@ -252,9 +252,9 @@ def data_warehouse_update(
     for consumer_unit in consumer_units:
         logger.info("Populate Consumer Unit: " + str(consumer_unit.pk))
         populate_consumer_unit_electric_data(consumer_unit,
-                                             update_instants_start,
-                                             update_instants_end,
-                                             granularity)
+            update_instants_start,
+            update_instants_end,
+            granularity)
 
     logger.info("UPDATE INSTANTS FACTS TABLES END")
 
@@ -267,9 +267,9 @@ def data_warehouse_update(
     for consumer_unit in consumer_units:
         logger.info("Populate Consumer Unit: " + str(consumer_unit.pk))
         populate_consumer_unit_electric_data_interval(consumer_unit,
-                                                      update_instants_start,
-                                                      update_instants_end,
-                                                      granularity)
+            update_instants_start,
+            update_instants_end,
+            granularity)
 
     logger.info("UPDATE INTERVALS FACTS TABLES END")
 
@@ -421,13 +421,13 @@ def update_consumer_units():
             continue
 
         consumer_unit_data_warehouse.building_name =\
-            get_consumer_unit_building_name(consumer_unit)
+        get_consumer_unit_building_name(consumer_unit)
 
         consumer_unit_data_warehouse.part_of_building_name =\
-            get_consumer_unit_part_of_building_name(consumer_unit)
+        get_consumer_unit_part_of_building_name(consumer_unit)
 
         consumer_unit_data_warehouse.electric_device_type_name =\
-            get_consumer_unit_electric_device_type_name(consumer_unit)
+        get_consumer_unit_electric_device_type_name(consumer_unit)
 
         try:
             consumer_unit_data_warehouse.full_clean()
@@ -640,8 +640,8 @@ def interpolation_functions_dictionary(independent_data, dependent_data, points_
         try:
             if is_valid_points_count(points_count_dictionary[key]):
                 interpolation_functions[key] = interpolate.interp1d(independent_data[key],
-                                                                    dependent_data[key],
-                                                                    'cubic')
+                    dependent_data[key],
+                    'cubic')
 
         except KeyError as interpolation_functions_key_error:
             logger.error(Error.KEY_ERROR + "\n\t" + str(interpolation_functions_key_error))
@@ -815,7 +815,6 @@ def interpolate_consumer_unit_electric_data_instant(
         medition_date__gte=instant_datetime,
         medition_date__lte=(instant_datetime + day_delta)
     ).order_by('medition_date')
-
     is_update_data_successful = update_data_dictionaries(
         electric_data_independent,
         electric_data_dependent,
@@ -860,7 +859,7 @@ def populate_consumer_unit_electric_data(
 
     try:
         profile_powermeter = ProfilePowermeter.objects.get(
-                                 pk=consumer_unit.profile_powermeter.pk)
+            pk=consumer_unit.profile_powermeter.pk)
 
     except ProfilePowermeter.DoesNotExist as profile_powermeter_does_not_exist:
         logger.error(Error.PROFILE_POWERMETER_DOES_NOT_EXIST + "\n\t" +
@@ -870,7 +869,7 @@ def populate_consumer_unit_electric_data(
 
     try:
         consumer_unit_data_warehouse = ConsumerUnit.objects.get(
-                                           transactional_id=consumer_unit.pk)
+            transactional_id=consumer_unit.pk)
 
     except ConsumerUnit.DoesNotExist as consumer_unit_does_not_exist:
         logger.error(Error.CONSUMER_UNIT_DOES_NOT_EXIST + "\n\t" +
@@ -932,7 +931,7 @@ def populate_consumer_unit_electric_data_interval(
 ):
     try:
         consumer_unit_data_warehouse = ConsumerUnit.objects.get(
-                                           transactional_id=consumer_unit.pk)
+            transactional_id=consumer_unit.pk)
 
     except ConsumerUnit.DoesNotExist as consumer_unit_does_not_exist:
         logger.error(Error.CONSUMER_UNIT_DOES_NOT_EXIST + "\n\t" +
@@ -1043,9 +1042,9 @@ def interpolate_electric_data():
     to_datetime = datetime(year=2012, month=11, day=19, hour=0, tzinfo=utc)
     granularity="day"
     populate_consumer_unit_electric_data(consumer_unit,
-                                         from_datetime,
-                                         to_datetime,
-                                         granularity)
+        from_datetime,
+        to_datetime,
+        granularity)
 
 
 def interpolate_electric_data_interval():
@@ -1129,8 +1128,8 @@ def get_consumer_unit_electric_data(
         certainty = electric_data_value is not None
         electric_data_values.append(
             dict(datetime=int(time.mktime(timezone.localtime(time_instant.instant_datetime).timetuple())),
-                 electric_data=electric_data_value,
-                 certainty=certainty))
+                electric_data=electric_data_value,
+                certainty=certainty))
 
 
     return electric_data_values
@@ -1220,8 +1219,8 @@ def get_consumer_unit_electric_data_interval(
 
         certainty = electric_data_value is not None
         electric_data_values.append(dict(datetime=int(time.mktime(timezone.localtime(time_interval.start_datetime).timetuple())),
-                                         electric_data=electric_data_value,
-                                         certainty=certainty))
+            electric_data=electric_data_value,
+            certainty=certainty))
 
 
     return electric_data_values

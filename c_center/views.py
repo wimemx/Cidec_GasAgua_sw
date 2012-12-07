@@ -6,7 +6,6 @@ import Image
 import cStringIO
 import os
 from django.core.files import File
-import hashlib
 import csv
 import re
 import time
@@ -31,8 +30,10 @@ from c_center.calculations import *
 from c_center.models import *
 from location.models import *
 from electric_rates.models import ElectricRatesDetail
-from rbac.models import Operation, DataContextPermission, UserRole, Object, PermissionAsigment, GroupObject
-from rbac.rbac_functions import  has_permission, get_buildings_context, default_consumerUnit
+from rbac.models import Operation, DataContextPermission, UserRole, Object, \
+    PermissionAsigment, GroupObject
+from rbac.rbac_functions import  has_permission, get_buildings_context, \
+    default_consumerUnit
 from c_center_functions import *
 
 from c_center.graphics import *
@@ -51,20 +52,20 @@ CREATE = Operation.objects.get(operation_name="Crear")
 DELETE = Operation.objects.get(operation_name="Eliminar")
 UPDATE = Operation.objects.get(operation_name="Modificar")
 
-#GRAPHS =['Potencia Activa (KW)', 'Potencia Reactiva (KVar)', 'Factor de Potencia (PF)',
-#         'kW Hora', 'kW Hora Consumido', 'kVAR Hora', 'kVAR Hora Consumido']
-#GRAPHS = ['Potencia Activa (KW)', 'Kw Fase1', 'Kw Fase2', 'Kw Fase3', 'Kw/H acumulado',
-#          'Kw/h/h', 'I1', 'I2', 'I3', 'V1', 'V2', 'V3', 'PF']
-GRAPHS_ENERGY = [ob.object for ob in GroupObject.objects.filter(group__group_name="Energía")] #['Potencia Activa (KW)', 'Kw Fase1', 'Kw Fase2', 'Kw Fase3', 'Kw/H acumulado', 'Kw/h/h']
-GRAPHS_I = [ob.object for ob in GroupObject.objects.filter(group__group_name="Corriente")] #['I1', 'I2', 'I3']
-GRAPHS_V = [ob.object for ob in GroupObject.objects.filter(group__group_name="Voltaje")] #['V1', 'V2', 'V3']
-GRAPHS_PF = [ob.object for ob in GroupObject.objects.filter(group__group_name="Factor de Potencia")] #['PF',]
+GRAPHS_ENERGY = [ob.object for ob in GroupObject.objects.filter(
+    group__group_name="Energía")]
+GRAPHS_I = [ob.object for ob in GroupObject.objects.filter(
+    group__group_name="Corriente")]
+GRAPHS_V = [ob.object for ob in GroupObject.objects.filter(
+    group__group_name="Voltaje")]
+GRAPHS_PF = [ob.object for ob in GroupObject.objects.filter(
+    group__group_name="Factor de Potencia")]
 
-GRAPHS = dict(energia=GRAPHS_ENERGY, corriente=GRAPHS_I, voltaje=GRAPHS_V, factor_potencia=GRAPHS_PF)
+GRAPHS = dict(energia=GRAPHS_ENERGY, corriente=GRAPHS_I, voltaje=GRAPHS_V,
+            factor_potencia=GRAPHS_PF)
 
 def call_celery_delay(request):
     if request.user.is_superuser:
-
         if request.method == "POST":
             text = '<h3>Se calcular&aacute;n: </h3>'
             almenosuno = False
@@ -113,120 +114,10 @@ def call_celery_delay(request):
             text = ''
         template_vars=dict(text=text)
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("tasks/datawarehouse_populate.html", template_vars_template)
+        return render_to_response("tasks/datawarehouse_populate.html",
+                                  template_vars_template)
     else:
         raise Http404
-
-
-def get_all_profiles_for_user(user):
-    """ returns an array of consumer_units in wich the user has access
-    """
-    contexts = DataContextPermission.objects.filter(user_role__user=user)
-    c_us = []
-    for context in contexts:
-        consumer_units = ConsumerUnit.objects.filter(building=context.building)
-        #cu, user, building
-        for consumerUnit in consumer_units:
-            if consumerUnit.profile_powermeter.powermeter.powermeter_anotation != "Medidor Virtual":
-                if context.part_of_building:
-                    #if the user has permission over a part of building, and the consumer unit is
-                    #the cu for the part of building
-                    if consumerUnit.part_of_building == context.part_of_building:
-                        c_us.append(consumerUnit)
-                    elif is_in_part_of_building(consumerUnit, context.part_of_building):
-                        c_us.append(consumerUnit)
-                elif context.building == consumerUnit.building:
-                    c_us.append(consumerUnit)
-
-    return c_us
-
-def get_intervals_1(get):
-    """get the interval for the graphs
-    by default we get the data from the last month
-    returns f1_init, f1_end as datetime objects
-    """
-    f1_init = datetime.datetime.today() - relativedelta( months = 1 )
-    f1_end = datetime.datetime.today()
-
-    if "f1_init" in get:
-        if get["f1_init"] != '':
-            f1_init = time.strptime(get['f1_init'], "%d/%m/%Y")
-            f1_init = datetime.datetime(f1_init.tm_year, f1_init.tm_mon, f1_init.tm_mday)
-        if get["f1_end"] != '':
-            f1_end = time.strptime(get['f1_end'], "%d/%m/%Y")
-            f1_end = datetime.datetime(f1_end.tm_year, f1_end.tm_mon, f1_end.tm_mday)
-
-    return f1_init, f1_end
-
-def get_intervals_fecha(get):
-    """get the interval for the graphs
-    by default we get the data from the last month
-    returns f1_init, f1_end as formated strings
-    """
-    f1_init = datetime.datetime.today() - relativedelta( months = 1 )
-    f1_init = str(f1_init.year)+"-"+str(f1_init.month)+"-"+str(f1_init.day)+" 00:00:00"
-    f1_end = datetime.datetime.today()
-    f1_end = str(f1_end.year)+"-"+str(f1_end.month)+"-"+str(f1_end.day)+" 23:59:59"
-
-
-    if "f1_init" in get:
-        f1_init = get['f1_init']
-        f1_init=str.split(str(f1_init),"/")
-        f1_init = str(f1_init[2])+"-"+str(f1_init[1])+"-"+str(f1_init[0])+" 00:00:00"
-        f1_end = get['f1_end']
-        f1_end = str.split(str(f1_end),"/")
-        f1_end = str(f1_end[2])+"-"+str(f1_end[1])+"-"+str(f1_end[0])+" 23:59:59"
-    return f1_init, f1_end
-
-
-def get_intervals_2(get):
-    """gets the second date interval """
-    get2=dict(f1_init=get['f2_init'], f1_end=get['f2_end'])
-    return get_intervals_1(get2)
-
-def set_default_session_vars(request, datacontext):
-    """Sets the default building and consumer unit """
-    #todo revisar bien estos callbacks, seguramente cambiaran cuando haya un landing page
-    if not datacontext:
-        request.session['main_building'] = None
-        request.session['company']= None
-        request.session['consumer_unit'] = None
-
-    if 'main_building' not in request.session:
-        #print "144"
-        #sets the default building (the first in DataContextPermission)
-        try:
-            building=Building.objects.get(pk=datacontext[0]['building_pk'])
-            request.session['main_building'] = building
-        except ObjectDoesNotExist:
-            request.session['main_building'] = None
-        except IndexError:
-            request.session['main_building'] = None
-    if "company" not in request.session and request.session['main_building']:
-        c_b = CompanyBuilding.objects.get(building=request.session['main_building'])
-        request.session['company'] = c_b.company
-    elif request.session['company'] and request.session['main_building']:
-        c_b = CompanyBuilding.objects.get(building=request.session['main_building'])
-        request.session['company'] = c_b.company
-    else:
-        #print "177"
-        request.session['company']= None
-    if ('consumer_unit' not in request.session and request.session['main_building']) or \
-       (not request.session['consumer_unit'] and request.session['main_building']):
-        #print "181"
-        #sets the default ConsumerUnit (the first in ConsumerUnit for the main building)
-        request.session['consumer_unit'] = default_consumerUnit(request.user, request.session['main_building'])
-    else:
-        if not request.session['consumer_unit'] or 'consumer_unit' not in request.session:
-            #print "186"
-            request.session['consumer_unit'] = None
-        #try:
-        #    c_unit = ConsumerUnit.objects.filter(building=request.session['main_building'])
-        #    request.session['consumer_unit'] = c_unit[0]
-        #except ObjectDoesNotExist:
-        #    request.session['main_building'] = None
-        #except IndexError:
-        #    request.session['main_building'] = None
 
 
 def set_default_building(request, id_building):
@@ -234,12 +125,13 @@ def set_default_building(request, id_building):
     request.session['main_building'] = Building.objects.get(pk=id_building)
     c_b = CompanyBuilding.objects.get(building=request.session['main_building'])
     request.session['company'] = c_b.company
-    request.session['consumer_unit'] = default_consumerUnit(request.user, request.session['main_building'])
+    request.session['consumer_unit'] = \
+        default_consumerUnit(request.user, request.session['main_building'])
 
     if request.session['consumer_unit']:
-
         dicc = dict(edificio=request.session['main_building'].building_name,
-            electric_device_type=request.session['consumer_unit'].electric_device_type.electric_device_type_name)
+            electric_device_type=request.session['consumer_unit']
+            .electric_device_type.electric_device_type_name)
         data = simplejson.dumps( dicc )
         if 'referer' in request.GET:
             if request.GET['referer'] == "cfe":
@@ -248,53 +140,19 @@ def set_default_building(request, id_building):
         data = ""
     return HttpResponse(content=data,content_type="application/json")
 
-
-def get_sons(parent, part, user, building):
-    """ Gets a list of the direct sons of a given part, or consumer unit
-    parent = instance of PartOfBuilding, or ConsumerUnit
-    part = string, is the type of the parent
-    """
-    if part == "part":
-        sons_of_parent = HierarchyOfPart.objects.filter(part_of_building_composite=parent)
-    else:
-        sons_of_parent = HierarchyOfPart.objects.filter(consumer_unit_composite=parent)
-
-    if sons_of_parent:
-        list = '<ul>'
-        for son in sons_of_parent:
-            if son.part_of_building_leaf:
-                tag = son.part_of_building_leaf.part_of_building_name
-                sons = get_sons(son.part_of_building_leaf, "part", user, building)
-                cu = ConsumerUnit.objects.get(part_of_building=son.part_of_building_leaf)
-                _class = "part_of_building"
-            else:
-                tag = son.consumer_unit_leaf.electric_device_type.electric_device_type_name
-                sons = get_sons(son.consumer_unit_leaf, "consumer", user, building)
-                cu = son.consumer_unit_leaf
-                _class = "consumer_unit"
-            if allowed_cu(cu, user, building):
-                list += '<li><a href="#" rel="' + str(cu.pk) + '" class="' + _class + '">'
-                list +=  tag + '</a>' + sons
-            else:
-                list += '<li>'
-                list +=  tag + sons
-            list += '</li>'
-        list += '</ul>'
-        return list
-    else:
-        return ""
-
 def set_consumer_unit(request):
 
     building = request.session['main_building']
-    hierarchy = HierarchyOfPart.objects.filter(part_of_building_composite__building=building)
+    hierarchy = HierarchyOfPart.objects.filter(
+        part_of_building_composite__building=building)
     ids_hierarchy = []
     for hy in hierarchy:
         if hy.part_of_building_leaf:
             ids_hierarchy.append(hy.part_of_building_leaf.pk)
 
     #sacar el padre(partes de edificios que no son hijos de nadie)
-    parents = PartOfBuilding.objects.filter(building=building).exclude(pk__in=ids_hierarchy)
+    parents = PartOfBuilding.objects.filter(building=building).exclude(
+        pk__in=ids_hierarchy)
 
     main_cu = ConsumerUnit.objects.get(building=building,
         electric_device_type__electric_device_type_name="Total Edificio")
@@ -312,7 +170,8 @@ def set_consumer_unit(request):
     except IndexError:
 
         #revisar si tiene consumer_units anidadas
-        hierarchy = HierarchyOfPart.objects.filter(consumer_unit_composite__building=building)
+        hierarchy = HierarchyOfPart.objects.filter(
+            consumer_unit_composite__building=building)
         ids_hierarchy = []
         for hy in hierarchy:
             if hy.consumer_unit_leaf:
@@ -321,7 +180,8 @@ def set_consumer_unit(request):
         #sacar el padre(ConsumerUnits que no son hijos de nadie)
         parents = ConsumerUnit.objects.filter(building=building).exclude(
                   Q(pk__in=ids_hierarchy)|
-                  Q(electric_device_type__electric_device_type_name="Total Edificio") )
+                  Q(electric_device_type__electric_device_type_name=
+                  "Total Edificio") )
         try:
             parents[0]
         except IndexError:
@@ -331,14 +191,18 @@ def set_consumer_unit(request):
             hierarchy_list += "<ul>"
             for parent in parents:
                 if allowed_cu(parent, request.user, building):
-                    hierarchy_list += "<li> <a href='#' rel='" + str(parent.pk) + "'>" +\
-                                      parent.electric_device_type.electric_device_type_name + \
+                    hierarchy_list += "<li> <a href='#' rel='" + \
+                                      str(parent.pk) + "'>" +\
+                                      parent.electric_device_type\
+                                      .electric_device_type_name + \
                                       "</a>"
                 else:
                     hierarchy_list += "<li>" +\
-                                      parent.electric_device_type.electric_device_type_name
+                                      parent.electric_device_type.\
+                                      electric_device_type_name
                 #obtengo la jerarquia de cada rama del arbol
-                hierarchy_list += get_sons(parent, "consumer", request.user, building)
+                hierarchy_list += get_sons(parent, "consumer", request.user,
+                                           building)
                 hierarchy_list +="</li>"
             hierarchy_list +="</ul>"
     else:
@@ -347,9 +211,11 @@ def set_consumer_unit(request):
 
             c_unit_parent = ConsumerUnit.objects.filter(building=building,
                             part_of_building=parent).exclude(
-                            electric_device_type__electric_device_type_name="Total Edificio")
+                            electric_device_type__electric_device_type_name=
+                            "Total Edificio")
             if allowed_cu(c_unit_parent[0], request.user, building):
-                hierarchy_list += "<li> <a href='#' rel='" + str(c_unit_parent[0].pk) + "'>" +\
+                hierarchy_list += "<li> <a href='#' rel='" + \
+                                  str(c_unit_parent[0].pk) + "'>" +\
                                   parent.part_of_building_name + "</a>"
             else:
                 hierarchy_list += "<li>" +\
@@ -362,199 +228,8 @@ def set_consumer_unit(request):
     template_vars = dict(hierarchy=hierarchy_list)
     template_vars_template = RequestContext(request, template_vars)
 
-    return render_to_response("consumption_centers/choose_hierarchy.html", template_vars_template)
-
-
-def get_total_consumer_unit(consumerUnit, total):
-    """gets the (physical)sons of a cu"""
-    c_units = []
-    if not total:
-
-        if consumerUnit.part_of_building:
-            #es el consumer_unit de una parte de un edificio, saco sus hijos
-            leafs = HierarchyOfPart.objects.filter(part_of_building_composite =
-                                                   consumerUnit.part_of_building)
-
-        else:
-            #es un consumer unit de algún electric device, saco sus hijos
-            leafs = HierarchyOfPart.objects.filter(consumer_unit_composite = consumerUnit)
-
-
-        for leaf in leafs:
-            if leaf.part_of_building_leaf:
-                leaf_cu = ConsumerUnit.objects.get(part_of_building=leaf.part_of_building_leaf)
-            else:
-                leaf_cu = leaf.consumer_unit_leaf
-            if leaf.ExistsPowermeter:
-                c_units.append(leaf_cu)
-            else:
-                c_units_leaf=get_total_consumer_unit(leaf_cu, False)
-                c_units.extend(c_units_leaf)
-        return c_units
-    else:
-        hierarchy = HierarchyOfPart.objects.filter(Q(part_of_building_composite__building=
-                                                    consumerUnit.building)
-                                                   |Q(consumer_unit_composite__building=
-                                                    consumerUnit.building))
-        ids_hierarchy = [] #arreglo donde guardo los hijos
-        ids_hierarchy_cu = [] #arreglo donde guardo los hijos (consumerunits)
-        for hy in hierarchy:
-            if hy.part_of_building_leaf:
-                ids_hierarchy.append(hy.part_of_building_leaf.pk)
-            if hy.consumer_unit_leaf:
-                ids_hierarchy_cu.append(hy.consumer_unit_leaf.pk)
-
-        #sacar los padres(partes de edificios y consumerUnits que no son hijos de nadie)
-        parents = PartOfBuilding.objects.filter(building=consumerUnit.building).exclude(
-                                                                        pk__in=ids_hierarchy)
-
-        for parent in parents:
-            par_cu=ConsumerUnit.objects.get(part_of_building=parent)
-            if par_cu.profile_powermeter.powermeter.powermeter_anotation == "Medidor Virtual":
-                c_units_leaf=get_total_consumer_unit(par_cu, False)
-                c_units.extend(c_units_leaf)
-            else:
-                c_units.append(par_cu)
-    return c_units
-
-
-
-def get_consumer_units(consumerUnit):
-    """ Gets an array of consumer units which sum equals the given consumerUnit"""
-    if consumerUnit.profile_powermeter.powermeter.powermeter_anotation == "Medidor Virtual":
-        if consumerUnit.electric_device_type.electric_device_type_name == "Total Edificio":
-            total = True
-        else:
-            total = False
-        c_units = get_total_consumer_unit(consumerUnit, total)
-    else:
-        c_units = [consumerUnit]
-    return c_units
-
-
-def allowed_cu(consumerUnit, user, building):
-    """returns true or false if the user has permission over the consumerUnit or not
-    consumerUnit = ConsumerUnit instance
-    user = auth.User instance
-    building = Building instance
-    """
-    if user.is_superuser:
-        return True
-    company = CompanyBuilding.objects.get(building=building)
-    context1 = DataContextPermission.objects.filter(user_role__user=user, company=company.company, building=None, part_of_building=None)
-    cluster = ClusterCompany.objects.get(company=company.company)
-    context2 = DataContextPermission.objects.filter(user_role__user=user, cluster=cluster.cluster, company=None, building=None, part_of_building=None)
-    if context1 or context2:
-        return True
-    if consumerUnit.electric_device_type.electric_device_type_name == "Total Edificio":
-        context = DataContextPermission.objects.filter(user_role__user=user, building=building, part_of_building=None)
-        if context:
-            return True
-        else:
-            return False
-    else:
-        context = DataContextPermission.objects.filter(user_role__user=user, building=building)
-        for cntx in context:
-            if cntx.part_of_building:
-                #if the user has permission over a part of building, and the consumer unit is
-                #the cu for the part of building
-                if consumerUnit.part_of_building == cntx.part_of_building:
-                    return True
-                elif is_in_part_of_building(consumerUnit, cntx.part_of_building):
-                    return True
-            elif cntx.building == consumerUnit.building:
-                return True
-        return False
-
-def is_in_part_of_building(consumerUnit, part_of_building):
-    """ checks if consumerUnit is part of the part_of_building
-    returns True if consumerUnit is inside the part
-    consumerUnit = ConsumerUnit instance *without part_of_building*
-    part_of_building = PartOfBuilding instance
-    """
-    part_parent = HierarchyOfPart.objects.filter(part_of_building_composite=part_of_building)
-    if part_parent:
-        for parent_part in part_parent:
-            if parent_part.consumer_unit_leaf:
-                if parent_part.consumer_unit_leaf == consumerUnit:
-                    return True
-                else:
-                    if is_in_consumer_unit(consumerUnit, parent_part.consumer_unit_leaf):
-                        return True
-            else:
-                if parent_part.part_of_building_leaf == consumerUnit.part_of_building:
-                    return True
-                elif is_in_part_of_building(consumerUnit, parent_part.part_of_building_leaf):
-                    return True
-        return False
-    else:
-        return False
-
-def is_in_consumer_unit(cunit, cuParent):
-    """ checks if consumerUnit is part of an electric system (another consumer unit)
-    returns True if consumerUnit is inside the system
-    cunit = ConsumerUnit instance *without part_of_building*
-    cuParent = ConsumerUnit instance
-    """
-    part_parent = HierarchyOfPart.objects.filter(consumer_unit_composite=cuParent)
-    if part_parent:
-        for parent_part in part_parent:
-            if parent_part.consumer_unit_leaf == cunit:
-                return True
-            else:
-                if is_in_consumer_unit(cunit, parent_part.consumer_unit_leaf):
-                    return True
-        return False
-    else:
-        return False
-
-
-def graphs_permission(user, consumer_unit, graphs_type):
-    """ Checks what kind of graphs can a user see for a consumer_unit
-    user.- django auth user object
-    consumer_unit.- ConsumerUnit object
-
-    returns an array of objects of permission, False if user is not allowed to see graphs
-
-    """
-
-    operation = VIEW
-    company = CompanyBuilding.objects.get(building=consumer_unit.building)
-    cluster = ClusterCompany.objects.get(company=company.company)
-    context = DataContextPermission.objects.filter(user_role__user=user,
-        cluster=cluster.cluster)
-    contextos = []
-    for cntx in context:
-        if cntx.part_of_building:
-            #if the user has permission over a part of building, and the consumer unit is
-            #the cu for the part of building
-            if consumer_unit.part_of_building == cntx.part_of_building:
-                contextos.append(cntx)
-            elif is_in_part_of_building(consumer_unit, cntx.part_of_building):
-                contextos.append(cntx)
-
-        else: #if cntx.building == consumer_unit.building:
-            contextos.append(cntx)
-
-
-    user_roles = [cntx.user_role.pk for cntx in contextos]
-
-    user_role = UserRole.objects.filter(user=user, pk__in=user_roles)
-
-    graphs = []
-    for u_role in user_role:
-        for object in graphs_type:
-
-            #ob = Object.objects.get(object_name=object)
-            permission = PermissionAsigment.objects.filter(object=object, role=u_role.role,
-                operation=operation)
-            if permission or user.is_superuser:
-                graphs.append(object)
-    if graphs:
-        return graphs
-    else:
-        return False
-
+    return render_to_response("consumption_centers/choose_hierarchy.html",
+                              template_vars_template)
 
 def set_default_consumer_unit(request, id_c_u):
     """Sets the consumer_unit for all the reports"""
@@ -623,6 +298,7 @@ def cfe_bill(request):
 
         template_vars={"type":"cfe", "datacontext":datacontext,
                        'empresa':request.session['main_building'],
+                       'company': request.session['company'],
                        'month':month, 'year':year, 'month_list':month_list, 'year_list':year_list,
                        'sidebar': request.session['sidebar']
         }
@@ -2918,60 +2594,6 @@ def see_company(request, id_cpy):
         return render_to_response("generic_error.html", template_vars_template)
 
 
-def scale_dimensions(width, height, longest_side):
-    """
-    para calcular la proporcion en la que se redimencionara la imagen
-    """
-    if width > height:
-        if width > longest_side:
-            ratio = longest_side*1./width
-            return int(width*ratio), int(height*ratio)
-    elif height > longest_side:
-        ratio = longest_side*1./height
-        return int(width*ratio), int(height*ratio)
-    return width, height
-
-def handle_company_logo(i, company, is_new):
-    dir_fd=os.open(os.path.join(settings.PROJECT_PATH, "templates/static/media/logotipos/"),os.O_RDONLY)
-    os.fchdir(dir_fd)
-    #Revisa si la carpeta de la empresa existe.
-    if not is_new:
-        dir_path = os.path.join(settings.PROJECT_PATH, 'templates/static/media/logotipos/')
-        files = os.listdir(dir_path)
-        dir_fd = os.open(dir_path, os.O_RDONLY)
-        os.fchdir(dir_fd)
-        for file in files:
-            if file==company.company_logo:
-                os.remove(file)
-        os.close(dir_fd)
-
-    dir_fd=os.open(os.path.join(settings.PROJECT_PATH, "templates/static/media/logotipos/"),os.O_RDONLY)
-    os.fchdir(dir_fd)
-
-    imagefile  = cStringIO.StringIO(i.read())
-    imagefile.seek(0)
-    imageImage = Image.open(imagefile)
-
-    if imageImage.mode != "RGB":
-        imageImage = imageImage.convert("RGB")
-
-    (width, height) = imageImage.size
-    width, height = scale_dimensions(width, height, longest_side=128)
-    resizedImage = imageImage.resize((width, height))
-
-    imagefile = cStringIO.StringIO()
-    resizedImage.save(imagefile,'JPEG')
-    filename = hashlib.md5(imagefile.getvalue()).hexdigest()+'.jpg'
-
-    # #save to disk
-    imagefile = open(os.path.join('',filename), 'w')
-    resizedImage.save(imagefile,'JPEG')
-    company.company_logo="logotipos/"+filename
-    company.save()
-    os.close(dir_fd)
-    return True
-
-
 def c_center_structures(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
@@ -4650,85 +4272,6 @@ def get_select_attributes(request, id_attribute_type):
 ###########
 #EDIFICIOS#
 ###########
-
-def location_objects(country_id, country_name, state_id, state_name, municipality_id,municipality_name,neighborhood_id,neighborhood_name,street_id,street_name):
-    #Se obtiene el objeto de Pais, sino esta Pais, se da de alta un pais nuevo.
-    if country_id:
-        countryObj = get_object_or_404(Pais, pk=country_id)
-    else:
-        countryObj = Pais(
-            pais_name = country_name
-        )
-        countryObj.save()
-
-    #Se obtiene el objeto de Estado, sino esta Estado, se da de alta un estado nuevo.
-    if state_id:
-        stateObj = get_object_or_404(Estado, pk=state_id)
-    else:
-        stateObj = Estado(
-            estado_name = state_name
-        )
-        stateObj.save()
-
-        #Se crea la relación Pais - Estado
-        country_stateObj = PaisEstado(
-            pais = countryObj,
-            estado = stateObj,
-        )
-        country_stateObj.save()
-
-    #Se obtiene el objeto de Municipio, sino esta Municipio, se da de alta un municipio nuevo.
-    if municipality_id:
-        municipalityObj = get_object_or_404(Municipio, pk=municipality_id)
-    else:
-        municipalityObj = Municipio(
-            municipio_name = municipality_name
-        )
-        municipalityObj.save()
-
-        #Se crea la relación Estado - Municipio
-        state_munObj = EstadoMunicipio(
-            estado = stateObj,
-            municipio = municipalityObj,
-        )
-        state_munObj.save()
-
-    #Se obtiene el objeto de Colonia, sino esta Colonia, se da de alta una Colonia nueva.
-    if neighborhood_id:
-        neighborhoodObj = get_object_or_404(Colonia, pk=neighborhood_id)
-    else:
-        neighborhoodObj = Colonia(
-            colonia_name = neighborhood_name
-        )
-        neighborhoodObj.save()
-
-        #Se crea la relación Municipio - Colonia
-        mun_neighObj = MunicipioColonia(
-            municipio = municipalityObj,
-            colonia = neighborhoodObj,
-        )
-        mun_neighObj.save()
-
-    #Se obtiene el objeto de Calle, sino esta Calle, se da de alta una Calle nueva.
-    if street_id:
-        streetObj = get_object_or_404(Calle, pk=street_id)
-    else:
-        streetObj = Calle(
-            calle_name = street_name
-        )
-        streetObj.save()
-
-        #Se crea la relación Calle - Colonia
-        neigh_streetObj = ColoniaCalle(
-            colonia = neighborhoodObj,
-            calle = streetObj,
-        )
-        neigh_streetObj.save()
-
-    return countryObj, stateObj, municipalityObj, neighborhoodObj, streetObj
-
-
-
 def add_building(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")

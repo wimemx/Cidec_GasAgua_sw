@@ -454,6 +454,9 @@
         openEffect	: 'none',
         closeEffect	: 'none'
     });
+    if($("#graphFrame").attr("src")=="/reportes/graficas/"){
+        $("#types_graphs ul li:eq(0)").click();
+    }
     {% endblock %}
 {% block contenido %}
 <div id="bread_crumbs">
