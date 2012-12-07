@@ -203,6 +203,7 @@ def populate_data_warehouse(
                                                      instant_facts_start,
                                                      instant_facts_end,
                                                      fact_instant_granularity)
+
         logger.info("POPULATE INSTANT FACTS TABLES END")
 
     #
@@ -267,8 +268,8 @@ def data_warehouse_update(
     for consumer_unit in consumer_units:
         logger.info("Populate Consumer Unit: " + str(consumer_unit.pk))
         populate_consumer_unit_electric_data_interval(consumer_unit,
-                                                      update_instants_start,
-                                                      update_instants_end,
+                                                      update_intervals_start,
+                                                      update_intervals_end,
                                                       granularity)
 
     logger.info("UPDATE INTERVALS FACTS TABLES END")
@@ -700,7 +701,7 @@ def save_electric_data(
             #
             if electric_data_name in fields_percentage:
                 if interpolation_value is not None and abs(interpolation_value) > 1.0:
-                    interpolation_value /= interpolation_value
+                    interpolation_value = 1.0
 
             setattr(electric_data_new, electric_data_name, interpolation_value)
 
@@ -788,6 +789,7 @@ def interpolate_consumer_unit_electric_data_instant(
         medition_date__lt=instant_datetime,
         medition_date__gt=(instant_datetime - day_delta)
     ).order_by('medition_date')
+
     is_update_data_successful = update_data_dictionaries(
         electric_data_independent,
         electric_data_dependent,
@@ -960,7 +962,7 @@ def populate_consumer_unit_electric_data_interval(
                 granularity)
 
         except DataWarehouseInformationRetrieveException as\
-        interval_instants_information_retrieve_exception:
+                   interval_instants_information_retrieve_exception:
 
             logger.error(str(interval_instants_information_retrieve_exception))
             are_facts_valid = False
