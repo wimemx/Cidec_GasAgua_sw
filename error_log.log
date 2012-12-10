@@ -428,3 +428,6 @@ INFO 2012-11-22 13:25:24,632 views 4393 -1221817600 electric_data_update - 141
 INFO 2012-11-22 13:25:38,120 views 4393 -1221817600 electric_data_update - 142
 ERROR 2012-11-26 12:05:16,973 views 3531 -1240466624 ConsumerUnit matching query does not exist.
 ERROR 2012-11-26 12:05:41,334 views 3531 -1250952384 ConsumerUnit matching query does not exist.
+ERROR 2012-12-10 16:10:03,504 views 4114 -1322747072 ConsumerUnit matching query does not exist.
+ERROR 2012-12-10 16:10:38,920 views 4114 -1249903808 ConsumerUnit matching query does not exist.
+ERROR 2012-12-10 16:10:39,195 views 4114 -1285567680 ConsumerUnit matching query does not exist.

@@ -340,8 +340,9 @@ def render_graphics(request):
                                      request.GET[date_start_get_key],
                                      "%Y-%m-%d")
 
-                datetime_end = datetime.datetime.strptime(request.GET[date_end_get_key],
-                                                          "%Y-%m-%d")
+                datetime_end =\
+                    datetime.datetime.strptime(request.GET[date_end_get_key], "%Y-%m-%d") +\
+                        datetime.timedelta(days=1)
 
             else:
                 datetime_start = get_default_datetime_start()
