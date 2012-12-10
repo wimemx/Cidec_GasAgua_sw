@@ -45,7 +45,7 @@ from data_warehouse.views import get_consumer_unit_electric_data_csv,\
 
 import json as simplejson
 import sys
-#from tareas.tasks import datawarehouse_run
+from tareas.tasks import datawarehouse_run
 
 VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
@@ -100,13 +100,13 @@ def call_celery_delay(request):
             else:
                 populate_interval_facts=None
             if almenosuno:
-                #datawarehouse_run.delay(
-                #    fill_instants,
-                #    fill_intervals,
-                #    _update_consumer_units,
-                #    populate_instant_facts,
-                #    populate_interval_facts
-                #)
+                datawarehouse_run.delay(
+                    fill_instants,
+                    fill_intervals,
+                    _update_consumer_units,
+                    populate_instant_facts,
+                    populate_interval_facts
+                )
                 pass
             else:
                 text="No se realizar&aacute; ninguna acci&oacute;n"
@@ -247,8 +247,8 @@ def main_page(request):
         request.session['consumer_unit'] = None
         print "set consumer unit to none"
     set_default_session_vars(request, datacontext)
-    #print request.session['consumer_unit'], request.session['main_building'], request.session['company']
-    if request.session['consumer_unit'] and request.session['main_building']:# and request.session['company']:
+
+    if request.session['consumer_unit'] and request.session['main_building']:
         if "g_type" not in request.GET:
             graphs_type = GRAPHS['energia']
         else:
@@ -256,7 +256,9 @@ def main_page(request):
                 graphs_type = GRAPHS[request.GET['g_type']]
             except KeyError:
                 graphs_type = GRAPHS['energia']
-        graphs = graphs_permission(request.user, request.session['consumer_unit'], graphs_type)
+        graphs = graphs_permission(request.user,
+                                   request.session['consumer_unit'],
+                                   graphs_type)
         if graphs:
             #valid years for reporting
             request.session['years'] = [__date.year for __date in

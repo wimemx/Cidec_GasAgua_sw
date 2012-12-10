@@ -13,8 +13,10 @@ from django.shortcuts import HttpResponse, get_object_or_404
 from django.utils import simplejson
 
 from cidec_sw import settings
-from c_center.models import Cluster, ClusterCompany, Company, CompanyBuilding, Building, PartOfBuilding
-from rbac.models import PermissionAsigment, DataContextPermission, Role, UserRole, Object, Operation
+from c_center.models import Cluster, ClusterCompany, Company, \
+    CompanyBuilding, Building, PartOfBuilding, HierarchyOfPart
+from rbac.models import PermissionAsigment, DataContextPermission, Role, \
+    UserRole, Object, Operation
 from location.models import *
 
 from rbac.rbac_functions import is_allowed_operation_for_object, \
