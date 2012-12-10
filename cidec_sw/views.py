@@ -323,3 +323,9 @@ def data_exchange():
         )
         elec.save()
     print "success :D"
+
+def data_replication(
+        consumer_unit_original,
+        consumer_unit_copy
+):
+    pass

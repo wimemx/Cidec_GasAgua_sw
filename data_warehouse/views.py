@@ -16,6 +16,7 @@ from django.utils import timezone
 #
 # Application Specific Imports
 #
+import c_center.c_center_functions
 import decimal
 from data_warehouse.models import *
 from c_center.models import Building, ConsumerUnit as ConsumerUnitTransactional,\
@@ -1182,11 +1183,22 @@ def get_consumer_unit_electric_data_interval(
         to_datetime
 ):
 
-    #
-    # TODO - Check if passing consumer_unit as object instead of as id increases performance
-    #
     try:
-        consumer_unit = ConsumerUnit.objects.get(pk=consumer_unit_id)
+        consumer_unit_transactional = ConsumerUnitTransactional.objects.get(
+                                          pk=consumer_unit_id)
+
+    except ConsumerUnitTransactional.DoesNotExist:
+        return []
+
+    consumer_unit_transactional_list = c_center.c_center_functions.get_consumer_units(
+                                           consumer_unit_transactional)
+
+
+    try:
+        consumer_unit_list =\
+            [ConsumerUnit.objects.get(pk=consumer_unit_transactional_item.pk)
+             for consumer_unit_transactional_item in consumer_unit_transactional_list]
+        #consumer_unit = ConsumerUnit.objects.get(pk=consumer_unit_id)
 
     except ConsumerUnit.DoesNotExist:
         return []
@@ -1204,23 +1216,30 @@ def get_consumer_unit_electric_data_interval(
         start_datetime__lte=to_datetime)
 
     for time_interval in time_intervals:
-        electric_data_values_dictionary = electric_data_class.objects.filter(
-            consumer_unit=consumer_unit,
-            interval=time_interval
-        ).values(electric_data)
+        electric_data_value_cumulative = None
+        for consumer_unit in consumer_unit_list:
+            electric_data_values_dictionary = electric_data_class.objects.filter(
+                consumer_unit=consumer_unit,
+                interval=time_interval
+            ).values(electric_data)
 
-        if len(electric_data_values_dictionary) == 1 and\
-           electric_data_values_dictionary[0][electric_data] is not None:
+            if len(electric_data_values_dictionary) == 1 and\
+               electric_data_values_dictionary[0][electric_data] is not None:
 
-            electric_data_value = float(electric_data_values_dictionary[0][electric_data])
+                electric_data_value = float(electric_data_values_dictionary[0][electric_data])
+                electric_data_value_cumulative =\
+                    electric_data_value if electric_data_value_cumulative is None\
+                    else electric_data_value_cumulative + electric_data_value
 
-        else:
-            electric_data_value = None
+            else:
+                electric_data_value = None
+                electric_data_value_cumulative = None
+                break
 
 
-        certainty = electric_data_value is not None
+        certainty = electric_data_value_cumulative is not None
         electric_data_values.append(dict(datetime=int(time.mktime(timezone.localtime(time_interval.start_datetime).timetuple())),
-            electric_data=electric_data_value,
+            electric_data=electric_data_value_cumulative,
             certainty=certainty))
 
 
