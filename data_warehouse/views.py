@@ -10,7 +10,7 @@ import time
 #
 # Django imports
 #
-from django.utils.timezone import utc
+from django.utils.timezone import utc, localtime
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 #
@@ -1145,8 +1145,48 @@ def get_consumer_unit_electric_data_csv(
         to_datetime
 ):
     electric_data_rows = []
-    electric_data_class = FACTS_INSTANT_CLASSES[granularity]
-    time_instant_class = TIME_INSTANTS_CLASSES[granularity]
+    try:
+        electric_data_class = FACTS_INSTANT_CLASSES[granularity]
+        time_instant_class = TIME_INSTANTS_CLASSES[granularity]
+
+    except KeyError:
+        try:
+            consumer_unit_transactional = ConsumerUnitTransactional.objects.get(
+                                              pk=consumer_unit.pk)
+
+        except ConsumerUnitTransactional.DoesNotExist:
+            return electric_data_rows
+
+        electric_data_raw_values_dictionary = \
+            ElectricDataTemp.objects.filter(
+                profile_powermeter=consumer_unit_transactional.profile_powermeter,
+                medition_date__gte=from_datetime,
+                medition_date__lte=to_datetime
+            ).order_by(
+                'medition_date'
+            ).values(
+                electric_data,
+                'medition_date'
+            )
+
+        for electric_data_raw_value in electric_data_raw_values_dictionary:
+            if electric_data_raw_value[electric_data] is not None:
+                electric_data_value_string =\
+                    "%.6f" % electric_data_raw_value[electric_data]
+
+                medition_date_string =\
+                    electric_data_raw_value['medition_date'].strftime("%Y/%m/%d %H:%M")
+
+                electric_data_row = [consumer_unit.building_name,
+                                     consumer_unit.electric_device_type_name,
+                                     electric_data,
+                                     electric_data_value_string,
+                                     medition_date_string]
+
+                electric_data_rows.append(electric_data_row)
+
+        return electric_data_rows
+
     time_instants = time_instant_class.objects.filter(
         instant_datetime__gte=from_datetime,
         instant_datetime__lte=to_datetime)
@@ -1254,8 +1294,77 @@ def get_consumer_unit_electric_data_interval_csv(
         to_datetime
 ):
     electric_data_rows = []
-    electric_data_class = FACTS_INTERVAL_CLASSES[granularity]
-    time_instant_class = TIME_INTERVALS_CLASSES[granularity]
+    try:
+        electric_data_class = FACTS_INTERVAL_CLASSES[granularity]
+        time_instant_class = TIME_INTERVALS_CLASSES[granularity]
+
+    except KeyError:
+        try:
+            electric_data_name_local =\
+                CUMULATIVE_ELECTRIC_DATA_INVERSE[electric_data]
+
+        except KeyError:
+            return  electric_data_rows
+
+        try:
+            consumer_unit_transactional = ConsumerUnitTransactional.objects.get(
+                pk=consumer_unit.pk)
+
+        except ConsumerUnitTransactional.DoesNotExist:
+            return electric_data_rows
+
+        hour_delta = timedelta(hours=1)
+        current_datetime = localtime(datetime(year=from_datetime.year,
+                                              month=from_datetime.month,
+                                              day=from_datetime.day,
+                                              hour=from_datetime.hour))
+
+        while current_datetime <= to_datetime:
+            electric_data_values_prev =\
+            c_center.models.ElectricDataTemp.objects.filter(
+                profile_powermeter=consumer_unit_transactional.profile_powermeter,
+                medition_date__gte=current_datetime - (hour_delta / 2),
+                medition_date__lte=current_datetime
+            ).order_by(
+                'medition_date'
+            ).reverse().values(
+                'medition_date',
+                electric_data_name_local
+            )[:1]
+
+            electric_data_values_next =\
+            c_center.models.ElectricDataTemp.objects.filter(
+                profile_powermeter=consumer_unit_transactional.profile_powermeter,
+                medition_date__gte=current_datetime,
+                medition_date__lte=current_datetime + (hour_delta / 2)
+            ).order_by(
+                'medition_date'
+            ).values(
+                'medition_date',
+                electric_data_name_local
+            )[:1]
+
+            electric_data_value = 0
+            if len(electric_data_values_prev) > 0 and len(electric_data_values_next) > 0:
+                electric_data_value =\
+                    electric_data_values_next[0][electric_data_name_local] -\
+                    electric_data_values_prev[0][electric_data_name_local]
+
+            electric_data_value_string = "%.6f" % electric_data_value
+            start_datetime_string = current_datetime.strftime("%Y/%m/%d %H:%M")
+            end_datetime_string = (current_datetime + hour_delta).strftime("%Y/%m/%d %H:%M")
+            electric_data_row = [consumer_unit.building_name,
+                                 consumer_unit.electric_device_type_name,
+                                 electric_data,
+                                 electric_data_value_string,
+                                 start_datetime_string,
+                                 end_datetime_string]
+
+            electric_data_rows.append(electric_data_row)
+            current_datetime += hour_delta
+
+        return electric_data_rows
+
     time_intervals = time_instant_class.objects.filter(
         start_datetime__gte=from_datetime,
         start_datetime__lte=to_datetime)
@@ -1270,7 +1379,7 @@ def get_consumer_unit_electric_data_interval_csv(
            electric_data_values_dictionary[0][electric_data] is not None:
 
             electric_data_value_string =\
-            "%.6f" % electric_data_values_dictionary[0][electric_data]
+                "%.6f" % electric_data_values_dictionary[0][electric_data]
 
             start_datetime_string = time_interval.start_datetime.strftime(
                 "%Y/%m/%d %H:%M")

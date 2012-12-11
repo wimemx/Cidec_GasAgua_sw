@@ -107,7 +107,7 @@ def get_consumer_unit_electric_data_interval_raw(
         data_warehouse.views.CUMULATIVE_ELECTRIC_DATA_INVERSE[
         electric_data_name]
 
-    except KeyError as electric_data_name_key_error:
+    except KeyError:
         return  electric_data_raw
 
     try:
@@ -136,26 +136,25 @@ def get_consumer_unit_electric_data_interval_raw(
             electric_data_name_local
         )[:1]
 
-        electric_data_values_next =\
+        electric_data_values_next = \
         c_center.models.ElectricDataTemp.objects.filter(
-            profile_powermeter=consumer_unit.profile_powermeter,
-            medition_date__gte=current_datetime,
-            medition_date__lte=current_datetime + (hour_delta / 2)
-        ).order_by(
-            'medition_date'
-        ).values(
-            'medition_date',
-            electric_data_name_local
-        )[:1]
+                profile_powermeter=consumer_unit.profile_powermeter,
+                medition_date__gte=current_datetime,
+                medition_date__lte=current_datetime + (hour_delta / 2)
+            ).order_by(
+                'medition_date'
+            ).values(
+                'medition_date',
+                electric_data_name_local
+            )[:1]
 
-        if len(electric_data_values_prev) <= 0 or len(
-            electric_data_values_next) <= 0:
-            electric_data = 0
-            continue
-
-        electric_data =\
-        electric_data_values_next[0][electric_data_name_local] -\
-        electric_data_values_prev[0][electric_data_name_local]
+        electric_data = 0
+        if len(electric_data_values_prev) > 0 and len(electric_data_values_next) > 0:
+            print electric_data_values_next[0][electric_data_name_local]
+            print electric_data_values_prev[0][electric_data_name_local]
+            electric_data =\
+                electric_data_values_next[0][electric_data_name_local] -\
+                electric_data_values_prev[0][electric_data_name_local]
 
         medition_date = current_datetime
         electric_data_raw.append(
