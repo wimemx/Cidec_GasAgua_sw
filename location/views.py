@@ -27,7 +27,9 @@ def validate_add_state(post):
     else:
         valid['pais'] = get_object_or_404(Pais, pk=int(post['country']))
         if variety.validate_string(post['estado']):
-            pa_es = PaisEstado.objects.filter(pais=valid['pais'], estado__estado_name=post['estado'])
+            pa_es = PaisEstado.objects.filter(pais=valid['pais'],
+                                              estado__estado_name=post[
+                                                                  'estado'])
             if not pa_es:
                 valid['estado'] = Estado(estado_name=post['estado'].strip())
                 valid['estado'].save()
@@ -37,6 +39,7 @@ def validate_add_state(post):
             valid['error'] = True
     return valid
 
+
 def validate_add_municipality(post):
     valid = dict(error=False)
     if not post['state'] or not post['estado'] or not post['municipio']:
@@ -44,9 +47,12 @@ def validate_add_municipality(post):
     else:
         valid['estado'] = get_object_or_404(Estado, pk=int(post['state']))
         if variety.validate_string(post['municipio']):
-            es_mun = EstadoMunicipio.objects.filter(estado=valid['estado'], municipio__municipio_name=post['municipio'])
+            es_mun = EstadoMunicipio.objects.filter(estado=valid['estado'],
+                                                    municipio__municipio_name=
+                                                    post['municipio'])
             if not es_mun:
-                valid['municipio'] = Municipio(municipio_name=post['municipio'].strip())
+                valid['municipio'] = Municipio(
+                    municipio_name=post['municipio'].strip())
                 valid['municipio'].save()
             else:
                 valid['error'] = True
@@ -54,14 +60,18 @@ def validate_add_municipality(post):
             valid['error'] = True
     return valid
 
+
 def validate_add_neighboorhood(post):
     valid = dict(error=False)
     if not post['municipality'] or not post['municipio'] or not post['colonia']:
         valid['error'] = True
     else:
-        valid['municipio'] = get_object_or_404(Municipio, pk=int(post['municipality']))
+        valid['municipio'] = get_object_or_404(Municipio,
+                                               pk=int(post['municipality']))
         if variety.validate_string(post['colonia']):
-            m_col = MunicipioColonia.objects.filter(municipio=valid['municipio'], colonia__colonia_name=post['colonia'])
+            m_col = MunicipioColonia.objects.filter(
+                municipio=valid['municipio'],
+                colonia__colonia_name=post['colonia'])
             if not m_col:
                 valid['colonia'] = Colonia(colonia_name=post['colonia'].strip())
                 valid['colonia'].save()
@@ -71,14 +81,17 @@ def validate_add_neighboorhood(post):
             valid['error'] = True
     return valid
 
+
 def validate_add_street(post):
     valid = dict(error=False)
     if not post['neighboorhood'] or not post['colonia'] or not post['calle']:
         valid['error'] = True
     else:
-        valid['colonia'] = get_object_or_404(Colonia, pk=int(post['neighboorhood']))
+        valid['colonia'] = get_object_or_404(Colonia,
+                                             pk=int(post['neighboorhood']))
         if variety.validate_string(post['calle']):
-            c_col = ColoniaCalle.objects.filter(colonia=valid['colonia'], calle__calle_name=post['calle'])
+            c_col = ColoniaCalle.objects.filter(colonia=valid['colonia'],
+                                                calle__calle_name=post['calle'])
             if not c_col:
                 valid['calle'] = Calle(calle_name=post['calle'].strip())
                 valid['calle'].save()
@@ -87,6 +100,7 @@ def validate_add_street(post):
         else:
             valid['error'] = True
     return valid
+
 
 def add_state(request):
     if not request.user.is_authenticated():
@@ -101,22 +115,28 @@ def add_state(request):
         if request.method == "POST":
             valid = validate_add_state(request.POST)
             if not valid['error']:
-                p_e, created = PaisEstado.objects.get_or_create(pais=valid['pais'], estado=valid['estado'])
+                p_e, created = PaisEstado.objects.get_or_create(
+                    pais=valid['pais'], estado=valid['estado'])
                 if created:
                     message = "El País-Estado se ha agregado correctamente"
                 else:
-                    message = "El país estado ya existe, no se aplicó ninguna operación"
+                    message = "El país estado ya existe, " \
+                              "no se aplicó ninguna operación"
                 return HttpResponseRedirect("/location/ver_estados?msj=" +
                                             message +
                                             "&ntype=success")
             else:
-                template_vars['message'] = "ha ocurrido un error al validar el nombre del estado"
+                template_vars[
+                'message'] = "ha ocurrido un error al validar el nombre del " \
+                             "estado"
                 template_vars['type'] = "n_error"
 
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("location/add_state.html", template_vars_template)
+        return render_to_response("location/add_state.html",
+                                  template_vars_template)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
+
 
 def edit_state(request, id_state_country):
     if not request.user.is_authenticated():
@@ -129,9 +149,9 @@ def edit_state(request, id_state_country):
             datacontext=get_buildings_context(request.user),
             empresa=request.session['main_building'],
             company=request.session['company'],
-            operation = "edit",
-            pais = pais,
-            estado = estado
+            operation="edit",
+            pais=pais,
+            estado=estado
         )
         if request.method == "POST":
             estado = request.POST['estado'].strip()
@@ -143,13 +163,16 @@ def edit_state(request, id_state_country):
             else:
                 message = "ha ocurrido un error al validar el nombre del estado"
                 ntype = "n_error"
-            return HttpResponseRedirect("/location/ver_estados?msj=" + message + "&ntype=" +
-                                        ntype)
+            return HttpResponseRedirect(
+                "/location/ver_estados?msj=" + message + "&ntype=" +
+                ntype)
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("location/add_state.html", template_vars_template)
+        return render_to_response("location/add_state.html",
+                                  template_vars_template)
 
     else:
         return render_to_response("generic_error.html", RequestContext(request))
+
 
 def add_municipality(request):
     if not request.user.is_authenticated():
@@ -164,22 +187,28 @@ def add_municipality(request):
         if request.method == "POST":
             valid = validate_add_municipality(request.POST)
             if not valid['error']:
-                p_e, created = EstadoMunicipio.objects.get_or_create(estado=valid['estado'], municipio=valid['municipio'])
+                p_e, created = EstadoMunicipio.objects.get_or_create(
+                    estado=valid['estado'], municipio=valid['municipio'])
                 if created:
                     message = "El Estado-Municipio se ha agregado correctamente"
                 else:
-                    message = "El Estado-Municipio ya existe, no se aplicó ninguna operación"
+                    message = "El Estado-Municipio ya existe, " \
+                              "no se aplicó ninguna operación"
                 return HttpResponseRedirect("/location/ver_municipios?msj=" +
                                             message +
                                             "&ntype=success")
             else:
-                template_vars['message'] = "ha ocurrido un error al validar el nombre del municipio"
+                template_vars[
+                'message'] = "ha ocurrido un error al validar el nombre del " \
+                             "municipio"
                 template_vars['type'] = "n_error"
 
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("location/add_municipality.html", template_vars_template)
+        return render_to_response("location/add_municipality.html",
+                                  template_vars_template)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
+
 
 def edit_municipality(request, id_edo_munip):
     if not request.user.is_authenticated():
@@ -189,15 +218,15 @@ def edit_municipality(request, id_edo_munip):
         pais_est = PaisEstado.objects.get(estado=estado_municipio.estado)
         municipio = estado_municipio.municipio.municipio_name
         estado = pais_est.estado.estado_name
-        pais =pais_est.pais.pais_name
+        pais = pais_est.pais.pais_name
         template_vars = dict(
             datacontext=get_buildings_context(request.user),
             empresa=request.session['main_building'],
             company=request.session['company'],
-            operation = "edit",
-            municipio = municipio,
-            estado = estado,
-            pais = pais
+            operation="edit",
+            municipio=municipio,
+            estado=estado,
+            pais=pais
         )
         if request.method == "POST":
             municipio = request.POST['municipio'].strip()
@@ -207,15 +236,19 @@ def edit_municipality(request, id_edo_munip):
                 message = "El municipio se ha modificado correctamente"
                 ntype = "success"
             else:
-                message = "ha ocurrido un error al validar el nombre del municipio"
+                message = "ha ocurrido un error al validar el nombre del " \
+                          "municipio"
                 ntype = "n_error"
-            return HttpResponseRedirect("/location/ver_municipios?msj=" + message + "&ntype=" +
-                                        ntype)
+            return HttpResponseRedirect(
+                "/location/ver_municipios?msj=" + message + "&ntype=" +
+                ntype)
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("location/add_municipality.html", template_vars_template)
+        return render_to_response("location/add_municipality.html",
+                                  template_vars_template)
 
     else:
         return render_to_response("generic_error.html", RequestContext(request))
+
 
 def add_neighboorhood(request):
     if not request.user.is_authenticated():
@@ -230,42 +263,50 @@ def add_neighboorhood(request):
         if request.method == "POST":
             valid = validate_add_neighboorhood(request.POST)
             if not valid['error']:
-                p_e, created = MunicipioColonia.objects.get_or_create(municipio=valid['municipio'], colonia=valid['colonia'])
+                p_e, created = MunicipioColonia.objects.get_or_create(
+                    municipio=valid['municipio'], colonia=valid['colonia'])
                 if created:
-                    message = "El Municipio-Colonia se ha agregado correctamente"
+                    message = "El Municipio-Colonia se ha agregado " \
+                              "correctamente"
                 else:
-                    message = "El Municipio-Colonia ya existe, no se aplicó ninguna operación"
+                    message = "El Municipio-Colonia ya existe, " \
+                              "no se aplicó ninguna operación"
                 return HttpResponseRedirect("/location/ver_colonias?msj=" +
                                             message + "&ntype=success")
             else:
-                template_vars['message'] = "ha ocurrido un error al validar el nombre de la colonia"
+                template_vars[
+                'message'] = "ha ocurrido un error al validar el nombre de la" \
+                             " colonia"
                 template_vars['type'] = "n_error"
 
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("location/add_neighboorhood.html", template_vars_template)
+        return render_to_response("location/add_neighboorhood.html",
+                                  template_vars_template)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
+
 
 def edit_neighboorhood(request, id_munip_col):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
     if request.user.is_superuser:
         municipio_colonia = get_object_or_404(MunicipioColonia, pk=id_munip_col)
-        est_mun = EstadoMunicipio.objects.get(municipio=municipio_colonia.municipio)
+        est_mun = EstadoMunicipio.objects.get(
+            municipio=municipio_colonia.municipio)
         pais_est = PaisEstado.objects.get(estado=est_mun.estado)
         colonia = municipio_colonia.colonia.colonia_name
         municipio = est_mun.municipio.municipio_name
         estado = pais_est.estado.estado_name
-        pais =pais_est.pais.pais_name
+        pais = pais_est.pais.pais_name
         template_vars = dict(
             datacontext=get_buildings_context(request.user),
             empresa=request.session['main_building'],
             company=request.session['company'],
-            operation = "edit",
-            colonia = colonia,
-            municipio = municipio,
-            estado = estado,
-            pais = pais
+            operation="edit",
+            colonia=colonia,
+            municipio=municipio,
+            estado=estado,
+            pais=pais
         )
         if request.method == "POST":
             colonia = request.POST['colonia'].strip()
@@ -275,15 +316,19 @@ def edit_neighboorhood(request, id_munip_col):
                 message = "La colonia se ha modificado correctamente"
                 ntype = "success"
             else:
-                message = "ha ocurrido un error al validar el nombre de la colonia"
+                message = "ha ocurrido un error al validar el nombre de la " \
+                          "colonia"
                 ntype = "n_error"
-            return HttpResponseRedirect("/location/ver_colonias?msj=" + message + "&ntype=" +
-                                        ntype)
+            return HttpResponseRedirect(
+                "/location/ver_colonias?msj=" + message + "&ntype=" +
+                ntype)
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("location/add_neighboorhood.html", template_vars_template)
+        return render_to_response("location/add_neighboorhood.html",
+                                  template_vars_template)
 
     else:
         return render_to_response("generic_error.html", RequestContext(request))
+
 
 def add_street(request):
     if not request.user.is_authenticated():
@@ -298,22 +343,28 @@ def add_street(request):
         if request.method == "POST":
             valid = validate_add_street(request.POST)
             if not valid['error']:
-                p_e, created = ColoniaCalle.objects.get_or_create(colonia=valid['colonia'], calle=valid['calle'])
+                p_e, created = ColoniaCalle.objects.get_or_create(
+                    colonia=valid['colonia'], calle=valid['calle'])
                 if created:
                     message = "La calle-colonia se ha agregado correctamente"
                 else:
-                    message = "La calle-colonia ya existe, no se aplicó ninguna operación"
+                    message = "La calle-colonia ya existe, " \
+                              "no se aplicó ninguna operación"
                 return HttpResponseRedirect("/location/ver_calles?msj=" +
                                             message +
                                             "&ntype=success")
             else:
-                template_vars['message'] = "ha ocurrido un error al validar el nombre de la calle"
+                template_vars[
+                'message'] = "ha ocurrido un error al validar el nombre de la" \
+                             " calle"
                 template_vars['type'] = "n_error"
 
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("location/add_street.html", template_vars_template)
+        return render_to_response("location/add_street.html",
+                                  template_vars_template)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
+
 
 def edit_street(request, id_col_calle):
     if not request.user.is_authenticated():
@@ -327,17 +378,17 @@ def edit_street(request, id_col_calle):
         colonia = mun_col.colonia.colonia_name
         municipio = est_mun.municipio.municipio_name
         estado = pais_est.estado.estado_name
-        pais =pais_est.pais.pais_name
+        pais = pais_est.pais.pais_name
         template_vars = dict(
             datacontext=get_buildings_context(request.user),
             empresa=request.session['main_building'],
             company=request.session['company'],
-            operation = "edit",
-            calle = calle,
-            colonia = colonia,
-            municipio = municipio,
-            estado = estado,
-            pais = pais
+            operation="edit",
+            calle=calle,
+            colonia=colonia,
+            municipio=municipio,
+            estado=estado,
+            pais=pais
         )
         if request.method == "POST":
             calle = request.POST['calle'].strip()
@@ -347,14 +398,18 @@ def edit_street(request, id_col_calle):
                 message = "La calle se ha modificado correctamente"
                 ntype = "success"
             else:
-                message = "ha ocurrido un error al validar el nombre de la calle"
+                message = "ha ocurrido un error al validar el nombre de la " \
+                          "calle"
                 ntype = "n_error"
-            return HttpResponseRedirect("/location/ver_calles?msj=" + message + "&ntype=" +
-                                        ntype)
+            return HttpResponseRedirect(
+                "/location/ver_calles?msj=" + message + "&ntype=" +
+                ntype)
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("location/add_street.html", template_vars_template)
+        return render_to_response("location/add_street.html",
+                                  template_vars_template)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
+
 
 def state_list(request):
     if not request.user.is_authenticated():
@@ -368,7 +423,7 @@ def state_list(request):
 
         if "search" in request.GET:
             search = request.GET["search"]
-            search=search.strip()
+            search = search.strip()
         else:
             search = ''
 
@@ -389,15 +444,18 @@ def state_list(request):
             else:
                 order_desc = True
         if search:
-            e_p = PaisEstado.objects.filter(Q(estado__estado_name__icontains=search)|Q(pais__pais_name__icontains=search))
+            e_p = PaisEstado.objects.filter(
+                Q(estado__estado_name__icontains=search) | Q(
+                    pais__pais_name__icontains=search))
 
         else:
             e_p = PaisEstado.objects.all()
 
-        lista=[]
+        lista = []
         for e_ in e_p:
-            lista.append(dict(id_pais_estado=e_.pk, estado=e_.estado.estado_name,
-                              pais=e_.pais.pais_name)
+            lista.append(
+                dict(id_pais_estado=e_.pk, estado=e_.estado.estado_name,
+                     pais=e_.pais.pais_name)
             )
         lista = sorted(lista, key=lambda k: k[order], reverse=order_desc)
         paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
@@ -417,15 +475,15 @@ def state_list(request):
         except (EmptyPage, InvalidPage):
             pag_user = paginator.page(paginator.num_pages)
 
-        template_vars['paginacion']=pag_user
+        template_vars['paginacion'] = pag_user
 
         if 'msj' in request.GET:
             template_vars['message'] = request.GET['msj']
             template_vars['msg_type'] = request.GET['ntype']
 
-
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("location/states_list.html", template_vars_template)
+        return render_to_response("location/states_list.html",
+                                  template_vars_template)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
@@ -442,7 +500,7 @@ def municipality_list(request):
 
         if "search" in request.GET:
             search = request.GET["search"]
-            search=search.strip()
+            search = search.strip()
         else:
             search = ''
 
@@ -463,15 +521,17 @@ def municipality_list(request):
             else:
                 order_desc = True
         if search:
-            estados_m = EstadoMunicipio.objects.filter(Q(estado__estado_name__icontains=search)|Q(municipio__municipio_name__icontains=search))
+            estados_m = EstadoMunicipio.objects.filter(
+                Q(estado__estado_name__icontains=search) | Q(
+                    municipio__municipio_name__icontains=search))
         else:
             estados_m = EstadoMunicipio.objects.all()
 
-        lista=[]
+        lista = []
         for estados_ in estados_m:
             lista.append(dict(id_est_mun=estados_.pk,
-                municipio=estados_.municipio.municipio_name,
-                estado=estados_.estado.estado_name)
+                              municipio=estados_.municipio.municipio_name,
+                              estado=estados_.estado.estado_name)
             )
         lista = sorted(lista, key=lambda k: k[order], reverse=order_desc)
         paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
@@ -491,15 +551,15 @@ def municipality_list(request):
         except (EmptyPage, InvalidPage):
             pag_user = paginator.page(paginator.num_pages)
 
-        template_vars['paginacion']=pag_user
+        template_vars['paginacion'] = pag_user
 
         if 'msj' in request.GET:
             template_vars['message'] = request.GET['msj']
             template_vars['msg_type'] = request.GET['ntype']
 
-
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("location/municipalities_list.html", template_vars_template)
+        return render_to_response("location/municipalities_list.html",
+                                  template_vars_template)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
@@ -516,7 +576,7 @@ def neighboorhood_list(request):
 
         if "search" in request.GET:
             search = request.GET["search"]
-            search=search.strip()
+            search = search.strip()
         else:
             search = ''
 
@@ -544,21 +604,25 @@ def neighboorhood_list(request):
             else:
                 order_desc = True
         if search:
-            estados_m = EstadoMunicipio.objects.filter(Q(estado__estado_name__icontains=search)|Q(municipio__municipio_name__icontains=search))
+            estados_m = EstadoMunicipio.objects.filter(
+                Q(estado__estado_name__icontains=search) | Q(
+                    municipio__municipio_name__icontains=search))
             muns = [em.municipio.pk for em in estados_m]
-            muns_col = MunicipioColonia.objects.filter(Q(municipio__pk__in=muns)|Q(colonia__colonia_name__icontains=search))
+            muns_col = MunicipioColonia.objects.filter(
+                Q(municipio__pk__in=muns) | Q(
+                    colonia__colonia_name__icontains=search))
 
         else:
             muns_col = MunicipioColonia.objects.all()
 
-        lista=[]
+        lista = []
         for muns_ in muns_col:
             col_mun = MunicipioColonia.objects.get(colonia=muns_.colonia)
             estado_m = EstadoMunicipio.objects.get(municipio=col_mun.municipio)
             lista.append(dict(id_mun_col=muns_.pk,
-                colonia=muns_.colonia.colonia_name,
-                municipio=estado_m.municipio.municipio_name,
-                estado=estado_m.estado.estado_name)
+                              colonia=muns_.colonia.colonia_name,
+                              municipio=estado_m.municipio.municipio_name,
+                              estado=estado_m.estado.estado_name)
             )
         lista = sorted(lista, key=lambda k: k[order], reverse=order_desc)
         paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
@@ -579,17 +643,18 @@ def neighboorhood_list(request):
         except (EmptyPage, InvalidPage):
             pag_user = paginator.page(paginator.num_pages)
 
-        template_vars['paginacion']=pag_user
+        template_vars['paginacion'] = pag_user
 
         if 'msj' in request.GET:
             template_vars['message'] = request.GET['msj']
             template_vars['msg_type'] = request.GET['ntype']
 
-
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("location/neighboorhood_list.html", template_vars_template)
+        return render_to_response("location/neighboorhood_list.html",
+                                  template_vars_template)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
+
 
 def street_list(request):
     if not request.user.is_authenticated():
@@ -603,7 +668,7 @@ def street_list(request):
 
         if "search" in request.GET:
             search = request.GET["search"]
-            search=search.strip()
+            search = search.strip()
         else:
             search = ''
 
@@ -614,7 +679,6 @@ def street_list(request):
         order_municipio = "asc"
         order_estado = "asc"
         if "order_calle" in request.GET:
-
             if request.GET["order_calle"] == "desc":
                 order_desc = True
         elif "order_colonia" in request.GET:
@@ -637,28 +701,28 @@ def street_list(request):
                 order_desc = True
         if search:
             estados_m = EstadoMunicipio.objects.filter(
-                                                Q(estado__estado_name__icontains=search)|
-                                                Q(municipio__municipio_name__icontains=search))
+                Q(estado__estado_name__icontains=search) |
+                Q(municipio__municipio_name__icontains=search))
             muns = [em.municipio.pk for em in estados_m]
             muns_col = MunicipioColonia.objects.filter(
-                                                    Q(municipio__pk__in=muns)|
-                                                    Q(colonia__colonia_name__icontains=search))
+                Q(municipio__pk__in=muns) |
+                Q(colonia__colonia_name__icontains=search))
             cols = [mc.colonia.pk for mc in muns_col]
             c_calles = ColoniaCalle.objects.filter(
-                                                Q(colonia__pk__in=cols)|
-                                                Q(calle__callename__icontains=search))
+                Q(colonia__pk__in=cols) |
+                Q(calle__callename__icontains=search))
 
         else:
             c_calles = ColoniaCalle.objects.all()
 
-        lista=[]
+        lista = []
         for calle in c_calles:
             col_mun = MunicipioColonia.objects.get(colonia=calle.colonia)
             estado_m = EstadoMunicipio.objects.get(municipio=col_mun.municipio)
             lista.append(dict(id_c_calle=calle.pk, calle=calle.calle.calle_name,
-                colonia=calle.colonia.colonia_name,
-                municipio=estado_m.municipio.municipio_name,
-                estado=estado_m.estado.estado_name)
+                              colonia=calle.colonia.colonia_name,
+                              municipio=estado_m.municipio.municipio_name,
+                              estado=estado_m.estado.estado_name)
             )
         lista = sorted(lista, key=lambda k: k[order], reverse=order_desc)
         paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
@@ -680,17 +744,18 @@ def street_list(request):
         except (EmptyPage, InvalidPage):
             pag_user = paginator.page(paginator.num_pages)
 
-        template_vars['paginacion']=pag_user
+        template_vars['paginacion'] = pag_user
 
         if 'msj' in request.GET:
             template_vars['message'] = request.GET['msj']
             template_vars['msg_type'] = request.GET['ntype']
 
-
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("location/streets_list.html", template_vars_template)
+        return render_to_response("location/streets_list.html",
+                                  template_vars_template)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
+
 
 def search_country(request):
     if "term" in request.GET:
@@ -698,77 +763,95 @@ def search_country(request):
         paises = Pais.objects.filter(pais_name__icontains=term)
         countries = []
         for pais in paises:
-            countries.append(dict(value=pais.pais_name, pk=pais.pk, label=pais.pais_name))
-        data=simplejson.dumps(countries)
-        return HttpResponse(content=data,content_type="application/json")
+            countries.append(
+                dict(value=pais.pais_name, pk=pais.pk, label=pais.pais_name))
+        data = simplejson.dumps(countries)
+        return HttpResponse(content=data, content_type="application/json")
     else:
         raise Http404
 
+
 def search_state(request):
-    """get a list of states wich contains 'term' and are in a certain 'country'"""
+    """get a list of states wich contains 'term' and are in a certain
+    'country'"""
     if "term" in request.GET and "country" in request.GET:
         term = request.GET['term']
-        pais_est = PaisEstado.objects.filter(pais__pk=int(request.GET['country']),
-                                             estado__estado_name__icontains=term)
+        pais_est = PaisEstado.objects.filter(
+            pais__pk=int(request.GET['country']),
+            estado__estado_name__icontains=term)
         states = []
         for estado in pais_est:
             label = estado.pais.pais_name + "-" + estado.estado.estado_name
-            states.append(dict(value=estado.estado.estado_name, pk=estado.estado.pk,
-                               label=label))
-        data=simplejson.dumps(states)
-        return HttpResponse(content=data,content_type="application/json")
+            states.append(
+                dict(value=estado.estado.estado_name, pk=estado.estado.pk,
+                     label=label))
+        data = simplejson.dumps(states)
+        return HttpResponse(content=data, content_type="application/json")
     else:
         raise Http404
 
+
 def search_municipality(request):
-    """get a list of municipalities wich contains 'term' and are in a certain 'state'"""
+    """get a list of municipalities wich contains 'term' and are in a certain
+     'state'"""
     if "term" in request.GET and "state" in request.GET:
         term = request.GET['term']
-        e_munip = EstadoMunicipio.objects.filter(estado__pk=int(request.GET['state']),
-                                                 municipio__municipio_name__icontains=term)
+        e_munip = EstadoMunicipio.objects.filter(
+            estado__pk=int(request.GET['state']),
+            municipio__municipio_name__icontains=term)
 
         municipalities = []
         for municipio in e_munip:
-            label = municipio.estado.estado_name + " - " + municipio.municipio.municipio_name
+            label = municipio.estado.estado_name + " - " + municipio\
+            .municipio.municipio_name
             municipalities.append(dict(value=municipio.municipio.municipio_name,
                                        pk=municipio.municipio.pk, label=label))
-        data=simplejson.dumps(municipalities)
-        return HttpResponse(content=data,content_type="application/json")
+        data = simplejson.dumps(municipalities)
+        return HttpResponse(content=data, content_type="application/json")
     else:
         raise Http404
 
+
 def search_neighboorhood(request):
-    """get a list of neighboorhoods wich contains 'term' and are in a certain 'municipality'"""
+    """get a list of neighboorhoods wich contains 'term' and are in a certain
+     'municipality'"""
     if "term" in request.GET and "municipality" in request.GET:
         term = request.GET['term']
 
-        mun_cols=MunicipioColonia.objects.filter(municipio__pk=int(request.GET['municipality'])
-                                                 , colonia__colonia_name__icontains=term)
+        mun_cols = MunicipioColonia.objects.filter(
+            municipio__pk=int(request.GET['municipality'])
+            , colonia__colonia_name__icontains=term)
         neighboorhoods = []
         for colonia in mun_cols:
-            label = colonia.municipio.municipio_name + " - " + colonia.colonia.colonia_name
+            label = colonia.municipio.municipio_name + " - " + colonia\
+            .colonia.colonia_name
             neighboorhoods.append(dict(value=colonia.colonia.colonia_name,
                                        pk=colonia.colonia.pk, label=label))
-        data=simplejson.dumps(neighboorhoods)
-        return HttpResponse(content=data,content_type="application/json")
+        data = simplejson.dumps(neighboorhoods)
+        return HttpResponse(content=data, content_type="application/json")
     else:
         raise Http404
 
+
 def search_street(request):
-    """get a list of streets wich contains 'term' and are in a certain 'neighboorhood'"""
+    """get a list of streets wich contains 'term' and are in a certain
+    'neighboorhood'"""
     if "term" in request.GET and "neighboorhood" in request.GET:
         term = request.GET['term']
 
-        calle_col = ColoniaCalle.objects.filter(colonia__pk=int(request.GET['neighboorhood']),
-                                                calle__calle_name__icontains=term)
+        calle_col = ColoniaCalle.objects.filter(
+            colonia__pk=int(request.GET['neighboorhood']),
+            calle__calle_name__icontains=term)
         streets = []
         for calle in calle_col:
             label = calle.colonia.colonia_name + " - " + calle.calle.calle_name
-            streets.append(dict(value=calle.calle.calle_name, pk=calle.calle.pk, label=label))
-        data=simplejson.dumps(streets)
-        return HttpResponse(content=data,content_type="application/json")
+            streets.append(dict(value=calle.calle.calle_name, pk=calle.calle.pk,
+                                label=label))
+        data = simplejson.dumps(streets)
+        return HttpResponse(content=data, content_type="application/json")
     else:
         raise Http404
+
 
 def delete_state_country(request, id_state_country):
     if request.user.is_superuser:
@@ -780,15 +863,18 @@ def delete_state_country(request, id_state_country):
             delete_municipalities(estado)
         except ProtectedError:
             PaisEstado(pais=pais, estado=estado).save()
-            mensaje = "Ha ocurrido un error de integridad de datos, por favor revisa que no " \
-                      "haya ningún dato asociado al estado ni a sus municipios, colonias o " \
+            mensaje = "Ha ocurrido un error de integridad de datos, " \
+                      "por favor revisa que no "\
+                      "haya ningún dato asociado al estado ni a sus " \
+                      "municipios, colonias o "\
                       "calles"
             type = "error"
         else:
-            mensaje = "Se ha eliminado correctamente la asociación entre el país y el estado"
+            mensaje = "Se ha eliminado correctamente la asociación entre el " \
+                      "país y el estado"
             type = "success"
         return HttpResponseRedirect("/location/ver_estados/?msj=" + mensaje +
-                                    "&ntype="+type)
+                                    "&ntype=" + type)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
@@ -803,16 +889,21 @@ def delete_municipality_state(request, id_edo_munip):
             delete_neigboorhoods(munip)
         except ProtectedError:
             EstadoMunicipio(estado=edo, municipio=munip).save()
-            mensaje = "Ha ocurrido un error de integridad de datos, por favor revisa que no " \
-                      "haya ningún dato asociado al municipio ni a sus colonias o calles"
+            mensaje = "Ha ocurrido un error de integridad de datos, " \
+                      "por favor revisa que no "\
+                      "haya ningún dato asociado al municipio ni a sus " \
+                      "colonias o calles"
             type = "error"
         else:
-            mensaje = "Se ha eliminado correctamente la asociación entre el estado y el " \
+            mensaje = "Se ha eliminado correctamente la asociación entre el " \
+                      "estado y el "\
                       "municipio"
             type = "success"
-        return HttpResponseRedirect("/location/ver_municipios?msj=" + mensaje +"&ntype="+type)
+        return HttpResponseRedirect(
+            "/location/ver_municipios?msj=" + mensaje + "&ntype=" + type)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
+
 
 def delete_neighboorhood_municipality(request, id_munip_col):
     if request.user.is_superuser:
@@ -824,16 +915,20 @@ def delete_neighboorhood_municipality(request, id_munip_col):
             delete_streets(colonia)
         except ProtectedError:
             MunicipioColonia(municipio=municipio, colonia=colonia).save()
-            mensaje = "Ha ocurrido un error de integridad de datos, por favor revisa que no "\
+            mensaje = "Ha ocurrido un error de integridad de datos, " \
+                      "por favor revisa que no "\
                       "haya ningún dato asociado a la colonia ni a sus calles"
             type = "error"
         else:
-            mensaje = "Se ha eliminado correctamente la asociación entre el municipio y la " \
+            mensaje = "Se ha eliminado correctamente la asociación entre el " \
+                      "municipio y la "\
                       "colonia"
             type = "success"
-        return HttpResponseRedirect("/location/ver_colonias?msj=" + mensaje + "&ntype=" + type)
+        return HttpResponseRedirect(
+            "/location/ver_colonias?msj=" + mensaje + "&ntype=" + type)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
+
 
 def delete_street_neighboor(request, id_col_calle):
     if request.user.is_superuser:
@@ -845,17 +940,21 @@ def delete_street_neighboor(request, id_col_calle):
             calle.delete()
         except ProtectedError:
             ColoniaCalle(colonia=colonia, calle=calle).save()
-            mensaje = "Ha ocurrido un error de integridad de datos, por favor revisa que no "\
+            mensaje = "Ha ocurrido un error de integridad de datos, " \
+                      "por favor revisa que no "\
                       "haya ningún dato asociado a la calle"
             type = "error"
         else:
-            mensaje = "Se ha eliminado correctamente la asociación entre el colonia y la "\
+            mensaje = "Se ha eliminado correctamente la asociación entre el " \
+                      "colonia y la "\
                       "calle"
             type = "success"
 
-        return HttpResponseRedirect("/location/ver_municipios?msj=" + mensaje + "&ntype="+type)
+        return HttpResponseRedirect(
+            "/location/ver_municipios?msj=" + mensaje + "&ntype=" + type)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
+
 
 def delete_state_country_batch(request):
     if not request.user.is_authenticated():
@@ -866,7 +965,7 @@ def delete_state_country_batch(request):
         if request.POST['actions'] == 'delete':
             for key in request.POST:
                 if re.search('^estado_\w+', key):
-                    r_id = int(key.replace("estado_",""))
+                    r_id = int(key.replace("estado_", ""))
                     object = get_object_or_404(PaisEstado, pk=r_id)
                     estado = object.estado
                     pais = object.pais
@@ -875,18 +974,23 @@ def delete_state_country_batch(request):
                         delete_municipalities(estado)
                     except ProtectedError:
                         PaisEstado(estado=estado, pais=pais).save()
-                        mensaje = "Ha ocurrido un error de integridad de datos, por favor " \
-                                  "revisa que no haya ningún dato asociado al estado ni a " \
+                        mensaje = "Ha ocurrido un error de integridad de " \
+                                  "datos, por favor "\
+                                  "revisa que no haya ningún dato asociado al" \
+                                  " estado ni a "\
                                   "sus municipios, colonias o calles"
-                        return HttpResponseRedirect("/location/ver_estados/?msj=" + mensaje +
-                                                    "&ntype=error")
+                        return HttpResponseRedirect(
+                            "/location/ver_estados/?msj=" + mensaje +
+                            "&ntype=error")
             mensaje = "Las relaciones País-Estado han sido eliminadas"
-            return HttpResponseRedirect("/location/ver_estados/?msj=" + mensaje +
-                                        "&ntype=success")
+            return HttpResponseRedirect(
+                "/location/ver_estados/?msj=" + mensaje +
+                "&ntype=success")
         else:
             mensaje = "No se ha seleccionado una acción"
-            return HttpResponseRedirect("/location/ver_estados/?msj=" + mensaje +
-                                        "&ntype=success")
+            return HttpResponseRedirect(
+                "/location/ver_estados/?msj=" + mensaje +
+                "&ntype=success")
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
@@ -900,7 +1004,7 @@ def delete_municipality_state_batch(request):
         if request.POST['actions'] == 'delete':
             for key in request.POST:
                 if re.search('^municipio_\w+', key):
-                    r_id = int(key.replace("municipio_",""))
+                    r_id = int(key.replace("municipio_", ""))
                     object = get_object_or_404(EstadoMunicipio, pk=r_id)
                     mun = object.municipio
                     est = object.estado
@@ -909,18 +1013,23 @@ def delete_municipality_state_batch(request):
                         delete_neigboorhoods(mun)
                     except ProtectedError:
                         EstadoMunicipio(estado=est, municipio=mun).save()
-                        mensaje = "Ha ocurrido un error de integridad de datos, por favor "\
-                                  "revisa que no haya ningún dato asociado al municipio, " \
+                        mensaje = "Ha ocurrido un error de integridad de " \
+                                  "datos, por favor "\
+                                  "revisa que no haya ningún dato asociado al" \
+                                  " municipio, "\
                                   "colonias o calles"
-                        return HttpResponseRedirect("/location/ver_municipios/?msj=" +
-                                                    mensaje + "&ntype=error")
+                        return HttpResponseRedirect(
+                            "/location/ver_municipios/?msj=" +
+                            mensaje + "&ntype=error")
             mensaje = "Las relaciones Estado-Municipio han sido eliminadas"
-            return HttpResponseRedirect("/location/ver_municipios/?msj=" + mensaje +
-                                        "&ntype=success")
+            return HttpResponseRedirect(
+                "/location/ver_municipios/?msj=" + mensaje +
+                "&ntype=success")
         else:
             mensaje = "No se ha seleccionado una acción"
-            return HttpResponseRedirect("/location/ver_municipios/?msj=" + mensaje +
-                                        "&ntype=success")
+            return HttpResponseRedirect(
+                "/location/ver_municipios/?msj=" + mensaje +
+                "&ntype=success")
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
@@ -934,7 +1043,7 @@ def delete_neighboorhood_municipality_batch(request):
         if request.POST['actions'] == 'delete':
             for key in request.POST:
                 if re.search('^colonia_\w+', key):
-                    r_id = int(key.replace("colonia_",""))
+                    r_id = int(key.replace("colonia_", ""))
                     object = get_object_or_404(MunicipioColonia, pk=r_id)
                     colonia = object.colonia
                     municipio = object.municipio
@@ -942,21 +1051,28 @@ def delete_neighboorhood_municipality_batch(request):
                     try:
                         delete_streets(colonia)
                     except ProtectedError:
-                        MunicipioColonia(municipio=municipio, colonia=colonia).save()
-                        mensaje = "Ha ocurrido un error de integridad de datos, por favor "\
-                                  "revisa que no haya ningún dato asociado a la colonia, "\
+                        MunicipioColonia(municipio=municipio,
+                                         colonia=colonia).save()
+                        mensaje = "Ha ocurrido un error de integridad de " \
+                                  "datos, por favor "\
+                                  "revisa que no haya ningún dato asociado a " \
+                                  "la colonia, "\
                                   "o sus calles"
-                        return HttpResponseRedirect("/location/ver_colonias/?msj=" +
-                                                    mensaje + "&ntype=error")
+                        return HttpResponseRedirect(
+                            "/location/ver_colonias/?msj=" +
+                            mensaje + "&ntype=error")
             mensaje = "Las relaciones Municipio-Colonia han sido eliminadas"
-            return HttpResponseRedirect("/location/ver_colonias/?msj=" + mensaje +
-                                        "&ntype=success")
+            return HttpResponseRedirect(
+                "/location/ver_colonias/?msj=" + mensaje +
+                "&ntype=success")
         else:
             mensaje = "No se ha seleccionado una acción"
-            return HttpResponseRedirect("/location/ver_colonias/?msj=" + mensaje +
-                                        "&ntype=success")
+            return HttpResponseRedirect(
+                "/location/ver_colonias/?msj=" + mensaje +
+                "&ntype=success")
     else:
         return render_to_response("generic_error.html", RequestContext(request))
+
 
 def delete_street_neighboor_batch(request):
     if not request.user.is_authenticated():
@@ -967,9 +1083,9 @@ def delete_street_neighboor_batch(request):
         if request.POST['actions'] == 'delete':
             for key in request.POST:
                 if re.search('^calle_\w+', key):
-                    r_id = int(key.replace("calle_",""))
+                    r_id = int(key.replace("calle_", ""))
                     object = get_object_or_404(ColoniaCalle, pk=r_id)
-                    calle=object.calle
+                    calle = object.calle
                     object.delete()#borro la relación
                     calle.delete()#borro la calle
             mensaje = "Las relaciones Colonia-calle han sido eliminadas"
@@ -981,6 +1097,7 @@ def delete_street_neighboor_batch(request):
                                         "&ntype=success")
     else:
         return render_to_response("generic_error.html", RequestContext(request))
+
 
 def delete_streets(neighboorhood):
     """Deletes all the streets in a given neighboorhood, then
@@ -994,20 +1111,23 @@ def delete_streets(neighboorhood):
     neighboorhood.delete()
     return True
 
+
 def delete_neigboorhoods(municipality):
     """Deletes all the neighboorhoods and streets in a given municipality, then
     deletes itself
     """
     mun_cols = MunicipioColonia.objects.filter(municipio=municipality)
     for m_c in mun_cols:
-        colonia=m_c.colonia
+        colonia = m_c.colonia
         m_c.delete()
         delete_streets(colonia)
     municipality.delete()
     return True
 
+
 def delete_municipalities(state):
-    """Deletes all the municipalities and neighboorhoods and streets in a given state, then
+    """Deletes all the municipalities and neighboorhoods and streets in a
+    given state, then
     deletes itself
     """
     est_muns = EstadoMunicipio.objects.filter(estado=state)
@@ -1026,33 +1146,42 @@ def add_region(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
     if request.user.is_superuser:
-
         #Se obtienen los estados que ya estan completamente ocupados
         #Primero obtengo todos los e
-        #estados_exc = [regiones_estados.estado_id for regiones_estados in RegionEstado.objects.filter(municipio = None)]
+        #estados_exc = [regiones_estados.estado_id for regiones_estados in
+        # RegionEstado.objects.filter(municipio = None)]
         estados_exc = []
 
         #Se obtienen todos los estados de la tabla RegionEstado
-        r_states = RegionEstado.objects.values('estado').annotate(dstates = Count('estado'))
+        r_states = RegionEstado.objects.values('estado').annotate(
+            dstates=Count('estado'))
         for rs in r_states:
-            region_states = RegionEstado.objects.filter(estado__pk = rs['estado']).filter(municipio = None)
-            #Significa que es un estado con todos sus municipios y se agrega por completo a la lista de excepcion de estados
+            region_states = RegionEstado.objects.filter(
+                estado__pk=rs['estado']).filter(municipio=None)
+            #Significa que es un estado con todos sus municipios y se agrega
+            # por completo a la lista de excepcion de estados
             if region_states:
                 estados_exc.append(rs['estado'])
             else:
-                region_states = RegionEstado.objects.filter(estado__pk = rs['estado']).filter(~Q(municipio = None))
-                #Se cuentan cuantos municipios ya estan registrados dentro de la tabla RegionEstado
+                region_states = RegionEstado.objects.filter(
+                    estado__pk=rs['estado']).filter(~Q(municipio=None))
+                #Se cuentan cuantos municipios ya estan registrados dentro de
+                # la tabla RegionEstado
                 reg_mun = len(region_states)
 
                 #Se obtienen el numero total de municipios de un estado
-                mun_estate = EstadoMunicipio.objects.filter(estado__pk = rs['estado'])
+                mun_estate = EstadoMunicipio.objects.filter(
+                    estado__pk=rs['estado'])
                 est_mun = len(mun_estate)
 
-                #Si ambos numeros son iguales indica que ya todos los municipios de ese estado estan registrado y por lo tanto no debe aparecer en la lista
+                #Si ambos numeros son iguales indica que ya todos los
+                # municipios de ese estado estan registrado y por lo tanto no
+                # debe aparecer en la lista
                 if reg_mun == est_mun:
                     estados_exc.append(rs['estado'])
 
-        estados = Estado.objects.all().exclude(pk__in = estados_exc).order_by('estado_name')
+        estados = Estado.objects.all().exclude(pk__in=estados_exc).order_by(
+            'estado_name')
 
         template_vars = dict(
             datacontext=get_buildings_context(request.user),
@@ -1083,50 +1212,52 @@ def add_region(request):
 
 
             #Valida por si le da muchos clics al boton
-            regionValidate = Region.objects.filter(region_name = region_name)
+            regionValidate = Region.objects.filter(region_name=region_name)
             if regionValidate:
                 message = "Ya existe una Región con ese nombre"
                 type = "n_notif"
                 continuar = False
 
-            post = {'region_name': region_name, 'region_description': region_description}
+            post = {'region_name': region_name,
+                    'region_description': region_description}
             template_vars['post'] = post
 
             if continuar:
-
                 newRegion = Region(
-                    region_name = region_name,
-                    region_description = region_description
+                    region_name=region_name,
+                    region_description=region_description
                 )
                 newRegion.save()
 
                 for state_id in request.POST:
                     if re.search('^r_state_\w+', state_id):
-                        s_id = int(state_id.replace("r_state_",""))
+                        s_id = int(state_id.replace("r_state_", ""))
                         atr_value_complete = request.POST.get(state_id)
                         atr_value_arr = atr_value_complete.split(',')
 
                         #Se obtiene el objeto de estado
-                        state_obj = get_object_or_404(Estado, pk = s_id)
+                        state_obj = get_object_or_404(Estado, pk=s_id)
 
                         #Se obtienen el número de municipios que tiene el estado
-                        state_mun = EstadoMunicipio.objects.filter(estado__pk = s_id)
+                        state_mun = EstadoMunicipio.objects.filter(
+                            estado__pk=s_id)
 
                         if len(state_mun) != len(atr_value_arr):
                             for id_mun in atr_value_arr:
                                 #Se obtiene el objeto de municipio
-                                mun_obj = get_object_or_404(Municipio, pk=id_mun)
+                                mun_obj = get_object_or_404(Municipio,
+                                                            pk=id_mun)
 
                                 newRegionEstado = RegionEstado(
-                                    region = newRegion,
-                                    estado = state_obj,
-                                    municipio = mun_obj,
+                                    region=newRegion,
+                                    estado=state_obj,
+                                    municipio=mun_obj,
                                 )
                                 newRegionEstado.save()
                         else:
                             newRegionEstado = RegionEstado(
-                                region = newRegion,
-                                estado = state_obj,
+                                region=newRegion,
+                                estado=state_obj,
                             )
                             newRegionEstado.save()
 
@@ -1138,26 +1269,30 @@ def add_region(request):
                                                 template_vars["message"] +
                                                 "&ntype=n_success")
 
-
             template_vars["message"] = message
             template_vars["type"] = type
         template_vars["post"] = post
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("location/add_region.html", template_vars_template)
+        return render_to_response("location/add_region.html",
+                                  template_vars_template)
 
     else:
         return render_to_response("generic_error.html", RequestContext(request))
+
 
 def edit_region(request, id_region):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
     if request.user.is_superuser:
-        regionObj = get_object_or_404(Region, pk = id_region)
+        regionObj = get_object_or_404(Region, pk=id_region)
 
         #Se obtienen los estados que ya tienen todos sus municipios registrados
-        estados_exc = [regiones_estados.estado_id for regiones_estados in RegionEstado.objects.filter(municipio = None).exclude(region = regionObj)]
+        estados_exc = [regiones_estados.estado_id for regiones_estados in
+                       RegionEstado.objects.filter(municipio=None).exclude(
+                           region=regionObj)]
 
-        estados = Estado.objects.all().exclude(id__in = estados_exc).order_by('estado_name')
+        estados = Estado.objects.all().exclude(id__in=estados_exc).order_by(
+            'estado_name')
 
         html_string_inputs = ''
         html_string_tags = ''
@@ -1165,28 +1300,69 @@ def edit_region(request, id_region):
         multiple = False
         rs_cont = 0;
 
-        r_states = RegionEstado.objects.filter(region = regionObj).values('estado').annotate(dstates = Count('estado'))
+        r_states = RegionEstado.objects.filter(region=regionObj).values(
+            'estado').annotate(dstates=Count('estado'))
         for rs in r_states:
-            region_states = RegionEstado.objects.filter(region = regionObj).filter(estado__pk = rs['estado']).filter(municipio = None)
+            region_states = RegionEstado.objects.filter(
+                region=regionObj).filter(estado__pk=rs['estado']).filter(
+                municipio=None)
             if region_states:
-                estados_municipios = EstadoMunicipio.objects.filter(estado__pk = rs['estado'])
+                estados_municipios = EstadoMunicipio.objects.filter(
+                    estado__pk=rs['estado'])
                 if estados_municipios:
                     for emun in estados_municipios:
-                        string_municipios += str(emun.municipio.pk) +","
+                        string_municipios += str(emun.municipio.pk) + ","
 
-                html_string_tags += "<div class='tag'><span class='delete_icon'><a href='#eliminar' rel='"+str(estados_municipios[0].estado_id)+"' class='del del_icn' title='Eliminar Estado'></a></span><span class='tag_label'><a href='#' id='s_tag_"+str(estados_municipios[0].estado_id)+"' onclick='getMun("+ str(estados_municipios[0].estado_id) +");' class='state_tag'>"+estados_municipios[0].estado.estado_name+" ("+ str(len(estados_municipios)) +")"+"</a></span></div>"
-                html_string_inputs += "<div><input type='hidden' name='r_state_" + str(estados_municipios[0].estado_id) +"' id='r_state_" + str(estados_municipios[0].estado_id)  + "' value='" + string_municipios[:-1] + "'/></div>"
+                html_string_tags += "<div class='tag'><span " \
+                                    "class='delete_icon'><a href='#eliminar' " \
+                                    "rel='" + str(
+                    estados_municipios[
+                    0].estado_id) + "' class='del del_icn' title='Eliminar " \
+                                    "Estado'></a></span><span " \
+                                    "class='tag_label'><a href='#' " \
+                                    "id='s_tag_" + str(
+                    estados_municipios[
+                    0].estado_id) + "' onclick='getMun(" + str(
+                    estados_municipios[
+                    0].estado_id) + ");' class='state_tag'>" + \
+                                    estados_municipios[
+                                    0].estado.estado_name + " (" + str(
+                    len(estados_municipios)) + ")" + "</a></span></div>"
+                html_string_inputs += "<div><input type='hidden' " \
+                                      "name='r_state_" + str(
+                    estados_municipios[0].estado_id) + "' id='r_state_" + str(
+                    estados_municipios[0].estado_id) + "' value='" + \
+                                      string_municipios[:-1] + "'/></div>"
                 string_municipios = ''
             else:
-                region_states = RegionEstado.objects.filter(region = regionObj).filter(estado__pk = rs['estado']).filter(~Q(municipio = None))
+                region_states = RegionEstado.objects.filter(
+                    region=regionObj).filter(estado__pk=rs['estado']).filter(
+                    ~Q(municipio=None))
                 for rst in region_states:
-                    string_municipios += str(rst.municipio.pk)+','
+                    string_municipios += str(rst.municipio.pk) + ','
 
-                html_string_tags += "<div class='tag'><span class='delete_icon'><a href='#eliminar' rel='"+str(rst.estado_id)+"' class='del del_icn' title='Eliminar Estado'></a></span><span class='tag_label'><a href='#' id='s_tag_"+str(rst.estado_id)+"' onclick='getMun("+ str(rst.estado_id) +");' class='state_tag'>"+rst.estado.estado_name+" ("+ str(len(region_states)) +")"+"</a></span></div>"
-                html_string_inputs += "<div><input type='hidden' name='r_state_" + str(rst.estado_id) +"' id='r_state_" + str(rst.estado_id)  + "' value='" + string_municipios[:-1] + "'/></div>"
+                html_string_tags += "<div class='tag'><span " \
+                                    "class='delete_icon'><a href='#eliminar' " \
+                                    "rel='" + str(
+                    rst.estado_id) + "' class='del del_icn' title='Eliminar " \
+                                     "Estado'></a></span><span " \
+                                     "class='tag_label'><a href='#' " \
+                                     "id='s_tag_" + str(
+                    rst.estado_id) + "' onclick='getMun(" + str(
+                    rst.estado_id) + ");' class='state_tag'>" + rst.estado\
+                .estado_name + " (" + str(
+                    len(region_states)) + ")" + "</a></span></div>"
+                html_string_inputs += "<div><input type='hidden' " \
+                                      "name='r_state_" + str(
+                    rst.estado_id) + "' id='r_state_" + str(
+                    rst.estado_id) + "' value='" + string_municipios[
+                                                   :-1] + "'/></div>"
                 string_municipios = ''
 
-        post = {'region_id':regionObj.pk, 'region_name': regionObj.region_name, 'region_description': regionObj.region_description, 'region_tags':html_string_tags, 'region_inputs':html_string_inputs}
+        post = {'region_id': regionObj.pk, 'region_name': regionObj.region_name,
+                'region_description': regionObj.region_description,
+                'region_tags': html_string_tags,
+                'region_inputs': html_string_inputs}
 
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
@@ -1210,49 +1386,51 @@ def edit_region(request, id_region):
 
             #Valida por si le da muchos clics al boton
             if regionObj.region_name != region_name:
-                regionValidate = Region.objects.filter(region_name = region_name)
+                regionValidate = Region.objects.filter(region_name=region_name)
                 if regionValidate:
                     message = "Ya existe una Región con ese nombre"
                     type = "n_notif"
                     continuar = False
 
             if continuar:
-
                 regionObj.region_name = region_name
                 regionObj.region_description = region_description
                 regionObj.save()
 
                 #Borrar todos los estados-municipios para esta region
-                region_mun_delete = RegionEstado.objects.filter(region = regionObj)
+                region_mun_delete = RegionEstado.objects.filter(
+                    region=regionObj)
                 region_mun_delete.delete()
 
                 for state_id in request.POST:
                     if re.search('^r_state_\w+', state_id):
-                        s_id = int(state_id.replace("r_state_",""))
+                        s_id = int(state_id.replace("r_state_", ""))
                         atr_value_complete = request.POST.get(state_id)
                         atr_value_arr = atr_value_complete.split(',')
 
                         #Se obtiene el objeto de estado
-                        state_obj = get_object_or_404(Estado, pk = s_id)
+                        state_obj = get_object_or_404(Estado, pk=s_id)
 
                         #Se obtienen el número de municipios que tiene el estado
-                        state_mun = EstadoMunicipio.objects.filter(estado__pk = s_id)
+                        state_mun = EstadoMunicipio.objects.filter(
+                            estado__pk=s_id)
 
                         if len(state_mun) != len(atr_value_arr):
                             for id_mun in atr_value_arr:
                                 #Se obtiene el objeto de municipio
-                                mun_obj = get_object_or_404(Municipio, pk=id_mun)
+                                mun_obj = get_object_or_404(Municipio,
+                                                            pk=id_mun)
 
                                 newRegionEstado = RegionEstado(
-                                    region = regionObj,
-                                    estado = state_obj,
-                                    municipio = mun_obj,
+                                    region=regionObj,
+                                    estado=state_obj,
+                                    municipio=mun_obj,
                                 )
                                 newRegionEstado.save()
                         else:
                             newRegionEstado = RegionEstado(
-                                region = regionObj,
-                                estado = state_obj,
+                                region=regionObj,
+                                estado=state_obj,
                             )
                             newRegionEstado.save()
 
@@ -1265,17 +1443,18 @@ def edit_region(request, id_region):
                                                 "&ntype=n_success")
 
         template_vars = dict(datacontext=datacontext,
-            empresa=empresa,
-            estados=estados,
-            post=post,
-            sidebar=request.session['sidebar'],
-            operation="edit",
-            message=message,
-            type=type,
-            company=request.session['company']
+                             empresa=empresa,
+                             estados=estados,
+                             post=post,
+                             sidebar=request.session['sidebar'],
+                             operation="edit",
+                             message=message,
+                             type=type,
+                             company=request.session['company']
         )
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("location/add_region.html", template_vars_template)
+        return render_to_response("location/add_region.html",
+                                  template_vars_template)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
@@ -1310,14 +1489,19 @@ def view_regions(request):
                     order = "-region_description"
                     order_description = "asc"
         if search:
-            lista = Region.objects.filter(Q(region_name__icontains=request.GET['search'])|Q(
-                region_description__icontains=request.GET['search'])).order_by(order)
+            lista = Region.objects.filter(
+                Q(region_name__icontains=request.GET['search']) | Q(
+                    region_description__icontains=request.GET[
+                                                  'search'])).order_by(order)
 
         else:
             lista = Region.objects.all().order_by(order)
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
-        template_vars = dict(order_name=order_name, order_description=order_description,
-            datacontext=datacontext, empresa=empresa, company=company,sidebar=request.session['sidebar'])
+        template_vars = dict(order_name=order_name,
+                             order_description=order_description,
+                             datacontext=datacontext, empresa=empresa,
+                             company=company,
+                             sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
             page = int(request.GET.get('page', '1'))
@@ -1330,17 +1514,18 @@ def view_regions(request):
         except (EmptyPage, InvalidPage):
             pag_user = paginator.page(paginator.num_pages)
 
-        template_vars['paginacion']=pag_user
+        template_vars['paginacion'] = pag_user
 
         if 'msj' in request.GET:
             template_vars['message'] = request.GET['msj']
             template_vars['msg_type'] = request.GET['ntype']
 
-
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("location/regions.html", template_vars_template)
+        return render_to_response("location/regions.html",
+                                  template_vars_template)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
+
 
 def see_region(request, id_region):
     if not request.user.is_authenticated():
@@ -1349,79 +1534,103 @@ def see_region(request, id_region):
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
 
-        region = get_object_or_404(Region, pk = id_region)
+        region = get_object_or_404(Region, pk=id_region)
 
         lista_estados = []
 
-        r_states = RegionEstado.objects.filter(region = region).values('estado').annotate(dstates = Count('estado'))
+        r_states = RegionEstado.objects.filter(region=region).values(
+            'estado').annotate(dstates=Count('estado'))
         for rs in r_states:
-            region_states = RegionEstado.objects.filter(region = region).filter(estado__pk = rs['estado']).filter(municipio = None)
+            region_states = RegionEstado.objects.filter(region=region).filter(
+                estado__pk=rs['estado']).filter(municipio=None)
             if region_states:
-                estados_municipios = EstadoMunicipio.objects.filter(estado__pk = rs['estado'])
+                estados_municipios = EstadoMunicipio.objects.filter(
+                    estado__pk=rs['estado'])
                 if estados_municipios:
-                    lista_estados.append("<a class='fbox' data-fancybox-type='iframe'  href='/location/municipios_estado/"+str(region_states[0].region_id)+"/"+str(rs['estado'])+"/'>"+estados_municipios[0].estado.estado_name + ' ('+str(len(estados_municipios))+')'+"</a>")
+                    lista_estados.append(
+                        "<a class='fbox' data-fancybox-type='iframe'  href='/location/municipios_estado/" + str(
+                            region_states[0].region_id) + "/" + str(
+                            rs['estado']) + "/'>" + estados_municipios[
+                                                    0].estado.estado_name + ' (' + str(
+                            len(estados_municipios)) + ')' + "</a>")
             else:
-                region_states = RegionEstado.objects.filter(region = region).filter(estado__pk = rs['estado']).filter(~Q(municipio = None))
+                region_states = RegionEstado.objects.filter(
+                    region=region).filter(estado__pk=rs['estado']).filter(
+                    ~Q(municipio=None))
                 if region_states:
-                    lista_estados.append("<a class='fbox' data-fancybox-type='iframe'  href='/location/municipios_estado/"+str(region_states[0].region_id)+"/"+str(rs['estado'])+"/'>"+region_states[0].estado.estado_name + ' ('+str(len(estados_municipios))+')'+"</a>")
+                    lista_estados.append(
+                        "<a class='fbox' data-fancybox-type='iframe'  href='/location/municipios_estado/" + str(
+                            region_states[0].region_id) + "/" + str(
+                            rs['estado']) + "/'>" + region_states[
+                                                    0].estado.estado_name + ' (' + str(
+                            len(estados_municipios)) + ')' + "</a>")
 
         template_vars = dict(
             datacontext=datacontext,
-            region = region,
-            region_estados = lista_estados,
+            region=region,
+            region_estados=lista_estados,
             empresa=empresa,
             sidebar=request.session['sidebar'],
             company=request.session['company']
         )
 
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("location/see_region.html", template_vars_template)
+        return render_to_response("location/see_region.html",
+                                  template_vars_template)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
-def region_municipalities(request, id_region, id_state):
 
+def region_municipalities(request, id_region, id_state):
     municipios = []
-    r_states = RegionEstado.objects.filter(region__pk = id_region).filter(estado__pk = id_state)
+    r_states = RegionEstado.objects.filter(region__pk=id_region).filter(
+        estado__pk=id_state)
 
     region_name = r_states[0].region.region_name
     estado_name = r_states[0].estado.estado_name
 
     for rs in r_states:
         if not rs.municipio:
-            estados_municipios = EstadoMunicipio.objects.filter(estado__pk = id_state)
+            estados_municipios = EstadoMunicipio.objects.filter(
+                estado__pk=id_state)
             for mn in estados_municipios:
                 municipios.append(mn.municipio.municipio_name)
         else:
             municipios.append(rs.municipio.municipio_name)
 
     template_vars = dict(
-        region_name = region_name,
-        estado_name = estado_name,
-        municipios = municipios,
+        region_name=region_name,
+        estado_name=estado_name,
+        municipios=municipios,
     )
 
     template_vars_template = RequestContext(request, template_vars)
-    return render_to_response("location/region_municipalities.html", template_vars_template)
+    return render_to_response("location/region_municipalities.html",
+                              template_vars_template)
+
 
 def get_select_municipalities(request, id_state, id_region):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
 
     #Obtiene los municipios de ese estado que ya estan asignados a una region
-    reg_est_exc = RegionEstado.objects.filter(estado__pk = id_state).exclude(region__pk = id_region)
+    reg_est_exc = RegionEstado.objects.filter(estado__pk=id_state).exclude(
+        region__pk=id_region)
     list_exception = []
     if reg_est_exc:
         for rg_ex in reg_est_exc:
             list_exception.append(rg_ex.municipio.pk)
 
-    municipalities = EstadoMunicipio.objects.filter(estado__pk = id_state).exclude(municipio__pk__in = list_exception).order_by('municipio__municipio_name')
+    municipalities = EstadoMunicipio.objects.filter(
+        estado__pk=id_state).exclude(municipio__pk__in=list_exception).order_by(
+        'municipio__municipio_name')
 
-    string_to_return=''
+    string_to_return = ''
     if municipalities:
         for mun in municipalities:
             string_to_return += """<option value="%s">
                                     %s
-                                    </option>""" % (mun.municipio.pk, mun.municipio.municipio_name)
+                                    </option>""" % (
+            mun.municipio.pk, mun.municipio.municipio_name)
 
     return HttpResponse(content=string_to_return, content_type="text/html")
