@@ -406,12 +406,13 @@ def grafica_datoscsv(request):
                     request.GET[date_start_get_key],
                     "%Y-%m-%d")
 
-                datetime_end = datetime.datetime.strptime(request.GET[date_end_get_key],
-                    "%Y-%m-%d")
+                datetime_end =\
+                    datetime.datetime.strptime(request.GET[date_end_get_key], "%Y-%m-%d") +\
+                        timedelta(days=1)
 
             else:
                 datetime_start = get_default_datetime_start()
-                datetime_end = get_default_datetime_end()
+                datetime_end = get_default_datetime_end() + timedelta(days=1)
 
             try:
                 consumer_unit = get_data_warehouse_consumer_unit_by_id(consumer_unit_id)
