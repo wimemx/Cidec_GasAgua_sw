@@ -4,12 +4,14 @@
     <link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
     <link rel="stylesheet" href="/static/js/external/jqueryUniform/css/uniform.default.css" type="text/css" media="screen" charset="utf-8" />
     <link href="/static/js/external/messi/messi.css" rel="stylesheet" type="text/css" media="screen" />
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/ui.spinner.css"/>
     <script type="text/javascript" src="/static/js/external/jquery.tools.min.js"></script>
     <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
     <script type="text/javascript" src="/static/js/external/jqueryUniform/jquery.uniform.min.js"></script>
     <script type="text/javascript" src="/static/js/external/jsapi.js"></script>
     <script type="text/javascript" src="/static/js/functions.js"></script>
     <script src="/static/js/external/messi/messi.min.js"></script>
+    <script src="{{ STATIC_URL}}js/external/ui.spinner.min.js"></script>
     <script type="text/javascript">
         google.load('visualization', '1.1', {packages: ['corechart', 'controls']});
     </script>
@@ -188,6 +190,37 @@
 
             dashboard.bind(control, chart);
             dashboard.draw(data);
+
+
+            var $input = $('#upper_limit');
+            var $input1 = $('#lower_limit');
+            $input.val("{{ limits.max }}").attr("min", Math.ceil({{ limits.min }})).attr("max", Math.ceil({{ limits.max }}));
+            $input1.val("{{ limits.min }}").attr("min", Math.floor({{ limits.min }})).attr("max", Math.floor({{ limits.max }}));
+            $input.spinner({
+                min: $input.attr('min'),
+                max: $input.attr('max'),
+                step: $input.attr('step')
+            }).change(function(){
+                if($input.val()<=$input1.val()){
+                    $input.val($input1.val() + .5);
+                }
+                chart.setOption('vAxis', {'viewWindow':{'max':$input.val(), 'min':$input1.val()}});
+                chart.draw();
+            });
+            $input1.spinner({
+                min: $input1.attr('min'),
+                max: $input1.attr('max'),
+                step: $input1.attr('step')
+            }).change(function(){
+                if($input1.val()>=$input.val()){
+                    $input1.val($input.val() - .5);
+                }
+                chart.setOption('vAxis', {'viewWindow':{'max':$input.val(), 'min':$input1.val()}});
+                chart.draw();
+            });
+
+
+
         }
 
 
@@ -208,7 +241,10 @@
         <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
     </div>
     <div id="control"></div>
-    <div id="slider-range" class="slider"></div>
+    <div id="slider-range">
+        <input type="text" class="integer" id="upper_limit" min="{{ limits.min }}" max="{{ limits.max }}" step="0.5"/>
+        <input type="text" class="integer" id="lower_limit" min="{{ limits.min }}" max="{{ limits.max }}" step="0.5"/>
+    </div>
 </div>
 
 {% if is_cumulative_electric_data %}
