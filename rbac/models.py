@@ -6,14 +6,17 @@ import django.contrib.auth.models
 class ExtendedUser(models.Model):
     """ Informacion adicional del usuario
 
-    Almacena la informacion adicional basica de los usuarios del sistema que les permite tener acceso al sistema
+    Almacena la informacion adicional basica de los usuarios del sistema que
+    les permite tener acceso al sistema
     """
-    user = models.OneToOneField(django.contrib.auth.models.User, on_delete=models.PROTECT)
+    user = models.OneToOneField(django.contrib.auth.models.User,
+                                on_delete=models.PROTECT)
     user_activation_key = models.CharField(max_length=128)
     user_first_visit = models.DateTimeField(null=True, blank=True)
 
     def __unicode__(self):
         return self.user.username + " - " + str(self.user_first_visit)
+
 
 class UserProfile(models.Model):
     """ Informacion de perfil que no es guardada por django
@@ -22,23 +25,32 @@ class UserProfile(models.Model):
 
     """
     SEXO = (
-        ('M','Masculino'),
-        ('F','Femenino')
+        ('M', 'Masculino'),
+        ('F', 'Femenino')
         )
-    user = models.OneToOneField(django.contrib.auth.models.User, on_delete=models.PROTECT)
-    user_profile_surname_mother = models.CharField(max_length=80, blank=True, null=True)
+    user = models.OneToOneField(django.contrib.auth.models.User,
+                                on_delete=models.PROTECT)
+    user_profile_surname_mother = models.CharField(max_length=80, blank=True,
+                                                   null=True)
     user_profile_birth_dates = models.DateField()
     user_profile_sex = models.CharField(choices=SEXO, default='M', max_length=1)
     user_profile_image = models.CharField(max_length=256, null=True, blank=True)
-    user_profile_office_phone1 = models.CharField(max_length="40", null=True, blank=True)
-    user_profile_office_phone2 = models.CharField(max_length="40", null=True, blank=True)
-    user_profile_mobile_phone = models.CharField(max_length="40", null=True, blank=True)
-    user_profile_idnext = models.CharField(max_length="40", null=True, blank=True)
+    user_profile_office_phone1 = models.CharField(max_length="40", null=True,
+                                                  blank=True)
+    user_profile_office_phone2 = models.CharField(max_length="40", null=True,
+                                                  blank=True)
+    user_profile_mobile_phone = models.CharField(max_length="40", null=True,
+                                                 blank=True)
+    user_profile_idnext = models.CharField(max_length="40", null=True,
+                                           blank=True)
     user_profile_contact_email = models.EmailField(max_length=254)
-    user_profile_contact_phone = models.CharField(max_length="40", null=True, blank=True)
+    user_profile_contact_phone = models.CharField(max_length="40", null=True,
+                                                  blank=True)
 
     def __unicode__(self):
-        return self.user.username + "-" + self.user.first_name + " " + self.user.last_name
+        return self.user.username + "-" + self.user.first_name + " " + self\
+        .user.last_name
+
 
 class Operation(models.Model):
     """Catalogo de operaciones
@@ -48,10 +60,12 @@ class Operation(models.Model):
 
     """
     operation_name = models.CharField(max_length=128)
-    operation_description = models.TextField(max_length=256, null=True, blank=True)
+    operation_description = models.TextField(max_length=256, null=True,
+                                             blank=True)
 
     def __unicode__(self):
         return self.operation_name
+
 
 class Object(models.Model):
     """ Catalogo de objetos
@@ -63,8 +77,10 @@ class Object(models.Model):
     object_name = models.CharField(max_length=128)
     object_description = models.TextField(max_length=256, null=True, blank=True)
     object_access_point = models.CharField(max_length=256)
+
     def __unicode__(self):
         return self.object_name
+
 
 class Role(models.Model):
     """Catalogo de roles
@@ -77,8 +93,10 @@ class Role(models.Model):
     role_description = models.TextField(max_length=256, null=True, blank=True)
     role_importance = models.CharField(max_length=200)
     status = models.BooleanField(default=True)
+
     def __unicode__(self):
         return self.role_name
+
 
 class PermissionAsigment(models.Model):
     """ Asignacion de Permisos a Roles
@@ -92,17 +110,22 @@ class PermissionAsigment(models.Model):
     object = models.ForeignKey(Object, on_delete=models.PROTECT)
 
     def __unicode__(self):
-        return self.role.role_name + " - " + self.operation.operation_name \
+        return self.role.role_name + " - " + self.operation.operation_name\
                + " - " + self.object.object_name
 
+
 class UserRole(models.Model):
-    user = models.ForeignKey(django.contrib.auth.models.User, on_delete=models.PROTECT)
+    user = models.ForeignKey(django.contrib.auth.models.User,
+                             on_delete=models.PROTECT)
     role = models.ForeignKey(Role, on_delete=models.PROTECT)
     status = models.BooleanField(default=True)
+
     def __unicode__(self):
         return self.user.username + " - " + self.role.role_name
+
     class Meta:
         unique_together = ('user', 'role')
+
 
 class DataContextPermission(models.Model):
     """ contexto de asignacion de permisos
@@ -113,9 +136,13 @@ class DataContextPermission(models.Model):
     """
     user_role = models.ForeignKey(UserRole, on_delete=models.PROTECT)
     cluster = models.ForeignKey(Cluster, on_delete=models.PROTECT)
-    company = models.ForeignKey(Company, on_delete=models.PROTECT, blank=True, null=True, default=None)
-    building = models.ForeignKey(Building, on_delete=models.PROTECT, blank=True, null=True, default=None)
-    part_of_building = models.ForeignKey(PartOfBuilding, on_delete=models.PROTECT, blank=True, null=True, default=None)
+    company = models.ForeignKey(Company, on_delete=models.PROTECT, blank=True,
+                                null=True, default=None)
+    building = models.ForeignKey(Building, on_delete=models.PROTECT, blank=True,
+                                 null=True, default=None)
+    part_of_building = models.ForeignKey(PartOfBuilding,
+                                         on_delete=models.PROTECT, blank=True,
+                                         null=True, default=None)
 
     def __unicode__(self):
         s = self.user_role.user.username
@@ -129,22 +156,28 @@ class DataContextPermission(models.Model):
             s += " - " + self.part_of_building.part_of_building_name
         return  s
 
-# ! ! ! NOTA: Los siguientes modelos solo son de referencia para el llenado de formularios,
-# para gestion de permisos se usaran los modelos especificados originalmente (arriba de esta
+# ! ! ! NOTA: Los siguientes modelos solo son de referencia para el llenado
+# de formularios,
+# para gestion de permisos se usaran los modelos especificados originalmente
+# (arriba de esta
 # nota)
 
 class Group(models.Model):
     """ Agrupacion de objetos de permisos
-    almacena las categorias en que se agrupan logicamente los objetos sobre los que se
+    almacena las categorias en que se agrupan logicamente los objetos sobre
+    los que se
     aplicaran las operaciones. Ejemplo: Reportes, Usuarios y permisos, Empresas
     """
     group_name = models.CharField(max_length=256)
+
     def __unicode__(self):
         return self.group_name
 
+
 class GroupObject(models.Model):
     """Agrupacion de objetos
-    almacena la relacion entre categorias y los objetos sobre los que se aplicaran las
+    almacena la relacion entre categorias y los objetos sobre los que se
+    aplicaran las
     operaciones. Ejemplo: Reportes-kwh, Usuarios y permisos-asignacion de roles,
     Empresas - alta edificios
     """
@@ -157,19 +190,23 @@ class GroupObject(models.Model):
     class Meta:
         unique_together = ('object', 'group')
 
+
 class OperationForGroup(models.Model):
     """Agrupacion de objetos por grupo
-    Almacena la relacion de la(s) operacion(es) que pueden aplicar para cierto grupo.
-    Ejemplo: Reportes-Lectura, Edificios-Lectura, Edificios-Crear, Edificios-Actualizar
+    Almacena la relacion de la(s) operacion(es) que pueden aplicar para
+    cierto grupo.
+    Ejemplo: Reportes-Lectura, Edificios-Lectura, Edificios-Crear,
+    Edificios-Actualizar
     """
     operation = models.ForeignKey(Operation, on_delete=models.PROTECT)
-    group = models.ForeignKey(Group,on_delete=models.PROTECT)
+    group = models.ForeignKey(Group, on_delete=models.PROTECT)
 
     def __unicode__(self):
         return self.operation.operation_name + " - " + self.group.group_name
 
     class Meta:
         unique_together = ('operation', 'group')
+
 
 class OperationForGroupObjects(models.Model):
     """Agrupa los tipos de operaciones que se pueden realizar para cada objeto"""
@@ -180,4 +217,4 @@ class OperationForGroupObjects(models.Model):
         return self.operation.operation_name + " - " + self.group_object.object.object_name
 
     class Meta:
-        unique_together = ('operation','group_object')
+        unique_together = ('operation', 'group_object')

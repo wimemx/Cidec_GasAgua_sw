@@ -1,12 +1,24 @@
 .ui-spinner {position: relative; border: 0px solid white; }
-.ui-spinner-buttons {position: absolute}
+.ui-spinner-buttons {position: absolute; top: -1px !important;}
 .ui-spinner-button {overflow: hidden}
+.ui-spinner-button{
+    height: 8.5px !important;
+}
 .integer{
-    width: 22px !important;
+    width: 29px !important;
+    height: 21px !important;
 }
 #slider-range{
     width: 45px;
     position: absolute;
     right: 0;
     top: 34%;
+}
+#up{
+    top: -83px;
+    position: absolute;
+}
+#down{
+    position: absolute;
+    bottom: -155px;
 }

@@ -242,8 +242,12 @@
     </div>
     <div id="control"></div>
     <div id="slider-range">
-        <input type="text" class="integer" id="upper_limit" min="{{ limits.min }}" max="{{ limits.max }}" step="0.5"/>
-        <input type="text" class="integer" id="lower_limit" min="{{ limits.min }}" max="{{ limits.max }}" step="0.5"/>
+        <div id="up">
+            <input type="text" class="integer" id="upper_limit" min="{{ limits.min }}" max="{{ limits.max }}" step="0.5"/>
+        </div>
+        <div id="down">
+            <input type="text" class="integer" id="lower_limit" min="{{ limits.min }}" max="{{ limits.max }}" step="0.5"/>
+        </div>
     </div>
 </div>
 
