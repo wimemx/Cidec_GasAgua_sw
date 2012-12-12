@@ -1739,14 +1739,12 @@ def multiply():
 def tag_reading(request):
     if request.method == 'POST':
         data = ElectricDataTemp.objects.filter(
-            medition_date__gte=datetime.datetime(2012, 9,
-                                                 20, 0, 0, 0)).order_by(
-            "-medition_date")[:15]
+            medition_date__gte=datetime.datetime(2012, 11, 20, 0, 0, 0),
+            TotalkWhIMPORT__lt=1000, TotalkWhIMPORT__gt=0).order_by("-medition_date")
         for dato in data:
-            if dato.TotalkWhIMPORT < 1000:
-                dato.TotalkWhIMPORT *= 1000
-                dato.TotalkvarhIMPORT *= 1000
-                dato.save()
+            dato.TotalkWhIMPORT *= 1000
+            dato.TotalkvarhIMPORT *= 1000
+            dato.save()
 
         #Obtiene el Id de la medicion
         reading_id = request.REQUEST.get("id_reading", "")

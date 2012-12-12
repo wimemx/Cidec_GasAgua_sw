@@ -110,7 +110,8 @@ def add_state(request):
             datacontext=get_buildings_context(request.user),
             empresa=request.session['main_building'],
             company=request.session['company'],
-            operation="add"
+            operation="add",
+            sidebar=request.session['sidebar']
         )
         if request.method == "POST":
             valid = validate_add_state(request.POST)
@@ -151,7 +152,8 @@ def edit_state(request, id_state_country):
             company=request.session['company'],
             operation="edit",
             pais=pais,
-            estado=estado
+            estado=estado,
+            sidebar=request.session['sidebar']
         )
         if request.method == "POST":
             estado = request.POST['estado'].strip()
@@ -182,7 +184,8 @@ def add_municipality(request):
             datacontext=get_buildings_context(request.user),
             empresa=request.session['main_building'],
             company=request.session['company'],
-            operation="add"
+            operation="add",
+            sidebar=request.session['sidebar']
         )
         if request.method == "POST":
             valid = validate_add_municipality(request.POST)
@@ -226,7 +229,8 @@ def edit_municipality(request, id_edo_munip):
             operation="edit",
             municipio=municipio,
             estado=estado,
-            pais=pais
+            pais=pais,
+            sidebar=request.session['sidebar']
         )
         if request.method == "POST":
             municipio = request.POST['municipio'].strip()
@@ -258,7 +262,8 @@ def add_neighboorhood(request):
             datacontext=get_buildings_context(request.user),
             empresa=request.session['main_building'],
             company=request.session['company'],
-            operation="add"
+            operation="add",
+            sidebar=request.session['sidebar']
         )
         if request.method == "POST":
             valid = validate_add_neighboorhood(request.POST)
@@ -306,7 +311,8 @@ def edit_neighboorhood(request, id_munip_col):
             colonia=colonia,
             municipio=municipio,
             estado=estado,
-            pais=pais
+            pais=pais,
+            sidebar=request.session['sidebar']
         )
         if request.method == "POST":
             colonia = request.POST['colonia'].strip()
@@ -338,7 +344,8 @@ def add_street(request):
             datacontext=get_buildings_context(request.user),
             empresa=request.session['main_building'],
             company=request.session['company'],
-            operation="add"
+            operation="add",
+            sidebar=request.session['sidebar']
         )
         if request.method == "POST":
             valid = validate_add_street(request.POST)
@@ -388,7 +395,8 @@ def edit_street(request, id_col_calle):
             colonia=colonia,
             municipio=municipio,
             estado=estado,
-            pais=pais
+            pais=pais,
+            sidebar=request.session['sidebar']
         )
         if request.method == "POST":
             calle = request.POST['calle'].strip()
@@ -418,7 +426,8 @@ def state_list(request):
         template_vars = dict(
             datacontext=get_buildings_context(request.user),
             empresa=request.session['main_building'],
-            company=request.session['company']
+            company=request.session['company'],
+            sidebar=request.session['sidebar']
         )
 
         if "search" in request.GET:
@@ -495,7 +504,8 @@ def municipality_list(request):
         template_vars = dict(
             datacontext=get_buildings_context(request.user),
             empresa=request.session['main_building'],
-            company=request.session['company']
+            company=request.session['company'],
+            sidebar=request.session['sidebar']
         )
 
         if "search" in request.GET:
@@ -571,7 +581,8 @@ def neighboorhood_list(request):
         template_vars = dict(
             datacontext=get_buildings_context(request.user),
             empresa=request.session['main_building'],
-            company=request.session['company']
+            company=request.session['company'],
+            sidebar=request.session['sidebar']
         )
 
         if "search" in request.GET:
@@ -663,7 +674,8 @@ def street_list(request):
         template_vars = dict(
             datacontext=get_buildings_context(request.user),
             empresa=request.session['main_building'],
-            company=request.session['company']
+            company=request.session['company'],
+            sidebar=request.session['sidebar']
         )
 
         if "search" in request.GET:
@@ -951,7 +963,7 @@ def delete_street_neighboor(request, id_col_calle):
             type = "success"
 
         return HttpResponseRedirect(
-            "/location/ver_municipios?msj=" + mensaje + "&ntype=" + type)
+            "/location/ver_calles?msj=" + mensaje + "&ntype=" + type)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
@@ -1138,9 +1150,9 @@ def delete_municipalities(state):
     state.delete()
     return True
 
-"""
-Regiones
-"""
+#"""
+#Regiones
+#"""
 
 def add_region(request):
     if not request.user.is_authenticated():
@@ -1182,7 +1194,8 @@ def add_region(request):
 
         estados = Estado.objects.all().exclude(pk__in=estados_exc).order_by(
             'estado_name')
-
+        type = ''
+        message = ''
         template_vars = dict(
             datacontext=get_buildings_context(request.user),
             empresa=request.session['main_building'],
@@ -1297,8 +1310,6 @@ def edit_region(request, id_region):
         html_string_inputs = ''
         html_string_tags = ''
         string_municipios = ''
-        multiple = False
-        rs_cont = 0;
 
         r_states = RegionEstado.objects.filter(region=regionObj).values(
             'estado').annotate(dstates=Count('estado'))
@@ -1543,9 +1554,9 @@ def see_region(request, id_region):
         for rs in r_states:
             region_states = RegionEstado.objects.filter(region=region).filter(
                 estado__pk=rs['estado']).filter(municipio=None)
+            estados_municipios = EstadoMunicipio.objects.filter(
+                estado__pk=rs['estado'])
             if region_states:
-                estados_municipios = EstadoMunicipio.objects.filter(
-                    estado__pk=rs['estado'])
                 if estados_municipios:
                     lista_estados.append(
                         "<a class='fbox' data-fancybox-type='iframe'  href='/location/municipios_estado/" + str(

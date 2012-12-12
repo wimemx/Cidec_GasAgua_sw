@@ -74,22 +74,38 @@ ol, ul {
     font-weight: 700;
     cursor: pointer;
 }
-#compare_interval li, #compare_interval2 li{
+#compare_interval1 li, #compare_interval2 li{
     float: left;
-    border: solid 1px #bdbdbf;
     height: 23px;
-    background: url(../images/bgs/date_interval_selector_bg.png) repeat-x;
+    /*border: solid 1px #bdbdbf;
+    background: url(../images/bgs/date_interval_selector_bg.png) repeat-x;*/
     line-height: 23px;
     width: 65px;
     text-align: center;
     margin: 0;
 }
-#compare_interval li:hover, #compare_interval2 li:hover{
+#compare_interval1 li.active, #compare_interval2 li.active{
+    border: solid 1px #9ebfc7;
+    /*box-shadow: 0 0 2px 1px #9EBFC7;
+    background: url(../images/bgs/date_interval_selected_bg.png) repeat-x;*/
+}
+#compare_interval li, #compare_interval2 li{
+    float: left;
+    height: 23px;
+    border: solid 1px #bdbdbf;
+    background: url(../images/bgs/date_interval_selector_bg.png) repeat-x;
+    line-height: 23px;
+    width: 65px;
+    text-align: center;
+    margin: 0;
+    cursor: pointer;
+}
+#compare_interval li.active, #compare_interval2 li.active{
     border: solid 1px #9ebfc7;
     box-shadow: 0 0 2px 1px #9EBFC7;
     background: url(../images/bgs/date_interval_selected_bg.png) repeat-x;
 }
-#compare_interval li.active, #compare_interval2 li.active{
+#compare_interval li:hover, #compare_interval2 li:hover{
     border: solid 1px #9ebfc7;
     box-shadow: 0 0 2px 1px #9EBFC7;
     background: url(../images/bgs/date_interval_selected_bg.png) repeat-x;

@@ -96,7 +96,7 @@ def validate_url(url):
 
 
 def validate_string(string):
-    arePat = re.compile(r'[^\w\s]', re.UNICODE)
+    arePat = re.compile(r'[^\w\s\-\'"]' , re.UNICODE)
     string_arr = string.split(" ")
     for i in string_arr:
         if i == "" or arePat.search(i):

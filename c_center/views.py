@@ -5215,7 +5215,8 @@ def edit_building(request, id_bld):
                     formatted_address += "-" + b_int
                 formatted_address += " Colonia: " + neighborhoodObj.colonia_name + " " + municipalityObj.municipio_name
                 formatted_address += " " + stateObj.estado_name + " " + countryObj.pais_name + "C.P." + b_zip
-
+                if b_mt2 == '':
+                    b_mt2 = 0
                 #Se edita la info el edificio
                 buildingObj.building_name = b_name
                 buildingObj.building_description = b_description

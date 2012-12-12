@@ -166,7 +166,7 @@
                     }
                     base_url += "&consumer-unit04={{ consumer_unit.pk }}"
                 }
-                base_url=append_parameters(base_url)+"&granularity=day";
+                base_url=append_parameters(base_url)+"&granularity=raw_data";
                 makeIframe(base_url);
             }else{
                 $("#graph_container").html("<h2>Por favor, " +
@@ -348,8 +348,12 @@
             //var get_vars = $("#graphFrame").attr("src").split('?')[1]
 
 
+                if(src == "/reportes/graficas?graph=TotalkWhIMPORT" || src == "/reportes/graficas?graph=kWh_consumido"){
+                    src+='&granularity=day';
+                }else{
+                    src+='&granularity=raw_data';
+                }
 
-                src+='&granularity=day';
                 src=append_parameters2(src);
 
                 src+="&consumer-unit01="+{{ consumer_unit.pk }};

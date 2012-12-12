@@ -90,8 +90,8 @@
 
 
             });
-            {% else %}
-                $("#compare_interval li").each(function(){
+            {% endif %}
+                $("#compare_interval1 li").each(function(){
                     //cambia el intervalo visible de las graficas y cambia el estilo segun la opcion seleccionada
                     $(this).click(function(){
                         if($(this).attr('id') == "raw_data"){
@@ -109,14 +109,14 @@
                                     });
                         }else{
                         changeRange($(this).attr('id'));
-                        $("#compare_interval li").each(function(){
+                        $("#compare_interval1 li").each(function(){
                             $(this).removeClass("active");
                         });
                         }
                         $(this).addClass("active");
                     });
                 });
-            {% endif %}
+
 
         });
         function changeRange(interval) {
@@ -295,11 +295,18 @@
 </head>
 
 <body>
-<ul id="compare_interval" class="fr">
-    <li id="raw_data" {% if granularity == "raw_data" %} class="active" {% endif %}>Mediciones</li>
-    <li id="hour" {% if granularity == "hour" %} class="active" {% endif %}>Hora</li>
-    <li id="day" {% if granularity == "day" %} class="active" {% endif %}>D&iacute;a</li>
-    <li id="week" {% if granularity == "week" %} class="active" {% endif %}>Semana</li>
+{% if is_cumulative_electric_data %}
+    <ul id="compare_interval" class="fr">
+        <li id="raw_data" {% if granularity == "raw_data" %} class="active" {% endif %}>Mediciones</li>
+        <li id="hour" {% if granularity == "hour" %} class="active" {% endif %}>Hora</li>
+        <li id="day" {% if granularity == "day" %} class="active" {% endif %}>Dia</li>
+        <li id="week" {% if granularity == "week" %} class="active" {% endif %}>Semana</li>
+    </ul>
+{% endif %}
+<ul id="compare_interval1" class="fr">
+    <li id="hour" {% if granularity == "hour" %} class="active" {% endif %}>1 H</li>
+    <li id="day" {% if granularity == "day" %} class="active" {% endif %}>1 D</li>
+    <li id="week" {% if granularity == "week" %} class="active" {% endif %}>1 Sem</li>
 </ul>
 <a id="export_csv" class="fr" href="">Exportar datos en CSV</a>
 <div id="dashboard" class="fl">

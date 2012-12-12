@@ -184,6 +184,10 @@ def index(request):
                            "<span>Regiones</span></span>"\
                            "<ul class='sidebarsub_op'>"\
                            "<li><a href='/location/ver_regiones/'>Ver Regiones</a></li>"\
+                           "<li><a href='/location/ver_estados/'>Ver Estados</a></li>"\
+                           "<li><a href='/location/ver_municipios/'>Ver Municipios</a></li>"\
+                           "<li><a href='/location/ver_colonias/'>Ver Colonias</a></li>"\
+                           "<li><a href='/location/ver_calles/'>Ver Calles</a></li>"\
                            "</ul>"
 
     request.session['sidebar'] = menu_option_str

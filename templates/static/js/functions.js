@@ -24,7 +24,7 @@ function isValidString(cadena){
      * isValidEmailAddress("1ra cadena #3");
      * return false;
      * */
-    var pattern= new RegExp(/^([a-zA-ZáéíóúñÁÉÍÓÚÑ ]+)*$/);
+    var pattern= new RegExp(/^([a-zA-ZáéíóúñÁÉÍÓÚÑ \-_'"]+)*$/);
     return pattern.test(cadena);
 }
 
