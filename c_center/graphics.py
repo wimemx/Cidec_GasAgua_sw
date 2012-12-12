@@ -350,7 +350,7 @@ def render_graphics(request):
             else:
                 datetime_start = get_default_datetime_start()
                 datetime_end = get_default_datetime_end()
-
+            template_variables['fi'] = datetime_start
             data.append((consumer_unit_id, datetime_start, datetime_end))
             consumer_unit_counter += 1
             consumer_unit_get_key = "consumer-unit%02d" % consumer_unit_counter
