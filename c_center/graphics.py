@@ -88,7 +88,7 @@ def get_consumer_unit_electric_data_raw(
         medition_date = electric_data_value['medition_date']
         electric_data_raw.append(
             dict(datetime=int(time.mktime(
-                django.utils.timezone.localtime(medition_date).timetuple())),
+                     django.utils.timezone.localtime(medition_date).timetuple())),
                  electric_data=electric_data,
                  certainty=True))
 
@@ -221,6 +221,10 @@ def get_electric_data_list_json(electric_data_list, limits=None):
         electric_data_max_value = 100.0
         electric_data_min_value = -100.0
 
+    elif electric_data_max_value == electric_data_min_value:
+        electric_data_max_value += abs(electric_data_max_value * 0.1)
+        electric_data_min_value -= abs(electric_data_min_value * 0.1)
+
     if limits is not None:
         electric_data_max_min_delta_value =\
         float(electric_data_max_value - electric_data_min_value)
@@ -350,7 +354,7 @@ def render_graphics(request):
             else:
                 datetime_start = get_default_datetime_start()
                 datetime_end = get_default_datetime_end()
-            template_variables['fi'] = datetime_start
+
             data.append((consumer_unit_id, datetime_start, datetime_end))
             consumer_unit_counter += 1
             consumer_unit_get_key = "consumer-unit%02d" % consumer_unit_counter
@@ -359,64 +363,70 @@ def render_graphics(request):
 
         electric_data_list = []
         consumer_unit_and_time_interval_information_list = []
+        electric_data_datetime_first = None
         for id, start, end in data:
             if is_interval_graphic:
                 electric_data_values =\
-                data_warehouse.views.get_consumer_unit_electric_data_interval(
-                    electric_data,
-                    granularity,
-                    id,
-                    start,
-                    end)
+                    data_warehouse.views.get_consumer_unit_electric_data_interval(
+                        electric_data,
+                        granularity,
+                        id,
+                        start,
+                        end)
 
                 if electric_data_values is None:
                     electric_data_values = \
-                    get_consumer_unit_electric_data_interval_raw(
-                        electric_data,
-                        id,
-                        start,
-                        end)
+                        get_consumer_unit_electric_data_interval_raw(
+                            electric_data,
+                            id,
+                            start,
+                            end)
 
             else:
                 electric_data_values =\
-                data_warehouse.views.get_consumer_unit_electric_data(
-                    electric_data,
-                    granularity,
-                    id,
-                    start,
-                    end)
-
-                if electric_data_values is None:
-                    electric_data_values = get_consumer_unit_electric_data_raw(
+                    data_warehouse.views.get_consumer_unit_electric_data(
                         electric_data,
+                        granularity,
                         id,
                         start,
                         end)
 
+                if electric_data_values is None:
+                    electric_data_values = get_consumer_unit_electric_data_raw(
+                                               electric_data,
+                                               id,
+                                               start,
+                                               end)
+
             electric_data_list.append(electric_data_values)
             consumer_unit_and_time_interval_information =\
-            data_warehouse.views\
-            .get_consumer_unit_and_time_interval_information(
-                id,
-                start,
-                end)
+                data_warehouse.views.get_consumer_unit_and_time_interval_information(
+                    id,
+                    start,
+                    end)
 
             consumer_unit_and_time_interval_information_list.append(
                 consumer_unit_and_time_interval_information)
 
-        minimum_values_number = normalize_electric_data_list(electric_data_list)
 
+        minimum_values_number = normalize_electric_data_list(electric_data_list)
         is_cut_electric_data_list_successful = cut_electric_data_list_values(
-            electric_data_list,
-            minimum_values_number)
+                                                   electric_data_list,
+                                                   minimum_values_number)
+
+        if len(electric_data_list) > 0 and len(electric_data_list[0]) > 0:
+            template_variables['fi'] =\
+                datetime.datetime.fromtimestamp(electric_data_list[0][0]['datetime'])
 
         limits = dict()
         template_variables['rows_data'] = get_electric_data_list_json(
-            electric_data_list,
-            limits)
+                                              electric_data_list,
+                                              limits)
 
-        template_variables[
-        'columns'] = consumer_unit_and_time_interval_information_list
+        print "ROWS_DATA"
+        print template_variables['rows_data']
+
+        template_variables['columns'] = consumer_unit_and_time_interval_information_list
         template_variables['limits'] = limits
         template_variables['granularity'] = granularity
         template_variables['years'] = request.session['years']

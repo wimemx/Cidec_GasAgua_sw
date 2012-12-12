@@ -1243,9 +1243,9 @@ def get_consumer_unit_electric_data_interval(
 
     try:
         consumer_unit_list =\
-        [ConsumerUnit.objects.get(pk=consumer_unit_transactional_item.pk)
-         for consumer_unit_transactional_item in
-         consumer_unit_transactional_list]
+            [ConsumerUnit.objects.get(pk=consumer_unit_transactional_item.pk)
+             for consumer_unit_transactional_item in
+             consumer_unit_transactional_list]
         #consumer_unit = ConsumerUnit.objects.get(pk=consumer_unit_id)
 
     except ConsumerUnit.DoesNotExist:
