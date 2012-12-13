@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block titulo %}
+    Modificar Tiempos de Medici&oacute;n y Adquisici&oacute;n
+{% endblock %}
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
+    <link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
+{% endblock %}
+{% block externaljs %}
+    <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/external/maskedinput.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/external/autoNumeric-1.7.4.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/external/jquery.metadata.js"></script>
+
+    <script type="text/javascript">
+
+    </script>
+{% endblock %}
+
+{% block document_ready %}
+
+{% endblock %}
+
+{% block contenido %}
+    <div id="bread_crumbs">
+        <ul>
+            <li><a href="/main/">Inicio</a></li>
+            <li><a href="/configuracion/tiempos/">Tiempos</a></li>
+            <li>
+                Modificar Tiempos de Medici&oacute;n y Adquisici&oacute;n
+            </li>
+        </ul>
+
+    </div>
+    <div id="contenido_interno">
+    <h2 id="titulo_form" class="company">
+        Modificar Tiempos de Medici&oacute;n y Adquisici&oacute;n
+    </h2>
+
+
+    <div class="divider" id="divider_top">&nbsp;</div>
+    <div id="form_container">
+    {% if message %}
+        <span class="notif {{ type }}">
+                    {% autoescape off %}{{ message }}{% endautoescape %}
+                    <a href="#" onclick="$(this).parent().remove();">X</a>
+                </span>
+    {% endif %}
+    <p class="description">
+        Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
+        <br/>
+        Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
+    </p>
+    <form method="post" action=".">
+        {% csrf_token %}
+        <h3 class="g12">Equipo Industrial (zotac)</h3>
+        <div class="ie_fields">
+            <span class="ie_alias">{{ ie_alias }}</span>
+            <span class="ie_descripcion">{{ ie_desc }}</span>
+            <p class="g6">
+                <label for=""></label>
+            </p>
+            <p class="g6">
+                <label></label>
+            </p>
+
+        </div>
+        <h3 class="g12">Unidades de Consumo</h3>
+        <div class="cu_fields">
+
+        </div>
+        <div class="buttons g12">
+            <button class="aqua_btn" id="save">
+                Guardar
+            </button>
+        </div>
+    </form>
+
+    </div>
+
+    </div>
+{% endblock %}

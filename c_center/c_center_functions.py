@@ -11,6 +11,7 @@ import hashlib
 #local application/library specific imports
 from django.shortcuts import HttpResponse, get_object_or_404
 from django.utils import simplejson
+from django.db.models import Q
 
 from cidec_sw import settings
 from c_center.models import Cluster, ClusterCompany, Company,\
