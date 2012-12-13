@@ -13,6 +13,7 @@ import time
 from django.utils.timezone import utc, localtime
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+
 #
 # Application Specific Imports
 #
@@ -206,9 +207,12 @@ def populate_data_warehouse(
     #
     if populate_interval_facts:
         logger.info("POPULATE INTERVALS FACTS TABLES START")
-        interval_facts_start = datetime(year=2012, month=8, day=28, tzinfo=utc)
+        interval_facts_start = datetime(year=2012, month=11, day=17, tzinfo=utc)
         interval_facts_end = datetime.utcnow()
         for consumer_unit in consumer_units:
+            if consumer_unit.pk != 7:
+                continue
+
             logger.info("Populate Consumer Unit: " + str(consumer_unit.pk))
             for fact_interval_granularity in FACTS_INTERVAL_CLASSES.keys():
                 logger.info("Granularity: " + fact_interval_granularity)
@@ -525,13 +529,14 @@ def is_cumulative_electric_data_valid(
         consumer_unit_instant_electric_data
 ):
     for instant_fact in CUMULATIVE_ELECTRIC_DATA.keys():
-        if not hasattr(consumer_unit_instant_electric_data, instant_fact):
-            raise DataWarehouseInformationRetrieveException(
-                function="is_cumulative_electric_data_valid",
-                reason="consumer_unit_instant_electric_data_key_error")
+        if hasattr(consumer_unit_instant_electric_data, instant_fact):
+            if getattr(consumer_unit_instant_electric_data, instant_fact) is None:
+                return False
 
-        if getattr(consumer_unit_instant_electric_data, instant_fact) is None:
-            return False
+        else:
+            logger.error(
+                "consumer_unit_instant_electric_data does not have attribute " +
+                instant_fact)
 
     return True
 
@@ -957,6 +962,7 @@ def populate_consumer_unit_electric_data_interval(
     except KeyError as facts_or_time_instant_classes_key_error:
         logger.error(Error.KEY_ERROR + "\n\t" + str(
             facts_or_time_instant_classes_key_error))
+
         return False
 
     intervals = TimeIntervalClass.objects.filter(
@@ -978,16 +984,11 @@ def populate_consumer_unit_electric_data_interval(
 
         interpolate_facts_instant = True
         if are_facts_valid:
-            try:
-                is_facts_instant_start_valid = is_cumulative_electric_data_valid(
-                    facts_instant_start)
-                is_facts_instant_end_valid = is_cumulative_electric_data_valid(
-                    facts_instant_end)
+            is_facts_instant_start_valid = is_cumulative_electric_data_valid(
+                facts_instant_start)
 
-            except DataWarehouseInformationRetrieveException as cumulative_electric_data_ire:
-                logger.error(str(cumulative_electric_data_ire))
-                is_facts_instant_start_valid = False
-                is_facts_instant_end_valid = False
+            is_facts_instant_end_valid = is_cumulative_electric_data_valid(
+                facts_instant_end)
 
             if is_facts_instant_end_valid and is_facts_instant_start_valid:
                 interpolate_facts_instant = False
@@ -1023,15 +1024,17 @@ def populate_consumer_unit_electric_data_interval(
             if hasattr(facts_instant_start, fact_instant_name) and\
                hasattr(facts_instant_end, fact_instant_name) and\
                hasattr(facts_interval, fact_interval_name):
+
                 fact_instant_start_value = getattr(facts_instant_start,
                                                    fact_instant_name)
+
                 fact_instant_end_value = getattr(facts_instant_end,
                                                  fact_instant_name)
 
                 if fact_instant_start_value is not None and\
                    fact_instant_end_value is not None:
                     fact_interval_value =\
-                    fact_instant_end_value - fact_instant_start_value
+                        fact_instant_end_value - fact_instant_start_value
 
                     setattr(facts_interval, fact_interval_name,
                             fact_interval_value)
