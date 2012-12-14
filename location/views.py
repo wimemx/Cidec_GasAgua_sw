@@ -883,18 +883,31 @@ def search_neighboorhood(request):
 def search_street(request):
     """get a list of streets wich contains 'term' and are in a certain
     'neighboorhood'"""
-    if "term" in request.GET and "neighboorhood" in request.GET:
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if "term" in request.GET:
         term = request.GET['term']
 
-        calle_col = ColoniaCalle.objects.filter(
-            colonia__pk=int(request.GET['neighboorhood']),
-            calle__calle_name__icontains=term)
-        streets = []
-        for calle in calle_col:
-            label = calle.colonia.colonia_name + " - " + calle.calle.calle_name
-            streets.append(dict(value=calle.calle.calle_name, pk=calle.calle.pk,
-                                label=label))
-        data = simplejson.dumps(streets)
+        neigh_id = request.GET['neighborhood']
+        try:
+            neigh_id = int(neigh_id)
+        except ValueError:
+            street_arr = []
+        else:
+            #Se obtiene la colonia
+
+            neighborhood = get_object_or_404(Colonia, pk=neigh_id)
+            streets = ColoniaCalle.objects.filter(colonia=neighborhood).filter(
+                Q(calle__calle_name__icontains=term))
+
+            street_arr = []
+
+            for st in streets:
+                street_arr.append(
+                    dict(value=st.calle.calle_name, pk=st.calle.pk,
+                         label=st.calle.calle_name))
+
+        data = simplejson.dumps(street_arr)
         return HttpResponse(content=data, content_type="application/json")
     else:
         raise Http404

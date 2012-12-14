@@ -63,11 +63,11 @@
 
                     <div class="fields_row g9">
                         <label for="ie_desc" class="g2">Descripci&oacute;n</label>
-                        <textarea rows="10" cols="60" name="ie_desc" id="ie_desc"></textarea>
+                        <textarea rows="10" cols="130" name="ie_desc" id="ie_desc" class="g9"></textarea>
                     </div>
                     <div class="fields_row g9">
                         <label for="ie_server" class="g2">Direcci&oacute;n del Servidor<span class="required">*</span></label>
-                        <input type="text" name="ie_server" id="ie_server" class="g9 validate notnull alpha"
+                        <input type="text" name="ie_server" id="ie_server" class="g9 validate notnull alphanumeric"
                                value="{{ post.ie_server }}"/>
                     </div>
                 </div>

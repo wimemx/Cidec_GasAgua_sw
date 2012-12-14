@@ -207,12 +207,9 @@ def populate_data_warehouse(
     #
     if populate_interval_facts:
         logger.info("POPULATE INTERVALS FACTS TABLES START")
-        interval_facts_start = datetime(year=2012, month=11, day=17, tzinfo=utc)
+        interval_facts_start = datetime(year=2012, month=8, day=28, tzinfo=utc)
         interval_facts_end = datetime.utcnow()
         for consumer_unit in consumer_units:
-            if consumer_unit.pk != 7:
-                continue
-
             logger.info("Populate Consumer Unit: " + str(consumer_unit.pk))
             for fact_interval_granularity in FACTS_INTERVAL_CLASSES.keys():
                 logger.info("Granularity: " + fact_interval_granularity)
@@ -1365,8 +1362,8 @@ def get_consumer_unit_electric_data_interval_csv(
             start_datetime_string = current_datetime.strftime("%Y/%m/%d %H:%M")
             end_datetime_string = (current_datetime + hour_delta).strftime(
                 "%Y/%m/%d %H:%M")
-            electric_data_row = [consumer_unit.building_name,
-                                 consumer_unit.electric_device_type_name,
+            electric_data_row = [consumer_unit.building_name.encode("utf-8"),
+                                 consumer_unit.electric_device_type_name.encode("utf-8"),
                                  electric_data,
                                  electric_data_value_string,
                                  start_datetime_string,

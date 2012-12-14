@@ -3,8 +3,8 @@
    var defaults = {
       class_: ".validate",
       maxlength: 300,
-      correct_img: "imgs/correct.png",
-      incorrect_img: "imgs/incorrect.png"
+      correct_img: "/static/css/images/imgs_icns/correct.png",
+      incorrect_img: "/static/css/images/imgs_icns/incorrect.png"
    };
    var options = $.extend(defaults, options);
    var back_correct = "url("+options.correct_img+") no-repeat";

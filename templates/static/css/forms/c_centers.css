@@ -1,23 +1,32 @@
-#cluster_fields div.selector{
-    width: 475px;
+input, textarea{
+    background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px !important;
 }
+form {
+    color: #6C6C6C;
+}
+.required {
+    color: red;
+}
+#cluster_fields div.selector{
+width: 475px;
+    }
 
 #cluster_fields div.selector select{
-    width: 500px;
-}
+width: 500px;
+    }
 
 #cluster_fields div.selector span{
-    width: 450px;
-}
+width: 450px;
+    }
 
 #cluster_fields input{
-    width: 465px;
-}
+width: 465px;
+    }
 
 #cluster_fields textarea{
-    width: 465px;
-    background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
-}
+width: 465px;
+background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
+    }
 
 #part_bld_fields div.selector{
     width: 487px;

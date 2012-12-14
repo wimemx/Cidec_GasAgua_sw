@@ -24,6 +24,7 @@ from django.db.models.aggregates import *
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
+from django.contrib.auth.decorators import login_required
 
 from cidec_sw import settings
 from c_center.calculations import *
@@ -5498,145 +5499,175 @@ def status_building(request, id_bld):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
-
-def search_bld_country(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    if "term" in request.GET:
-        term = request.GET['term']
-        countries = Pais.objects.filter(Q(pais_name__icontains=term))
-        countries_arr = []
-        for country in countries:
-            countries_arr.append(dict(value=country.pais_name, pk=country.pk,
-                                      label=country.pais_name))
-        data = simplejson.dumps(countries_arr)
-        return HttpResponse(content=data, content_type="application/json")
-    else:
-        raise Http404
-
-
-def search_bld_state(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    if "term" in request.GET:
-        term = request.GET['term']
-
-        ctry_id = request.GET['country']
-        try:
-            ctry_id = int(ctry_id)
-        except ValueError:
-            states_arr = []
-        else:
-            #Se obtiene el país
-            country = get_object_or_404(Pais, pk=ctry_id)
-
-            states = PaisEstado.objects.filter(pais=country).filter(
-                Q(estado__estado_name__icontains=term))
-            states_arr = []
-            for sts in states:
-                states_arr.append(
-                    dict(value=sts.estado.estado_name, pk=sts.estado.pk,
-                         label=sts.estado.estado_name))
-        data = simplejson.dumps(states_arr)
-        return HttpResponse(content=data, content_type="application/json")
-    else:
-        raise Http404
-
-
-def search_bld_municipality(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    if "term" in request.GET:
-        term = request.GET['term']
-
-        state_id = request.GET['state']
-        try:
-            state_id = int(state_id)
-        except ValueError:
-            mun_arr = []
-        else:
-            #Se obtiene el país
-            state = get_object_or_404(Estado, pk=state_id)
-
-            municipalities = EstadoMunicipio.objects.filter(
-                estado=state).filter(
-                Q(municipio__municipio_name__icontains=term))
-            mun_arr = []
-
-            for mnp in municipalities:
-                mun_arr.append(dict(value=mnp.municipio.municipio_name,
-                                    pk=mnp.municipio.pk,
-                                    label=mnp.municipio.municipio_name))
-
-        data = simplejson.dumps(mun_arr)
-        return HttpResponse(content=data, content_type="application/json")
-    else:
-        raise Http404
-
-
-def search_bld_neighborhood(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    if "term" in request.GET:
-        term = request.GET['term']
-
-        mun_id = request.GET['municipality']
-        try:
-            mun_id = int(mun_id)
-        except ValueError:
-            ngh_arr = []
-        else:
-            #Se obtiene el municipio
-            municipality = get_object_or_404(Municipio, pk=mun_id)
-
-            neighborhoods = MunicipioColonia.objects.filter(
-                municipio=municipality).filter(
-                Q(colonia__colonia_name__icontains=term))
-            ngh_arr = []
-
-            for ng in neighborhoods:
-                ngh_arr.append(
-                    dict(value=ng.colonia.colonia_name, pk=ng.colonia.pk,
-                         label=ng.colonia.colonia_name))
-
-        data = simplejson.dumps(ngh_arr)
-        return HttpResponse(content=data, content_type="application/json")
-    else:
-        raise Http404
-
-
-def search_bld_street(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    if "term" in request.GET:
-        term = request.GET['term']
-
-        neigh_id = request.GET['neighborhood']
-        try:
-            neigh_id = int(neigh_id)
-        except ValueError:
-            street_arr = []
-        else:
-            #Se obtiene la colonia
-
-            neighborhood = get_object_or_404(Colonia, pk=neigh_id)
-            streets = ColoniaCalle.objects.filter(colonia=neighborhood).filter(
-                Q(calle__calle_name__icontains=term))
-
-            street_arr = []
-
-            for st in streets:
-                street_arr.append(
-                    dict(value=st.calle.calle_name, pk=st.calle.pk,
-                         label=st.calle.calle_name))
-
-        data = simplejson.dumps(street_arr)
-        return HttpResponse(content=data, content_type="application/json")
-    else:
-        raise Http404
 ####################################################
 #          CONSUMER UNITS
-# ##################################################
+####################################################
 
+@login_required(login_url='/')
 def add_ie(request):
+    datacontext = get_buildings_context(request.user)
+    template_vars = {}
+
+    if datacontext:
+        template_vars["datacontext"] = datacontext
+
+    template_vars["sidebar"] = request.session['sidebar']
+    template_vars["empresa"] = request.session['main_building']
+    template_vars["company"] = request.session['company']
+
+    if has_permission(request.user, CREATE,
+                      "Alta de equipos industriales") or request.user.is_superuser:
+        if request.method == 'POST':
+            ie = IndustrialEquipment(
+                alias=request.POST['ie_alias'],
+                description=request.POST['ie_desc'],
+                server=request.POST['ie_server']
+                )
+            ie.save()
+            message = "El equipo industrial se ha creado exitosamente"
+            type = "n_success"
+            if has_permission(request.user, VIEW,
+                              "Ver equipos industriales") or request.user.is_superuser:
+                return HttpResponseRedirect("/buildings/industrial_equipments?msj=" +
+                                            message +
+                                            "&ntype=" + type)
+            template_vars["message"] = message
+            template_vars["type"] = type
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/consumer_units/ind_eq.html", template_vars_template)
+    else:
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
+
+def edit_ie(request, id_ie):
     pass
+
+def see_ie(request):
+    pass
+
+def status_ie(request):
+    pass
+
+def status_batch_ie():
+    pass
+
+@login_required(login_url='/')
+def view_ie(request):
+    datacontext = get_buildings_context(request.user)
+    template_vars = {}
+
+    if datacontext:
+        template_vars["datacontext"] = datacontext
+
+    template_vars["sidebar"] = request.session['sidebar']
+    template_vars["empresa"] = request.session['main_building']
+    template_vars["company"] = request.session['company']
+
+    if has_permission(request.user, VIEW,
+                      "Ver equipos industriales") or request.user.is_superuser:
+        datacontext = get_buildings_context(request.user)
+        empresa = request.session['main_building']
+        company = request.session['company']
+
+        if "search" in request.GET:
+            search = request.GET["search"]
+        else:
+            search = ''
+
+        order_name = 'asc'
+        order_state = 'asc'
+        order_municipality = 'asc'
+        order_company = 'asc'
+        order_status = 'asc'
+        order = "building__building_name" #default order
+        if "order_name" in request.GET:
+            if request.GET["order_name"] == "desc":
+                order = "-building__building_name"
+                order_name = "asc"
+            else:
+                order_name = "desc"
+        else:
+            if "order_state" in request.GET:
+                if request.GET["order_state"] == "asc":
+                    order = "building__estado__estado_name"
+                    order_state = "desc"
+                else:
+                    order = "-building__estado__estado_name"
+
+            if "order_municipality" in request.GET:
+                if request.GET["order_municipality"] == "asc":
+                    order = "building__municipio__municipio_name"
+                    order_municipality = "desc"
+                else:
+                    order = "-building__municipio__municipio_name"
+                    order_municipality = "asc"
+
+            if "order_company" in request.GET:
+                if request.GET["order_company"] == "asc":
+                    order = "company__company_name"
+                    order_company = "desc"
+                else:
+                    order = "-company__company_name"
+                    order_company = "asc"
+
+            if "order_status" in request.GET:
+                if request.GET["order_status"] == "asc":
+                    order = "building__building_status"
+                    order_status = "desc"
+                else:
+                    order = "-building__building_status"
+                    order_status = "asc"
+
+        if search:
+            lista = CompanyBuilding.objects.filter(
+                Q(building__building_name__icontains=request.GET['search']) | Q(
+                    building__estado__estado_name__icontains=request.GET[
+                                                             'search']) | Q(
+                    building__municipio__municipio_name__icontains=request.GET[
+                                                                   'search']) | Q(
+                    company__company_name__icontains=request.GET[
+                                                     'search'])).exclude(
+                building__building_status=2).order_by(order)
+
+        else:
+            lista = CompanyBuilding.objects.all().exclude(
+                building__building_status=2).order_by(order)
+
+        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        template_vars = dict(order_name=order_name, order_state=order_state,
+                             order_municipality=order_municipality,
+                             order_company=order_company,
+                             order_status=order_status,
+                             datacontext=datacontext, empresa=empresa,
+                             company=company,
+                             sidebar=request.session['sidebar'])
+        # Make sure page request is an int. If not, deliver first page.
+        try:
+            page = int(request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+
+        # If page request (9999) is out of range, deliver last page of results.
+        try:
+            pag_user = paginator.page(page)
+        except (EmptyPage, InvalidPage):
+            pag_user = paginator.page(paginator.num_pages)
+
+        template_vars['paginacion'] = pag_user
+
+        if 'msj' in request.GET:
+            template_vars['message'] = request.GET['msj']
+            template_vars['msg_type'] = request.GET['ntype']
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/buildings/building.html",
+                                  template_vars_template)
+    else:
+        datacontext = get_buildings_context(request.user)
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
