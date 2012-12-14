@@ -104,8 +104,8 @@ def get_consumer_unit_electric_data_interval_raw(
     electric_data_raw = []
     try:
         electric_data_name_local =\
-        data_warehouse.views.CUMULATIVE_ELECTRIC_DATA_INVERSE[
-        electric_data_name]
+            data_warehouse.views.CUMULATIVE_ELECTRIC_DATA_INVERSE[
+                electric_data_name]
 
     except KeyError:
         return  electric_data_raw
@@ -123,6 +123,14 @@ def get_consumer_unit_electric_data_interval_raw(
                           day=start.day,
                           hour=start.hour))
 
+    the_data = c_center.models.ElectricDataTemp.objects.filter(
+                    profile_powermeter=consumer_unit.profile_powermeter,
+                    medition_date__gte=start,
+                    medition_date__lte=end
+                ).order_by(
+                    'medition_date'
+                ).values(electric_data_name_local, 'medition_date')
+
     while current_datetime <= end:
         electric_data_values_prev =\
         c_center.models.ElectricDataTemp.objects.filter(
@@ -137,21 +145,19 @@ def get_consumer_unit_electric_data_interval_raw(
         )[:1]
 
         electric_data_values_next = \
-        c_center.models.ElectricDataTemp.objects.filter(
-                profile_powermeter=consumer_unit.profile_powermeter,
-                medition_date__gte=current_datetime,
-                medition_date__lte=current_datetime + (hour_delta / 2)
-            ).order_by(
-                'medition_date'
-            ).values(
-                'medition_date',
-                electric_data_name_local
-            )[:1]
+            c_center.models.ElectricDataTemp.objects.filter(
+                    profile_powermeter=consumer_unit.profile_powermeter,
+                    medition_date__gte=current_datetime,
+                    medition_date__lte=current_datetime + (hour_delta / 2)
+                ).order_by(
+                    'medition_date'
+                ).values(
+                    'medition_date',
+                    electric_data_name_local
+                )[:1]
 
         electric_data = 0
         if len(electric_data_values_prev) > 0 and len(electric_data_values_next) > 0:
-            print electric_data_values_next[0][electric_data_name_local]
-            print electric_data_values_prev[0][electric_data_name_local]
             electric_data =\
                 electric_data_values_next[0][electric_data_name_local] -\
                 electric_data_values_prev[0][electric_data_name_local]
@@ -422,9 +428,6 @@ def render_graphics(request):
         template_variables['rows_data'] = get_electric_data_list_json(
                                               electric_data_list,
                                               limits)
-
-        print "ROWS_DATA"
-        print template_variables['rows_data']
 
         template_variables['columns'] = consumer_unit_and_time_interval_information_list
         template_variables['limits'] = limits
