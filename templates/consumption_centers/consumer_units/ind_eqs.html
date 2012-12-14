@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block titulo %}
+    {% if operation == "edit" %}Editar{% else %}Alta de{% endif %} Equipo Industrial
+{% endblock %}
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/forms/c_centers.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="/static/js/external/jquery-validator/css/validator.css">
+{% endblock %}
+{% block externaljs %}
+    <script type="text/javascript" src="/static/js/external/jquery-validator/js/validator.min.js"></script>
+    <script type="text/javascript">
+        $(document).on("ready", function(){
+            $("#industrial_equipment").validate();
+        });
+    </script>
+{% endblock %}
+
+
+{% block contenido %}
+    <div id="bread_crumbs">
+        <ul>
+            <li><a href="/main/">Inicio</a></li>
+            <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
+            <li><a href="/buildings/editar_ie/">Equipos Industriales</a></li>
+            {% if operation == "edit" %}
+                <li>
+                    Editar Equipo Industrial
+                </li>
+            {% else %}
+                <li>Alta de Equipo Industrial</li>
+            {% endif %}
+
+        </ul>
+
+    </div>
+    <div id="contenido_interno">
+        <h2 id="titulo_form">
+            {% if operation == "edit" %}Editar{% else %}Alta de{% endif %} Equipo Industrial
+        </h2>
+        <div class="divider" id="divider_top">&nbsp;</div>
+        <div id="form_container">
+            {% if message %}
+                <span class="notif {{ type }}">
+                    {% autoescape off %}{{ message }}{% endautoescape %}
+                    <a href="#" onclick="$(this).parent().remove();">X</a>
+                </span>
+            {% endif %}
+            <p class="description">
+                Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
+                <br/>
+                Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
+            </p>
+            <form method="post" action="." id="industrial_equipment">
+                {% csrf_token %}
+                <h3 class="g12">Informaci&oacute;n del Equipo Industrial</h3>
+                <div id="ie_fields">
+                    <div class="fields_row g9">
+                        <label for="ie_alias" class="g2">Nombre<span class="required">*</span></label>
+                        <input type="text" name="ie_alias" id="ie_alias" class="g9 validate notnull alphanumeric"
+                               value="{{ post.ie_alias }}"/>
+                    </div>
+
+                    <div class="fields_row g9">
+                        <label for="ie_desc" class="g2">Descripci&oacute;n</label>
+                        <textarea rows="10" cols="60" name="ie_desc" id="ie_desc"></textarea>
+                    </div>
+                    <div class="fields_row g9">
+                        <label for="ie_server" class="g2">Direcci&oacute;n del Servidor<span class="required">*</span></label>
+                        <input type="text" name="ie_server" id="ie_server" class="g9 validate notnull alpha"
+                               value="{{ post.ie_server }}"/>
+                    </div>
+                </div>
+
+                <div class="buttons g12">
+                    <button class="aqua_btn" id="save">
+                        Guardar
+                    </button>
+                </div>
+            </form>
+
+        </div>
+
+
+    </div>
+{% endblock %}

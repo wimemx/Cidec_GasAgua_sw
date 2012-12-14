@@ -5634,3 +5634,9 @@ def search_bld_street(request):
         return HttpResponse(content=data, content_type="application/json")
     else:
         raise Http404
+####################################################
+#          CONSUMER UNITS
+# ##################################################
+
+def add_ie(request):
+    pass

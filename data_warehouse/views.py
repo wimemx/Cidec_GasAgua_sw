@@ -1186,8 +1186,8 @@ def get_consumer_unit_electric_data_csv(
                 electric_data_raw_value['medition_date'].strftime(
                     "%Y/%m/%d %H:%M")
 
-                electric_data_row = [consumer_unit.building_name,
-                                     consumer_unit.electric_device_type_name,
+                electric_data_row = [consumer_unit.building_name.encode("utf-8"),
+                                     consumer_unit.electric_device_type_name.encode("utf-8"),
                                      electric_data,
                                      electric_data_value_string,
                                      medition_date_string]

@@ -15,7 +15,7 @@ from django.db.models import Q
 
 from cidec_sw import settings
 from c_center.models import Cluster, ClusterCompany, Company,\
-    CompanyBuilding, Building, PartOfBuilding, HierarchyOfPart
+    CompanyBuilding, Building, PartOfBuilding, HierarchyOfPart, ConsumerUnit
 from rbac.models import PermissionAsigment, DataContextPermission, Role,\
     UserRole, Object, Operation
 from location.models import *

@@ -770,14 +770,16 @@ def street_list(request):
 
 
 def search_country(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
     if "term" in request.GET:
         term = request.GET['term']
-        paises = Pais.objects.filter(pais_name__icontains=term)
-        countries = []
-        for pais in paises:
-            countries.append(
-                dict(value=pais.pais_name, pk=pais.pk, label=pais.pais_name))
-        data = simplejson.dumps(countries)
+        countries = Pais.objects.filter(Q(pais_name__icontains=term))
+        countries_arr = []
+        for country in countries:
+            countries_arr.append(dict(value=country.pais_name, pk=country.pk,
+                                      label=country.pais_name))
+        data = simplejson.dumps(countries_arr)
         return HttpResponse(content=data, content_type="application/json")
     else:
         raise Http404
@@ -786,18 +788,28 @@ def search_country(request):
 def search_state(request):
     """get a list of states wich contains 'term' and are in a certain
     'country'"""
-    if "term" in request.GET and "country" in request.GET:
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if "term" in request.GET:
         term = request.GET['term']
-        pais_est = PaisEstado.objects.filter(
-            pais__pk=int(request.GET['country']),
-            estado__estado_name__icontains=term)
-        states = []
-        for estado in pais_est:
-            label = estado.pais.pais_name + "-" + estado.estado.estado_name
-            states.append(
-                dict(value=estado.estado.estado_name, pk=estado.estado.pk,
-                     label=label))
-        data = simplejson.dumps(states)
+
+        ctry_id = request.GET['country']
+        try:
+            ctry_id = int(ctry_id)
+        except ValueError:
+            states_arr = []
+        else:
+            #Se obtiene el país
+            country = get_object_or_404(Pais, pk=ctry_id)
+
+            states = PaisEstado.objects.filter(pais=country).filter(
+                Q(estado__estado_name__icontains=term))
+            states_arr = []
+            for sts in states:
+                states_arr.append(
+                    dict(value=sts.estado.estado_name, pk=sts.estado.pk,
+                         label=sts.estado.estado_name))
+        data = simplejson.dumps(states_arr)
         return HttpResponse(content=data, content_type="application/json")
     else:
         raise Http404
@@ -806,19 +818,31 @@ def search_state(request):
 def search_municipality(request):
     """get a list of municipalities wich contains 'term' and are in a certain
      'state'"""
-    if "term" in request.GET and "state" in request.GET:
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if "term" in request.GET:
         term = request.GET['term']
-        e_munip = EstadoMunicipio.objects.filter(
-            estado__pk=int(request.GET['state']),
-            municipio__municipio_name__icontains=term)
 
-        municipalities = []
-        for municipio in e_munip:
-            label = municipio.estado.estado_name + " - " + municipio\
-            .municipio.municipio_name
-            municipalities.append(dict(value=municipio.municipio.municipio_name,
-                                       pk=municipio.municipio.pk, label=label))
-        data = simplejson.dumps(municipalities)
+        state_id = request.GET['state']
+        try:
+            state_id = int(state_id)
+        except ValueError:
+            mun_arr = []
+        else:
+            #Se obtiene el país
+            state = get_object_or_404(Estado, pk=state_id)
+
+            municipalities = EstadoMunicipio.objects.filter(
+                estado=state).filter(
+                Q(municipio__municipio_name__icontains=term))
+            mun_arr = []
+
+            for mnp in municipalities:
+                mun_arr.append(dict(value=mnp.municipio.municipio_name,
+                                    pk=mnp.municipio.pk,
+                                    label=mnp.municipio.municipio_name))
+
+        data = simplejson.dumps(mun_arr)
         return HttpResponse(content=data, content_type="application/json")
     else:
         raise Http404
@@ -827,23 +851,34 @@ def search_municipality(request):
 def search_neighboorhood(request):
     """get a list of neighboorhoods wich contains 'term' and are in a certain
      'municipality'"""
-    if "term" in request.GET and "municipality" in request.GET:
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect("/")
+    if "term" in request.GET:
         term = request.GET['term']
 
-        mun_cols = MunicipioColonia.objects.filter(
-            municipio__pk=int(request.GET['municipality'])
-            , colonia__colonia_name__icontains=term)
-        neighboorhoods = []
-        for colonia in mun_cols:
-            label = colonia.municipio.municipio_name + " - " + colonia\
-            .colonia.colonia_name
-            neighboorhoods.append(dict(value=colonia.colonia.colonia_name,
-                                       pk=colonia.colonia.pk, label=label))
-        data = simplejson.dumps(neighboorhoods)
+        mun_id = request.GET['municipality']
+        try:
+            mun_id = int(mun_id)
+        except ValueError:
+            ngh_arr = []
+        else:
+            #Se obtiene el municipio
+            municipality = get_object_or_404(Municipio, pk=mun_id)
+
+            neighborhoods = MunicipioColonia.objects.filter(
+                municipio=municipality).filter(
+                Q(colonia__colonia_name__icontains=term))
+            ngh_arr = []
+
+            for ng in neighborhoods:
+                ngh_arr.append(
+                    dict(value=ng.colonia.colonia_name, pk=ng.colonia.pk,
+                         label=ng.colonia.colonia_name))
+
+        data = simplejson.dumps(ngh_arr)
         return HttpResponse(content=data, content_type="application/json")
     else:
         raise Http404
-
 
 def search_street(request):
     """get a list of streets wich contains 'term' and are in a certain
