@@ -239,6 +239,45 @@ def set_default_consumer_unit(request, id_c_u):
     return HttpResponse(status=200)
 
 
+def week_report_kwh(request):
+    """ Index page?
+    shows a report of the consumed kwh in the current week
+    """
+    datacontext = get_buildings_context(request.user)
+    if not datacontext:
+        request.session['consumer_unit'] = None
+        print "set consumer unit to none"
+    set_default_session_vars(request, datacontext)
+
+    if request.session['consumer_unit'] and request.session['main_building']:
+        graphs = graphs_permission(request.user,
+                                   request.session['consumer_unit'],
+                                   GRAPHS['energia'])
+        if graphs:
+
+            template_vars = {"datacontext": datacontext,
+                             'empresa': request.session['main_building'],
+                             'company': request.session['company'],
+                             'consumer_unit': request.session['consumer_unit'],
+                             'sidebar': request.session['sidebar']
+            }
+            template_vars_template = RequestContext(request, template_vars)
+            return render_to_response("consumption_centers/main.html",
+                                      template_vars_template)
+        else:
+            return render_to_response("generic_error.html",
+                                      RequestContext(request,
+                                                     {
+                                                         "datacontext": datacontext}
+                                      ))
+    else:
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("empty.html", template_vars_template)
+
 def main_page(request):
     """Main Page
     in the mean time the main view is the graphics view
@@ -274,7 +313,7 @@ def main_page(request):
                              'sidebar': request.session['sidebar']
             }
             template_vars_template = RequestContext(request, template_vars)
-            return render_to_response("consumption_centers/main.html",
+            return render_to_response("consumption_centers/graphs/main.html",
                                       template_vars_template)
         else:
             return render_to_response("generic_error.html",

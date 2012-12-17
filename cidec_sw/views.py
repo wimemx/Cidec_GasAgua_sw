@@ -18,7 +18,7 @@ from collections import defaultdict
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from c_center.models import ProfilePowermeter, ElectricData, ElectricDataTemp
-from c_center.views import main_page
+from c_center.views import main_page, week_report_kwh
 from rbac.models import DataContextPermission, Object, PermissionAsigment, UserRole, GroupObject
 from variety import unique_from_array
 
@@ -191,8 +191,10 @@ def index(request):
                            "</ul>"
 
     request.session['sidebar'] = menu_option_str
-
-    return main_page(request)
+    if 'g_type' in request.GET:
+        return main_page(request)
+    else:
+        return week_report_kwh(request)
 
 def logout_page(request):
     logout(request)

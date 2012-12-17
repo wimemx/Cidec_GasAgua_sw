@@ -123,14 +123,6 @@ def get_consumer_unit_electric_data_interval_raw(
                           day=start.day,
                           hour=start.hour))
 
-    the_data = c_center.models.ElectricDataTemp.objects.filter(
-                    profile_powermeter=consumer_unit.profile_powermeter,
-                    medition_date__gte=start,
-                    medition_date__lte=end
-                ).order_by(
-                    'medition_date'
-                ).values(electric_data_name_local, 'medition_date')
-
     while current_datetime <= end:
         electric_data_values_prev =\
         c_center.models.ElectricDataTemp.objects.filter(
@@ -170,6 +162,120 @@ def get_consumer_unit_electric_data_interval_raw(
                  certainty=True))
 
         current_datetime += hour_delta
+
+    return electric_data_raw
+
+
+def get_consumer_unit_electric_data_interval_raw_optimized(
+        electric_data_name,
+        id,
+        start,
+        end
+):
+    electric_data_raw = []
+    try:
+        electric_data_name_local =\
+            data_warehouse.views.CUMULATIVE_ELECTRIC_DATA_INVERSE[electric_data_name]
+
+    except KeyError:
+        return  electric_data_raw
+
+    try:
+        consumer_unit = c_center.models.ConsumerUnit.objects.get(pk=id)
+
+    except c_center.models.ConsumerUnit.DoesNotExist:
+        return electric_data_raw
+
+    current_timezone = django.utils.timezone.get_current_timezone()
+    start_localtime = current_timezone.localize(start)
+    start_utc = start_localtime.astimezone(django.utils.timezone.utc)
+    end_localtime = current_timezone.localize(end)
+    end_utc = end_localtime.astimezone(django.utils.timezone.utc)
+    electric_data_raw_dictionaries = c_center.models.ElectricDataTemp.objects.filter(
+            profile_powermeter=consumer_unit.profile_powermeter,
+            medition_date__gte=start_utc,
+            medition_date__lte=end_utc
+        ).order_by(
+            'medition_date'
+        ).values(electric_data_name_local, 'medition_date')
+
+    electric_data_raw_results_length = len(electric_data_raw_dictionaries)
+    if not electric_data_raw_results_length:
+        return electric_data_raw
+
+    def get_hour_from_datetime(datetime_input):
+        hour_datetime = datetime.datetime(year=datetime_input.year,
+                                          month=datetime_input.month,
+                                          day=datetime_input.day,
+                                          hour=datetime_input.hour,
+                                          tzinfo=datetime_input.tzinfo)
+
+        return hour_datetime
+
+    electric_data_raw_hours_dictionary = dict()
+    timedelta_tolerance = timedelta(minutes=10)
+    for electric_data_raw_dictionary in electric_data_raw_dictionaries:
+        medition_date_current = electric_data_raw_dictionary['medition_date']
+        electric_data_current = electric_data_raw_dictionary[electric_data_name_local]
+        datetime_hour_current = get_hour_from_datetime(medition_date_current)
+        timedelta_current = abs(medition_date_current - datetime_hour_current)
+        if timedelta_current < timedelta_tolerance:
+            datetime_hour_current_string = datetime_hour_current.strftime("%Y-%m-%d-%H")
+            medition_date_current_stored, electric_data_current_stored =\
+                electric_data_raw_hours_dictionary.get(
+                    datetime_hour_current_string,
+                    (datetime.datetime.max.replace(tzinfo=django.utils.timezone.utc),
+                     None)
+                )
+
+            if abs(medition_date_current_stored - datetime_hour_current) > timedelta_current:
+                electric_data_raw_hours_dictionary[datetime_hour_current_string] =\
+                    (medition_date_current, electric_data_current)
+
+        datetime_hour_next = datetime_hour_current + timedelta(hours=1)
+        timedelta_next = abs(medition_date_current - datetime_hour_next)
+        if timedelta_next < timedelta_tolerance:
+            datetime_hour_next_string = datetime_hour_next.strftime("%Y-%m-%d-%H")
+            medition_date_next_stored, electric_data_next_stored =\
+            electric_data_raw_hours_dictionary.get(
+                datetime_hour_next_string,
+                (datetime.datetime.max.replace(tzinfo=django.utils.timezone.utc),
+                 None)
+            )
+
+            if abs(medition_date_next_stored - datetime_hour_next) > timedelta_next:
+                electric_data_raw_hours_dictionary[datetime_hour_next_string] =\
+                    (medition_date_current, electric_data_current)
+
+    hour_delta = timedelta(hours=1)
+    datetime_current_utc = datetime.datetime(year=start_utc.year,
+                                         month=start_utc.month,
+                                         day=start_utc.day,
+                                         hour=start_utc.hour,
+                                         tzinfo=django.utils.timezone.utc)
+
+    while datetime_current_utc <= end_utc:
+        datetime_current_utc_string = datetime_current_utc.strftime("%Y-%m-%d-%H")
+        datetime_next_utc = datetime_current_utc + hour_delta
+        datetime_next_utc_string = datetime_next_utc.strftime("%Y-%m-%d-%H")
+        electric_data_value = 0
+        if electric_data_raw_hours_dictionary.has_key(datetime_current_utc_string) and\
+           electric_data_raw_hours_dictionary.has_key(datetime_next_utc_string):
+
+            medition_date_value_current, electric_data_value_current =\
+                electric_data_raw_hours_dictionary.get(datetime_current_utc_string)
+
+            medition_date_value_next, electric_data_value_next =\
+                electric_data_raw_hours_dictionary.get(datetime_next_utc_string)
+
+            electric_data_value = electric_data_value_next - electric_data_value_current
+
+        electric_data_raw_item = dict(datetime=int(time.mktime(datetime_current_utc.timetuple())),
+                                      electric_data=electric_data_value,
+                                      certainty=True)
+
+        electric_data_raw.append(electric_data_raw_item)
+        datetime_current_utc += hour_delta
 
     return electric_data_raw
 
@@ -332,7 +438,7 @@ def render_graphics(request):
             is_interval_graphic = True
 
         template_variables["is_cumulative_electric_data"] =\
-        electric_data in cumulative_electric_data
+            electric_data in cumulative_electric_data
 
         template_variables["is_interval_graphic"] = is_interval_graphic
 
@@ -382,7 +488,7 @@ def render_graphics(request):
 
                 if electric_data_values is None:
                     electric_data_values = \
-                        get_consumer_unit_electric_data_interval_raw(
+                        get_consumer_unit_electric_data_interval_raw_optimized(
                             electric_data,
                             id,
                             start,

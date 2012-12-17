@@ -1,0 +1,588 @@
+{% extends "base.html" %}
+{% block titulo %}Reportes{% endblock %}
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/consumption_centers/main.css" type="text/css" />
+    <link rel="stylesheet" href="/static/date_picker/css/datepicker.css" type="text/css" />
+    <link rel="stylesheet" href="/static/js/external/fancybox/jquery.fancybox.css" type="text/css" />
+{% endblock %}
+{% block externaljs %}
+    <script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
+    <script type="text/javascript" src="/static/date_picker/js/date_picker.js"></script>
+    <script type="text/javascript">
+        google.load('visualization', '1.1', {packages: ['corechart', 'controls']});
+    </script>
+    <script type="text/javascript">
+    //<![CDATA[
+    function clean_dates(url){
+        var f1_init = encodeURIComponent($("#range1_init").val());
+        var f1_end = encodeURIComponent($("#range1_end").val());
+        var f2_init = encodeURIComponent($("#range2_init").val());
+        var f2_end = encodeURIComponent($("#range2_end").val());
+        var f3_init = encodeURIComponent($("#range3_init").val());
+        var f3_end = encodeURIComponent($("#range3_end").val());
+        var f4_init = encodeURIComponent($("#range4_init").val());
+        var f4_end = encodeURIComponent($("#range4_end").val());
+
+        url=url.replace('#','').split("?");
+        if (url.length > 1){
+            //if url has get_vars
+            var hash = url[1];
+            hash = hash.replace(/&{0,1}date-start01=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
+            hash = hash.replace(/&{0,1}date-end01=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
+            hash = hash.replace(/&{0,1}date-start02=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
+            hash = hash.replace(/&{0,1}date-end02=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
+            hash = hash.replace(/&{0,1}date-start03=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
+            hash = hash.replace(/&{0,1}date-end03=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
+            hash = hash.replace(/&{0,1}date-start04=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
+            hash = hash.replace(/&{0,1}date-end04=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
+            //hash is equal to all the get vars but the dates
+            url = url[0] + "?" + hash + "&";
+        }else{
+            url+="?";
+        }
+
+        if(f1_init != ''){
+            url += "date-start01=" + f1_init;
+
+        }else{
+            var fecha_ini = new Date();
+            fecha_ini.setDate(fecha_ini.getDate()-30);
+            url += "date-start01=" + encodeURIComponent(fecha_ini.format("yyyy-mm-dd"));
+        }
+        if(f1_end != ''){
+            url += "&date-end01=" + f1_end;
+        }else{
+            url += "&date-end01=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
+        }
+
+        if(f2_init != ''){
+            url += "&date-start02=" + f2_init;
+            if(f2_end != ''){
+                url += "&date-end02=" + f2_end;
+            }else{
+                url += "&date-end02=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
+            }
+        }
+        if(f3_init != ''){
+            url += "&date-start03=" + f3_init;
+            if(f3_end != ''){
+                url += "&date-end03=" + f3_end;
+            }else{
+                url += "&date-end03=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
+            }
+        }
+        if(f4_init != ''){
+            url += "&date-start04=" + f4_init;
+            if(f4_end != ''){
+                url += "&date-end04=" + f4_end;
+            }else{
+                url += "&date-end04=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
+            }
+        }
+        return url;
+    }
+    function append_parameters(base_url){
+        var get = getUrlVars();
+        if(get.length>0){
+            if (get[0]!=window.location.protocol+"//"+window.location
+                    .host+window.location.pathname){
+                for(var i=0; i<get.length; i++){
+                    if (get[i]!="date-start01" || get[i]!="date-start02" || get[i]!="date-start03" || get[i]!="date-start04" || get[i]!="consumer-unit01" || get[i]!="consumer-unit02" || get[i]!="consumer-unit03" || get[i]!="consumer-unit04" ){
+                        base_url+="&"+get[i]+"="+get[get[i]];
+                    }
+                }
+            }
+
+        }
+        return base_url
+    }
+    function append_parameters2(base_url){
+        var get = getUrlVars();
+        if(get.length>0){
+            if (get[0]!=window.location.protocol+"//"+window.location
+                    .host+window.location.pathname){
+                for(var i=0; i<get.length; i++){
+                    if (get[i]!="graph" || get[i]!="granularity" ){
+                        base_url+="&"+get[i]+"="+get[get[i]];
+                    }
+                }
+            }
+
+        }
+        return base_url
+    }
+    function graphsReload(){
+        /* Takes the date in the range inputs and reloads the graph data */
+
+        var f1_init = encodeURIComponent($("#range1_init").val());
+        var f1_end = encodeURIComponent($("#range1_end").val());
+        var f2_init = encodeURIComponent($("#range2_init").val());
+        var f2_end = encodeURIComponent($("#range2_end").val());
+        var f3_init = encodeURIComponent($("#range3_init").val());
+        var f3_end = encodeURIComponent($("#range3_end").val());
+        var f4_init = encodeURIComponent($("#range4_init").val());
+        var f4_end = encodeURIComponent($("#range4_end").val());
+        if(f1_init!=''){
+            var url = $("#graphFrame").attr("src").replace('#','').split("&");
+            var base_url=url[0];
+
+            base_url+='&consumer-unit01={{ consumer_unit.pk }}';
+            if (url.length > 1){
+
+                base_url += "&date-start01=" + f1_init;
+                if(f1_end != ''){
+                    base_url += "&date-end01=" + f1_end;
+                }else{
+                    base_url += "&date-end01=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
+                }
+                if(f2_init != ''){
+                    base_url += "&date-start02=" + f2_init;
+                    if(f2_end != ''){
+                        base_url += "&date-end02=" + f2_end;
+                    }else{
+                        base_url += "&date-end02=" + encodeURIComponent(new Date());
+
+                    }
+                    base_url += "&consumer-unit02={{ consumer_unit.pk }}"
+                }
+                if(f3_init != ''){
+                    base_url += "&date-start03=" + f3_init;
+                    if(f3_end != ''){
+                        base_url += "&date-end03=" + f3_end;
+                    }else{
+                        base_url += "&date-end03=" + encodeURIComponent(new Date());
+
+                    }
+                    base_url += "&consumer-unit03={{ consumer_unit.pk }}"
+                }
+                if(f4_init != ''){
+                    base_url += "&date-start04=" + f4_init;
+                    if(f4_end != ''){
+                        base_url += "&date-end04=" + f4_end;
+                    }else{
+                        base_url += "&date-end04=" + encodeURIComponent(new Date());
+
+                    }
+                    base_url += "&consumer-unit04={{ consumer_unit.pk }}"
+                }
+                base_url=append_parameters(base_url)+"&granularity=raw_data";
+                makeIframe(base_url);
+            }else{
+                $("#graph_container").html("<h2>Por favor, " +
+                        "primero seleccione el tipo de gr&aacute;fica a mostrar</h2>" +
+                        "<iframe id='graphFrame' src=''>" +
+                        "</iframe>");
+            }
+
+        }
+
+    }
+    function refresh_iframe_height(){
+        // regresca el height del iframe para ajustarse a su conte
+        setTimeout("parent.document.getElementById('graphFrame').height = document['body'].offsetHeight;", 1000);
+    }
+    function makeIframe(src){
+        var graphFrame = document.createElement("IFRAME");
+        graphFrame.id = "graphFrame";
+        graphFrame.src = src;
+        $("#graph_container").html(graphFrame);
+        refresh_iframe_height();
+    }
+    //]]>
+    </script>
+{% endblock %}
+{% block document_ready %}
+
+    var url = window.location.href;
+    url = url.replace("#", '');
+    History.replaceState(url,"Reporte electrico", url);
+
+    var now3 = new Date();
+    now3.addDays(-4);
+    var now4 = new Date();
+    var mul_date, mul_date3, mul_date4 = false;
+    $('#widgetCalendar').DatePicker({
+        flat: true,
+        format: 'Y-m-d',
+        date: [new Date(now3), new Date(now4)],
+        calendars: 2,
+        mode: 'range',
+        starts: 1,
+        onChange: function(formated) {
+            $('#range1_init').val(formated[0]);
+            $('#range1_end').val(formated[1]);
+            if(!mul_date){
+                $('#widgetField span').css({'font-size':'16px', 'height':'26px'});
+                $('#widgetField span').get(0).innerHTML = formated.join(' &ndash; ');
+            }else{
+                $('#widgetField span').get(0).innerHTML = $('#range1_init').val() + " &ndash; " + $('#range1_end').val() + " contra: " + $('#range2_init').val() + " &ndash; " + $('#range2_end').val();
+            }
+        }
+    });
+    $('#widgetCalendar').DatePickerClear();
+    $('#widgetCalendar2').DatePicker({
+        flat: true,
+        format: 'Y-m-d',
+        date: [new Date(now3), new Date(now4)],
+        calendars: 2,
+        mode: 'range',
+        starts: 1,
+        onChange: function(formated) {
+            $('#range2_init').val(formated[0]);
+            $('#range2_end').val(formated[1]);
+            $('#widgetField span').get(0).innerHTML = $('#range1_init').val() + " &ndash; " + $('#range1_end').val();
+            $('#widgetField span').get(0).innerHTML = $('#widgetField span').html() + " contra: " + $('#range2_init').val() + " &ndash; " + $('#range2_end').val();
+            $('#widgetField span').css('font-size','11px');
+
+        }
+    });
+    $('#widgetCalendar2').DatePickerClear();
+
+    //-----3rd and 4th calendars-------
+    $('#widgetCalendar3').DatePicker({
+        flat: true,
+        format: 'Y-m-d',
+        date: [new Date(now3), new Date(now4)],
+        calendars: 2,
+        mode: 'range',
+        starts: 1,
+        onChange: function(formated) {
+            $('#range3_init').val(formated[0]);
+            $('#range3_end').val(formated[1]);
+
+            var inner_text='';
+            inner_text= $('#range1_init').val() + " &ndash; " + $('#range1_end').val() + " contra: " + $('#range2_init').val() + " &ndash; " + $('#range2_end').val();
+            inner_text+= " contra "+$('#range3_init').val() + " &ndash; " + $('#range3_end').val();
+            $('#widgetField span').get(0).innerHTML = inner_text;
+            $('#widgetField').css({'font-size':'11px', 'height': '52px' });
+    }
+    });
+    $('#widgetCalendar3').DatePickerClear();
+    $('#widgetCalendar4').DatePicker({
+        flat: true,
+        format: 'Y-m-d',
+        date: [new Date(now3), new Date(now4)],
+        calendars: 2,
+        mode: 'range',
+        starts: 1,
+        onChange: function(formated) {
+            $('#range4_init').val(formated[0]);
+            $('#range4_end').val(formated[1]);
+            var inner_text = '';
+            inner_text= $('#range1_init').val() + " &ndash; " + $('#range1_end').val() + " contra: " + $('#range2_init').val() + " &ndash; " + $('#range2_end').val();
+            inner_text+= " contra: "+$('#range3_init').val() + " &ndash; " + $('#range3_end').val() + " contra: " + $('#range4_init').val() + " &ndash; " + $('#range4_end').val();
+            $('#widgetField span').get(0).innerHTML = inner_text;
+            $('#widgetField').css({'font-size':'11px', 'height': '52px', 'width': '362px' });
+        }
+    });
+    $('#widgetCalendar4').DatePickerClear();
+
+    var state = false;
+    $('#widgetField').click(function(){
+        $('#datepicker').slideToggle();
+    });
+    $("#date_ranges .aqua_btn").click(function(e){
+        //aplicar el(los) rangos de fecha seleccionados
+        e.preventDefault();
+        $('#datepicker').slideUp();
+        graphsReload();
+    });
+    $("#prev_dates").click(function(){
+        //maneja la visibilidad del calendario del rango adicional
+        if($("#widgetCalendar2").is(":visible")){
+            mul_date = false;
+            $('#range2_init').val("");
+            $('#range2_end').val("");
+            $('#widgetField span').html($('#widgetField span').html().split(" contra: ")[0]);
+            $('#widgetCalendar2').DatePickerClear();
+        }else{
+            mul_date = true;
+        }
+        $("#widgetCalendar2").slideToggle();
+    });
+
+    $("#prev_dates3").click(function(){
+        //maneja la visibilidad del calendario del rango adicional
+        if($("#widgetCalendar3").is(":visible")){
+            mul_date3 = false;
+            $('#range3_init').val("");
+            $('#range3_end').val("");
+            var span_content=$('#widgetField span').html().split(" contra: ")
+            $('#widgetField span').html(span_content[0]+" contra: "+span_content[1]);
+            $('#widgetCalendar3').DatePickerClear();
+        }else{
+            mul_date = true;
+        }
+        $("#widgetCalendar3").slideToggle();
+    });
+
+    $("#prev_dates4").click(function(){
+        //maneja la visibilidad del calendario del rango adicional
+        if($("#widgetCalendar4").is(":visible")){
+            mul_date4 = false;
+            $('#range4_init').val("");
+            $('#range4_end').val("");
+            var span_content=$('#widgetField span').html().split(" contra: ")
+            $('#widgetField span').html(span_content[0]+" contra: "+span_content[1]+" contra: "+span_content[2]);
+            $('#widgetCalendar4').DatePickerClear();
+        }else{
+            mul_date = true;
+        }
+        $("#widgetCalendar4").slideToggle();
+    });
+
+    $("#types_graphs ul li").each(function(){
+        // Carga el iframe de la grafica correspondiente,
+        $(this).click(function(){
+            $("#types_graphs ul li").each(function(){$(this).removeClass("active");});
+            var src;
+            switch($(this).attr("id")){
+                {% for type in graphs %}
+                case "{{ type.pk }}":
+                    src = "{{ type.object_access_point }}";
+                    break;
+                {% endfor %}
+            }
+
+
+            //var get_vars = $("#graphFrame").attr("src").split('?')[1]
+
+
+                if(src == "/reportes/graficas?graph=TotalkWhIMPORT" || src == "/reportes/graficas?graph=kWh_consumido"){
+                    src+='&granularity=day';
+                }else{
+                    src+='&granularity=raw_data';
+                }
+
+                src=append_parameters2(src);
+
+                src+="&consumer-unit01="+{{ consumer_unit.pk }};
+                if ($("#range2_init").val()!=''){
+                    src+="&consumer-unit02="+{{ consumer_unit.pk }};
+                }
+                if ($("#range3_init").val()!=''){
+                    src+="&consumer-unit03="+{{ consumer_unit.pk }};
+                }
+                if ($("#range4_init").val()!=''){
+                    src+="&consumer-unit04="+{{ consumer_unit.pk }};
+                }
+
+                //makeIframe(src);
+                src=clean_dates(src)
+                makeIframe(src);
+                //cambia la clase de la pestania
+                $(this).addClass("active");
+
+
+
+        });
+    });
+    /*$("#compare_to").change(function(){
+        //agrega y refresca los datos para ser comparados contra otra entidad
+        var compared_companies=$("#evaluated_companies").val().split(",");
+        if($(this).val()!=0 && compared_companies.length < 4){
+
+            var bandera = true;
+            for(var comp = 0; comp < compared_companies.length; comp++){
+                //check if the entitie is compared with self, or some entity already added
+                if(compared_companies[comp] == $(this).val()) bandera = false;
+            }
+            if(bandera){
+                var src=$("#graphFrame").attr("src").split('?');
+                var iframesrc = src[0] + '?';
+
+                if (src[1] != undefined){
+                    iframesrc += src[1] + '&';
+                }
+                iframesrc += "compare_to" + $(this).val() + "=" + $(this).val();
+                $(this).parent().before('<span class="compared">' + $("#compare_to option:selected").text()
+                                    + '</span><span class="vs_tag">VS</span>');
+                src = iframesrc;
+
+                makeIframe(src);
+                $("#evaluated_companies").val($("#evaluated_companies").val() + "," + $(this).val());
+            }
+        }
+    });*/
+
+    refresh_iframe_height();
+
+    //custom select for sidebar
+    $("#empresa").click(function(){
+        $("#company_list").slideToggle();
+    });
+
+    $("#company_list li").click(function(){
+        var texto=$(this).text().replace(/^\s*|\s*$/g,'');
+        var texto1 = texto.substring(0,17) + "...";
+        $("#empresa").text(texto1);
+        $("#company_list").slideUp();
+        //reload with the selected company data
+        $("#evaluated_companies").val($(this).attr("rel") + ",");
+        $(".compared").remove();
+        $(".vs_tag").remove();
+        $("#compare_to").parent().before('<span class="compared">'+
+            texto +
+            '</span>' +
+            '<span class="vs_tag">VS</span>'
+        );
+        $.ajax({
+            url: "/reportes/set_default_building/" + $(this).attr("rel"),
+            type: "GET",
+            dataType: 'json',
+            async: 'true',
+            success: function(datos){
+                document.location.reload(true);
+
+            }
+        });
+        var src = $("#graphFrame").attr("src").split('?')[0];
+        $("#widgetField span").html("Fecha Inicio &ndash; Fecha Fin");
+        $("#range1_init").val("");
+        $("#range1_end").val("");
+        $("#range2_init").val("");
+        $("#range2_end").val("");
+        $('#widgetCalendar').DatePickerClear();
+        $('#widgetCalendar2').DatePickerClear();
+        $("#types_graphs ul li").removeClass("active");
+        makeIframe("");
+    });
+    $(".various").fancybox({
+        maxWidth	: 800,
+        maxHeight	: 800,
+        fitToView	: false,
+        width		: '70%',
+        height		: '70%',
+        autoSize	: false,
+        closeClick	: false,
+        openEffect	: 'none',
+        closeEffect	: 'none'
+    });
+    if($("#graphFrame").attr("src")=="/reportes/graficas/"){
+        $("#types_graphs ul li:eq(0)").click();
+    }
+    {% endblock %}
+{% block contenido %}
+<div id="bread_crumbs">
+    <ul>
+        <li><a href="/main/">Inicio</a></li>
+        <li><a href="/main/">Reportes</a></li>
+    </ul>
+
+</div>
+<div id="contenido_interno">
+    <h2 id="titulo_reporte">{{ empresa.building_name }} -
+        <span>
+            {% if consumer_unit.part_of_building %}
+                {{ consumer_unit.part_of_building.part_of_building_name }}
+            {% else %}
+                {{ consumer_unit.electric_device_type.electric_device_type_name }}
+            {% endif %}
+        </span>
+    </h2><a class="various" data-fancybox-type="iframe"  href="/reportes/set_consumer_unit/">Cambiar</a>
+
+    <div id="datepicker_component">
+        <span class="period_tag">Periodo</span>
+        <div id="widgetField">
+            <span>Fecha Inicio &ndash; Fecha Fin</span>
+            <a href="#">&nbsp;</a>
+        </div>
+
+        <div id="datepicker">
+            <div id="widgetCalendar">
+
+            </div>
+            <div id="date_ranges">
+                <span>Selecciona un periodo</span>
+                <div>
+                    <label for="range1_init">Desde</label>
+                    <input type="text" name="range1_init" id="range1_init" readonly="readonly"/>
+                </div>
+                <span>&ndash;</span>
+                <div>
+                    <label for="range1_end">Hasta</label>
+                    <input type="text" name="range1_end" id="range1_end" readonly="readonly"/>
+                </div>
+                <label id="compare_prev_date"><input type="checkbox" id="prev_dates"/>Comparar con fechas previas</label>
+                <div>
+                    <label for="range2_init">Desde</label>
+                    <input type="text" name="range2_init" id="range2_init" readonly="readonly"/>
+                </div>
+                <span>&ndash;</span>
+                <div>
+                    <label for="range2_end">Hasta</label>
+                    <input type="text" name="range2_end" id="range2_end" readonly="readonly"/>
+                </div>
+
+                <label id="compare_prev_date3"><input type="checkbox" id="prev_dates3"/>Comparar con fechas previas</label>
+                <div>
+                    <label for="range3_init">Desde</label>
+                    <input type="text" name="range3_init" id="range3_init" readonly="readonly"/>
+                </div>
+                <span>&ndash;</span>
+                <div>
+                    <label for="range3_end">Hasta</label>
+                    <input type="text" name="range3_end" id="range3_end" readonly="readonly"/>
+                </div>
+                <label id="compare_prev_date4"><input type="checkbox" id="prev_dates4"/>Comparar con fechas previas</label>
+                <div>
+                    <label for="range4_init">Desde</label>
+                    <input type="text" name="range2_init" id="range4_init" readonly="readonly"/>
+                </div>
+                <span>&ndash;</span>
+                <div>
+                    <label for="range4_end">Hasta</label>
+                    <input type="text" name="range2_end" id="range4_end" readonly="readonly"/>
+                </div>
+
+
+                <a href="#" class="aqua_btn">Aplicar</a>
+            </div>
+            <div id="widgetCalendar2">
+
+            </div>
+
+            <div id="widgetCalendar3">
+
+            </div>
+
+            <div id="widgetCalendar4">
+
+            </div>
+        </div>
+    </div>
+
+    <div class="divider" id="divider_top">&nbsp;</div>
+
+    <div id="types_graphs">
+        <ul>
+            {% for type in graphs %}
+                <li id="{{ type.pk }}">{{ type.object_name }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div id="graphs_container">
+        <div id="compare" class="fl">
+            <input id="evaluated_companies" type="hidden" value="{{ empresa.pk }},"/>
+            <!--<span>Comparar:</span>
+            <span class="compared">{{ empresa.building_name }}</span>
+            <span class="vs_tag">VS</span>
+            <select id="compare_to">
+                <option value="0">Selecciona</option>
+                {% for cntx in datacontext %}
+                    <option value="{{ cntx.building.pk }}">
+                        {{cntx.building.building_name}}
+                    </option>
+                {% endfor %}
+            </select>-->
+        </div>
+
+        <div id="graph_container">
+            <iframe src="/reportes/graficas/" id="graphFrame" seamless="seamless"></iframe>
+        </div>
+
+    </div>
+
+
+</div>
+{% endblock %}
