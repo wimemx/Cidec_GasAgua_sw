@@ -15,14 +15,19 @@
         function drawVisualization() {
             // Create and populate the data table.
             var data = google.visualization.arrayToDataTable([
-                ['Día', 'KwH-h', 'KwH-h', 'KwH-h', 'KwH-h', 'KwH-h', 'KwH-h'],
-                ['Lunes',  1336060,   3817614,       974066,       1104797,   6651824,  15727003],
-                ['Martes',  1538156,   3968305,       928875,       1151983,   5940129,  17356071],
-                ['Miércoles',  1576579,   4063225,       1063414,      1156441,   5714009,  16716049],
-                ['Jueves',  1600652,   4604684,       940478,       1167979,   6190532,  18542843],
-                ['Viernes',  1968113,   4013653,       1037079,      1207029,   6420270,  19564053],
-                ['Sábado',  1901067,   6792087,       1037327,      1284795,   6240921,  19830493],
-                ['Domingo',  1037327,   6792087,       1037327,      1284795,   6240921,  19830493]
+                ['Día', 'KwH-h', 'KwH-h', 'KwH-h', 'KwH-h', 'KwH-h', 'KwH-h', 'KwH-h', 'KwH-h', 'KwH-h', 'KwH-h', 'KwH-h', 'KwH-h','KwH-h', 'KwH-h', 'KwH-h', 'KwH-h', 'KwH-h', 'KwH-h','KwH-h', 'KwH-h', 'KwH-h', 'KwH-h', 'KwH-h', 'KwH-h'],
+                {% for day, hour_values in week_report_cumulative %}
+                    {% if forloop.first %}
+                        ['{{ day }}'
+                    {% else %}
+                        , ['{{ day }}'
+                    {% endif %}
+
+                    {% for value in hour_values %}
+                        , {{ value }}
+                    {% endfor %}
+                    ]
+                {% endfor %}
             ]);
 
             // Create and draw the visualization.
@@ -40,6 +45,28 @@
 {% endblock %}
 {% block document_ready %}
     drawVisualization();
+    //custom select for sidebar
+    $("#empresa").click(function(){
+    $("#company_list").slideToggle();
+    });
+
+    $("#company_list li").click(function(){
+    var texto=$(this).text().replace(/^\s*|\s*$/g,'');
+    var texto1 = texto.substring(0,17) + "...";
+    $("#empresa").text(texto1);
+    $("#company_list").slideUp();
+
+    $.ajax({
+    url: "/reportes/set_default_building/" + $(this).attr("rel"),
+    type: "GET",
+    dataType: 'json',
+    async: 'true',
+    success: function(datos){
+    document.location.reload(true);
+
+    }
+    });
+    });
 {% endblock %}
 {% block contenido %}
 <div id="bread_crumbs">

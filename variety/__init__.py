@@ -15,7 +15,16 @@ from django.utils import timezone
 #from django.template.loader import get_template
 #from xhtml2pdf import pisa
 
-def get_week_start_and_end_datetime(
+def get_hour_from_datetime(datetime_input):
+    hour_datetime = datetime(year=datetime_input.year,
+                             month=datetime_input.month,
+                             day=datetime_input.day,
+                             hour=datetime_input.hour,
+                             tzinfo=datetime_input.tzinfo)
+
+    return hour_datetime
+
+def get_week_start_datetime_end_datetime_tuple(
         year,
         month,
         week
@@ -34,13 +43,13 @@ def get_week_start_and_end_datetime(
 
     week_start = first_day_of_week.replace(hour=0,
                                            minute=0,
-                                           second=0,
-                                           tzinfo=timezone.get_current_timezone())
+                                           second=0)
 
     week_end = week_start + week_delta
     return week_start, week_end
 
-def week_of_month(datetime_variable):
+
+def get_week_of_month_from_datetime(datetime_variable):
     """Get the week number of the month for a datetime
     datetime_variable = the date
     returns the week number (int)

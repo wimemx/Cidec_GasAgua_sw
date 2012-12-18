@@ -254,6 +254,17 @@ def week_report_kwh(request):
                                    request.session['consumer_unit'],
                                    GRAPHS['energia'])
         if graphs:
+            consumer_unit = request.session['consumer_unit']
+            datetime_current = datetime.datetime.now()
+            year_current = datetime_current.year
+            month_current = datetime_current.month
+            week_current = variety.get_week_of_month_from_datetime(datetime_current)
+            week_report_cumulative =\
+                get_consumer_unit_week_report_cumulative(consumer_unit,
+                                                         year_current,
+                                                         month_current,
+                                                         week_current,
+                                                         "kWh")
 
             template_vars = {"datacontext": datacontext,
                              'empresa': request.session['main_building'],
@@ -261,6 +272,8 @@ def week_report_kwh(request):
                              'consumer_unit': request.session['consumer_unit'],
                              'sidebar': request.session['sidebar']
             }
+
+            template_vars['week_report_cumulative'] = week_report_cumulative
             template_vars_template = RequestContext(request, template_vars)
             return render_to_response("consumption_centers/main.html",
                                       template_vars_template)
@@ -545,7 +558,7 @@ def render_cumulative_comparison_in_week(request):
                     month_current = int(request.GET[month_get_key])
                     week_current = int(request.GET[week_get_key])
                     start_datetime, end_datetime = variety.\
-                    get_week_start_and_end_datetime(
+                    get_week_start_datetime_end_datetime_tuple(
                         year_current,
                         month_current,
                         week_current)
