@@ -285,14 +285,28 @@ def get_consumer_unit_week_report_cumulative(
     week_start_datetime, week_end_datetime =\
         variety.get_week_start_datetime_end_datetime_tuple(year, month, week)
 
+
+
+    def build_day_tuple_list(week_start, day_index):
+        hour_delta = datetime.timedelta(hours=1)
+        day_delta = datetime.timedelta(days=1)
+        day_tuple_list = []
+        for index in range(0, 24):
+            hour_start_current = week_start + (day_index * day_delta) + (index * hour_delta)
+            hour_end_current = week_start + (day_index * day_delta) + (index * hour_delta) + hour_delta
+            day_tuple_list.append((hour_start_current, hour_end_current, 0.0))
+
+        return day_tuple_list
+
     electric_data_days_tuple_list = [
-        (u"Lunes", [0.0 for index in range(0, 24)]),
-        (u"Martes", [0.0 for index in range(0, 24)]),
-        (u"Miércoles", [0.0 for index in range(0, 24)]),
-        (u"Jueves", [0.0 for index in range(0, 24)]),
-        (u"Viernes", [0.0 for index in range(0, 24)]),
-        (u"Sábado", [0.0 for index in range(0, 24)]),
-        (u"Domingo", [0.0 for index in range(0, 24)])]
+        (u"Lunes", build_day_tuple_list(week_start_datetime, 0)),
+        (u"Martes", build_day_tuple_list(week_start_datetime, 1)),
+        (u"Miércoles", build_day_tuple_list(week_start_datetime, 2)),
+        (u"Jueves", build_day_tuple_list(week_start_datetime, 3)),
+        (u"Viernes", build_day_tuple_list(week_start_datetime, 4)),
+        (u"Sábado", build_day_tuple_list(week_start_datetime, 5)),
+        (u"Domingo", build_day_tuple_list(week_start_datetime, 6))
+    ]
 
     data_warehouse.views.logger.info("wsd - wed")
     data_warehouse.views.logger.info(week_start_datetime)
@@ -325,8 +339,11 @@ def get_consumer_unit_week_report_cumulative(
                 consumer_unit_electric_data_interval_raw_dictionary.get("electric_data",
                                                                         0.0)
 
-            day_current, hours_list_current = electric_data_days_tuple_list[day_index]
-            hours_list_current[hour_index] += float(electric_data_value_current)
+            day_current, hours_tuple_list_current = electric_data_days_tuple_list[day_index]
+            hour_datetime_start, hour_datetime_end, electric_data_value = hours_tuple_list_current[hour_index]
+            hours_tuple_list_current[hour_index] = (hour_datetime_start,
+                                                    hour_datetime_end,
+                                                    electric_data_value + float(electric_data_value_current))
 
     data_warehouse.views.logger.info(electric_data_days_tuple_list)
     return electric_data_days_tuple_list

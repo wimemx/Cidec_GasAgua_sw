@@ -272,10 +272,11 @@ def week_report_kwh(request):
                              'empresa': request.session['main_building'],
                              'company': request.session['company'],
                              'consumer_unit': request.session['consumer_unit'],
-                             'sidebar': request.session['sidebar']
+                             'sidebar': request.session['sidebar'],
+                             'electric_data_name': "kWh",
+                             'week_report_cumulative': week_report_cumulative
             }
 
-            template_vars['week_report_cumulative'] = week_report_cumulative
             template_vars_template = RequestContext(request, template_vars)
             return render_to_response("consumption_centers/main.html",
                                       template_vars_template)
