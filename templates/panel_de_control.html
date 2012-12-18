@@ -45,8 +45,8 @@
         <div class="divider" id="divider_top">&nbsp;</div>
 
         <ul id="permissions">
-            {% for option in sidebar %}
-                <li><a href="{{ option.uri }}">{{ option.name }}</a></li>
+            {% for option in object_permission %}
+                <li><a href="{{ option.object_access_point }}">{{ option.object_name }}</a></li>
             {% endfor %}
         </ul>
 

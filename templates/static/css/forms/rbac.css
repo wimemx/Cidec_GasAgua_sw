@@ -125,15 +125,24 @@
     width: 99%;
 }
 
-
 #role_actions .aqua_btn{
     width: 106px;
+}
+#role_actions{
+    height: 40px;
+}
+#role_actions form{
+    float: left;
+}
+form#operations_batch{
+    display: block;
+    clear: both;
 }
 .hz_divider{
     float: left;
     display: inline-block;
     height: 27px;
-    margin: 4px 4em 0 4em;
+    margin: 4px 42px 0 42px;
     border-right: solid 1px #9EBFC7;
 }
 #grid_container{

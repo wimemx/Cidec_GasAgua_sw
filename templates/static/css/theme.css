@@ -164,7 +164,8 @@ body{
 }
 
 #table_container{
-    margin-top: 59px;
+    position: relative;
+    top: 59px;
     height: 100%;
     background: #f3f3f3;
     background-image: url(images/bgs/gray_steel.png); /* fallback */
@@ -174,6 +175,7 @@ body{
     background-image: url(images/bgs/gray_steel.png),     -ms-linear-gradient(top, #ffffff, #333333); /* IE10 */
     background-image: url(images/bgs/gray_steel.png),      -o-linear-gradient(top, #ffffff, #333333); /* Opera 11.10+ */
     background-image: url(images/bgs/gray_steel.png),         linear-gradient(top, #ffffff, #333333); /* W3C */
+    width: 100%;
 }
 #table_container tr{
     height: 100%;
@@ -225,6 +227,7 @@ body{
 
 #user_menu{
     margin-right: 38px;
+    width: 137px;
 }
 #user_menu li, #user_menu li a{
     display: inline-block;

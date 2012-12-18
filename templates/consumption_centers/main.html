@@ -17,13 +17,13 @@
             var dataTable = new google.visualization.DataTable();
             dataTable.addColumn('string', 'Día');
             var dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
-            for(var k=0; k<168; k++){
+            for(var k=0; k<24; k++){
                 dataTable.addColumn('number', 'KwH-hora');
                 dataTable.addColumn({'type': 'string', 'role': 'tooltip', 'p': {'html': true}});
             }
             for(var i=0; i<7; i++){
                 var arr = [dias[i]];
-                for(var j=0; j<168; j++){
+                for(var j=0; j<24; j++){
                     var randomnumber=Math.floor(Math.random()*101);
                     arr.push(randomnumber, "Kw/H Hora - "+dias[i]+ " de "+parseInt(j+1)+" a "+ parseInt(j+2));
                 }

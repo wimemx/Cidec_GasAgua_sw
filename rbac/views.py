@@ -32,12 +32,23 @@ DELETE = Operation.objects.get(operation_name="Eliminar")
 UPDATE = Operation.objects.get(operation_name="Modificar")
 
 def control_panel(request):
+    objetos = Object.objects.exclude(Q(object_access_point='')|
+                                     Q(object_access_point="/"))
+    object_permission = []
+    for obj in objetos:
+        if has_permission(request.user, VIEW, obj.object_name) or \
+           has_permission(request.user, CREATE, obj.object_name) or \
+           has_permission(request.user, DELETE, obj.object_name) or \
+           has_permission(request.user, UPDATE, obj.object_name):
+            object_permission.append(obj)
+
     template_vars = dict(
         sidebar=request.session['sidebar'],
         datacontext=get_buildings_context(request.user),
         empresa=request.session['main_building'],
         operations=Operation.objects.all(),
         company=request.session['company'],
+        object_permission=object_permission
     )
     template_vars_template = RequestContext(request, template_vars)
     return render_to_response("panel_de_control.html", template_vars_template)

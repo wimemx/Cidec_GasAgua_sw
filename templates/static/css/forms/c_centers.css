@@ -210,7 +210,8 @@ background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
 }
 
 .widgetField span.legend{
-    width: 180px;
+    width: 180px !important;
+    float: left;
 }
 
 .widgetField ul.ddl{
@@ -235,7 +236,6 @@ background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
 
 .building_info{
     width: 100%;
-    overflow: auto;
 }
 
 .building_column{
@@ -293,4 +293,7 @@ background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
     height: 27px;
     margin: 4px 1.3em 0 1.3em;
     border-right: solid 1px #9EBFC7;
+}
+.required{
+    color: red;
 }

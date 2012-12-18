@@ -29,11 +29,21 @@
 #user_actions label input {
     width: 99%;
 }
+#user_actions{
+    height: 40px;
+}
+#user_actions form{
+    float: left;
+}
+form#operations_batch{
+    display: block;
+    clear: both;
+}
 .hz_divider{
     float: left;
     display: inline-block;
     height: 27px;
-    margin: 4px 2.7em 0 2.7em;
+    margin: 4px 27px 0 27px;
     border-right: solid 1px #9EBFC7;
 }
 .attr_list .hz_divider{
