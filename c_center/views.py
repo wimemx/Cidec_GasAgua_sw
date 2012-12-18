@@ -256,6 +256,8 @@ def week_report_kwh(request):
         if graphs:
 
             template_vars = {"datacontext": datacontext,
+                             'fi': datetime.datetime.now(),
+                             'ff': datetime.datetime.now(),
                              'empresa': request.session['main_building'],
                              'company': request.session['company'],
                              'consumer_unit': request.session['consumer_unit'],

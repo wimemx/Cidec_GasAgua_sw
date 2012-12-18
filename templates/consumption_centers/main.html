@@ -14,6 +14,23 @@
     <script type="text/javascript">
         function drawVisualization() {
             // Create and populate the data table.
+            var dataTable = new google.visualization.DataTable();
+            dataTable.addColumn('string', 'Día');
+            var dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+            for(var k=0; k<168; k++){
+                dataTable.addColumn('number', 'KwH-hora');
+                dataTable.addColumn({'type': 'string', 'role': 'tooltip', 'p': {'html': true}});
+            }
+            for(var i=0; i<7; i++){
+                var arr = [dias[i]];
+                for(var j=0; j<168; j++){
+                    var randomnumber=Math.floor(Math.random()*101);
+                    arr.push(randomnumber, "Kw/H Hora - "+dias[i]+ " de "+parseInt(j+1)+" a "+ parseInt(j+2));
+                }
+                dataTable.addRows([arr]);
+            }
+
+
             var data = google.visualization.arrayToDataTable([
                 ['Día', 'KwH-h', 'KwH-h', 'KwH-h', 'KwH-h', 'KwH-h', 'KwH-h'],
                 ['Lunes',  1336060,   3817614,       974066,       1104797,   6651824,  15727003],
@@ -27,12 +44,14 @@
 
             // Create and draw the visualization.
             new google.visualization.ColumnChart(document.getElementById('visualization')).
-                    draw(data,
+                    draw(dataTable,
                     {title:"",
                         width:960, height:400,
-                        hAxis: {title: "Día de la semana"},
+                        hAxis: {title: "Día de la semana", baselineColor: "#cccccc"},
                         legend: {position: 'none'},
-                        colors: ['#9ebfc6']
+                        colors: ['#9ebfc6'],
+                        backgroundColor: "transparent",
+                        tooltip: {isHtml: true}
                     }
             );
         }
@@ -40,6 +59,28 @@
 {% endblock %}
 {% block document_ready %}
     drawVisualization();
+    //custom select for sidebar
+    $("#empresa").click(function(){
+    $("#company_list").slideToggle();
+    });
+
+    $("#company_list li").click(function(){
+    var texto=$(this).text().replace(/^\s*|\s*$/g,'');
+    var texto1 = texto.substring(0,17) + "...";
+    $("#empresa").text(texto1);
+    $("#company_list").slideUp();
+
+    $.ajax({
+    url: "/reportes/set_default_building/" + $(this).attr("rel"),
+    type: "GET",
+    dataType: 'json',
+    async: 'true',
+    success: function(datos){
+    document.location.reload(true);
+
+    }
+    });
+    });
 {% endblock %}
 {% block contenido %}
 <div id="bread_crumbs">
@@ -65,24 +106,31 @@
     <h2>
         Reporte de la semana en curso KW/h hora
     </h2>
+    <p id="date_range_legend" class="g12 c">
+
+
+        Mostrando datos de la semana del <span>{{ fi|date:"F d, Y" }}</span> al <span>{{ ff|date:"F d, Y" }}</span>
+
+    </p>
     <div id="visualization">
 
     </div>
     <h2 class="g12">Totales Acumulados</h2>
-    <table class="g12">
-        <thead>
-        <tr>
-            <th width="14.28%">Lunes</th>
-            <th width="14.28%">Martes</th>
-            <th width="14.28%">Mi&eacute;rcoles</th>
-            <th width="14.28%">Jueves</th>
-            <th width="14.28%">Viernes</th>
-            <th width="14.28%">S&aacute;bado</th>
-            <th width="14.28%">Domingo</th>
-        </tr>
-        </thead>
-        <tbody>
+    <div class="g12" id="week_sumary">
+        <table width="95%">
+            <thead>
             <tr>
+                <th width="14.28%">Lunes</th>
+                <th width="14.28%">Martes</th>
+                <th width="14.28%">Mi&eacute;rcoles</th>
+                <th width="14.28%">Jueves</th>
+                <th width="14.28%">Viernes</th>
+                <th width="14.28%">S&aacute;bado</th>
+                <th width="14.28%">Domingo</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr class="datos_semana">
                 <td>42 KwH Hora</td>
                 <td>23 KwH Hora</td>
                 <td>35 KwH Hora</td>
@@ -91,8 +139,9 @@
                 <td>55 KwH Hora</td>
                 <td>36 KwH Hora</td>
             </tr>
-        </tbody>
-    </table>
+            </tbody>
+        </table>
+    </div>
 
 </div>
 {% endblock %}

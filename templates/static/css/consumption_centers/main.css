@@ -344,3 +344,15 @@ ul#permissions li a{
     font-weight: 700;
     color: #666;
 }
+#week_sumary td{
+    text-align: center;
+}
+#week_sumary tr.datos_semana td{
+    margin-top: 1em;
+    height: 32px;
+    vertical-align: middle !important;
+    color: #878787;
+}
+#week_sumary th{
+    color: #666;
+}
