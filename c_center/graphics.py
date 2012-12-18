@@ -22,6 +22,7 @@ import django.template.context
 #
 # cidec imports
 #
+import c_center.c_center_functions
 import c_center.models
 import data_warehouse.views
 import variety
@@ -203,21 +204,12 @@ def get_consumer_unit_electric_data_interval_raw_optimized(
     if not electric_data_raw_results_length:
         return electric_data_raw
 
-    def get_hour_from_datetime(datetime_input):
-        hour_datetime = datetime.datetime(year=datetime_input.year,
-                                          month=datetime_input.month,
-                                          day=datetime_input.day,
-                                          hour=datetime_input.hour,
-                                          tzinfo=datetime_input.tzinfo)
-
-        return hour_datetime
-
     electric_data_raw_hours_dictionary = dict()
     timedelta_tolerance = timedelta(minutes=10)
     for electric_data_raw_dictionary in electric_data_raw_dictionaries:
         medition_date_current = electric_data_raw_dictionary['medition_date']
         electric_data_current = electric_data_raw_dictionary[electric_data_name_local]
-        datetime_hour_current = get_hour_from_datetime(medition_date_current)
+        datetime_hour_current = variety.get_hour_from_datetime(medition_date_current)
         timedelta_current = abs(medition_date_current - datetime_hour_current)
         if timedelta_current < timedelta_tolerance:
             datetime_hour_current_string = datetime_hour_current.strftime("%Y-%m-%d-%H")
@@ -270,7 +262,8 @@ def get_consumer_unit_electric_data_interval_raw_optimized(
 
             electric_data_value = electric_data_value_next - electric_data_value_current
 
-        electric_data_raw_item = dict(datetime=int(time.mktime(datetime_current_utc.timetuple())),
+        datetime_current_localtime = datetime_current_utc.astimezone(current_timezone)
+        electric_data_raw_item = dict(datetime=int(time.mktime(datetime_current_localtime.timetuple())),
                                       electric_data=electric_data_value,
                                       certainty=True)
 
@@ -279,6 +272,81 @@ def get_consumer_unit_electric_data_interval_raw_optimized(
 
     return electric_data_raw
 
+
+def get_consumer_unit_week_report_cumulative(
+        consumer_unit,
+        year,
+        month,
+        week,
+        electric_data_name
+):
+    data_warehouse.views.logger.info("consumer_unit")
+    data_warehouse.views.logger.info(consumer_unit)
+    week_start_datetime, week_end_datetime =\
+        variety.get_week_start_datetime_end_datetime_tuple(year, month, week)
+
+
+
+    def build_day_tuple_list(week_start, day_index):
+        hour_delta = datetime.timedelta(hours=1)
+        day_delta = datetime.timedelta(days=1)
+        day_tuple_list = []
+        for index in range(0, 24):
+            hour_start_current = week_start + (day_index * day_delta) + (index * hour_delta)
+            hour_end_current = week_start + (day_index * day_delta) + (index * hour_delta) + hour_delta
+            day_tuple_list.append((hour_start_current, hour_end_current, 0.0))
+
+        return day_tuple_list
+
+    electric_data_days_tuple_list = [
+        (u"Lunes", build_day_tuple_list(week_start_datetime, 0)),
+        (u"Martes", build_day_tuple_list(week_start_datetime, 1)),
+        (u"Miércoles", build_day_tuple_list(week_start_datetime, 2)),
+        (u"Jueves", build_day_tuple_list(week_start_datetime, 3)),
+        (u"Viernes", build_day_tuple_list(week_start_datetime, 4)),
+        (u"Sábado", build_day_tuple_list(week_start_datetime, 5)),
+        (u"Domingo", build_day_tuple_list(week_start_datetime, 6))
+    ]
+
+    data_warehouse.views.logger.info("wsd - wed")
+    data_warehouse.views.logger.info(week_start_datetime)
+    data_warehouse.views.logger.info(week_end_datetime)
+    consumer_unit_list = c_center.c_center_functions.get_consumer_units(consumer_unit)
+    data_warehouse.views.logger.info("consumer_unit_list")
+    data_warehouse.views.logger.info(consumer_unit_list)
+    for consumer_unit_item in consumer_unit_list:
+        consumer_unit_electric_data_interval_raw =\
+            get_consumer_unit_electric_data_interval_raw_optimized(
+                electric_data_name,
+                consumer_unit_item.pk,
+                week_start_datetime,
+                week_end_datetime)
+
+        data_warehouse.views.logger.info("consumer_unit_electric_data_raw_interval")
+        data_warehouse.views.logger.info(len(consumer_unit_electric_data_interval_raw))
+
+        hours_in_week = 7 * 24
+        if len(consumer_unit_electric_data_interval_raw) < hours_in_week:
+            continue
+
+        for index in range(0, hours_in_week):
+            day_index = index / 24
+            hour_index = index % 24
+            consumer_unit_electric_data_interval_raw_dictionary =\
+                consumer_unit_electric_data_interval_raw[index]
+
+            electric_data_value_current =\
+                consumer_unit_electric_data_interval_raw_dictionary.get("electric_data",
+                                                                        0.0)
+
+            day_current, hours_tuple_list_current = electric_data_days_tuple_list[day_index]
+            hour_datetime_start, hour_datetime_end, electric_data_value = hours_tuple_list_current[hour_index]
+            hours_tuple_list_current[hour_index] = (hour_datetime_start,
+                                                    hour_datetime_end,
+                                                    electric_data_value + float(electric_data_value_current))
+
+    data_warehouse.views.logger.info(electric_data_days_tuple_list)
+    return electric_data_days_tuple_list
 
 def cut_electric_data_list_values(electric_data_list, data_values_length):
     for index in range(0, len(electric_data_list)):

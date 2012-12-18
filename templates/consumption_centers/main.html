@@ -21,26 +21,18 @@
                 dataTable.addColumn('number', 'KwH-hora');
                 dataTable.addColumn({'type': 'string', 'role': 'tooltip', 'p': {'html': true}});
             }
-            for(var i=0; i<7; i++){
-                var arr = [dias[i]];
-                for(var j=0; j<24; j++){
-                    var randomnumber=Math.floor(Math.random()*101);
-                    arr.push(randomnumber, "Kw/H Hora - "+dias[i]+ " de "+parseInt(j+1)+" a "+ parseInt(j+2));
-                }
-                dataTable.addRows([arr]);
-            }
 
 
-            var data = google.visualization.arrayToDataTable([
-                ['Día', 'KwH-h', 'KwH-h', 'KwH-h', 'KwH-h', 'KwH-h', 'KwH-h'],
-                ['Lunes',  1336060,   3817614,       974066,       1104797,   6651824,  15727003],
-                ['Martes',  1538156,   3968305,       928875,       1151983,   5940129,  17356071],
-                ['Miércoles',  1576579,   4063225,       1063414,      1156441,   5714009,  16716049],
-                ['Jueves',  1600652,   4604684,       940478,       1167979,   6190532,  18542843],
-                ['Viernes',  1968113,   4013653,       1037079,      1207029,   6420270,  19564053],
-                ['Sábado',  1901067,   6792087,       1037327,      1284795,   6240921,  19830493],
-                ['Domingo',  1037327,   6792087,       1037327,      1284795,   6240921,  19830493]
-            ]);
+            var row_array;
+            {% for week_day, hours_tuple_list in week_report_cumulative %}
+                row_array = new Array();
+                row_array.push("{{ week_day }}");
+                {% for hour_start, hour_end, electic_data_value in hours_tuple_list %}
+                    row_array.push({{ electic_data_value }});
+                    row_array.push("{{ electic_data_name }} - {{ week_day }} de {{ hour_start }} a {{ hour_end }}");
+                {% endfor %}
+                dataTable.addRows([row_array]);
+            {% endfor %}
 
             // Create and draw the visualization.
             new google.visualization.ColumnChart(document.getElementById('visualization')).
