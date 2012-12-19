@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block titulo %}Ver Modelos de Medidores{% endblock %}
+{% block titulo %}Ver Equipos Industriales{% endblock %}
 {% block externalcss %}
 <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
 <link rel="stylesheet" href="/static/css/forms/rbac_user_list.css" type="text/css" />
@@ -60,10 +60,10 @@ window.location.reload();
 
 $("a.switch").click(function(event){
 event.preventDefault();
-var url="/buildings/status_modelomedidor/"+$(this).attr("rel")+"/";
+var url="/buildings/status_ie/"+$(this).attr("rel")+"/";
 var action = $(this).attr("title");
-new Messi('&iquest;Est&aacute; seguro de que desea '+ action +' este modelo de medidor?',
-{title: action+' modelo de medidor', modal: true, buttons: [{id: 0,
+new Messi('&iquest;Est&aacute; seguro de que desea '+ action +' este equipo industrial?',
+{title: action+' equipo industrial', modal: true, buttons: [{id: 0,
 label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
 }],
 callback: function(val) {
@@ -83,7 +83,7 @@ $("#aplicar").click(function(e){
             }
         });
         if(check){
-            new Messi('&iquest;Est&aacute; seguro de que desea cambiar el estatus de los modelos' +
+            new Messi('&iquest;Est&aacute; seguro de que desea cambiar el estatus los equipos industriales' +
                 ' seleccionados?',
                 {title: 'Cambiar estatus', modal: true, buttons: [{id: 0,
                 label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
@@ -169,12 +169,12 @@ window.location = base_url;
     <ul>
         <li><a href="/main/">Inicio</a></li>
         <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
-        <li>Modelos de Medidores</li>
+        <li>Equipos Industriales</li>
     </ul>
 
 </div>
 <div id="contenido_interno">
-    <h2 id="titulo_form" class="powermeter">Ver Modelos de Medidores</h2>
+    <h2 id="titulo_form" class="powermeter">Ver Equipos Industriales</h2>
 
 
     <div class="divider" id="divider_top">&nbsp;</div>
@@ -194,8 +194,8 @@ window.location = base_url;
 
         <div id="user_actions">
 
-            <a href="/buildings/alta_modelo_medidor/"><span class="plus"></span>
-                Nuevo Modelo
+            <a href="/buildings/alta_ie/"><span class="plus"></span>
+                Nuevo Equipo
             </a>
             <span class="hz_divider"></span>
             <form method="get" action=".">
@@ -208,21 +208,21 @@ window.location = base_url;
                 </button>
             </form>
         </div>
-        <form id="operations_batch" action="/buildings/status_batch_powermetermodel/" method="post">
+        <form id="operations_batch" action="/buildings/status_batch_ie/" method="post">
             {% csrf_token %}
             <div id="grid_container">
                 <table>
                     <thead>
                     <tr>
                         <th style="width: 25%;">
-                            <a href="#" id="sort_brand" rel="{{ order_brand }}">
-                                Marca
+                            <a href="#" id="sort_name" rel="{{ order_name }}">
+                                Alias del Equipo
                                 <span class="sort"></span>
                             </a>
                         </th>
                         <th style="width: 45%;">
-                            <a href="#" id="sort_model" rel="{{ order_model }}">
-                                Modelo
+                            <a href="#" id="sort_server" rel="{{ order_server }}">
+                                Servidor
                                 <span class="sort"></span>
                             </a>
                         </th>
@@ -236,30 +236,30 @@ window.location = base_url;
                     </tr>
                     </thead>
                     <tbody>
-                    {% for models in paginacion.object_list %}
+                    {% for equipo in paginacion.object_list %}
 
                     <tr class="{% cycle 'row1' 'row2' %}">
                         <td>
-                            <input type="checkbox" id="model_{{ models.pk }}"
-                                   name="model_{{ models.pk }}"/>
-                            <label for="model_{{ models.pk }}">
-                                <a href="/buildings/ver_modelomedidor/{{ models.pk }}/">
-                                    {{ models.powermeter_brand }}
+                            <input type="checkbox" id="equipo_{{ equipo.pk }}"
+                                   name="equipo_{{ equipo.pk }}"/>
+                            <label for="equipo_{{ equipo.pk }}">
+                                <a href="/buildings/ver_ie/{{ equipo.pk }}/">
+                                    {{ equipo.alias }}
                                 </a>
                             </label>
                         </td>
                         <td class="c">
-                            <a href="/buildings/ver_modelomedidor/{{ models.pk }}/">
-                                {{ models.powermeter_model }}
+                            <a href="/buildings/ver_ie/{{ equipo.pk }}/">
+                                {{ equipo.server }}
                             </a>
                         </td>
                         <td class="c">
-                            <a href="#" rel="{{ models.pk }}" {% if models.status == 1 %}class="switch active_switch" title="desactivar"{% else %}class="switch inactive_switch" title="activar"{% endif %}>
+                            <a href="#" rel="{{ equipo.pk }}" {% if equipo.status %}class="switch active_switch" title="desactivar"{% else %}class="switch inactive_switch" title="activar"{% endif %}>
                             </a>
                         </td>
                         <td class="c">
-                            <a class="edit" title="Editar modelo de medidor"
-                               href="/buildings/editar_modelo_medidor/{{ models.pk }}/"></a>
+                            <a class="edit" title="Editar equipo industrial"
+                               href="/buildings/editar_ie/{{ equipo.pk }}/"></a>
                         </td>
                     </tr>
                     {% endfor %}

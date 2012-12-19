@@ -8,7 +8,7 @@
     <link rel="stylesheet" type="text/css" href="/static/js/external/jquery-validator/css/validator.css">
 {% endblock %}
 {% block externaljs %}
-    <script type="text/javascript" src="/static/js/external/jquery-validator/js/validator.min.js"></script>
+    <script type="text/javascript" src="/static/js/external/jquery-validator/js/validator.js"></script>
     <script type="text/javascript">
         $(document).on("ready", function(){
             $("#industrial_equipment").validate();
@@ -35,7 +35,7 @@
 
     </div>
     <div id="contenido_interno">
-        <h2 id="titulo_form">
+        <h2 id="titulo_form" class="powermeter">
             {% if operation == "edit" %}Editar{% else %}Alta de{% endif %} Equipo Industrial
         </h2>
         <div class="divider" id="divider_top">&nbsp;</div>

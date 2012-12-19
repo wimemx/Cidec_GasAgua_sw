@@ -269,13 +269,17 @@ body{
     height: 69%;
 }
 #sidebar{
-    width: 154px;
+    width: 154px !important;
     min-width:  154px;
     height: 100%;
     background: url(images/bgs/side_bar_bg.png) repeat-y;
 }
 #sidebar.collapsed_nav{
     min-width: 0 !important;
+}
+#sidebar_content{
+    color: #fff;
+    width: 154px;
 }
 #nav_toggle{
     width: 10px;
@@ -358,7 +362,7 @@ a.aqua_btn:hover, a.grey_btn:hover{
     background: none;
 }
 #bread_crumbs ul li{
-    display: inline-block;
+    float: left;
     padding-left: 10px;
     margin-right: 5px;
     background: url(images/bgs/bread_crumb_sep.png) 0 50% no-repeat;

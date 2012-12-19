@@ -8,9 +8,7 @@
 {% block externaljs %}
     <script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
     <script type="text/javascript" src="/static/date_picker/js/date_picker.js"></script>
-    <script type="text/javascript">
-        google.load('visualization', '1.1', {packages: ['corechart', 'controls']});
-    </script>
+
     <script type="text/javascript">
     //<![CDATA[
     function clean_dates(url){
@@ -102,13 +100,14 @@
             if (get[0]!=window.location.protocol+"//"+window.location
                     .host+window.location.pathname){
                 for(var i=0; i<get.length; i++){
-                    if (get[i]!="graph" || get[i]!="granularity" ){
+                    if (get[i]!="graph" || get[i]!="granularity" || get[i]!="g_type" || get[i]!="_suid" ){
                         base_url+="&"+get[i]+"="+get[get[i]];
                     }
                 }
             }
 
         }
+        base_url = base_url.split("#")[0];
         return base_url
     }
     function graphsReload(){
@@ -356,19 +355,20 @@
 
                 src=append_parameters2(src);
 
-                src+="&consumer-unit01="+{{ consumer_unit.pk }};
+                src+="&consumer-unit01="+String({{ consumer_unit.pk }});
                 if ($("#range2_init").val()!=''){
-                    src+="&consumer-unit02="+{{ consumer_unit.pk }};
+                    src+="&consumer-unit02="+String({{ consumer_unit.pk }});
                 }
                 if ($("#range3_init").val()!=''){
-                    src+="&consumer-unit03="+{{ consumer_unit.pk }};
+                    src+="&consumer-unit03="+String({{ consumer_unit.pk }});
                 }
                 if ($("#range4_init").val()!=''){
-                    src+="&consumer-unit04="+{{ consumer_unit.pk }};
+                    src+="&consumer-unit04="+String({{ consumer_unit.pk }});
                 }
 
                 //makeIframe(src);
                 src=clean_dates(src)
+
                 makeIframe(src);
                 //cambia la clase de la pestania
                 $(this).addClass("active");

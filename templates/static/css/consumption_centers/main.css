@@ -33,9 +33,6 @@
     background-color: #fff;
     color: #505e68;
 }
-#sidebar_content{
-    color: #fff;
-}
 h2{
     line-height: 22px;
     color: #878787;
@@ -107,6 +104,7 @@ h2{
 #datepicker_component{
     position: relative;
     float: right;
+    width: 400px;
 }
 #date_ranges{
     display: block;
@@ -154,7 +152,7 @@ h2{
 }
 #widgetField span{
     width: 90%;
-    display: inline-block;
+    float: left;
 }
 #widgetField a{
     float: right;
@@ -167,7 +165,7 @@ h2{
     z-index: 2;
     padding: 11px 3px 0 3px;
     width: 592px;
-    left: -223px;
+    left: -201px;
     top: 27px;
     position: absolute;
     border: solid 1px #BDBDBD;
@@ -209,7 +207,7 @@ h2{
     border-left: solid 1px #D6D6D6;
     border-top: solid 1px #D6D6D6;
     padding: 0 8px;
-    display: inline-block;
+    float: left;
     background: #E4E4E4;
     height: 27px;
     margin-top: 4px;

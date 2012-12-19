@@ -5621,50 +5621,28 @@ def view_ie(request):
 
     if has_permission(request.user, VIEW,
                       "Ver equipos industriales") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
-        empresa = request.session['main_building']
-        company = request.session['company']
-
         if "search" in request.GET:
             search = request.GET["search"]
         else:
             search = ''
 
         order_name = 'asc'
-        order_state = 'asc'
-        order_municipality = 'asc'
-        order_company = 'asc'
+        order_server = 'asc'
         order_status = 'asc'
-        order = "building__building_name" #default order
+        order = "alias" #default order
         if "order_name" in request.GET:
             if request.GET["order_name"] == "desc":
-                order = "-building__building_name"
+                order = "-alias"
                 order_name = "asc"
             else:
                 order_name = "desc"
         else:
-            if "order_state" in request.GET:
+            if "order_server" in request.GET:
                 if request.GET["order_state"] == "asc":
-                    order = "building__estado__estado_name"
-                    order_state = "desc"
+                    order = "server"
+                    order_server = "desc"
                 else:
-                    order = "-building__estado__estado_name"
-
-            if "order_municipality" in request.GET:
-                if request.GET["order_municipality"] == "asc":
-                    order = "building__municipio__municipio_name"
-                    order_municipality = "desc"
-                else:
-                    order = "-building__municipio__municipio_name"
-                    order_municipality = "asc"
-
-            if "order_company" in request.GET:
-                if request.GET["order_company"] == "asc":
-                    order = "company__company_name"
-                    order_company = "desc"
-                else:
-                    order = "-company__company_name"
-                    order_company = "asc"
+                    order = "-server"
 
             if "order_status" in request.GET:
                 if request.GET["order_status"] == "asc":
@@ -5675,28 +5653,20 @@ def view_ie(request):
                     order_status = "asc"
 
         if search:
-            lista = CompanyBuilding.objects.filter(
-                Q(building__building_name__icontains=request.GET['search']) | Q(
-                    building__estado__estado_name__icontains=request.GET[
-                                                             'search']) | Q(
-                    building__municipio__municipio_name__icontains=request.GET[
-                                                                   'search']) | Q(
-                    company__company_name__icontains=request.GET[
-                                                     'search'])).exclude(
-                building__building_status=2).order_by(order)
+            lista = IndustrialEquipment.objects.filter(
+                Q(alias__icontains=request.GET['search']) | Q(
+                    server__icontains=request.GET['search']) | Q(
+                    description=request.GET['search'])).exclude(
+                status=False).order_by(order)
 
         else:
-            lista = CompanyBuilding.objects.all().exclude(
-                building__building_status=2).order_by(order)
+            lista = IndustrialEquipment.objects.all().exclude(
+                status=False).order_by(order)
 
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
-        template_vars = dict(order_name=order_name, order_state=order_state,
-                             order_municipality=order_municipality,
-                             order_company=order_company,
-                             order_status=order_status,
-                             datacontext=datacontext, empresa=empresa,
-                             company=company,
-                             sidebar=request.session['sidebar'])
+        template_vars['order_name'] = order_name
+        template_vars['order_server'] = order_server
+        template_vars['order_status'] = order_status
         # Make sure page request is an int. If not, deliver first page.
         try:
             page = int(request.GET.get('page', '1'))
@@ -5716,7 +5686,7 @@ def view_ie(request):
             template_vars['msg_type'] = request.GET['ntype']
 
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("consumption_centers/buildings/building.html",
+        return render_to_response("consumption_centers/consumer_units/ie_list.html",
                                   template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
