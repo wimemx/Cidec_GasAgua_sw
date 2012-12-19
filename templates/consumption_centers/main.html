@@ -29,7 +29,7 @@
                 row_array.push("{{ week_day }}");
                 {% for hour_start, hour_end, electic_data_value in hours_tuple_list %}
                     row_array.push({{ electic_data_value }});
-                    row_array.push("{{ electic_data_name }} - {{ week_day }} de {{ hour_start }} a {{ hour_end }}");
+                    row_array.push("{{ electic_data_value }} {{ electric_data_name }} - {{ week_day }} de {{ hour_start }} a {{ hour_end }}");
                 {% endfor %}
                 dataTable.addRows([row_array]);
             {% endfor %}
@@ -123,13 +123,9 @@
             </thead>
             <tbody>
             <tr class="datos_semana">
-                <td>42 KwH Hora</td>
-                <td>23 KwH Hora</td>
-                <td>35 KwH Hora</td>
-                <td>26 KwH Hora</td>
-                <td>33 KwH Hora</td>
-                <td>55 KwH Hora</td>
-                <td>36 KwH Hora</td>
+                {% for week_day, cumulative_total in week_report_cumulative_total %}
+                    <td>{{ cumulative_total }} {{ electric_data_name }}</td>
+                {% endfor %}
             </tr>
             </tbody>
         </table>
