@@ -285,8 +285,6 @@ def get_consumer_unit_week_report_cumulative(
     week_start_datetime, week_end_datetime =\
         variety.get_week_start_datetime_end_datetime_tuple(year, month, week)
 
-
-
     def build_day_tuple_list(week_start, day_index):
         hour_delta = datetime.timedelta(hours=1)
         day_delta = datetime.timedelta(days=1)
@@ -308,12 +306,17 @@ def get_consumer_unit_week_report_cumulative(
         (u"Domingo", build_day_tuple_list(week_start_datetime, 6))
     ]
 
-    data_warehouse.views.logger.info("wsd - wed")
-    data_warehouse.views.logger.info(week_start_datetime)
-    data_warehouse.views.logger.info(week_end_datetime)
+    electric_data_days_cumulative_total_tuple_list = [
+        (u"Lunes", 0.0),
+        (u"Martes", 0.0),
+        (u"Miércoles", 0.0),
+        (u"Jueves", 0.0),
+        (u"Viernes", 0.0),
+        (u"Sábado", 0.0),
+        (u"Domingo", 0.0)
+    ]
+
     consumer_unit_list = c_center.c_center_functions.get_consumer_units(consumer_unit)
-    data_warehouse.views.logger.info("consumer_unit_list")
-    data_warehouse.views.logger.info(consumer_unit_list)
     for consumer_unit_item in consumer_unit_list:
         consumer_unit_electric_data_interval_raw =\
             get_consumer_unit_electric_data_interval_raw_optimized(
@@ -321,9 +324,6 @@ def get_consumer_unit_week_report_cumulative(
                 consumer_unit_item.pk,
                 week_start_datetime,
                 week_end_datetime)
-
-        data_warehouse.views.logger.info("consumer_unit_electric_data_raw_interval")
-        data_warehouse.views.logger.info(len(consumer_unit_electric_data_interval_raw))
 
         hours_in_week = 7 * 24
         if len(consumer_unit_electric_data_interval_raw) < hours_in_week:
@@ -339,14 +339,28 @@ def get_consumer_unit_week_report_cumulative(
                 consumer_unit_electric_data_interval_raw_dictionary.get("electric_data",
                                                                         0.0)
 
-            day_current, hours_tuple_list_current = electric_data_days_tuple_list[day_index]
-            hour_datetime_start, hour_datetime_end, electric_data_value = hours_tuple_list_current[hour_index]
-            hours_tuple_list_current[hour_index] = (hour_datetime_start,
-                                                    hour_datetime_end,
-                                                    electric_data_value + float(electric_data_value_current))
+            day_current, hours_tuple_list_current =\
+                electric_data_days_tuple_list[day_index]
 
-    data_warehouse.views.logger.info(electric_data_days_tuple_list)
-    return electric_data_days_tuple_list
+            hour_datetime_start, hour_datetime_end, electric_data_value =\
+                hours_tuple_list_current[hour_index]
+
+            hours_tuple_list_current[hour_index] =\
+                (hour_datetime_start,
+                 hour_datetime_end,
+                 electric_data_value + float(electric_data_value_current))
+
+            day_cumulative_current, electric_data_value_cumulative_total_current =\
+                electric_data_days_cumulative_total_tuple_list[day_index]
+
+            electric_data_value_cumulative_total_current +=\
+                float(electric_data_value_current)
+
+            electric_data_days_cumulative_total_tuple_list[day_index] =\
+                (day_cumulative_current, electric_data_value_cumulative_total_current)
+
+    return electric_data_days_tuple_list, electric_data_days_cumulative_total_tuple_list
+
 
 def cut_electric_data_list_values(electric_data_list, data_values_length):
     for index in range(0, len(electric_data_list)):

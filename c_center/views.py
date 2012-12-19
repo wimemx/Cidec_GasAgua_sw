@@ -259,7 +259,7 @@ def week_report_kwh(request):
             year_current = datetime_current.year
             month_current = datetime_current.month
             week_current = variety.get_week_of_month_from_datetime(datetime_current)
-            week_report_cumulative =\
+            week_report_cumulative, week_report_cumulative_total =\
                 get_consumer_unit_week_report_cumulative(consumer_unit,
                                                          year_current,
                                                          month_current,
@@ -274,7 +274,8 @@ def week_report_kwh(request):
                              'consumer_unit': request.session['consumer_unit'],
                              'sidebar': request.session['sidebar'],
                              'electric_data_name': "kWh",
-                             'week_report_cumulative': week_report_cumulative
+                             'week_report_cumulative': week_report_cumulative,
+                             'week_report_cumulative_total': week_report_cumulative_total
             }
 
             template_vars_template = RequestContext(request, template_vars)
