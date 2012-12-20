@@ -74,15 +74,21 @@ def get_consumer_unit_electric_data_raw(
     except c_center.models.ConsumerUnit.DoesNotExist:
         return electric_data_raw
 
+    current_timezone = django.utils.timezone.get_current_timezone()
+    start_localtime = current_timezone.localize(start)
+    start_utc = start_localtime.astimezone(django.utils.timezone.utc)
+    end_localtime = current_timezone.localize(end)
+    end_utc = end_localtime.astimezone(django.utils.timezone.utc)
     electric_data_values = c_center.models.ElectricDataTemp.objects.filter(
         profile_powermeter=consumer_unit.profile_powermeter,
-        medition_date__gte=start,
-        medition_date__lte=end
+        medition_date__gte=start_utc,
+        medition_date__lte=end_utc
     ).order_by(
         'medition_date'
     ).values(
         'medition_date',
-        electric_data_name)
+        electric_data_name
+    )
 
     for electric_data_value in electric_data_values:
         electric_data = electric_data_value[electric_data_name]
@@ -90,7 +96,7 @@ def get_consumer_unit_electric_data_raw(
         electric_data_raw.append(
             dict(datetime=int(time.mktime(
                      django.utils.timezone.localtime(medition_date).timetuple())),
-                 electric_data=electric_data,
+                 electric_data=abs(electric_data),
                  certainty=True))
 
     return electric_data_raw
@@ -241,10 +247,10 @@ def get_consumer_unit_electric_data_interval_raw_optimized(
 
     hour_delta = timedelta(hours=1)
     datetime_current_utc = datetime.datetime(year=start_utc.year,
-                                         month=start_utc.month,
-                                         day=start_utc.day,
-                                         hour=start_utc.hour,
-                                         tzinfo=django.utils.timezone.utc)
+                                             month=start_utc.month,
+                                             day=start_utc.day,
+                                             hour=start_utc.hour,
+                                             tzinfo=django.utils.timezone.utc)
 
     while datetime_current_utc <= end_utc:
         datetime_current_utc_string = datetime_current_utc.strftime("%Y-%m-%d-%H")
@@ -264,7 +270,7 @@ def get_consumer_unit_electric_data_interval_raw_optimized(
 
         datetime_current_localtime = datetime_current_utc.astimezone(current_timezone)
         electric_data_raw_item = dict(datetime=int(time.mktime(datetime_current_localtime.timetuple())),
-                                      electric_data=electric_data_value,
+                                      electric_data=abs(electric_data_value),
                                       certainty=True)
 
         electric_data_raw.append(electric_data_raw_item)
@@ -280,8 +286,6 @@ def get_consumer_unit_week_report_cumulative(
         week,
         electric_data_name
 ):
-    data_warehouse.views.logger.info("consumer_unit")
-    data_warehouse.views.logger.info(consumer_unit)
     week_start_datetime, week_end_datetime =\
         variety.get_week_start_datetime_end_datetime_tuple(year, month, week)
 
@@ -500,6 +504,55 @@ def prepare_electric_data(electric_data_values):
     return True
 
 
+def merge_electric_data_values_lists(
+        list_main,
+        list_main_contributions,
+        list_temporary,
+        list_temporary_consumer_unit_id,
+        consumer_units_read_rate_dictionary
+):
+    list_temporary_length = len(list_temporary)
+    list_main_index = 0
+    list_temporary_index = 0
+    continue_processing = list_main_index < len(list_main) or\
+                          list_temporary_index < list_temporary_length
+
+    while continue_processing:
+        list_temporary_item_current =\
+            list_temporary[list_temporary_index] if list_temporary_length > list_temporary_index\
+            else None
+
+        if list_temporary_item_current is None:
+            return
+
+        list_main_item_current =\
+            list_main[list_main_index] if len(list_main) > list_main_index else None
+
+        if list_main_item_current is None:
+            list_main.insert(list_main_index, list_temporary_item_current)
+            list_temporary_index += 1
+
+        else:
+            if list_temporary_item_current['datetime'] < list_main_item_current['datetime']:
+                list_main.insert(list_main_index, list_temporary_item_current)
+                list_temporary_index += 1
+
+            elif list_temporary_item_current['datetime'] > list_main_item_current['datetime']:
+                list_main_index += 1
+
+            else:
+                list_main_item_current['electric_data'] +=\
+                    list_temporary_item_current['electric_data']
+
+                list_main_index += 1
+                list_temporary_index += 1
+
+        continue_processing = list_main_index < len(list_main) or\
+                              list_temporary_index < list_temporary_length
+
+    return
+
+
 def render_graphics(request):
     if request.method == "GET":
         try:
@@ -559,11 +612,25 @@ def render_graphics(request):
         consumer_unit_and_time_interval_information_list = []
         electric_data_datetime_first = None
         for id, start, end in data:
+            try:
+                consumer_unit_current = c_center.models.ConsumerUnit.objects.get(pk=id)
+
+            except c_center.models.ConsumerUnit.DoesNotExist:
+                raise django.http.Http404
+
+#            consumer_unit_list = c_center.c_center_functions.get_consumer_units(
+#                                     consumer_unit_current)
+#
+#            consumer_unit_electric_data_values = []
+#            for consumer_unit_item in consumer_unit_list:
+#                pass
+
             if is_interval_graphic:
                 electric_data_values =\
                     data_warehouse.views.get_consumer_unit_electric_data_interval(
                         electric_data,
                         granularity,
+                        #consumer_unit_item.pk,
                         id,
                         start,
                         end)
@@ -572,6 +639,7 @@ def render_graphics(request):
                     electric_data_values = \
                         get_consumer_unit_electric_data_interval_raw_optimized(
                             electric_data,
+                            #consumer_unit_item.pk,
                             id,
                             start,
                             end)
@@ -581,6 +649,7 @@ def render_graphics(request):
                     data_warehouse.views.get_consumer_unit_electric_data(
                         electric_data,
                         granularity,
+                        #consumer_unit_item.pk,
                         id,
                         start,
                         end)
@@ -588,9 +657,14 @@ def render_graphics(request):
                 if electric_data_values is None:
                     electric_data_values = get_consumer_unit_electric_data_raw(
                                                electric_data,
+                                               #consumer_unit_item.pk,
                                                id,
                                                start,
                                                end)
+
+#                data_warehouse.views.logger.info(consumer_unit_item)
+#                merge_electric_data_values_lists(consumer_unit_electric_data_values,
+#                                                 electric_data_values)
 
             electric_data_list.append(electric_data_values)
             consumer_unit_and_time_interval_information =\

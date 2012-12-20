@@ -266,9 +266,14 @@ def week_report_kwh(request):
                                                          week_current,
                                                          "kWh")
 
+            week_start_datetime, week_end_datetime =\
+                variety.get_week_start_datetime_end_datetime_tuple(year_current,
+                                                                   month_current,
+                                                                   week_current)
+
             template_vars = {"datacontext": datacontext,
-                             'fi': datetime.datetime.now(),
-                             'ff': datetime.datetime.now(),
+                             'fi': week_start_datetime.date(),
+                             'ff': (week_end_datetime -timedelta(days=1)).date(),
                              'empresa': request.session['main_building'],
                              'company': request.session['company'],
                              'consumer_unit': request.session['consumer_unit'],
