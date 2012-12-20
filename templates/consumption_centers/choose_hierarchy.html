@@ -34,9 +34,9 @@
                     async: 'true',
                     success: function(datos){
                         parent.jQuery("h2#titulo_reporte span").text(texto);
-                        parent.makeIframe("");
+                        //parent.makeIframe("");
                         //$.fancybox.close( true );
-                        parent.window.location = "/";
+                        parent.window.location.reload();// = "/";
                         parent.jQuery.fancybox.close();
                     }
                 });

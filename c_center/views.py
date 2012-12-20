@@ -259,6 +259,7 @@ def week_report_kwh(request):
             year_current = datetime_current.year
             month_current = datetime_current.month
             week_current = variety.get_week_of_month_from_datetime(datetime_current)
+            fi, ff = variety.get_fist_last_day_of_week_from_dt(datetime_current)
             week_report_cumulative, week_report_cumulative_total =\
                 get_consumer_unit_week_report_cumulative(consumer_unit,
                                                          year_current,
@@ -267,8 +268,8 @@ def week_report_kwh(request):
                                                          "kWh")
 
             template_vars = {"datacontext": datacontext,
-                             'fi': datetime.datetime.now(),
-                             'ff': datetime.datetime.now(),
+                             'fi': fi,
+                             'ff': ff,
                              'empresa': request.session['main_building'],
                              'company': request.session['company'],
                              'consumer_unit': request.session['consumer_unit'],
@@ -5574,6 +5575,7 @@ def add_ie(request):
     if has_permission(request.user, CREATE,
                       "Alta de equipos industriales") or request.user.is_superuser:
         if request.method == 'POST':
+            template_vars["post"] = request.POST
             ie = IndustrialEquipment(
                 alias=request.POST['ie_alias'],
                 description=request.POST['ie_desc'],
@@ -5596,8 +5598,46 @@ def add_ie(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+@login_required(login_url='/')
 def edit_ie(request, id_ie):
-    pass
+    datacontext = get_buildings_context(request.user)
+    template_vars = {}
+
+    if datacontext:
+        template_vars["datacontext"] = datacontext
+
+    template_vars["sidebar"] = request.session['sidebar']
+    template_vars["empresa"] = request.session['main_building']
+    template_vars["company"] = request.session['company']
+    template_vars["operation"] = "edit"
+    industrial_eq = get_object_or_404(IndustrialEquipment, pk=int(id_ie))
+    if has_permission(request.user, UPDATE,
+                      "Modificar equipos industriales") or request.user.is_superuser:
+        if request.method == 'POST':
+
+            industrial_eq.alias=request.POST['ie_alias']
+            industrial_eq.description=request.POST['ie_desc']
+            industrial_eq.server=request.POST['ie_server']
+            industrial_eq.save()
+            message = "El equipo industrial se ha actualizado exitosamente"
+            type = "n_success"
+            if has_permission(request.user, VIEW,
+                              "Ver equipos industriales") or request.user.is_superuser:
+                return HttpResponseRedirect("/buildings/industrial_equipments?msj=" +
+                                            message +
+                                            "&ntype=" + type)
+            template_vars["message"] = message
+            template_vars["type"] = type
+        template_vars["post"] = dict(ie_alias=industrial_eq.alias,
+                                     ie_desc=industrial_eq.description,
+                                     ie_server=industrial_eq.server)
+
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/consumer_units/ind_eq.html", template_vars_template)
+    else:
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def see_ie(request):
     pass
@@ -5657,12 +5697,10 @@ def view_ie(request):
             lista = IndustrialEquipment.objects.filter(
                 Q(alias__icontains=request.GET['search']) | Q(
                     server__icontains=request.GET['search']) | Q(
-                    description=request.GET['search'])).exclude(
-                status=False).order_by(order)
+                    description=request.GET['search'])).order_by(order)
 
         else:
-            lista = IndustrialEquipment.objects.all().exclude(
-                status=False).order_by(order)
+            lista = IndustrialEquipment.objects.all().order_by(order)
 
         paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
         template_vars['order_name'] = order_name

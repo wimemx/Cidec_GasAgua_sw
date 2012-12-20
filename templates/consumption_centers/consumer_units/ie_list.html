@@ -100,12 +100,12 @@ $("#aplicar").click(function(e){
     }
 });
 
-$("#sort_brand").click(function(e){
+$("#sort_name").click(function(e){
 e.preventDefault();
 var get = getUrlVars();
 
 var base_url = window.location.pathname;
-base_url+="?order_brand="+$("#sort_brand").attr("rel");
+base_url+="?sort_name="+$("#sort_name").attr("rel");
 if(get.length>0){
 if (get[0]!=window.location.protocol+"//"+window.location
 .host+window.location.pathname){
@@ -118,12 +118,12 @@ base_url+="&"+get[i]+"="+get[get[i]];
 }
 window.location = base_url;
 });
-$("#sort_model").click(function(e){
+$("#sort_server").click(function(e){
 e.preventDefault();
 var get = getUrlVars();
 
 var base_url = window.location.pathname;
-base_url+="?order_model="+$("#sort_model").attr("rel");
+base_url+="?sort_server="+$("#sort_server").attr("rel");
 if(get.length>0){
 if (get[0]!=window.location.protocol+"//"+window.location
 .host+window.location.pathname){

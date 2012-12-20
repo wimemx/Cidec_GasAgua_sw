@@ -354,3 +354,6 @@ ul#permissions li a{
 #week_sumary th{
     color: #666;
 }
+#graphic_container{
+    width: 960px;
+}

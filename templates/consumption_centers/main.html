@@ -73,6 +73,17 @@
     }
     });
     });
+    $(".various").fancybox({
+    maxWidth	: 800,
+    maxHeight	: 800,
+    fitToView	: false,
+    width		: '70%',
+    height		: '70%',
+    autoSize	: false,
+    closeClick	: false,
+    openEffect	: 'none',
+    closeEffect	: 'none'
+    });
 {% endblock %}
 {% block contenido %}
 <div id="bread_crumbs">
@@ -83,6 +94,9 @@
 
 </div>
 <div id="contenido_interno">
+    <div id="graphic_container">
+
+
     <h2 id="titulo_reporte">{{ empresa.building_name }} -
         <span>
             {% if consumer_unit.part_of_building %}
@@ -129,6 +143,7 @@
             </tr>
             </tbody>
         </table>
+    </div>
     </div>
 
 </div>
