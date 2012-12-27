@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% block titulo %}Ver Medidor{% endblock %}
+
+{% block externalcss %}
+<link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
+<link rel="stylesheet" href="/static/css/forms/rbac.css" type="text/css" />
+<link rel="stylesheet" href="/static/css/forms/c_centers.css" type="text/css" />
+<link rel="stylesheet" href="/static/css/forms/rbac_user_list.css" type="text/css" />
+<link href="/static/js/external/messi/messi.css" rel="stylesheet" type="text/css" media="screen" />
+{% endblock %}
+{% block externaljs %}
+    <script src="/static/js/external/messi/messi.min.js"></script>
+{% endblock %}
+{% block document_ready %}
+    $("a.switch").click(function(event){
+    event.preventDefault();
+    var url="/buildings/status_medidor/"+$(this).attr("rel")+"/";
+    var action = $(this).attr("title");
+    new Messi('&iquest;Est&aacute; seguro de que desea '+ action +' este medidor?',
+    {title: action+' medidor', modal: true, buttons: [{id: 0,
+    label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
+    }],
+    callback: function(val) {
+    if(val=='Y'){
+    document.location.href=url;
+    } else return false; }
+    });
+    });
+
+    $("#sort_alias").click(function(e){
+    e.preventDefault();
+    var get = getUrlVars();
+
+    var base_url = window.location.pathname;
+    base_url+="?order_alias="+$("#sort_alias").attr("rel");
+    if(get.length>0){
+    if (get[0]!=window.location.protocol+"//"+window.location
+    .host+window.location.pathname){
+    for(var i=0; i<get.length; i++){
+    if (get[i]!="order_alias" && get[i]!="order_model" && get[i]!="order_status" && get[i]!="order_serial"){
+    base_url+="&"+get[i]+"="+get[get[i]];
+    }
+    }
+    }
+    }
+    window.location = base_url;
+    });
+    $("#sort_model").click(function(e){
+    e.preventDefault();
+    var get = getUrlVars();
+
+    var base_url = window.location.pathname;
+    base_url+="?order_model="+$("#sort_model").attr("rel");
+    if(get.length>0){
+    if (get[0]!=window.location.protocol+"//"+window.location
+    .host+window.location.pathname){
+    for(var i=0; i<get.length; i++){
+    if (get[i]!="order_alias" && get[i]!="order_model" && get[i]!="order_status" && get[i]!="order_serial"){
+    base_url+="&"+get[i]+"="+get[get[i]];
+    }
+    }
+    }
+
+    }
+
+    window.location = base_url;
+    });
+
+    $("#sort_status").click(function(e){
+    e.preventDefault();
+    var get = getUrlVars();
+
+    var base_url = window.location.pathname;
+    base_url+="?order_status="+$("#sort_status").attr("rel");
+    if(get.length>0){
+    if (get[0]!=window.location.protocol+"//"+window.location
+    .host+window.location.pathname){
+    for(var i=0; i<get.length; i++){
+    if (get[i]!="order_alias" && get[i]!="order_model" && get[i]!="order_status" && get[i]!="order_serial"){
+    base_url+="&"+get[i]+"="+get[get[i]];
+    }
+    }
+    }
+
+    }
+
+    window.location = base_url;
+    });
+
+    $("#sort_serial").click(function(e){
+    e.preventDefault();
+    var get = getUrlVars();
+
+    var base_url = window.location.pathname;
+    base_url+="?order_serial="+$("#sort_serial").attr("rel");
+    if(get.length>0){
+    if (get[0]!=window.location.protocol+"//"+window.location
+    .host+window.location.pathname){
+    for(var i=0; i<get.length; i++){
+    if (get[i]!="order_alias" && get[i]!="order_model" && get[i]!="order_status" && get[i]!="order_serial"){
+    base_url+="&"+get[i]+"="+get[get[i]];
+    }
+    }
+    }
+
+    }
+
+    window.location = base_url;
+    });
+{% endblock %}
+
+
+{% block contenido %}
+<div id="bread_crumbs">
+    <ul>
+        <li><a href="/main/">Inicio</a></li>
+        <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
+        <li><a href="/buildings/industrial_equipments/">Equipos Industriales</a></li>
+        <li>Ver Equipo Industrial</li>
+    </ul>
+
+</div>
+<div id="contenido_interno" class="card">
+    <h2 id="titulo_form" class="powermeter">
+        Equipo Industrial
+    </h2>
+
+
+    <div class="divider" id="divider_top">&nbsp;</div>
+    <div id="card_container">
+        <div id="user_img" class="fl">
+            <img src="/static/css/images/imgs_icns/powermeter.png" alt="Medidor"/>
+        </div>
+        <div id="user_data" class="fl">
+            <p>
+                <span class="strong label">Equipo industrial:</span>
+                {{ industrial_eq.alias }}
+            </p>
+            <p>
+                <span class="strong label">Dirección del servidor:</span>
+                {{ industrial_eq.description }}
+            </p>
+            <p>
+                <span class="strong label">Estado:</span>
+                {% if powermeter.status == 1 %}
+                    Activo
+                {% else %}
+                    Inactivo
+                {% endif %}
+            </p>
+            <div class="g12">
+                {% if ver_medidores %}
+                <span class="strong label">Medidores instalados:</span>
+                <div id="grid_container">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th style="width: 20%;">
+                                <a href="#" id="sort_alias" rel="{{ order_alias }}">
+                                    Alias
+                                    <span class="sort"></span>
+                                </a>
+                            </th>
+                            <th style="width: 20%;">
+                                <a href="#" id="sort_model" rel="{{ order_model }}">
+                                    Modelo
+                                    <span class="sort"></span>
+                                </a>
+                            </th>
+                            <th style="width: 20%;">
+                                <a href="#" id="sort_serial" rel="{{ order_serial }}">
+                                    Número de Serie
+                                    <span class="sort"></span>
+                                </a>
+                            </th>
+                            <th style="width: 20%;">
+                                <a href="#" id="sort_status" rel="{{ order_status }}">
+                                    Estatus
+                                    <span class="sort"></span>
+                                </a>
+                            </th>
+                            <th style="width: 20%;">Acciones</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for powermeter in powermeters %}
+
+                            <tr class="{% cycle 'row1' 'row2' %}">
+                                <td>
+
+                                    <label for="powermeter_{{ powermeter.powermeter.pk }}">
+                                        <a href="/buildings/ver_medidor/{{ powermeter.powermeter.pk }}/">
+                                            {{ powermeter.powermeter.powermeter_anotation }}
+                                        </a>
+                                    </label>
+                                </td>
+                                <td class="c">
+                                    {{ powermeter.powermeter.powermeter_model.powermeter_brand }}-{{ powermeter.powermeter.powermeter_model.powermeter_model }}
+                                </td>
+                                <td class="c">
+                                    {{ powermeter.powermeter.powermeter_serial }}
+                                </td>
+                                <td class="c">
+                                    <a href="#" rel="{{ powermeter.powermeter.pk }}" {% if powermeter.powermeter.status == 1 %}class="switch active_switch" title="desactivar"{% else %}class="switch inactive_switch" title="activar"{% endif %}>
+                                    </a>
+                                </td>
+                                <td class="c">
+                                    <a class="edit" title="Editar medidor"
+                                       href="/buildings/editar_medidor/{{ powermeter.powermeter.pk }}/"></a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    </div>
+                    {% if show_asign %}
+                        <a class="aqua_btn g6" href="/buildings/editar_ie/{{ industrial_eq.pk }}/">Agregar medidores al equipo industrial</a>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+
+
+            <a href="/buildings/industrial_equipments/" id="go_back" class="g12">Volver al listado</a>
+        </div>
+
+    </div>
+
+
+</div>
+{% endblock %}

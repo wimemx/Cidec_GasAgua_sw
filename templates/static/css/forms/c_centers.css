@@ -83,15 +83,6 @@ background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
     margin-left: 20px;
 }
 
-#titulo_form.company {
-    background: url(../images/imgs_icns/company_icon.png) no-repeat left 50%;
-}
-
-#titulo_form.cluster {
-    background: url(../images/imgs_icns/cluster_icon.png) no-repeat left 50%;
-    padding-left: 60px;
-}
-
 #clusters_companies{
     overflow: auto;
 }
@@ -296,4 +287,13 @@ background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
 }
 .required{
     color: red;
+}
+#search_pm label{
+    float: left;
+    margin-top: 0;
+    font-weight: 700;
+    color: #6C6C6C;
+}
+#search_pm .plus{
+    margin-top: 5px;
 }

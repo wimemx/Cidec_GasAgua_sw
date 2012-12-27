@@ -160,21 +160,6 @@
     graphsReload();
     });
 
-
-    //custom select for sidebar
-    $("#empresa").click(function(){
-    $("#company_list").slideToggle();
-    });
-    $("#company_list li").click(function(){
-    var texto=$(this).text().replace(/^\s*|\s*$/g,'');
-    var texto1=texto.substring(0,17)+"...";
-    $("#empresa").text(texto1);
-    $("#company_list").slideUp();
-    //reload with the selected company data
-    window.location.href="/reportes/set_default_building/"+$(this).attr("rel")+"/?referer=cfe";
-
-
-    });
 {% endblock %}
 {% block contenido %}
 

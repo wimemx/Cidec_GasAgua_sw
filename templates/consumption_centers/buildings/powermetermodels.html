@@ -36,28 +36,6 @@
 </script>
 {% endblock %}
 {% block document_ready %}
-
-//custom select for sidebar
-$("#empresa").click(function(){
-$("#company_list").slideToggle();
-});
-$("#company_list li").click(function(){
-var texto=$(this).text().replace(/^\s*|\s*$/g,'');
-var texto1 = texto.substring(0,17) + "...";
-$("#empresa").text(texto1);
-$("#company_list").slideUp();
-
-$.ajax({
-url: "/reportes/set_default_building/" + $(this).attr("rel"),
-type: "GET",
-dataType: 'json',
-async: 'true',
-success: function(datos){
-window.location.reload();
-}
-});
-});
-
 $("a.switch").click(function(event){
 event.preventDefault();
 var url="/buildings/status_modelomedidor/"+$(this).attr("rel")+"/";
@@ -243,15 +221,15 @@ window.location = base_url;
                             <input type="checkbox" id="model_{{ models.pk }}"
                                    name="model_{{ models.pk }}"/>
                             <label for="model_{{ models.pk }}">
-                                <a href="/buildings/ver_modelomedidor/{{ models.pk }}/">
+
                                     {{ models.powermeter_brand }}
-                                </a>
+
                             </label>
                         </td>
                         <td class="c">
-                            <a href="/buildings/ver_modelomedidor/{{ models.pk }}/">
+
                                 {{ models.powermeter_model }}
-                            </a>
+
                         </td>
                         <td class="c">
                             <a href="#" rel="{{ models.pk }}" {% if models.status == 1 %}class="switch active_switch" title="desactivar"{% else %}class="switch inactive_switch" title="activar"{% endif %}>

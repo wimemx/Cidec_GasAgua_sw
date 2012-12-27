@@ -135,6 +135,7 @@ a:hover{
     padding: 11px 0;
     margin-left: 3px;
     color: #909090;
+    z-index: 1;
 }
 .input input, .input textarea, .input select {
     position: relative;
@@ -422,4 +423,36 @@ a.aqua_btn:hover, a.grey_btn:hover{
     width: 13px;
     height: 12px;
     display: inline-block;
+}
+#titulo_form{
+    font-size: 18px;
+    height: 23px;
+    padding-left: 39px;
+}
+#titulo_form span{
+    font-size: 18px;
+    font-weight: 400;
+    color: #505e68;
+}
+#titulo_form.user_role{
+    background: url(images/imgs_icns/user_role_icon.png) no-repeat left 50%;
+}
+#titulo_form.user{
+    background: url(images/imgs_icns/user_icon.png) no-repeat left 50%;
+}
+#titulo_form.privileges{
+    background: url(images/imgs_icns/privileges_icon.png) no-repeat left 50%;
+}
+#titulo_form.building_attr{
+    background: url(images/imgs_icns/square_triangle_icon_sm.png) no-repeat left 50%;
+}
+#titulo_form.company {
+    background: url(images/imgs_icns/company_icon.png) no-repeat left 50%;
+}
+#titulo_form.cluster {
+    background: url(images/imgs_icns/cluster_icon.png) no-repeat left 50%;
+    padding-left: 60px;
+}
+#titulo_form.powermeter {
+    background: url(images/imgs_icns/consumer_unit_icon.png) no-repeat left 50%;
 }

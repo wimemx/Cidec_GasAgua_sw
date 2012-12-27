@@ -335,3 +335,37 @@ def data_replication(
         consumer_unit_copy
 ):
     pass
+
+def data_multiplier_3000():
+    todos_los_datos = ElectricDataTemp.objects.filter(medition_date__gte=datetime.datetime(2012,11,11), TotalkWhIMPORT__lte=100)
+    for dato in todos_los_datos:
+        print dato.pk, dato.TotalkWhIMPORT, dato.TotalkvarhIMPORT, dato.kWhL1
+        print dato.kWhL2, dato.kwhL3, dato.kvarhL1, dato.kvarhL2, dato.kvarhL3
+        print dato.kVAhL1, dato.kVAhL2, dato.kVAhL3
+
+        if dato.TotalkWhIMPORT and dato.TotalkWhIMPORT>0:
+            dato.TotalkWhIMPORT *= 1000
+        if dato.TotalkvarhIMPORT and dato.TotalkvarhIMPORT>0 and dato.TotalkvarhIMPORT<10000000000:
+            dato.TotalkvarhIMPORT *= 1000
+        if dato.kWhL1 and dato.kWhL1>0:
+            dato.kWhL1 *= 1000
+        if dato.kWhL2 and dato.kWhL2>0:
+            dato.kWhL2 *= 1000
+        if dato.kwhL3 and dato.kwhL3>0:
+            dato.kwhL3 *= 1000
+        if dato.kvarhL1 and dato.kvarhL1>0:
+            dato.kvarhL1 *= 1000
+        if dato.kvarhL2 and dato.kvarhL2>0:
+            dato.kvarhL2 *= 1000
+        if dato.kvarhL3 and dato.kvarhL3>0:
+            dato.kvarhL3 *= 1000
+        if dato.kVAhL1 and dato.kVAhL1>0:
+            dato.kVAhL1 *= 1000
+        if dato.kVAhL2 and dato.kVAhL2>0:
+            dato.kVAhL2 *= 1000
+        if dato.kVAhL3 and dato.kVAhL3>0:
+            dato.kVAhL3 *= 1000
+        dato.save()
+        print dato
+    print "EXITO!!!!!!"
+    return True

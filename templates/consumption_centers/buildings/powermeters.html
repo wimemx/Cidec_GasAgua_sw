@@ -37,28 +37,6 @@
 </script>
 {% endblock %}
 {% block document_ready %}
-
-//custom select for sidebar
-$("#empresa").click(function(){
-$("#company_list").slideToggle();
-});
-$("#company_list li").click(function(){
-var texto=$(this).text().replace(/^\s*|\s*$/g,'');
-var texto1 = texto.substring(0,17) + "...";
-$("#empresa").text(texto1);
-$("#company_list").slideUp();
-
-$.ajax({
-url: "/reportes/set_default_building/" + $(this).attr("rel"),
-type: "GET",
-dataType: 'json',
-async: 'true',
-success: function(datos){
-window.location.reload();
-}
-});
-});
-
 $("a.switch").click(function(event){
 event.preventDefault();
 var url="/buildings/status_medidor/"+$(this).attr("rel")+"/";
@@ -281,7 +259,7 @@ window.location = base_url;
                             {{ powermeter.powermeter_serial }}
                         </td>
                         <td class="c">
-                            <a href="#" rel="{{ powermeter.pk }}" {% if powermeter.status = 1 %}class="switch active_switch" title="desactivar"{% else %}class="switch inactive_switch" title="activar"{% endif %}>
+                            <a href="#" rel="{{ powermeter.pk }}" {% if powermeter.status == 1 %}class="switch active_switch" title="desactivar"{% else %}class="switch inactive_switch" title="activar"{% endif %}>
                             </a>
                         </td>
                         <td class="c">
@@ -319,10 +297,6 @@ window.location = base_url;
                 </div>
             </div>
         </form>
-
-
-
-
     </div>
 
 

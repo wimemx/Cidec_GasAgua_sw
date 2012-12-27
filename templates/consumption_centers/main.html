@@ -51,28 +51,6 @@
 {% endblock %}
 {% block document_ready %}
     drawVisualization();
-    //custom select for sidebar
-    $("#empresa").click(function(){
-    $("#company_list").slideToggle();
-    });
-
-    $("#company_list li").click(function(){
-    var texto=$(this).text().replace(/^\s*|\s*$/g,'');
-    var texto1 = texto.substring(0,17) + "...";
-    $("#empresa").text(texto1);
-    $("#company_list").slideUp();
-
-    $.ajax({
-    url: "/reportes/set_default_building/" + $(this).attr("rel"),
-    type: "GET",
-    dataType: 'json',
-    async: 'true',
-    success: function(datos){
-    document.location.reload(true);
-
-    }
-    });
-    });
     $(".various").fancybox({
     maxWidth	: 800,
     maxHeight	: 800,
@@ -115,7 +93,7 @@
     <p id="date_range_legend" class="g12 c">
 
 
-        Mostrando datos de la semana del <span>{{ fi|date:"F d, Y" }}</span> al <span>{{ ff|date:"F d, Y" }}</span>
+        Mostrando datos de la semana del <span>{{ fi|date:"d/m/Y" }}</span> al <span>{{ ff|date:"d/m/Y" }}</span>
 
     </p>
     <div id="visualization">

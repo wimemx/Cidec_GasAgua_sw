@@ -114,28 +114,6 @@
 
 
 {% block document_ready %}
-
-//custom select for sidebar
-$("#empresa").click(function(){
-$("#company_list").slideToggle();
-});
-$("#company_list li").click(function(){
-var texto=$(this).text().replace(/^\s*|\s*$/g,'');
-var texto1 = texto.substring(0,17) + "...";
-$("#empresa").text(texto1);
-$("#company_list").slideUp();
-
-$.ajax({
-url: "/reportes/set_default_building/" + $(this).attr("rel"),
-type: "GET",
-dataType: 'json',
-async: 'true',
-success: function(datos){
-window.location.reload();
-}
-});
-});
-
 $("#region_states").change(function () {
     if($("#region_states").val() != ''){
         var url = "/location/get_municipalities/"+$("#region_states").val()+"/{{post.region_id}}";

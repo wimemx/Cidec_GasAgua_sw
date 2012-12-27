@@ -407,46 +407,6 @@
 
     refresh_iframe_height();
 
-    //custom select for sidebar
-    $("#empresa").click(function(){
-        $("#company_list").slideToggle();
-    });
-
-    $("#company_list li").click(function(){
-        var texto=$(this).text().replace(/^\s*|\s*$/g,'');
-        var texto1 = texto.substring(0,17) + "...";
-        $("#empresa").text(texto1);
-        $("#company_list").slideUp();
-        //reload with the selected company data
-        $("#evaluated_companies").val($(this).attr("rel") + ",");
-        $(".compared").remove();
-        $(".vs_tag").remove();
-        $("#compare_to").parent().before('<span class="compared">'+
-            texto +
-            '</span>' +
-            '<span class="vs_tag">VS</span>'
-        );
-        $.ajax({
-            url: "/reportes/set_default_building/" + $(this).attr("rel"),
-            type: "GET",
-            dataType: 'json',
-            async: 'true',
-            success: function(datos){
-                document.location.reload(true);
-
-            }
-        });
-        var src = $("#graphFrame").attr("src").split('?')[0];
-        $("#widgetField span").html("Fecha Inicio &ndash; Fecha Fin");
-        $("#range1_init").val("");
-        $("#range1_end").val("");
-        $("#range2_init").val("");
-        $("#range2_end").val("");
-        $('#widgetCalendar').DatePickerClear();
-        $('#widgetCalendar2').DatePickerClear();
-        $("#types_graphs ul li").removeClass("active");
-        makeIframe("");
-    });
     $(".various").fancybox({
         maxWidth	: 800,
         maxHeight	: 800,

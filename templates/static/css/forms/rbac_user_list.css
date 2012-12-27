@@ -23,7 +23,7 @@
 }
 #user_actions label {
     margin-right: 25px;
-    width: 500px;
+    width: 450px;
     display: inline-block;
 }
 #user_actions label input {
@@ -34,6 +34,7 @@
 }
 #user_actions form{
     float: left;
+    width: 690px;
 }
 form#operations_batch{
     display: block;
@@ -146,5 +147,11 @@ form#operations_batch{
     display: inline-block;
     margin-left: 8px;
     color: #6c6c6c;
-    width: initial;
+    width: auto;
+}
+#filter_data_context .selector{
+    width: 175px;
+}
+#filter_data_context .selector span{
+    width: 150px;
 }

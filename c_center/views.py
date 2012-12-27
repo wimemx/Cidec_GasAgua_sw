@@ -259,7 +259,6 @@ def week_report_kwh(request):
             year_current = datetime_current.year
             month_current = datetime_current.month
             week_current = variety.get_week_of_month_from_datetime(datetime_current)
-            fi, ff = variety.get_fist_last_day_of_week_from_dt(datetime_current)
             week_report_cumulative, week_report_cumulative_total =\
                 get_consumer_unit_week_report_cumulative(consumer_unit,
                                                          year_current,
@@ -267,9 +266,14 @@ def week_report_kwh(request):
                                                          week_current,
                                                          "kWh")
 
+            week_start_datetime, week_end_datetime =\
+                variety.get_week_start_datetime_end_datetime_tuple(year_current,
+                                                                   month_current,
+                                                                   week_current)
+
             template_vars = {"datacontext": datacontext,
-                             'fi': fi,
-                             'ff': ff,
+                             'fi': week_start_datetime.date(),
+                             'ff': (week_end_datetime -timedelta(days=1)).date(),
                              'empresa': request.session['main_building'],
                              'company': request.session['company'],
                              'consumer_unit': request.session['consumer_unit'],
@@ -5611,8 +5615,67 @@ def edit_ie(request, id_ie):
     template_vars["company"] = request.session['company']
     template_vars["operation"] = "edit"
     industrial_eq = get_object_or_404(IndustrialEquipment, pk=int(id_ie))
+    template_vars["id_ie"] = id_ie
     if has_permission(request.user, UPDATE,
                       "Modificar equipos industriales") or request.user.is_superuser:
+        #Asociated powermeters
+        if has_permission(
+            request.user,
+            CREATE,
+            "Asignación de medidores eléctricos a equipos industriales")\
+        or request.user.is_superuser:
+            order_alias = 'asc'
+            order_serial = 'asc'
+            order_model = 'asc'
+            order_status = 'asc'
+            order = "powermeter__powermeter_anotation" #default order
+            if "order_alias" in request.GET:
+                if request.GET["order_alias"] == "desc":
+                    order = "-powermeter__powermeter_anotation"
+                    order_alias = "asc"
+                else:
+                    order_alias = "desc"
+            else:
+                if "order_model" in request.GET:
+                    if request.GET["order_model"] == "asc":
+                        order = "powermeter__powermeter_model__powermeter_brand"
+                        order_model = "desc"
+                    else:
+                        order = "-powermeter__powermeter_model__powermeter_brand"
+                        order_model = "asc"
+
+                if "order_serial" in request.GET:
+                    if request.GET["order_serial"] == "asc":
+                        order = "powermeter__powermeter_serial"
+                        order_serial = "desc"
+                    else:
+                        order = "-powermeter__powermeter_serial"
+                        order_serial = "asc"
+
+                if "order_status" in request.GET:
+                    if request.GET["order_status"] == "asc":
+                        order = "powermeter__status"
+                        order_status = "desc"
+                    else:
+                        order = "-powermeter__status"
+                        order_status = "asc"
+
+            lista = PowermeterForIndustrialEquipment.objects.filter(
+                industrial_equipment=industrial_eq).order_by(order)
+            template_vars['order_alias'] = order_alias
+            template_vars['order_model'] = order_model
+            template_vars['order_serial'] = order_serial
+            template_vars['order_status'] = order_status
+            template_vars['powermeters'] = lista
+
+            if 'msj' in request.GET:
+                template_vars['message'] = request.GET['msj']
+                template_vars['msg_type'] = request.GET['ntype']
+
+            template_vars['ver_medidores'] = True
+        else:
+            template_vars['ver_medidores'] = False
+
         if request.method == 'POST':
 
             industrial_eq.alias=request.POST['ie_alias']
@@ -5639,8 +5702,103 @@ def edit_ie(request, id_ie):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
-def see_ie(request):
-    pass
+@login_required(login_url='/')
+def see_ie(request, id_ie):
+    datacontext = get_buildings_context(request.user)
+    template_vars = {}
+
+    if datacontext:
+        template_vars["datacontext"] = datacontext
+
+    template_vars["sidebar"] = request.session['sidebar']
+    template_vars["empresa"] = request.session['main_building']
+    template_vars["company"] = request.session['company']
+
+    if has_permission(request.user, VIEW,
+                      "Ver equipos industriales") or request.user.is_superuser:
+        template_vars["industrial_eq"] = get_object_or_404(IndustrialEquipment,
+                                                           pk=int(id_ie))
+
+        #Asociated powermeters
+        if has_permission(request.user, VIEW,
+                          "Ver medidores eléctricos") or request.user.is_superuser:
+            order_alias = 'asc'
+            order_serial = 'asc'
+            order_model = 'asc'
+            order_status = 'asc'
+
+
+
+            order = "powermeter__powermeter_anotation" #default order
+            if "order_alias" in request.GET:
+                if request.GET["order_alias"] == "desc":
+                    order = "-powermeter__powermeter_anotation"
+                    order_alias = "asc"
+                else:
+                    order_alias = "desc"
+            else:
+                if "order_model" in request.GET:
+                    if request.GET["order_model"] == "asc":
+                        order = "powermeter__powermeter_model__powermeter_brand"
+                        order_model = "desc"
+                    else:
+                        order = "-powermeter__powermeter_model__powermeter_brand"
+                        order_model = "asc"
+
+                if "order_serial" in request.GET:
+                    if request.GET["order_serial"] == "asc":
+                        order = "powermeter__powermeter_serial"
+                        order_serial = "desc"
+                    else:
+                        order = "-powermeter__powermeter_serial"
+                        order_serial = "asc"
+
+                if "order_status" in request.GET:
+                    if request.GET["order_status"] == "asc":
+                        order = "powermeter__status"
+                        order_status = "desc"
+                    else:
+                        order = "-powermeter__status"
+                        order_status = "asc"
+
+            lista = PowermeterForIndustrialEquipment.objects.filter(
+                industrial_equipment=template_vars["industrial_eq"]
+                ).order_by(order)
+            template_vars['order_alias'] = order_alias
+            template_vars['order_model'] = order_model
+            template_vars['order_serial'] = order_serial
+            template_vars['order_status'] = order_status
+            template_vars['powermeters'] = lista
+
+            if 'msj' in request.GET:
+                template_vars['message'] = request.GET['msj']
+                template_vars['msg_type'] = request.GET['ntype']
+
+            template_vars['ver_medidores'] = True
+            if has_permission(
+                request.user,
+                CREATE,
+                "Asignación de medidores eléctricos a equipos industriales")\
+            or request.user.is_superuser:
+                template_vars['show_asign'] = True
+            else:
+                template_vars['show_asign'] = False
+
+
+        else:
+            template_vars['ver_medidores'] = False
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("consumption_centers/consumer_units/see_ie.html",
+                                  template_vars_template)
+    else:
+        datacontext = get_buildings_context(request.user)
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
+
 
 def status_ie(request):
     pass
@@ -5735,3 +5893,45 @@ def view_ie(request):
         template_vars["sidebar"] = request.session['sidebar']
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
+
+@login_required(login_url='/')
+def search_pm(request):
+    """Search for a powermeter wich have an alias or serial number containing
+     'term'
+     returns a json for jquery automplete
+    """
+    if "term" in request.GET:
+        term = request.GET['term']
+        ie_pm = PowermeterForIndustrialEquipment.objects.all()
+        pm_in_ie = [ip.powermeter.pk for ip in ie_pm]
+        powermeters = Powermeter.objects.exclude(
+            pk__in=pm_in_ie
+        ).filter(
+            Q(powermeter_anotation__icontains=term)|
+            Q(powermeter_serial__icontains=term)
+        ).filter(status=1)
+        medidores = []
+        for medidor in powermeters:
+            texto = medidor.powermeter_anotation + " - " + medidor.powermeter_serial
+            medidores.append(dict(value=texto, pk=medidor.pk, label=texto))
+        data = simplejson.dumps(medidores)
+        return HttpResponse(content=data, content_type="application/json")
+    else:
+        raise Http404
+
+@login_required(login_url='/')
+def asign_pm(request, id_ie):
+    if (has_permission(
+        request.user,
+        CREATE,
+        "Asignación de medidores eléctricos a equipos industriales")\
+    or request.user.is_superuser) and "pm" in request.GET:
+        ie = get_object_or_404(IndustrialEquipment, pk=int(id_ie))
+        pm = get_object_or_404(Powermeter, pk=int(request.GET['pm']))
+        pm_ie = PowermeterForIndustrialEquipment(powermeter=pm,
+                                                 industrial_equipment=ie)
+        pm_ie.save()
+        data = simplejson.dumps([pm_ie])
+        return HttpResponse(content=data, content_type="application/json")
+    else:
+        raise Http404

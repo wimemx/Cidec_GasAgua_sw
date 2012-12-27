@@ -6,8 +6,13 @@
     <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
     <link rel="stylesheet" href="/static/css/forms/c_centers.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="/static/js/external/jquery-validator/css/validator.css">
+    <link rel="stylesheet" href="/static/css/forms/rbac_user_list.css" type="text/css" />
+    <link href="/static/js/external/messi/messi.css" rel="stylesheet" type="text/css" media="screen" />
+    <link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
 {% endblock %}
 {% block externaljs %}
+    <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+    <script src="/static/js/external/messi/messi.min.js"></script>
     <script type="text/javascript" src="/static/js/external/jquery-validator/js/validator.js"></script>
     <script type="text/javascript">
         $(document).on("ready", function(){
@@ -15,14 +20,144 @@
         });
     </script>
 {% endblock %}
+{% block document_ready %}
+    $("a.switch").click(function(event){
+    event.preventDefault();
+    var url="/buildings/status_medidor/"+$(this).attr("rel")+"/";
+    var action = $(this).attr("title");
+    new Messi('&iquest;Est&aacute; seguro de que desea '+ action +' este medidor?',
+    {title: action+' medidor', modal: true, buttons: [{id: 0,
+    label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
+    }],
+    callback: function(val) {
+    if(val=='Y'){
+    document.location.href=url;
+    } else return false; }
+    });
+    });
 
+    $("#sort_alias").click(function(e){
+    e.preventDefault();
+    var get = getUrlVars();
+
+    var base_url = window.location.pathname;
+    base_url+="?order_alias="+$("#sort_alias").attr("rel");
+    if(get.length>0){
+    if (get[0]!=window.location.protocol+"//"+window.location
+    .host+window.location.pathname){
+    for(var i=0; i<get.length; i++){
+    if (get[i]!="order_alias" && get[i]!="order_model" && get[i]!="order_status" && get[i]!="order_serial"){
+    base_url+="&"+get[i]+"="+get[get[i]];
+    }
+    }
+    }
+    }
+    window.location = base_url;
+    });
+    $("#sort_model").click(function(e){
+    e.preventDefault();
+    var get = getUrlVars();
+
+    var base_url = window.location.pathname;
+    base_url+="?order_model="+$("#sort_model").attr("rel");
+    if(get.length>0){
+    if (get[0]!=window.location.protocol+"//"+window.location
+    .host+window.location.pathname){
+    for(var i=0; i<get.length; i++){
+    if (get[i]!="order_alias" && get[i]!="order_model" && get[i]!="order_status" && get[i]!="order_serial"){
+    base_url+="&"+get[i]+"="+get[get[i]];
+    }
+    }
+    }
+
+    }
+
+    window.location = base_url;
+    });
+
+    $("#sort_status").click(function(e){
+    e.preventDefault();
+    var get = getUrlVars();
+
+    var base_url = window.location.pathname;
+    base_url+="?order_status="+$("#sort_status").attr("rel");
+    if(get.length>0){
+    if (get[0]!=window.location.protocol+"//"+window.location
+    .host+window.location.pathname){
+    for(var i=0; i<get.length; i++){
+    if (get[i]!="order_alias" && get[i]!="order_model" && get[i]!="order_status" && get[i]!="order_serial"){
+    base_url+="&"+get[i]+"="+get[get[i]];
+    }
+    }
+    }
+
+    }
+
+    window.location = base_url;
+    });
+
+    $("#sort_serial").click(function(e){
+    e.preventDefault();
+    var get = getUrlVars();
+
+    var base_url = window.location.pathname;
+    base_url+="?order_serial="+$("#sort_serial").attr("rel");
+    if(get.length>0){
+    if (get[0]!=window.location.protocol+"//"+window.location
+    .host+window.location.pathname){
+    for(var i=0; i<get.length; i++){
+    if (get[i]!="order_alias" && get[i]!="order_model" && get[i]!="order_status" && get[i]!="order_serial"){
+    base_url+="&"+get[i]+"="+get[get[i]];
+    }
+    }
+    }
+
+    }
+
+    window.location = base_url;
+    });
+
+    {% if ver_medidores %}
+        $("#asign").hide();
+        $( "#search" ).autocomplete({
+        source: "/buildings/buscar_pm/",
+        minLength: 2,
+        select: function( event, ui ) {
+            $("#search").val(ui.item.pk);
+            $("#id_pm").val(ui.item.pk);
+            $("#asign").show();
+
+
+        }
+        }).keyup(function(){$("#id_pm").val("");$("#asign").hide();});
+
+        $("#asign").click(function(){
+            $.ajax({
+                url: "/buildings/asign_pm/{{ id_ie }}/",
+                global: false,
+                type: "POST",
+                data: ({
+                        csrfmiddlewaretoken : {{ csrf_token }},
+                        pm: $("#id_pm").val();,
+                    }),
+                dataType: "html",
+                async:false,
+                success: function(msg){
+                    alert(msg);
+                }
+            });
+
+        });
+    {% endif %}
+
+{% endblock %}
 
 {% block contenido %}
     <div id="bread_crumbs">
         <ul>
             <li><a href="/main/">Inicio</a></li>
             <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
-            <li><a href="/buildings/editar_ie/">Equipos Industriales</a></li>
+            <li><a href="/buildings/industrial_equipments/">Equipos Industriales</a></li>
             {% if operation == "edit" %}
                 <li>
                     Editar Equipo Industrial
@@ -39,7 +174,7 @@
             {% if operation == "edit" %}Editar{% else %}Alta de{% endif %} Equipo Industrial
         </h2>
         <div class="divider" id="divider_top">&nbsp;</div>
-        <div id="form_container">
+        <div id="form_container" class="g12">
             {% if message %}
                 <span class="notif {{ type }}">
                     {% autoescape off %}{{ message }}{% endautoescape %}
@@ -63,7 +198,7 @@
 
                     <div class="fields_row g9">
                         <label for="ie_desc" class="g2">Descripci&oacute;n</label>
-                        <textarea rows="10" cols="130" name="ie_desc" id="ie_desc" class="g9"></textarea>
+                        <textarea rows="10" cols="130" name="ie_desc" id="ie_desc" class="g9">post.ie_desc</textarea>
                     </div>
                     <div class="fields_row g9">
                         <label for="ie_server" class="g2">Direcci&oacute;n del Servidor<span class="required">*</span></label>
@@ -80,6 +215,99 @@
             </form>
 
         </div>
+        {% if operation == "edit" and ver_medidores %}
+            <div id="powermeters" class="g9">
+
+                <div id="search_pm" class="g12">
+
+                    <label class="g2">
+                        Buscar medidor
+                    </label>
+                    <input type="text" name="search" id="search" class="g7"/>
+                    <input type="hidden" id="id_pm" name="id_pm"/>
+                    <a href="#" title="Asignar medidor a equipo industrial" id="asign">
+                        Asignar medidor a equipo industrial
+                        <span class="plus"></span>
+                    </a>
+                </div>
+                <form id="operations_batch" action="/buildings/status_batch_powermeter/" method="post">
+                    {% csrf_token %}
+                    <div id="grid_container">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th style="width: 20%;">
+                                    <a href="#" id="sort_alias" rel="{{ order_alias }}">
+                                        Alias
+                                        <span class="sort"></span>
+                                    </a>
+                                </th>
+                                <th style="width: 20%;">
+                                    <a href="#" id="sort_model" rel="{{ order_model }}">
+                                        Modelo
+                                        <span class="sort"></span>
+                                    </a>
+                                </th>
+                                <th style="width: 20%;">
+                                    <a href="#" id="sort_serial" rel="{{ order_serial }}">
+                                        Número de Serie
+                                        <span class="sort"></span>
+                                    </a>
+                                </th>
+                                <th style="width: 20%;">
+                                    <a href="#" id="sort_status" rel="{{ order_status }}">
+                                        Estatus
+                                        <span class="sort"></span>
+                                    </a>
+                                </th>
+                                <th style="width: 20%;">Acciones</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for powermeter in paginacion.object_list %}
+
+                                <tr class="{% cycle 'row1' 'row2' %}">
+                                    <td>
+                                        <input type="checkbox" id="powermeter_{{ powermeter.pk }}"
+                                               name="powermeter_{{ powermeter.pk }}"/>
+                                        <label for="powermeter_{{ powermeter.pk }}">
+                                            <a href="/buildings/ver_medidor/{{ powermeter.pk }}/">
+                                                {{ powermeter.powermeter_anotation }}
+                                            </a>
+                                        </label>
+                                    </td>
+                                    <td class="c">
+                                        {{ powermeter.powermeter_model.powermeter_brand }}-{{ powermeter.powermeter_model.powermeter_model }}
+                                    </td>
+                                    <td class="c">
+                                        {{ powermeter.powermeter_serial }}
+                                    </td>
+                                    <td class="c">
+                                        <a href="#" rel="{{ powermeter.pk }}" {% if powermeter.status == 1 %}class="switch active_switch" title="desactivar"{% else %}class="switch inactive_switch" title="activar"{% endif %}>
+                                        </a>
+                                    </td>
+                                    <td class="c">
+                                        <a class="edit" title="Editar medidor"
+                                           href="/buildings/editar_medidor/{{ powermeter.pk }}/"></a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        <div id="table_footer">
+                            <select id="actions" name="actions">
+                                <option value="0">Elije una Acci&oacute;n</option>
+                                <option value="status">Habilitar/Deshabilitar</option>
+                            </select>
+                            <button class="fl aqua_btn" id="aplicar">Aplicar a la
+                                selecci&oacute;n</button>
+
+                        </div>
+                    </div>
+                </form>
+            </div>
+        {% endif %}
+
 
 
     </div>
