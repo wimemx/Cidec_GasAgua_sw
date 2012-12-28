@@ -24,8 +24,8 @@ from variety import unique_from_array
 
 from django.shortcuts import redirect, render
 
-GRAPHS =['Potencia Activa (KW)', 'Potencia Reactiva (KVar)', 'Factor de Potencia (PF)',
-         'kW Hora', 'kW Hora Consumido', 'kVAR Hora', 'kVAR Hora Consumido']
+GRAPHS =['Potencia Activa (kW)', 'Potencia Reactiva (KVar)', 'Factor de Potencia (PF)',
+         'kW Hora', 'kWh/h Consumido', 'kVAR Hora', 'kVAR Hora Consumido']
 GRAPHS_ENERGY = [ob.object.object_name for ob in GroupObject.objects.filter(group__group_name="Energía")] #['Potencia Activa (KW)', 'Kw Fase1', 'Kw Fase2', 'Kw Fase3', 'Kw/H acumulado', 'Kw/h/h']
 GRAPHS_I = [ob.object.object_name for ob in GroupObject.objects.filter(group__group_name="Corriente")] #['I1', 'I2', 'I3']
 GRAPHS_V = [ob.object.object_name for ob in GroupObject.objects.filter(group__group_name="Voltaje")] #['V1', 'V2', 'V3']

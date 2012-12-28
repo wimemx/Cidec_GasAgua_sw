@@ -11,14 +11,14 @@
 #slider-range{
     width: 45px;
     position: absolute;
-    right: 0;
+    left: 0;
     top: 34%;
 }
 #up{
-    top: -83px;
+    top: -112px;
     position: absolute;
 }
 #down{
     position: absolute;
-    bottom: -155px;
+    bottom: -200px;
 }
