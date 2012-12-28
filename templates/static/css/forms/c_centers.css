@@ -288,7 +288,7 @@ background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
 .required{
     color: red;
 }
-#search_pm label{
+#search_pm label, #search_pm a#asign{
     float: left;
     margin-top: 0;
     font-weight: 700;

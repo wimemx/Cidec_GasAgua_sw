@@ -18,22 +18,67 @@
         $(document).on("ready", function(){
             $("#industrial_equipment").validate();
         });
+    function form_row(pm, alias, brand, model, serial, status){
+        var row = '<td>';
+        row += '<input type="checkbox" id="powermeter_'+pm+'" name="powermeter_'+pm+'"/>';
+        row += '<label for="powermeter_'+pm+'">';
+        row += '<a href="/buildings/ver_medidor/'+pm+'/">';
+        row += alias;
+        row += '</a></label></td>';
+        row += '<td class="c">'+brand+'- '+model+'</td>';
+        row += '<td class="c">'+serial+'</td>';
+        row += '<td class="c"><a href="#" rel="'+pm+'"';
+        if (status == 1){
+            row += 'class="switch active_switch" title="desactivar"';
+        }else{
+            row += 'class="switch inactive_switch" title="activar"';
+        }
+        row += '></a></td>';
+        row += '<td class="c"><a class="edit" title="Editar medidor" href="/buildings/editar_medidor/'+pm+'/"></a><a class="remove" title="Desvincular medidor" rel="'+pm+'">Desvincular Medidor</a></td>';
+
+        var tabla = $("#powermeters_table");
+        if($("#powermeters_table tr").size()>1)
+            if(tabla.find("tr:last-child").hasClass("row1")){
+                tabla.append('<tr class="row2">' + row + '</tr>');
+            }
+            else{
+                tabla.append('<tr class="row1">' + row + '</tr>');
+            }
+        else{
+            tabla.append('<tr class="row1">' + row + '</tr>');
+        }
+        tabla.find("tr:last-child input").uniform();
+    }
     </script>
 {% endblock %}
 {% block document_ready %}
-    $("a.switch").click(function(event){
-    event.preventDefault();
-    var url="/buildings/status_medidor/"+$(this).attr("rel")+"/";
-    var action = $(this).attr("title");
-    new Messi('&iquest;Est&aacute; seguro de que desea '+ action +' este medidor?',
-    {title: action+' medidor', modal: true, buttons: [{id: 0,
-    label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
-    }],
-    callback: function(val) {
-    if(val=='Y'){
-    document.location.href=url;
-    } else return false; }
+    $("a.switch").live('click',function(event){
+        event.preventDefault();
+        var url="/buildings/status_medidor/"+$(this).attr("rel")+"/?ref={{ id_ie }}";
+        var action = $(this).attr("title");
+        new Messi('&iquest;Est&aacute; seguro de que desea '+ action +' este medidor?',
+            {title: action+' medidor', modal: true, buttons: [{id: 0,
+                label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
+            }],
+            callback: function(val) {
+            if(val=='Y'){
+                document.location.href=url;
+            } else return false; }
+        });
     });
+
+    $(".remove").live("click", function(){
+        event.preventDefault();
+        var url="/buildings/detach_pm/{{ id_ie }}/?pm="+$(this).attr("rel");
+        new Messi('&iquest;Est&aacute; seguro de que desea desvincular este medidor?',
+        {title: 'Desvincular medidor', modal: true, buttons: [{id: 0,
+        label: 'Cancelar', val: 'N'},{id: 1, label: 'Desvincular', val: 'Y'
+        }],
+        callback: function(val) {
+        if(val=='Y'){
+        document.location.href=url;
+        } else return false; }
+        });
     });
 
     $("#sort_alias").click(function(e){
@@ -126,25 +171,35 @@
             $("#search").val(ui.item.pk);
             $("#id_pm").val(ui.item.pk);
             $("#asign").show();
-
-
         }
-        }).keyup(function(){$("#id_pm").val("");$("#asign").hide();});
+        }).keyup(function(e){
+                    if(e.keyCode!=13){
+                        $("#id_pm").val("");
+                        $("#asign").hide();
+                    }
+                });
 
-        $("#asign").click(function(){
+        var msg = '<span class="notif n_error">Ocurri&oacute; un error al procesar la petici&oacute;n, revise los datos y verifique si tiene los permisos necesarios<a href="#" onclick="$(this).parent().remove();">X</a></span>';
+        $("#asign").click(function(e){
+            e.preventDefault();
+            History.replaceState({}, '', ' ');
+            $(".notif").remove();
             $.ajax({
-                url: "/buildings/asign_pm/{{ id_ie }}/",
+                url: "/buildings/asign_pm/{{ id_ie }}/?pm="+$("#id_pm").val(),
                 global: false,
-                type: "POST",
-                data: ({
-                        csrfmiddlewaretoken : {{ csrf_token }},
-                        pm: $("#id_pm").val();,
-                    }),
-                dataType: "html",
-                async:false,
+                type: "GET",
+                dataType: "json",
+                statusCode: {
+                    404: function() {
+                        $("#search_pm").append(msg);
+                    }
+                },
                 success: function(msg){
-                    alert(msg);
-                }
+                    $("#search").val("");
+                    $("#id_pm").val("");
+                    var registro = msg[0];
+                    form_row(registro.pm, registro.alias, registro.marca, registro.modelo, registro.serie, registro.status);
+                },
             });
 
         });
@@ -176,9 +231,9 @@
         <div class="divider" id="divider_top">&nbsp;</div>
         <div id="form_container" class="g12">
             {% if message %}
-                <span class="notif {{ type }}">
+                <span class="notif {{ msg_type }}">
                     {% autoescape off %}{{ message }}{% endautoescape %}
-                    <a href="#" onclick="$(this).parent().remove();">X</a>
+                    <a href="#" onclick="$(this).parent().remove(); History.replaceState({}, '', ' ');">X</a>
                 </span>
             {% endif %}
             <p class="description">
@@ -198,11 +253,11 @@
 
                     <div class="fields_row g9">
                         <label for="ie_desc" class="g2">Descripci&oacute;n</label>
-                        <textarea rows="10" cols="130" name="ie_desc" id="ie_desc" class="g9">post.ie_desc</textarea>
+                        <textarea rows="10" cols="130" name="ie_desc" id="ie_desc" class="g9">{{ post.ie_desc }}</textarea>
                     </div>
                     <div class="fields_row g9">
                         <label for="ie_server" class="g2">Direcci&oacute;n del Servidor<span class="required">*</span></label>
-                        <input type="text" name="ie_server" id="ie_server" class="g9 validate notnull alphanumeric"
+                        <input type="text" name="ie_server" id="ie_server" class="g9 validate notnull url"
                                value="{{ post.ie_server }}"/>
                     </div>
                 </div>
@@ -221,19 +276,20 @@
                 <div id="search_pm" class="g12">
 
                     <label class="g2">
-                        Buscar medidor
+                        Vincular medidor
                     </label>
                     <input type="text" name="search" id="search" class="g7"/>
                     <input type="hidden" id="id_pm" name="id_pm"/>
-                    <a href="#" title="Asignar medidor a equipo industrial" id="asign">
-                        Asignar medidor a equipo industrial
+
+                    <a href="#" title="Asignar medidor a equipo industrial" id="asign" class="g2">
                         <span class="plus"></span>
+                        Asignar medidor a equipo industrial
                     </a>
                 </div>
-                <form id="operations_batch" action="/buildings/status_batch_powermeter/" method="post">
+                <form id="operations_batch" action="/buildings/status_batch_powermeter/?ref={{ id_ie }}" method="post">
                     {% csrf_token %}
                     <div id="grid_container">
-                        <table>
+                        <table id="powermeters_table">
                             <thead>
                             <tr>
                                 <th style="width: 20%;">
@@ -264,7 +320,7 @@
                             </tr>
                             </thead>
                             <tbody>
-                            {% for powermeter in paginacion.object_list %}
+                            {% for powermeter in powermeters %}
 
                                 <tr class="{% cycle 'row1' 'row2' %}">
                                     <td>
@@ -289,6 +345,7 @@
                                     <td class="c">
                                         <a class="edit" title="Editar medidor"
                                            href="/buildings/editar_medidor/{{ powermeter.pk }}/"></a>
+                                        <a class="remove" title="Desvincular medidor" rel="{{ powermeter.pk }}">Desvincular Medidor</a>
                                     </td>
                                 </tr>
                             {% endfor %}

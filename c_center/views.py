@@ -792,7 +792,7 @@ def b_attr_list(request):
                 request.GET['search'])).order_by(order)
         else:
             lista = BuildingAttributes.objects.all().order_by(order)
-        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
         template_vars = dict(roles=paginator, order_attrname=order_attrname,
                              order_type=order_type, order_units=order_units,
                              order_sequence=order_sequence, empresa=empresa,
@@ -1163,7 +1163,7 @@ def view_cluster(request):
         else:
             lista = Cluster.objects.all().exclude(cluster_status=2).\
             order_by(order)
-        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
         template_vars = dict(order_name=order_name,
                              order_sector=order_sector,
                              order_status=order_status,
@@ -1633,7 +1633,7 @@ def view_powermetermodels(request):
 
         else:
             lista = PowermeterModel.objects.all().order_by(order)
-        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
         template_vars = dict(order_brand=order_brand,
                              order_model=order_model,
                              order_status=order_status,
@@ -1996,7 +1996,7 @@ def view_powermeter(request):
             #profiles_pw_objs = ProfilePowermeter.objects.filter(powermeter__pk__in = powermeter_ids).filter(profile_powermeter_status = 1)
             lista = Powermeter.objects.all().order_by(order)
 
-        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
         template_vars = dict(order_alias=order_alias, order_model=order_model,
                              order_serial=order_serial,
                              order_status=order_status,
@@ -2053,6 +2053,12 @@ def status_batch_powermeter(request):
                     powermeter.save()
 
             mensaje = "Los medidores seleccionados han cambiado su estatus correctamente"
+            if "ref" in request.GET:
+                return HttpResponseRedirect("/buildings/editar_ie/" +
+                                            request.GET['ref'] + "/?msj=" +
+                                            mensaje +
+                                            "&ntype=n_success")
+
             return HttpResponseRedirect("/buildings/medidores/?msj=" + mensaje +
                                         "&ntype=n_success")
         else:
@@ -2083,9 +2089,13 @@ def status_powermeter(request, id_powermeter):
             str_status = "Inactivo"
 
         powermeter.save()
-        mensaje = "El estatus del medidor " + powermeter.powermeter_anotation + " ha cambiado a " + str_status
+        mensaje = "El estatus del medidor " + powermeter.powermeter_anotation \
+                  + " ha cambiado a " + str_status
         type = "n_success"
-
+        if 'ref' in request.GET:
+            return HttpResponseRedirect("/buildings/editar_ie/" +
+                                        request.GET['ref'] + "/?msj=" + mensaje +
+                                        "&ntype=" + type)
         return HttpResponseRedirect("/buildings/medidores/?msj=" + mensaje +
                                     "&ntype=" + type)
     else:
@@ -2353,7 +2363,7 @@ def view_electric_device_type(request):
             lista = ElectricDeviceType.objects.all().exclude(
                 electric_device_type_status=2).order_by(order)
 
-        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
         template_vars = dict(order_name=order_name,
                              order_description=order_description,
                              order_status=order_status,
@@ -2800,7 +2810,7 @@ def view_companies(request):
             lista = ClusterCompany.objects.all().exclude(
                 company__company_status=2).order_by(order)
 
-        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
         template_vars = dict(order_company=order_company,
                              order_cluster=order_cluster,
                              order_sector=order_sector,
@@ -3198,7 +3208,7 @@ def view_buildingtypes(request):
             lista = BuildingType.objects.all().exclude(
                 building_type_status=2).order_by(order)
 
-        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
         template_vars = dict(order_name=order_name,
                              order_description=order_description,
                              order_status=order_status,
@@ -3520,7 +3530,7 @@ def view_sectoraltypes(request):
             lista = SectoralType.objects.all().exclude(
                 sectoral_type_status=2).order_by(order)
 
-        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
         template_vars = dict(order_name=order_name,
                              order_description=order_description,
                              order_status=order_status,
@@ -3842,7 +3852,7 @@ def view_b_attributes_type(request):
             lista = BuildingAttributesType.objects.all().exclude(
                 building_attributes_type_status=2).order_by(order)
 
-        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
         template_vars = dict(order_name=order_name,
                              order_description=order_description,
                              order_status=order_status,
@@ -4153,7 +4163,7 @@ def view_partbuildingtype(request):
             lista = PartOfBuildingType.objects.all().exclude(
                 part_of_building_type_status=2).order_by(order)
 
-        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
         template_vars = dict(order_name=order_name,
                              order_description=order_description,
                              order_status=order_status,
@@ -4642,7 +4652,7 @@ def view_partbuilding(request):
         else:
             lista = PartOfBuilding.objects.all().order_by(order)
 
-        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
         template_vars = dict(order_name=order_name, order_type=order_type,
                              order_building=order_building,
                              order_status=order_status,
@@ -5457,7 +5467,7 @@ def view_building(request):
             lista = CompanyBuilding.objects.all().exclude(
                 building__building_status=2).order_by(order)
 
-        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
         template_vars = dict(order_name=order_name, order_state=order_state,
                              order_municipality=order_municipality,
                              order_company=order_company,
@@ -5581,9 +5591,9 @@ def add_ie(request):
         if request.method == 'POST':
             template_vars["post"] = request.POST
             ie = IndustrialEquipment(
-                alias=request.POST['ie_alias'],
-                description=request.POST['ie_desc'],
-                server=request.POST['ie_server']
+                alias=request.POST['ie_alias'].strip(),
+                description=request.POST['ie_desc'].strip(),
+                server=request.POST['ie_server'].strip()
                 )
             ie.save()
             message = "El equipo industrial se ha creado exitosamente"
@@ -5666,7 +5676,7 @@ def edit_ie(request, id_ie):
             template_vars['order_model'] = order_model
             template_vars['order_serial'] = order_serial
             template_vars['order_status'] = order_status
-            template_vars['powermeters'] = lista
+            template_vars['powermeters'] = [pm.powermeter for pm in lista]
 
             if 'msj' in request.GET:
                 template_vars['message'] = request.GET['msj']
@@ -5678,9 +5688,9 @@ def edit_ie(request, id_ie):
 
         if request.method == 'POST':
 
-            industrial_eq.alias=request.POST['ie_alias']
-            industrial_eq.description=request.POST['ie_desc']
-            industrial_eq.server=request.POST['ie_server']
+            industrial_eq.alias = request.POST['ie_alias'].strip()
+            industrial_eq.description = request.POST['ie_desc'].strip()
+            industrial_eq.server = request.POST['ie_server'].strip()
             industrial_eq.save()
             message = "El equipo industrial se ha actualizado exitosamente"
             type = "n_success"
@@ -5860,7 +5870,7 @@ def view_ie(request):
         else:
             lista = IndustrialEquipment.objects.all().order_by(order)
 
-        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
         template_vars['order_name'] = order_name
         template_vars['order_server'] = order_server
         template_vars['order_status'] = order_status
@@ -5921,17 +5931,42 @@ def search_pm(request):
 
 @login_required(login_url='/')
 def asign_pm(request, id_ie):
-    if (has_permission(
+    if (not(not has_permission(
         request.user,
         CREATE,
-        "Asignación de medidores eléctricos a equipos industriales")\
-    or request.user.is_superuser) and "pm" in request.GET:
+        "Asignación de medidores eléctricos a equipos industriales") and not
+    request.user.is_superuser)) and "pm" in request.GET:
         ie = get_object_or_404(IndustrialEquipment, pk=int(id_ie))
         pm = get_object_or_404(Powermeter, pk=int(request.GET['pm']))
         pm_ie = PowermeterForIndustrialEquipment(powermeter=pm,
                                                  industrial_equipment=ie)
         pm_ie.save()
-        data = simplejson.dumps([pm_ie])
+        pm_data = dict(pm=pm.pk,
+                       alias=pm.powermeter_anotation,
+                       modelo=pm.powermeter_model.powermeter_model,
+                       marca=pm.powermeter_model.powermeter_brand,
+                       serie=pm.powermeter_serial,
+                       status=pm.status)
+        data = simplejson.dumps([pm_data])
         return HttpResponse(content=data, content_type="application/json")
     else:
         raise Http404
+
+@login_required(login_url='/')
+def detach_pm(request, id_ie):
+    if (not(not has_permission(
+        request.user,
+        UPDATE,
+        "Modificar asignaciones de medidores eléctricos a equipos industriales")
+            and not request.user.is_superuser)) and "pm" in request.GET:
+        pm = get_object_or_404(Powermeter, pk=int(request.GET['pm']))
+        ie = get_object_or_404(IndustrialEquipment, pk=int(id_ie))
+        PowermeterForIndustrialEquipment.objects.\
+        filter(powermeter=pm,industrial_equipment=ie).delete()
+        mensaje = "El medidor se ha desvinculado"
+        return HttpResponseRedirect("/buildings/editar_ie/" +
+                                    id_ie + "/?msj=" + mensaje +
+                                    "&ntype=n_success")
+    else:
+        raise Http404
+

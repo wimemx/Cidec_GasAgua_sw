@@ -194,6 +194,8 @@ urlpatterns = patterns('',
                            'c_center.views.edit_ie'),
                        url(r'^asign_pm/(?P<id_ie>\d+)/',
                            'c_center.views.asign_pm'),
+                       url(r'^detach_pm/(?P<id_ie>\d+)/',
+                           'c_center.views.detach_pm'),
 
                        url(r'^industrial_equipments/',
                            'c_center.views.view_ie'),

@@ -137,8 +137,12 @@
                 {{ industrial_eq.alias }}
             </p>
             <p>
-                <span class="strong label">Dirección del servidor:</span>
+                <span class="strong label">Descripci&oacute;n del equipo industrial:</span>
                 {{ industrial_eq.description }}
+            </p>
+            <p>
+                <span class="strong label">Dirección del servidor:</span>
+                {{ industrial_eq.server }}
             </p>
             <p>
                 <span class="strong label">Estado:</span>
@@ -214,7 +218,7 @@
                     </table>
                     </div>
                     {% if show_asign %}
-                        <a class="aqua_btn g6" href="/buildings/editar_ie/{{ industrial_eq.pk }}/">Agregar medidores al equipo industrial</a>
+                        <a class="aqua_btn g6" href="/buildings/editar_ie/{{ industrial_eq.pk }}/">Editar / Agregar medidores</a>
                     {% endif %}
                 {% endif %}
             </div>

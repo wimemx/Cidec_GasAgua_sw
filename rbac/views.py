@@ -331,6 +331,9 @@ def see_role(request, id_role):
 
         template_vars['objs_group_perms'] = arr_ops
         template_vars['just_watch'] = "solo ver"
+
+
+
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("rbac/edit_role.html", template_vars_template)
     else:
@@ -389,7 +392,7 @@ def view_roles(request):
             order_by(order)
         else:
             lista = Role.objects.all().order_by(order)
-        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
         template_vars = dict(sidebar=request.session['sidebar'],
                              roles=paginator,
                              order_name=order_name,
@@ -685,7 +688,7 @@ def view_users(request):
                     email__icontains=request.GET['search'])).order_by(order)
         else:
             lista = User.objects.all().order_by(order)
-        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
         template_vars = dict(sidebar=request.session['sidebar'],
                              order_name=order_name,
                              order_username=order_username,
@@ -1112,7 +1115,7 @@ def added_data_context_permissions(request):
         else:
             lista = DataContextPermission.objects.filter(
                 user_role__user__is_active=True).order_by(order)
-        paginator = Paginator(lista, 6) # muestra 10 resultados por pagina
+        paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
         template_vars = dict(sidebar=request.session['sidebar'],
                              order_role=order_role,
                              order_username=order_username,
