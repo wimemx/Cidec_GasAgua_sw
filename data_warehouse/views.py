@@ -1411,10 +1411,11 @@ def get_consumer_unit_electric_data_interval_tuple_list(
             interval=time_interval
         ).values(electric_data_name)
 
-        if len(electric_data_values_dictionary) == 1 and\
-           electric_data_values_dictionary[0][electric_data_name] is not None:
-            electric_data_value = electric_data_values_dictionary[0][
-                                  electric_data_name]
+        if len(electric_data_values_dictionary) == 1:
+            electric_data_value = electric_data_values_dictionary[0][electric_data_name]
             electric_data_list.append((time_interval, electric_data_value))
+
+        else:
+            electric_data_list.append((time_interval, None))
 
     return electric_data_list
