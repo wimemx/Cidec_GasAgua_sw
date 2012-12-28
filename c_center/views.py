@@ -574,21 +574,33 @@ def render_cumulative_comparison_in_week(request):
 
                     try:
                         consumer_unit_current =\
-                        get_data_warehouse_consumer_unit_by_id(
-                            consumer_unit_id_current)
+                            ConsumerUnit.objects.get(pk=consumer_unit_id_current)
 
-                    except DataWarehouseInformationRetrieveException:
+                    except ConsumerUnit.DoesNotExist:
                         return HttpResponse("")
 
-                    consumer_unit_electric_data_tuple_list_current =\
-                    get_consumer_unit_electric_data_interval_tuple_list(
-                        electric_data, "day", consumer_unit_current,
-                        start_datetime, end_datetime)
+                    (electric_data_days_tuple_list,
+                     consumer_unit_electric_data_tuple_list_current) =\
+                        get_consumer_unit_week_report_cumulative(
+                            consumer_unit_current,
+                            year_current,
+                            month_current,
+                            week_current,
+                            electric_data)
 
-                    if len(consumer_unit_electric_data_tuple_list_current) == 7:
-                        consumer_units_data_tuple_list.append(
-                            (consumer_unit_current,
-                             consumer_unit_electric_data_tuple_list_current))
+                    week_day_date = start_datetime.date()
+                    for index in range(0, 7):
+                        week_day_name, electric_data_value =\
+                            consumer_unit_electric_data_tuple_list_current[index]
+
+                        consumer_unit_electric_data_tuple_list_current[index] =\
+                            (week_day_date, electric_data_value)
+
+                        week_day_date += timedelta(days=1)
+
+                    consumer_units_data_tuple_list.append(
+                        (consumer_unit_current,
+                         consumer_unit_electric_data_tuple_list_current))
 
                     consumer_unit_counter += 1
                     consumer_unit_get_key = "consumer-unit%02d" %\
@@ -607,35 +619,37 @@ def render_cumulative_comparison_in_week(request):
 
             consumer_unit_electric_data_total_tuple_list = []
             for consumer_unit, electric_data_tuple_list in\
-            consumer_units_data_tuple_list:
+                consumer_units_data_tuple_list:
+
                 consumer_unit_total =\
                 reduce(lambda x, y: x + y,
-                       [electric_data for time_interval, electric_data in
+                       [electric_data_value for week_day_date, electric_data_value in
                         electric_data_tuple_list])
 
                 consumer_unit_electric_data_total_tuple_list.append(
                     (consumer_unit, consumer_unit_total))
 
                 week_day_index = 0
-                for time_interval, electric_data in electric_data_tuple_list:
+                for week_day_date, electric_data_value in electric_data_tuple_list:
                     electric_data_percentage =\
-                    0 if consumer_unit_total == 0 else electric_data /\
+                    0 if consumer_unit_total == 0 else electric_data_value /\
                                                        consumer_unit_total\
-                                                       * Decimal(100)
+                                                       * 100
 
                     week_days_data_tuple_list[week_day_index][1].append(
                         (consumer_unit,
-                         time_interval,
-                         electric_data,
+                         week_day_date,
+                         electric_data_value,
                          electric_data_percentage))
 
                     week_day_index += 1
 
             template_variables = dict()
             template_variables["week_days_data_tuple_list"] =\
-            week_days_data_tuple_list
-            template_variables["consumer_unit_electric_data_total_tuple_list"]\
-            = consumer_unit_electric_data_total_tuple_list
+                week_days_data_tuple_list
+
+            template_variables["consumer_unit_electric_data_total_tuple_list"] =\
+                consumer_unit_electric_data_total_tuple_list
 
             template_context = RequestContext(request, template_variables)
             return render_to_response(

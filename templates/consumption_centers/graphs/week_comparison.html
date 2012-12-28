@@ -19,10 +19,10 @@
             <td  width="200"></td>
         </tr>
 
-        {% for consumer_unit, time_interval, electric_data, electric_data_percentage, color_css in week_day_data_tuple_list %}
+        {% for consumer_unit, week_day_date, electric_data, electric_data_percentage, color_css in week_day_data_tuple_list %}
             <tr>
-                <td>{{ consumer_unit.building_name }}</td>
-                <td>{{ time_interval.start_datetime }}</td>
+                <td>{{ consumer_unit.building.building_name }}</td>
+                <td>{{ week_day_date }}</td>
                 <td>{{ electric_data|floatformat:2 }}</td>
                 <td>{{ electric_data_percentage|floatformat:2 }}%</td>
                 <td>

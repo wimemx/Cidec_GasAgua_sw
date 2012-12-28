@@ -38,7 +38,7 @@ class HourInstant(models.Model):
                                             verbose_name=u"Instante de Tiempo")
 
     def __unicode__(self):
-        return u"Instante: " + self.instant_datetime.strftime(u"%Y/%m/%d %H:%M")
+        return u"Instante:   " + self.instant_datetime.strftime(u"%Y/%m/%d %H:%M")
 
 
 class HourInterval(models.Model):
