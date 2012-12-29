@@ -22,3 +22,15 @@
     position: absolute;
     bottom: -200px;
 }
+#electric_unit{
+    top: 307px;
+    position: absolute;
+    left: 29px;
+    font-weight: 700;
+}
+#notice{
+    display: block;
+    margin: 0 auto;
+    text-align: center;
+    font-weight: 700;
+}

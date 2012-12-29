@@ -563,6 +563,21 @@ def render_graphics(request):
             return django.http.HttpResponse("")
 
         template_variables = dict()
+        parameter_units = dict(kWh_consumido="kWh/h",
+                               TotalkWhIMPORT="kW/h",
+                               kWL3="kW",
+                               kWL2="kW",
+                               kWL1="kW",
+                               kW="kW",
+                               I1="I",
+                               I2="I",
+                               I3="I",
+                               V1="V",
+                               V2="V",
+                               V3="V",
+                               PF="%",
+                               )
+        template_variables['electric_param'] = parameter_units[electric_data]
         cumulative_electric_data = (
         "TotalkWhIMPORT", "TotalkvarhIMPORT", "kWh", "kvarh")
         suffix_consumed = "_consumido"

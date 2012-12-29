@@ -233,7 +233,7 @@
                 {% for column in columns %}
                     data.addColumn({type:'datetime', role:'domain'},
                             "From {{ column.start_datetime_string }} To {{ column.end_datetime_string }}");
-                    data.addColumn('number', '{{ column.consumer_unit_string }}');
+                    data.addColumn('number', '{{ column.consumer_unit_string }}: De {{ column.start_datetime_string }} A {{ column.end_datetime_string }}');
                     data.addColumn({type:'boolean', role:'certainty'});
                 {% endfor %}
 
@@ -323,7 +323,7 @@
         </div>
     </div>
 </div>
-
+<span id="electric_unit">{{ electric_param }}</span>
 {% if is_cumulative_electric_data %}
     <div id="weekly_summary">
         <h1>Resumen Semanal - {{ tipo }}</h1>

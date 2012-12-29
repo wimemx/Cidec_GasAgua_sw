@@ -618,6 +618,7 @@ def render_cumulative_comparison_in_week(request):
                                          ("Domingo", [])]
 
             consumer_unit_electric_data_total_tuple_list = []
+            all_meditions = True
             for consumer_unit, electric_data_tuple_list in\
                 consumer_units_data_tuple_list:
 
@@ -641,13 +642,15 @@ def render_cumulative_comparison_in_week(request):
                          week_day_date,
                          electric_data_value,
                          electric_data_percentage))
-
+                    if not electric_data_percentage:
+                        all_meditions = False
                     week_day_index += 1
 
             template_variables = dict()
             template_variables["week_days_data_tuple_list"] =\
                 week_days_data_tuple_list
 
+            template_variables['all_meditions'] = all_meditions
             template_variables["consumer_unit_electric_data_total_tuple_list"] =\
                 consumer_unit_electric_data_total_tuple_list
 
