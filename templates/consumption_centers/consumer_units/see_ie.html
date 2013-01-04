@@ -14,7 +14,7 @@
 {% block document_ready %}
     $("a.switch").click(function(event){
     event.preventDefault();
-    var url="/buildings/status_medidor/"+$(this).attr("rel")+"/";
+    var url="/buildings/status_medidor/"+$(this).attr("rel")+"/?ref={{ industrial_eq.pk }}&see={{industrial_eq.pk}}";
     var action = $(this).attr("title");
     new Messi('&iquest;Est&aacute; seguro de que desea '+ action +' este medidor?',
     {title: action+' medidor', modal: true, buttons: [{id: 0,
@@ -127,6 +127,12 @@
 
 
     <div class="divider" id="divider_top">&nbsp;</div>
+    {% if message %}
+        <span class="notif {{ msg_type }}">
+                    {% autoescape off %}{{ message }}{% endautoescape %}
+                    <a href="#" onclick="$(this).parent().remove(); History.replaceState({}, '', ' ');">X</a>
+                </span>
+    {% endif %}
     <div id="card_container">
         <div id="user_img" class="fl">
             <img src="/static/css/images/imgs_icns/powermeter.png" alt="Medidor"/>

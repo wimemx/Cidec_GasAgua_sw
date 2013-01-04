@@ -15,9 +15,11 @@ from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.db.models.aggregates import Count
 from django.db.models import Q
 from django.db import IntegrityError
+from django.db.models import ProtectedError
 from django.utils import simplejson
-
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+
 from rbac.models import *
 from c_center.models import Cluster, ClusterCompany, CompanyBuilding
 from c_center.c_center_functions import *
@@ -244,7 +246,6 @@ def edit_role(request, id_role):
                                "&ntype=" + ntype
                     return HttpResponseRedirect(response)
             else:
-                print "regresa al formulario de alta con el mensaje de error"
                 mensaje = "Ha ocurrido un error al validar el nombre o la "\
                           "descripción del rol. Por favor verifique"
                 ntype = "fail"
@@ -257,6 +258,62 @@ def edit_role(request, id_role):
                              operations=Operation.objects.all(),
                              message=mensaje,
                              ntype=ntype)
+
+            #Users with this role
+        if not(not (has_permission(request.user, UPDATE,
+                                   "Modificar asignación de roles a "
+                                   "usuarios") and
+                    has_permission(request.user, VIEW,
+                                   "Ver usuarios")) and not request.user.is_superuser):
+            order_username = 'asc'
+            order_role = 'asc'
+            order_status = 'asc'
+            order = "user__username" #default order
+            if "order_username" in request.GET:
+                if request.GET["order_username"] == "desc":
+                    order = "-user__username"
+                    order_username = "asc"
+                else:
+                    order_username = "desc"
+            else:
+                if "order_role" in request.GET:
+                    if request.GET["order_role"] == "asc":
+                        order = "role__role_name"
+                        order_role = "desc"
+                    else:
+                        order = "-role__role_name"
+                        order_role = "asc"
+
+                if "order_status" in request.GET:
+                    if request.GET["order_status"] == "asc":
+                        order = "powermeter__status"
+                        order_status = "desc"
+                    else:
+                        order = "-powermeter__status"
+                        order_status = "asc"
+
+            lista = UserRole.objects.filter(
+                role=rol
+            ).order_by(order)
+            template_vars['order_username'] = order_username
+            template_vars['order_role'] = order_role
+            template_vars['order_status'] = order_status
+            template_vars['usuarios'] = lista
+
+            if 'msj' in request.GET:
+                template_vars['message'] = request.GET['msj']
+                template_vars['msg_type'] = request.GET['ntype']
+
+            template_vars['ver_usuarios'] = True
+            if has_permission(request.user, CREATE,
+                              "Asignar roles a usuarios")\
+            or request.user.is_superuser:
+                template_vars['show_asign'] = True
+            else:
+                template_vars['show_asign'] = False
+        else:
+            template_vars['ver_usuarios'] = False
+
         permissions = PermissionAsigment.objects.filter(role=rol)
         objects = [ob.object.pk for ob in permissions]
 
@@ -332,7 +389,60 @@ def see_role(request, id_role):
         template_vars['objs_group_perms'] = arr_ops
         template_vars['just_watch'] = "solo ver"
 
+        #Users with this role
+        if not(not (has_permission(request.user, UPDATE,
+                                   "Modificar asignación de roles a "
+                                   "usuarios") and
+                    has_permission(request.user, VIEW,
+                                   "Ver usuarios")) and not request.user.is_superuser):
+            order_username = 'asc'
+            order_role = 'asc'
+            order_status = 'asc'
+            order = "user__username" #default order
+            if "order_username" in request.GET:
+                if request.GET["order_username"] == "desc":
+                    order = "-user__username"
+                    order_username = "asc"
+                else:
+                    order_username = "desc"
+            else:
+                if "order_role" in request.GET:
+                    if request.GET["order_role"] == "asc":
+                        order = "role__role_name"
+                        order_role = "desc"
+                    else:
+                        order = "-role__role_name"
+                        order_role = "asc"
 
+                if "order_status" in request.GET:
+                    if request.GET["order_status"] == "asc":
+                        order = "powermeter__status"
+                        order_status = "desc"
+                    else:
+                        order = "-powermeter__status"
+                        order_status = "asc"
+
+            lista = UserRole.objects.filter(
+                role=rol
+            ).order_by(order)
+            template_vars['order_username'] = order_username
+            template_vars['order_role'] = order_role
+            template_vars['order_status'] = order_status
+            template_vars['usuarios'] = lista
+
+            if 'msj' in request.GET:
+                template_vars['message'] = request.GET['msj']
+                template_vars['msg_type'] = request.GET['ntype']
+
+            template_vars['ver_usuarios'] = True
+            if has_permission(request.user, CREATE,
+                              "Asignar roles a usuarios")\
+            or request.user.is_superuser:
+                template_vars['show_asign'] = True
+            else:
+                template_vars['show_asign'] = False
+        else:
+            template_vars['ver_usuarios'] = False
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("rbac/edit_role.html", template_vars_template)
@@ -345,6 +455,130 @@ def see_role(request, id_role):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+@login_required(login_url='/')
+def switch_status_user_role(request, id_ur):
+    if (not(not has_permission(
+        request.user,
+        UPDATE,
+        "Modificar asignación de roles a usuarios")
+            and not request.user.is_superuser)):
+        ur = get_object_or_404(UserRole, pk=int(id_ur))
+        if ur.status:
+            ur.status = False
+            action = "inactivo"
+        else: #if cluster.cluster_status == 0:
+            ur.status = True
+            action = "activo"
+        ur.save()
+        mensaje = "El estatus del Rol - Usuario ha cambiado a " + action
+        type = "n_success"
+        if "ref" in request.GET:
+            if "see" in request.GET:
+                page = "ver_rol"
+            else:
+                page = "editar_rol"
+            return HttpResponseRedirect("/panel_de_control/"+ page +"/"+
+                                        request.GET['ref'] +"/?msj=" + mensaje +
+                                        "&ntype=" + type)
+        return HttpResponseRedirect("/panel_de_control/roles/?msj=" + mensaje +
+                                "&ntype=" + type)
+    else:
+        datacontext = get_buildings_context(request.user)
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
+
+@login_required(login_url='/')
+def delete_user_role(request, id_ur):
+    if not(not has_permission(
+        request.user,
+        DELETE,
+        "Eliminar asignaciones de roles a usuarios")
+            and not request.user.is_superuser):
+        if "role" in request.GET:
+            ur = get_object_or_404(UserRole, pk=int(id_ur))
+            try:
+                ur.delete()
+            except ProtectedError:
+                type = "n_error"
+                mensaje = "El usuario tiene asignado este rol sobre alguna " \
+                          "entidad. Por favor elimine todas sus asignaciones " \
+                          "de permisos e intente de nuevo."
+            else:
+                type = "n_success"
+                mensaje = "El rol del usuario ha sido eliminado"
+
+            if "see" in request.GET:
+                page = "ver_rol"
+            else:
+                page = "editar_rol"
+            return HttpResponseRedirect("/panel_de_control/"+page+"/"+
+                                        request.GET['role']+"/?msj="+mensaje+
+                                        "&ntype="+type)
+        else:
+            raise Http404
+    else:
+        raise Http404
+
+@login_required(login_url='/')
+def asign_role(request, id_role):
+    if (not(not has_permission(
+        request.user,
+        CREATE,
+        "Asignar roles a usuarios") and not
+            request.user.is_superuser)) and "usr" in request.GET:
+        role = get_object_or_404(Role, pk=int(id_role))
+        user = get_object_or_404(User, pk=int(request.GET['usr']))
+        user_role, created = UserRole.objects.get_or_create(user=user, role=role)
+        ur_data = dict(pk=user_role.pk,
+                       username=user_role.user.username,
+                       role=user_role.role.role_name,
+                       status=str(user_role.status),
+                       created=str(created))
+        data = simplejson.dumps([ur_data])
+        return HttpResponse(content=data, content_type="application/json")
+    else:
+        raise Http404
+
+@login_required(login_url='/')
+def status_batch_user_role(request):
+    if has_permission(request.user,
+                      UPDATE,
+                      "Modificar asignación de roles a usuarios") or\
+       request.user.is_superuser:
+        if request.POST['actions'] != '0':
+            for key in request.POST:
+                if re.search('^userrole_\w+', key):
+                    r_id = int(key.replace("userrole_", ""))
+                    user_role = get_object_or_404(UserRole, pk=r_id)
+
+                    if user_role.status:
+                        user_role.status = False
+                    else:
+                        user_role.status = True
+
+                    user_role.save()
+
+            mensaje = "Los roles de los usuarios seleccionados han " \
+                      "cambiado su estatus correctamente"
+            type = "n_success"
+        else:
+            mensaje = str("No se ha seleccionado una acción").decode("utf-8")
+            type = "n_notif"
+        return HttpResponseRedirect("/panel_de_control/editar_rol/"+
+                                    request.GET['ref']+"/?msj="+
+                                    mensaje+"&ntype="+type)
+    else:
+        datacontext = get_buildings_context(request.user)
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 def view_roles(request):
     if not request.user.is_authenticated():

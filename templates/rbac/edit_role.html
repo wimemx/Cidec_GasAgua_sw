@@ -3,10 +3,44 @@
 {% block externalcss %}
     <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
     <link rel="stylesheet" href="/static/css/forms/rbac.css" type="text/css" />
+    <link href="/static/js/external/messi/messi.css" rel="stylesheet" type="text/css" media="screen" />
+    <link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
 {% endblock %}
-{% if not just_watch %}
+
     {% block externaljs %}
+        <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+        <script src="/static/js/external/messi/messi.min.js"></script>
         <script type="text/javascript">
+            function form_row(pm, alias, role, status){
+                var row = '<td>';
+                row += '<input type="checkbox" id="userrole_'+pm+'" name="userrole_'+pm+'"/>';
+                row += '<label for="user_'+pm+'">';
+                row += '<a href="/panel_de_control/ver_usuario/'+pm+'/">';
+                row += alias;
+                row += '</a></label></td>';
+                row += '<td class="c">'+role+'</td>';
+                row += '<td class="c"><a href="#" rel="'+pm+'"';
+                if (status == "True"){
+                    row += 'class="switch active_switch" title="desactivar"';
+                }else{
+                    row += 'class="switch inactive_switch" title="activar"';
+                }
+                row += '></a></td>';
+                row += '<td class="c"><a class="remove" title="Eliminar rol de usuario" rel="'+pm+'">Desvincular rol de usuario</a></td>';
+
+                var tabla = $("#users_table");
+                if($("#users_table tr").size()>1)
+                    if(tabla.find("tr:last-child").hasClass("row1")){
+                        tabla.append('<tr class="row2">' + row + '</tr>');
+                    }
+                    else{
+                        tabla.append('<tr class="row1">' + row + '</tr>');
+                    }
+                else{
+                    tabla.append('<tr class="row1">' + row + '</tr>');
+                }
+                tabla.find("tr:last-child input").uniform();
+            }
             function check_if_exists(checkbox){
 
                 var id_check = parseInt(checkbox.attr("id"));
@@ -141,6 +175,79 @@
         </script>
     {% endblock %}
 {% block document_ready %}
+    $( "#user" ).autocomplete({
+        source: "/rbac/search_users/",
+        minLength: 2,
+        select: function( event, ui ) {
+            $("#usuario").val(ui.item.pk);
+            $("#asign").show();
+        }
+    }).keyup(function(e){
+        if($.trim($(this).val())==''){
+            $("#usuario").val();
+            $("#asign").hide();
+        }
+        if(e.keyCode!=13){
+            $("#id_pm").val("");
+            $("#asign").hide();
+        }
+    });
+
+    var msg = '<span class="notif n_error">Ocurri&oacute; un error al procesar la petici&oacute;n, revise los datos y verifique si tiene los permisos necesarios<a href="#" onclick="$(this).parent().remove();">X</a></span>';
+    $("#asign").click(function(e){
+        e.preventDefault();
+        History.replaceState({}, '', ' ');
+        $(".notif").remove();
+        $.ajax({
+            url: "/panel_de_control/asign_role/{{ rol.pk }}/?usr="+$("#usuario").val(),
+            global: false,
+            type: "GET",
+            dataType: "json",
+            statusCode: {
+                404: function() {
+                        $("#search_user").append(msg);
+                }
+            },
+            success: function(msg){
+                $("#user").val("");
+                $("#id_pm").val("");
+                var registro = msg[0];
+                if (registro.created == "True")
+                    form_row(registro.pk, registro.username, registro.role, registro.status);
+            },
+        });
+    });
+
+
+    $("a.switch").live('click',function(event){
+    event.preventDefault();
+    var url="/panel_de_control/user_role_status/"+$(this).attr("rel")+"/?ref={{ rol.pk }}{% if just_watch %}&see=1{% endif %}";
+    var action = $(this).attr("title");
+    new Messi('&iquest;Est&aacute; seguro de que desea '+ action +' este rol de usuario?',
+    {title: action+' rol de usuario', modal: true, buttons: [{id: 0,
+    label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
+    }],
+    callback: function(val) {
+    if(val=='Y'){
+    document.location.href=url;
+    } else return false; }
+    });
+    });
+
+    $(".remove").live("click", function(event){
+    event.preventDefault();
+    var url="/panel_de_control/delete_user_role/"+$(this).attr("rel")+"/?role={{ rol.pk }}{% if just_watch %}&see=1{% endif %}"
+    new Messi('&iquest;Est&aacute; seguro de que desea desvincular el presente rol para el usuario?',
+    {title: 'Desvincular Rol', modal: true, buttons: [{id: 0,
+    label: 'Cancelar', val: 'N'},{id: 1, label: 'Desvincular', val: 'Y'
+    }],
+    callback: function(val) {
+    if(val=='Y'){
+    document.location.href=url;
+    } else return false; }
+    });
+    });
+
 
             $("#add_permission").click(function(e){
                 e.preventDefault();
@@ -275,7 +382,7 @@
             });
             $("a.back").click(function(e){e.preventDefault(); History.back();});
 {% endblock %}
-{% endif %}
+
 
 {% block contenido %}
     <div id="bread_crumbs">
@@ -294,12 +401,12 @@
 
         <div class="divider" id="divider_top">&nbsp;</div>
         <div id="form_container">
-            {% if message %}
-                <span class="notif {% if msg_type == "success" %}n_success{% else %}n_error{% endif %}">
+        {% if message %}
+            <span class="notif {{ msg_type }}">
                     {% autoescape off %}{{ message }}{% endautoescape %}
-                <a href="#" onclick="$(this).parent().remove();">X</a>
+                    <a href="#" onclick="$(this).parent().remove(); History.replaceState({}, '', ' ');">X</a>
                 </span>
-            {% endif %}
+        {% endif %}
             <p class="description">
                 Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
                 <br/>
@@ -331,6 +438,7 @@
                         <a href="#" class="back" rel="cancel">cancelar</a>
                     </p>
                 </div>
+                
             {% endif %}
                 <div id="add_permissions"{% if just_watch %} style="display: block;" {% endif %}>
                     <span id="rolename">{{  rol.role_name }}</span>
@@ -363,7 +471,7 @@
                 {% if just_watch %}
                     <div class="c" style="margin-top: 4em;">
                         <a href="/panel_de_control/editar_rol/{{ rol.pk }}/" class="aqua_btn">
-                            Editar rol
+                            Editar rol{% if show_asign %} / Asignar usuarios{% endif %}
                         </a>
                     </div>
                 {% endif %}
@@ -416,6 +524,96 @@
                 </div>
 
             </form>
+            {% endif %}
+            {% if ver_usuarios %}
+                <div id="user_roles" class="g12">
+                    {% if not just_watch %}
+
+                    <div id="search_user" class="g12">
+
+                        <label class="g2">
+                            Asignar rol
+                        </label>
+                        <input type="text" name="user" id="user" class="g7"/>
+                        <input type="hidden" id="usuario" name="usuario"/>
+
+                        <a href="#" title="Asignar rol al usuario" id="asign" class="g2">
+                            <span class="plus"></span>
+                            Asignar rol al usuario
+                        </a>
+                    </div>
+                    {% endif %}
+                    <form id="operations_batch" action="/panel_de_control/status_batch_user_role/?ref={{ rol.pk }}" method="post">
+                    {% csrf_token %}
+                    <span class="strong label">Usuarios con rol '{{ rol.role_name }}':</span>
+                    <div id="grid_container">
+                        <table id="users_table">
+                            <thead>
+                            <tr>
+                                <th style="width: 25%;">
+                                    <a href="#" id="sort_username" rel="{{ order_username }}">
+                                        Usuario
+                                        <span class="sort"></span>
+                                    </a>
+                                </th>
+                                <th style="width: 25%;">
+                                    <a href="#" id="sort_role" rel="{{ order_role }}">
+                                        Rol
+                                        <span class="sort"></span>
+                                    </a>
+                                </th>
+                                <th style="width: 25%;">
+                                    <a href="#" id="sort_status" rel="{{ order_status }}">
+                                        Estatus
+                                        <span class="sort"></span>
+                                    </a>
+                                </th>
+                                <th style="width: 25%;">Acciones</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for user in usuarios %}
+
+                                <tr class="{% cycle 'row1' 'row2' %}">
+                                    <td>
+                                        {% if not just_watch %}
+                                            <input type="checkbox" id="userrole_{{ user.pk }}"
+                                                   name="userrole_{{ user.pk }}"/>
+                                        {% endif %}
+                                        <label for="user_{{ user.user.pk }}">
+                                            <a href="/panel_de_control/ver_usuario/{{ user.user.pk }}/">
+                                                {{ user.user.username }}
+                                            </a>
+                                        </label>
+                                    </td>
+                                    <td class="c">
+                                        {{ user.role.role_name }}
+                                    </td>
+                                    <td class="c">
+                                        <a href="#" rel="{{ user.pk }}" {% if user.status == 1 %}class="switch active_switch" title="desactivar"{% else %}class="switch inactive_switch" title="activar"{% endif %}>
+                                        </a>
+                                    </td>
+                                    <td class="c">
+                                        <a class="remove" title="Eliminar rol de usuario" rel="{{ user.pk }}">Desvincular rol de usuario</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        {% if not just_watch %}
+                        <div id="table_footer">
+                            <select id="actions" name="actions">
+                                <option value="0">Elije una Acci&oacute;n</option>
+                                <option value="status">Habilitar/Deshabilitar</option>
+                            </select>
+                            <button class="fl aqua_btn" id="aplicar">Aplicar a la
+                                selecci&oacute;n</button>
+
+                        </div>
+                        {% endif %}
+                    </div>
+                    </form>
+                </div>
             {% endif %}
         </div>
 

@@ -2110,6 +2110,11 @@ def status_powermeter(request, id_powermeter):
                   + " ha cambiado a " + str_status
         type = "n_success"
         if 'ref' in request.GET:
+            if 'see' in request.GET:
+                return HttpResponseRedirect("/buildings/ver_ie/" +
+                                            request.GET['ref'] + "/?msj=" +
+                                            mensaje +
+                                            "&ntype=" + type)
             return HttpResponseRedirect("/buildings/editar_ie/" +
                                         request.GET['ref'] + "/?msj=" + mensaje +
                                         "&ntype=" + type)
@@ -3312,7 +3317,7 @@ def status_buildingtype(request, id_btype):
             str_status = "Activo"
         else: #if building_type.building_type_status == 1:
             building_type.building_type_status = 0
-            str_status = "Activo"
+            str_status = "Inactivo"
 
         building_type.save()
         mensaje = "El estatus del tipo de edificio " + building_type.building_type_name + " ha cambiado a " + str_status
@@ -5753,9 +5758,6 @@ def see_ie(request, id_ie):
             order_serial = 'asc'
             order_model = 'asc'
             order_status = 'asc'
-
-
-
             order = "powermeter__powermeter_anotation" #default order
             if "order_alias" in request.GET:
                 if request.GET["order_alias"] == "desc":
@@ -5826,12 +5828,70 @@ def see_ie(request, id_ie):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+@login_required(login_url='/')
+def status_ie(request, id_ie):
+    if has_permission(request.user,
+                      UPDATE,
+                      "Modificar equipos industriales") or\
+       request.user.is_superuser:
+        ind_eq = get_object_or_404(IndustrialEquipment, pk=id_ie)
+        if ind_eq.status:
+            ind_eq.status = False
+            str_status = "Activo"
+        else:
+            ind_eq.status = True
+            str_status = "Activo"
+        ind_eq.save()
+        mensaje = "El estatus del equipo industrial " + ind_eq.alias + ", ha cambiado a " + str_status
+        type = "n_success"
 
-def status_ie(request):
-    pass
+        return HttpResponseRedirect(
+            "/buildings/industrial_equipments/?msj=" + mensaje +
+            "&ntype=" + type)
+    else:
+        datacontext = get_buildings_context(request.user)
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
-def status_batch_ie():
-    pass
+@login_required(login_url='/')
+def status_batch_ie(request):
+    if has_permission(request.user,
+                      UPDATE,
+                      "Modificar equipos industriales") or\
+       request.user.is_superuser:
+        if request.POST['actions'] != '0':
+            for key in request.POST:
+                if re.search('^equipo_\w+', key):
+                    r_id = int(key.replace("equipo_", ""))
+                    equipo_ind = get_object_or_404(IndustrialEquipment, pk=r_id)
+
+                    if equipo_ind.status:
+                        equipo_ind.status = False
+                    else:
+                        equipo_ind.status = True
+
+                    equipo_ind.save()
+
+            mensaje = "Los equipos industriales seleccionados han "\
+                      "cambiado su estatus correctamente"
+            type = "n_success"
+        else:
+            mensaje = str("No se ha seleccionado una acción").decode("utf-8")
+            type = "n_notif"
+        return HttpResponseRedirect("/buildings/industrial_equipments/?msj="+
+                                    mensaje+"&ntype="+type)
+    else:
+        datacontext = get_buildings_context(request.user)
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
 
 @login_required(login_url='/')
 def view_ie(request):
@@ -5913,11 +5973,6 @@ def view_ie(request):
         return render_to_response("consumption_centers/consumer_units/ie_list.html",
                                   template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
-        template_vars = {}
-        if datacontext:
-            template_vars = {"datacontext": datacontext}
-        template_vars["sidebar"] = request.session['sidebar']
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 

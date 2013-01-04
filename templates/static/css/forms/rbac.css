@@ -282,3 +282,15 @@ label.input span.incorrect,label.input span.correct{
     right: -34px;
     top: 10px;
 }
+#form_container span.strong.label{
+    color: #6E6E6E;
+}
+#search_user label, #search_user a#asign {
+    float: left;
+    margin-top: 0;
+    font-weight: 700;
+    color: #6C6C6C;
+}
+#user_roles{
+    margin-top: 2em;
+}
