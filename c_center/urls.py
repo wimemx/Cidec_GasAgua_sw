@@ -207,4 +207,7 @@ urlpatterns = patterns('',
                            'c_center.views.see_ie'),
                        url(r'^buscar_pm/',
                            'c_center.views.search_pm'),
+
+                       url(r'^configurar_equipo_industrial/(?P<id_ie>\d+)/',
+                           'c_center.views.configure_ie'),
 )

@@ -1826,6 +1826,7 @@ def add_powermeter(request):
 
                 )
                 newPowerMeter.save()
+                ProfilePowermeter(powermeter=newPowerMeter).save()
 
                 template_vars["message"] = "Medidor creado exitosamente"
                 template_vars["type"] = "n_success"
@@ -4762,7 +4763,9 @@ def status_partofbuilding(request, id_bpart):
 
         building_part.save()
 
-        mensaje = "El estatus de la parte de edificio " + building_part.part_of_building_name + " ha cambiado a " + str_status
+        mensaje = "El estatus de la parte de edificio " + \
+                  building_part.part_of_building_name + " ha cambiado a " + \
+                  str_status
         type = "n_success"
 
         return HttpResponseRedirect(
@@ -4997,7 +5000,8 @@ def add_building(request):
                 #Se obtiene el objeto de la region
                 regionObj = get_object_or_404(Region, pk=b_region_id)
 
-                countryObj, stateObj, municipalityObj, neighborhoodObj, streetObj = location_objects(
+                countryObj, stateObj, municipalityObj, neighborhoodObj, \
+                streetObj = location_objects(
                     b_country_id, b_country_name,
                     b_state_id, b_state_name, b_municipality_id,
                     b_municipality_name, b_neighborhood_id, b_neighborhood_name,
@@ -5007,8 +5011,11 @@ def add_building(request):
                 formatted_address = streetObj.calle_name + " " + b_ext
                 if b_int:
                     formatted_address += "-" + b_int
-                formatted_address += " Colonia: " + neighborhoodObj.colonia_name + " " + municipalityObj.municipio_name
-                formatted_address += " " + stateObj.estado_name + " " + countryObj.pais_name + "C.P." + b_zip
+                formatted_address += " Colonia: " + \
+                                     neighborhoodObj.colonia_name + " " + \
+                                     municipalityObj.municipio_name
+                formatted_address += " " + stateObj.estado_name + " " + \
+                                     countryObj.pais_name + "C.P." + b_zip
 
                 #Se da de alta el edificio
                 newBuilding = Building(
@@ -5139,7 +5146,9 @@ def edit_building(request, id_bld):
         string_attributes = ''
         if building_attributes:
             for bp_att in building_attributes:
-                string_attributes += '<div  class="extra_attributes_div"><span class="delete_attr_icon"><a href="#eliminar" class="delete hidden_icon" ' +\
+                string_attributes += '<div  class="extra_attributes_div">' \
+                                     '<span class="delete_attr_icon">' \
+                                     '<a href="#eliminar" class="delete hidden_icon" ' +\
                                      'title="eliminar atributo"></a></span>' +\
                                      '<span class="tip_attribute_part">' +\
                                      bp_att.building_attributes.building_attributes_type.building_attributes_type_name +\
@@ -5296,7 +5305,8 @@ def edit_building(request, id_bld):
                 #Se obtiene el objeto de la region
                 regionObj = get_object_or_404(Region, pk=b_region_id)
 
-                countryObj, stateObj, municipalityObj, neighborhoodObj, streetObj = location_objects(
+                countryObj, stateObj, municipalityObj, neighborhoodObj, \
+                streetObj = location_objects(
                     b_country_id, request.POST.get('b_country'),
                     b_state_id, request.POST.get('b_state'), b_municipality_id,
                     request.POST.get('b_municipality'), b_neighborhood_id,
@@ -5307,8 +5317,11 @@ def edit_building(request, id_bld):
                 formatted_address = streetObj.calle_name + " " + b_ext
                 if b_int:
                     formatted_address += "-" + b_int
-                formatted_address += " Colonia: " + neighborhoodObj.colonia_name + " " + municipalityObj.municipio_name
-                formatted_address += " " + stateObj.estado_name + " " + countryObj.pais_name + "C.P." + b_zip
+                formatted_address += " Colonia: " + \
+                                     neighborhoodObj.colonia_name + " " + \
+                                     municipalityObj.municipio_name
+                formatted_address += " " + stateObj.estado_name + " " + \
+                                     countryObj.pais_name + "C.P." + b_zip
                 if b_mt2 == '':
                     b_mt2 = 0
                 #Se edita la info el edificio
@@ -5350,10 +5363,12 @@ def edit_building(request, id_bld):
                 for b_type in b_type_arr:
                     #Se obtiene el objeto del tipo de edificio
                     typeObj = get_object_or_404(BuildingType, pk=b_type)
+                    b_name = buildingObj.building_name + " - " + \
+                             typeObj.building_type_name
                     newBuildingTypeBuilding = BuildingTypeForBuilding(
                         building=buildingObj,
                         building_type=typeObj,
-                        building_type_for_building_name=buildingObj.building_name + " - " + typeObj.building_type_name
+                        building_type_for_building_name=b_name
                     )
                     newBuildingTypeBuilding.save()
 
@@ -5368,7 +5383,6 @@ def edit_building(request, id_bld):
                         atr_value_complete = request.POST.get(key)
                         atr_value_arr = atr_value_complete.split(',')
                         #Se obtiene el objeto tipo de atributo
-                        #attribute_type_obj = BuildingAttributesType.objects.get(pk = atr_value_arr[0])
                         #Se obtiene el objeto atributo
                         attribute_obj = BuildingAttributes.objects.get(
                             pk=atr_value_arr[1])
@@ -5578,7 +5592,8 @@ def status_building(request, id_bld):
 
         building.save()
 
-        mensaje = "El estatus del edificio " + building.building_name + " ha cambiado a " + str_status
+        mensaje = "El estatus del edificio " + building.building_name + \
+                  " ha cambiado a " + str_status
         type = "n_success"
 
         return HttpResponseRedirect("/buildings/edificios/?msj=" + mensaje +
@@ -5629,7 +5644,8 @@ def add_ie(request):
             template_vars["type"] = type
 
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("consumption_centers/consumer_units/ind_eq.html", template_vars_template)
+        return render_to_response(
+            "consumption_centers/consumer_units/ind_eq.html", template_vars_template)
     else:
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
@@ -5729,7 +5745,9 @@ def edit_ie(request, id_ie):
 
 
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("consumption_centers/consumer_units/ind_eq.html", template_vars_template)
+        return render_to_response(
+            "consumption_centers/consumer_units/ind_eq.html",
+            template_vars_template)
     else:
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
@@ -5842,7 +5860,8 @@ def status_ie(request, id_ie):
             ind_eq.status = True
             str_status = "Activo"
         ind_eq.save()
-        mensaje = "El estatus del equipo industrial " + ind_eq.alias + ", ha cambiado a " + str_status
+        mensaje = "El estatus del equipo industrial " + ind_eq.alias + \
+                  ", ha cambiado a " + str_status
         type = "n_success"
 
         return HttpResponseRedirect(
@@ -6042,3 +6061,91 @@ def detach_pm(request, id_ie):
     else:
         raise Http404
 
+@login_required(login_url='/')
+def configure_ie(request, id_ie):
+    datacontext = get_buildings_context(request.user)
+    template_vars = {}
+
+    if datacontext:
+        template_vars["datacontext"] = datacontext
+
+    template_vars["sidebar"] = request.session['sidebar']
+    template_vars["empresa"] = request.session['main_building']
+    template_vars["company"] = request.session['company']
+
+    if has_permission(request.user, VIEW,
+                      "Ver equipos industriales") or request.user.is_superuser:
+        ie = get_object_or_404(IndustrialEquipment, pk=id_ie)
+        template_vars['ie'] = ie
+        template_vars['last_changed'] = ie.last_changed
+        ie_pm = PowermeterForIndustrialEquipment.objects.filter(
+            industrial_equipment=ie)
+        pms = [pm.powermeter.pk for pm in ie_pm]
+        powermeters = ProfilePowermeter.objects.filter(
+            pk__in=pms)
+        tz = timezone.get_current_timezone()
+        if request.method == "POST":
+            settings_pm = []
+            template_vars['powermeters'] = []
+            for pm in powermeters:
+
+                read_time_rate = request.POST['read_time_rate_' + str(pm.pk)]
+                send_time_rate = request.POST['send_time_rate_' + str(pm.pk)]
+                initial_send_time = request.POST['initial_send_time_h_' +
+                                                 str(pm.pk)]
+                send_time_duration = request.POST['send_time_duration_' +
+                                                  str(pm.pk)]
+                pm.read_time_rate = read_time_rate
+                pm.send_time_rate = send_time_rate
+                h = initial_send_time.split(":")
+                hora_ = datetime.time(int(h[0]), int(h[1]))
+                hora = variety.convert_to_utc(hora_, tz)
+                pm.initial_send_time = hora[0]
+                pm.send_time_duration = send_time_duration
+                pm.save()
+                template_vars['powermeters'].append(
+                    dict(pk=pm.pk,
+                         anotation=pm.powermeter.powermeter_anotation,
+                         read_time_rate=pm.read_time_rate,
+                         send_time_rate=pm.send_time_rate,
+                         initial_send_time=hora_,
+                         send_time_duration=pm.send_time_duration
+                        ))
+
+                settings_pm.append(dict(identifier = pm.identifier,
+                                        read_time_rate=read_time_rate,
+                                        send_time_rate=send_time_rate,
+                                        initial_send_time=str(hora[0]),
+                                        send_time_duration=send_time_duration
+                                        ))
+            ie.monitor_time_rate = request.POST['monitor_time_rate']
+            ie.check_config_time_rate = request.POST['check_config_time_rate']
+            ie.has_new_config = True
+            ie.save()
+            settings_ie = [dict(monitor_time_rate=ie.monitor_time_rate,
+                                check_config_time_rate=ie.check_config_time_rate,
+                                powermeters=settings_pm)]
+            ie.new_config = simplejson.dumps(settings_ie)
+            ie.save()
+            template_vars['message'] = "El equipo industrial ha guardado su" \
+                                       " configuración correctamente"
+            template_vars['msg_type'] = "n_success"
+        else:
+            template_vars['powermeters'] = []
+            for pm in powermeters:
+                time = variety.convert_from_utc(pm.initial_send_time, tz)
+                template_vars['powermeters'].append(
+                    dict(pk=pm.pk,
+                         anotation=pm.powermeter.powermeter_anotation,
+                         read_time_rate=pm.read_time_rate,
+                         send_time_rate=pm.send_time_rate,
+                         initial_send_time=time,
+                         send_time_duration=pm.send_time_duration
+                ))
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response(
+            "consumption_centers/consumer_units/configure_times.html",
+            template_vars_template)
+    else:
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)

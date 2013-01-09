@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import pytz
 from decimal import Decimal
 import decimal
 from decimal import InvalidOperation
@@ -243,3 +244,30 @@ def scale_dimensions(width, height, longest_side):
         ratio = longest_side*1./height
         return int(width*ratio), int(height*ratio)
     return width, height
+
+def convert_to_utc(time, tz):
+    """this returns the offset in int form as well"""
+    now_dt = datetime.utcnow()
+    #get a date object
+    date_dt = now_dt.date()
+    #combine the current date object with our given time object
+    dt = datetime.combine(date_dt, time)
+    #get an timezone object for the source timezone
+    src_tz = pytz.timezone(str(tz))
+    #stamp the source datetime object with the src timezone
+    src_dt = src_tz.localize(dt)
+    #get the offset from utc to given timezone
+    offset = str(int(src_dt.strftime("%z"))).rstrip('0')
+    #convert the source datetime object to
+    utc_dt = src_dt.astimezone(pytz.utc)
+    #return the converted time and the offset in integer format
+    return utc_dt.time(), int(offset)
+
+def convert_from_utc(time, tz):
+    now_dt = datetime.now()
+    date = now_dt.date()
+    dt = datetime.combine(date, time)
+    dest = pytz.timezone(str(tz))
+    dt = dt.replace(tzinfo=pytz.utc)
+    dest_dt = dt.astimezone(dest)
+    return dest_dt.time()

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from django.db import models
 import datetime
+import hashlib
+import variety
 from location.models import Pais, Estado, Municipio, Colonia, Calle, Region
 from electric_rates.models import ElectricRates, ElectricRatesPeriods
 
@@ -278,6 +280,10 @@ class ProfilePowermeter(models.Model):
     initial_send_time = models.TimeField(auto_now_add=True)
     send_time_duration = models.IntegerField(default=300)
     realtime = models.BooleanField(default=False)
+    identifier = models.TextField(max_length=50,
+                                  default=hashlib.md5(
+                                      variety.random_string_generator(30)
+                                  ).hexdigest())
 
     def __unicode__(self):
         return self.powermeter.powermeter_anotation
@@ -736,7 +742,7 @@ class IndustrialEquipment(models.Model):
     server = models.CharField(max_length=256, blank=True, null=True)
     last_changed = models.DateTimeField(auto_now=True)
     realtime = models.BooleanField(default=False)
-    status = models.BooleanField(default=False)
+    status = models.BooleanField(default=True)
 
     def __unicode__(self):
         return self.alias

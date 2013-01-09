@@ -17,6 +17,7 @@ from collections import defaultdict
 #local application/library specific imports
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
+from django.db.models import Q
 from c_center.models import ProfilePowermeter, ElectricData, ElectricDataTemp
 from c_center.views import main_page, week_report_kwh
 from rbac.models import DataContextPermission, Object, PermissionAsigment, UserRole, GroupObject
@@ -337,34 +338,39 @@ def data_replication(
     pass
 
 def data_multiplier_3000():
-    todos_los_datos = ElectricDataTemp.objects.filter(medition_date__gte=datetime.datetime(2012,11,11), TotalkWhIMPORT__lte=100)
-    for dato in todos_los_datos:
+    todos_los_datos = ElectricDataTemp.objects.filter(TotalkWhIMPORT__gt=1000000)
+    #datos = ElectricDataTemp.objects.filter(TotalkWhIMPORT__gt=30000, profile_powermeter__powermeter__powermeter_anotation__icontains="cidec").filter(Q(medition_date__lt=datetime.datetime(2012, 12, 14)), Q(medition_date__gt=datetime.datetime(2012, 12, 12)))
+    #datos = ElectricDataTemp.objects.filter(TotalkWhIMPORT__gt=51000, profile_powermeter__powermeter__powermeter_anotation__icontains="cidec").filter(Q(medition_date__lte=datetime.datetime(2012, 12, 13)), Q(medition_date__gt=datetime.datetime(2012, 12, 11)))
+    datos = ElectricDataTemp.objects.filter(TotalkWhIMPORT__gte=32000, profile_powermeter__powermeter__powermeter_anotation__icontains="cidec").filter(Q(medition_date__lte=datetime.datetime(2012, 12, 14)), Q(medition_date__gt=datetime.datetime(2012, 12, 12)))
+    for dato in datos:
         print dato.pk, dato.TotalkWhIMPORT, dato.TotalkvarhIMPORT, dato.kWhL1
         print dato.kWhL2, dato.kwhL3, dato.kvarhL1, dato.kvarhL2, dato.kvarhL3
         print dato.kVAhL1, dato.kVAhL2, dato.kVAhL3
 
         if dato.TotalkWhIMPORT and dato.TotalkWhIMPORT>0:
-            dato.TotalkWhIMPORT *= 1000
+            dato.TotalkWhIMPORT /= 1000
         if dato.TotalkvarhIMPORT and dato.TotalkvarhIMPORT>0 and dato.TotalkvarhIMPORT<10000000000:
-            dato.TotalkvarhIMPORT *= 1000
+                dato.TotalkvarhIMPORT /= 1000
+        if dato.kvahTOTAL and dato.kvahTOTAL>40000 and dato.kvahTOTAL<10000000000:
+            dato.kvahTOTAL /= 1000
         if dato.kWhL1 and dato.kWhL1>0:
-            dato.kWhL1 *= 1000
+            dato.kWhL1 /= 1000
         if dato.kWhL2 and dato.kWhL2>0:
-            dato.kWhL2 *= 1000
+            dato.kWhL2 /= 1000
         if dato.kwhL3 and dato.kwhL3>0:
-            dato.kwhL3 *= 1000
+            dato.kwhL3 /= 1000
         if dato.kvarhL1 and dato.kvarhL1>0:
-            dato.kvarhL1 *= 1000
+            dato.kvarhL1 /= 1000
         if dato.kvarhL2 and dato.kvarhL2>0:
-            dato.kvarhL2 *= 1000
+            dato.kvarhL2 /= 1000
         if dato.kvarhL3 and dato.kvarhL3>0:
-            dato.kvarhL3 *= 1000
+            dato.kvarhL3 /= 1000
         if dato.kVAhL1 and dato.kVAhL1>0:
-            dato.kVAhL1 *= 1000
+            dato.kVAhL1 /= 1000
         if dato.kVAhL2 and dato.kVAhL2>0:
-            dato.kVAhL2 *= 1000
+            dato.kVAhL2 /= 1000
         if dato.kVAhL3 and dato.kVAhL3>0:
-            dato.kVAhL3 *= 1000
+            dato.kVAhL3 /= 1000
         dato.save()
         print dato
     print "EXITO!!!!!!"

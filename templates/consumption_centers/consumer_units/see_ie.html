@@ -10,6 +10,25 @@
 {% endblock %}
 {% block externaljs %}
     <script src="/static/js/external/messi/messi.min.js"></script>
+    <script type="text/javascript">
+    function order_column(column){
+        var column_n = "order_" + column;
+        var order = $("#sort_"+column).attr("rel");
+        var get = getUrlVars();
+        var base_url = window.location.pathname;
+        base_url+="?" + column_n + "="+order;
+        if(get.length>0){
+            if (get[0]!=window.location.protocol+"//"+window.location.host+window.location.pathname){
+                for(var i=0; i<get.length; i++){
+                    if (get[i]!="order_alias" && get[i]!="order_model" && get[i]!="order_status" && get[i]!="order_serial"){
+                        base_url+="&"+get[i]+"="+get[get[i]];
+                    }
+                }
+            }
+        }
+        window.location = base_url;
+    }
+    </script>
 {% endblock %}
 {% block document_ready %}
     $("a.switch").click(function(event){
@@ -28,84 +47,20 @@
     });
 
     $("#sort_alias").click(function(e){
-    e.preventDefault();
-    var get = getUrlVars();
-
-    var base_url = window.location.pathname;
-    base_url+="?order_alias="+$("#sort_alias").attr("rel");
-    if(get.length>0){
-    if (get[0]!=window.location.protocol+"//"+window.location
-    .host+window.location.pathname){
-    for(var i=0; i<get.length; i++){
-    if (get[i]!="order_alias" && get[i]!="order_model" && get[i]!="order_status" && get[i]!="order_serial"){
-    base_url+="&"+get[i]+"="+get[get[i]];
-    }
-    }
-    }
-    }
-    window.location = base_url;
+        e.preventDefault();
+        order_column("alias");
     });
     $("#sort_model").click(function(e){
-    e.preventDefault();
-    var get = getUrlVars();
-
-    var base_url = window.location.pathname;
-    base_url+="?order_model="+$("#sort_model").attr("rel");
-    if(get.length>0){
-    if (get[0]!=window.location.protocol+"//"+window.location
-    .host+window.location.pathname){
-    for(var i=0; i<get.length; i++){
-    if (get[i]!="order_alias" && get[i]!="order_model" && get[i]!="order_status" && get[i]!="order_serial"){
-    base_url+="&"+get[i]+"="+get[get[i]];
-    }
-    }
-    }
-
-    }
-
-    window.location = base_url;
+        e.preventDefault();
+        order_column("model");
     });
-
     $("#sort_status").click(function(e){
-    e.preventDefault();
-    var get = getUrlVars();
-
-    var base_url = window.location.pathname;
-    base_url+="?order_status="+$("#sort_status").attr("rel");
-    if(get.length>0){
-    if (get[0]!=window.location.protocol+"//"+window.location
-    .host+window.location.pathname){
-    for(var i=0; i<get.length; i++){
-    if (get[i]!="order_alias" && get[i]!="order_model" && get[i]!="order_status" && get[i]!="order_serial"){
-    base_url+="&"+get[i]+"="+get[get[i]];
-    }
-    }
-    }
-
-    }
-
-    window.location = base_url;
+        e.preventDefault();
+        order_column("status");
     });
-
     $("#sort_serial").click(function(e){
-    e.preventDefault();
-    var get = getUrlVars();
-
-    var base_url = window.location.pathname;
-    base_url+="?order_serial="+$("#sort_serial").attr("rel");
-    if(get.length>0){
-    if (get[0]!=window.location.protocol+"//"+window.location
-    .host+window.location.pathname){
-    for(var i=0; i<get.length; i++){
-    if (get[i]!="order_alias" && get[i]!="order_model" && get[i]!="order_status" && get[i]!="order_serial"){
-    base_url+="&"+get[i]+"="+get[get[i]];
-    }
-    }
-    }
-
-    }
-
-    window.location = base_url;
+        e.preventDefault();
+        order_column("serial");
     });
 {% endblock %}
 

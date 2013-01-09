@@ -11,6 +11,24 @@
         <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
         <script src="/static/js/external/messi/messi.min.js"></script>
         <script type="text/javascript">
+            function order_column(column){
+                var column_n = "order_" + column;
+                var order = $("#sort_"+column).attr("rel");
+                var get = getUrlVars();
+                var base_url = window.location.pathname;
+                base_url+="?" + column_n + "="+order;
+                if(get.length>0){
+                    if (get[0]!=window.location.protocol+"//"+window.location.host+window.location.pathname){
+                        for(var i=0; i<get.length; i++){
+                            if (get[i]!="order_username" && get[i]!="order_role" && get[i]!="order_status"){
+                                base_url+="&"+get[i]+"="+get[get[i]];
+                            }
+                        }
+                    }
+                }
+                window.location = base_url;
+            }
+
             function form_row(pm, alias, role, status){
                 var row = '<td>';
                 row += '<input type="checkbox" id="userrole_'+pm+'" name="userrole_'+pm+'"/>';
@@ -381,6 +399,16 @@
                 });
             });
             $("a.back").click(function(e){e.preventDefault(); History.back();});
+    $("#sort_username").click(function(e){
+    e.preventDefault();
+    order_column("username");
+    });
+
+    $("#sort_status").click(function(e){
+    e.preventDefault();
+    order_column("status");
+    });
+
 {% endblock %}
 
 
@@ -557,10 +585,8 @@
                                     </a>
                                 </th>
                                 <th style="width: 25%;">
-                                    <a href="#" id="sort_role" rel="{{ order_role }}">
                                         Rol
-                                        <span class="sort"></span>
-                                    </a>
+
                                 </th>
                                 <th style="width: 25%;">
                                     <a href="#" id="sort_status" rel="{{ order_status }}">

@@ -1,0 +1,32 @@
+#form_container{
+    width: 900px;
+}
+.ui-spinner {position: relative; }
+.ui-spinner-buttons {position: absolute; top: 0px !important;}
+.ui-spinner-button {overflow: hidden}
+.ui-spinner-button{
+    height: 12px !important;
+}
+.integer{
+    width: 29px !important;
+    height: 21px !important;
+}
+#pm_settings{
+    width: 90%;
+    margin: 0 auto;
+    display: none;
+}
+.initial_send_time_h{
+    width: 45px;
+    text-align: center;
+}
+.pm{
+    margin: 1em;
+    background: #dedede;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+}
+.pm h3{
+    padding: 5px;
+}
