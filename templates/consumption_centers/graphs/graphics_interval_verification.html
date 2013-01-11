@@ -1,0 +1,44 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+    <head>
+
+        <title>Graphics Verification</title>
+    </head>
+    <body>
+        <div id="wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha y Hora de Medición Inicial Ajustada</th>
+                        <th>ID de Medición Inicial</th>
+                        <th>Fecha y Hora de Medición Inicial Real</th>
+                        <th>Valor de Medición Inicial</th>
+                        <th>Fecha y Hora de Medición Final Ajustada</th>
+                        <th>ID de Medición Final</th>
+                        <th>Fecha y Hora de Medición Final Real</th>
+                        <th>Valor de Medición Final</th>
+                        <th>Fecha y Hora de Intervalo</th>
+                        <th>Valor de Intervalo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for initial_measure_adjusted, initial_measure_pk, initial_measure_real, initial_measure_value, final_measure_adjusted, final_measure_pk, final_measure_real, final_measure_value, interval_datetime, interval_value in electric_data_interval_raw_verification_tuple_list %}
+                        <tr>
+                            <td>{{ initial_measure_adjusted }}</td>
+                            <td>{{ initial_measure_pk }}</td>
+                            <td>{{ initial_measure_real }}</td>
+                            <td>{{ initial_measure_value }}</td>
+                            <td>{{ final_measure_adjusted }}</td>
+                            <td>{{ final_measure_pk }}</td>
+                            <td>{{ final_measure_real }}</td>
+                            <td>{{ final_measure_value }}</td>
+                            <td>{{ interval_datetime }}</td>
+                            <td>{{ interval_value }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </body>
+</html>
