@@ -279,6 +279,148 @@ def get_consumer_unit_electric_data_interval_raw_optimized(
     return electric_data_raw
 
 
+def get_consumer_unit_electric_data_interval_raw_verification(
+        electric_data_name,
+        id,
+        start,
+        end
+):
+    electric_data_raw = []
+    try:
+        electric_data_name_local =\
+        data_warehouse.views.CUMULATIVE_ELECTRIC_DATA_INVERSE[electric_data_name]
+
+    except KeyError:
+        return  electric_data_raw
+
+    try:
+        consumer_unit = c_center.models.ConsumerUnit.objects.get(pk=id)
+
+    except c_center.models.ConsumerUnit.DoesNotExist:
+        return electric_data_raw
+
+    current_timezone = django.utils.timezone.get_current_timezone()
+    start_localtime = current_timezone.localize(start)
+    start_utc = start_localtime.astimezone(django.utils.timezone.utc)
+    end_localtime = current_timezone.localize(end)
+    end_utc = end_localtime.astimezone(django.utils.timezone.utc)
+    electric_data_raw_dictionaries = c_center.models.ElectricDataTemp.objects.filter(
+        profile_powermeter=consumer_unit.profile_powermeter,
+        medition_date__gte=start_utc,
+        medition_date__lte=end_utc
+    ).order_by(
+        'medition_date'
+    ).values('id', electric_data_name_local, 'medition_date')
+
+    electric_data_raw_results_length = len(electric_data_raw_dictionaries)
+    if not electric_data_raw_results_length:
+        return electric_data_raw
+
+    electric_data_raw_hours_dictionary = dict()
+    timedelta_tolerance = timedelta(minutes=10)
+    for electric_data_raw_dictionary in electric_data_raw_dictionaries:
+        medition_id_current = electric_data_raw_dictionary['id']
+        medition_date_current = electric_data_raw_dictionary['medition_date']
+        electric_data_current = electric_data_raw_dictionary[electric_data_name_local]
+        datetime_hour_current = variety.get_hour_from_datetime(medition_date_current)
+        timedelta_current = abs(medition_date_current - datetime_hour_current)
+        if timedelta_current < timedelta_tolerance:
+            datetime_hour_current_string = datetime_hour_current.strftime("%Y-%m-%d-%H")
+            medition_id_current_stored, medition_date_current_stored, electric_data_current_stored =\
+            electric_data_raw_hours_dictionary.get(
+                datetime_hour_current_string,
+                (None,
+                 datetime.datetime.max.replace(tzinfo=django.utils.timezone.utc),
+                 None)
+            )
+
+            if abs(medition_date_current_stored - datetime_hour_current) > timedelta_current:
+                electric_data_raw_hours_dictionary[datetime_hour_current_string] =\
+                (medition_id_current, medition_date_current, electric_data_current)
+
+        datetime_hour_next = datetime_hour_current + timedelta(hours=1)
+        timedelta_next = abs(medition_date_current - datetime_hour_next)
+        if timedelta_next < timedelta_tolerance:
+            datetime_hour_next_string = datetime_hour_next.strftime("%Y-%m-%d-%H")
+            medition_id_next_stored, medition_date_next_stored, electric_data_next_stored =\
+            electric_data_raw_hours_dictionary.get(
+                datetime_hour_next_string,
+                (None,
+                 datetime.datetime.max.replace(tzinfo=django.utils.timezone.utc),
+                 None)
+            )
+
+            if abs(medition_date_next_stored - datetime_hour_next) > timedelta_next:
+                electric_data_raw_hours_dictionary[datetime_hour_next_string] =\
+                (medition_id_current, medition_date_current, electric_data_current)
+
+    hour_delta = timedelta(hours=1)
+    datetime_current_utc = datetime.datetime(year=start_utc.year,
+        month=start_utc.month,
+        day=start_utc.day,
+        hour=start_utc.hour,
+        tzinfo=django.utils.timezone.utc)
+
+    while datetime_current_utc <= end_utc:
+        datetime_current_utc_string = datetime_current_utc.strftime("%Y-%m-%d-%H")
+        datetime_next_utc = datetime_current_utc + hour_delta
+        datetime_next_utc_string = datetime_next_utc.strftime("%Y-%m-%d-%H")
+        medition_pk_current = None
+        medition_pk_next = None
+        medition_date_value_current_localtime_string = "NULA"
+        medition_date_value_next_localtime_string = "NULA"
+        electric_data_value_current = None
+        electric_data_value_next = None
+        electric_data_value = 0
+        if electric_data_raw_hours_dictionary.has_key(datetime_current_utc_string) and\
+           electric_data_raw_hours_dictionary.has_key(datetime_next_utc_string):
+
+            medition_pk_current, medition_date_value_current, electric_data_value_current =\
+                electric_data_raw_hours_dictionary.get(datetime_current_utc_string)
+
+            medition_pk_next, medition_date_value_next, electric_data_value_next =\
+                electric_data_raw_hours_dictionary.get(datetime_next_utc_string)
+
+            electric_data_value = electric_data_value_next - electric_data_value_current
+
+            medition_date_value_current_localtime =\
+                medition_date_value_current.astimezone(current_timezone)
+
+            medition_date_value_current_localtime_string =\
+                medition_date_value_current_localtime.strftime("%Y-%m-%d %H:%M")
+
+            medition_date_value_next_localtime =\
+                medition_date_value_next.astimezone(current_timezone)
+
+            medition_date_value_next_localtime_string =\
+                medition_date_value_next_localtime.strftime("%Y-%m-%d %H:%M")
+
+        datetime_current_localtime = datetime_current_utc.astimezone(current_timezone)
+        datetime_current_localtime_string =\
+            datetime_current_localtime.strftime("%Y-%m-%d %H:%M")
+
+        datetime_next_localtime = datetime_next_utc.astimezone(current_timezone)
+        datetime_next_localtime_string =\
+            datetime_next_localtime.strftime("%Y-%m-%d %H:%M")
+
+        electric_data_raw_item =\
+            (datetime_current_localtime_string,
+             medition_pk_current,
+             medition_date_value_current_localtime_string,
+             electric_data_value_current,
+             datetime_next_localtime_string,
+             medition_pk_next,
+             medition_date_value_next_localtime_string,
+             electric_data_value_next,
+             datetime_current_localtime_string,
+             electric_data_value)
+
+        electric_data_raw.append(electric_data_raw_item)
+        datetime_current_utc += hour_delta
+
+    return electric_data_raw
+
+
 def get_consumer_unit_week_report_cumulative(
         consumer_unit,
         year,
@@ -720,3 +862,41 @@ def render_graphics(request):
 
     else:
         raise django.http.Http404
+
+
+def render_graphics_interval_verification(
+        request
+):
+    template_variables = dict()
+    if request.method == "GET":
+        try:
+            consumer_unit_id = request.GET['consumer-unit-id']
+            electric_data_name = request.GET['electric-data-name']
+            datetime_start = datetime.datetime.strptime(request.GET['date-start'],
+                                                        "%Y-%m-%d")
+
+            datetime_end =\
+                datetime.datetime.strptime(request.GET['date-end'], "%Y-%m-%d") +\
+                datetime.timedelta(days=1)
+
+        except KeyError:
+            raise django.http.Http404
+
+        cumulative_electric_data = ("TotalkWhIMPORT", "TotalkvarhIMPORT", "kWh", "kvarh")
+        if electric_data_name in cumulative_electric_data:
+            electric_data_interval_raw_verification_tuple_list =\
+                get_consumer_unit_electric_data_interval_raw_verification(
+                    electric_data_name,
+                    consumer_unit_id,
+                    datetime_start,
+                    datetime_end)
+
+            template_variables['electric_data_interval_raw_verification_tuple_list'] =\
+                electric_data_interval_raw_verification_tuple_list
+
+    template_context = django.template.context.RequestContext(request,
+                                                              template_variables)
+
+    return django.shortcuts.render_to_response(
+               "consumption_centers/graphs/graphics_interval_verification.html",
+               template_context)

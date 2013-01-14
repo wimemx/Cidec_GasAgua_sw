@@ -3,7 +3,7 @@ from django.conf.urls import patterns, url
 urlpatterns = patterns('',
                        url(r'^celery/', 'c_center.views.call_celery_delay'),
                        url(r'^graficas/', 'c_center.graphics.render_graphics'),
-                       #url(r'^grafica_datos/', 'c_center.views.grafica_datos'),
+                       url(r'^verificar_graficas_intervalos/', 'c_center.graphics.render_graphics_interval_verification'),
                        url(r'^grafica_datos_csv/',
                            'c_center.views.grafica_datoscsv'),
 
