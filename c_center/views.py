@@ -6149,3 +6149,25 @@ def configure_ie(request, id_ie):
     else:
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
+
+@login_required(login_url='/')
+def create_hierarchy(request):
+    datacontext = get_buildings_context(request.user)
+    template_vars = {}
+
+    if datacontext:
+        template_vars["datacontext"] = datacontext
+
+    template_vars["sidebar"] = request.session['sidebar']
+    template_vars["empresa"] = request.session['main_building']
+    template_vars["company"] = request.session['company']
+
+    if has_permission(request.user, VIEW,
+                      "Ver equipos industriales") or request.user.is_superuser:
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response(
+            "consumption_centers/create_hierarchy.html",
+            template_vars_template)
+    else:
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)

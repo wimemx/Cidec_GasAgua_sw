@@ -210,4 +210,7 @@ urlpatterns = patterns('',
 
                        url(r'^configurar_equipo_industrial/(?P<id_ie>\d+)/',
                            'c_center.views.configure_ie'),
+
+                       url(r'^crear_jerarquia/',
+                           'c_center.views.create_hierarchy'),
 )

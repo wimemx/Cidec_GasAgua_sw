@@ -1,15 +1,20 @@
 from django.db import models
 from c_center.models import ConsumerUnit
 import django.contrib.auth.models
-
+import hashlib
+import variety
 
 class ElectricParameters(models.Model):
     name = models.CharField(max_length=64)
     position = models.IntegerField()
 
+    def __unicode__(self):
+        return self.name
 
 class Alarms(models.Model):
-    alarm_identifier = models.CharField(max_length=256)
+    alarm_identifier = models.CharField(max_length=256, default=hashlib.md5(
+        variety.random_string_generator(30)
+    ).hexdigest())
     electric_parameter = models.ForeignKey(ElectricParameters,
                                            on_delete=models.PROTECT)
     max_value = models.DecimalField(blank=True, null=True, max_digits=20,

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block titulo %}Crear jerarqu&iacute;a de partes de edificio y medidores{% endblock %}
+
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/forms/c_centers.css" type="text/css" />
+    <link rel="stylesheet" href="{{ STATIC_URL }}js/external/jOrgChart/css/jquery.jOrgChart.css"/>
+    <link rel="stylesheet" href="/static/css/consumption_centers/consumer_units_tree.css">
+{% endblock %}
+{% block externaljs %}
+    <script type="text/javascript" src="{{ STATIC_URL }}jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/external/jOrgChart/jquery.jOrgChart.custom.js"></script>
+    <script type="text/javascript">
+
+        function init_tree(){
+            var opts = {
+                chartElement : '#chart',
+                dragAndDrop  : true
+            }
+            $("#chart").html("");
+            $("#org").jOrgChart(opts);
+
+        }
+    </script>
+{% endblock %}
+{% block document_ready %}
+    init_tree();
+
+    $(".del").live("click", function(e){
+        var nodo=$(this);
+        var texto = $.trim(nodo.parent().parent().find("p:eq(0)").text())
+
+        $("#org").find("li").each(function(index, lista){
+            var texto_lista = $.trim($(lista).find("p:eq(0)").text());
+            console.log(texto_lista, texto)
+            if(texto_lista==texto){
+                console.log(lista);
+                $(lista).remove();
+                init_tree();
+
+            }else{
+                return;
+            }
+        });
+
+    });
+    $(".add").live("click", function(e){
+        var nodo=$(this);
+        var texto = $.trim(nodo.parent().parent().find("p:eq(0)").text())
+
+        $("#org").find("li").each(function(index, lista){
+            var texto_lista = $.trim($(lista).find("p:eq(0)").text());
+            console.log(texto_lista, texto)
+            if(texto_lista==texto){
+                $(lista).find("ul:eq(0) li.temp").removeClass("temp");
+                init_tree();
+                //lightbox
+            }else{
+                return;
+            }
+        });
+
+    });
+
+
+{% endblock %}
+
+
+{% block contenido %}
+    <div id="bread_crumbs">
+        <ul>
+            <li><a href="/main/">Inicio</a></li>
+            <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
+            <li><a href="/buildings/industrial_equipments/">Equipos Industriales</a></li>
+            <li>Configurar Equipo Industrial</li>
+        </ul>
+
+    </div>
+    <div id="contenido_interno" class="card">
+        <h2 id="titulo_form" class="powermeter">
+            Configurar Equipo Industrial - {{ ie.alias }}
+        </h2>
+
+
+        <div class="divider" id="divider_top">&nbsp;</div>
+        {% if message %}
+            <span class="notif {{ msg_type }}">
+                    {% autoescape off %}{{ message }}{% endautoescape %}
+                    <a href="#" onclick="$(this).parent().remove(); History.replaceState({}, '', ' ');">X</a>
+                </span>
+        {% endif %}
+        <p class="description">
+            Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
+            <br/>
+            Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
+        </p>
+
+        <div class="g12" id="form_container">
+            <form action="." method="post">
+                {% csrf_token %}
+                <div id="hierarchy" class="g12">
+                    <div id="chart"></div>
+                    <ul id="org">
+                        <li>
+                            <p class="raiz">Edificio</p>
+                            <ul>
+                                <li><p>Parte 1</p></li>
+                                <li>
+                                    <p>Parte 2</p>
+                                    <ul>
+                                        <li class="temp"><p>Parte 2.1</p></li>
+                                        <li><p>Parte 2.2</p></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+
+                    </ul>
+                </div>
+            </form>
+        </div>
+        <div id="lb">
+            <a></a>
+        </div>
+
+
+    </div>
+{% endblock %}
