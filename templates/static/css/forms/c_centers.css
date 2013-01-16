@@ -297,3 +297,7 @@ background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
 #search_pm .plus{
     margin-top: 5px;
 }
+
+#user_actions form{
+    width: 670px !important;
+}

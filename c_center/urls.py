@@ -211,6 +211,9 @@ urlpatterns = patterns('',
                        url(r'^configurar_equipo_industrial/(?P<id_ie>\d+)/',
                            'c_center.views.configure_ie'),
 
-                       url(r'^crear_jerarquia/',
+                       url(r'^crear_jerarquia/(?P<id_building>\d+)/',
                            'c_center.views.create_hierarchy'),
+                       url(r'^get_parts_of_building_for_tree/',
+                           'c_center.views.get_parts_of_building_for_tree'),
+
 )

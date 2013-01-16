@@ -277,6 +277,10 @@ def get_company_buildings(request, id_company):
 
 
 def get_parts_of_building(request, id_building):
+    """ Get all the parts of a building in wich the user has permission to do
+    something
+
+    """
     building = get_object_or_404(Building, pk=id_building)
     parts_for_user, all_building = get_partsofbuilding_for_operation(
         "Asignar roles a usuarios", CREATE, request.user, building)
@@ -422,6 +426,99 @@ def set_default_session_vars(request, datacontext):
 
     return True
 
+def get_hierarchy_list(building, user):
+    """ Obtains an unordered-nested list representing the building hierarchy
+
+    """
+    hierarchy = HierarchyOfPart.objects.filter(
+        part_of_building_composite__building=building)
+    ids_hierarchy = []
+    for hy in hierarchy:
+        if hy.part_of_building_leaf:
+            ids_hierarchy.append(hy.part_of_building_leaf.pk)
+
+    #sacar el padre(partes de edificios que no son hijos de nadie)
+    parents = PartOfBuilding.objects.filter(building=building).exclude(
+        pk__in=ids_hierarchy)
+
+    main_cu = ConsumerUnit.objects.get(
+        building=building,
+        electric_device_type__electric_device_type_name="Total Edificio")
+    hierarchy_list = "<ul id='org'>"\
+                     "<li>"
+    if allowed_cu(main_cu, user, building):
+        hierarchy_list += "<a href='#' class='raiz' rel='" + str(main_cu.pk) + "'>" +\
+                          building.building_name +\
+                          "<br/>(Total)</a>"
+    else:
+        hierarchy_list += building.building_name + "<br/>(Total)"
+
+    hierarchy_list += "<ul>"
+    try:
+        parents[0]
+    except IndexError:
+        #No tiene partes, paso para revisar sus sistemas y dispositiovos
+        pass
+    else:
+
+        for parent in parents:
+            c_unit_parent = ConsumerUnit.objects.filter(building=building,
+                                                        part_of_building=parent).exclude(
+                electric_device_type__electric_device_type_name=
+                "Total Edificio")
+            if allowed_cu(c_unit_parent[0], user, building):
+                hierarchy_list += "<li> <a href='#' rel='" +\
+                                  str(c_unit_parent[0].pk) + "'>" +\
+                                  parent.part_of_building_name + "</a>"
+            else:
+                hierarchy_list += "<li>" +\
+                                  parent.part_of_building_name
+                #obtengo la jerarquia de cada rama del arbol
+            hierarchy_list += get_sons(parent, "part", user, building)
+            hierarchy_list += "</li>"
+
+
+    #revisa por dispositivos en el primer nivel
+    hierarchy = HierarchyOfPart.objects.filter(
+        consumer_unit_composite__building=building)
+    ids_hierarchy = []
+    for hy in hierarchy:
+        if hy.consumer_unit_leaf:
+            ids_hierarchy.append(hy.consumer_unit_leaf.pk)
+
+    #sacar el padre(ConsumerUnits que no son hijos de nadie)
+    parents = ConsumerUnit.objects.filter(building=building, part_of_building=None).exclude(
+        Q(pk__in=ids_hierarchy) |
+        Q(electric_device_type__electric_device_type_name="Total Edificio")
+        )
+    try:
+        parents[0]
+    except IndexError:
+        #si no hay ninguno, es un edificio sin partes, o sin partes anidadas
+        pass
+    else:
+
+        for parent in parents:
+            if allowed_cu(parent, user, building):
+                hierarchy_list += "<li class='consumer_unit'> <a href='#' rel='" +\
+                                  str(parent.pk) + "'>" +\
+                                  parent.electric_device_type\
+                                  .electric_device_type_name +\
+                                  "</a>"
+            else:
+                hierarchy_list += "<li>" +\
+                                  parent.electric_device_type.\
+                                  electric_device_type_name
+                #obtengo la jerarquia de cada rama del arbol
+            hierarchy_list += get_sons(parent, "consumer", user,
+                                       building)
+            hierarchy_list += "</li>"
+
+    hierarchy_list += "</ul>"
+
+
+    hierarchy_list += "</li></ul>"
+    return hierarchy_list
 
 def get_sons(parent, part, user, building):
     """ Gets a list of the direct sons of a given part, or consumer unit
@@ -452,8 +549,8 @@ def get_sons(parent, part, user, building):
                 cu = son.consumer_unit_leaf
                 _class = "consumer_unit"
             if allowed_cu(cu, user, building):
-                list += '<li><a href="#" rel="' + str(
-                    cu.pk) + '" class="' + _class + '">'
+                list += '<li class="' + _class + '"><a href="#" rel="' + str(
+                    cu.pk) + '">'
                 list += tag + '</a>' + sons
             else:
                 list += '<li>'

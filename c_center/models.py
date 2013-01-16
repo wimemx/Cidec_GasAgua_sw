@@ -397,7 +397,7 @@ class PartOfBuilding(models.Model):
     part_of_building_name = models.CharField(max_length=128)
     part_of_building_description = models.TextField(max_length=256, null=True,
                                                     blank=True)
-    mts2_built = models.DecimalField(max_digits=6, decimal_places=2)
+    mts2_built = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     part_of_building_status = models.BooleanField(default=True)
 
     def __unicode__(self):

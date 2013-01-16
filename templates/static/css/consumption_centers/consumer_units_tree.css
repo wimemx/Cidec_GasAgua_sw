@@ -17,9 +17,19 @@ a.consumer_unit{
     -webkit-border-radius: 5px;
     border-radius: 5px;
 }
+.node a{
+    font-size: 14px;
+    line-height: 150%;
+    color: #909aa2 !important;
+    text-decoration: none;
+    cursor: ;
+}
 .temp{
     border: dotted 2px #869baf !important;
 }
 .edit{
     margin-right: 0;
+}
+.consumer_unit{
+    background: url(../images/imgs_icns/consumer_unit_icon.png) 50% 50% no-repeat #fff !important;
 }

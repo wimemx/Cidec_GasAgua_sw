@@ -6,8 +6,10 @@
     <link rel="stylesheet" href="/static/css/forms/c_centers.css" type="text/css" />
     <link rel="stylesheet" href="{{ STATIC_URL }}js/external/jOrgChart/css/jquery.jOrgChart.css"/>
     <link rel="stylesheet" href="/static/css/consumption_centers/consumer_units_tree.css">
+    <link rel="stylesheet" href="/static/js/external/fancybox/jquery.fancybox.css" type="text/css" />
 {% endblock %}
 {% block externaljs %}
+    <script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/external/jOrgChart/jquery.jOrgChart.custom.js"></script>
     <script type="text/javascript">
@@ -16,11 +18,11 @@
             var opts = {
                 chartElement : '#chart',
                 dragAndDrop  : true
-            }
+            };
             $("#chart").html("");
             $("#org").jOrgChart(opts);
-
         }
+    var click_flag = true;
     </script>
 {% endblock %}
 {% block document_ready %}
@@ -28,13 +30,11 @@
 
     $(".del").live("click", function(e){
         var nodo=$(this);
-        var texto = $.trim(nodo.parent().parent().find("p:eq(0)").text())
+        var texto = $.trim(nodo.parent().parent().find("a:eq(0)").text())
 
         $("#org").find("li").each(function(index, lista){
-            var texto_lista = $.trim($(lista).find("p:eq(0)").text());
-            console.log(texto_lista, texto)
+            var texto_lista = $.trim($(lista).find("a:eq(0)").text());
             if(texto_lista==texto){
-                console.log(lista);
                 $(lista).remove();
                 init_tree();
 
@@ -44,23 +44,62 @@
         });
 
     });
-    $(".add").live("click", function(e){
-        var nodo=$(this);
-        var texto = $.trim(nodo.parent().parent().find("p:eq(0)").text())
-
-        $("#org").find("li").each(function(index, lista){
-            var texto_lista = $.trim($(lista).find("p:eq(0)").text());
-            console.log(texto_lista, texto)
-            if(texto_lista==texto){
-                $(lista).find("ul:eq(0) li.temp").removeClass("temp");
-                init_tree();
-                //lightbox
-            }else{
-                return;
+    $(".add").live("click", function(){
+        click_flag=false;
+    }).fancybox({
+        maxWidth	: 800,
+        maxHeight	: 800,
+        fitToView	: false,
+        width		: '70%',
+        height		: '70%',
+        autoSize	: false,
+        closeClick	: false,
+        openEffect	: 'none',
+        closeEffect	: 'none',
+        afterClose  : function(){click_flag=true;}
+    });
+    $("#type_node").change(function(){
+        var valor = parseInt($(this).val());
+        if (valor > 0){
+            if(valor == 1)
+                url = "/buildings/get_parts_of_building/"
+            $.ajax({
+            url: "/buildings/get_parts_of_building/",
+            global: false,
+            type: "GET",
+            dataType: "json",
+            statusCode: {
+            404: function() {
+            $("#notice").before(msg);
             }
-        });
+            },
+            success: function(msg){
+            $("#search").val("");
+            $("#id_pm").val("");
+            var registro = msg[0];
+            form_row(registro.pm, registro.alias, registro.marca, registro.modelo, registro.serie, registro.status);
+            },
+            });
+        }
 
     });
+    /*
+    $(".add").live("click", function(e){
+    var nodo=$(this);
+    var texto = $.trim(nodo.parent().parent().find("p:eq(0)").text())
+
+    $("#org").find("li").each(function(index, lista){
+    var texto_lista = $.trim($(lista).find("p:eq(0)").text());
+
+    if(texto_lista==texto){
+    $(lista).removeClass("temp");
+    init_tree();
+    return false;
+    }
+    });
+
+    })
+    */
 
 
 {% endblock %}
@@ -78,7 +117,7 @@
     </div>
     <div id="contenido_interno" class="card">
         <h2 id="titulo_form" class="powermeter">
-            Configurar Equipo Industrial - {{ ie.alias }}
+            Configurar Jerarqu&iacute;a de Partes y Medidores - {{ building.building_name }}
         </h2>
 
 
@@ -100,29 +139,28 @@
                 {% csrf_token %}
                 <div id="hierarchy" class="g12">
                     <div id="chart"></div>
-                    <ul id="org">
-                        <li>
-                            <p class="raiz">Edificio</p>
-                            <ul>
-                                <li><p>Parte 1</p></li>
-                                <li>
-                                    <p>Parte 2</p>
-                                    <ul>
-                                        <li class="temp"><p>Parte 2.1</p></li>
-                                        <li><p>Parte 2.2</p></li>
-                                    </ul>
-                                </li>
-                            </ul>
-                        </li>
+                    {{ list|safe }}
+                </div>
+                <div id="fancy">
+                    <h1 id="title_lb">Crear Nuevo Nodo</h1>
+                    <p id="notice">
+                        Selecciona que tipo de nodo deseas agregar
+                    </p>
+                    <div class="g12" id="agregar_nodo">
+                        <label class="g2"> Elija un tipo de nodo</label>
+                        <select class="g2" id="type_node">
+                            <option value="0">Elija una opci&oacute;n</option>
+                            <option value="1">
+                                Parte de edificio
+                            </option>
+                            <option value="2">
+                                Sistema o dispositivo el&eacute;ctrico
+                            </option>
+                        </select>
 
-                    </ul>
+                    </div>
                 </div>
             </form>
         </div>
-        <div id="lb">
-            <a></a>
-        </div>
-
-
     </div>
 {% endblock %}

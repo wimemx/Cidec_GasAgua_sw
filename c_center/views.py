@@ -65,6 +65,9 @@ GRAPHS_PF = [ob.object for ob in GroupObject.objects.filter(
 GRAPHS = dict(energia=GRAPHS_ENERGY, corriente=GRAPHS_I, voltaje=GRAPHS_V,
               factor_potencia=GRAPHS_PF)
 
+VIRTUAL_PROFILE = ProfilePowermeter.objects.get(
+    powermeter__powermeter_anotation = "Medidor Virtual")
+
 def call_celery_delay(request):
     if request.user.is_superuser:
         if request.method == "POST":
@@ -144,87 +147,8 @@ def set_default_building(request, id_building):
 
 def set_consumer_unit(request):
     building = request.session['main_building']
-    hierarchy = HierarchyOfPart.objects.filter(
-        part_of_building_composite__building=building)
-    ids_hierarchy = []
-    for hy in hierarchy:
-        if hy.part_of_building_leaf:
-            ids_hierarchy.append(hy.part_of_building_leaf.pk)
 
-    #sacar el padre(partes de edificios que no son hijos de nadie)
-    parents = PartOfBuilding.objects.filter(building=building).exclude(
-        pk__in=ids_hierarchy)
-
-    main_cu = ConsumerUnit.objects.get(
-        building=building,
-        electric_device_type__electric_device_type_name="Total Edificio")
-    hierarchy_list = "<ul id='org'>"\
-                     "<li>"
-    if allowed_cu(main_cu, request.user, building):
-        hierarchy_list += "<a href='#' rel='" + str(main_cu.pk) + "'>" +\
-                          building.building_name +\
-                          "<br/>(Total)</a>"
-    else:
-        hierarchy_list += building.building_name + "<br/>(Total)"
-
-    try:
-        parents[0]
-    except IndexError:
-        #revisar si tiene consumer_units anidadas
-        hierarchy = HierarchyOfPart.objects.filter(
-            consumer_unit_composite__building=building)
-        ids_hierarchy = []
-        for hy in hierarchy:
-            if hy.consumer_unit_leaf:
-                ids_hierarchy.append(hy.consumer_unit_leaf.pk)
-
-        #sacar el padre(ConsumerUnits que no son hijos de nadie)
-        parents = ConsumerUnit.objects.filter(building=building).exclude(
-            Q(pk__in=ids_hierarchy) |
-            Q(electric_device_type__electric_device_type_name=
-            "Total Edificio"))
-        try:
-            parents[0]
-        except IndexError:
-            #si no hay ninguno, es un edificio sin partes, o sin partes anidadas
-            pass
-        else:
-            hierarchy_list += "<ul>"
-            for parent in parents:
-                if allowed_cu(parent, request.user, building):
-                    hierarchy_list += "<li> <a href='#' rel='" +\
-                                      str(parent.pk) + "'>" +\
-                                      parent.electric_device_type\
-                                      .electric_device_type_name +\
-                                      "</a>"
-                else:
-                    hierarchy_list += "<li>" +\
-                                      parent.electric_device_type.\
-                                      electric_device_type_name
-                    #obtengo la jerarquia de cada rama del arbol
-                hierarchy_list += get_sons(parent, "consumer", request.user,
-                                           building)
-                hierarchy_list += "</li>"
-            hierarchy_list += "</ul>"
-    else:
-        hierarchy_list += "<ul>"
-        for parent in parents:
-            c_unit_parent = ConsumerUnit.objects.filter(building=building,
-                                                        part_of_building=parent).exclude(
-                electric_device_type__electric_device_type_name=
-                "Total Edificio")
-            if allowed_cu(c_unit_parent[0], request.user, building):
-                hierarchy_list += "<li> <a href='#' rel='" +\
-                                  str(c_unit_parent[0].pk) + "'>" +\
-                                  parent.part_of_building_name + "</a>"
-            else:
-                hierarchy_list += "<li>" +\
-                                  parent.part_of_building_name
-                #obtengo la jerarquia de cada rama del arbol
-            hierarchy_list += get_sons(parent, "part", request.user, building)
-            hierarchy_list += "</li>"
-        hierarchy_list += "</ul>"
-    hierarchy_list += "</li></ul>"
+    hierarchy_list = get_hierarchy_list(building, request.user)
     template_vars = dict(hierarchy=hierarchy_list)
     template_vars_template = RequestContext(request, template_vars)
 
@@ -4393,6 +4317,14 @@ def add_partbuilding(request):
                     mts2_built=b_part_mt2
                 )
                 newPartBuilding.save()
+                deviceType = ElectricDeviceType.objects.get(electric_device_type_name="Total parte de un edificio")
+                newConsumerUnit = ConsumerUnit(
+                    building = buildingObj,
+                    part_of_building = newPartBuilding,
+                    electric_device_type = deviceType,
+                    profile_powermeter = VIRTUAL_PROFILE
+                )
+                newConsumerUnit.save()
 
                 for key in request.POST:
                     if re.search('^atributo_\w+', key):
@@ -6151,7 +6083,33 @@ def configure_ie(request, id_ie):
         return render_to_response("generic_error.html", template_vars_template)
 
 @login_required(login_url='/')
-def create_hierarchy(request):
+def create_hierarchy(request, id_building):
+    datacontext = get_buildings_context(request.user)
+    template_vars = {}
+
+    if datacontext:
+        template_vars["datacontext"] = datacontext
+
+    template_vars["sidebar"] = request.session['sidebar']
+    template_vars["empresa"] = request.session['main_building']
+    template_vars["company"] = request.session['company']
+
+    if has_permission(request.user, VIEW,
+                      "Ver equipos industriales") or request.user.is_superuser:
+        building = get_object_or_404(Building, pk=id_building)
+        list = get_hierarchy_list(building, request.user)
+        template_vars['list'] = list
+        template_vars['building'] = building
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response(
+            "consumption_centers/create_hierarchy.html",
+            template_vars_template)
+    else:
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
+
+@login_required(login_url='/')
+def get_parts_of_building_for_tree(request):
     datacontext = get_buildings_context(request.user)
     template_vars = {}
 
@@ -6166,7 +6124,7 @@ def create_hierarchy(request):
                       "Ver equipos industriales") or request.user.is_superuser:
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
-            "consumption_centers/create_hierarchy.html",
+            "consumption_centers/add_node.html",
             template_vars_template)
     else:
         template_vars_template = RequestContext(request, template_vars)

@@ -13,6 +13,7 @@
  */
 (function($) {
 
+
     $.fn.jOrgChart = function(options) {
         var opts = $.extend({}, $.fn.jOrgChart.defaults, options);
         var $appendTo = $(opts.chartElement);
@@ -30,7 +31,10 @@
 
         // add drag and drop if enabled
         if(opts.dragAndDrop){
-            $('div.node').draggable({
+            var $divNode = $('div.node:not(.temp)');
+            var $nodeParts = $divNode.not(".consumer_unit");
+            var $nodeCU = $("div.node.consumer_unit");
+            $divNode.draggable({
                 cursor      : 'move',
                 distance    : 40,
                 helper      : 'clone',
@@ -42,14 +46,22 @@
                 stack       : 'div.node'
             });
 
-            $('div.node').droppable({
+            $nodeParts.droppable({
                 accept      : '.node',
                 activeClass : 'drag-active',
                 hoverClass  : 'drop-hover'
             });
 
+            $nodeCU.droppable({
+                accept      : '.consumer_unit',
+                activeClass : 'drag-active',
+                hoverClass  : 'drop-hover'
+            });
+
+
+
             // Drag start event handler for nodes
-            $('div.node').bind("dragstart", function handleDragStart( event, ui ){
+            $divNode.bind("dragstart", function handleDragStart( event, ui ){
 
                 var sourceNode = $(this);
                 sourceNode.parentsUntil('.node-container')
@@ -59,7 +71,7 @@
             });
 
             // Drag stop event handler for nodes
-            $('div.node').bind("dragstop", function handleDragStop( event, ui ){
+            $divNode.bind("dragstop", function handleDragStop( event, ui ){
 
                 /* reload the plugin */
                 $(opts.chartElement).children().remove();
@@ -67,7 +79,7 @@
             });
 
             // Drop event handler for nodes
-            $('div.node').bind("drop", function handleDropEvent( event, ui ) {
+            $divNode.bind("drop", function handleDropEvent( event, ui ) {
 
                 var targetID = $(this).data("tree-node");
                 var targetLi = $this.find("li").filter(function() { return $(this).data("tree-node") === targetID; } );
@@ -103,6 +115,19 @@
     };
 
     var nodeCount = 0;
+
+    function removeNode($node, opts, $nodeDiv){
+        if($nodeDiv.hasClass("temp")){
+            if(click_flag){
+                $node.remove();
+                click_flag = true;
+                $(opts.chartElement).children().remove();
+                $this.jOrgChart(opts);
+            }
+
+        }
+    }
+
     // Method that recursively builds the tree
     function buildNode($node, $appendTo, level, opts) {
         var $table = $("<table cellpadding='0' cellspacing='0' border='0'/>");
@@ -135,9 +160,8 @@
 
 
         $nodeDiv.append(
-            "<div class='opciones hidden'><span class='add'></span>" +
-            "<span class='edit'></span>" +
-            "<span class='del'></span></div>")
+            "<div class='opciones hidden'>" +
+            "</div>")
             .mouseenter(function(){
                 $(this).find(".opciones").toggle();
             }).mouseleave(function(){
@@ -152,30 +176,15 @@
         // add temporal nodes
 
         if ($childNodes.length > 0) {
-
-
             if($node.find("ul:eq(0)").find("> li.temp").size()==0){
                 $nodeDiv.mouseenter(function(){
-                    console.log($list_element.hasClass("temp"));
                     if(!$list_element.hasClass("temp")){
-                        console.log("si entra");
                         $node.find("ul:eq(0)").append(append_text);
                         $(opts.chartElement).children().remove();
                         $this.jOrgChart(opts);
-
                     }
                 });
-
             }
-
-            $nodeDiv.mouseleave(function(){
-
-                $node.find("ul:eq(0)").find("> li.temp").remove();
-                $(opts.chartElement).children().remove();
-                $this.jOrgChart(opts);
-
-
-            });
         }else{
 
             $nodeDiv.mouseenter(function(){
@@ -191,6 +200,9 @@
                 }
             });
         }
+        $nodeDiv.mouseleave(function(){
+            removeNode($node, opts, $nodeDiv);
+        });
 
         $nodeCell.append($nodeDiv);
         $nodeRow.append($nodeCell);
@@ -242,6 +254,7 @@
 
         // any classes on the LI element get copied to the relevant node in the tree
         // apart from the special 'collapsed' class, which collapses the sub-tree at this point
+
         if ($node.attr('class') != undefined) {
             var classList = $node.attr('class').split(/\s+/);
             $.each(classList, function(index,item) {
@@ -256,14 +269,22 @@
                 }
             });
         }
+        if(!$nodeDiv.hasClass("temp")){
+            $nodeDiv.find(".opciones:eq(0)").append("<span class='edit'></span>");
+            if($nodeDiv.hasClass("consumer_unit")){
+                $nodeDiv.find(".opciones:eq(0)").append("<span class='del'></span>");
+            }
+        }else{
+            $nodeDiv.find(".opciones:eq(0)").append("<span class='add' href='#fancy'></span><span class='del'></span>");
+        }
 
         $table.append($tbody);
         $appendTo.append($table);
 
         /* Prevent trees collapsing if a link inside a node is clicked */
-        $nodeDiv.children('a').click(function(e){
+        $nodeDiv.children('a, span').click(function(e){
             e.stopPropagation();
         });
-    };
+    }
 
 })(jQuery);
