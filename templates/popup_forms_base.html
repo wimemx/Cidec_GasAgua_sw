@@ -1,0 +1,59 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>{% block titulo%}{% endblock %}</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" href="/static/css/theme.css"/>
+    <link rel="stylesheet" href="/static/css/forms/main.css"/>
+    <link rel="stylesheet" href="/static/js/external/jqueryUniform/css/uniform.default.css" type="text/css" media="screen" charset="utf-8" />
+    {% block externalcss %}{% endblock %}
+
+    <script type="text/javascript" src="/static/js/external/jquery.tools.min.js"></script>
+    <script type="text/javascript" src="/static/js/external/jquery.effects.core.js"></script>
+    <script type="text/javascript" src="/static/js/external/jquery.effects.slide.js"></script>
+
+    <!-- Loading JS Files this way is not recommended! Merge them but keep their order -->
+    <!-- some basic functions -->
+    <script type="text/javascript" src="/static/js/functions.js"></script>
+
+    <!-- all Third Party Plugins -->
+    <script type="text/javascript" src="/static/js/external/history/jquery.history.js"></script>
+    <script type="text/javascript" src="/static/js/external/labels.js"></script>
+    <script type="text/javascript" src="/static/js/external/jqueryUniform/jquery.uniform.min.js"></script>
+    {% block externaljs %}{% endblock %}
+    <script type="text/javascript">
+        //<![CDATA[
+
+        $(document).ready(function(){
+
+            Date.prototype.addDays = function (n) {
+                this.setDate(this.getDate() + n);
+                this.tempDate = this.getDate();
+            };
+            Date.prototype.addHours= function(h){
+                this.setHours(this.getHours()+h);
+                return this;
+            };
+            String.prototype.format = function() {
+                var args = arguments;
+                return this.replace(/{(\d+)}/g, function(match, number) {
+                    return typeof args[number] != 'undefined'
+                            ? args[number]
+                            : match
+                            ;
+                });
+            };
+            $("select, input, input:checkbox, input:radio, input:file, textarea").uniform();
+            {% block document_ready %}{% endblock %}
+
+        });
+        //]]>
+    </script>
+</head>
+<body>
+
+<div id="contenido_interno">
+    {% block contenido %}{% endblock %}
+</div>
+</body>
+</html>

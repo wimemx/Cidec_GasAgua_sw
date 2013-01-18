@@ -444,10 +444,14 @@ def get_hierarchy_list(building, user):
     main_cu = ConsumerUnit.objects.get(
         building=building,
         electric_device_type__electric_device_type_name="Total Edificio")
+    clase_parent = "class='raiz"
+    if main_cu.profile_powermeter.powermeter.powermeter_anotation == "Medidor Virtual":
+        clase_parent += " virtual"
+    clase_parent += "'"
     hierarchy_list = "<ul id='org'>"\
-                     "<li>"
+                     "<li " + clase_parent + ">"
     if allowed_cu(main_cu, user, building):
-        hierarchy_list += "<a href='#' class='raiz' rel='" + str(main_cu.pk) + "'>" +\
+        hierarchy_list += "<a href='#' rel='" + str(main_cu.pk) + "'>" +\
                           building.building_name +\
                           "<br/>(Total)</a>"
     else:
@@ -466,12 +470,19 @@ def get_hierarchy_list(building, user):
                                                         part_of_building=parent).exclude(
                 electric_device_type__electric_device_type_name=
                 "Total Edificio")
+            clase = "class='"
+            clase += "disabled" if not parent.part_of_building_status else ""
+            cu_part = ConsumerUnit.objects.get(part_of_building=parent)
+            if cu_part.profile_powermeter.powermeter.powermeter_anotation == "Medidor Virtual":
+                clase += " virtual'"
+            else:
+                clase += "'"
             if allowed_cu(c_unit_parent[0], user, building):
-                hierarchy_list += "<li> <a href='#' rel='" +\
+                hierarchy_list += "<li " + clase + "> <a href='#' rel='" +\
                                   str(c_unit_parent[0].pk) + "'>" +\
                                   parent.part_of_building_name + "</a>"
             else:
-                hierarchy_list += "<li>" +\
+                hierarchy_list += "<li " + clase + ">" +\
                                   parent.part_of_building_name
                 #obtengo la jerarquia de cada rama del arbol
             hierarchy_list += get_sons(parent, "part", user, building)
@@ -479,13 +490,14 @@ def get_hierarchy_list(building, user):
 
 
     #revisa por dispositivos en el primer nivel
+    #(dispositivos que no estén como hojas en el arbol de jerarquía)
     hierarchy = HierarchyOfPart.objects.filter(
-        consumer_unit_composite__building=building)
+        consumer_unit_leaf__building=building
+    )
     ids_hierarchy = []
     for hy in hierarchy:
         if hy.consumer_unit_leaf:
             ids_hierarchy.append(hy.consumer_unit_leaf.pk)
-
     #sacar el padre(ConsumerUnits que no son hijos de nadie)
     parents = ConsumerUnit.objects.filter(building=building, part_of_building=None).exclude(
         Q(pk__in=ids_hierarchy) |
@@ -499,14 +511,23 @@ def get_hierarchy_list(building, user):
     else:
 
         for parent in parents:
+            clase = "class='consumer_unit "
+            if not parent.profile_powermeter.profile_powermeter_status:
+                clase += 'disabled'
+            else:
+                clase += ""
+            if parent.profile_powermeter.powermeter.powermeter_anotation == "Medidor Virtual":
+                clase += " virtual'"
+            else:
+                clase += "'"
             if allowed_cu(parent, user, building):
-                hierarchy_list += "<li class='consumer_unit'> <a href='#' rel='" +\
+                hierarchy_list += "<li " + clase + "> <a href='#' rel='" +\
                                   str(parent.pk) + "'>" +\
                                   parent.electric_device_type\
                                   .electric_device_type_name +\
                                   "</a>"
             else:
-                hierarchy_list += "<li>" +\
+                hierarchy_list += "<li " + clase + ">" +\
                                   parent.electric_device_type.\
                                   electric_device_type_name
                 #obtengo la jerarquia de cada rama del arbol

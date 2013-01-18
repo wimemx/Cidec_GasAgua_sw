@@ -33,3 +33,9 @@ a.consumer_unit{
 .consumer_unit{
     background: url(../images/imgs_icns/consumer_unit_icon.png) 50% 50% no-repeat #fff !important;
 }
+.disabled{
+    border: dotted 2px #d4cb5a !important;
+}
+.virtual{
+    border: dotted 2px #23cbcc !important;
+}

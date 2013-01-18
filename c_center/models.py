@@ -246,7 +246,6 @@ class PowermeterModel(models.Model):
     def __unicode__(self):
         return self.powermeter_brand + " " + self.powermeter_model
 
-
 class Powermeter(models.Model):
     """ Medidores
 

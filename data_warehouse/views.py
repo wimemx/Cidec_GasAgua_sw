@@ -1334,7 +1334,7 @@ def get_consumer_unit_electric_data_interval_csv(
             electric_data_value_string =\
                 "%.6f" % abs(electric_data_raw_dictionary['electric_data'])
 
-            datetime_value = datetime.fromtimestamp(electric_data_raw_dictionary['datetime']/ 1e3)
+            datetime_value = datetime.fromtimestamp(electric_data_raw_dictionary['datetime'])
             start_datetime_string =\
                 datetime_value.strftime("%Y/%m/%d %H:%M")
 

@@ -6129,3 +6129,221 @@ def get_parts_of_building_for_tree(request):
     else:
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
+
+@login_required(login_url='/')
+def add_partbuilding_pop(request, id_building):
+    template_vars = {}
+
+    if has_permission(request.user, CREATE,
+                      "Alta de partes de edificio") or request.user.is_superuser:
+
+        post = ''
+
+        #Se obtienen los tipos de partes de edificios
+        tipos_parte = PartOfBuildingType.objects.all().exclude(
+            part_of_building_type_status=0).order_by(
+            'part_of_building_type_name')
+
+        #Se obtienen los tipos de atributos de edificios
+        tipos_atributos = BuildingAttributesType.objects.all().exclude(
+            building_attributes_type_status=0).order_by(
+            'building_attributes_type_name')
+
+        template_vars = dict(
+                             tipos_parte=tipos_parte,
+                             tipos_atributos=tipos_atributos,
+                             building = get_object_or_404(Building,
+                                                          pk=id_building),
+                             operation = "pop_add"
+        )
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response(
+            "consumption_centers/buildings/popup_add_partbuilding.html",
+            template_vars_template)
+    else:
+        datacontext = get_buildings_context(request.user)
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
+
+@login_required(login_url='/')
+def save_add_part_popup(request):
+    if (has_permission(
+        request.user,
+        CREATE,
+        "Alta de partes de edificio") or request.user.is_superuser) \
+    and request.method == "POST":
+        b_part_name = request.POST.get('b_part_name').strip()
+        b_part_description = request.POST.get('b_part_description').strip()
+        b_part_type_id = request.POST.get('b_part_type')
+        b_part_building_name = request.POST.get('b_building_name').strip()
+        b_part_building_id = request.POST.get('b_building_id')
+        b_part_mt2 = request.POST.get('b_part_mt2').strip()
+        message = ""
+        type = ""
+
+        continuar = True
+        if not b_part_name and not b_part_type_id and not b_part_building_id:
+            continuar = False
+        if continuar:
+            #Valida por si le da muchos clics al boton
+            partValidate = PartOfBuilding.objects.filter(
+                part_of_building_name=b_part_name).filter(
+                part_of_building_type__pk=b_part_type_id).filter(
+                building__pk=b_part_building_id)
+            if partValidate:
+                return HttpResponse(status=400)
+            else:
+                #Se obtiene la instancia del edificio
+                buildingObj = get_object_or_404(Building, pk=b_part_building_id)
+
+                #Se obtiene la instancia del tipo de parte de edificio
+                part_building_type_obj = get_object_or_404(PartOfBuildingType,
+                                                           pk=b_part_type_id)
+
+                if not bool(b_part_mt2):
+                    b_part_mt2 = '0'
+                else:
+                    b_part_mt2 = b_part_mt2.replace(",", "")
+
+                newPartBuilding = PartOfBuilding(
+                    building=buildingObj,
+                    part_of_building_type=part_building_type_obj,
+                    part_of_building_name=b_part_name,
+                    part_of_building_description=b_part_description,
+                    mts2_built=b_part_mt2
+                )
+                newPartBuilding.save()
+                deviceType = ElectricDeviceType.objects.get(electric_device_type_name="Total parte de un edificio")
+                newConsumerUnit = ConsumerUnit(
+                    building = buildingObj,
+                    part_of_building = newPartBuilding,
+                    electric_device_type = deviceType,
+                    profile_powermeter = VIRTUAL_PROFILE
+                )
+                newConsumerUnit.save()
+
+                for key in request.POST:
+                    if re.search('^atributo_\w+', key):
+                        atr_value_complete = request.POST.get(key)
+                        atr_value_arr = atr_value_complete.split(',')
+                        #Se obtiene el objeto tipo de atributo
+                        #attribute_type_obj = BuildingAttributesType.objects.get(pk = atr_value_arr[0])
+                        #Se obtiene el objeto atributo
+                        attribute_obj = BuildingAttributes.objects.get(
+                            pk=atr_value_arr[1])
+
+                        newBldPartAtt = BuilAttrsForPartOfBuil(
+                            part_of_building=newPartBuilding,
+                            building_attributes=attribute_obj,
+                            building_attributes_value=atr_value_arr[2]
+                        )
+                        newBldPartAtt.save()
+                return HttpResponse(content=newConsumerUnit.pk,
+                             content_type="text/plain",
+                             status=200)
+        else:
+            return HttpResponse(status=400)
+    raise Http404
+
+@login_required(login_url='/')
+def add_powermeter_popup(request):
+    if has_permission(request.user, CREATE,
+                      "Alta de medidor electrico") or request.user.is_superuser:
+        empresa = request.session['main_building']
+        post = ''
+        pw_models_list = PowermeterModel.objects.all().exclude(
+            status=0).order_by("powermeter_brand")
+        template_vars = dict(datacontext=datacontext,
+                             empresa=empresa,
+                             modelos=pw_models_list,
+                             post=post,
+                             company=request.session['company'],
+                             sidebar=request.session['sidebar']
+        )
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response(
+            "consumption_centers/buildings/add_powermeter.html",
+            template_vars_template)
+    else:
+        datacontext = get_buildings_context(request.user)
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
+
+@login_required(login_url='/')
+def save_add_powermeter_popup(request):
+    if (has_permission(request.user,
+                       CREATE,
+                      "Alta de medidor electrico") or
+        request.user.is_superuser) and request.method == "POST":
+        template_vars["post"] = request.POST
+        pw_alias = request.POST.get('pw_alias').strip()
+        pw_model = request.POST.get('pw_model')
+        pw_serial = request.POST.get('pw_serial').strip()
+        message = ''
+        type = ''
+
+        continuar = True
+        if pw_alias == '':
+            message = "El Alias del medidor no puede quedar vacío"
+            type = "n_notif"
+            continuar = False
+        elif not variety.validate_string(pw_alias):
+            message = "El Alias del medidor contiene caracteres inválidos"
+            type = "n_notif"
+            pw_alias = ""
+            continuar = False
+
+        if pw_model == '':
+            message = "El modelo del medidor no puede quedar vacío"
+            type = "n_notif"
+            continuar = False
+
+        if pw_serial == '':
+            message = "El número serial del medidor no puede quedar vacío"
+            type = "n_notif"
+            continuar = False
+
+        #Valida por si le da muchos clics al boton
+        pwValidate = Powermeter.objects.filter(
+            powermeter_model__pk=pw_model).filter(
+            powermeter_serial=pw_serial)
+        if pwValidate:
+            message = "Ya existe un Medidor con ese Modelo y ese Número de Serie"
+            type = "n_notif"
+            continuar = False
+
+        post = {'pw_alias': pw_alias, 'pw_model': int(pw_model),
+                'pw_serial': pw_serial}
+
+        if continuar:
+            pw_model = PowermeterModel.objects.get(pk=pw_model)
+
+            newPowerMeter = Powermeter(
+                powermeter_model=pw_model,
+                powermeter_anotation=pw_alias,
+                powermeter_serial=pw_serial
+
+            )
+            newPowerMeter.save()
+            ProfilePowermeter(powermeter=newPowerMeter).save()
+
+            template_vars["message"] = "Medidor creado exitosamente"
+            template_vars["type"] = "n_success"
+
+            if has_permission(request.user, VIEW,
+                              "Ver medidores eléctricos") or request.user.is_superuser:
+                return HttpResponseRedirect("/buildings/medidores?msj=" +
+                                            template_vars["message"] +
+                                            "&ntype=n_success")
+        template_vars["post"] = post
+        template_vars["message"] = message
+        template_vars["type"] = type

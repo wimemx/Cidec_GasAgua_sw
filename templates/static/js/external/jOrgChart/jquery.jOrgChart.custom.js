@@ -31,7 +31,7 @@
 
         // add drag and drop if enabled
         if(opts.dragAndDrop){
-            var $divNode = $('div.node:not(.temp)');
+            var $divNode = $('div.node:not(.temp)').not(".disabled");
             var $nodeParts = $divNode.not(".consumer_unit");
             var $nodeCU = $("div.node.consumer_unit");
             $divNode.draggable({
@@ -57,8 +57,6 @@
                 activeClass : 'drag-active',
                 hoverClass  : 'drop-hover'
             });
-
-
 
             // Drag start event handler for nodes
             $divNode.bind("dragstart", function handleDragStart( event, ui ){

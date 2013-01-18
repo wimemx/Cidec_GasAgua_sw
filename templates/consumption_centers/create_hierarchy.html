@@ -61,8 +61,14 @@
     $("#type_node").change(function(){
         var valor = parseInt($(this).val());
         if (valor > 0){
-            if(valor == 1)
+            if(valor == 1){
+                var url = "/buildings/add_partbuilding_pop/{{ building.pk }}/"
+                var newwindow=window.open(url,'name','height=600,width=800');
+                if (window.focus) {newwindow.focus()}
+                return false;
+            }else{
                 url = "/buildings/get_parts_of_building/"
+            }
             $.ajax({
             url: "/buildings/get_parts_of_building/",
             global: false,
@@ -147,16 +153,23 @@
                         Selecciona que tipo de nodo deseas agregar
                     </p>
                     <div class="g12" id="agregar_nodo">
-                        <label class="g2"> Elija un tipo de nodo</label>
-                        <select class="g2" id="type_node">
-                            <option value="0">Elija una opci&oacute;n</option>
-                            <option value="1">
-                                Parte de edificio
-                            </option>
-                            <option value="2">
-                                Sistema o dispositivo el&eacute;ctrico
-                            </option>
-                        </select>
+                        <div class="g4">
+                            <label class="g6"> Elija un tipo de nodo</label>
+                            <select class="g6" id="type_node">
+                                <option value="0">Elija una opci&oacute;n</option>
+                                <option value="1">
+                                    Parte de edificio
+                                </option>
+                                <option value="2">
+                                    Sistema o dispositivo el&eacute;ctrico
+                                </option>
+                            </select>
+                        </div>
+                        <div class="g4 hidden">
+                            <label class="g6" id="label_node_part" for="node_part"> Elija un tipo de nodo</label>
+                            <select class="g6" id="node_part">
+                            </select>
+                        </div>
 
                     </div>
                 </div>

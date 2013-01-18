@@ -10,7 +10,7 @@
 <link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
 {% endblock %}
 {% block externaljs %}
-<script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+    <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/external/autoNumeric-1.7.4.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/external/jquery.metadata.js"></script>
 <script type="text/javascript">
@@ -253,118 +253,8 @@ $("a.back").click(function(e){e.preventDefault(); History.back();});
 
 </div>
 <div id="contenido_interno">
-    <h2 id="titulo_form" class="company">
-        {% if operation == "edit" %}Edici&oacute;n de{% else %}Alta de{% endif %} parte de edificio
-    </h2>
 
-    <div class="divider" id="divider_top">&nbsp;</div>
-    <div id="form_container">
-        {% if message %}
-                <span class="notif {{ type }}">
-                    {% autoescape off %}{{ message }}{% endautoescape %}
-                    <a href="#" onclick="$(this).parent().remove();">X</a>
-                </span>
-        {% endif %}
-        <p class="description">
-            Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
-            <br/>
-            Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
-        </p>
-        <form method="post" action=".">
-            {% csrf_token %}
-            <h3 class="g12">Informaci&oacute;n de la Parte de Edificio</h3>
-            <div id="part_bld_fields">
-                <div class="fields_row g9">
-                    <label for="b_part_name" class="g2">Nombre<span class="required">*</span></label>
-                    <input type="text" name="b_part_name" id="b_part_name" class="g9"
-                           value="{{ post.b_part_name }}"
-                            />
-                    <span></span>
-                </div>
-                <div class="fields_row g9">
-                    <label for="b_part_description" class="g2">Descripci&oacute;n</label>
-                    <textarea rows="5" name="b_part_description" id="b_part_description" class="g9">{{ post.b_part_description }}</textarea>
-
-                    <span></span>
-                </div>
-                <div class="fields_row g9">
-                    <label for="b_part_type" class="g2">Tipo de Parte de Edificio<span class="required">*</span></label>
-                    <select name="b_part_type" id="b_part_type" class="g9">
-                        <option value="">Selecciona un tipo de parte </option>
-                        {% if tipos_parte %}
-                        {% for tipo in tipos_parte %}
-                        <option value="{{tipo.id}}" {% if post.b_part_type == tipo.id %} selected {% endif %}>{{ tipo.part_of_building_type_name }}</option>
-                        {% endfor %}
-                        {% endif %}
-                    </select>
-                    <span id="sel_type"></span>
-                </div>
-                <div class="fields_row g9">
-                    <label for="b_building_name" class="g2">Edificio<span class="required">*</span></label>
-                    <input type="text" name="b_building_name" id="b_building_name" class="g9"
-                           value="{{ post.b_part_building_name }}"  autocomplete="off"
-                            />
-                    <span style="visibility: visible !important;"></span>
-                    <input type="hidden" name="b_building_id" id="b_building_id" value="{{post.b_part_building_id}}">
-
-                </div>
-                <div class="fields_row g9">
-                    <label for="b_part_mt2" class="g2">Mt2 Construidos</label>
-                    <input type="text" name="b_part_mt2" id="b_part_mt2" class="g9" maxlength="3"
-                           value="{{ post.b_part_mt2 }}"
-                            />
-
-                </div>
-            </div>
-
-            <h3 class="g12">Atributos extra</h3>
-            {{post.b_part_attributes|safe}}
-
-            <div id="atributes_fields">
-                <div id="fields_row g9">
-                    <div class="widgetField" id="attributes_type">
-                        <span class="legend">Tipos de Atributos</span>
-                        <a href="#">&nbsp;</a>
-                        <ul id="attributes_type_list" class="ddl">
-                            {% for tipo_at in tipos_atributos %}
-                            <li rel="{{ tipo_at.pk }}">
-                                {{ tipo_at.building_attributes_type_name }}
-                            </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-
-                    <div class="widgetField" id="attributes">
-                        <span class="legend">Atributo</span>
-                        <a href="#">&nbsp;</a>
-                        <ul id="attribute_list" class="ddl">
-                            <li></li>
-                        </ul>
-                    </div>
-
-                    <div class="fields_row attribute_value_text_row g4">
-                        <input type="text" name="attr_value" id="attr_value" class="attribute_value_text g10"  placeholder="Valor" maxlength="3"/>
-                    </div>
-
-                    <p class="buttons" id="">
-                        <button class="grey_btn fl" id="add_attributes">
-                            <span class="plus"></span>
-                            Agregar
-                        </button>
-                    </p>
-                    <input type="hidden" name="attr_type_id_sel" id="attr_type_id_sel" value="">
-                    <input type="hidden" name="attr_id_sel" id="attr_id_sel" value="">
-                </div>
-            </div>
-
-            <div class="buttons g12">
-                <button class="aqua_btn" id="save">
-                    Guardar
-                </button>
-            </div>
-        </form>
-
-    </div>
+    {% include "consumption_centers/buildings/just_forms/just_form_add_partbuilding.html" %}
 
 </div>
 {% endblock %}

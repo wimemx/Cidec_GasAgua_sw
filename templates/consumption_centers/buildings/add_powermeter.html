@@ -136,68 +136,6 @@
 
 </div>
 <div id="contenido_interno">
-    <h2 id="titulo_form" class="building_attr">
-        {% if operation == "edit" %}Edici&oacute;n de{% else %}Alta de{% endif %} medidor
-    </h2>
-
-
-    <div class="divider" id="divider_top">&nbsp;</div>
-    <div id="form_container">
-        {% if message %}
-                <span class="notif {{ type }}">
-                    {% autoescape off %}{{ message }}{% endautoescape %}
-                    <a href="#" onclick="$(this).parent().remove();">X</a>
-                </span>
-        {% endif %}
-        <p class="description">
-            Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
-            <br/>
-            Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
-        </p>
-        <form method="post" action=".">
-            {% csrf_token %}
-            <h3 class="g12">Informaci&oacute;n del Medidor</h3>
-            <div id="cluster_fields">
-                <div class="fields_row g9">
-                    <label for="pw_alias" class="g2">Nombre<span class="required">*</span></label>
-                    <input type="text" name="pw_alias" id="pw_alias" class="g9"
-                           value="{{ post.pw_alias }}"
-                            />
-                    <span></span>
-                </div>
-
-                <div class="fields_row g9">
-                    <label for="pw_model" class="g2">Modelo<span class="required">*</span></label>
-                    <select name="pw_model" id="pw_model" class="g9">
-                        <option value="" selected>Selecciona un modelo </option>
-                        {% if modelos %}
-                        {% for modelo in modelos %}
-                        <option value="{{modelo.id}}" {% if post.pw_model == modelo.id %} selected {% endif %}>{{ modelo.powermeter_brand }} - {{ modelo.powermeter_model }}</option>
-                        {% endfor %}
-                        {% endif %}
-
-                    </select>
-                    <span id="sel_model"></span>
-                </div>
-                <div class="fields_row g9">
-                    <label for="pw_serial" class="g2">Número Serial<span class="required">*</span></label>
-                    <input type="text" name="pw_serial" id="pw_serial" class="g9"
-                           value="{{ post.pw_serial }}"
-                            />
-                    <span></span>
-                </div>
-
-            </div>
-
-            <div class="buttons g12">
-                <button class="aqua_btn" id="save">
-                    Guardar
-                </button>
-            </div>
-        </form>
-
-    </div>
-
-
+    {% include "consumption_centers/buildings/just_forms/just_form_add_powermeter.html" %}
 </div>
 {% endblock %}
