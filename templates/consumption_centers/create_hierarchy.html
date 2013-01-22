@@ -23,6 +23,13 @@
             $("#org").jOrgChart(opts);
         }
     var click_flag = true;
+
+    function add_pw2cu(pw, cu){
+
+    }
+    function add_node(){
+
+    }
     </script>
 {% endblock %}
 {% block document_ready %}
@@ -56,38 +63,56 @@
         closeClick	: false,
         openEffect	: 'none',
         closeEffect	: 'none',
-        afterClose  : function(){click_flag=true;}
+        afterClose  : function(){click_flag=true;init_tree()}
     });
     $("#type_node").change(function(){
         var valor = parseInt($(this).val());
+        $("#node_part").parent().find("span").text("Elija una opción");
         if (valor > 0){
             if(valor == 1){
+                $("#label_node_part").text("Elija la parte del edificio");
                 var url = "/buildings/add_partbuilding_pop/{{ building.pk }}/"
+                var newwindow=window.open(url,'name','height=600,width=900');
+                if (window.focus) {newwindow.focus()}
+                return false;
+            }else{
+                $("#node_part").html();
+                options = "<option value='0'>Elija una opci&oacute;n</option> ";
+                options += "<option value='newed'>Crear un nuevo dispositivo o sistema el&eacute;ctrico</option> ";
+
+                {% if electric_devices|length > 0 %}
+                    {% for device in electric_devices %}
+                        options += "<option value='{{ device.pk }}'>{{ device.electric_device_type_name }}</option> ";
+                    {% endfor %}
+                {% endif %}
+                $("#node_part").html(options);
+            }
+        }
+    });
+    $("#node_part").change(function(){
+        var val_added_cu = $("#node_part").val();
+        pw = val_added_cu.split("_");
+        if(pw.length>1){
+            $("#prof_pwr").parent().parent().show("hidden");
+        }else{
+            if(val_added_cu == 'newed'){
+                var url = "/buildings/add_electric_device_popup/"
                 var newwindow=window.open(url,'name','height=600,width=800');
                 if (window.focus) {newwindow.focus()}
                 return false;
             }else{
-                url = "/buildings/get_parts_of_building/"
+                $("#prof_pwr").parent().parent().hide("hidden");
             }
-            $.ajax({
-            url: "/buildings/get_parts_of_building/",
-            global: false,
-            type: "GET",
-            dataType: "json",
-            statusCode: {
-            404: function() {
-            $("#notice").before(msg);
-            }
-            },
-            success: function(msg){
-            $("#search").val("");
-            $("#id_pm").val("");
-            var registro = msg[0];
-            form_row(registro.pm, registro.alias, registro.marca, registro.modelo, registro.serie, registro.status);
-            },
-            });
         }
-
+    });
+    $("#prof_pwr").change(function(){
+        var val_added_cu = $("#prof_pwr").val();
+        if(val_added_cu == 'newpm'){
+            var url = "/buildings/add_powermeter_popup/";
+            var newwindow=window.open(url,'name','height=600,width=800');
+            if (window.focus) {newwindow.focus()}
+            return false;
+        }
     });
     /*
     $(".add").live("click", function(e){
@@ -153,9 +178,9 @@
                         Selecciona que tipo de nodo deseas agregar
                     </p>
                     <div class="g12" id="agregar_nodo">
-                        <div class="g4">
-                            <label class="g6"> Elija un tipo de nodo</label>
-                            <select class="g6" id="type_node">
+                        <div class="g3">
+                            <label class="fl"> Elija un tipo de nodo</label>
+                            <select class="fl" id="type_node">
                                 <option value="0">Elija una opci&oacute;n</option>
                                 <option value="1">
                                     Parte de edificio
@@ -165,10 +190,27 @@
                                 </option>
                             </select>
                         </div>
-                        <div class="g4 hidden">
-                            <label class="g6" id="label_node_part" for="node_part"> Elija un tipo de nodo</label>
-                            <select class="g6" id="node_part">
+                        <div class="g3 hidden">
+                            <label class="fl" id="label_node_part" for="node_part"> Elija un tipo de nodo</label>
+                            <select class="fl" id="node_part">
+                                <option value="0">Elija una opci&oacute;n</option>
                             </select>
+                        </div>
+                        <div class="g3 hidden">
+                            <label class="fl" id="label_pwer" for="prof_pwr"> Elija un medidor</label>
+                            <select class="fl" id="prof_pwr">
+                                <option value='0'>Elija una opci&oacute;n</option>
+                                <option value='newpm'>Crear un nuevo medidor el&eacute;ctrico</option>
+                                {% if prof_pwmeters|length > 0 %}
+                                    {% for pm in prof_pwmeters %}
+                                        options += "<option value='{{ pm.pk }}'>{{ pm.powermeter.powermeter_anotation }}</option> ";
+                                    {% endfor %}
+                                {% endif %}
+                            </select>
+
+                        </div>
+                        <div class="g3 hidden">
+                            <button id="add_node" class="aqua_btn">agregar</button>
                         </div>
 
                     </div>

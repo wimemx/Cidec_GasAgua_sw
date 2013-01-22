@@ -1,0 +1,103 @@
+{% extends "popup_forms_base.html" %}
+{% block titulo %}
+    {% if operation == "edit" %}Editar{% else %}Alta de{% endif %} Dispositivos y Sistemas El&eacute;ctricos
+{% endblock %}
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/forms/rbac_add_user.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/forms/c_centers.css" type="text/css" />
+    <link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
+{% endblock %}
+{% block externaljs %}
+    <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+    <script type="text/javascript">
+        var form_valid = true;
+        var send_form = 0;
+        $(document).ready(function(){
+            $("#devicetypename").focus();
+            $(".required").each(function(){
+                $(this).parent().next().blur(function(e){
+                    var _span;
+
+                    if($.trim(e.delegateTarget.value)==''){
+                        _span = "incorrect";
+                        form_valid = false;
+                    }else{
+                        if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ ]+$/.test(e.delegateTarget.value)){
+                            _span = "correct";
+                            form_valid = true;
+                        }else{
+                            _span = "incorrect";
+                            form_valid = false;
+                        }
+                    }
+
+                    var n_span = $("#"+e.delegateTarget.id).next();
+                    n_span.removeClass("incorrect");
+                    n_span.removeClass("correct");
+                    n_span.addClass(_span);
+                });
+            });
+            $("#save").click(function(e){
+                e.preventDefault();
+                validate_form();
+                if(send_form == 1){
+                    $.ajax({
+                        type: "POST",
+                        url: "/buildings/save_add_electric_device_popup/",
+                        data: $("#add_electric_device_form").serialize(),
+                        success: function(data){
+                            var opener_=$(window.opener.document);
+                            var nombre_parte = $("#devicetypename").val();
+                            opener_.find("#node_part")
+                                    .append("<option value='"+ data +"'>"+ nombre_parte+"</option>")
+                                    .parent()
+                                    .removeClass("hidden");
+                            opener_.find("#node_part option[value="+data+"]")
+                                    .attr("selected","selected")
+                                    .parent()
+                                    .parent()
+                                    .find("span")
+                                    .text(nombre_parte);
+
+                            window.close();
+                        }
+                    });
+                }
+            });
+        });
+        function validate_form(){
+            if (form_valid){
+                var _span;
+                var devicetype_name = $("#devicetypename");
+                if($.trim(devicetype_name.val())==''){
+                    _span = "incorrect";
+                    form_valid = false;
+                }else{
+                    if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ ]+$/.test(devicetype_name.val())){
+                        _span = "correct";
+                        form_valid = true;
+                    }else{
+                        _span = "incorrect";
+                        form_valid = false;
+                    }
+                }
+                devicetype_name.next().removeClass("incorrect");
+                devicetype_name.next().removeClass("correct");
+                devicetype_name.next().addClass(_span);
+
+            }
+
+            if(form_valid){
+                send_form++;
+            }
+
+            return form_valid
+        }
+    </script>
+{% endblock %}
+
+
+{% block contenido %}
+    {% include "consumption_centers/buildings/just_forms/just_form_add_electric_device.html" %}
+{% endblock %}

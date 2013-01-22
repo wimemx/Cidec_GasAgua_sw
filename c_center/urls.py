@@ -213,8 +213,6 @@ urlpatterns = patterns('',
 
                        url(r'^crear_jerarquia/(?P<id_building>\d+)/',
                            'c_center.views.create_hierarchy'),
-                       url(r'^get_parts_of_building_for_tree/',
-                           'c_center.views.get_parts_of_building_for_tree'),
 
                        url(r'^add_partbuilding_pop/(?P<id_building>\d+)/',
                            'c_center.views.add_partbuilding_pop'),
@@ -225,5 +223,10 @@ urlpatterns = patterns('',
                            'c_center.views.add_powermeter_popup'),
                        url(r'^save_add_powermeter_popup/',
                            'c_center.views.save_add_powermeter_popup'),
+
+                       url(r'^add_electric_device_popup/',
+                           'c_center.views.add_electric_device_popup'),
+                       url(r'^save_add_electric_device_popup/',
+                           'c_center.views.save_add_electric_device_popup'),
 
 )
