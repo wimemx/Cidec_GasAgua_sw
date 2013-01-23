@@ -229,4 +229,7 @@ urlpatterns = patterns('',
                        url(r'^save_add_electric_device_popup/',
                            'c_center.views.save_add_electric_device_popup'),
 
+                       url(r'^add_cu/',
+                           'c_center.views.add_cu'),
+
 )

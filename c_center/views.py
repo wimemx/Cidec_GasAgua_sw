@@ -6364,3 +6364,38 @@ def save_add_electric_device_popup(request):
             return HttpResponse(status=400)
     else:
         raise Http404
+
+@login_required(login_url='/')
+def add_cu(request):
+    if (has_permission(request.user, CREATE,
+                       "Modificar unidades de consumo") or has_permission(
+        request.user, CREATE, "Alta de unidades de consumo") or
+        request.user.is_superuser) and request.method == "POST":
+        post = request.POST
+        profile = get_object_or_404(ProfilePowermeter,
+                                    pk=int(post['prof_pwr']))
+        if post['type_node'] == "1":
+            cu = post["node_part"].split("_")
+            consumer_unit = get_object_or_404(ConsumerUnit,
+                                              pk=int(cu[0]))
+            if cu[1] == "cu":
+                consumer_unit.profile_powermeter = profile
+                consumer_unit.save()
+            c_type="*part"
+        else:
+            building = get_object_or_404(Building, pk=int(post['building']))
+            electric_device_type = get_object_or_404(ElectricDeviceType,
+                                                     pk=int(post['node_part']))
+            consumer_unit = ConsumerUnit(
+                building = building,
+                electric_device_type = electric_device_type,
+                profile_powermeter = profile
+            )
+            consumer_unit.save()
+            c_type="*consumer_unit"
+        content = str(consumer_unit.pk) + c_type
+        return HttpResponse(content=content,
+                        content_type="text/plain",
+                        status=200)
+    else:
+        raise Http404
