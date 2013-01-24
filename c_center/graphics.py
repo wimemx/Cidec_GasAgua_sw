@@ -30,7 +30,7 @@ import variety
 
 def build_electric_data_json(consumer_units_ids, electric_data, granularity,
                              from_dates, to_dates):
-    if not variety.are_array_same_length(consumer_units, from_dates, to_dates):
+    if not variety.are_array_same_length(consumer_units_ids, from_dates, to_dates):
         return []
 
     data_arrays = []
@@ -858,6 +858,131 @@ def render_graphics(request):
 
         return django.shortcuts.render_to_response(
             "consumption_centers/graphs/graphics.html",
+            template_context)
+
+    else:
+        raise django.http.Http404
+
+
+def render_graphics_extended(request):
+    if request.method == "GET":
+        try:
+            granularity = request.GET['granularity']
+
+        except KeyError:
+            return django.http.HttpResponse("")
+
+        template_variables = dict()
+        parameter_units = dict(kWh_consumido="kWh/h",
+            TotalkWhIMPORT="kW/h",
+            kWL3="kW",
+            kWL2="kW",
+            kWL1="kW",
+            kW="kW",
+            I1="I",
+            I2="I",
+            I3="I",
+            V1="V",
+            V2="V",
+            V3="V",
+            PF="%",
+        )
+
+        data = []
+        consumer_unit_counter = 1
+        consumer_unit_get_key = "consumer-unit%02d" % consumer_unit_counter
+        date_start_get_key = "date-start%02d" % consumer_unit_counter
+        date_end_get_key = "date-end%02d" % consumer_unit_counter
+        parameter_get_key = "parameter%02d" % consumer_unit_counter
+        while request.GET.has_key(consumer_unit_get_key):
+            consumer_unit_id = request.GET[consumer_unit_get_key]
+            parameter = request.GET[parameter_get_key]
+            if request.GET.has_key(date_start_get_key) and\
+               request.GET.has_key(date_end_get_key):
+                datetime_start = datetime.datetime.strptime(
+                                     request.GET[date_start_get_key],
+                                     "%Y-%m-%d")
+
+                datetime_end =\
+                    datetime.datetime.strptime(request.GET[date_end_get_key],
+                                               "%Y-%m-%d") +\
+                    datetime.timedelta(days=1)
+
+            else:
+                datetime_start = get_default_datetime_start()
+                datetime_end = get_default_datetime_end()
+
+            data.append((consumer_unit_id, datetime_start, datetime_end, parameter))
+            consumer_unit_counter += 1
+            consumer_unit_get_key = "consumer-unit%02d" % consumer_unit_counter
+            date_start_get_key = "date-start%02d" % consumer_unit_counter
+            date_end_get_key = "date-end%02d" % consumer_unit_counter
+            parameter_get_key = "parameter%02d" % consumer_unit_counter
+
+        electric_data_list = []
+        consumer_unit_and_time_interval_information_list = []
+        electric_data_datetime_first = None
+        for id, start, end, electrical_parameter in data:
+            try:
+                consumer_unit_current = c_center.models.ConsumerUnit.objects.get(pk=id)
+
+            except c_center.models.ConsumerUnit.DoesNotExist:
+                raise django.http.Http404
+
+            electric_data_values =\
+            data_warehouse.views.get_consumer_unit_electric_data(
+                electrical_parameter,
+                granularity,
+                #consumer_unit_item.pk,
+                id,
+                start,
+                end)
+
+            if electric_data_values is None:
+                electric_data_values = get_consumer_unit_electric_data_raw(
+                    electrical_parameter,
+                    #consumer_unit_item.pk,
+                    id,
+                    start,
+                    end)
+
+            electric_data_list.append(electric_data_values)
+            consumer_unit_and_time_interval_information =\
+            data_warehouse.views.get_consumer_unit_and_time_interval_information(
+                id,
+                start,
+                end)
+
+            consumer_unit_and_time_interval_information['parameter'] =\
+                parameter_units[electrical_parameter]
+
+            consumer_unit_and_time_interval_information_list.append(
+                consumer_unit_and_time_interval_information)
+
+
+        minimum_values_number = normalize_electric_data_list(electric_data_list)
+        is_cut_electric_data_list_successful = cut_electric_data_list_values(
+            electric_data_list,
+            minimum_values_number)
+
+        if len(electric_data_list) > 0 and len(electric_data_list[0]) > 0:
+            template_variables['fi'] =\
+            datetime.datetime.fromtimestamp(electric_data_list[0][0]['datetime'])
+
+        limits = dict()
+        template_variables['rows_data'] = get_electric_data_list_json(
+            electric_data_list,
+            limits)
+
+        template_variables['columns'] = consumer_unit_and_time_interval_information_list
+        template_variables['limits'] = limits
+        template_variables['granularity'] = granularity
+
+        template_context = django.template.context.RequestContext(request,
+            template_variables)
+
+        return django.shortcuts.render_to_response(
+            "consumption_centers/graphs/graphics_extended.html",
             template_context)
 
     else:
