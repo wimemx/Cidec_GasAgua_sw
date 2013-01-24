@@ -40,7 +40,7 @@
                         n_span.addClass(_span);
                     });
                 }else if ($(this).parent().next()[0].nodeName.toLowerCase() == 'select'){
-                    var id_select = $(this).parent().next().attr('id')
+                    var id_select = $(this).parent().next().attr('id');
                     $("#"+id_select).change(function(e){
                         if($.trim(e.delegateTarget.value)==''){
                             _span = "incorrect";
@@ -68,18 +68,18 @@
                         success: function(data){
                             var opener_=$(window.opener.document);
                             var nombre_parte = $("#b_part_name").val();
-                            console.log(data, nombre_parte);
                             opener_.find("#node_part")
-                                    .append("<option value='"+ data +"'>"+ nombre_parte+" - Sin medidor</option>")
-                                    .append("<option value='"+ data +"_pw'>"+ nombre_parte+" - Con medidor</option>")
+                                    .append("<option value='"+ data +"_ncu'>"+ nombre_parte+" - Sin medidor</option>")
+                                    .append("<option value='"+ data +"_cu'>"+ nombre_parte+" - Con medidor</option>")
                                     .parent()
                                     .removeClass("hidden");
-                            opener_.find("#node_part option[value="+data+"]")
+                            opener_.find("#node_part option[value="+data+"_ncu]")
                                     .attr("selected","selected")
                                     .parent()
                                     .parent()
                                     .find("span")
-                                    .text(nombre_parte);
+                                    .text(nombre_parte+" - Sin medidor");
+                            opener_.find("#add_node").show();
 
                             window.close();
                         }

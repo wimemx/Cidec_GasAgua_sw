@@ -6100,6 +6100,16 @@ def create_hierarchy(request, id_building):
         list = get_hierarchy_list(building, request.user)
         template_vars['list'] = list
         template_vars['building'] = building
+
+        cus = ConsumerUnit.objects.all()
+        ids_prof = [cu.profile_powermeter.pk for cu in cus]
+        profs = ProfilePowermeter.objects.exclude(
+            pk__in=ids_prof).exclude(
+            powermeter__powermeter_anotation="No Registrado").exclude(
+            powermeter__powermeter_anotation="Medidor Virtual"
+        )
+        template_vars['electric_devices'] = ElectricDeviceType.objects.all()
+        template_vars['prof_pwmeters'] = profs
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
             "consumption_centers/create_hierarchy.html",
@@ -6109,31 +6119,7 @@ def create_hierarchy(request, id_building):
         return render_to_response("generic_error.html", template_vars_template)
 
 @login_required(login_url='/')
-def get_parts_of_building_for_tree(request):
-    datacontext = get_buildings_context(request.user)
-    template_vars = {}
-
-    if datacontext:
-        template_vars["datacontext"] = datacontext
-
-    template_vars["sidebar"] = request.session['sidebar']
-    template_vars["empresa"] = request.session['main_building']
-    template_vars["company"] = request.session['company']
-
-    if has_permission(request.user, VIEW,
-                      "Ver equipos industriales") or request.user.is_superuser:
-        template_vars_template = RequestContext(request, template_vars)
-        return render_to_response(
-            "consumption_centers/add_node.html",
-            template_vars_template)
-    else:
-        template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("generic_error.html", template_vars_template)
-
-@login_required(login_url='/')
 def add_partbuilding_pop(request, id_building):
-    template_vars = {}
-
     if has_permission(request.user, CREATE,
                       "Alta de partes de edificio") or request.user.is_superuser:
 
@@ -6253,21 +6239,13 @@ def save_add_part_popup(request):
 def add_powermeter_popup(request):
     if has_permission(request.user, CREATE,
                       "Alta de medidor electrico") or request.user.is_superuser:
-        empresa = request.session['main_building']
-        post = ''
         pw_models_list = PowermeterModel.objects.all().exclude(
             status=0).order_by("powermeter_brand")
-        template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
-                             modelos=pw_models_list,
-                             post=post,
-                             company=request.session['company'],
-                             sidebar=request.session['sidebar']
-        )
+        template_vars = dict(modelos=pw_models_list)
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
-            "consumption_centers/buildings/add_powermeter.html",
+            "consumption_centers/buildings/popup_add_powermeter.html",
             template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
@@ -6284,32 +6262,22 @@ def save_add_powermeter_popup(request):
                        CREATE,
                       "Alta de medidor electrico") or
         request.user.is_superuser) and request.method == "POST":
-        template_vars["post"] = request.POST
+
         pw_alias = request.POST.get('pw_alias').strip()
         pw_model = request.POST.get('pw_model')
         pw_serial = request.POST.get('pw_serial').strip()
-        message = ''
-        type = ''
 
         continuar = True
         if pw_alias == '':
-            message = "El Alias del medidor no puede quedar vacío"
-            type = "n_notif"
             continuar = False
         elif not variety.validate_string(pw_alias):
-            message = "El Alias del medidor contiene caracteres inválidos"
-            type = "n_notif"
             pw_alias = ""
             continuar = False
 
         if pw_model == '':
-            message = "El modelo del medidor no puede quedar vacío"
-            type = "n_notif"
             continuar = False
 
         if pw_serial == '':
-            message = "El número serial del medidor no puede quedar vacío"
-            type = "n_notif"
             continuar = False
 
         #Valida por si le da muchos clics al boton
@@ -6317,12 +6285,7 @@ def save_add_powermeter_popup(request):
             powermeter_model__pk=pw_model).filter(
             powermeter_serial=pw_serial)
         if pwValidate:
-            message = "Ya existe un Medidor con ese Modelo y ese Número de Serie"
-            type = "n_notif"
             continuar = False
-
-        post = {'pw_alias': pw_alias, 'pw_model': int(pw_model),
-                'pw_serial': pw_serial}
 
         if continuar:
             pw_model = PowermeterModel.objects.get(pk=pw_model)
@@ -6334,16 +6297,105 @@ def save_add_powermeter_popup(request):
 
             )
             newPowerMeter.save()
-            ProfilePowermeter(powermeter=newPowerMeter).save()
+            profile = ProfilePowermeter(powermeter=newPowerMeter)
+            profile.save()
 
-            template_vars["message"] = "Medidor creado exitosamente"
-            template_vars["type"] = "n_success"
+            return HttpResponse(content=profile.pk,
+                                content_type="text/plain",
+                                status=200)
+        else:
+            return HttpResponse(status=400)
+    else:
+        raise Http404
 
-            if has_permission(request.user, VIEW,
-                              "Ver medidores eléctricos") or request.user.is_superuser:
-                return HttpResponseRedirect("/buildings/medidores?msj=" +
-                                            template_vars["message"] +
-                                            "&ntype=n_success")
-        template_vars["post"] = post
-        template_vars["message"] = message
-        template_vars["type"] = type
+@login_required(login_url='/')
+def add_electric_device_popup(request):
+    if has_permission(request.user, CREATE,
+                      "Alta de dispositivos y sistemas eléctricos") or \
+       request.user.is_superuser:
+
+        template_vars_template = RequestContext(request,
+                                                {"operation":"add_popup"})
+        return render_to_response(
+            "consumption_centers/buildings/popup_add_electric_device.html",
+            template_vars_template)
+    else:
+        datacontext = get_buildings_context(request.user)
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
+
+@login_required(login_url='/')
+def save_add_electric_device_popup(request):
+    if has_permission(request.user, CREATE,
+                      "Alta de dispositivos y sistemas eléctricos") or \
+           request.user.is_superuser and request.method == "POST":
+
+        edt_name = request.POST['devicetypename'].strip()
+        edt_description = request.POST['devicetypedescription'].strip()
+
+        continuar = True
+        if edt_name == '':
+            continuar = False
+        elif not variety.validate_string(edt_name):
+            edt_name = ""
+            continuar = False
+
+        #Valida por si le da muchos clics al boton
+        b_electric_typeValidate = ElectricDeviceType.objects.filter(
+            electric_device_type_name=edt_name)
+        if b_electric_typeValidate:
+            continuar = False
+
+        if continuar:
+            newElectricDeviceType = ElectricDeviceType(
+                electric_device_type_name=edt_name,
+                electric_device_type_description=edt_description
+            )
+            newElectricDeviceType.save()
+
+            return HttpResponse(content=newElectricDeviceType.pk,
+                                content_type="text/plain",
+                                status=200)
+        else:
+            return HttpResponse(status=400)
+    else:
+        raise Http404
+
+@login_required(login_url='/')
+def add_cu(request):
+    if (has_permission(request.user, CREATE,
+                       "Modificar unidades de consumo") or has_permission(
+        request.user, CREATE, "Alta de unidades de consumo") or
+        request.user.is_superuser) and request.method == "POST":
+        post = request.POST
+        profile = get_object_or_404(ProfilePowermeter,
+                                    pk=int(post['prof_pwr']))
+        if post['type_node'] == "1":
+            cu = post["node_part"].split("_")
+            consumer_unit = get_object_or_404(ConsumerUnit,
+                                              pk=int(cu[0]))
+            if cu[1] == "cu":
+                consumer_unit.profile_powermeter = profile
+                consumer_unit.save()
+            c_type="*part"
+        else:
+            building = get_object_or_404(Building, pk=int(post['building']))
+            electric_device_type = get_object_or_404(ElectricDeviceType,
+                                                     pk=int(post['node_part']))
+            consumer_unit = ConsumerUnit(
+                building = building,
+                electric_device_type = electric_device_type,
+                profile_powermeter = profile
+            )
+            consumer_unit.save()
+            c_type="*consumer_unit"
+        content = str(consumer_unit.pk) + c_type
+        return HttpResponse(content=content,
+                        content_type="text/plain",
+                        status=200)
+    else:
+        raise Http404

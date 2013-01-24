@@ -22,7 +22,7 @@ a.consumer_unit{
     line-height: 150%;
     color: #909aa2 !important;
     text-decoration: none;
-    cursor: ;
+    cursor: pointer;
 }
 .temp{
     border: dotted 2px #869baf !important;
@@ -37,5 +37,6 @@ a.consumer_unit{
     border: dotted 2px #d4cb5a !important;
 }
 .virtual{
-    border: dotted 2px #23cbcc !important;
+    background: #d8fff8 !important;
+    color: #586476;
 }

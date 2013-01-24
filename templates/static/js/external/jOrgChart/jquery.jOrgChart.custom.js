@@ -178,6 +178,13 @@
                 $nodeDiv.mouseenter(function(){
                     if(!$list_element.hasClass("temp")){
                         $node.find("ul:eq(0)").append(append_text);
+                        var classList = $node.attr('class').split(/\s+/);
+                        $.each(classList, function(index,item) {
+                           if(item != "virtual" && item != "consumer_unit"){
+                               $node.find("ul:eq(0) li.temp").addClass(item);
+                           }
+                        });
+
                         $(opts.chartElement).children().remove();
                         $this.jOrgChart(opts);
                     }
@@ -193,6 +200,12 @@
                     }else{
                         $node.find("ul:eq(0)").append(append_text);
                     }
+                    var classList = $node.attr('class').split(/\s+/);
+                    $.each(classList, function(index,item) {
+                        if(item != "virtual" && item != "consumer_unit"){
+                            $node.find("ul:eq(0) li.temp").addClass(item);
+                        }
+                    });
                     $(opts.chartElement).children().remove();
                     $this.jOrgChart(opts);
                 }

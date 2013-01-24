@@ -456,7 +456,7 @@ def get_hierarchy_list(building, user):
                           "<br/>(Total)</a>"
     else:
         hierarchy_list += building.building_name + "<br/>(Total)"
-
+    node_cont = 1
     hierarchy_list += "<ul>"
     try:
         parents[0]
@@ -464,7 +464,6 @@ def get_hierarchy_list(building, user):
         #No tiene partes, paso para revisar sus sistemas y dispositiovos
         pass
     else:
-
         for parent in parents:
             c_unit_parent = ConsumerUnit.objects.filter(building=building,
                                                         part_of_building=parent).exclude(
@@ -474,9 +473,9 @@ def get_hierarchy_list(building, user):
             clase += "disabled" if not parent.part_of_building_status else ""
             cu_part = ConsumerUnit.objects.get(part_of_building=parent)
             if cu_part.profile_powermeter.powermeter.powermeter_anotation == "Medidor Virtual":
-                clase += " virtual'"
+                clase += str(node_cont) + " virtual'"
             else:
-                clase += "'"
+                clase += " " + str(node_cont) + "'"
             if allowed_cu(c_unit_parent[0], user, building):
                 hierarchy_list += "<li " + clase + "> <a href='#' rel='" +\
                                   str(c_unit_parent[0].pk) + "'>" +\
@@ -485,8 +484,9 @@ def get_hierarchy_list(building, user):
                 hierarchy_list += "<li " + clase + ">" +\
                                   parent.part_of_building_name
                 #obtengo la jerarquia de cada rama del arbol
-            hierarchy_list += get_sons(parent, "part", user, building)
+            hierarchy_list += get_sons(parent, "part", user, building, node_cont)
             hierarchy_list += "</li>"
+            node_cont += 1
 
 
     #revisa por dispositivos en el primer nivel
@@ -517,9 +517,9 @@ def get_hierarchy_list(building, user):
             else:
                 clase += ""
             if parent.profile_powermeter.powermeter.powermeter_anotation == "Medidor Virtual":
-                clase += " virtual'"
+                clase += str(node_cont) + " virtual'"
             else:
-                clase += "'"
+                clase += " " + str(node_cont) + "'"
             if allowed_cu(parent, user, building):
                 hierarchy_list += "<li " + clase + "> <a href='#' rel='" +\
                                   str(parent.pk) + "'>" +\
@@ -532,8 +532,9 @@ def get_hierarchy_list(building, user):
                                   electric_device_type_name
                 #obtengo la jerarquia de cada rama del arbol
             hierarchy_list += get_sons(parent, "consumer", user,
-                                       building)
+                                       building, node_cont)
             hierarchy_list += "</li>"
+            node_cont += 1
 
     hierarchy_list += "</ul>"
 
@@ -541,11 +542,13 @@ def get_hierarchy_list(building, user):
     hierarchy_list += "</li></ul>"
     return hierarchy_list
 
-def get_sons(parent, part, user, building):
+def get_sons(parent, part, user, building, node_index):
     """ Gets a list of the direct sons of a given part, or consumer unit
     parent = instance of PartOfBuilding, or ConsumerUnit
     part = string, is the type of the parent
     """
+    node_index = str(node_index)
+    node_number = 1
     if part == "part":
         sons_of_parent = HierarchyOfPart.objects.filter(
             part_of_building_composite=parent)
@@ -559,24 +562,31 @@ def get_sons(parent, part, user, building):
             if son.part_of_building_leaf:
                 tag = son.part_of_building_leaf.part_of_building_name
                 sons = get_sons(son.part_of_building_leaf, "part", user,
-                                building)
+                                building, node_number)
                 cu = ConsumerUnit.objects.get(
                     part_of_building=son.part_of_building_leaf)
                 _class = "part_of_building"
+                if cu.profile_powermeter.powermeter.powermeter_anotation == "Medidor Virtual":
+                    _class += " virtual"
+
             else:
                 tag = son.consumer_unit_leaf.electric_device_type.electric_device_type_name
                 sons = get_sons(son.consumer_unit_leaf, "consumer", user,
-                                building)
+                                building, node_number)
                 cu = son.consumer_unit_leaf
                 _class = "consumer_unit"
+                if cu.profile_powermeter.powermeter.powermeter_anotation == "Medidor Virtual":
+                    _class += " virtual"
             if allowed_cu(cu, user, building):
-                list += '<li class="' + _class + '"><a href="#" rel="' + str(
+                list += '<li class="' + _class + ' ' + node_index + "_" + \
+                        str(node_number) + '"><a href="#" rel="' + str(
                     cu.pk) + '">'
                 list += tag + '</a>' + sons
             else:
                 list += '<li>'
                 list += tag + sons
             list += '</li>'
+            node_number += 1
         list += '</ul>'
         return list
     else:

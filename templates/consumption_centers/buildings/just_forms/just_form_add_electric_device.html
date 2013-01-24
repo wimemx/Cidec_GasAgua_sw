@@ -1,0 +1,45 @@
+<h2 id="titulo_form" class="powermeter">
+    {% if operation == "edit" %}Edici&oacute;n de{% else %}Alta de{% endif %} Dispositivos y Sistemas El&eacute;ctricos
+</h2>
+<div class="divider" id="divider_top">&nbsp;</div>
+<div id="form_container">
+    {% if message %}
+        <span class="notif {{ type }}">
+                    {% autoescape off %}{{ message }}{% endautoescape %}
+                    <a href="#" onclick="$(this).parent().remove();">X</a>
+                </span>
+    {% endif %}
+    <p class="description">
+        Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
+        <br/>
+        Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
+    </p>
+    <form method="post" action="." id="add_electric_device_form">
+        {% csrf_token %}
+        <h3 class="g12">Informaci&oacute;n del Tipo de Equipo Eléctrico</h3>
+        <div id="cluster_fields">
+            <div class="fields_row g9">
+                <label for="devicetypename" class="g2">Nombre<span class="required">*</span></label>
+                <input type="text" name="devicetypename" id="devicetypename" class="g9"
+                       value="{{ post.devicetypename }}"
+                        />
+                <span></span>
+            </div>
+            <div class="fields_row g9">
+                <label for="devicetypedescription" class="g2">Descripci&oacute;n</label>
+                <textarea rows="5" name="devicetypedescription" id="devicetypedescription" class="g9">{{ post.devicetypedescription }}</textarea>
+
+                <span></span>
+            </div>
+
+
+        </div>
+
+        <div class="buttons g12">
+            <button class="aqua_btn" id="save">
+                Guardar
+            </button>
+        </div>
+    </form>
+
+</div>

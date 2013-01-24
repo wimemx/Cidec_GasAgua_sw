@@ -57,7 +57,8 @@
                     });
                 }
             });
-            $("#save").click(function(){
+            $("#save").click(function(e){
+                e.preventDefault();
                 validate_form();
                 if(send_form == 1){
                     $.ajax({
@@ -66,19 +67,22 @@
                         data: $("#add_pw_form").serialize(),
                         success: function(data){
                             var opener_=$(window.opener.document);
-                            var nombre_parte = $("#b_part_name").val();
-                            console.log(data, nombre_parte);
-                            opener_.find("#node_part")
-                                    .append("<option value='"+ data +"'>"+ nombre_parte+" - Sin medidor</option>")
-                                    .append("<option value='"+ data +"_pw'>"+ nombre_parte+" - Con medidor</option>")
+                            var nombre_parte = $("#pw_alias").val();
+                            opener_.find("#prof_pwr")
+                                    .append("<option value='"+ data +"'>"+ nombre_parte+"</option>")
+                                    .parent()
+                                    .parent()
                                     .parent()
                                     .removeClass("hidden");
-                            opener_.find("#node_part option[value="+data+"]")
+                            opener_.find("#prof_pwr option[value="+data+"]")
                                     .attr("selected","selected")
                                     .parent()
                                     .parent()
                                     .find("span")
                                     .text(nombre_parte);
+                            opener_.find("#add_node").parent()
+                                    .removeClass("hidden");
+                            opener_.find("#add_node").show();
 
                             window.close();
                         }
@@ -141,5 +145,5 @@
     </script>
 {% endblock %}
 {% block contenido %}
-    {% include "consumption_centers/buildings/just_forms/just_form_add_partbuilding.html" %}
+    {% include "consumption_centers/buildings/just_forms/just_form_add_powermeter.html" %}
 {% endblock %}
