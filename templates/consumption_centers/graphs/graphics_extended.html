@@ -1,0 +1,291 @@
+<html>
+<head>
+<link rel="stylesheet" href="/static/css/consumption_centers/graphs.css"/>
+<link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
+<link rel="stylesheet" href="/static/js/external/jqueryUniform/css/uniform.default.css" type="text/css" media="screen" charset="utf-8" />
+<link href="/static/js/external/messi/messi.css" rel="stylesheet" type="text/css" media="screen" />
+<link rel="stylesheet" href="{{ STATIC_URL }}css/ui.spinner.css"/>
+<script type="text/javascript" src="/static/js/external/jquery.tools.min.js"></script>
+<script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+<script type="text/javascript" src="/static/js/external/jqueryUniform/jquery.uniform.min.js"></script>
+<script type="text/javascript" src="/static/js/external/jsapi.js"></script>
+<script type="text/javascript" src="/static/js/functions.js"></script>
+<script src="/static/js/external/messi/messi.min.js"></script>
+<script src="{{ STATIC_URL}}js/external/ui.spinner.min.js"></script>
+<script type="text/javascript">
+    google.load('visualization', '1.1', {packages: ['corechart', 'controls']});
+</script>
+<script type="text/javascript">
+    Date.prototype.addDays = function (n) {
+        this.setDate(this.getDate() + n);
+        this.tempDate = this.getDate();
+    };
+    Date.prototype.addHours= function(h){
+        this.setHours(this.getHours()+h);
+        return this;
+    };
+    $(document).ready(function(){
+        $("#compare_interval1 li").each(function(){
+            //cambia el intervalo visible de las graficas y cambia el estilo segun la opcion seleccionada
+            $(this).click(function(){
+                if($(this).attr('id') == "raw_data"){
+                    var base_url = window.location.pathname;
+                    new Messi('&iquest;Est&aacute; seguro de que desea ver los datos reales medidos? Esta operaci&oacute;n podr&iacute;a tardar y su navegador podr&iacute;ia parecer no responder, le pedimos paciencia',
+                            {title: 'Ver datos medidos', modal: true, buttons: [{id: 0,
+                                label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
+                            }],
+                                callback: function(val) {
+                                    if(val=='Y'){
+                                        base_url+="?granularity=raw";
+                                        base_url=append_parameters(base_url);
+                                        window.location = base_url;
+                                    } else return false; }
+                            });
+                }else{
+                    changeRange($(this).attr('id'));
+                    $("#compare_interval1 li").each(function(){
+                        $(this).removeClass("active");
+                    });
+                }
+                $(this).addClass("active");
+            });
+        });
+
+
+    });
+    function changeRange(interval) {
+        var start_date, end_date;
+
+        //Date("October 13, 1975 11:13:00")
+        start_date = new Date("{{ fi|date:"F d, Y" }} 00:00:00");
+        end_date=  new Date("{{ fi|date:"F d, Y" }} 00:00:00");
+        start_date.addDays(1);
+        end_date.addDays(1);
+        switch (interval){
+            case 'hour' :
+                start_date.addHours(5);
+                end_date.addHours(7);
+                break;
+            case 'day' :
+                end_date.addDays(1);
+                break;
+            case 'week' :
+                end_date.addDays(7);
+                break;
+            case 'month' :
+                end_date.addDays(30);
+                break;
+        }
+        // 'slider' is the ControlWrapper instance describing the range slider.
+
+        control.setState({
+            'range': {
+                'start':new Date("{{ fi|date:"F d, Y" }}"),
+                'end': end_date
+            }
+        });
+        control.draw();
+    }
+</script>
+
+<script type="text/javascript">
+    function update_bars_color(){
+        var colors_css = ["#7d979e", "a10f0f", "#5aa550", "#b38619"];
+        $('.bar').each(function(){
+            var bar_class = $(this).attr("id").split()[0].replace("bar", "");
+            var bar_class_number = parseInt(bar_class);
+            var color_css = colors_css[(bar_class_number-1) % colors_css.length];
+            $(this).css("background-color", color_css);
+        });
+    }
+
+    function append_parameters(base_url){
+        var get = getUrlVars();
+        if(get.length>0){
+            if (get[0]!=window.location.protocol+"//"+window.location
+                    .host+window.location.pathname){
+                for(var i=0; i<get.length; i++){
+                    if (get[i]!="granularity"){
+                        base_url+="&"+get[i]+"="+get[get[i]];
+                    }
+                }
+            }
+
+        }
+        return base_url
+    }
+
+    function drawVisualization() {
+        var dashboard = new google.visualization.Dashboard(
+                document.getElementById('dashboard'));
+
+        var control = new google.visualization.ControlWrapper({
+            'controlType': 'ChartRangeFilter',
+            'containerId': 'control',
+            'options': {
+                // Filter by the date axis.
+                'filterColumnIndex': 0,
+                'ui': {
+                    'chartType': 'LineChart',
+                    'chartOptions': {
+                        'chartArea': {'width': '90%'},
+                        'hAxis': {'baselineColor': 'none'}
+                    },
+                    // Display a single series that shows the closing value of the stock.
+                    // Thus, this view has two columns: the date (axis) and the stock value (line series).
+                    'chartView': {
+                        'columns': [0, 1]
+                    },
+                    // 1 day in milliseconds = 24 * 60 * 60 * 1000 = 86,400,000
+                    //'minRangeSize': 86400000
+                    'minRangeSize':3600000
+                }
+            }
+            // Initial range: 2012-02-09 to 2012-03-20.
+            //'state': {'range': {'start': new Date(2012, 9, 8), 'end': new Date(2012, 9, 9)}}
+        });
+
+        var colors_array = ["#7d979e", "a10f0f", "#5aa550", "#b38619"];
+        var chart = new google.visualization.ChartWrapper({
+            'chartType': 'LineChart',
+            'containerId': 'chart',
+            'options': {
+                // Use the same chart area width as the control for axis alignment.
+                'chartArea': {'height': '80%', 'width': '90%'},
+                'colors': colors_array,
+                'hAxis': {'slantedText': false},
+                'vAxis': {'viewWindow': {'min': {{ limits.min }}, 'max': {{ limits.max}} }},
+                'legend': {'position': 'top', 'alignment': 'center'},
+            }
+        });
+
+        //
+        // Google Chart
+        //
+
+        var data = new google.visualization.DataTable();
+        var columns_display = new Array();
+        var default_colors = new Array();
+        {% for column in columns %}
+            data.addColumn({type:'datetime', role:'domain'},
+                    "From {{ column.start_datetime_string }} To {{ column.end_datetime_string }}");
+            data.addColumn('number', '{{ column.consumer_unit_string }} ({{ column.parameter }}): De {{ column.start_datetime_string }} A {{ column.end_datetime_string }}');
+            data.addColumn({type:'boolean', role:'certainty'});
+            columns_display.push(true);
+            default_colors.push(colors_array[{{ forloop.counter0 }}%colors_array.length]);
+        {% endfor %}
+
+        var rows_data = {% autoescape off %}{{ rows_data }}{% endautoescape %};
+        for(var row_index = 0; row_index < rows_data.length; row_index++){
+            var row_data = rows_data[row_index];
+            var row_array = new Array();
+            for(var data_index = 0; data_index < row_data.length; data_index++){
+                var data_object = row_data[data_index];
+                var object_datetime = new Date();
+                object_datetime.setTime((data_object['datetime']*1000));
+                row_array.push(object_datetime);
+                var object_electric_data = Math.abs(data_object['electric_data']);
+                row_array.push(object_electric_data);
+                var object_certainty = data_object['certainty'];
+                row_array.push(object_certainty);
+            }
+            data.addRow(row_array);
+        }
+        var view = new google.visualization.DataView(data);
+
+        dashboard.bind(control, chart);
+        dashboard.draw(view);
+
+        $(".chart-column").click(function(){
+            var column_id = $(this).attr("id");
+            var column_index = parseInt(column_id.substring("column".length));
+            columns_display[column_index] = !columns_display[column_index];
+            var columns_set_array = new Array();
+            var colors = new Array();
+            for(var index = 0; index < columns_display.length; index++){
+                if(columns_display[index]){
+                    columns_set_array.push((index * 3) + 0);
+                    columns_set_array.push((index * 3) + 1);
+                    columns_set_array.push((index * 3) + 2);
+                    colors.push(default_colors[index]);
+                }
+            }
+
+            var options = chart.getOptions();
+            options['colors'] = colors;
+            chart.setOptions(options);
+            view.setColumns(columns_set_array);
+            dashboard.bind(control, chart);
+            dashboard.draw(view);
+        });
+
+        //
+        // Range Controllers
+        //
+        var $input = $('#upper_limit');
+        var $input1 = $('#lower_limit');
+        $input.val("{{ limits.max }}").attr("min", Math.ceil({{ limits.min }})).attr("max", Math.ceil({{ limits.max }}));
+        $input1.val("{{ limits.min }}").attr("min", Math.floor({{ limits.min }})).attr("max", Math.floor({{ limits.max }}));
+        $input.spinner({
+            min: $input.attr('min'),
+            max: $input.attr('max'),
+            step: $input.attr('step')
+        }).change(function(){
+                    if($input.val()<=$input1.val()){
+                        $input.val($input1.val() + .5);
+                    }
+                    chart.setOption('vAxis', {'viewWindow':{'max':$input.val(), 'min':$input1.val()}});
+                    chart.draw();
+                });
+        $input1.spinner({
+            min: $input1.attr('min'),
+            max: $input1.attr('max'),
+            step: $input1.attr('step')
+        }).change(function(){
+                    if($input1.val()>=$input.val()){
+                        $input1.val($input.val() - .5);
+                    }
+                    chart.setOption('vAxis', {'viewWindow':{'max':$input.val(), 'min':$input1.val()}});
+                    chart.draw();
+                });
+
+
+
+    }
+
+
+    google.setOnLoadCallback(drawVisualization);
+</script>
+</head>
+
+<body>
+<ul id="compare_interval1" class="fr">
+    <li id="hour" {% if granularity == "hour" %} class="active" {% endif %}>1 H</li>
+    <li id="day" {% if granularity == "day" %} class="active" {% endif %}>1 D</li>
+    <li id="week" {% if granularity == "week" %} class="active" {% endif %}>1 Sem</li>
+</ul>
+<a id="export_csv" class="fr" href="">Exportar datos en CSV</a>
+<div id="dashboard" class="fl">
+    <div id="chart">
+        <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
+    </div>
+    <div id="control"></div>
+    <div id="slider-range">
+        <div id="up">
+            <input type="text" class="integer" id="upper_limit" min="{{ limits.min }}" max="{{ limits.max }}" step="0.5"/>
+        </div>
+        <div id="down">
+            <input type="text" class="integer" id="lower_limit" min="{{ limits.min }}" max="{{ limits.max }}" step="0.5"/>
+        </div>
+    </div>
+</div>
+
+<div id="show-controls">
+    <ul>
+        {% for column in columns %}
+            <li id="column{{ forloop.counter0 }}" class="chart-column" >{{ column.consumer_unit_string }} ({{ column.parameter }})</li>
+        {% endfor %}
+    </ul>
+</div>
+</body>
+</html>
