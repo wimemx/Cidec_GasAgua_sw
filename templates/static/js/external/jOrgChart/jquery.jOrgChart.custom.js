@@ -33,7 +33,6 @@
         if(opts.dragAndDrop){
             var $divNode = $('div.node:not(.temp)').not(".disabled");
             var $nodeParts = $divNode.not(".consumer_unit");
-            var $nodeCU = $("div.node.consumer_unit");
             $divNode.draggable({
                 cursor      : 'move',
                 distance    : 40,
@@ -52,11 +51,14 @@
                 hoverClass  : 'drop-hover'
             });
 
+            /* //uncomment to add consumer_unit drop functionality
+            var $nodeCU = $("div.node.consumer_unit");
             $nodeCU.droppable({
                 accept      : '.consumer_unit',
                 activeClass : 'drag-active',
                 hoverClass  : 'drop-hover'
             });
+            */
 
             // Drag start event handler for nodes
             $divNode.bind("dragstart", function handleDragStart( event, ui ){
@@ -180,7 +182,7 @@
                         $node.find("ul:eq(0)").append(append_text);
                         var classList = $node.attr('class').split(/\s+/);
                         $.each(classList, function(index,item) {
-                           if(item != "virtual" && item != "consumer_unit"){
+                           if(item != "virtual" && item != "consumer_unit" && item != "part_of_building"){
                                $node.find("ul:eq(0) li.temp").addClass(item);
                            }
                         });
@@ -193,13 +195,14 @@
         }else{
 
             $nodeDiv.mouseenter(function(){
-                if(!$list_element.hasClass("temp")){
+                if(!$list_element.hasClass("temp") && !$list_element.hasClass("consumer_unit")){
                     if($node.find("ul").size()==0){
                         append_text = "<ul>" + append_text + "</ul>";
                         $node.append(append_text);
                     }else{
                         $node.find("ul:eq(0)").append(append_text);
                     }
+                    //add the parent class to the temp node
                     var classList = $node.attr('class').split(/\s+/);
                     $.each(classList, function(index,item) {
                         if(item != "virtual" && item != "consumer_unit"){
@@ -281,7 +284,7 @@
             });
         }
         if(!$nodeDiv.hasClass("temp")){
-            $nodeDiv.find(".opciones:eq(0)").append("<span class='edit'></span>");
+            $nodeDiv.find(".opciones:eq(0)").append("<span class='edit' href='#fancy_edit'></span>");
             if($nodeDiv.hasClass("consumer_unit")){
                 $nodeDiv.find(".opciones:eq(0)").append("<span class='del'></span>");
             }

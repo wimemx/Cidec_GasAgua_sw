@@ -13,6 +13,7 @@
     <script type="text/javascript">
         var form_valid = true;
         var send_form = 0;
+        var get = getUrlVars();
         $(document).ready(function(){
             $("#pw_alias").focus();
             $(".required").each(function(){
@@ -68,21 +69,30 @@
                         success: function(data){
                             var opener_=$(window.opener.document);
                             var nombre_parte = $("#pw_alias").val();
-                            opener_.find("#prof_pwr")
+                            var id_ddl;
+                            if(get['edit']=="edit"){
+                                id_ddl = "#prof_pwr_edit";
+                                opener_.find("#edit_node").parent()
+                                        .removeClass("hidden");
+                                opener_.find("#edit_node").show();
+                            }else{
+                                id_ddl = "#prof_pwr";
+                                opener_.find("#add_node").parent()
+                                        .removeClass("hidden");
+                                opener_.find("#add_node").show();
+                            }
+                            opener_.find(id_ddl)
                                     .append("<option value='"+ data +"'>"+ nombre_parte+"</option>")
                                     .parent()
                                     .parent()
                                     .parent()
                                     .removeClass("hidden");
-                            opener_.find("#prof_pwr option[value="+data+"]")
+                            opener_.find(id_ddl+" option[value="+data+"]")
                                     .attr("selected","selected")
                                     .parent()
                                     .parent()
                                     .find("span")
                                     .text(nombre_parte);
-                            opener_.find("#add_node").parent()
-                                    .removeClass("hidden");
-                            opener_.find("#add_node").show();
 
                             window.close();
                         }

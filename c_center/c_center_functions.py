@@ -469,11 +469,11 @@ def get_hierarchy_list(building, user):
                                                         part_of_building=parent).exclude(
                 electric_device_type__electric_device_type_name=
                 "Total Edificio")
-            clase = "class='"
+            clase = "class='part_of_building "
             clase += "disabled" if not parent.part_of_building_status else ""
             cu_part = ConsumerUnit.objects.get(part_of_building=parent)
             if cu_part.profile_powermeter.powermeter.powermeter_anotation == "Medidor Virtual":
-                clase += str(node_cont) + " virtual'"
+                clase += " " + str(node_cont) + " virtual'"
             else:
                 clase += " " + str(node_cont) + "'"
             if allowed_cu(c_unit_parent[0], user, building):
@@ -517,7 +517,7 @@ def get_hierarchy_list(building, user):
             else:
                 clase += ""
             if parent.profile_powermeter.powermeter.powermeter_anotation == "Medidor Virtual":
-                clase += str(node_cont) + " virtual'"
+                clase += " " + str(node_cont) + " virtual'"
             else:
                 clase += " " + str(node_cont) + "'"
             if allowed_cu(parent, user, building):
