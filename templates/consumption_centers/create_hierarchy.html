@@ -21,14 +21,42 @@
             };
             $("#chart").html("");
             $("#org").jOrgChart(opts);
+
+            $.ajax({
+                type: "GET",
+                url: "/buildings/get_json_pw/",
+                dataType: "json",
+                success: function(data){
+                    var $prof1 = $("#prof_pwr_edit");
+                    var $prof2 = $("#prof_pwr");
+                    var options = '';
+                    for(var i in data){
+                        options += "<option value='";
+                        options += data[i].pk;
+                        options += "'>"+ data[i].powermeter+"</option>";
+                    }
+                    options = "<option value='0'>" +
+                            "Elija una opci&oacute;n" +
+                            "</option>" +
+                            "<option value='newpm'>" +
+                            "Crear un nuevo medidor el&eacute;ctrico" +
+                            "</option>"+options;
+                    $prof1.html(options);
+                    $prof2.html(options);
+                }
+            });
+
+
         }
     var click_flag = true;
     function resetForm(id) {
-        $('#'+id).find("select option[value='0']").each(function(){
+        $form = $('#'+id);
+        $form.find("select option[value='0']").each(function(){
             $(this).attr("selected","selected");
         });
     }
     var add_to_node;
+    var node_to_edit;
     var options = "<option value='0'>Elija una opci&oacute;n</option> ";
     var options2 = options;
     options += "<option value='newed'>Crear un nuevo dispositivo o sistema el&eacute;ctrico</option> ";
@@ -37,28 +65,106 @@
             options += "<option value='{{ device.pk }}'>{{ device.electric_device_type_name }}</option>";
         {% endfor %}
     {% endif %}
+    function genero_lista(ul_lista){
+        var cu_root = $("li.raiz a:eq(0)").attr("rel");
+        $.ajax({
+            type: "POST",
+            url: "/buildings/reset_hierarchy/",
+            data: {csrfmiddlewaretoken: "{{ csrf_token }}", building:"{{ building.pk }}"},
+            success: function(){
+                ul_lista.find("li:not(.temp)").each(function(){
+                    var li = $(this);
+                    var $this_cu = li.find("a:eq(0)").attr("rel");
+                    var texto_li = li.find("a:eq(0)").text();
+
+                    var parent = $(this).parent().parent();
+                    var $parent_cu = parent.find("a:eq(0)").attr("rel");
+                    var texto_parent = parent.find("a:eq(0)").text();
+                    if($this_cu != cu_root && $parent_cu != cu_root){
+                        var asoc_arr={pp:"",pl:"",cl:""};
+                        var tipo_leaf;
+                        if(li.hasClass("consumer_unit")){
+                            asoc_arr["cl"] = $this_cu;
+                        }else{
+                            asoc_arr["pl"] = $this_cu;
+                        }
+                        if(li.hasClass("virtual")){
+                            asoc_arr["pw"] = "0";
+                        }else{
+                            asoc_arr["pw"] = "1";
+                        }
+                        asoc_arr["pp"] = $parent_cu;
+                        asoc_arr["csrfmiddlewaretoken"] = "{{ csrf_token }}";
+                        $.ajax({
+                            type: "POST",
+                            url: "/buildings/add_hierarchy_node/",
+                            data: asoc_arr,
+                            success: function(data){
+                                console.log(asoc_arr);
+                            }
+                        });
+                    }
+                });
+            }
+        });
+        $("#tree_notif").show();
+    }
     </script>
 {% endblock %}
 {% block document_ready %}
-    $("#add_node, #choose_prof_pwr, #choose_node_part, #edit_notif, #edit_node").hide();
+    $("#add_node, #choose_prof_pwr, #choose_node_part, #edit_notif, #edit_node, #tree_notif").hide();
     init_tree();
     $(".edit").live("click", function(e){
+        var classList = $(this).parent().parent().attr('class').split(/\s+/);
+        $.each(classList, function(index,item) {
+            if(item != "virtual" && item != "temp" && item != "node" && item != "consumer_unit" && item != "ui-draggable" && item != "part_of_building" && item != "ui-droppable"){
+                add_to_node = item;
+            }
+        });
+        $("#edit_node, #edit_notif").hide();
         $(".selector span").text("Elija una opción");
-        $("#prof_pwr_edit").html($("#prof_pwr").html()).find("option[value='newpm']").after("<option value='del_pw'>Medidor Virtual</option>");
         var nodo=$(this);
         var nodeDiv = nodo.parent().parent();
         var cu = nodeDiv.find("a").attr("rel");
+        $("#consumer_unit").val(cu);
         var classList = nodeDiv.attr('class').split(/\s+/);
+        $("#prof_pwr_edit option").each(function(){
+            $(this).removeAttr("selected");
+        });
+        $("#prof_pwr_edit option[value='0']").attr("selected", "selected");
+        var tipo_n;
         $.each(classList, function(index,item) {
-
             if(item != "temp" && item != "node" && item != "consumer_unit" && item != "ui-draggable" && item != "part_of_building" && item != "ui-droppable"){
                 del_node = item;
             }
-            if(item == "consumer_unit"){
-                $("#node_part_edit").html(options);
+            if(item == "raiz" || item == "consumer_unit" || item == "part_of_building"){
+                tipo_n = item;
+            }
+        });
+        if(tipo_n == "consumer_unit" || tipo_n == "raiz"){
+            if(tipo_n == "raiz"){
+                $("#choose_node_part_edit").hide();
+                $("#edit_part").val("root");
+            }else{
+                $("#edit_part").val("cu");
+            }
 
-            }else if(item == "part_of_building"){
-                $("#node_part_edit")
+            $("#choose_prof_pwr_edit").show();
+            $("#node_part_edit").html(options);
+            if($("#prof_pwr_edit").find("option[value='del_pw']").size()>0)
+                $("#prof_pwr_edit").find("option[value='del_pw']").remove();
+            $("#node_part_edit").change(function(){
+                if($(this).val()!="0"){
+                $("#edit_node").show();
+                }
+            });
+        }else if(tipo_n == "part_of_building"){
+            $("#edit_part").val("part");
+            $("#choose_node_part_edit").show();
+            if($("#prof_pwr_edit").find("option[value='del_pw']").size()==0)
+                $("#prof_pwr_edit").find("option[value='newpm']").after("<option value='del_pw'>Medidor Virtual</option>");
+
+            $("#node_part_edit")
                 .html(options2)
                 .append("<option value='edit_part'>Editar parte de edificio</option>")
                 .change(function(){
@@ -69,9 +175,8 @@
                         return false;
                     }
                 });
-            }
-        });
-        var element = $("li."+del_node+":not('.temp')");
+        }
+        node_to_edit = $("li."+del_node+":not('.temp')");
     }).fancybox({
         maxWidth	: 800,
         maxHeight	: 800,
@@ -81,25 +186,65 @@
         autoSize	: false,
         closeClick	: false,
         openEffect	: 'none',
-        closeEffect	: 'none',
-        afterClose  : function(){init_tree();}
+        closeEffect	: 'none'
     });
     $("#prof_pwr_edit").change(function(){
-        var val_added_cu = $("#prof_pwr").val();
+        var val_added_cu = $("#prof_pwr_edit").val();
         if(val_added_cu == 'newpm'){
-            $("#add_node").hide();
+            $("#edit_node").hide();
             var url = "/buildings/add_powermeter_popup/?edit=edit";
             var newwindow=window.open(url,'name','height=600,width=800');
             if (window.focus) {newwindow.focus()}
             return false;
         }else{
-            if(val_added_cu != "0")
-                $("#add_node").show();
-            else
-            $("#add_node").hide();
+            if(val_added_cu == "0"){
+                $("#edit_node").hide();
+            }
+            else{
+                $("#edit_node").show();
+            }
         }
     });
+    $("#edit_node").click(function(e){
+        e.preventDefault();
+        if($("#edit_part").val() == "part" && $("#prof_pwr_edit").val()=="0"){
+            resetForm('edit_node_form');
+            $(".selector span").text("Elija una opción");
+            $.fancybox.close();
+            init_tree();
+        }else{
+        $.ajax({
+            type: "POST",
+            url: "/buildings/edit_cu/"+$("#consumer_unit").val()+"/",
+            data: $("#edit_node_form").serialize(),
+            success: function(data){
+                //unidad de consumo agregada, agregar li a la lista, y refrescar arbol
+                var cu = $("#consumer_unit").val();
+                var tipo_nodo = "";
+                var texto = '';
+                var tipo = $("#edit_part").val();
+                if(tipo=="cu"){
+                    tipo_nodo = "consumer_unit";
+                    texto = $("#node_part_edit option[value='"+$("#node_part_edit").val()+"']").text();
+                }else{
+                    if($("#prof_pwr_edit").val() == "del_pw"){
+                        tipo_nodo = "virtual";
+                    }
+                    tipo_nodo += " part_of_building"
 
+                    texto = node_to_edit.find("a:eq(0)").text();
+                }
+                tipo_nodo = add_to_node+" "+tipo_nodo;
+                node_to_edit.removeClass().addClass($.trim(tipo_nodo));
+                node_to_edit.find("a:eq(0)").attr("rel", cu).text(texto);
+                resetForm('edit_node_form');
+                $(".selector span").text("Elija una opción");
+                $.fancybox.close();
+                init_tree();
+            }
+        });
+        }
+    });
     $(".del").live("click", function(e){
         var nodo=$(this);
 
@@ -142,10 +287,14 @@
 
         var classList = $(this).parent().parent().attr('class').split(/\s+/);
         $.each(classList, function(index,item) {
-            if(item != "temp" && item != "node" && item != "consumer_unit" && item != "ui-draggable" && item != "part_of_building" && item != "ui-droppable"){
+            if(item != "virtual" && item != "temp" && item != "node" && item != "consumer_unit" && item != "ui-draggable" && item != "part_of_building" && item != "ui-droppable"){
                 add_to_node = item;
             }
         });
+        $("#prof_pwr option").each(function(){
+            $(this).removeAttr("selected");
+        });
+        $("#prof_pwr option[value='0']").attr("selected", "selected");
 
     }).fancybox({
         maxWidth	: 800,
@@ -243,9 +392,7 @@
                 var cu = data.split("*");
                 var tipo_nodo = "";
                 var texto = '';
-                if($("#prof_pwr").val()!="0" && $("#prof_pwr").val()!="newpm" && $("#type_node").val()=="2"){
-                    $("#prof_pwr option[value='"+$("#prof_pwr").val()+"']").remove();
-                }
+
 
                 if(cu[1]=="consumer_unit"){
                     tipo_nodo = "consumer_unit";
@@ -255,8 +402,6 @@
                     texto = texto.split(" - ");
                     if(texto[1] == "Sin medidor"){
                         tipo_nodo = "virtual";
-                    }else{
-                        $("#prof_pwr option[value='"+$("#prof_pwr").val()+"']").remove();
                     }
                     texto = texto[0];
                     tipo_nodo += " part_of_building"
@@ -281,23 +426,11 @@
             }
         });
     });
-    /*
-    $(".add").live("click", function(e){
-    var nodo=$(this);
-    var texto = $.trim(nodo.parent().parent().find("p:eq(0)").text())
-
-    $("#org").find("li").each(function(index, lista){
-    var texto_lista = $.trim($(lista).find("p:eq(0)").text());
-
-    if(texto_lista==texto){
-    $(lista).removeClass("temp");
-    init_tree();
-    return false;
-    }
+    $("#save_hierarchy").click(function(e){
+        e.preventDefault();
+        var lista =  $("ul#org");
+        genero_lista(lista);
     });
-
-    })
-    */
 
 
 {% endblock %}
@@ -320,12 +453,10 @@
 
 
         <div class="divider" id="divider_top">&nbsp;</div>
-        {% if message %}
-            <span class="notif {{ msg_type }}">
-                    {% autoescape off %}{{ message }}{% endautoescape %}
-                    <a href="#" onclick="$(this).parent().remove(); History.replaceState({}, '', ' ');">X</a>
-                </span>
-        {% endif %}
+        <span id="tree_notif" class="notif n_success">
+            La jerarqu&iacute;a de partes y medidores se ha guardado exitosamente
+        <a href="#" onclick="$(this).parent().hide();">X</a>
+        </span>
         <p class="description">
             Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
             <br/>
@@ -335,6 +466,7 @@
         <div class="g12" id="form_container">
                 <div id="hierarchy" class="g12">
                         <div id="chart"></div>
+                        <button id="save_hierarchy">Guardar Jerarqu&iacute;a</button>
                         {{ list|safe }}
                 </div>
                 <div id="fancy">
@@ -388,10 +520,12 @@
             <div id="fancy_edit">
                 <form action="." method="post" id="edit_node_form">
                     {% csrf_token %}
-                    <input type="hidden" name="consumer_unit" value=""/>
+                    <input type="hidden" name="consumer_unit" id="consumer_unit" value=""/>
+                    <input type="hidden" name="edit_part" value="" id="edit_part"/>
                     <h1 id="title_lb">Editar Nodo</h1>
                     <p id="notice">
-                        Selecciona la nueva informaci&oacute;n para la unidad de consumo
+                        Selecciona la nueva informaci&oacute;n para la unidad de consumo, selecciona las opciones que deseas cambiar.
+                        No modifiques la lista desplegable si deseas conservar la misma información para el tipo de nodo
                     </p>
                     <span id="edit_notif" class="notif n_success">
                         La parte se ha editado correctamente
@@ -407,6 +541,13 @@
                         <div class="g4 hidden" id="choose_prof_pwr_edit">
                             <label class="fl" id="label_pwer_edit" for="prof_pwr_edit">Cambiar medidor</label>
                             <select class="fl" id="prof_pwr_edit" name="prof_pwr_edit">
+                                <option value='0'>Elija una opci&oacute;n</option>
+                                <option value='newpm'>Crear un nuevo medidor el&eacute;ctrico</option>
+                                {% if prof_pwmeters|length > 0 %}
+                                    {% for pm in prof_pwmeters %}
+                                        <option value='{{ pm.pk }}'>{{ pm.powermeter.powermeter_anotation }}</option>
+                                    {% endfor %}
+                                {% endif %}
                             </select>
 
                         </div>

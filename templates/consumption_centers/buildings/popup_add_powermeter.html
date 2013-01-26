@@ -75,6 +75,8 @@
                                 opener_.find("#edit_node").parent()
                                         .removeClass("hidden");
                                 opener_.find("#edit_node").show();
+
+
                             }else{
                                 id_ddl = "#prof_pwr";
                                 opener_.find("#add_node").parent()
@@ -88,11 +90,19 @@
                                     .parent()
                                     .removeClass("hidden");
                             opener_.find(id_ddl+" option[value="+data+"]")
-                                    .attr("selected","selected")
                                     .parent()
                                     .parent()
                                     .find("span")
                                     .text(nombre_parte);
+                            if(get['edit']=="edit"){
+                                opener_.find("#prof_pwr")
+                                        .html(opener_.find(id_ddl).html());
+                            }else{
+                                opener_.find("#prof_pwr_edit")
+                                        .html(opener_.find(id_ddl).html());
+                            }
+                            opener_.find(id_ddl+" option[value="+data+"]")
+                                    .attr("selected","selected");
 
                             window.close();
                         }

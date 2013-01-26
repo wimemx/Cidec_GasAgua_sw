@@ -15,7 +15,8 @@ from django.db.models import Q
 
 from cidec_sw import settings
 from c_center.models import Cluster, ClusterCompany, Company,\
-    CompanyBuilding, Building, PartOfBuilding, HierarchyOfPart, ConsumerUnit
+    CompanyBuilding, Building, PartOfBuilding, HierarchyOfPart, ConsumerUnit, \
+    ProfilePowermeter
 from rbac.models import PermissionAsigment, DataContextPermission, Role,\
     UserRole, Object, Operation
 from location.models import *
@@ -295,6 +296,24 @@ def get_parts_of_building(request, id_building):
         data = simplejson.dumps([dict(all="all")])
     else:
         data = simplejson.dumps([dict(all="none")])
+    return HttpResponse(content=data, content_type="application/json")
+
+def get_pw_profiles(request):
+    """ Get all the ProfilePowermeters that are available for use in a
+    consumer unit, except for not registered and virtual profile
+    """
+    used_profiles = ConsumerUnit.objects.all()
+    used_pks = [pw.profile_powermeter.powermeter.pk for pw in used_profiles]
+    profiles = ProfilePowermeter.objects.all().exclude(
+        powermeter__powermeter_anotation="Medidor Virtual").exclude(
+        powermeter__powermeter_anotation="No Registrado").exclude(
+        powermeter__id__in=used_pks).values("pk",
+                                            "powermeter__powermeter_anotation")
+    data = []
+    for profile in profiles:
+        data.append(dict(pk=profile['pk'],
+                    powermeter=profile['powermeter__powermeter_anotation']))
+    data = simplejson.dumps(data)
     return HttpResponse(content=data, content_type="application/json")
 
 
