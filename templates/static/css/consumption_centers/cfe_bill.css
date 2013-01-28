@@ -105,12 +105,28 @@ h2{
     margin-right: 20px;
 }
 
-.selector span{
+#uniform-month_01{
+    width: 100px;
+}
+
+#uniform-month_01 span{
     width: 70px;
 }
 
-.selector select{
+#uniform-month_01 select{
     min-width: 105px;
+}
+
+#uniform-year_01{
+    width: 70px;
+}
+
+#uniform-year_01 span{
+    width: 40px;
+}
+
+#uniform-year_01 select{
+    min-width: 70px;
 }
 
 #date_ranges{
@@ -423,3 +439,9 @@ iframe{
     background-repeat: no-repeat;
     background-position: 50% 0%;
 }
+
+#date_cutdates{
+    margin-left: 120px
+}
+
+

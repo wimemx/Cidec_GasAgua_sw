@@ -466,10 +466,10 @@
         <div class="g12" id="form_container">
                 <div id="hierarchy" class="g12">
                         <div id="chart"></div>
-                        <button id="save_hierarchy">Guardar Jerarqu&iacute;a</button>
-                        {{ list|safe }}
+                        <button id="save_hierarchy" class="aqua_btn c">Guardar Jerarqu&iacute;a</button>
+                        <div class="hidden">{{ list|safe }}</div>
                 </div>
-                <div id="fancy">
+                <div id="fancy" class="hidden">
                     <form action="." method="post" id="add_node_form">
                         {% csrf_token %}
                         <input type="hidden" name="building" value="{{ building.pk }}"/>
@@ -517,7 +517,7 @@
                     </form>
                 </div>
 
-            <div id="fancy_edit">
+            <div id="fancy_edit" class="hidden">
                 <form action="." method="post" id="edit_node_form">
                     {% csrf_token %}
                     <input type="hidden" name="consumer_unit" id="consumer_unit" value=""/>

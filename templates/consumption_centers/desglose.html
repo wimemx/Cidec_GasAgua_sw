@@ -1,0 +1,49 @@
+<html>
+<head>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <link rel="stylesheet" href="/static/css/consumption_centers/cfe_bill.css">
+    <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+
+</head>
+<body>
+<h4>Desglose</h4>
+<div id="left_col" class="fl inner_col">
+
+    <table id="function_period">
+        <thead>
+        <tr>
+            <th class="h82">Funci&oacute;n y Periodo</th>
+            <th class="h18">Totales</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>Kwh Totales</td>
+            <td>{{ resultados.kwh }}</td>
+        </tr>
+        <tr>
+            <td>KVARH</td>
+            <td>{{ resultados.kvarh }}</td>
+        </tr>
+
+        <tr>
+            <td>Demanda Mínima</td>
+            <td>{{ resultados.dem_min }}</td>
+        </tr>
+        <tr>
+            <td>Demanda Máxima</td>
+            <td>{{ resultados.dem_max }}</td>
+        </tr>
+        <tr>
+            <td>Factor de Potencia</td>
+            <td>{{ resultados.fpotencia|floatformat:2 }}</td>
+        </tr>
+        </tbody>
+    </table>
+
+</div>
+<div id="right_col" class="fl inner_col">
+</div>
+
+</body>
+</html>

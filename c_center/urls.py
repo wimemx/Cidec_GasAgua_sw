@@ -248,4 +248,13 @@ urlpatterns = patterns('',
                            'c_center.views.add_hierarchy_node'),
                        url(r'^reset_hierarchy/$',
                            'c_center.views.reset_hierarchy'),
+
+                       url(r'^mediciones_pw/(?P<id_pw>\d+)/',
+                           'c_center.views._meditions'),
+
+                       url(r'^fechas_corte/', 'c_center.views.view_cutdates'),
+                       url(r'^establecer_fecha/(?P<id_cutdate>\d+)/', 'c_center.views.set_cutdate'),
+
+                       url(r'^desglose/', 'c_center.views.cfe_desglose'),
+                       url(r'^desglose_calculos/', 'c_center.views.cfe_desglose_calcs'),
 )

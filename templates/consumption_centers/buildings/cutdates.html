@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% block titulo %}Ver fechas de corte{% endblock %}
+{% block externalcss %}
+<link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
+<link rel="stylesheet" href="/static/css/forms/rbac_user_list.css" type="text/css" />
+<link rel="stylesheet" href="/static/css/forms/c_centers.css" type="text/css" />
+<link href="/static/js/external/messi/messi.css" rel="stylesheet" type="text/css" media="screen" />
+{% endblock %}
+{% block externaljs %}
+<script src="/static/js/external/messi/messi.min.js"></script>
+<script type="text/javascript">
+    function search_submit(pagina){
+        if (typeof pagina == "object") {
+            pagina = "1";
+        }
+
+        var base_url = window.location.pathname;
+        base_url+="?page="+pagina;
+        base_url=append_page(base_url);
+        window.location = base_url;
+    }
+    function append_page(base_url){
+        var get = getUrlVars();
+        if(get.length>0){
+            if (get[0]!=window.location.protocol+"//"+window.location
+                    .host+window.location.pathname){
+                for(var i=0; i<get.length; i++){
+                    if (get[i]!="msj" && get[i]!="ntype" && get[i]!="page"){
+                        base_url+="&"+get[i]+"="+get[get[i]];
+                    }
+                }
+            }
+
+        }
+        return base_url
+    }
+</script>
+{% endblock %}
+{% block document_ready %}
+
+//custom select for sidebar
+$("#empresa").click(function(){
+$("#company_list").slideToggle();
+});
+$("#company_list li").click(function(){
+var texto=$(this).text().replace(/^\s*|\s*$/g,'');
+var texto1 = texto.substring(0,17) + "...";
+$("#empresa").text(texto1);
+$("#company_list").slideUp();
+
+$.ajax({
+url: "/reportes/set_default_building/" + $(this).attr("rel"),
+type: "GET",
+dataType: 'json',
+async: 'true',
+success: function(datos){
+window.location.reload();
+}
+});
+});
+
+
+$("#sort_billing").click(function(e){
+e.preventDefault();
+var get = getUrlVars();
+
+var base_url = window.location.pathname;
+base_url+="?order_billing="+$("#sort_billing").attr("rel");
+if(get.length>0){
+if (get[0]!=window.location.protocol+"//"+window.location
+.host+window.location.pathname){
+for(var i=0; i<get.length; i++){
+if (get[i]!="order_billing" && get[i]!="order_sector" && get[i]!="order_status"){
+base_url+="&"+get[i]+"="+get[get[i]];
+}
+}
+}
+}
+window.location = base_url;
+});
+$("#sort_sector").click(function(e){
+e.preventDefault();
+var get = getUrlVars();
+
+var base_url = window.location.pathname;
+base_url+="?order_sector="+$("#sort_sector").attr("rel");
+if(get.length>0){
+if (get[0]!=window.location.protocol+"//"+window.location
+.host+window.location.pathname){
+for(var i=0; i<get.length; i++){
+if (get[i]!="order_billing" && get[i]!="order_sector" && get[i]!="order_status"){
+base_url+="&"+get[i]+"="+get[get[i]];
+}
+}
+}
+
+}
+
+window.location = base_url;
+});
+
+
+$("#sort_status").click(function(e){
+e.preventDefault();
+var get = getUrlVars();
+
+var base_url = window.location.pathname;
+base_url+="?order_status="+$("#sort_status").attr("rel");
+if(get.length>0){
+if (get[0]!=window.location.protocol+"//"+window.location
+.host+window.location.pathname){
+for(var i=0; i<get.length; i++){
+if (get[i]!="order_billing" && get[i]!="order_sector" && get[i]!="order_status"){
+base_url+="&"+get[i]+"="+get[get[i]];
+}
+}
+}
+}
+window.location = base_url;
+});
+
+{% endblock %}
+
+
+{% block contenido %}
+<div id="bread_crumbs">
+    <ul>
+        <li><a href="/main/">Inicio</a></li>
+        <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
+        <li>Fechas de Corte</li>
+    </ul>
+
+</div>
+<div id="contenido_interno">
+    <h2 id="titulo_form" class="cluster">Fechas de Corte</h2>
+
+
+    <div class="divider" id="divider_top">&nbsp;</div>
+    {% if message %}
+            <span class="notif {{ msg_type }}">
+                    {% autoescape off %}{{ message }}{% endautoescape %}
+                <a href="#" onclick="$(this).parent().remove(); History.replaceState({}, '', '?page=1');">X</a>
+                </span>
+    {% endif %}
+    <div id="form_container">
+
+        <p class="description">
+            Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
+            <br/>
+            Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
+        </p>
+
+        <form id="operations_batch" action="" method="post">
+            {% csrf_token %}
+            <div id="grid_container">
+                <table>
+                    <thead>
+                    <tr>
+                        <th style="width: 25%;">
+                            <a href="#" id="sort_billing" rel="{{ order_billing }}">
+                                Mes de Facturación
+                                <span class="sort"></span>
+                            </a>
+                        </th>
+                        <th style="width: 25%;">
+                            <a href="#" id="sort_sector" rel="{{ order_sector }}">
+                                Fecha Inicial
+                                <span class="sort"></span>
+                            </a>
+                        </th>
+                        <th style="width: 25%;">
+                            <a href="#" id="sort_status" rel="{{ order_status }}">
+                                Fecha Final
+                                <span class="sort"></span>
+                            </a>
+                        </th>
+                        <th style="width: 25%;">Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for cutdate in paginacion.object_list %}
+
+                    <tr class="{% cycle 'row1' 'row2' %}">
+                        <td class="c">
+                            {{ cutdate.billing_month|date:"M Y" }}
+                        </td>
+                        <td class="c">
+                            {{ cutdate.date_init|date:"d/m/Y" }}
+                        </td>
+                        <td class="c">
+                            {% if cutdate.date_end %}
+                                {{ cutdate.date_end|date:"d/m/Y" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="c">
+                            <a class="edit" title="Editar Fecha"
+                               href="/buildings/establecer_fecha/{{ cutdate.pk }}/"></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                <div id="table_footer">
+                    <div class="pagination">
+                            <span class="step-links">
+                                {% if paginacion.has_previous %}
+                                    <a href="#" onclick="search_submit({{ paginacion.previous_page_number }})">Anterior</a> &ndash;
+                                {% endif %}
+
+                                <span class="current">
+                                    P&aacute;gina {{ paginacion.number }} de {{ paginacion.paginator.num_pages }}
+                                </span>
+
+                                {% if paginacion.has_next %}
+                                &ndash; <a href="#" onclick="search_submit({{ paginacion.next_page_number }})">Siguiente</a>
+                                {% endif %}
+                            </span>
+                    </div>
+
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

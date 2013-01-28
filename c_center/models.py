@@ -778,3 +778,76 @@ class MonthlyCutDates(models.Model):
 
     class Meta:
         verbose_name_plural = "Fechas Mensuales de Corte"
+
+class HMHistoricData(models.Model):
+    monthly_cut_dates = models.ForeignKey(MonthlyCutDates, on_delete=models.PROTECT)
+    KWH_total = models.IntegerField(null=True, blank=True)
+    KWH_base = models.IntegerField(null=True, blank=True)
+    KWH_intermedio = models.IntegerField(null=True, blank=True)
+    KWH_punta = models.IntegerField(null=True, blank=True)
+    KW_base = models.IntegerField(null=True, blank=True)
+    KW_punta = models.IntegerField(null=True, blank=True)
+    KW_intermedio = models.IntegerField(null=True, blank=True)
+    KVARH = models.IntegerField(null=True, blank=True)
+    power_factor = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    charge_factor = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    billable_demand = models.IntegerField(null=True, blank=True)
+    KWH_base_rate = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    KWH_intermedio_rate = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    KWH_punta_rate = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    billable_demand_rate = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    average_rate = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    energy_cost = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    billable_demand_cost = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    power_factor_bonification = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    subtotal = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    iva = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    total = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+
+    def __unicode__(self):
+        return "CU: " + self.consumer_unit + " - Mes:" + str(self.billing_month)
+
+    class Meta:
+        verbose_name_plural = "Información Historica de Tarifa HM"
+
+
+class DacHistoricData(models.Model):
+    monthly_cut_dates = models.ForeignKey(MonthlyCutDates, on_delete=models.PROTECT)
+    KWH_total = models.IntegerField(null=True, blank=True)
+    KWH_rate = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    monthly_rate = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    average_rate = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    energy_cost = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    subtotal = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    iva = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    total = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+
+    def __unicode__(self):
+        return "CU: " + self.consumer_unit + " - Mes:" + str(self.billing_month)
+
+    class Meta:
+        verbose_name_plural = "Información Historica de Tarifa DAC"
+
+
+class T3HistoricData(models.Model):
+    monthly_cut_dates = models.ForeignKey(MonthlyCutDates, on_delete=models.PROTECT)
+    KWH_total = models.IntegerField(null=True, blank=True)
+    KVARH = models.IntegerField(null=True, blank=True)
+    power_factor = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    charge_factor = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    max_demand = models.IntegerField(null=True, blank=True)
+    KWH_rate = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    demand_rate = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    average_rate = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    energy_cost = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    demand_cost = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    power_factor_bonification = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    subtotal = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    iva = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    total = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+
+    def __unicode__(self):
+        return "CU: " + self.consumer_unit + " - Mes:" + str(self.billing_month)
+
+    class Meta:
+        verbose_name_plural = "Información Historica de Tarifa 3"

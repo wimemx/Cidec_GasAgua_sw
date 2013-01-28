@@ -25,6 +25,7 @@
         return this;
     };
     $(document).ready(function(){
+
         $("#compare_interval1 li").each(function(){
             //cambia el intervalo visible de las graficas y cambia el estilo segun la opcion seleccionada
             $(this).click(function(){
@@ -249,12 +250,13 @@
                     chart.draw();
                 });
 
-
-
     }
 
 
     google.setOnLoadCallback(drawVisualization);
+    setTimeout(function(){
+        $("#control svg").attr("pointer-events","none");
+    }, 500);
 </script>
 </head>
 

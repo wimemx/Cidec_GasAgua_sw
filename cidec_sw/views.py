@@ -20,7 +20,9 @@ from django.template.context import RequestContext
 from django.db.models import Q
 from c_center.models import ProfilePowermeter, ElectricData, ElectricDataTemp
 from c_center.views import main_page, week_report_kwh
+from c_center.c_center_functions import set_default_session_vars
 from rbac.models import DataContextPermission, Object, PermissionAsigment, UserRole, GroupObject
+from rbac.rbac_functions import get_buildings_context
 from variety import unique_from_array
 
 from django.shortcuts import redirect, render
@@ -137,10 +139,15 @@ def _login(request):
         if user is not None:
             if user.is_active:
                 login(request, user)
-                request.session.set_expiry(0)
-                return HttpResponseRedirect("/main/")
+                request.session.set_expiry(900)
+                ur_get = request.META['HTTP_REFERER']
+                ur_get = ur_get.split("next=")
+                url = "/main/"
+                if len(ur_get) > 1:
+                    url += "?next=" + ur_get[1]
+                return HttpResponseRedirect(url)
             else:
-                error = "Tu cuenta ha sido desactivada, por favor ponete en contacto con tu administrador!"
+                error = "Tu cuenta ha sido desactivada, por favor ponte en contacto con tu administrador"
         else:
             error = "Tu nombre de usuario o contrase&ntilde;a son incorrectos."
     variables = dict(username=username, password=password, error=error)
@@ -192,7 +199,14 @@ def index(request):
                            "</ul>"
 
     request.session['sidebar'] = menu_option_str
-    if 'g_type' in request.GET:
+
+    if 'next' in request.GET:
+        datacontext = get_buildings_context(request.user)
+        if not datacontext:
+            request.session['consumer_unit'] = None
+        set_default_session_vars(request, datacontext)
+        return HttpResponseRedirect(request.GET['next'])
+    elif 'g_type' in request.GET:
         return main_page(request)
     else:
         return week_report_kwh(request)

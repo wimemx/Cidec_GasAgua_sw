@@ -11,10 +11,22 @@
         function drawVisualization() {
             // Create and populate the data table.
             var data = google.visualization.arrayToDataTable([
-                ['Mes', 'Base', 'Media', 'Punta'],
-                {% for hist in  historico%}
-                    ['{{ hist.fecha|date:"m/Y" }}', {{ hist.kw_base }}, {{ hist.kw_intermedio }}, {{ hist.kw_punta }}],
-                {% endfor %}
+                {% if tipo_tarifa.pk == 1 %}
+                    ['Mes', 'Base', 'Media', 'Punta'],
+                    {% for hist in  historico%}
+                        ['{{ hist.fecha }}', {{ hist.kw_base }}, {{ hist.kw_intermedio }}, {{ hist.kw_punta }}],
+                    {% endfor %}
+                {% elif tipo_tarifa.pk == 2 %}
+                    ['Mes', 'KWH'],
+                    {% for hist in  historico%}
+                    ['{{ hist.fecha }}', {{ hist.total_kwh }}],
+                    {% endfor %}
+                {% elif tipo_tarifa.pk == 3 %}
+                    ['Mes', 'KWH'],
+                    {% for hist in  historico%}
+                    ['{{ hist.fecha }}', {{ hist.total_kwh }}],
+                    {% endfor %}
+                {% endif %}
             ]);
 
             // Create and draw the visualization.
@@ -56,6 +68,23 @@
         <span class="r">{{ resultados.periodo }}</span>
         <span class="l">Energ&iacute;a</span>
         <span class="r">${{ resultados.costo_energia|floatformat:2 }}</span>
+        <span class="l">IVA 16%</span>
+        <span class="r">${{ resultados.iva|floatformat:2 }}</span>
+        <span class="l">Total</span>
+        <span class="r total">${{ resultados.total|floatformat:2 }}</span>
+    </div>
+    {% elif tipo_tarifa.pk = 3 %}
+    <div id="sumary">
+        <span class="l">Periodo</span>
+        <span class="r">{{ resultados.periodo }}</span>
+        <span class="l">Energ&iacute;a</span>
+        <span class="r">${{ resultados.costo_energia|floatformat:2 }}</span>
+        <span class="l">Demanda M&aacute;xima</span>
+        <span class="r">${{ resultados.costo_demanda|floatformat:2 }}</span>
+        <span class="l">Bonificaci&oacute;n Factor de Potencia</span>
+        <span class="r">${{ resultados.costo_fpotencia|floatformat:2 }}</span>
+        <span class="l">Sub Total</span>
+        <span class="r">${{ resultados.subtotal|floatformat:2 }}</span>
         <span class="l">IVA 16%</span>
         <span class="r">${{ resultados.iva|floatformat:2 }}</span>
         <span class="l">Total</span>
@@ -169,6 +198,41 @@
         </tr>
         </tbody>
     </table>
+    {% elif tipo_tarifa.pk = 3 %}
+    <table id="function_period">
+        <thead>
+        <tr>
+            <th class="h82">Funci&oacute;n y Periodo</th>
+            <th class="h18">Totales</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>Energía KWH</td>
+            <td>{{ resultados.kwh_totales }}</td>
+        </tr>
+        <tr>
+            <td>Tarifa $/Kwh</td>
+            <td>{{ resultados.tarifa_kwh|floatformat:4 }}</td>
+        </tr>
+        <tr>
+            <td>Demanda Máxima KW</td>
+            <td>{{ resultados.kw_totales }}</td>
+        </tr>
+        <tr>
+            <td>Tarifa $/Kw</td>
+            <td>{{ resultados.tarifa_kw|floatformat:4 }}</td>
+        </tr>
+        <tr>
+            <td>Factor de Potencia</td>
+            <td>{{ resultados.factor_potencia|floatformat:2 }}</td>
+        </tr>
+        <tr>
+            <td>Importe</td>
+            <td>{{ resultados.costo_energia|floatformat:2 }}</td>
+        </tr>
+        </tbody>
+    </table>
     {% endif %}
 </div>
 <div id="right_col" class="fl inner_col">
@@ -194,16 +258,40 @@
         </tr>
         </thead>
         <tbody>
-        {% for hist in  historico%}
-            <tr>
-                <td>{{ hist.fecha }}</td>
-                <td>{{ hist.demanda_maxima|floatformat:2 }}</td>
-                <td>{{ hist.total_kwh }}</td>
-                <td>{{ hist.factor_potencia|floatformat:2 }}%</td>
-                <td>{{ hist.factor_carga|floatformat:2 }}%</td>
-                <td>{{ hist.costo_promedio|floatformat:4 }}</td>
-            </tr>
-        {% endfor %}
+        {% if tipo_tarifa.pk == 1 %}
+            {% for hist in  historico%}
+                <tr>
+                    <td>{{ hist.fecha }}</td>
+                    <td>{{ hist.demanda_maxima|floatformat:2 }}</td>
+                    <td>{{ hist.total_kwh }}</td>
+                    <td>{{ hist.factor_potencia|floatformat:2 }}%</td>
+                    <td>{{ hist.factor_carga|floatformat:2 }}%</td>
+                    <td>{{ hist.costo_promedio|floatformat:4 }}</td>
+                </tr>
+            {% endfor %}
+        {% elif tipo_tarifa.pk = 2 %}
+            {% for hist in  historico%}
+                <tr>
+                    <td>{{ hist.fecha }}</td>
+                    <td>-</td>
+                    <td>{{ hist.total_kwh }}</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>{{ hist.costo_promedio|floatformat:4 }}</td>
+                </tr>
+            {% endfor %}
+        {% elif tipo_tarifa.pk = 3 %}
+            {% for hist in  historico%}
+                <tr>
+                    <td>{{ hist.fecha }}</td>
+                    <td>{{ hist.demanda_maxima|floatformat:2 }}</td>
+                    <td>{{ hist.total_kwh }}</td>
+                    <td>{{ hist.factor_potencia|floatformat:2 }}%</td>
+                    <td>{{ hist.factor_carga|floatformat:2 }}%</td>
+                    <td>{{ hist.costo_promedio|floatformat:4 }}</td>
+                </tr>
+            {% endfor %}
+        {% endif %}
         </tbody>
     </table>
 </div>
