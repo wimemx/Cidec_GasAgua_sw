@@ -251,3 +251,11 @@ div.container{
     font-weight: 700;
     margin: 7px;
 }
+
+.chart-column-active{
+    font-weight: bold;
+}
+
+.chart-column-not-active{
+    font-weight: normal;
+}

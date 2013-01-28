@@ -25,7 +25,6 @@
         return this;
     };
     $(document).ready(function(){
-
         $("#compare_interval1 li").each(function(){
             //cambia el intervalo visible de las graficas y cambia el estilo segun la opcion seleccionada
             $(this).click(function(){
@@ -116,35 +115,35 @@
         return base_url
     }
 
+    var control = new google.visualization.ControlWrapper({
+        'controlType': 'ChartRangeFilter',
+        'containerId': 'control',
+        'options': {
+            // Filter by the date axis.
+            'filterColumnIndex': 0,
+            'ui': {
+                'chartType': 'LineChart',
+                'chartOptions': {
+                    'chartArea': {'width': '90%'},
+                    'hAxis': {'baselineColor': 'none'}
+                },
+                // Display a single series that shows the closing value of the stock.
+                // Thus, this view has two columns: the date (axis) and the stock value (line series).
+                'chartView': {
+                    'columns': [0, 1]
+                },
+                // 1 day in milliseconds = 24 * 60 * 60 * 1000 = 86,400,000
+                //'minRangeSize': 86400000
+                'minRangeSize':3600000
+            }
+        }
+        // Initial range: 2012-02-09 to 2012-03-20.
+        //'state': {'range': {'start': new Date(2012, 9, 8), 'end': new Date(2012, 9, 9)}}
+    });
+
     function drawVisualization() {
         var dashboard = new google.visualization.Dashboard(
                 document.getElementById('dashboard'));
-
-        var control = new google.visualization.ControlWrapper({
-            'controlType': 'ChartRangeFilter',
-            'containerId': 'control',
-            'options': {
-                // Filter by the date axis.
-                'filterColumnIndex': 0,
-                'ui': {
-                    'chartType': 'LineChart',
-                    'chartOptions': {
-                        'chartArea': {'width': '90%'},
-                        'hAxis': {'baselineColor': 'none'}
-                    },
-                    // Display a single series that shows the closing value of the stock.
-                    // Thus, this view has two columns: the date (axis) and the stock value (line series).
-                    'chartView': {
-                        'columns': [0, 1]
-                    },
-                    // 1 day in milliseconds = 24 * 60 * 60 * 1000 = 86,400,000
-                    //'minRangeSize': 86400000
-                    'minRangeSize':3600000
-                }
-            }
-            // Initial range: 2012-02-09 to 2012-03-20.
-            //'state': {'range': {'start': new Date(2012, 9, 8), 'end': new Date(2012, 9, 9)}}
-        });
 
         var colors_array = ["#7d979e", "a10f0f", "#5aa550", "#b38619"];
         var chart = new google.visualization.ChartWrapper({
@@ -198,9 +197,25 @@
         dashboard.draw(view);
 
         $(".chart-column").click(function(){
+            var active_counter = 0;
+            for(var i = 0; i < columns_display.length; i++){
+                if(columns_display[i]){
+                    active_counter++;
+                }
+            }
+
+            if(active_counter <= 1){
+                return;
+            }
+
             var column_id = $(this).attr("id");
             var column_index = parseInt(column_id.substring("column".length));
             columns_display[column_index] = !columns_display[column_index];
+            if(columns_display[column_index]){
+                $(this).attr("class", "chart-column chart-column-active");
+            } else{
+                $(this).attr("class", "chart-column chart-column-not-active");
+            }
             var columns_set_array = new Array();
             var colors = new Array();
             for(var index = 0; index < columns_display.length; index++){
@@ -249,14 +264,10 @@
                     chart.setOption('vAxis', {'viewWindow':{'max':$input.val(), 'min':$input1.val()}});
                     chart.draw();
                 });
-
     }
 
 
     google.setOnLoadCallback(drawVisualization);
-    setTimeout(function(){
-        $("#control svg").attr("pointer-events","none");
-    }, 500);
 </script>
 </head>
 
@@ -266,7 +277,13 @@
     <li id="day" {% if granularity == "day" %} class="active" {% endif %}>1 D</li>
     <li id="week" {% if granularity == "week" %} class="active" {% endif %}>1 Sem</li>
 </ul>
-<a id="export_csv" class="fr" href="">Exportar datos en CSV</a>
+<div id="show-controls">
+    <ul>
+        {% for column in columns %}
+            <li id="column{{ forloop.counter0 }}" class="chart-column chart-column-active" >{{ column.consumer_unit_string }} ({{ column.parameter }})</li>
+        {% endfor %}
+    </ul>
+</div>
 <div id="dashboard" class="fl">
     <div id="chart">
         <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
@@ -280,14 +297,6 @@
             <input type="text" class="integer" id="lower_limit" min="{{ limits.min }}" max="{{ limits.max }}" step="0.5"/>
         </div>
     </div>
-</div>
-
-<div id="show-controls">
-    <ul>
-        {% for column in columns %}
-            <li id="column{{ forloop.counter0 }}" class="chart-column" >{{ column.consumer_unit_string }} ({{ column.parameter }})</li>
-        {% endfor %}
-    </ul>
 </div>
 </body>
 </html>
