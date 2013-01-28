@@ -197,9 +197,25 @@
         dashboard.draw(view);
 
         $(".chart-column").click(function(){
+            var active_counter = 0;
+            for(var i = 0; i < columns_display.length; i++){
+                if(columns_display[i]){
+                    active_counter++;
+                }
+            }
+
+            if(active_counter <= 1){
+                return;
+            }
+            
             var column_id = $(this).attr("id");
             var column_index = parseInt(column_id.substring("column".length));
             columns_display[column_index] = !columns_display[column_index];
+            if(columns_display[column_index]){
+                $(this).attr("class", "chart-column chart-column-active");
+            } else{
+                $(this).attr("class", "chart-column chart-column-not-active");
+            }
             var columns_set_array = new Array();
             var colors = new Array();
             for(var index = 0; index < columns_display.length; index++){
@@ -248,9 +264,6 @@
                     chart.setOption('vAxis', {'viewWindow':{'max':$input.val(), 'min':$input1.val()}});
                     chart.draw();
                 });
-
-
-
     }
 
 
@@ -264,7 +277,13 @@
     <li id="day" {% if granularity == "day" %} class="active" {% endif %}>1 D</li>
     <li id="week" {% if granularity == "week" %} class="active" {% endif %}>1 Sem</li>
 </ul>
-<a id="export_csv" class="fr" href="">Exportar datos en CSV</a>
+<div id="show-controls">
+    <ul>
+        {% for column in columns %}
+            <li id="column{{ forloop.counter0 }}" class="chart-column chart-column-active" >{{ column.consumer_unit_string }} ({{ column.parameter }})</li>
+        {% endfor %}
+    </ul>
+</div>
 <div id="dashboard" class="fl">
     <div id="chart">
         <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
@@ -278,14 +297,6 @@
             <input type="text" class="integer" id="lower_limit" min="{{ limits.min }}" max="{{ limits.max }}" step="0.5"/>
         </div>
     </div>
-</div>
-
-<div id="show-controls">
-    <ul>
-        {% for column in columns %}
-            <li id="column{{ forloop.counter0 }}" class="chart-column" >{{ column.consumer_unit_string }} ({{ column.parameter }})</li>
-        {% endfor %}
-    </ul>
 </div>
 </body>
 </html>
