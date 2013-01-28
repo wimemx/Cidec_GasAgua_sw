@@ -232,5 +232,20 @@ urlpatterns = patterns('',
 
                        url(r'^add_cu/',
                            'c_center.views.add_cu'),
+                       url(r'^del_cu/(?P<id_cu>\d+)/',
+                           'c_center.views.del_cu'),
 
+                       url(r'^editar_parte_edificio_popup/(?P<cu_id>\d+)/',
+                           'c_center.views.popup_edit_partbuilding'),
+                       url(r'^save_edit_part_popup/(?P<cu_id>\d+)/',
+                           'c_center.views.save_edit_part_popup'),
+
+                       url(r'^edit_cu/(?P<cu_id>\d+)/',
+                           'c_center.views.edit_cu'),
+                       url(r'^get_json_pw/$',
+                           'c_center.c_center_functions.get_pw_profiles'),
+                       url(r'^add_hierarchy_node/$',
+                           'c_center.views.add_hierarchy_node'),
+                       url(r'^reset_hierarchy/$',
+                           'c_center.views.reset_hierarchy'),
 )

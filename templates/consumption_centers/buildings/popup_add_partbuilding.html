@@ -63,11 +63,17 @@
                 if(send_form == 1){
                     $.ajax({
                         type: "POST",
-                        url: "/buildings/save_add_part_popup/",
+                    {% if operation == "pop_edit" %}url: "/buildings/save_edit_part_popup/{{ cu }}/"{% else %}url: "/buildings/save_add_part_popup/"{% endif %},
                         data: $("#add_part_form").serialize(),
                         success: function(data){
                             var opener_=$(window.opener.document);
                             var nombre_parte = $("#b_part_name").val();
+                            {% if operation == "pop_edit" %}
+                                opener_.find("#edit_notif").show();
+                                opener_.find("li a[rel='{{ cu }}']").text(nombre_parte);
+                                opener_.find("#edit_node").show();
+                            {% else %}
+
                             opener_.find("#node_part")
                                     .append("<option value='"+ data +"_ncu'>"+ nombre_parte+" - Sin medidor</option>")
                                     .append("<option value='"+ data +"_cu'>"+ nombre_parte+" - Con medidor</option>")
@@ -80,6 +86,7 @@
                                     .find("span")
                                     .text(nombre_parte+" - Sin medidor");
                             opener_.find("#add_node").show();
+                            {% endif %}
 
                             window.close();
                         }

@@ -1,5 +1,5 @@
 <h2 id="titulo_form" class="company">
-    {% if operation == "edit" %}Edici&oacute;n de{% else %}Alta de{% endif %} parte de edificio
+    {% if operation == "edit" or operation == "pop_edit"%}Edici&oacute;n de{% else %}Alta de{% endif %} parte de edificio
 </h2>
 
 <div class="divider" id="divider_top">&nbsp;</div>
@@ -47,7 +47,7 @@
             <div class="fields_row g9">
                 <label for="b_building_name" class="g2">Edificio<span class="required">*</span></label>
                 <input type="text" name="b_building_name" id="b_building_name" class="g9"
-                       {% if operation == "pop_add" %}readonly="readonly" value="{{ building.building_name }}"{% else %}value="{{ post.b_part_building_name }}"{% endif %}  autocomplete="off"
+                       {% if operation == "pop_add" or operation == "pop_edit" %}readonly="readonly" value="{{ building.building_name }}"{% else %}value="{{ post.b_part_building_name }}"{% endif %}  autocomplete="off"
                         />
                 <span style="visibility: visible !important;"></span>
                 <input type="hidden" name="b_building_id" id="b_building_id" value="{% if operation == "pop_add" %}{{ building.pk }}{% else %}{{post.b_part_building_id}}{% endif %}">

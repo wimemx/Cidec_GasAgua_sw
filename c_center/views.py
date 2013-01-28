@@ -4325,6 +4325,14 @@ def add_partbuilding(request):
                     profile_powermeter = VIRTUAL_PROFILE
                 )
                 newConsumerUnit.save()
+                #Add the consumer_unit instance for the DW
+                datawarehouse_run.delay(
+                    fill_instants=None,
+                    fill_intervals=None,
+                    _update_consumer_units=True,
+                    populate_instant_facts=None,
+                    populate_interval_facts=None
+                )
 
                 for key in request.POST:
                     if re.search('^atributo_\w+', key):
@@ -5004,6 +5012,23 @@ def add_building(request):
                             building_attributes_value=atr_value_arr[2]
                         )
                         newBldAtt.save()
+
+                electric_device_type = ElectricDeviceType.objects.get(electric_device_type_name="Total Edificio")
+                cu =  ConsumerUnit(
+                    building=newBuilding,
+                    electric_device_type=electric_device_type,
+                    profile_powermeter=VIRTUAL_PROFILE
+                )
+                cu.save()
+                #Add the consumer_unit instance for the DW
+                datawarehouse_run.delay(
+                    fill_instants=None,
+                    fill_intervals=None,
+                    _update_consumer_units=True,
+                    populate_instant_facts=None,
+                    populate_interval_facts=None
+                )
+
 
                 template_vars["message"] = "Edificio creado exitosamente"
                 template_vars["type"] = "n_success"
@@ -6094,8 +6119,9 @@ def create_hierarchy(request, id_building):
     template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
 
-    if has_permission(request.user, VIEW,
-                      "Ver equipos industriales") or request.user.is_superuser:
+    if has_permission(request.user, CREATE,
+                      "Alta de jerarquía de partes") or \
+       request.user.is_superuser:
         building = get_object_or_404(Building, pk=id_building)
         list = get_hierarchy_list(building, request.user)
         template_vars['list'] = list
@@ -6122,9 +6148,6 @@ def create_hierarchy(request, id_building):
 def add_partbuilding_pop(request, id_building):
     if has_permission(request.user, CREATE,
                       "Alta de partes de edificio") or request.user.is_superuser:
-
-        post = ''
-
         #Se obtienen los tipos de partes de edificios
         tipos_parte = PartOfBuildingType.objects.all().exclude(
             part_of_building_type_status=0).order_by(
@@ -6165,11 +6188,8 @@ def save_add_part_popup(request):
         b_part_name = request.POST.get('b_part_name').strip()
         b_part_description = request.POST.get('b_part_description').strip()
         b_part_type_id = request.POST.get('b_part_type')
-        b_part_building_name = request.POST.get('b_building_name').strip()
         b_part_building_id = request.POST.get('b_building_id')
         b_part_mt2 = request.POST.get('b_part_mt2').strip()
-        message = ""
-        type = ""
 
         continuar = True
         if not b_part_name and not b_part_type_id and not b_part_building_id:
@@ -6211,6 +6231,15 @@ def save_add_part_popup(request):
                     profile_powermeter = VIRTUAL_PROFILE
                 )
                 newConsumerUnit.save()
+                #Add the consumer_unit instance for the DW
+                datawarehouse_run.delay(
+                    fill_instants=None,
+                    fill_intervals=None,
+                    _update_consumer_units=True,
+                    populate_instant_facts=None,
+                    populate_interval_facts=None
+                )
+
 
                 for key in request.POST:
                     if re.search('^atributo_\w+', key):
@@ -6367,22 +6396,24 @@ def save_add_electric_device_popup(request):
 
 @login_required(login_url='/')
 def add_cu(request):
-    if (has_permission(request.user, CREATE,
+    if (has_permission(request.user, UPDATE,
                        "Modificar unidades de consumo") or has_permission(
         request.user, CREATE, "Alta de unidades de consumo") or
         request.user.is_superuser) and request.method == "POST":
         post = request.POST
-        profile = get_object_or_404(ProfilePowermeter,
-                                    pk=int(post['prof_pwr']))
         if post['type_node'] == "1":
             cu = post["node_part"].split("_")
             consumer_unit = get_object_or_404(ConsumerUnit,
                                               pk=int(cu[0]))
             if cu[1] == "cu":
+                profile = get_object_or_404(ProfilePowermeter,
+                                            pk=int(post['prof_pwr']))
                 consumer_unit.profile_powermeter = profile
                 consumer_unit.save()
             c_type="*part"
         else:
+            profile = get_object_or_404(ProfilePowermeter,
+                                        pk=int(post['prof_pwr']))
             building = get_object_or_404(Building, pk=int(post['building']))
             electric_device_type = get_object_or_404(ElectricDeviceType,
                                                      pk=int(post['node_part']))
@@ -6392,10 +6423,253 @@ def add_cu(request):
                 profile_powermeter = profile
             )
             consumer_unit.save()
-            c_type="*consumer_unit"
+            #Add the consumer_unit instance for the DW
+            datawarehouse_run.delay(
+                fill_instants=None,
+                fill_intervals=None,
+                _update_consumer_units=True,
+                populate_instant_facts=None,
+                populate_interval_facts=None
+            )
+
+        c_type="*consumer_unit"
         content = str(consumer_unit.pk) + c_type
         return HttpResponse(content=content,
                         content_type="text/plain",
                         status=200)
+    else:
+        raise Http404
+
+@login_required(login_url='/')
+def del_cu(request, id_cu):
+    if (has_permission(request.user, DELETE,
+                       "Eliminar unidades de consumo")  or
+        request.user.is_superuser):
+        cu = get_object_or_404(ConsumerUnit, pk=int(id_cu))
+        cu.delete()
+        return HttpResponse(content="",
+                            content_type="text/plain",
+                            status=200)
+    else:
+        raise Http404
+
+@login_required(login_url='/')
+def popup_edit_partbuilding(request, cu_id):
+    if has_permission(request.user, UPDATE,
+                      "Modificar partes de un edificio") or request.user.is_superuser:
+        #Se obtienen los tipos de partes de edificios
+        tipos_parte = PartOfBuildingType.objects.all().exclude(
+            part_of_building_type_status=0).order_by(
+            'part_of_building_type_name')
+
+        #Se obtienen los tipos de atributos de edificios
+        tipos_atributos = BuildingAttributesType.objects.all().exclude(
+            building_attributes_type_status=0).order_by(
+            'building_attributes_type_name')
+        cu = get_object_or_404(ConsumerUnit, pk=int(cu_id))
+
+        building_part = cu.part_of_building
+
+        #Se obtienen todos los atributos
+        building_part_attributes = BuilAttrsForPartOfBuil.objects.filter(
+            part_of_building=building_part)
+        string_attributes = ''
+        if building_part_attributes:
+            for bp_att in building_part_attributes:
+                string_attributes += '<div  class="extra_attributes_div"><span class="delete_attr_icon"><a href="#eliminar" class="delete hidden_icon" ' +\
+                                     'title="eliminar atributo"></a></span>' +\
+                                     '<span class="tip_attribute_part">' +\
+                                     bp_att.building_attributes.building_attributes_type.building_attributes_type_name +\
+                                     '</span>' +\
+                                     '<span class="attribute_part">' +\
+                                     bp_att.building_attributes.building_attributes_name +\
+                                     '</span>' +\
+                                     '<span class="attribute_value_part">' +\
+                                     str(bp_att.building_attributes_value) +\
+                                     '</span>' +\
+                                     '<input type="hidden" name="atributo_' + str(
+                    bp_att.building_attributes.building_attributes_type.pk) +\
+                                     '_' + str(
+                    bp_att.building_attributes.pk) + '" ' +\
+                                     'value="' + str(
+                    bp_att.building_attributes.building_attributes_type.pk) + ',' + str(
+                    bp_att.building_attributes.pk) + ',' + str(
+                    bp_att.building_attributes_value) +\
+                                     '"/></div>'
+
+        post = {'b_part_name': building_part.part_of_building_name,
+                'b_part_description': building_part.part_of_building_description,
+                'b_part_building_id': str(building_part.building.pk),
+                'b_part_type': building_part.part_of_building_type.id,
+                'b_part_mt2': building_part.mts2_built,
+                'b_part_attributes': string_attributes,
+                }
+        template_vars = dict(post=post,
+                             tipos_parte=tipos_parte,
+                             tipos_atributos=tipos_atributos,
+                             operation="pop_edit",
+                             building=building_part.building,
+                             cu = cu.pk
+        )
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response(
+            "consumption_centers/buildings/popup_add_partbuilding.html",
+            template_vars_template)
+    else:
+        raise Http404
+
+@login_required(login_url='/')
+def save_edit_part_popup(request, cu_id):
+    if (has_permission(request.user, UPDATE,
+                      "Modificar partes de un edificio") or
+        request.user.is_superuser) and request.method == "POST":
+        b_part_name = request.POST.get('b_part_name').strip()
+        b_part_description = request.POST.get('b_part_description').strip()
+        b_part_type_id = request.POST.get('b_part_type')
+
+        b_part_mt2 = request.POST.get('b_part_mt2').strip()
+
+        cu = get_object_or_404(ConsumerUnit, pk=int(cu_id))
+        building_part = cu.part_of_building
+
+        if not bool(b_part_mt2):
+            b_part_mt2 = '0'
+        else:
+            b_part_mt2 = b_part_mt2.replace(",", "")
+
+        continuar = True
+        if b_part_name == '':
+            continuar = False
+
+        if b_part_type_id == '':
+            continuar = False
+
+        if continuar:
+            #Se obtiene la instancia del tipo de parte de edificio
+            part_building_type_obj = get_object_or_404(PartOfBuildingType,
+                                                       pk=b_part_type_id)
+
+            building_part.part_of_building_name = b_part_name
+            building_part.part_of_building_description = b_part_description
+            building_part.part_of_building_type = part_building_type_obj
+            building_part.mts2_built = b_part_mt2
+            building_part.save()
+
+            #Se eliminan todos los atributos existentes
+            builAttrsElim = BuilAttrsForPartOfBuil.objects.filter(
+                part_of_building=building_part)
+            builAttrsElim.delete()
+
+            #Se insertan los nuevos
+            for key in request.POST:
+                if re.search('^atributo_\w+', key):
+                    atr_value_complete = request.POST.get(key)
+                    atr_value_arr = atr_value_complete.split(',')
+
+                    #Se obtiene el objeto atributo
+                    attribute_obj = BuildingAttributes.objects.get(
+                        pk=atr_value_arr[1])
+
+                    newBldPartAtt = BuilAttrsForPartOfBuil(
+                        part_of_building=building_part,
+                        building_attributes=attribute_obj,
+                        building_attributes_value=atr_value_arr[2]
+                    )
+                    newBldPartAtt.save()
+
+            return HttpResponse(content=cu.pk,
+                                content_type="text/plain",
+                                status=200)
+        else:
+            return HttpResponse(status=400)
+    else:
+        raise Http404
+
+@login_required(login_url='/')
+def edit_cu(request, cu_id):
+    if (has_permission(request.user, UPDATE,
+                       "Modificar unidades de consumo") or has_permission(
+        request.user, CREATE, "Alta de unidades de consumo") or
+        request.user.is_superuser) and request.method == "POST":
+        post = request.POST
+
+        consumer_unit = get_object_or_404(ConsumerUnit, pk=int(cu_id))
+
+        if post['prof_pwr_edit'] != "0":
+            if post['prof_pwr_edit'] == "del_pw":
+                profile = VIRTUAL_PROFILE
+            else:
+                profile = get_object_or_404(ProfilePowermeter,
+                                            pk=int(post['prof_pwr_edit']))
+            consumer_unit.profile_powermeter = profile
+
+        if post['edit_part'] == "cu":
+            if post['node_part_edit'] != "0":
+                device_t = get_object_or_404(ElectricDeviceType,
+                                             pk=int(post['node_part_edit']))
+                consumer_unit.electric_device_type = device_t
+        consumer_unit.save()
+        return HttpResponse(status=200)
+    else:
+        raise Http404
+
+@login_required(login_url='/')
+def add_hierarchy_node(request):
+    if (has_permission(request.user, CREATE,
+                      "Alta de jerarquía de partes") or
+       request.user.is_superuser) and request.method == "POST":
+        parent_cu = get_object_or_404(ConsumerUnit, pk=int(request.POST['pp']))
+        parent_part = parent_cu.part_of_building
+
+        pp = True if request.POST['pp'] == "1" else False
+
+        if request.POST['pl'] != '':
+            cu_leaf = get_object_or_404(ConsumerUnit,
+                                        pk=int(request.POST['pl']))
+            part_leaf = cu_leaf.part_of_building
+
+            h = HierarchyOfPart(part_of_building_composite=parent_part,
+                                part_of_building_leaf=part_leaf,
+                                ExistsPowermeter=pp)
+            h.save()
+            return HttpResponse(status=200)
+        elif request.POST['cl'] != '':
+            cu_leaf = get_object_or_404(ConsumerUnit,
+                                        pk=int(request.POST['cl']))
+            h = HierarchyOfPart(part_of_building_composite=parent_part,
+                                consumer_unit_leaf=cu_leaf,
+                                ExistsPowermeter=pp)
+            h.save()
+
+            return HttpResponse(status=200)
+        else:
+            raise Http404
+    else:
+        raise Http404
+
+@login_required(login_url='/')
+def reset_hierarchy(request):
+    if (has_permission(request.user, UPDATE,
+                       "Modificar jerarquía de partes de edificios") or
+        request.user.is_superuser) and request.method == "POST":
+        building = get_object_or_404(Building, pk=int(request.POST['building']))
+        cus = ConsumerUnit.objects.filter(building=building)
+        parts = []
+        consumer_u = []
+        for cu in cus:
+            if cu.part_of_building:
+                parts.append(cu.part_of_building.pk)
+            else:
+                consumer_u.append(cu.pk)
+        h = HierarchyOfPart.objects.filter(
+            Q(part_of_building_composite__pk__in=parts)|
+            Q(part_of_building_leaf__pk__in=parts)|
+            Q(consumer_unit_composite__pk__in=consumer_u)|
+            Q(consumer_unit_leaf__pk__in=consumer_u)
+        )
+        if h:
+            h.delete()
+        return HttpResponse(status=200)
+
     else:
         raise Http404
