@@ -250,7 +250,7 @@ urlpatterns = patterns('',
                            'c_center.views.reset_hierarchy'),
 
                        url(r'^mediciones_pw/(?P<id_pw>\d+)/',
-                           'c_center.views._meditions'),
+                           'c_center.views.pw_meditions'),
 
                        url(r'^fechas_corte/', 'c_center.views.view_cutdates'),
                        url(r'^establecer_fecha/(?P<id_cutdate>\d+)/', 'c_center.views.set_cutdate'),

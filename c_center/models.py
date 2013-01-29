@@ -764,7 +764,6 @@ class PowermeterForIndustrialEquipment(models.Model):
     class Meta:
         unique_together = ('powermeter', 'industrial_equipment')
 
-
 class MonthlyCutDates(models.Model):
     building = models.ForeignKey(Building, on_delete=models.PROTECT)
     billing_month = models.DateField("Fecha de Inicio")

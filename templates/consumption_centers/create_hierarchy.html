@@ -100,7 +100,7 @@
                             url: "/buildings/add_hierarchy_node/",
                             data: asoc_arr,
                             success: function(data){
-                                console.log(asoc_arr);
+
                             }
                         });
                     }
@@ -134,21 +134,14 @@
         $("#prof_pwr_edit option[value='0']").attr("selected", "selected");
         var tipo_n;
         $.each(classList, function(index,item) {
-            if(item != "temp" && item != "node" && item != "consumer_unit" && item != "ui-draggable" && item != "part_of_building" && item != "ui-droppable"){
+            if(item != "temp" && item != "node" && item != "consumer_unit" && item != "ui-draggable" && item != "part_of_building" && item != "ui-droppable" && item != "virtual"){
                 del_node = item;
             }
             if(item == "raiz" || item == "consumer_unit" || item == "part_of_building"){
                 tipo_n = item;
             }
         });
-        if(tipo_n == "consumer_unit" || tipo_n == "raiz"){
-            if(tipo_n == "raiz"){
-                $("#choose_node_part_edit").hide();
-                $("#edit_part").val("root");
-            }else{
-                $("#edit_part").val("cu");
-            }
-
+        if(tipo_n == "consumer_unit"){
             $("#choose_prof_pwr_edit").show();
             $("#node_part_edit").html(options);
             if($("#prof_pwr_edit").find("option[value='del_pw']").size()>0)
@@ -158,9 +151,18 @@
                 $("#edit_node").show();
                 }
             });
-        }else if(tipo_n == "part_of_building"){
-            $("#edit_part").val("part");
-            $("#choose_node_part_edit").show();
+        }else if(tipo_n == "part_of_building" || tipo_n == "raiz"){
+            if(tipo_n == "raiz"){
+                $("#choose_node_part_edit").hide();
+                $("#edit_part").val("root");
+            }else{
+                $("#edit_part").val("part");
+                $("#choose_node_part_edit").show();
+            }
+            console.log("tipo_n",tipo_n);
+
+            //$("#edit_part").val("part");
+            //$("#choose_node_part_edit").show();
             if($("#prof_pwr_edit").find("option[value='del_pw']").size()==0)
                 $("#prof_pwr_edit").find("option[value='newpm']").after("<option value='del_pw'>Medidor Virtual</option>");
 
@@ -236,7 +238,7 @@
                 }
                 tipo_nodo = add_to_node+" "+tipo_nodo;
                 node_to_edit.removeClass().addClass($.trim(tipo_nodo));
-                node_to_edit.find("a:eq(0)").attr("rel", cu).text(texto);
+                node_to_edit.find("> a:eq(0)").attr("rel", cu).text(texto);
                 resetForm('edit_node_form');
                 $(".selector span").text("Elija una opción");
                 $.fancybox.close();

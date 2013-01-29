@@ -6506,8 +6506,7 @@ def add_cu(request):
                 populate_instant_facts=None,
                 populate_interval_facts=None
             )
-
-        c_type="*consumer_unit"
+            c_type="*consumer_unit"
         content = str(consumer_unit.pk) + c_type
         return HttpResponse(content=content,
                         content_type="text/plain",
@@ -6551,25 +6550,30 @@ def popup_edit_partbuilding(request, cu_id):
         string_attributes = ''
         if building_part_attributes:
             for bp_att in building_part_attributes:
-                string_attributes += '<div  class="extra_attributes_div"><span class="delete_attr_icon"><a href="#eliminar" class="delete hidden_icon" ' +\
+                string_attributes += '<div  class="extra_attributes_div">' \
+                                     '<span class="delete_attr_icon">' \
+                                     '<a href="#eliminar" class="delete hidden_icon" ' +\
                                      'title="eliminar atributo"></a></span>' +\
                                      '<span class="tip_attribute_part">' +\
-                                     bp_att.building_attributes.building_attributes_type.building_attributes_type_name +\
+                                     bp_att.building_attributes\
+                                     .building_attributes_type\
+                                     .building_attributes_type_name +\
                                      '</span>' +\
                                      '<span class="attribute_part">' +\
-                                     bp_att.building_attributes.building_attributes_name +\
+                                     bp_att.building_attributes\
+                                     .building_attributes_name +\
                                      '</span>' +\
                                      '<span class="attribute_value_part">' +\
                                      str(bp_att.building_attributes_value) +\
                                      '</span>' +\
-                                     '<input type="hidden" name="atributo_' + str(
-                    bp_att.building_attributes.building_attributes_type.pk) +\
-                                     '_' + str(
-                    bp_att.building_attributes.pk) + '" ' +\
-                                     'value="' + str(
-                    bp_att.building_attributes.building_attributes_type.pk) + ',' + str(
-                    bp_att.building_attributes.pk) + ',' + str(
-                    bp_att.building_attributes_value) +\
+                                     '<input type="hidden" name="atributo_' + \
+                                     str(bp_att.building_attributes
+                                     .building_attributes_type.pk) +\
+                                     '_' + str(bp_att.building_attributes.pk) \
+                                     + '" ' + 'value="' + \
+                                     str(bp_att.building_attributes.building_attributes_type.pk) + \
+                                     ',' + str(bp_att.building_attributes.pk) \
+                                     + ',' + str(bp_att.building_attributes_value) +\
                                      '"/></div>'
 
         post = {'b_part_name': building_part.part_of_building_name,
@@ -6750,7 +6754,7 @@ def reset_hierarchy(request):
         raise Http404
 
 @login_required(login_url='/')
-def cu_meditions(request, id_pw):
+def pw_meditions(request, id_pw):
     if request.user.is_superuser:
         pw = get_object_or_404(ProfilePowermeter, int(id_pw))
         fechas = dict(f1_init=request.GET['inicio'],
@@ -6758,20 +6762,16 @@ def cu_meditions(request, id_pw):
         f1, f2 = get_intervals_1(fechas)
 
         ElectricDataTemp.objects.filter()
-
+        return HttpResponse(status=200)
 
     else:
         raise Http404
 
-"""=========="""
-
+##==========##
 
 def tarifaHM_2(building, consumer_unit, month, year):
-
     status = 'OK'
-    diccionario_final_cfe = {}
-    diccionario_final_cfe['status'] = status
-
+    diccionario_final_cfe = dict(status=status)
     #Variables que almacenan todos los campos
     tarifa_kwh_base = 0
     tarifa_kwh_intermedio = 0
@@ -6795,18 +6795,21 @@ def tarifaHM_2(building, consumer_unit, month, year):
 
     billing_month = datetime.date(year=year, month=month, day=1)
     try:
-        month_cut_dates = MonthlyCutDates.objects.get(building = building, billing_month = billing_month)
+        month_cut_dates = MonthlyCutDates.objects.get(
+            building=building, billing_month=billing_month)
     except MonthlyCutDates.DoesNotExist:
-        month_all_cut_dates = MonthlyCutDates.objects.filter(building = building).order_by("-billing_month")
+        month_all_cut_dates = MonthlyCutDates.objects.filter(
+            building=building).order_by("-billing_month")
         month_cut_dates = month_all_cut_dates[0]
 
-    billing_mrates = datetime.date(year=month_cut_dates.date_init.year, month = month_cut_dates.date_init.month, day = 1)
+    billing_mrates = datetime.date(year=month_cut_dates.date_init.year,
+                                   month=month_cut_dates.date_init.month, day=1)
 
     #Se obtiene la fecha de inicio
     s_date = datetime.datetime(year=month_cut_dates.date_init.year,
                                month=month_cut_dates.date_init.month,
                                day=month_cut_dates.date_init.day,
-                               hour=0,minute=0,second=0,
+                               hour=0, minute=0, second=0,
                                tzinfo=timezone.get_current_timezone()
     )
 
@@ -6815,15 +6818,18 @@ def tarifaHM_2(building, consumer_unit, month, year):
         e_date = datetime.datetime(year=month_cut_dates.date_end.year,
                                    month=month_cut_dates.date_end.month,
                                    day=month_cut_dates.date_end.day,
-                                   hour=0,minute=0,second=0,
+                                   hour=0, minute=0, second=0,
                                    tzinfo=timezone.get_current_timezone()
         )
     else: #Si la fecha de fin es nula, se toma el dia de hoy
-        e_date = datetime.datetime.today().replace(hour=0,minute=0,second=0,
-                                                   tzinfo=timezone.get_current_timezone())
+        e_date = datetime.datetime.today().replace(hour=0, minute=0, second=0,
+                                                   tzinfo=timezone
+                                                   .get_current_timezone())
         #billing_month = e_date
 
-    periodo = str(s_date.day)+'/'+str(s_date.month)+"/"+str(s_date.year)+" - "+str(e_date.day)+'/'+str(e_date.month)+"/"+str(e_date.year)
+    periodo = str(s_date.day) + '/' + str(s_date.month) + "/" + str(
+        s_date.year) + " - " + str(e_date.day) + '/' + str(
+        e_date.month) + "/" + str(e_date.year)
     periodo_dias = (e_date - s_date).days
     periodo_horas = periodo_dias * 24
 
@@ -6837,24 +6843,42 @@ def tarifaHM_2(building, consumer_unit, month, year):
             dict_mes = {}
 
             pr_powermeter = c_unit.profile_powermeter.powermeter
-            """
-            lecturas_totales = ElectricRateForElectricData.objects.filter(electric_data__profile_powermeter__powermeter__pk = pr_powermeter.pk).filter(electric_data__medition_date__range=(s_date, e_date)).order_by('electric_data__medition_date')
-            kw_t = obtenerDemanda_kw(lecturas_totales)
-            if kw_t > demanda_max:
-                demanda_max = kw_t
-            """
+            #
+            #lecturas_totales = ElectricRateForElectricData.objects.filter(
+            #electric_data__profile_powermeter__powermeter__pk = pr_powermeter
+            #.pk).filter(electric_data__medition_date__range=(s_date,
+            #e_date)).order_by('electric_data__medition_date')
+            #kw_t = obtenerDemanda_kw(lecturas_totales)
+            #if kw_t > demanda_max:
+            #    demanda_max = kw_t
+            #
 
-            lecturas_base = ElectricRateForElectricData.objects.filter(electric_data__profile_powermeter__powermeter__pk = pr_powermeter.pk).filter(electric_data__medition_date__range=(s_date, e_date)).filter(electric_rates_periods__period_type = 'base').order_by('electric_data__medition_date')
+            lecturas_base = ElectricRateForElectricData.objects.filter(
+                electric_data__profile_powermeter__powermeter__pk
+                =pr_powermeter.pk).filter(
+                electric_data__medition_date__range=(s_date, e_date)).filter(
+                electric_rates_periods__period_type='base').order_by(
+                'electric_data__medition_date')
             kw_base_t = obtenerDemanda_kw(lecturas_base)
             if kw_base_t > diccionario_final_cfe["kw_base"]:
                 diccionario_final_cfe["kw_base"] = kw_base_t
 
-            lecturas_intermedio = ElectricRateForElectricData.objects.filter(electric_data__profile_powermeter__powermeter__pk = pr_powermeter.pk).filter(electric_data__medition_date__range=(s_date, e_date)).filter(electric_rates_periods__period_type = 'intermedio').order_by('electric_data__medition_date')
+            lecturas_intermedio = ElectricRateForElectricData.objects.filter(
+                electric_data__profile_powermeter__powermeter__pk
+                =pr_powermeter.pk).filter(
+                electric_data__medition_date__range=(s_date, e_date)).filter(
+                electric_rates_periods__period_type='intermedio').order_by(
+                'electric_data__medition_date')
             kw_intermedio_t = obtenerDemanda_kw(lecturas_intermedio)
             if kw_intermedio_t > diccionario_final_cfe["kw_intermedio"]:
                 diccionario_final_cfe["kw_intermedio"] = kw_intermedio_t
 
-            lecturas_punta = ElectricRateForElectricData.objects.filter(electric_data__profile_powermeter__powermeter__pk = pr_powermeter.pk).filter(electric_data__medition_date__range=(s_date, e_date)).filter(electric_rates_periods__period_type = 'punta').order_by('electric_data__medition_date')
+            lecturas_punta = ElectricRateForElectricData.objects.filter(
+                electric_data__profile_powermeter__powermeter__pk
+                =pr_powermeter.pk).filter(
+                electric_data__medition_date__range=(s_date, e_date)).filter(
+                electric_rates_periods__period_type='punta').order_by(
+                'electric_data__medition_date')
             kw_punta_t = obtenerDemanda_kw(lecturas_punta)
             if kw_punta_t > diccionario_final_cfe["kw_punta"]:
                 diccionario_final_cfe["kw_punta"] = kw_punta_t
@@ -6868,27 +6892,37 @@ def tarifaHM_2(building, consumer_unit, month, year):
 
             #KWH
             #Se obtienen todos los identificadores para los KWH
-            lecturas_identificadores = ElectricRateForElectricData.objects.filter(electric_data__profile_powermeter__powermeter__pk = pr_powermeter.pk).\
+            lecturas_identificadores = ElectricRateForElectricData.objects\
+            .filter(
+                electric_data__profile_powermeter__powermeter__pk
+                =pr_powermeter.pk).\
             filter(electric_data__medition_date__range=(s_date, e_date)).\
-            order_by("electric_data__medition_date").values("identifier").annotate(Count("identifier"))
+            order_by("electric_data__medition_date").values(
+                "identifier").annotate(Count("identifier"))
 
             ultima_lectura = 0
             kwh_por_periodo = []
 
             for lectura in lecturas_identificadores:
-
-                electric_info = ElectricRateForElectricData.objects.filter(identifier = lectura["identifier"]).\
-                filter(electric_data__profile_powermeter__powermeter__pk = pr_powermeter.pk).\
+                electric_info = ElectricRateForElectricData.objects.filter(
+                    identifier=lectura["identifier"]).\
+                filter(
+                    electric_data__profile_powermeter__powermeter__pk
+                    =pr_powermeter.pk).\
                 filter(electric_data__medition_date__range=(s_date, e_date)).\
                 order_by("electric_data__medition_date")
 
                 num_lecturas = len(electric_info)
                 primer_lectura = electric_info[0].electric_data.TotalkWhIMPORT
-                ultima_lectura = electric_info[num_lecturas-1].electric_data.TotalkWhIMPORT
-                #print electric_info[0].electric_data.pk,"Primer Lectura:",primer_lectura,"-",electric_info[num_lecturas-1].electric_data.pk," Ultima Lectura:",ultima_lectura
+                ultima_lectura = electric_info[
+                                 num_lecturas - 1].electric_data.TotalkWhIMPORT
+                #print electric_info[0].electric_data.pk,"Primer Lectura:",
+                # primer_lectura,"-",electric_info[num_lecturas-1]
+                # .electric_data.pk," Ultima Lectura:",ultima_lectura
 
                 #Obtener el tipo de periodo: Base, punta, intermedio
-                tipo_periodo = electric_info[0].electric_rates_periods.period_type
+                tipo_periodo = electric_info[
+                               0].electric_rates_periods.period_type
                 t = primer_lectura, tipo_periodo
                 kwh_por_periodo.append(t)
 
@@ -6902,8 +6936,8 @@ def tarifaHM_2(building, consumer_unit, month, year):
                 #print "Lectura:", kwh_p[0], "-:",kwh_p[1]
                 inicial = kwh_p[0]
                 periodo_t = kwh_p[1]
-                if idx+1 <= kwh_periodo_long-1:
-                    kwh_p2 = kwh_por_periodo[idx+1]
+                if idx + 1 <= kwh_periodo_long - 1:
+                    kwh_p2 = kwh_por_periodo[idx + 1]
                     final = kwh_p2[0]
                 else:
                     final = ultima_lectura
@@ -6931,10 +6965,13 @@ def tarifaHM_2(building, consumer_unit, month, year):
             diccionario_final_cfe["kwh_totales"] += kwh_totales
 
             #Se obtienen los kvarhs por medidor
-            diccionario_final_cfe['kvarh_totales'] += obtenerKVARH_total(pr_powermeter, s_date, e_date)
+            diccionario_final_cfe['kvarh_totales'] += obtenerKVARH_total(
+                pr_powermeter, s_date, e_date)
 
     #Obtiene el id de la tarifa correspondiente para el mes en cuestion
-    tarifasObj = ElectricRatesDetail.objects.filter(electric_rate=hm_id).filter(region=region).filter(date_init__lte = billing_mrates).filter(date_end__gte = billing_mrates)
+    tarifasObj = ElectricRatesDetail.objects.filter(electric_rate=hm_id).filter(
+        region=region).filter(date_init__lte=billing_mrates).filter(
+        date_end__gte=billing_mrates)
     if tarifasObj:
         tarifa_kwh_base = tarifasObj[0].KWHB
         tarifa_kwh_intermedio = tarifasObj[0].KWHI
@@ -6944,30 +6981,45 @@ def tarifaHM_2(building, consumer_unit, month, year):
         tarifa_demanda_facturable = tarifasObj[0].KDF
 
     #Demanda Facturable
-    df_t = demandafacturable(diccionario_final_cfe["kw_base"], diccionario_final_cfe["kw_intermedio"], diccionario_final_cfe["kw_punta"], tarifa_fri, tarifa_frb)
+    df_t = demandafacturable(diccionario_final_cfe["kw_base"],
+                             diccionario_final_cfe["kw_intermedio"],
+                             diccionario_final_cfe["kw_punta"], tarifa_fri,
+                             tarifa_frb)
 
     #Factor de Potencia
-    factor_potencia_total = factorpotencia(diccionario_final_cfe["kwh_totales"], diccionario_final_cfe['kvarh_totales'])
+    factor_potencia_total = factorpotencia(diccionario_final_cfe["kwh_totales"],
+                                           diccionario_final_cfe[
+                                           'kvarh_totales'])
 
     #Costo Energía
-    costo_energia_total = costoenergia(diccionario_final_cfe["kwh_base"], diccionario_final_cfe["kwh_intermedio"], diccionario_final_cfe["kwh_punta"],tarifa_kwh_base,tarifa_kwh_intermedio,tarifa_kwh_punta)
+    costo_energia_total = costoenergia(diccionario_final_cfe["kwh_base"],
+                                       diccionario_final_cfe["kwh_intermedio"],
+                                       diccionario_final_cfe["kwh_punta"],
+                                       tarifa_kwh_base, tarifa_kwh_intermedio,
+                                       tarifa_kwh_punta)
 
     #Costo Demanda Facturable
-    costo_demanda_facturable = costodemandafacturable(df_t, tarifa_demanda_facturable)
+    costo_demanda_facturable = costodemandafacturable(df_t,
+                                                      tarifa_demanda_facturable)
 
     #Costo Factor Potencia
-    costo_factor_potencia = costofactorpotencia(factor_potencia_total, costo_energia_total, costo_demanda_facturable)
+    costo_factor_potencia = costofactorpotencia(factor_potencia_total,
+                                                costo_energia_total,
+                                                costo_demanda_facturable)
 
     #Subtotal
-    subtotal_final = obtenerSubtotal(costo_energia_total, costo_demanda_facturable, costo_factor_potencia)
+    subtotal_final = obtenerSubtotal(costo_energia_total,
+                                     costo_demanda_facturable,
+                                     costo_factor_potencia)
 
     #Total
-    total_final = obtenerTotal(subtotal_final,16)
+    total_final = obtenerTotal(subtotal_final, 16)
 
     if demanda_max == 0:
         factor_carga = 0
     else:
-        factor_carga = (float(diccionario_final_cfe["kwh_totales"])/float(demanda_max * periodo_horas)) * 100
+        factor_carga = (float(diccionario_final_cfe["kwh_totales"]) / float(
+            demanda_max * periodo_horas)) * 100
 
     diccionario_final_cfe['periodo'] = periodo
     diccionario_final_cfe['demanda_facturable'] = df_t
@@ -6988,37 +7040,33 @@ def tarifaHM_2(building, consumer_unit, month, year):
 
 
 def tarifaDAC_2(building, consumer_unit, month, year):
-
     status = 'OK'
     diccionario_final_cfe = {}
     diccionario_final_cfe['status'] = status
 
     tarifa_kwh = 0
     tarifa_mes = 0
-    kwh_final = 0
-    kwh_inicial = 0
-    costo_energia = 0
-    iva = 0
-    total = 0
 
     #Se obtiene la region
     region = building.region
 
-
     billing_month = datetime.date(year=year, month=month, day=1)
     try:
-        month_cut_dates = MonthlyCutDates.objects.get(building = building, billing_month = billing_month)
+        month_cut_dates = MonthlyCutDates.objects.get(building=building,
+                                                      billing_month=billing_month)
     except MonthlyCutDates.DoesNotExist:
-        month_all_cut_dates = MonthlyCutDates.objects.filter(building = building).order_by("-billing_month")
+        month_all_cut_dates = MonthlyCutDates.objects.filter(
+            building=building).order_by("-billing_month")
         month_cut_dates = month_all_cut_dates[0]
 
-    billing_mrates = datetime.date(year=month_cut_dates.date_init.year, month = month_cut_dates.date_init.month, day = 1)
+    billing_mrates = datetime.date(year=month_cut_dates.date_init.year,
+                                   month=month_cut_dates.date_init.month, day=1)
 
     #Se obtiene la fecha de inicio
     s_date = datetime.datetime(year=month_cut_dates.date_init.year,
                                month=month_cut_dates.date_init.month,
                                day=month_cut_dates.date_init.day,
-                               hour=0,minute=0,second=0,
+                               hour=0, minute=0, second=0,
                                tzinfo=timezone.get_current_timezone()
     )
 
@@ -7027,26 +7075,32 @@ def tarifaDAC_2(building, consumer_unit, month, year):
         e_date = datetime.datetime(year=month_cut_dates.date_end.year,
                                    month=month_cut_dates.date_end.month,
                                    day=month_cut_dates.date_end.day,
-                                   hour=0,minute=0,second=0,
+                                   hour=0, minute=0, second=0,
                                    tzinfo=timezone.get_current_timezone()
         )
     else: #Si la fecha de fin es nula, se toma el dia de hoy
-        e_date = datetime.datetime.today().replace(hour=0,minute=0,second=0,
+        e_date = datetime.datetime.today().replace(hour=0, minute=0, second=0,
                                                    tzinfo=timezone.get_current_timezone())
         #billing_month = e_date
 
-    periodo = str(s_date.day)+'/'+str(s_date.month)+"/"+str(s_date.year)+" - "+str(e_date.day)+'/'+str(e_date.month)+"/"+str(e_date.year)
+    periodo = str(s_date.day) + '/' + str(s_date.month) + "/" + str(
+        s_date.year) + " - " + str(e_date.day) + '/' + str(
+        e_date.month) + "/" + str(e_date.year)
 
     #Para las regiones BC y BCS es necesario obtener revisar si se aplica Tarifa de Verano o de Invierno
     if region.pk == 1 or region.pk == 2:
-        tf_ver_inv = obtenerHorarioVeranoInvierno(mes_facturacion,2)
-        tarifasObj = DACElectricRateDetail.objects.filter(region = region.pk).filter(date_interval = tf_ver_inv).filter(date_init__lte = billing_mrates).filter(date_end__gte = billing_mrates)
+        tf_ver_inv = obtenerHorarioVeranoInvierno(mes_facturacion, 2)
+        tarifasObj = DACElectricRateDetail.objects.filter(
+            region=region.pk).filter(date_interval=tf_ver_inv).filter(
+            date_init__lte=billing_mrates).filter(date_end__gte=billing_mrates)
         if tarifasObj:
             tarifa_kwh = tarifasObj[0].kwh_rate
             tarifa_mes = tarifasObj[0].month_rate
 
     else:
-        tarifasObj = DACElectricRateDetail.objects.filter(region = region.pk).filter(date_interval = None).filter(date_init__lte = billing_mrates).filter(date_end__gte = billing_mrates)
+        tarifasObj = DACElectricRateDetail.objects.filter(
+            region=region.pk).filter(date_interval=None).filter(
+            date_init__lte=billing_mrates).filter(date_end__gte=billing_mrates)
         if tarifasObj:
             tarifa_kwh = tarifasObj[0].kwh_rate
             tarifa_mes = tarifasObj[0].month_rate
@@ -7058,16 +7112,17 @@ def tarifaDAC_2(building, consumer_unit, month, year):
 
     if consumer_units:
         for c_unit in consumer_units:
-
             pr_powermeter = c_unit.profile_powermeter.powermeter
 
             #Se obtienen los kwh de ese periodo de tiempo.
-            kwh_lecturas = ElectricDataTemp.objects.filter(profile_powermeter = pr_powermeter, medition_date__range=(s_date,e_date)).order_by('medition_date')
+            kwh_lecturas = ElectricDataTemp.objects.filter(
+                profile_powermeter=pr_powermeter,
+                medition_date__range=(s_date, e_date)).order_by('medition_date')
             total_lecturas = len(kwh_lecturas)
 
             if kwh_lecturas:
                 kwh_inicial = kwh_lecturas[0].TotalkWhIMPORT
-                kwh_final = kwh_lecturas[total_lecturas-1].TotalkWhIMPORT
+                kwh_final = kwh_lecturas[total_lecturas - 1].TotalkWhIMPORT
 
                 kwh_netos += int(ceil(kwh_final - kwh_inicial))
 
@@ -7087,14 +7142,13 @@ def tarifaDAC_2(building, consumer_unit, month, year):
 
     return diccionario_final_cfe
 
-"""
-Tarifa 3 v1. Realiza el calculo tomando unicamente una tarifa
-"""
-def tarifa_3_v1(building, consumer_unit, month, year):
 
+def tarifa_3_v1(building, consumer_unit, month, year):
+    """
+    Tarifa 3 v1. Realiza el calculo tomando unicamente una tarifa
+    """
     status = 'OK'
-    diccionario_final_cfe = {}
-    diccionario_final_cfe['status'] = status
+    diccionario_final_cfe = dict(status=status)
 
     tarifa_kwh = 0
     tarifa_kw = 0
@@ -7117,7 +7171,8 @@ def tarifa_3_v1(building, consumer_unit, month, year):
 
     billing_month = datetime.date(year=year, month=month, day=1)
     try:
-        month_cut_dates = MonthlyCutDates.objects.get(building = building, billing_month = billing_month)
+        month_cut_dates = MonthlyCutDates.objects.get(building=building,
+                                                      billing_month=billing_month)
     except MonthlyCutDates.DoesNotExist:
         mensaje = "La fecha de corte para este mes no está definida"
         status = 'ERROR'
@@ -7127,7 +7182,7 @@ def tarifa_3_v1(building, consumer_unit, month, year):
         s_date = datetime.datetime(year=month_cut_dates.date_init.year,
                                    month=month_cut_dates.date_init.month,
                                    day=month_cut_dates.date_init.day,
-                                   hour=0,minute=0,second=0,
+                                   hour=0, minute=0, second=0,
                                    tzinfo=timezone.get_current_timezone()
         )
 
@@ -7136,15 +7191,18 @@ def tarifa_3_v1(building, consumer_unit, month, year):
             e_date = datetime.datetime(year=month_cut_dates.date_end.year,
                                        month=month_cut_dates.date_end.month,
                                        day=month_cut_dates.date_end.day,
-                                       hour=0,minute=0,second=0,
+                                       hour=0, minute=0, second=0,
                                        tzinfo=timezone.get_current_timezone()
             )
         else: #Si la fecha de fin es nula, se toma el dia de hoy
-            e_date = datetime.datetime.today().replace(hour=0,minute=0,second=0,
+            e_date = datetime.datetime.today().replace(hour=0, minute=0,
+                                                       second=0,
                                                        tzinfo=timezone.get_current_timezone())
             billing_month = e_date
 
-        periodo = str(s_date.day)+'/'+str(s_date.month)+"/"+str(s_date.year)+" - "+str(e_date.day)+'/'+str(e_date.month)+"/"+str(e_date.year)
+        periodo = str(s_date.day) + '/' + str(s_date.month) + "/" + str(
+            s_date.year) + " - " + str(e_date.day) + '/' + str(
+            e_date.month) + "/" + str(e_date.year)
 
         #Se obtiene el medidor padre del edificio
         main_cu = ConsumerUnit.objects.get(
@@ -7154,39 +7212,43 @@ def tarifa_3_v1(building, consumer_unit, month, year):
         consumer_units = get_consumer_units(main_cu)
 
         #Es necesario obtener los meses correspondientes
-        start_month=s_date.month
-        end_months=(e_date.year-s_date.year)*12 + e_date.month+1
-        dates=[datetime.datetime(year=yr, month=mn, day=1) for (yr, mn) in (
-            ((m - 1) / 12 + s_date.year, (m - 1) % 12 + 1) for m in range(start_month, end_months)
+        start_month = s_date.month
+        end_months = (e_date.year - s_date.year) * 12 + e_date.month + 1
+        dates = [datetime.datetime(year=yr, month=mn, day=1) for (yr, mn) in (
+            ((m - 1) / 12 + s_date.year, (m - 1) % 12 + 1) for m in range(
+            start_month, end_months)
             )]
         num_meses = len(dates)
         cont_mes_act = 1
 
         for mdate in dates:
-
-            month_days = monthrange(mdate.year,mdate.month)
+            month_days = monthrange(mdate.year, mdate.month)
             start_d = None
             end_d = None
             sff = 1
             primer = 1
             ultimo = month_days[1]
 
-            sff = float(month_days[1] - (primer-1))/float(month_days[1])
+            sff = float(month_days[1] - (primer - 1)) / float(month_days[1])
             if cont_mes_act == 1: #Es el primer mes
                 primer = s_date.day
-                sff = float(month_days[1] - (primer))/float(month_days[1])
+                sff = float(month_days[1] - (primer)) / float(month_days[1])
             if cont_mes_act == num_meses: #Es el ultimo mes
                 ultimo = e_date.day
-                sff = float(ultimo - (primer-1))/float(month_days[1])
+                sff = float(ultimo - (primer - 1)) / float(month_days[1])
 
-            start_d = datetime.date(year=mdate.year, month=mdate.month, day=primer)
-            end_d = datetime.date(year=mdate.year, month=mdate.month, day=ultimo)
-            print "Fecha I:",start_d
-            print "Fecha F:",end_d
-            print "Factor:",sff
+            start_d = datetime.date(year=mdate.year, month=mdate.month,
+                                    day=primer)
+            end_d = datetime.date(year=mdate.year, month=mdate.month,
+                                  day=ultimo)
+            print "Fecha I:", start_d
+            print "Fecha F:", end_d
+            print "Factor:", sff
             billing_month = start_d
 
-            tarifasObj = ThreeElectricRateDetail.objects.filter(date_init__lte = billing_month).filter(date_end__gte = billing_month)
+            tarifasObj = ThreeElectricRateDetail.objects.filter(
+                date_init__lte=billing_month).filter(
+                date_end__gte=billing_month)
             if tarifasObj:
                 tarifa_kwh = tarifasObj[0].kwh_rate
                 tarifa_kw = tarifasObj[0].kw_rate
@@ -7199,25 +7261,32 @@ def tarifa_3_v1(building, consumer_unit, month, year):
 
             if consumer_units:
                 for c_unit in consumer_units:
-
                     kwh_netos = 0
 
                     pr_powermeter = c_unit.profile_powermeter.powermeter
 
                     #Se obtienen los KW, para obtener la demanda maxima
-                    lecturas_totales = ElectricRateForElectricData.objects.filter(electric_data__profile_powermeter__powermeter__pk = pr_powermeter.pk).filter(electric_data__medition_date__range=(start_d, end_d)).order_by('electric_data__medition_date')
+                    lecturas_totales = ElectricRateForElectricData.objects.filter(
+                        electric_data__profile_powermeter__powermeter__pk=pr_powermeter.pk).filter(
+                        electric_data__medition_date__range=(
+                        start_d, end_d)).order_by(
+                        'electric_data__medition_date')
                     kw_t = obtenerDemanda_kw(lecturas_totales)
                     if kw_t > demanda_max:
                         demanda_max = kw_t
 
 
                     #Se obtienen los kwh de ese periodo de tiempo.
-                    kwh_lecturas = ElectricDataTemp.objects.filter(profile_powermeter = pr_powermeter, medition_date__range=(start_d, end_d)).order_by('medition_date')
+                    kwh_lecturas = ElectricDataTemp.objects.filter(
+                        profile_powermeter=pr_powermeter,
+                        medition_date__range=(start_d, end_d)).order_by(
+                        'medition_date')
                     total_lecturas = len(kwh_lecturas)
 
                     if kwh_lecturas:
                         kwh_inicial = kwh_lecturas[0].TotalkWhIMPORT
-                        kwh_final = kwh_lecturas[total_lecturas-1].TotalkWhIMPORT
+                        kwh_final = kwh_lecturas[
+                                    total_lecturas - 1].TotalkWhIMPORT
 
                         kwh_netos += int(ceil(kwh_final - kwh_inicial))
 
@@ -7231,8 +7300,10 @@ def tarifa_3_v1(building, consumer_unit, month, year):
 
         fechas_llaves = kwh_tarifas.keys()
         for llave in fechas_llaves:
-            costo_total_kwh += float(kwh_tarifas[llave])*float(kwh_valores[llave])/float(meses_factores[llave])
-            costo_total_kw += float(demanda_max)*float(kw_tarifas[llave])/float(meses_factores[llave])
+            costo_total_kwh += float(kwh_tarifas[llave]) * float(
+                kwh_valores[llave]) / float(meses_factores[llave])
+            costo_total_kw += float(demanda_max) * float(
+                kw_tarifas[llave]) / float(meses_factores[llave])
 
         print "Costo KWH:", costo_total_kwh
         print "Costo KW:", costo_total_kw
@@ -7249,44 +7320,33 @@ def tarifa_3_v1(building, consumer_unit, month, year):
         diccionario_final_cfe['total'] = float(total)
 
 
-        """
-        costo_energia = kwh_netos * 0
-        costo_df = demanda_max * 0
+        #costo_energia = kwh_netos * 0
+        #costo_df = demanda_max * 0
 
-        importe = kwh_netos * tarifa_kwh
-        costo_energia = importe + tarifa_mes
-        iva = costo_energia * Decimal(str(.16))
-        total = costo_energia + iva
+        #importe = kwh_netos * tarifa_kwh
+        #costo_energia = importe + tarifa_mes
+        #iva = costo_energia * Decimal(str(.16))
+        #total = costo_energia + iva
 
-        diccionario_final_cfe['kwh_totales'] = kwh_netos
+        #diccionario_final_cfe['kwh_totales'] = kwh_netos
 
-        diccionario_final_cfe['importe'] = importe
-        diccionario_final_cfe['costo_energia'] = float(costo_energia)
-        diccionario_final_cfe['iva'] = float(iva)
-        diccionario_final_cfe['total'] = float(total)
-        """
+        #diccionario_final_cfe['importe'] = importe
+        #diccionario_final_cfe['costo_energia'] = float(costo_energia)
+        #diccionario_final_cfe['iva'] = float(iva)
+        #diccionario_final_cfe['total'] = float(total)
+
     return diccionario_final_cfe
 
-def tarifa_3_v2(building, consumer_unit, month, year):
 
+def tarifa_3_v2(building, consumer_unit, month, year):
     status = 'OK'
-    diccionario_final_cfe = {}
-    diccionario_final_cfe['status'] = status
+    diccionario_final_cfe = dict(status=status)
 
     tarifa_kwh = 0
     tarifa_kw = 0
     demanda_max = 0
-    kwh_final = 0
-    kwh_inicial = 0
     kwh_netos = 0
     kvarh_netos = 0
-    costo_total_kwh = 0
-    costo_total_kw = 0
-    costo_energia = 0
-    costo_demanda = 0
-    costo_factor_potencia = 0
-    iva = 0
-    total = 0
 
     #Se obtiene la region
     region = building.region
@@ -7294,18 +7354,21 @@ def tarifa_3_v2(building, consumer_unit, month, year):
     billing_month = datetime.date(year=year, month=month, day=1)
     print "Mes de facturacion:", billing_month
     try:
-        month_cut_dates = MonthlyCutDates.objects.get(building = building, billing_month = billing_month)
+        month_cut_dates = MonthlyCutDates.objects.get(building=building,
+                                                      billing_month=billing_month)
     except MonthlyCutDates.DoesNotExist:
-        month_all_cut_dates = MonthlyCutDates.objects.filter(building = building).order_by("-billing_month")
+        month_all_cut_dates = MonthlyCutDates.objects.filter(
+            building=building).order_by("-billing_month")
         month_cut_dates = month_all_cut_dates[0]
 
-    billing_mrates = datetime.date(year=month_cut_dates.date_init.year, month = month_cut_dates.date_init.month, day = 1)
+    billing_mrates = datetime.date(year=month_cut_dates.date_init.year,
+                                   month=month_cut_dates.date_init.month, day=1)
 
     #Se obtiene la fecha de inicio
     s_date = datetime.datetime(year=month_cut_dates.date_init.year,
                                month=month_cut_dates.date_init.month,
                                day=month_cut_dates.date_init.day,
-                               hour=0,minute=0,second=0,
+                               hour=0, minute=0, second=0,
                                tzinfo=timezone.get_current_timezone()
     )
 
@@ -7314,19 +7377,21 @@ def tarifa_3_v2(building, consumer_unit, month, year):
         e_date = datetime.datetime(year=month_cut_dates.date_end.year,
                                    month=month_cut_dates.date_end.month,
                                    day=month_cut_dates.date_end.day,
-                                   hour=0,minute=0,second=0,
+                                   hour=0, minute=0, second=0,
                                    tzinfo=timezone.get_current_timezone()
         )
     else: #Si la fecha de fin es nula, se toma el dia de hoy
-        e_date = datetime.datetime.today().replace(hour=0,minute=0,second=0,
+        e_date = datetime.datetime.today().replace(hour=0, minute=0, second=0,
                                                    tzinfo=timezone.get_current_timezone())
 
-
-    periodo = str(s_date.day)+'/'+str(s_date.month)+"/"+str(s_date.year)+" - "+str(e_date.day)+'/'+str(e_date.month)+"/"+str(e_date.year)
+    periodo = str(s_date.day) + '/' + str(s_date.month) + "/" + str(
+        s_date.year) + " - " + str(e_date.day) + '/' + str(
+        e_date.month) + "/" + str(e_date.year)
     periodo_dias = (e_date - s_date).days
     periodo_horas = periodo_dias * 24
 
-    tarifasObj = ThreeElectricRateDetail.objects.filter(date_init__lte = billing_mrates).filter(date_end__gte = billing_mrates)
+    tarifasObj = ThreeElectricRateDetail.objects.filter(
+        date_init__lte=billing_mrates).filter(date_end__gte=billing_mrates)
     if tarifasObj:
         print "Tarifas Obj", tarifasObj
         tarifa_kwh = tarifasObj[0].kwh_rate
@@ -7342,23 +7407,27 @@ def tarifa_3_v2(building, consumer_unit, month, year):
 
     if consumer_units:
         for c_unit in consumer_units:
-
             pr_powermeter = c_unit.profile_powermeter.powermeter
 
             #Se obtienen los KW, para obtener la demanda maxima
-            lecturas_totales = ElectricRateForElectricData.objects.filter(electric_data__profile_powermeter__powermeter__pk = pr_powermeter.pk).filter(electric_data__medition_date__range=(s_date, e_date)).order_by('electric_data__medition_date')
+            lecturas_totales = ElectricRateForElectricData.objects.filter(
+                electric_data__profile_powermeter__powermeter__pk=pr_powermeter.pk).filter(
+                electric_data__medition_date__range=(s_date, e_date)).order_by(
+                'electric_data__medition_date')
             kw_t = obtenerDemanda_kw(lecturas_totales)
 
             if kw_t > demanda_max:
                 demanda_max = kw_t
 
             #Se obtienen los kwh de ese periodo de tiempo.
-            kwh_lecturas = ElectricDataTemp.objects.filter(profile_powermeter = pr_powermeter, medition_date__range=(s_date,e_date)).order_by('medition_date')
+            kwh_lecturas = ElectricDataTemp.objects.filter(
+                profile_powermeter=pr_powermeter,
+                medition_date__range=(s_date, e_date)).order_by('medition_date')
             total_lecturas = len(kwh_lecturas)
 
             if kwh_lecturas:
                 kwh_inicial = kwh_lecturas[0].TotalkWhIMPORT
-                kwh_final = kwh_lecturas[total_lecturas-1].TotalkWhIMPORT
+                kwh_final = kwh_lecturas[total_lecturas - 1].TotalkWhIMPORT
 
                 kwh_netos += int(ceil(kwh_final - kwh_inicial))
 
@@ -7372,13 +7441,16 @@ def tarifa_3_v2(building, consumer_unit, month, year):
     if demanda_max == 0:
         factor_carga = 0
     else:
-        factor_carga = (float(kwh_netos)/float(demanda_max * periodo_horas)) * 100
+        factor_carga = (float(kwh_netos) / float(
+            demanda_max * periodo_horas)) * 100
 
     costo_energia = kwh_netos * tarifa_kwh
     costo_demanda = demanda_max * tarifa_kw
-    costo_factor_potencia = costofactorpotencia(factor_potencia_total, costo_energia, costo_demanda)
+    costo_factor_potencia = costofactorpotencia(factor_potencia_total,
+                                                costo_energia, costo_demanda)
 
-    subtotal = obtenerSubtotal(costo_energia, costo_demanda, costo_factor_potencia)
+    subtotal = obtenerSubtotal(costo_energia, costo_demanda,
+                               costo_factor_potencia)
     iva = obtenerIva(subtotal, 16)
     total = obtenerTotal(subtotal, 16)
 
@@ -7401,14 +7473,16 @@ def tarifa_3_v2(building, consumer_unit, month, year):
 
 
 def save_historic(request, monthly_cutdate, building):
-
     try:
         if building.electric_rate.pk == 1:
-            exist_historic = HMHistoricData.objects.get(monthly_cut_dates = monthly_cutdate)
+            exist_historic = HMHistoricData.objects.get(
+                monthly_cut_dates=monthly_cutdate)
         elif building.electric_rate.pk == 2:
-            exist_historic = DacHistoricData.objects.get(monthly_cut_dates = monthly_cutdate)
-        elif building.electric_rate.pk == 3:
-            exist_historic = T3HistoricData.objects.get(monthly_cut_dates = monthly_cutdate)
+            exist_historic = DacHistoricData.objects.get(
+                monthly_cut_dates=monthly_cutdate)
+        else:#if building.electric_rate.pk == 3:
+            exist_historic = T3HistoricData.objects.get(
+                monthly_cut_dates=monthly_cutdate)
     except ObjectDoesNotExist:
         pass
     else:
@@ -7419,85 +7493,113 @@ def save_historic(request, monthly_cutdate, building):
 
     #Se obtiene el tipo de tarifa del edificio (HM o DAC)
     if building.electric_rate.pk == 1: #Tarifa HM
-        resultado_mensual = tarifaHM_2(building, request.session['consumer_unit'], month, year)
+        resultado_mensual = tarifaHM_2(building,
+                                       request.session['consumer_unit'], month,
+                                       year)
 
         if resultado_mensual['kwh_totales'] == 0:
             aver_rate = 0
         else:
-            aver_rate = resultado_mensual['subtotal']/resultado_mensual['kwh_totales']
-
+            aver_rate = resultado_mensual['subtotal'] / resultado_mensual[
+                                                        'kwh_totales']
+        aver_rate = str(aver_rate)
+        resultado_mensual['factor_carga'] = str(
+            resultado_mensual['factor_carga'])
+        resultado_mensual['costo_fpotencia'] = str(
+            resultado_mensual['costo_fpotencia'])
+        resultado_mensual['subtotal'] = str(resultado_mensual['subtotal'])
+        resultado_mensual['iva'] = str(resultado_mensual['iva'])
+        resultado_mensual['total'] = str(resultado_mensual['total'])
         newHistoric = HMHistoricData(
-            monthly_cut_dates = monthly_cutdate,
-            KWH_total = resultado_mensual['kwh_totales'],
-            KWH_base = resultado_mensual['kwh_base'],
-            KWH_intermedio = resultado_mensual['kwh_intermedio'],
-            KWH_punta = resultado_mensual['kwh_punta'],
-            KW_base = resultado_mensual['kw_base'],
-            KW_punta = resultado_mensual['kw_punta'],
-            KW_intermedio = resultado_mensual['kw_intermedio'],
-            KVARH = resultado_mensual['kvarh_totales'],
-            power_factor = resultado_mensual['factor_potencia'],
-            charge_factor = resultado_mensual['factor_carga'],
-            billable_demand = resultado_mensual['demanda_facturable'],
-            KWH_base_rate = resultado_mensual['tarifa_kwhb'],
-            KWH_intermedio_rate = resultado_mensual['tarifa_kwhi'],
-            KWH_punta_rate = resultado_mensual['tarifa_kwhp'],
-            billable_demand_rate = resultado_mensual['tarifa_df'],
-            average_rate = aver_rate,
-            energy_cost = resultado_mensual['costo_energia'],
-            billable_demand_cost = resultado_mensual['costo_dfacturable'],
-            power_factor_bonification = resultado_mensual['costo_fpotencia'],
-            subtotal = resultado_mensual['subtotal'],
-            iva = resultado_mensual['iva'],
-            total = resultado_mensual['total']
+            monthly_cut_dates=monthly_cutdate,
+            KWH_total=resultado_mensual['kwh_totales'],
+            KWH_base=resultado_mensual['kwh_base'],
+            KWH_intermedio=resultado_mensual['kwh_intermedio'],
+            KWH_punta=resultado_mensual['kwh_punta'],
+            KW_base=resultado_mensual['kw_base'],
+            KW_punta=resultado_mensual['kw_punta'],
+            KW_intermedio=resultado_mensual['kw_intermedio'],
+            KVARH=resultado_mensual['kvarh_totales'],
+            power_factor=resultado_mensual['factor_potencia'],
+            charge_factor=resultado_mensual['factor_carga'],
+            billable_demand=resultado_mensual['demanda_facturable'],
+            KWH_base_rate=resultado_mensual['tarifa_kwhb'],
+            KWH_intermedio_rate=resultado_mensual['tarifa_kwhi'],
+            KWH_punta_rate=resultado_mensual['tarifa_kwhp'],
+            billable_demand_rate=resultado_mensual['tarifa_df'],
+            average_rate=aver_rate,
+            energy_cost=resultado_mensual['costo_energia'],
+            billable_demand_cost=resultado_mensual['costo_dfacturable'],
+            power_factor_bonification=resultado_mensual['costo_fpotencia'],
+            subtotal=resultado_mensual['subtotal'],
+            iva=resultado_mensual['iva'],
+            total=resultado_mensual['total']
         )
         newHistoric.save()
 
     elif building.electric_rate.pk == 2:#Tarifa DAC
-        resultado_mensual = tarifaDAC_2(building, request.session['consumer_unit'],month,year)
+        resultado_mensual = tarifaDAC_2(building,
+                                        request.session['consumer_unit'], month,
+                                        year)
 
         if resultado_mensual['kwh_totales'] == 0:
             aver_rate = 0
         else:
-            aver_rate = resultado_mensual['costo_energia']/resultado_mensual['kwh_totales']
+            aver_rate = resultado_mensual['costo_energia'] / resultado_mensual[
+                                                             'kwh_totales']
+        aver_rate = str(aver_rate)
 
+        resultado_mensual['subtotal'] = str(resultado_mensual['subtotal'])
+        resultado_mensual['iva'] = str(resultado_mensual['iva'])
+        resultado_mensual['total'] = str(resultado_mensual['total'])
         newHistoric = DacHistoricData(
-            monthly_cut_dates = monthly_cutdate,
-            KWH_total = resultado_mensual['kwh_totales'],
-            KWH_rate = resultado_mensual['tarifa_kwh'],
-            monthly_rate = resultado_mensual['tarifa_mes'],
-            energy_cost = resultado_mensual['importe'],
-            average_rate = aver_rate,
-            subtotal = resultado_mensual['costo_energia'],
-            iva = resultado_mensual['iva'],
-            total = resultado_mensual['total']
+            monthly_cut_dates=monthly_cutdate,
+            KWH_total=resultado_mensual['kwh_totales'],
+            KWH_rate=resultado_mensual['tarifa_kwh'],
+            monthly_rate=resultado_mensual['tarifa_mes'],
+            energy_cost=resultado_mensual['importe'],
+            average_rate=aver_rate,
+            subtotal=resultado_mensual['costo_energia'],
+            iva=resultado_mensual['iva'],
+            total=resultado_mensual['total']
         )
         newHistoric.save()
 
     elif building.electric_rate.pk == 3:#Tarifa 3
-        resultado_mensual = tarifa_3_v2(building, request.session['consumer_unit'], month, year)
+        resultado_mensual = tarifa_3_v2(building,
+                                        request.session['consumer_unit'], month,
+                                        year)
 
         if resultado_mensual['kwh_totales'] == 0:
             aver_rate = 0
         else:
-            aver_rate = resultado_mensual['subtotal']/resultado_mensual['kwh_totales']
+            aver_rate = resultado_mensual['subtotal'] / resultado_mensual[
+                                                        'kwh_totales']
 
+        aver_rate = str(aver_rate)
+        resultado_mensual['factor_carga'] = str(
+            resultado_mensual['factor_carga'])
+        resultado_mensual['costo_fpotencia'] = str(
+            resultado_mensual['costo_fpotencia'])
+        resultado_mensual['subtotal'] = str(resultado_mensual['subtotal'])
+        resultado_mensual['iva'] = str(resultado_mensual['iva'])
+        resultado_mensual['total'] = str(resultado_mensual['total'])
         newHistoric = T3HistoricData(
-            monthly_cut_dates = monthly_cutdate,
-            KWH_total = resultado_mensual['kwh_totales'],
-            KVARH = resultado_mensual['kvarh_totales'],
-            power_factor = resultado_mensual['factor_potencia'],
-            charge_factor = resultado_mensual['factor_carga'],
-            max_demand = resultado_mensual['kw_totales'],
-            KWH_rate = resultado_mensual['tarifa_kwh'],
-            demand_rate = resultado_mensual['tarifa_kw'],
-            average_rate = aver_rate,
-            energy_cost = resultado_mensual['costo_energia'],
-            demand_cost = resultado_mensual['costo_demanda'],
-            power_factor_bonification = resultado_mensual['costo_fpotencia'],
-            subtotal = resultado_mensual['subtotal'],
-            iva = resultado_mensual['iva'],
-            total = resultado_mensual['total']
+            monthly_cut_dates=monthly_cutdate,
+            KWH_total=resultado_mensual['kwh_totales'],
+            KVARH=resultado_mensual['kvarh_totales'],
+            power_factor=resultado_mensual['factor_potencia'],
+            charge_factor=resultado_mensual['factor_carga'],
+            max_demand=resultado_mensual['kw_totales'],
+            KWH_rate=resultado_mensual['tarifa_kwh'],
+            demand_rate=resultado_mensual['tarifa_kw'],
+            average_rate=aver_rate,
+            energy_cost=resultado_mensual['costo_energia'],
+            demand_cost=resultado_mensual['costo_demanda'],
+            power_factor_bonification=resultado_mensual['costo_fpotencia'],
+            subtotal=resultado_mensual['subtotal'],
+            iva=resultado_mensual['iva'],
+            total=resultado_mensual['total']
         )
         newHistoric.save()
 
@@ -7518,11 +7620,14 @@ def view_cutdates(request):
             else:
                 order_billing = "desc"
 
-        lista = MonthlyCutDates.objects.filter(building = request.session['main_building']).order_by(order)
+        lista = MonthlyCutDates.objects.filter(
+            building=request.session['main_building']).order_by(order)
 
         paginator = Paginator(lista, 12) # muestra 10 resultados por pagina
         template_vars = dict(order_billing=order_billing,
-                             datacontext=datacontext, empresa=empresa, company=request.session['company'], sidebar=request.session['sidebar'])
+                             datacontext=datacontext, empresa=empresa,
+                             company=request.session['company'],
+                             sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
             page = int(request.GET.get('page', '1'))
@@ -7535,26 +7640,25 @@ def view_cutdates(request):
         except (EmptyPage, InvalidPage):
             pag_user = paginator.page(paginator.num_pages)
 
-        template_vars['paginacion']=pag_user
+        template_vars['paginacion'] = pag_user
 
         if 'msj' in request.GET:
             template_vars['message'] = request.GET['msj']
             template_vars['msg_type'] = request.GET['ntype']
 
-
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("consumption_centers/buildings/cutdates.html", template_vars_template)
+        return render_to_response("consumption_centers/buildings/cutdates.html",
+                                  template_vars_template)
     else:
         template_vars = {}
         if datacontext:
-            template_vars = {"datacontext":datacontext}
+            template_vars = {"datacontext": datacontext}
         template_vars["sidebar"] = request.session['sidebar']
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
 
-
-def set_cutdate(request,id_cutdate):
+def set_cutdate(request, id_cutdate):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
     datacontext = get_buildings_context(request.user)
@@ -7565,20 +7669,19 @@ def set_cutdate(request,id_cutdate):
         message = ""
         type = ""
 
-        cutdate_obj = get_object_or_404(MonthlyCutDates, pk = id_cutdate)
+        cutdate_obj = get_object_or_404(MonthlyCutDates, pk=id_cutdate)
 
         template_vars = dict(datacontext=datacontext,
                              empresa=empresa,
                              cutdate=cutdate_obj,
-                             company=request.session['company'], sidebar=request.session['sidebar']
+                             company=request.session['company'],
+                             sidebar=request.session['sidebar']
         )
 
         if request.method == "POST":
             template_vars["post"] = request.POST
             init_str = request.POST.get('date_init').strip()
             end_str = request.POST.get('date_end').strip()
-
-
 
             date_init = None
             date_end = None
@@ -7590,19 +7693,24 @@ def set_cutdate(request,id_cutdate):
 
             if init_str != '':
                 int_ar = time.strptime(init_str, "%Y-%m-%d")
-                date_init = datetime.date(year=int_ar[0],month=int_ar[1],day=int_ar[2])
+                date_init = datetime.date(year=int_ar[0], month=int_ar[1],
+                                          day=int_ar[2])
             if end_str == '':
                 date_end = None
             else:
                 end_ar = time.strptime(end_str, "%Y-%m-%d")
-                date_end = datetime.date(year=end_ar[0],month=end_ar[1],day=end_ar[2])
+                date_end = datetime.date(year=end_ar[0], month=end_ar[1],
+                                         day=end_ar[2])
 
             template_vars['post'] = post
 
             #Si se modificó la fecha inicial es necesario modificar el mes anterior
             if cutdate_obj.date_init != date_init:
-                month_before = cutdate_obj.billing_month + relativedelta(months=-1)
-                cutdate_before = MonthlyCutDates.objects.filter(billing_month = month_before).filter(building = request.session['main_building'])
+                month_before = cutdate_obj.billing_month + relativedelta(
+                    months=-1)
+                cutdate_before = MonthlyCutDates.objects.filter(
+                    billing_month=month_before).filter(
+                    building=request.session['main_building'])
 
                 if cutdate_before:
                     cd_before_flag = True
@@ -7615,8 +7723,11 @@ def set_cutdate(request,id_cutdate):
 
             if cutdate_obj.date_end:
                 #Si el registro tiene fecha final, significa que se esta modificando un mes intermedio, y es necesario modificar el mes siguiente
-                month_after = cutdate_obj.billing_month + relativedelta(months=+1)
-                cutdate_after = MonthlyCutDates.objects.filter(billing_month = month_after).filter(building = request.session['main_building'])
+                month_after = cutdate_obj.billing_month + relativedelta(
+                    months=+1)
+                cutdate_after = MonthlyCutDates.objects.filter(
+                    billing_month=month_after).filter(
+                    building=request.session['main_building'])
                 if cutdate_after:
                     cd_after_flag = True
                     if cutdate_after[0].date_end:
@@ -7630,7 +7741,6 @@ def set_cutdate(request,id_cutdate):
                         cd_after = cutdate_after[0]
 
             if continue_flag:
-
                 #Si hay cambio de fechas en mes anterior
                 if cd_before_flag:
                     #Se guardan las fechas en la tabla de MonthlyCutDates
@@ -7638,7 +7748,8 @@ def set_cutdate(request,id_cutdate):
                     cd_before.save()
 
                     #Se recalcula el mes anterior ya con las nuevas fechas.
-                    save_historic(request, cd_before, request.session['main_building'])
+                    save_historic(request, cd_before,
+                                  request.session['main_building'])
 
                 #Si hay cambio de fechas en mes siguiente
                 if cd_after_flag:
@@ -7648,13 +7759,15 @@ def set_cutdate(request,id_cutdate):
 
                     #Si la fecha final del mes siguiente no es nula, se crea el historico
                     if cd_after.date_end:
-                        save_historic(request, cd_after, request.session['main_building'])
+                        save_historic(request, cd_after,
+                                      request.session['main_building'])
                 else:
                     #Se crea el nuevo mes
                     new_cut = MonthlyCutDates(
-                        building = request.session['main_building'],
-                        billing_month = cutdate_obj.billing_month + relativedelta(months=+1),
-                        date_init = date_end
+                        building=request.session['main_building'],
+                        billing_month=cutdate_obj.billing_month + relativedelta(
+                            months=+1),
+                        date_init=date_end
                     )
                     new_cut.save()
 
@@ -7663,9 +7776,11 @@ def set_cutdate(request,id_cutdate):
                 cutdate_obj.save()
 
                 #Se calcula el mes actual
-                save_historic(request, cutdate_obj, request.session['main_building'])
+                save_historic(request, cutdate_obj,
+                              request.session['main_building'])
 
-                template_vars["message"] = "Fechas de Corte establecidas correctamente"
+                template_vars[
+                "message"] = "Fechas de Corte establecidas correctamente"
                 template_vars["type"] = "n_success"
 
                 if request.user.is_superuser:
@@ -7677,30 +7792,31 @@ def set_cutdate(request,id_cutdate):
             template_vars["message"] = message
             template_vars["type"] = type
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("consumption_centers/buildings/set_cutdate.html", template_vars_template)
+        return render_to_response(
+            "consumption_centers/buildings/set_cutdate.html",
+            template_vars_template)
 
     else:
         template_vars = {}
         if datacontext:
-            template_vars = {"datacontext":datacontext}
+            template_vars = {"datacontext": datacontext}
         template_vars["sidebar"] = request.session['sidebar']
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
 
-
 def obtenerHistorico_r(f_monthly_cutdate):
-
     arr_historico = []
     #Obtener 5 meses antes
     ind = 5
     building = f_monthly_cutdate.building
 
     while ind > 0:
+        month_before = f_monthly_cutdate.billing_month + relativedelta(
+            months=-ind)
 
-        month_before = f_monthly_cutdate.billing_month + relativedelta(months=-ind)
-
-        mtl = MonthlyCutDates.objects.filter(billing_month = month_before).filter(building = building)
+        mtl = MonthlyCutDates.objects.filter(billing_month=month_before).filter(
+            building=building)
 
         month_str = ''
         if month_before.month == 1:
@@ -7728,23 +7844,17 @@ def obtenerHistorico_r(f_monthly_cutdate):
         elif month_before.month == 12:
             month_str = 'Dic'
 
-        dict_periodo = {}
-        dict_periodo["fecha"] = month_str +' '+str(month_before.year)
-        dict_periodo["kw_base"] = 0
-        dict_periodo["kw_intermedio"] = 0
-        dict_periodo["kw_punta"] = 0
-        dict_periodo["demanda_maxima"] = 0
-        dict_periodo["total_kwh"] = 0
-        dict_periodo["kvarh"] =  0
-        dict_periodo["factor_potencia"] = 0
-        dict_periodo["factor_carga"] = 0
-        dict_periodo["costo_promedio"] = 0
+        dict_periodo = dict(fecha=month_str + ' ' + str(month_before.year),
+                            kw_base=0, kw_intermedio=0, kw_punta=0,
+                            demanda_maxima=0, total_kwh=0, kvarh=0,
+                            factor_potencia=0, factor_carga=0, costo_promedio=0)
 
         if mtl:
             monthly_cut_dates = mtl[0]
 
             if building.electric_rate_id == 1:
-                cfe_hist_objs = HMHistoricData.objects.filter(monthly_cut_dates = monthly_cut_dates)
+                cfe_hist_objs = HMHistoricData.objects.filter(
+                    monthly_cut_dates=monthly_cut_dates)
 
                 if cfe_hist_objs:
                     historico = cfe_hist_objs[0]
@@ -7754,13 +7864,14 @@ def obtenerHistorico_r(f_monthly_cutdate):
                     dict_periodo["kw_punta"] = historico.KW_punta
                     dict_periodo["demanda_maxima"] = historico.billable_demand
                     dict_periodo["total_kwh"] = historico.KWH_total
-                    dict_periodo["kvarh"] =  historico.KVARH
+                    dict_periodo["kvarh"] = historico.KVARH
                     dict_periodo["factor_potencia"] = historico.power_factor
                     dict_periodo["factor_carga"] = historico.charge_factor
                     dict_periodo["costo_promedio"] = historico.average_rate
 
             elif building.electric_rate_id == 2:
-                cfe_hist_objs = DacHistoricData.objects.filter(monthly_cut_dates = monthly_cut_dates)
+                cfe_hist_objs = DacHistoricData.objects.filter(
+                    monthly_cut_dates=monthly_cut_dates)
 
                 if cfe_hist_objs:
                     historico = cfe_hist_objs[0]
@@ -7769,7 +7880,8 @@ def obtenerHistorico_r(f_monthly_cutdate):
                     dict_periodo["costo_promedio"] = historico.average_rate
 
             elif building.electric_rate_id == 3:
-                cfe_hist_objs = T3HistoricData.objects.filter(monthly_cut_dates = monthly_cut_dates)
+                cfe_hist_objs = T3HistoricData.objects.filter(
+                    monthly_cut_dates=monthly_cut_dates)
 
                 if cfe_hist_objs:
                     historico = cfe_hist_objs[0]
@@ -7786,55 +7898,61 @@ def obtenerHistorico_r(f_monthly_cutdate):
     return arr_historico
 
 
-
-
 def cfe_desglose(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
     datacontext = get_buildings_context(request.user)
-    if has_permission(request.user, VIEW, "Consultar recibo CFE") or request.user.is_superuser:
-
+    if has_permission(request.user, VIEW,
+                      "Consultar recibo CFE") or request.user.is_superuser:
         set_default_session_vars(request, datacontext)
 
-        today = datetime.datetime.today().replace(hour=0,minute=0,second=0,tzinfo=timezone.get_current_timezone())
+        today = datetime.datetime.today().replace(hour=0, minute=0, second=0,
+                                                  tzinfo=timezone.get_current_timezone())
         month = int(today.month)
         year = int(today.year)
         dict(one=1, two=2)
-        month_list = {1:'Enero', 2:'Febrero', 3:'Marzo', 4:'Abril', 5:'Mayo', 6:'Junio', 7:'Julio', 8:'Agosto',
-                      9:'Septiembre', 10:'Octubre', 11:'Noviembre', 12:'Diciembre' }
-        year_list = {2010:2010, 2011:2011, 2012:2012, 2013:2013}
+        month_list = {1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
+                      5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
+                      9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre',
+                      12: 'Diciembre'}
+        year_list = {2010: 2010, 2011: 2011, 2012: 2012, 2013: 2013}
 
-        template_vars={"type":"cfe", "datacontext":datacontext,
-                       'empresa':request.session['main_building'],
-                       'month':month, 'year':year, 'month_list':month_list, 'year_list':year_list,
-                       'sidebar': request.session['sidebar']
+        template_vars = {"type": "cfe", "datacontext": datacontext,
+                         'empresa': request.session['main_building'],
+                         'month': month, 'year': year, 'month_list': month_list,
+                         'year_list': year_list,
+                         'sidebar': request.session['sidebar']
         }
 
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("consumption_centers/cfe_desglose.html", template_vars_template)
+        return render_to_response("consumption_centers/cfe_desglose.html",
+                                  template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request, {"datacontext":datacontext}))
-
+        return render_to_response("generic_error.html", RequestContext(request,
+                                                                       {
+                                                                       "datacontext": datacontext}))
 
 
 def cfe_desglose_calcs(request):
-
-    print "Estoy en los calculos del desglose"
-    """Renders the cfe bill and the historic data chart"""
+    """Estoy en los calculos del desglose
+    Renders the cfe bill and the historic data chart
+    """
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
     datacontext = get_buildings_context(request.user)
-    if has_permission(request.user, VIEW, "Consultar recibo CFE") or request.user.is_superuser :
+    if has_permission(request.user, VIEW,
+                      "Consultar recibo CFE") or request.user.is_superuser:
         if not request.session['consumer_unit']:
-            context={}
+            context = {}
             if datacontext:
-                context = {"datacontext":datacontext}
-            return HttpResponse(content="<h2 style='font-family: helvetica; color: #878787; font-size:14px;' text-align: center;>No hay unidades de consumo asignadas, por favor ponte en contacto con el administrador para remediar esta situaci&oacute;n</h2>")
+                context = {"datacontext": datacontext}
+            return HttpResponse(
+                content="<h2 style='font-family: helvetica; color: #878787; font-size:14px;' text-align: center;>No hay unidades de consumo asignadas, por favor ponte en contacto con el administrador para remediar esta situaci&oacute;n</h2>")
 
         set_default_session_vars(request, datacontext)
 
-        template_vars={"type":"cfe", "datacontext":datacontext,
-                       'empresa':request.session['main_building']
+        template_vars = {"type": "cfe", "datacontext": datacontext,
+                         'empresa': request.session['main_building']
         }
 
         kwh_netos = 0
@@ -7843,81 +7961,85 @@ def cfe_desglose_calcs(request):
         demanda_min = 1000000
         factor_potencia = 0
 
-        if request.GET:
-            if request.method == "GET":
-                s_date_str = request.GET['init_d']
-                e_date_str = request.GET['end_d']
+        if request.method == "GET":
+            s_date_str = request.GET['init_d']
+            e_date_str = request.GET['end_d']
 
-        s_arr = s_date_str.split('-')
-        e_arr = e_date_str.split('-')
+            s_arr = s_date_str.split('-')
+            e_arr = e_date_str.split('-')
 
-        s_date = datetime.date(year=int(s_arr[0]), month=int(s_arr[1]), day=int(s_arr[2]))
-        e_date = datetime.date(year=int(e_arr[0]), month=int(e_arr[1]), day=int(e_arr[2]))
+            s_date = datetime.date(year=int(s_arr[0]), month=int(s_arr[1]),
+                                   day=int(s_arr[2]))
+            e_date = datetime.date(year=int(e_arr[0]), month=int(e_arr[1]),
+                                   day=int(e_arr[2]))
 
-        print "s_date", s_date
-        print "e_date", e_date
+            #print "s_date", s_date
+            #print "e_date", e_date
 
-        #Se obtiene el edificio
-        building = request.session['main_building']
+            #Se obtiene el edificio
+            building = request.session['main_building']
 
-        #Se obtiene la tarifa del edificio
-        electric_rate = building.electric_rate_id
+            #Se obtiene la tarifa del edificio
+            electric_rate = building.electric_rate_id
 
-        #Se obtiene el medidor padre del edificio
-        main_cu = ConsumerUnit.objects.get(
-            building=building,
-            electric_device_type__electric_device_type_name="Total Edificio")
-        #Se obtienen todos los medidores necesarios
-        consumer_units = get_consumer_units(main_cu)
+            #Se obtiene el medidor padre del edificio
+            main_cu = ConsumerUnit.objects.get(
+                building=building,
+                electric_device_type__electric_device_type_name="Total Edificio")
+            #Se obtienen todos los medidores necesarios
+            consumer_units = get_consumer_units(main_cu)
 
-        if consumer_units:
-            for c_unit in consumer_units:
+            if consumer_units:
+                for c_unit in consumer_units:
+                    pr_powermeter = c_unit.profile_powermeter.powermeter
 
-                pr_powermeter = c_unit.profile_powermeter.powermeter
+                    #Se obtienen los KW, para obtener la demanda maxima
+                    lecturas_totales = ElectricRateForElectricData.objects.filter(
+                        electric_data__profile_powermeter__powermeter__pk=pr_powermeter.pk).filter(
+                        electric_data__medition_date__range=(
+                        s_date, e_date)).order_by('electric_data__medition_date')
+                    kw_t = obtenerDemanda_kw(lecturas_totales)
+                    kw_mt = obtenerDemandaMin_kw(lecturas_totales)
 
-                #Se obtienen los KW, para obtener la demanda maxima
-                lecturas_totales = ElectricRateForElectricData.objects.filter(electric_data__profile_powermeter__powermeter__pk = pr_powermeter.pk).filter(electric_data__medition_date__range=(s_date, e_date)).order_by('electric_data__medition_date')
-                kw_t = obtenerDemanda_kw(lecturas_totales)
-                kw_mt = obtenerDemandaMin_kw(lecturas_totales)
+                    if kw_t > demanda_max:
+                        demanda_max = kw_t
 
-                if kw_t > demanda_max:
-                    demanda_max = kw_t
+                    if kw_mt < demanda_min:
+                        demanda_min = kw_mt
 
-                if kw_mt < demanda_min:
-                    demanda_min = kw_mt
+                    #Se obtienen los kwh de ese periodo de tiempo.
+                    kwh_lecturas = ElectricDataTemp.objects.filter(
+                        profile_powermeter=pr_powermeter,
+                        medition_date__range=(s_date, e_date)).order_by(
+                        'medition_date')
+                    total_lecturas = len(kwh_lecturas)
 
-                #Se obtienen los kwh de ese periodo de tiempo.
-                kwh_lecturas = ElectricDataTemp.objects.filter(profile_powermeter = pr_powermeter, medition_date__range=(s_date,e_date)).order_by('medition_date')
-                total_lecturas = len(kwh_lecturas)
+                    if kwh_lecturas:
+                        kwh_inicial = kwh_lecturas[0].TotalkWhIMPORT
+                        kwh_final = kwh_lecturas[total_lecturas - 1].TotalkWhIMPORT
 
-                if kwh_lecturas:
-                    kwh_inicial = kwh_lecturas[0].TotalkWhIMPORT
-                    kwh_final = kwh_lecturas[total_lecturas-1].TotalkWhIMPORT
+                        kwh_netos += int(ceil(kwh_final - kwh_inicial))
 
-                    kwh_netos += int(ceil(kwh_final - kwh_inicial))
+                    #Se obtienen los kvarhs por medidor
+                    kvarh_netos += obtenerKVARH_total(pr_powermeter, s_date, e_date)
 
-                #Se obtienen los kvarhs por medidor
-                kvarh_netos += obtenerKVARH_total(pr_powermeter, s_date, e_date)
+            #Factor de Potencia
+            factor_potencia_total = factorpotencia(kwh_netos, kvarh_netos)
 
-        #Factor de Potencia
-        factor_potencia_total = factorpotencia(kwh_netos, kvarh_netos)
+            resultado = dict(kwh=kwh_netos, kvarh=kvarh_netos,
+                             dem_max=demanda_max, dem_min=demanda_min,
+                             fpotencia=factor_potencia_total)
 
-        resultado = {}
-        resultado['kwh'] = kwh_netos
-        resultado['kvarh'] = kvarh_netos
-        resultado['dem_max'] = demanda_max
-        resultado['dem_min'] = demanda_min
-        resultado['fpotencia'] = factor_potencia_total
-
-        template_vars['resultados'] = resultado
-        template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("consumption_centers/graphs/desglose.html",
-                                  template_vars_template)
-
+            template_vars['resultados'] = resultado
+            template_vars_template = RequestContext(request, template_vars)
+            return render_to_response("consumption_centers/graphs/desglose.html",
+                                      template_vars_template)
+        else:
+            raise Http404
     else:
         template_vars = {}
         if datacontext:
-            template_vars = {"datacontext":datacontext}
+            template_vars = {"datacontext": datacontext}
         template_vars["sidebar"] = request.session['sidebar']
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)

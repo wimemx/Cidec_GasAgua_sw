@@ -1,5 +1,3 @@
-
-
 {% extends "base.html" %}
 {% block titulo %}Reportes{% endblock %}
 {% block externalcss %}
@@ -99,26 +97,6 @@
 </script>
 {% endblock %}
 {% block document_ready %}
-$(".desp").click(function(){
-$(this).next().slideToggle();
-});
-$("#nav_toggle").click(function(){
-if($("#sidebar").hasClass("collapsed_nav")){
-
-$("#sidebar").animate({width: 'toggle',}, 500, function(){console.log("quito la clase");
-$(this).removeClass("collapsed_nav");
-});
-$("#sidebar_content").show('slide', {direction: 'right'}, 100);
-$("footer").show('slide', {direction: 'right'}, 100);
-
-}else{
-$("#sidebar").addClass("collapsed_nav");
-$("#sidebar_content").hide('slide', {direction: 'left'}, 100);
-$("footer").hide('slide', {direction: 'left'}, 100);
-$("#sidebar").animate({width: 'toggle',}, 500);
-}
-$("#nav_toggle").toggleClass("closed");
-});
 
 var now3 = new Date();
 now3.addDays(-60);
@@ -129,22 +107,6 @@ refresh_iframe_height();
 var state = false;
 $('#widgetField').click(function(){
 $('#datepicker').slideToggle();
-});
-
-
-//custom select for sidebar
-$("#empresa").click(function(){
-$("#company_list").slideToggle();
-});
-$("#company_list li").click(function(){
-var texto=$(this).text().replace(/^\s*|\s*$/g,'');
-var texto1=texto.substring(0,17)+"...";
-$("#empresa").text(texto1);
-$("#company_list").slideUp();
-//reload with the selected company data
-window.location.href="/reportes/set_default_building/"+$(this).attr("rel")+"/?referer=cfe";
-
-
 });
 {% endblock %}
 {% block contenido %}
