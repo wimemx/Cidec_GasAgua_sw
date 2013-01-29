@@ -3,8 +3,10 @@ from django.conf.urls import patterns, url
 urlpatterns = patterns('',
                        url(r'^celery/', 'c_center.views.call_celery_delay'),
                        url(r'^graficas/', 'c_center.graphics.render_graphics'),
-                       url(r'^graficas_extendidas/', 'c_center.graphics.render_graphics_extended'),
-                       url(r'^verificar_graficas_intervalos/', 'c_center.graphics.render_graphics_interval_verification'),
+                       url(r'^graficas_extendidas/',
+                           'c_center.graphics.render_graphics_extended'),
+                       url(r'^verificar_graficas_intervalos/',
+                           'c_center.graphics.render_graphics_interval_verification'),
                        url(r'^grafica_datos_csv/',
                            'c_center.views.grafica_datoscsv'),
 
@@ -253,8 +255,10 @@ urlpatterns = patterns('',
                            'c_center.views.pw_meditions'),
 
                        url(r'^fechas_corte/', 'c_center.views.view_cutdates'),
-                       url(r'^establecer_fecha/(?P<id_cutdate>\d+)/', 'c_center.views.set_cutdate'),
+                       url(r'^establecer_fecha/(?P<id_cutdate>\d+)/',
+                           'c_center.views.set_cutdate'),
 
                        url(r'^desglose/', 'c_center.views.cfe_desglose'),
-                       url(r'^desglose_calculos/', 'c_center.views.cfe_desglose_calcs'),
+                       url(r'^desglose_calculos/',
+                           'c_center.views.cfe_desglose_calcs'),
 )
