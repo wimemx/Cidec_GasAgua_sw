@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
 import pytz
+from functools import wraps
+from time import time
 from decimal import Decimal
 import decimal
 from decimal import InvalidOperation
@@ -9,6 +11,7 @@ import re
 from urlparse import urlparse
 from django.core.validators import email_re
 from django.utils import timezone
+
 
 #-----libs for write_pdf
 #import cgi
@@ -271,3 +274,13 @@ def convert_from_utc(time, tz):
     dt = dt.replace(tzinfo=pytz.utc)
     dest_dt = dt.astimezone(dest)
     return dest_dt.time()
+
+def timed(f):
+    @wraps(f)
+    def wrapper(*args, **kwds):
+        start = time()
+        result = f(*args, **kwds)
+        elapsed = time() - start
+        print "%s took %d seconds to finish" % (f.__name__, elapsed)
+        return result
+    return wrapper

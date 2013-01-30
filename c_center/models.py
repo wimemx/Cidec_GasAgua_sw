@@ -708,7 +708,6 @@ class ElectricDataTemp(models.Model):
                " " + str(self.medition_date) + "\nkWL1 = " + str(self.kWL1) +\
                "\nkWL2 = " + str(self.kWL2) +\
                "\nkWL3 = " + str(self.kWL3)
-
     class Meta:
         verbose_name = "Electric Data"
 

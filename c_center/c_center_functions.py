@@ -3,6 +3,7 @@ __author__ = 'wime'
 #standard library imports
 from datetime import  timedelta, datetime
 from dateutil.relativedelta import relativedelta
+import time
 import os
 import cStringIO
 import Image
@@ -16,7 +17,7 @@ from django.db.models import Q
 from cidec_sw import settings
 from c_center.models import Cluster, ClusterCompany, Company,\
     CompanyBuilding, Building, PartOfBuilding, HierarchyOfPart, ConsumerUnit, \
-    ProfilePowermeter
+    ProfilePowermeter, ElectricDataTemp
 from rbac.models import PermissionAsigment, DataContextPermission, Role,\
     UserRole, Object, Operation
 from location.models import *
@@ -346,17 +347,17 @@ def get_intervals_1(get):
     by default we get the data from the last month
     returns f1_init, f1_end as datetime objects
     """
-    f1_init = datetime.datetime.today() - relativedelta(months=1)
-    f1_end = datetime.datetime.today()
+    f1_init = datetime.today() - relativedelta(months=1)
+    f1_end = datetime.today()
 
     if "f1_init" in get:
         if get["f1_init"] != '':
             f1_init = time.strptime(get['f1_init'], "%d/%m/%Y")
-            f1_init = datetime.datetime(f1_init.tm_year, f1_init.tm_mon,
+            f1_init = datetime(f1_init.tm_year, f1_init.tm_mon,
                                         f1_init.tm_mday)
         if get["f1_end"] != '':
             f1_end = time.strptime(get['f1_end'], "%d/%m/%Y")
-            f1_end = datetime.datetime(f1_end.tm_year, f1_end.tm_mon,
+            f1_end = datetime(f1_end.tm_year, f1_end.tm_mon,
                                        f1_end.tm_mday)
 
     return f1_init, f1_end

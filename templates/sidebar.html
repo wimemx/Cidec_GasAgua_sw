@@ -1,7 +1,7 @@
 <div id="sidebar_content">
 
     {% if company.company_logo %}
-        <img id="company_profile_pic" src="{{ MEDIA_URL }}{{ company.company_logo }}" alt="logotipo"/>
+        <img id="company_profile_pic" src="/static/media/{{ company.company_logo }}" alt="logotipo"/>
     {% else %}
         <img id="company_profile_pic" src="/static/css/images/imgs_icns/company_placeholder.png" alt="logotipo"/>
     {% endif %}

@@ -17,7 +17,7 @@ import variety
 #from PIL import *
 
 #local application/library specific imports
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import render_to_response, get_object_or_404, render
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.template.context import RequestContext
 from django.utils import timezone
@@ -26,6 +26,8 @@ from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.contrib.auth.decorators import login_required
+
+from django_tables2 import RequestConfig
 
 from cidec_sw import settings
 from c_center.calculations import *
@@ -44,6 +46,8 @@ from data_warehouse.views import get_consumer_unit_electric_data_csv,\
     DataWarehouseInformationRetrieveException,\
     get_consumer_unit_by_id as get_data_warehouse_consumer_unit_by_id,\
     get_consumer_unit_electric_data_interval_tuple_list
+
+from .tables import ElectricDataTempTable, ThemedElectricDataTempTable
 
 import json as simplejson
 import sys
@@ -6756,13 +6760,37 @@ def reset_hierarchy(request):
 @login_required(login_url='/')
 def pw_meditions(request, id_pw):
     if request.user.is_superuser:
-        pw = get_object_or_404(ProfilePowermeter, int(id_pw))
-        fechas = dict(f1_init=request.GET['inicio'],
-                      f1_end=request.GET['fin'])
-        f1, f2 = get_intervals_1(fechas)
+        datacontext = get_buildings_context(request.user)
+        template_vars = {}
 
-        ElectricDataTemp.objects.filter()
-        return HttpResponse(status=200)
+        if datacontext:
+            template_vars["datacontext"] = datacontext
+
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars["empresa"] = request.session['main_building']
+        template_vars["company"] = request.session['company']
+
+        pw = get_object_or_404(ProfilePowermeter, pk=int(id_pw))
+        if "inicio" not in request.GET:
+            f1 = ""
+        else:
+            f1 = request.GET['inicio']
+        if "fin" not in request.GET:
+            f2 = ""
+        else:
+            f2 = request.GET['fin']
+        fechas = dict(f1_init=f1, f1_end=f2)
+        f1, f2 = get_intervals_1(fechas)
+        data = ElectricDataTemp.objects.filter(
+            medition_date__range=(f1, f2),
+            profile_powermeter=pw)
+        data = ThemedElectricDataTempTable(data, prefix="")
+        RequestConfig(request, paginate={"per_page": 300}).configure(data)
+
+        template_vars["electric_data"] = data
+
+        return render(request, "consumption_centers/meditions_table.html",
+                      template_vars)
 
     else:
         raise Http404

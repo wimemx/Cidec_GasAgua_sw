@@ -4,14 +4,14 @@
 {% block externalcss %}
     <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
     <link rel="stylesheet" href="/static/css/forms/c_centers.css" type="text/css" />
-    <link rel="stylesheet" href="{{ STATIC_URL }}js/external/jOrgChart/css/jquery.jOrgChart.css"/>
+    <link rel="stylesheet" href="/static/js/external/jOrgChart/css/jquery.jOrgChart.css"/>
     <link rel="stylesheet" href="/static/css/consumption_centers/consumer_units_tree.css">
     <link rel="stylesheet" href="/static/js/external/fancybox/jquery.fancybox.css" type="text/css" />
 {% endblock %}
 {% block externaljs %}
     <script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/external/jOrgChart/jquery.jOrgChart.custom.js"></script>
+    <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+    <script type="text/javascript" src="/static/js/external/jOrgChart/jquery.jOrgChart.custom.js"></script>
     <script type="text/javascript">
 
         function init_tree(){
@@ -159,8 +159,6 @@
                 $("#edit_part").val("part");
                 $("#choose_node_part_edit").show();
             }
-            console.log("tipo_n",tipo_n);
-
             //$("#edit_part").val("part");
             //$("#choose_node_part_edit").show();
             if($("#prof_pwr_edit").find("option[value='del_pw']").size()==0)
@@ -232,8 +230,11 @@
                     if($("#prof_pwr_edit").val() == "del_pw"){
                         tipo_nodo = "virtual";
                     }
-                    tipo_nodo += " part_of_building"
-
+                    if(tipo == "root"){
+                        tipo_nodo += " raiz"
+                    }else{
+                        tipo_nodo += " part_of_building"
+                    }
                     texto = node_to_edit.find("a:eq(0)").text();
                 }
                 tipo_nodo = add_to_node+" "+tipo_nodo;
