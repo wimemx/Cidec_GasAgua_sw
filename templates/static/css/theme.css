@@ -282,16 +282,34 @@ body{
     color: #fff;
     width: 154px;
 }
+#toggle_bar{
+    width: 31px;
+    min-width: 31px;
+}
 #nav_toggle{
-    width: 10px;
-    min-width: 10px;
-    background-color: transparent;
+    margin-top: 300px;
+    display: block;
+    width: 31px;
+    min-width: 31px;
+    height: 103px;
+    background: url(images/bgs/hide_bar.png) no-repeat;
+    line-height: 103px;
+    text-align: center;
+}
+#nav_toggle a{
+    background: url(images/bgs/hide_bar_arrow.png) 50% 50% no-repeat;
+    width: 100%;
+    height: 100%;
+    display: block;
 }
 #nav_toggle:hover{
     cursor:w-resize;
 }
 #nav_toggle.closed:hover{
     cursor:e-resize;
+}
+#nav_toggle.closed a{
+    background: url(images/bgs/show_bar_arrow.png) 50% 50% no-repeat;
 }
 #sidebar_content{
 
