@@ -8,21 +8,21 @@
 {% block document_ready %}
     var get = getUrlVars();
     $(".paleblue a, ul.pagination a").each(function(){
-        var append_str = "";
-        if(get.length>0){
-            if (get[0]!=window.location.protocol+"//"+window.location.host+window.location.pathname){
-                for(var i=0; i<get.length; i++){
-                    if (get[i]=="inicio" || get[i]=="fin"){
-                        append_str+="&"+get[i]+"="+get[get[i]];
-                    }
-                }
-            }
-        }
+    var append_str = "";
+    if(get.length>0){
+    if (get[0]!=window.location.protocol+"//"+window.location.host+window.location.pathname){
+    for(var i=0; i<get.length; i++){
+    if (get[i]=="inicio" || get[i]=="fin"){
+    append_str+="&"+get[i]+"="+get[get[i]];
+    }
+    }
+    }
+    }
 
-        var href = $(this).attr("href")
-        $(this).attr("href", href+append_str);
+    var href = $(this).attr("href")
+    $(this).attr("href", href+append_str);
     });
 {% endblock %}
 {% block contenido %}
-{{ electric_data.as_html }}
+    {{ electric_data.as_html }}
 {% endblock %}

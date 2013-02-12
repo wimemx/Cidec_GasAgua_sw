@@ -14,6 +14,9 @@ urlpatterns = patterns('',
 
                        url(r'^medition_rate/',
                            'c_center.calculations.tag_reading'),
+                       url(r'^profile_for_serial/',
+                           'c_center.c_center_functions.get_profile'),
+
                        url(r'^cfe/', 'c_center.views.cfe_bill'),
                        #url(r'^perfil_carga/', 'c_center.views.perfil_carga'),
                        #url(r'^perfil_carga_data/',

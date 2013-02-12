@@ -718,7 +718,10 @@ class ElectricRateForElectricData(models.Model):
     electric_data = models.ForeignKey(ElectricDataTemp,
                                       on_delete=models.PROTECT)
     identifier = models.CharField(max_length=128)
-
+    def __unicode__(self):
+        return "Electric Data: " + str(self.electric_data.pk) + " " + \
+               self.identifier + " - " + \
+               self.electric_rates_periods.electric_rate.electric_rate_name
     class META:
         unique_together = ('electric_rates_periods', 'electric_data')
 

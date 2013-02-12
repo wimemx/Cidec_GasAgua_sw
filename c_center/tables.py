@@ -6,7 +6,7 @@ from .models import ElectricDataTemp
 class ElectricDataTempTable(tables.Table):
     profile_powermeter = tables.Column()
     medition_date = tables.Column()
-    V1 = tables.Column()
+    V1 = tables.Column(verbose_name="voltage 1")
     V2 = tables.Column()
     V3 = tables.Column()
     I1 = tables.Column()

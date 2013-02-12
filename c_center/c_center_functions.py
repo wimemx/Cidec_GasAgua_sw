@@ -11,8 +11,10 @@ import hashlib
 
 #local application/library specific imports
 from django.shortcuts import HttpResponse, get_object_or_404
+from django.http import Http404
 from django.utils import simplejson
 from django.db.models import Q
+from django.views.decorators.csrf import csrf_exempt
 
 from cidec_sw import settings
 from c_center.models import Cluster, ClusterCompany, Company,\
@@ -943,3 +945,21 @@ def location_objects(country_id, country_name, state_id, state_name,
         neigh_streetObj.save()
 
     return countryObj, stateObj, municipalityObj, neighborhoodObj, streetObj
+
+@csrf_exempt
+def get_profile(request):
+    if request.method == 'POST':
+        if "serials" in request.POST:
+            serials = request.POST['serials'].split("-")
+            srls = []
+            for serial in serials:
+                profile = ProfilePowermeter.objects.get(
+                    powermeter__powermeter_serial=serial
+                )
+                srls.append(dict(profile=profile.pk, serial=serial))
+            data = simplejson.dumps(srls)
+            return HttpResponse(content=data, content_type="application/json")
+        else:
+            raise Http404
+    else:
+        raise Http404
