@@ -1,0 +1,207 @@
+<html>
+<head>
+<link rel="stylesheet" href="/static/css/consumption_centers/graphs.css"/>
+<link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
+<link rel="stylesheet" href="/static/js/external/jqueryUniform/css/uniform.default.css" type="text/css" media="screen" charset="utf-8" />
+<link href="/static/js/external/messi/messi.css" rel="stylesheet" type="text/css" media="screen" />
+<link rel="stylesheet" href="/static/css/ui.spinner.css"/>
+
+<script type="text/javascript" src="/static/js/external/jquery.tools.min.js"></script>
+<script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+<script type="text/javascript" src="/static/js/external/jqueryUniform/jquery.uniform.min.js"></script>
+<script type="text/javascript" src="/static/js/external/jsapi.js"></script>
+<script type="text/javascript" src="/static/js/functions.js"></script>
+<script src="/static/js/external/messi/messi.min.js"></script>
+<script src="/static/js/external/ui.spinner.min.js"></script>
+
+<script type="text/javascript">
+    google.load('visualization', '1.1', {packages: ['corechart', 'controls']});
+</script>
+
+<script type="text/javascript">
+    $(document).ready(function(){
+
+    });
+</script>
+
+<script type="text/javascript">
+    var control = new google.visualization.ControlWrapper({
+        'controlType': 'ChartRangeFilter',
+        'containerId': 'control',
+        'options': {
+            // Filter by the date axis.
+            'filterColumnIndex': 0,
+            'ui': {
+                'enableInteractivity': false,
+                'chartType': 'LineChart',
+                'chartOptions': {
+                    'chartArea': {'width': '90%'},
+                    'hAxis': {'baselineColor': 'none'}
+                },
+                // Display a single series that shows the closing value of the stock.
+                // Thus, this view has two columns: the date (axis) and the stock value (line series).
+                'chartView': {
+                    'columns': [0, 1]
+                },
+                // 1 day in milliseconds = 24 * 60 * 60 * 1000 = 86,400,000
+                //'minRangeSize': 86400000
+                'minRangeSize':3600000
+            }
+        }
+        // Initial range: 2012-02-09 to 2012-03-20.
+        //'state': {'range': {'start': new Date(2012, 9, 8), 'end': new Date(2012, 9, 9)}}
+    });
+
+    function drawVisualization() {
+        var dashboard = new google.visualization.Dashboard(
+                document.getElementById('dashboard'));
+
+        var chart = new google.visualization.ChartWrapper({
+            'chartType': 'ColumnChart',
+            'containerId': 'chart',
+            'options': {
+                // Use the same chart area width as the control for axis alignment.
+                'chartArea': {'height': '80%', 'width': '90%'},
+                'hAxis': {'slantedText': false},
+                //'vAxis': {'viewWindow': {'min': {{ limits.min }}, 'max': {{ limits.max}} }},
+                'legend': {'position': 'top', 'alignment': 'center'}
+            }
+        });
+
+        //
+        // Google Chart
+        //
+
+        var data = new google.visualization.DataTable();
+
+        data.addColumn('datetime', "Semana 3 (13 al 19 de enero)");
+        //data.addColumn('string', 'kwh');
+        data.addColumn('number', 'A');
+        data.addColumn('number', 'B');
+        data.addColumn('number', 'C');
+
+
+        var d01 = new Date();
+        d01.setTime(1306190258*1000);
+        var d02 = new Date();
+        d02.setTime(1306191258*1000);
+        var d03 = new Date();
+        d03.setTime(1306192258*1000);
+        var d04 = new Date();
+        d04.setTime(1306193258*1000);
+        var d05 = new Date();
+        d05.setTime(1306194258*1000);
+        var d06 = new Date();
+        d06.setTime(1306195258*1000);
+        var d07 = new Date();
+        d07.setTime(1306196258*1000);
+        var d08 = new Date();
+        d08.setTime(1306197258*1000);
+        var d09 = new Date();
+        d09.setTime(1306198258*1000);
+        var d10 = new Date();
+        d10.setTime(1306199258*1000);
+
+        data.addRows([
+            [d01,  2, null, null],
+            [d02,  4, null, null],
+            [d03,  3, null, null],
+            [d04,  null, 6, null],
+            [d05,  null, 8, null],
+            [d06,  null, 2, null],
+            [d07,  null, 5, null],
+            [d08,  null, null, 3],
+            [d09,  null, null, 9],
+            [d10,  null, null, 7]
+        ]);
+
+        var view = new google.visualization.DataView(data);
+        /*
+        view.setColumns([0, {
+            type: 'number',
+            label: 'kwh',
+            calc: function (dt, row) {
+                return (dt.getValue(row, 1) <= 3) ? dt.getValue(row, 1) : null;
+            }
+        }, {
+            type: 'number',
+            label: 'kwh',
+            calc: function (dt, row) {
+                return (dt.getValue(row, 1) > 3) ? dt.getValue(row, 1) : null;
+            }
+        }
+        ]);
+        */
+
+        dashboard.bind(control, chart);
+        dashboard.draw(view, {
+                isStacked: true
+    });
+
+        /* Code needed to disable the control */
+
+        google.visualization.events.addListener(dashboard, 'ready', onDashboardReady);
+
+        function onDashboardReady(){
+           $("#control svg").attr("pointer-events","none");
+        }
+
+        //
+        // Range Controllers
+        //
+        var $input = $('#upper_limit');
+        var $input1 = $('#lower_limit');
+        $input.val("{{ limits.max }}").attr("min", Math.ceil({{ limits.min }})).attr("max", Math.ceil({{ limits.max }}));
+        $input1.val("{{ limits.min }}").attr("min", Math.floor({{ limits.min }})).attr("max", Math.floor({{ limits.max }}));
+        $input.spinner({
+            min: $input.attr('min'),
+            max: $input.attr('max'),
+            step: $input.attr('step')
+        }).change(function(){
+                    if($input.val()<=$input1.val()){
+                        $input.val($input1.val() + .5);
+                    }
+                    chart.setOption('vAxis', {'viewWindow':{'max':$input.val(), 'min':$input1.val()}});
+                    chart.draw();
+                });
+        $input1.spinner({
+            min: $input1.attr('min'),
+            max: $input1.attr('max'),
+            step: $input1.attr('step')
+        }).change(function(){
+                    if($input1.val()>=$input.val()){
+                        $input1.val($input.val() - .5);
+                    }
+                    chart.setOption('vAxis', {'viewWindow':{'max':$input.val(), 'min':$input1.val()}});
+                    chart.draw();
+                });
+    }
+
+    google.setOnLoadCallback(drawVisualization);
+
+</script>
+</head>
+
+<body>
+<ul id="compare_interval1" class="fr">
+    <li id="hour" {% if granularity == "hour" %} class="active" {% endif %}>1 H</li>
+    <li id="day" {% if granularity == "day" %} class="active" {% endif %}>1 D</li>
+    <li id="week" {% if granularity == "week" %} class="active" {% endif %}>1 Sem</li>
+</ul>
+
+<div id="dashboard" class="fl">
+    <div id="chart">
+        <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
+    </div>
+    <div id="control"></div>
+    <div id="slider-range">
+        <div id="up">
+            <input type="text" class="integer" id="upper_limit" min="{{ limits.min }}" max="{{ limits.max }}" step="0.5"/>
+        </div>
+        <div id="down">
+            <input type="text" class="integer" id="lower_limit" min="{{ limits.min }}" max="{{ limits.max }}" step="0.5"/>
+        </div>
+    </div>
+</div>
+</body>
+</html>
