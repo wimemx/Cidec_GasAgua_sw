@@ -873,7 +873,8 @@ def render_graphics_extended(request):
             return django.http.HttpResponse("")
 
         template_variables = dict()
-        parameter_units = dict(kWh_consumido="kWh/h",
+        parameter_units = dict(
+            kWh_consumido="kWh/h",
             TotalkWhIMPORT="kW/h",
             kWL3="kW",
             kWL2="kW",
@@ -974,6 +975,8 @@ def render_graphics_extended(request):
             electric_data_list,
             limits)
 
+        print template_variables['rows_data']
+
         template_variables['columns'] = consumer_unit_and_time_interval_information_list
         template_variables['limits'] = limits
         template_variables['granularity'] = granularity
@@ -1024,4 +1027,29 @@ def render_graphics_interval_verification(
 
     return django.shortcuts.render_to_response(
                "consumption_centers/graphs/graphics_interval_verification.html",
+               template_context)
+
+
+def render_graphics_month_consumption_trend(
+        request
+):
+
+    template_variables = dict()
+    if request.method == "GET":
+        try:
+            consumer_unit_id = request.GET['consumer-unit-id']
+            month = request.GET['month']
+            year = request.GET['year']
+
+        except KeyError:
+            raise django.http.Http404
+
+
+
+    template_context = django.template.context.RequestContext(
+                           request,
+                           template_variables)
+
+    return django.shortcuts.render_to_response(
+               "consumption_centers/graphs/graphics_month_consumption_trend.html",
                template_context)
