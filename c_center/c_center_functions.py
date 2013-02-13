@@ -3,6 +3,7 @@ __author__ = 'wime'
 #standard library imports
 from datetime import  timedelta, datetime
 from dateutil.relativedelta import relativedelta
+import time
 import os
 import cStringIO
 import Image
@@ -10,13 +11,15 @@ import hashlib
 
 #local application/library specific imports
 from django.shortcuts import HttpResponse, get_object_or_404
+from django.http import Http404
 from django.utils import simplejson
 from django.db.models import Q
+from django.views.decorators.csrf import csrf_exempt
 
 from cidec_sw import settings
 from c_center.models import Cluster, ClusterCompany, Company,\
     CompanyBuilding, Building, PartOfBuilding, HierarchyOfPart, ConsumerUnit, \
-    ProfilePowermeter
+    ProfilePowermeter, ElectricDataTemp
 from rbac.models import PermissionAsigment, DataContextPermission, Role,\
     UserRole, Object, Operation
 from location.models import *
@@ -346,17 +349,17 @@ def get_intervals_1(get):
     by default we get the data from the last month
     returns f1_init, f1_end as datetime objects
     """
-    f1_init = datetime.datetime.today() - relativedelta(months=1)
-    f1_end = datetime.datetime.today()
+    f1_init = datetime.today() - relativedelta(months=1)
+    f1_end = datetime.today()
 
     if "f1_init" in get:
         if get["f1_init"] != '':
             f1_init = time.strptime(get['f1_init'], "%d/%m/%Y")
-            f1_init = datetime.datetime(f1_init.tm_year, f1_init.tm_mon,
+            f1_init = datetime(f1_init.tm_year, f1_init.tm_mon,
                                         f1_init.tm_mday)
         if get["f1_end"] != '':
             f1_end = time.strptime(get['f1_end'], "%d/%m/%Y")
-            f1_end = datetime.datetime(f1_end.tm_year, f1_end.tm_mon,
+            f1_end = datetime(f1_end.tm_year, f1_end.tm_mon,
                                        f1_end.tm_mday)
 
     return f1_init, f1_end
@@ -942,3 +945,21 @@ def location_objects(country_id, country_name, state_id, state_name,
         neigh_streetObj.save()
 
     return countryObj, stateObj, municipalityObj, neighborhoodObj, streetObj
+
+@csrf_exempt
+def get_profile(request):
+    if request.method == 'POST':
+        if "serials" in request.POST:
+            serials = request.POST['serials'].split("-")
+            srls = []
+            for serial in serials:
+                profile = ProfilePowermeter.objects.get(
+                    powermeter__powermeter_serial=serial
+                )
+                srls.append(dict(profile=profile.pk, serial=serial))
+            data = simplejson.dumps(srls)
+            return HttpResponse(content=data, content_type="application/json")
+        else:
+            raise Http404
+    else:
+        raise Http404

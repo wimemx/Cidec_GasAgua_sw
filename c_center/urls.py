@@ -5,13 +5,18 @@ urlpatterns = patterns('',
                        url(r'^graficas/', 'c_center.graphics.render_graphics'),
                        url(r'^graficas_extendidas/',
                            'c_center.graphics.render_graphics_extended'),
-                       url(r'^verificar_graficas_intervalos/',
-                           'c_center.graphics.render_graphics_interval_verification'),
                        url(r'^grafica_datos_csv/',
                            'c_center.views.grafica_datoscsv'),
+                       url(r'^grafica_tendencia_consumo_mensual/',
+                           'c_center.graphics.render_graphics_month_consumption_trend'),
+                       url(r'^verificar_graficas_intervalos/',
+                           'c_center.graphics.render_graphics_interval_verification'),
 
                        url(r'^medition_rate/',
                            'c_center.calculations.tag_reading'),
+                       url(r'^profile_for_serial/',
+                           'c_center.c_center_functions.get_profile'),
+
                        url(r'^cfe/', 'c_center.views.cfe_bill'),
                        #url(r'^perfil_carga/', 'c_center.views.perfil_carga'),
                        #url(r'^perfil_carga_data/',
@@ -263,5 +268,11 @@ urlpatterns = patterns('',
                            'c_center.views.cfe_desglose_calcs'),
 
                        url(r'^corte_recibo/(?P<id_cutdate>\d+)/', 'c_center.views.set_cutdate_bill_show'),
-                       url(r'^set_cutdate_ajax/', 'c_center.views.set_cutdate_bill')
+                       url(r'^set_cutdate_ajax/', 'c_center.views.set_cutdate_bill'),
+
+                       url(r'^analisis_mensual/(?P<id_building>\d+)/',
+                           'c_center.views.montly_analitics'),
+                       url(r'^node/',
+                           'django.views.generic.simple.direct_to_template',
+                           {'template': 'test.html'}),
 )

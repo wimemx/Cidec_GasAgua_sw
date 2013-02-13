@@ -18,7 +18,7 @@ import variety
 #from PIL import *
 
 #local application/library specific imports
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import render_to_response, get_object_or_404, render
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.template.context import RequestContext
 from django.utils import timezone
@@ -28,11 +28,13 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.contrib.auth.decorators import login_required
 
+from django_tables2 import RequestConfig
+
 from cidec_sw import settings
 from c_center.calculations import *
 from c_center.models import *
 from location.models import *
-from electric_rates.models import ElectricRatesDetail
+from electric_rates.models import ElectricRatesDetail, DACElectricRateDetail, ThreeElectricRateDetail
 from rbac.models import Operation, DataContextPermission, UserRole, Object,\
     PermissionAsigment, GroupObject
 from rbac.rbac_functions import  has_permission, get_buildings_context,\
@@ -45,6 +47,8 @@ from data_warehouse.views import get_consumer_unit_electric_data_csv,\
     DataWarehouseInformationRetrieveException,\
     get_consumer_unit_by_id as get_data_warehouse_consumer_unit_by_id,\
     get_consumer_unit_electric_data_interval_tuple_list
+
+from .tables import ElectricDataTempTable, ThemedElectricDataTempTable
 
 import json as simplejson
 import sys
@@ -313,6 +317,7 @@ def cfe_bill(request):
                                                  {"datacontext": datacontext}))
 
 
+# noinspection PyArgumentList
 def cfe_calculations(request):
     """Renders the cfe bill and the historic data chart"""
     if not request.user.is_authenticated():
@@ -320,7 +325,6 @@ def cfe_calculations(request):
     datacontext = get_buildings_context(request.user)
     if has_permission(request.user, VIEW, "Consultar recibo CFE") or request.user.is_superuser :
         if not request.session['consumer_unit']:
-            context={}
             if datacontext:
                 context = {"datacontext":datacontext}
             return HttpResponse(content="<h2 style='font-family: helvetica; color: #878787; font-size:14px;' text-align: center;>No hay unidades de consumo asignadas, por favor ponte en contacto con el administrador para remediar esta situaci&oacute;n</h2>")
@@ -332,9 +336,8 @@ def cfe_calculations(request):
         }
 
         if request.GET:
-            if request.method == "GET":
-                month = int(request.GET['month'])
-                year = int(request.GET['year'])
+            month = int(request.GET['month'])
+            year = int(request.GET['year'])
         else:
         #Obtener la fecha actual
             today = datetime.datetime.today().replace(hour=0,minute=0,second=0,tzinfo=timezone.get_current_timezone())
@@ -342,6 +345,7 @@ def cfe_calculations(request):
             year = int(today.year)
 
         #Se buscan los datos en el historico
+        # noinspection PyArgumentList
         billing_month = datetime.date(year=year, month=month, day=1)
 
         #Se obtiene el tipo de tarifa del edificio (HM o DAC)
@@ -351,12 +355,11 @@ def cfe_calculations(request):
             cfe_historico = HMHistoricData.objects.filter(monthly_cut_dates__building = request.session['main_building']).filter(monthly_cut_dates__billing_month = billing_month)
         elif tipo_tarifa.pk == 2: #Tarifa DAC
             cfe_historico = DacHistoricData.objects.filter(monthly_cut_dates__building = request.session['main_building']).filter(monthly_cut_dates__billing_month = billing_month)
-        elif tipo_tarifa.pk == 3: #Tarifa 3
+        else: #if tipo_tarifa.pk == 3: #Tarifa 3
             cfe_historico = T3HistoricData.objects.filter(monthly_cut_dates__building = request.session['main_building']).filter(monthly_cut_dates__billing_month = billing_month)
 
         #Si hay información en la tabla del historico, toma los datos
         resultado_mensual = {}
-
         if cfe_historico:
 
             if tipo_tarifa.pk == 1: #Tarifa HM
@@ -487,6 +490,7 @@ def cfe_calculations(request):
 
             elif tipo_tarifa.pk == 3: #Tarifa 3
                 resultado_mensual = tarifa_3_v2(request.session['main_building'],request.session['consumer_unit'], s_date, e_date, month, year)
+
 
         if resultado_mensual['status'] == 'OK':
             template_vars['resultados'] = resultado_mensual
@@ -798,13 +802,13 @@ def add_building_attr(request):
     or request.user.is_superuser:
         empresa = request.session['main_building']
         company = request.session['company']
-        type = ""
+        _type = ""
         message = ""
         attributes = BuildingAttributesType.objects.all().order_by(
             "building_attributes_type_sequence")
         template_vars = dict(datacontext=datacontext, empresa=empresa,
                              company=company,
-                             type=type,
+                             type=_type,
                              message=message,
                              attributes=attributes,
                              sidebar=request.session['sidebar'])
@@ -827,7 +831,7 @@ def add_building_attr(request):
                     "Por favor solo ingrese caracteres v&aacute;lidos"
 
             if int(template_vars['post']['value_boolean']) == 1:
-                bool = True
+                _bool = True
                 unidades = template_vars['post']['unidades']
                 if not unidades:
                     valid = False
@@ -837,14 +841,14 @@ def add_building_attr(request):
                         template_vars['message'] = "Por favor solo ingrese"\
                                                    " caracteres v&aacute;lidos"
             else:
-                bool = False
+                _bool = False
                 unidades = ""
             if attr_name and valid:
                 b_attr = BuildingAttributes(
                     building_attributes_type=attr,
                     building_attributes_name=attr_name,
                     building_attributes_description=desc,
-                    building_attributes_value_boolean=bool,
+                    building_attributes_value_boolean=_bool,
                     building_attributes_units_of_measurement=unidades
                 )
                 b_attr.save()
@@ -991,9 +995,9 @@ def delete_b_attr(request, id_b_attr):
         b_attr.save()
 
         mensaje = "El atributo ha cambiado de status correctamente"
-        type = "n_success"
+        _type = "n_success"
         return HttpResponseRedirect("/buildings/atributos/?msj=" + mensaje +
-                                    "&ntype=" + type)
+                                    "&ntype=" + _type)
     else:
         template_vars = {}
         if datacontext:
@@ -1013,20 +1017,20 @@ def editar_b_attr(request, id_b_attr):
         empresa = request.session['main_building']
         company = request.session['company']
         if b_attr.building_attributes_value_boolean:
-            bool = "1"
+            _bool = "1"
         else:
-            bool = "0"
+            _bool = "0"
         post = {'attr_name': b_attr.building_attributes_name,
                 'description': b_attr.building_attributes_description,
                 'attr_type': b_attr.building_attributes_type.pk,
-                'value_boolean': bool,
+                'value_boolean': _bool,
                 'unidades': b_attr.building_attributes_units_of_measurement}
         message = ''
-        type = ''
+        _type = ''
         attributes = BuildingAttributesType.objects.all().order_by(
             "building_attributes_type_sequence")
         template_vars = dict(datacontext=datacontext, empresa=empresa,
-                             message=message, post=post, type=type,
+                             message=message, post=post, type=_type,
                              operation="edit", company=company,
                              attributes=attributes,
                              sidebar=request.session['sidebar'])
@@ -1045,7 +1049,7 @@ def editar_b_attr(request, id_b_attr):
                                            "caracteres v&aacute;lidos"
 
             if template_vars['post']['value_boolean'] == 1:
-                bool = True
+                _bool = True
                 unidades = template_vars['post']['unidades']
                 if not unidades:
                     valid = False
@@ -1055,13 +1059,13 @@ def editar_b_attr(request, id_b_attr):
                         template_vars['message'] = "Por favor solo ingrese"\
                                                    " caracteres v&aacute;lidos"
             else:
-                bool = False
+                _bool = False
                 unidades = ""
             if attr_name and valid:
                 b_attr.building_attributes_type = attr
                 b_attr.building_attributes_name = attr_name
                 b_attr.building_attributes_description = desc
-                b_attr.building_attributes_value_boolean = bool
+                b_attr.building_attributes_value_boolean = _bool
                 b_attr.building_attributes_units_of_measurement = unidades
                 b_attr.save()
                 template_vars['message'] = "El atributo fue editado"\
@@ -1099,22 +1103,22 @@ def ver_b_attr(request, id_b_attr):
         empresa = request.session['main_building']
         company = request.session['company']
         if b_attr.building_attributes_value_boolean:
-            bool = "1"
+            _bool = "1"
         else:
-            bool = "0"
+            _bool = "0"
         post = {'attr_name': b_attr.building_attributes_name,
                 'description': b_attr.building_attributes_description,
                 'attr_type': b_attr.building_attributes_type.
                 building_attributes_type_name,
-                'value_boolean': bool,
+                'value_boolean': _bool,
                 'unidades': b_attr.building_attributes_units_of_measurement}
         message = ''
-        type = ''
+        _type = ''
         attributes = BuildingAttributesType.objects.all().order_by(
             "building_attributes_type_sequence")
         template_vars = dict(datacontext=datacontext, empresa=empresa,
                              message=message, company=company, post=post,
-                             type=type, operation="edit", attributes=attributes,
+                             type=_type, operation="edit", attributes=attributes,
                              sidebar=request.session['sidebar'])
 
         template_vars_template = RequestContext(request, template_vars)
@@ -1178,7 +1182,7 @@ def add_cluster(request):
        request.user.is_superuser:
         empresa = request.session['main_building']
         message = ''
-        type = ''
+        _type = ''
         #Se obtienen los sectores
         sectores = SectoralType.objects.filter(sectoral_type_status=1)
         template_vars = dict(datacontext=datacontext,
@@ -1197,17 +1201,17 @@ def add_cluster(request):
             continuar = True
             if clustername == '':
                 message = "El nombre del Cluster no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(clustername):
                 message = "El nombre del Cluster contiene caracteres inválidos"
-                type = "n_notif"
+                _type = "n_notif"
                 clustername = ""
                 continuar = False
 
             if clustersector == '':
                 message = "El Cluster debe pertenecer a un tipo de sector"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
 
@@ -1215,7 +1219,7 @@ def add_cluster(request):
             clusterValidate = Cluster.objects.filter(cluster_name=clustername)
             if clusterValidate:
                 message = "Ya existe un cluster con ese nombre"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             post = {'clustername': clustername,
@@ -1245,7 +1249,7 @@ def add_cluster(request):
 
             template_vars["post"] = post
             template_vars["message"] = message
-            template_vars["type"] = type
+            template_vars["type"] = _type
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
             "consumption_centers/buildings/add_cluster.html",
@@ -1362,10 +1366,10 @@ def status_cluster(request, id_cluster):
         cluster.save()
         mensaje = "El estatus del cluster " + cluster.cluster_name +\
                   " ha cambiado a " + action
-        type = "n_success"
+        _type = "n_success"
 
         return HttpResponseRedirect("/buildings/clusters/?msj=" + mensaje +
-                                    "&ntype=" + type)
+                                    "&ntype=" + _type)
     else:
         datacontext = get_buildings_context(request.user)
         template_vars = {}
@@ -1430,7 +1434,7 @@ def edit_cluster(request, id_cluster):
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         message = ''
-        type = ''
+        _type = ''
 
         if request.method == "POST":
             clustername = request.POST.get('clustername')
@@ -1439,17 +1443,17 @@ def edit_cluster(request, id_cluster):
             continuar = True
             if clustername == '':
                 message = "El nombre del cluster no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(clustername):
                 message = "El nombre del Cluster contiene caracteres inválidos"
-                type = "n_notif"
+                _type = "n_notif"
                 clustername = ""
                 continuar = False
 
             if clustersector == '':
                 message = "El sector del cluster no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             #Valida el nombre (para el caso de los repetidos)
@@ -1459,7 +1463,7 @@ def edit_cluster(request, id_cluster):
                     cluster_name=clustername)
                 if clusterValidate:
                     message = "Ya existe un cluster con ese nombre"
-                    type = "n_notif"
+                    _type = "n_notif"
                     continuar = False
 
             post = {'clustername': cluster.cluster_name,
@@ -1475,7 +1479,7 @@ def edit_cluster(request, id_cluster):
                 cluster.save()
 
                 message = "Cluster editado exitosamente"
-                type = "n_success"
+                _type = "n_success"
                 if has_permission(request.user,
                                   VIEW,
                                   "Ver grupos de empresas") or\
@@ -1490,7 +1494,7 @@ def edit_cluster(request, id_cluster):
                              post=post,
                              operation="edit",
                              message=message,
-                             type=type,
+                             type=_type,
                              company=request.session['company'],
                              sidebar=request.session['sidebar']
         )
@@ -1564,27 +1568,27 @@ def add_powermetermodel(request):
             pw_brand = request.POST.get('pw_brand').strip()
             pw_model = request.POST.get('pw_model').strip()
             message = ''
-            type = ''
+            _type = ''
 
             continuar = True
 
             if pw_brand == '':
                 message = "El nombre de la Marca no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(pw_brand):
                 message = "El nombre de la Marca contiene caracteres inválidos"
-                type = "n_notif"
+                _type = "n_notif"
                 pw_brand = ""
                 continuar = False
 
             if pw_model == '':
                 message = "El nombre del Modelo no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(pw_model):
                 message = "El nombre del Modelo contiene caracteres inválidos"
-                type = "n_notif"
+                _type = "n_notif"
                 pw_model = ""
                 continuar = False
 
@@ -1594,7 +1598,7 @@ def add_powermetermodel(request):
             ).filter(powermeter_model=pw_model)
             if p_modelValidate:
                 message = "Ya existe una Marca y un Modelo con esos datos"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             post = {'pw_brand': pw_brand, 'pw_model': pw_model}
@@ -1620,7 +1624,7 @@ def add_powermetermodel(request):
 
             template_vars['post'] = post
             template_vars["message"] = message
-            template_vars["type"] = type
+            template_vars["type"] = _type
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -1652,7 +1656,7 @@ def edit_powermetermodel(request, id_powermetermodel):
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         message = ''
-        type = ''
+        _type = ''
 
         if request.method == "POST":
             pw_brand = request.POST.get('pw_brand')
@@ -1661,21 +1665,21 @@ def edit_powermetermodel(request, id_powermetermodel):
             continuar = True
             if pw_brand == '':
                 message = "El nombre de la Marca no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(pw_brand):
                 message = "El nombre de la Marca contiene caracteres inválidos"
-                type = "n_notif"
+                _type = "n_notif"
                 pw_brand = ""
                 continuar = False
 
             if pw_model == '':
                 message = "El nombre del Modelo no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(pw_model):
                 message = "El nombre del Modelo contiene caracteres inválidos"
-                type = "n_notif"
+                _type = "n_notif"
                 pw_model = ""
                 continuar = False
 
@@ -1687,7 +1691,7 @@ def edit_powermetermodel(request, id_powermetermodel):
                     powermeter_model=pw_model)
                 if p_modelValidate:
                     message = "Ya existe una Marca y un Modelo con esos datos"
-                    type = "n_notif"
+                    _type = "n_notif"
                     continuar = False
 
             post = {'pw_brand': pw_brand, 'pw_model': pw_model}
@@ -1698,7 +1702,7 @@ def edit_powermetermodel(request, id_powermetermodel):
                 powermetermodel.save()
 
                 message = "Modelo de Medidor editado exitosamente"
-                type = "n_success"
+                _type = "n_success"
                 if has_permission(request.user,
                                   VIEW,
                                   "Ver modelos de medidores eléctricos")\
@@ -1712,7 +1716,7 @@ def edit_powermetermodel(request, id_powermetermodel):
                              post=post,
                              operation="edit",
                              message=message,
-                             type=type,
+                             type=_type,
                              company=request.session['company'],
                              sidebar=request.session['sidebar']
         )
@@ -1874,10 +1878,10 @@ def status_powermetermodel(request, id_powermetermodel):
         powermetermodel.save()
 
         mensaje = "El estatus del modelo ha cambiado a " + str_status
-        type = "n_success"
+        _type = "n_success"
 
         return HttpResponseRedirect("/buildings/modelos_medidor/?msj=" +
-                                    mensaje + "&ntype=" + type)
+                                    mensaje + "&ntype=" + _type)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
@@ -1909,27 +1913,27 @@ def add_powermeter(request):
             pw_model = request.POST.get('pw_model')
             pw_serial = request.POST.get('pw_serial').strip()
             message = ''
-            type = ''
+            _type = ''
 
             continuar = True
             if pw_alias == '':
                 message = "El Alias del medidor no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(pw_alias):
                 message = "El Alias del medidor contiene caracteres inválidos"
-                type = "n_notif"
+                _type = "n_notif"
                 pw_alias = ""
                 continuar = False
 
             if pw_model == '':
                 message = "El modelo del medidor no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if pw_serial == '':
                 message = "El número serial del medidor no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             #Valida por si le da muchos clics al boton
@@ -1938,7 +1942,7 @@ def add_powermeter(request):
                 powermeter_serial=pw_serial)
             if pwValidate:
                 message = "Ya existe un Medidor con ese Modelo y ese Número de Serie"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             post = {'pw_alias': pw_alias, 'pw_model': int(pw_model),
@@ -1966,7 +1970,7 @@ def add_powermeter(request):
                                                 "&ntype=n_success")
             template_vars["post"] = post
             template_vars["message"] = message
-            template_vars["type"] = type
+            template_vars["type"] = _type
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -1999,7 +2003,7 @@ def edit_powermeter(request, id_powermeter):
 
         empresa = request.session['main_building']
         message = ''
-        type = ''
+        _type = ''
 
         if request.method == "POST":
             pw_alias = request.POST.get('pw_alias').strip()
@@ -2009,21 +2013,21 @@ def edit_powermeter(request, id_powermeter):
             continuar = True
             if pw_alias == '':
                 message = "El Alias del medidor no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(pw_alias):
                 message = "El Alias del medidor contiene caracteres inválidos"
-                type = "n_notif"
+                _type = "n_notif"
                 pw_alias = ""
                 continuar = False
 
             if pw_model == '':
                 message = "El modelo del medidor no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
             if pw_serial == '':
                 message = "El número serial del medidor no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             #Valida el nombre (para el caso de los repetidos)
@@ -2034,7 +2038,7 @@ def edit_powermeter(request, id_powermeter):
                     powermeter_serial=pw_serial)
                 if pwValidate:
                     message = "Ya existe un Medidor con ese Modelo y ese Número de Serie"
-                    type = "n_notif"
+                    _type = "n_notif"
                     continuar = False
 
             post = {'pw_alias': pw_alias, 'pw_model': int(pw_model),
@@ -2049,7 +2053,7 @@ def edit_powermeter(request, id_powermeter):
                 powermeter.save()
 
                 message = "Medidor editado exitosamente"
-                type = "n_success"
+                _type = "n_success"
                 if has_permission(request.user, VIEW,
                                   "Ver medidores eléctricos") or request.user.is_superuser:
                     return HttpResponseRedirect("/buildings/medidores?msj=" +
@@ -2062,7 +2066,7 @@ def edit_powermeter(request, id_powermeter):
                              modelos=pw_models_list,
                              operation="edit",
                              message=message,
-                             type=type,
+                             type=_type,
                              company=request.session['company'],
                              sidebar=request.session['sidebar']
         )
@@ -2237,18 +2241,18 @@ def status_powermeter(request, id_powermeter):
         powermeter.save()
         mensaje = "El estatus del medidor " + powermeter.powermeter_anotation \
                   + " ha cambiado a " + str_status
-        type = "n_success"
+        _type = "n_success"
         if 'ref' in request.GET:
             if 'see' in request.GET:
                 return HttpResponseRedirect("/buildings/ver_ie/" +
                                             request.GET['ref'] + "/?msj=" +
                                             mensaje +
-                                            "&ntype=" + type)
+                                            "&ntype=" + _type)
             return HttpResponseRedirect("/buildings/editar_ie/" +
                                         request.GET['ref'] + "/?msj=" + mensaje +
-                                        "&ntype=" + type)
+                                        "&ntype=" + _type)
         return HttpResponseRedirect("/buildings/medidores/?msj=" + mensaje +
-                                    "&ntype=" + type)
+                                    "&ntype=" + _type)
     else:
         datacontext = get_buildings_context(request.user)
         template_vars = {}
@@ -2326,16 +2330,16 @@ def add_electric_device_type(request):
             edt_name = request.POST.get('devicetypename').strip()
             edt_description = request.POST.get('devicetypedescription').strip()
             message = ''
-            type = ''
+            _type = ''
 
             continuar = True
             if edt_name == '':
                 message = "El nombre del Tipo de Equipo Eléctrico no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(edt_name):
                 message = "El nombre del Tipo de Equipo Eléctrico contiene caracteres inválidos"
-                type = "n_notif"
+                _type = "n_notif"
                 edt_name = ""
                 continuar = False
 
@@ -2344,7 +2348,7 @@ def add_electric_device_type(request):
                 electric_device_type_name=edt_name)
             if b_electric_typeValidate:
                 message = "Ya existe un Tipo de Equipo Eléctrico con ese nombre"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             post = {'devicetypename': edt_name,
@@ -2369,7 +2373,7 @@ def add_electric_device_type(request):
                         "&ntype=n_success")
             template_vars["post"] = post
             template_vars["message"] = message
-            template_vars["type"] = type
+            template_vars["type"] = _type
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -2398,7 +2402,7 @@ def edit_electric_device_type(request, id_edt):
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         message = ''
-        type = ''
+        _type = ''
 
         if request.method == "POST":
             edt_name = request.POST.get('devicetypename').strip()
@@ -2407,11 +2411,11 @@ def edit_electric_device_type(request, id_edt):
             continuar = True
             if edt_name == '':
                 message = "El nombre del Tipo de Equipo Eléctrico no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(edt_name):
                 message = "El nombre del Tipo de Equipo Eléctrico contiene caracteres inválidos"
-                type = "n_notif"
+                _type = "n_notif"
                 edt_name = ""
                 continuar = False
 
@@ -2422,7 +2426,7 @@ def edit_electric_device_type(request, id_edt):
                     electric_device_type_name=edt_name)
                 if e_typeValidate:
                     message = "Ya existe un Tipo de Equipo Eléctrico con ese nombre"
-                    type = "n_notif"
+                    _type = "n_notif"
                     continuar = False
 
             post = {'devicetypename': edt_name,
@@ -2434,7 +2438,7 @@ def edit_electric_device_type(request, id_edt):
                 edt_obj.save()
 
                 message = "Tipo de Equipo Eléctrico editado exitosamente"
-                type = "n_success"
+                _type = "n_success"
                 if has_permission(request.user, VIEW,
                                   "Ver dispositivos y sistemas eléctricos") or request.user.is_superuser:
                     return HttpResponseRedirect(
@@ -2447,7 +2451,7 @@ def edit_electric_device_type(request, id_edt):
                              post=post,
                              operation="edit",
                              message=message,
-                             type=type,
+                             type=_type,
                              company=request.session['company'],
                              sidebar=request.session['sidebar']
         )
@@ -2636,11 +2640,11 @@ def status_electric_device_type(request, id_edt):
 
         edt_obj.save()
         mensaje = "El estatus del tipo de equipo eléctrico ha cambiado a " + str_status
-        type = "n_success"
+        _type = "n_success"
 
         return HttpResponseRedirect(
             "/buildings/tipos_equipo_electrico/?msj=" + mensaje +
-            "&ntype=" + type)
+            "&ntype=" + _type)
     else:
         datacontext = get_buildings_context(request.user)
         template_vars = {}
@@ -2663,7 +2667,7 @@ def add_company(request):
         empresa = request.session['main_building']
         post = ''
         message = ''
-        type = ''
+        _type = ''
 
         #Get Clusters
         clusters = get_clusters_for_operation("Alta de empresas", CREATE,
@@ -2692,29 +2696,29 @@ def add_company(request):
             continuar = True
             if cmp_name == '':
                 message = "El nombre de la empresa no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(cmp_name):
                 message = "El nombre de la empresa contiene caracteres inválidos"
-                type = "n_notif"
+                _type = "n_notif"
                 cmp_name = ""
                 continuar = False
 
             if cmp_cluster == '':
                 message = "La empresa debe pertenencer a un grupo de empresas"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if cmp_sector == '':
                 message = "La empresa debe pertenencer a un sector"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             #Valida no puede haber empresas con el mismo nombre
             companyValidate = Company.objects.filter(company_name=cmp_name)
             if companyValidate:
                 message = "Ya existe una empresa con ese nombre"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             post = {'cmp_name': cmp_name, 'cmp_description': cmp_description,
@@ -2756,7 +2760,7 @@ def add_company(request):
                                                 "&ntype=n_success")
             template_vars["post"] = post
             template_vars["message"] = message
-            template_vars["type"] = type
+            template_vars["type"] = _type
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -2797,7 +2801,7 @@ def edit_company(request, id_cpy):
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         message = ''
-        type = ''
+        _type = ''
 
         if request.method == "POST":
             cmp_name = request.POST.get('company_name').strip()
@@ -2808,22 +2812,22 @@ def edit_company(request, id_cpy):
             continuar = True
             if cmp_name == '':
                 message = "El nombre de la empresa no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(cmp_name):
                 message = "El nombre de la empresa contiene caracteres inválidos"
-                type = "n_notif"
+                _type = "n_notif"
                 cmp_name = ""
                 continuar = False
 
             if cmp_cluster == '':
                 message = "La empresa debe pertenencer a un grupo de empresas"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if cmp_sector == '':
                 message = "La empresa debe pertenencer a un sector"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             #Valida el nombre (para el caso de los repetidos)
@@ -2831,7 +2835,7 @@ def edit_company(request, id_cpy):
                 companyValidate = Company.objects.filter(company_name=cmp_name)
                 if companyValidate:
                     message = "Ya existe una empresa con ese nombre"
-                    type = "n_notif"
+                    _type = "n_notif"
                     continuar = False
 
             post = {'cmp_id': company_clusters[0].company.id,
@@ -2870,7 +2874,7 @@ def edit_company(request, id_cpy):
                                         False)
 
                 message = "Empresa editada exitosamente"
-                type = "n_success"
+                _type = "n_success"
                 if has_permission(request.user, VIEW,
                                   "Ver empresas") or request.user.is_superuser:
                     return HttpResponseRedirect("/buildings/empresas?msj=" +
@@ -2885,7 +2889,7 @@ def edit_company(request, id_cpy):
                              message=message,
                              clusters=clusters,
                              sectors=sectors,
-                             type=type, sidebar=request.session['sidebar']
+                             type=_type, sidebar=request.session['sidebar']
         )
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -3051,10 +3055,10 @@ def status_company(request, id_cpy):
 
         company.save()
         mensaje = "El estatus de la empresa " + company.company_name + " ha cambiado a " + str_status
-        type = "n_success"
+        _type = "n_success"
 
         return HttpResponseRedirect("/buildings/empresas/?msj=" + mensaje +
-                                    "&ntype=" + type)
+                                    "&ntype=" + _type)
     else:
         datacontext = get_buildings_context(request.user)
         template_vars = {}
@@ -3159,7 +3163,7 @@ def add_buildingtype(request):
         company = request.session['company']
         post = ''
         message = ""
-        type = ""
+        _type = ""
         template_vars = dict(datacontext=datacontext,
                              empresa=empresa,
                              company=company,
@@ -3174,11 +3178,11 @@ def add_buildingtype(request):
             continuar = True
             if btype_name == '':
                 message = "El nombre del Tipo de Edificio no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(btype_name):
                 message = "El nombre del Tipo de Edificio contiene caracteres inválidos"
-                type = "n_notif"
+                _type = "n_notif"
                 btype_name = ""
                 continuar = False
 
@@ -3187,7 +3191,7 @@ def add_buildingtype(request):
                 building_type_name=btype_name)
             if b_typeValidate:
                 message = "Ya existe un Tipo de Edificio con ese nombre"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             post = {'btype_name': btype_name,
@@ -3212,7 +3216,7 @@ def add_buildingtype(request):
                         "&ntype=n_success")
             template_vars["post"] = post
             template_vars["message"] = message
-            template_vars["type"] = type
+            template_vars["type"] = _type
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -3242,7 +3246,7 @@ def edit_buildingtype(request, id_btype):
         empresa = request.session['main_building']
         company = request.session['company']
         message = ''
-        type = ''
+        _type = ''
 
         if request.method == "POST":
             btype_name = request.POST.get('btype_name')
@@ -3251,11 +3255,11 @@ def edit_buildingtype(request, id_btype):
             continuar = True
             if btype_name == '':
                 message = "El nombre del Tipo de Edificio no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(btype_name):
                 message = "El nombre del Tipo de Edificio contiene caracteres inválidos"
-                type = "n_notif"
+                _type = "n_notif"
                 btype_name = ""
                 continuar = False
 
@@ -3266,7 +3270,7 @@ def edit_buildingtype(request, id_btype):
                     building_type_name=btype_name)
                 if b_typeValidate:
                     message = "Ya existe un Tipo de Edificio con ese nombre"
-                    type = "n_notif"
+                    _type = "n_notif"
                     continuar = False
 
             post = {'btype_name': btype_name,
@@ -3278,7 +3282,7 @@ def edit_buildingtype(request, id_btype):
                 building_type.save()
 
                 message = "Tipo de Edificio editado exitosamente"
-                type = "n_success"
+                _type = "n_success"
                 if has_permission(request.user, VIEW,
                                   "Ver tipos de edificios") or request.user.is_superuser:
                     return HttpResponseRedirect(
@@ -3292,7 +3296,7 @@ def edit_buildingtype(request, id_btype):
                              post=post,
                              operation="edit",
                              message=message,
-                             type=type, sidebar=request.session['sidebar']
+                             type=_type, sidebar=request.session['sidebar']
         )
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -3450,11 +3454,11 @@ def status_buildingtype(request, id_btype):
 
         building_type.save()
         mensaje = "El estatus del tipo de edificio " + building_type.building_type_name + " ha cambiado a " + str_status
-        type = "n_success"
+        _type = "n_success"
 
         return HttpResponseRedirect(
             "/buildings/tipos_edificios/?msj=" + mensaje +
-            "&ntype=" + type)
+            "&ntype=" + _type)
     else:
         datacontext = get_buildings_context(request.user)
         template_vars = {}
@@ -3489,19 +3493,19 @@ def add_sectoraltype(request):
         if request.method == "POST":
             template_vars["post"] = request.POST
             message = ''
-            type = ''
+            _type = ''
             stype_name = request.POST.get('stype_name')
             stype_description = request.POST.get('stype_description')
 
             continuar = True
             if stype_name == '':
                 message = "El nombre del tipo de sector no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if not variety.validate_string(stype_name):
                 message = "El nombre del tipo de sector contiene caracteres inválidos"
-                type = "n_notif"
+                _type = "n_notif"
                 stype_name = ""
                 continuar = False
 
@@ -3510,7 +3514,7 @@ def add_sectoraltype(request):
                 sectorial_type_name=stype_name)
             if sectorValidate:
                 message = "Ya existe un tipo de sector con ese nombre"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             post = {'stype_name': stype_name,
@@ -3534,7 +3538,7 @@ def add_sectoraltype(request):
                         "&ntype=n_success")
             template_vars["post"] = post
             template_vars["message"] = message
-            template_vars["type"] = type
+            template_vars["type"] = _type
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -3564,7 +3568,7 @@ def edit_sectoraltype(request, id_stype):
         empresa = request.session['main_building']
         company = request.session['company']
         message = ''
-        type = ''
+        _type = ''
 
         if request.method == "POST":
             stype_name = request.POST.get('stype_name')
@@ -3573,12 +3577,12 @@ def edit_sectoraltype(request, id_stype):
             continuar = True
             if stype_name == '':
                 message = "El nombre del tipo de sector no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if not variety.validate_string(stype_name):
                 message = "El nombre del tipo de sector contiene caracteres inválidos"
-                type = "n_notif"
+                _type = "n_notif"
                 stype_name = ""
                 continuar = False
 
@@ -3589,7 +3593,7 @@ def edit_sectoraltype(request, id_stype):
                     sectorial_type_name=stype_name)
                 if sectorValidate:
                     message = "Ya existe un tipo de sector con ese nombre"
-                    type = "n_notif"
+                    _type = "n_notif"
                     continuar = False
 
             post = {'stype_name': stype_name,
@@ -3601,7 +3605,7 @@ def edit_sectoraltype(request, id_stype):
                 sectoral_type.save()
 
                 message = "Tipo de Sector editado exitosamente"
-                type = "n_success"
+                _type = "n_success"
                 if has_permission(request.user, VIEW,
                                   "Ver tipos de sectores") or request.user.is_superuser:
                     return HttpResponseRedirect(
@@ -3615,7 +3619,7 @@ def edit_sectoraltype(request, id_stype):
                              post=post,
                              operation="edit",
                              message=message,
-                             type=type, sidebar=request.session['sidebar']
+                             type=_type, sidebar=request.session['sidebar']
         )
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -3772,11 +3776,11 @@ def status_sectoraltype(request, id_stype):
 
         sectoral_type.save()
         mensaje = "El estatus del sector " + sectoral_type.sectorial_type_name + " ha cambiado a " + str_status
-        type = "n_success"
+        _type = "n_success"
 
         return HttpResponseRedirect(
             "/buildings/tipos_sectores/?msj=" + mensaje +
-            "&ntype=" + type)
+            "&ntype=" + _type)
     else:
         datacontext = get_buildings_context(request.user)
         template_vars = {}
@@ -3813,16 +3817,16 @@ def add_b_attributes_type(request):
             b_attr_type_description = request.POST.get(
                 'b_attr_type_description').strip()
             message = ''
-            type = ''
+            _type = ''
 
             continuar = True
             if b_attr_type_name == '':
                 message = "El nombre del tipo de atributo no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(b_attr_type_name):
                 message = "El nombre del Tipo de Atributo contiene caracteres inválidos"
-                type = "n_notif"
+                _type = "n_notif"
                 b_attr_type_name = ""
                 continuar = False
 
@@ -3831,7 +3835,7 @@ def add_b_attributes_type(request):
                 building_attributes_type_name=b_attr_type_name)
             if b_attribute_typeValidate:
                 message = "Ya existe un Tipo de Atributo con ese nombre"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             post = {'stype_name': b_attr_type_name,
@@ -3856,7 +3860,7 @@ def add_b_attributes_type(request):
                         "&ntype=n_success")
             template_vars["post"] = post
             template_vars["message"] = message
-            template_vars["type"] = type
+            template_vars["type"] = _type
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -3886,7 +3890,7 @@ def edit_b_attributes_type(request, id_batype):
         empresa = request.session['main_building']
         company = request.session['company']
         message = ''
-        type = ''
+        _type = ''
 
         if request.method == "POST":
             b_attr_type_name = request.POST.get('b_attr_type_name').strip()
@@ -3896,11 +3900,11 @@ def edit_b_attributes_type(request, id_batype):
             continuar = True
             if b_attr_type_name == '':
                 message = "El nombre del tipo de atributo no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(b_attr_type_name):
                 message = "El nombre del Tipo de Atributo contiene caracteres inválidos"
-                type = "n_notif"
+                _type = "n_notif"
                 b_attr_type_name = ""
                 continuar = False
 
@@ -3911,7 +3915,7 @@ def edit_b_attributes_type(request, id_batype):
                     building_attributes_type_name=b_attr_type_name)
                 if b_attribute_typeValidate:
                     message = "Ya existe un Tipo de Atributo con ese nombre"
-                    type = "n_notif"
+                    _type = "n_notif"
                     continuar = False
 
             post = {'batype_name': b_attr_type_name,
@@ -3923,7 +3927,7 @@ def edit_b_attributes_type(request, id_batype):
                 b_attr_typeObj.save()
 
                 message = "Tipo de Atributo de Edificio editado exitosamente"
-                type = "n_success"
+                _type = "n_success"
                 if has_permission(request.user, VIEW,
                                   "Ver tipos de atributos") or request.user.is_superuser:
                     return HttpResponseRedirect(
@@ -3937,7 +3941,7 @@ def edit_b_attributes_type(request, id_batype):
                              post=post,
                              operation="edit",
                              message=message,
-                             type=type, sidebar=request.session['sidebar']
+                             type=_type, sidebar=request.session['sidebar']
         )
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -4057,11 +4061,11 @@ def status_b_attributes_type(request, id_batype):
         b_att_type.save()
 
         mensaje = "El estatus del Tipo de Atributo " + b_att_type.building_attributes_type_name + " ha cambiado a " + str_status
-        type = "n_success"
+        _type = "n_success"
 
         return HttpResponseRedirect(
             "/buildings/tipos_atributos_edificios/?msj=" + mensaje +
-            "&ntype=" + type)
+            "&ntype=" + _type)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
@@ -4125,16 +4129,16 @@ def add_partbuildingtype(request):
             b_part_type_description = request.POST.get(
                 'b_part_type_description').strip()
             message = ''
-            type = ''
+            _type = ''
 
             continuar = True
             if b_part_type_name == '':
                 message = "El nombre del Tipo de Parte de Edificio no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(b_part_type_name):
                 message = "El nombre del Tipo de Parte de Edificio contiene caracteres inválidos"
-                type = "n_notif"
+                _type = "n_notif"
                 b_part_type_name = ""
                 continuar = False
 
@@ -4143,7 +4147,7 @@ def add_partbuildingtype(request):
                 part_of_building_type_name=b_part_type_name)
             if partTypeValidate:
                 message = "Ya existe un Tipo de Parte de Edificio con ese nombre"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             post = {'b_part_type_name': b_part_type_name,
@@ -4168,7 +4172,7 @@ def add_partbuildingtype(request):
                         "&ntype=n_success")
             template_vars["post"] = post
             template_vars["message"] = message
-            template_vars["type"] = type
+            template_vars["type"] = _type
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -4199,7 +4203,7 @@ def edit_partbuildingtype(request, id_pbtype):
         empresa = request.session['main_building']
         company = request.session['company']
         message = ''
-        type = ''
+        _type = ''
 
         if request.method == "POST":
             b_part_type_name = request.POST.get('b_part_type_name').strip()
@@ -4209,7 +4213,7 @@ def edit_partbuildingtype(request, id_pbtype):
             continuar = True
             if b_part_type_name == '':
                 message = "El nombre del Tipo de Parte de Edificio no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             #Valida el nombre (para el caso de los repetidos)
@@ -4219,7 +4223,7 @@ def edit_partbuildingtype(request, id_pbtype):
                     part_of_building_type_name=b_part_type_name)
                 if partTypeValidate:
                     message = "Ya existe un Tipo de Parte de Edificio con ese nombre"
-                    type = "n_notif"
+                    _type = "n_notif"
                     continuar = False
 
             post = {
@@ -4232,7 +4236,7 @@ def edit_partbuildingtype(request, id_pbtype):
                 building_part_type.save()
 
                 message = "Tipo de Parte de Edificio editado exitosamente"
-                type = "n_success"
+                _type = "n_success"
                 if has_permission(request.user, VIEW,
                                   "Ver tipos de partes de un edificio") or request.user.is_superuser:
                     return HttpResponseRedirect(
@@ -4246,7 +4250,7 @@ def edit_partbuildingtype(request, id_pbtype):
                              post=post,
                              operation="edit",
                              message=message,
-                             type=type, sidebar=request.session['sidebar']
+                             type=_type, sidebar=request.session['sidebar']
         )
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -4407,11 +4411,11 @@ def status_partbuildingtype(request, id_pbtype):
         part_building_type.save()
 
         mensaje = "El estatus del tipo de edificio " + part_building_type.part_of_building_type_name + " ha cambiado a " + str_status
-        type = "n_success"
+        _type = "n_success"
 
         return HttpResponseRedirect(
             "/buildings/tipos_partes_edificio/?msj=" + mensaje +
-            "&ntype=" + type)
+            "&ntype=" + _type)
     else:
         datacontext = get_buildings_context(request.user)
         template_vars = {}
@@ -4465,22 +4469,22 @@ def add_partbuilding(request):
             b_part_building_id = request.POST.get('b_building_id')
             b_part_mt2 = request.POST.get('b_part_mt2').strip()
             message = ""
-            type = ""
+            _type = ""
 
             continuar = True
             if not b_part_name:
                 message = "El nombre de la Parte de Edificio no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if not b_part_type_id:
                 message = "Se debe seleccionar un tipo de parte de edificio"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if not b_part_building_id:
                 message = "Se debe seleccionar un edificio ya registrado"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
             if continuar:
                 #Valida por si le da muchos clics al boton
@@ -4490,7 +4494,7 @@ def add_partbuilding(request):
                     building__pk=b_part_building_id)
                 if partValidate:
                     message = "Ya existe una Parte de Edificio con ese nombre, ese tipo de parte y en ese edificio"
-                    type = "n_notif"
+                    _type = "n_notif"
                     continuar = False
 
                 post = {'b_part_name': b_part_name,
@@ -4567,7 +4571,7 @@ def add_partbuilding(request):
                         "&ntype=n_success")
             template_vars["post"] = post
             template_vars["message"] = message
-            template_vars["type"] = type
+            template_vars["type"] = _type
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -4640,7 +4644,7 @@ def edit_partbuilding(request, id_bpart):
         empresa = request.session['main_building']
         company = request.session['company']
         message = ''
-        type = ''
+        _type = ''
 
         if request.method == "POST":
             b_part_name = request.POST.get('b_part_name').strip()
@@ -4658,17 +4662,17 @@ def edit_partbuilding(request, id_bpart):
             continuar = True
             if b_part_name == '':
                 message = "El nombre de la Parte de Edificio no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if b_part_type_id == '':
                 message = "Se debe seleccionar un tipo de parte de edificio"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if b_part_building_id == '':
                 message = "Se debe seleccionar un edificio"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if building_part.part_of_building_name != b_part_name and building_part.building_id != b_part_building_id and building_part.part_of_building_type_id != b_part_type_id:
@@ -4679,7 +4683,7 @@ def edit_partbuilding(request, id_bpart):
                     building__pk=b_part_building_id)
                 if partValidate:
                     message = "Ya existe una Parte de Edificio con ese nombre, ese tipo de parte y en ese edificio"
-                    type = "n_notif"
+                    _type = "n_notif"
                     continuar = False
 
             post = {'b_part_name': b_part_name,
@@ -4727,7 +4731,7 @@ def edit_partbuilding(request, id_bpart):
                         newBldPartAtt.save()
 
                 message = "Parte de Edificio editado exitosamente"
-                type = "n_success"
+                _type = "n_success"
                 if has_permission(request.user, VIEW,
                                   "Ver partes de un edificio") or request.user.is_superuser:
                     return HttpResponseRedirect(
@@ -4743,7 +4747,7 @@ def edit_partbuilding(request, id_bpart):
                              tipos_atributos=tipos_atributos,
                              operation="edit",
                              message=message,
-                             type=type, sidebar=request.session['sidebar']
+                             type=_type, sidebar=request.session['sidebar']
         )
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -4910,11 +4914,11 @@ def status_partofbuilding(request, id_bpart):
         mensaje = "El estatus de la parte de edificio " + \
                   building_part.part_of_building_name + " ha cambiado a " + \
                   str_status
-        type = "n_success"
+        _type = "n_success"
 
         return HttpResponseRedirect(
             "/buildings/partes_edificio/?msj=" + mensaje +
-            "&ntype=" + type)
+            "&ntype=" + _type)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
@@ -4990,7 +4994,7 @@ def add_building(request):
         company = request.session['company']
         post = ''
         message = ''
-        type = ''
+        _type = ''
         #Se obtienen las empresas
         #empresas_lst = Company.objects.all().exclude(company_status=0).order_by('company_name')
         empresas_lst = get_all_companies_for_operation("Alta de edificios",
@@ -5058,54 +5062,54 @@ def add_building(request):
             continuar = True
             if b_name == '':
                 message += "El nombre del Edificio no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(b_name):
                 message += "El nombre del Edificio contiene caracteres inválidos"
-                type = "n_notif"
+                _type = "n_notif"
                 b_name = ""
                 continuar = False
 
             if b_company == '':
                 message += " - Se debe seleccionar una empresa"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if not b_type_arr:
                 message += " - El edificio debe ser al menos de un tipo"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if b_electric_rate_id == '':
                 message += " - Se debe seleccionar un tipo de tarifa"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if b_ext == '':
                 message += " - El edificio debe tener un número exterior"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if b_zip == '':
                 message += " - El edificio debe tener un código postal"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if b_long == '' and b_lat == '':
                 message += " - Debes ubicar el edificio en el mapa"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if b_region_id == '':
                 message += " - El edificio debe pertenecer a una región"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             #Valida por si le da muchos clics al boton
             buildingValidate = Building.objects.filter(building_name=b_name)
             if buildingValidate:
                 message = "Ya existe un Edificio con ese nombre"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             post = {
@@ -5257,7 +5261,7 @@ def add_building(request):
                                                 "&ntype=n_success")
             template_vars["post"] = post
             template_vars["message"] = message
-            template_vars["type"] = type
+            template_vars["type"] = _type
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -5282,7 +5286,7 @@ def edit_building(request, id_bld):
         empresa = request.session['main_building']
         company = request.session['company']
         message = ''
-        type = ''
+        _type = ''
 
         #Se obtienen las empresas
         #empresas_lst = Company.objects.all().exclude(company_status=0).order_by('company_name')
@@ -5391,47 +5395,47 @@ def edit_building(request, id_bld):
             continuar = True
             if b_name == '':
                 message = "El nombre del Edificio no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(b_name):
                 message = "El nombre del Edificio contiene caracteres inválidos"
-                type = "n_notif"
+                _type = "n_notif"
                 b_name = ""
                 continuar = False
 
             if b_company == '':
                 message += " - Se debe seleccionar una empresa"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if not b_type_arr:
                 message += " - El edificio debe ser al menos de un tipo"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if b_electric_rate_id == '':
                 message += " - Se debe seleccionar un tipo de tarifa"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if b_ext == '':
                 message += " - El edificio debe tener un número exterior"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if b_zip == '':
                 message += " - El edificio debe tener un código postal"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if b_long == '' and b_lat == '':
                 message += " - Debes ubicar el edificio en el mapa"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if b_region_id == '':
                 message += " - El edificio debe pertenecer a una región"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             #Valida el nombre (para el caso de los repetidos)
@@ -5441,7 +5445,7 @@ def edit_building(request, id_bld):
                 buildingValidate = Building.objects.filter(building_name=b_name)
                 if buildingValidate:
                     message = "Ya existe un Edificio con ese nombre"
-                    type = "n_notif"
+                    _type = "n_notif"
                     continuar = False
 
             post = {
@@ -5569,7 +5573,7 @@ def edit_building(request, id_bld):
                         newBldAtt.save()
 
                 message = "Edificio editado exitosamente"
-                type = "n_success"
+                _type = "n_success"
                 if has_permission(request.user, VIEW,
                                   "Ver edificios") or request.user.is_superuser:
                     return HttpResponseRedirect("/buildings/edificios?msj=" +
@@ -5587,7 +5591,7 @@ def edit_building(request, id_bld):
                              tipos_atributos=tipos_atributos,
                              operation="edit",
                              message=message,
-                             type=type, sidebar=request.session['sidebar']
+                             type=_type, sidebar=request.session['sidebar']
         )
 
         template_vars_template = RequestContext(request, template_vars)
@@ -5768,10 +5772,10 @@ def status_building(request, id_bld):
 
         mensaje = "El estatus del edificio " + building.building_name + \
                   " ha cambiado a " + str_status
-        type = "n_success"
+        _type = "n_success"
 
         return HttpResponseRedirect("/buildings/edificios/?msj=" + mensaje +
-                                    "&ntype=" + type)
+                                    "&ntype=" + _type)
     else:
         datacontext = get_buildings_context(request.user)
         template_vars = {}
@@ -5808,12 +5812,12 @@ def add_ie(request):
                 )
             ie.save()
             message = "El equipo industrial se ha creado exitosamente"
-            type = "n_success"
+            _type = "n_success"
             if has_permission(request.user, VIEW,
                               "Ver equipos industriales") or request.user.is_superuser:
                 return HttpResponseRedirect("/buildings/industrial_equipments?msj=" +
                                             message +
-                                            "&ntype=" + type)
+                                            "&ntype=" + _type)
             template_vars["message"] = message
             template_vars["type"] = type
 
@@ -5905,12 +5909,12 @@ def edit_ie(request, id_ie):
             industrial_eq.server = request.POST['ie_server'].strip()
             industrial_eq.save()
             message = "El equipo industrial se ha actualizado exitosamente"
-            type = "n_success"
+            _type = "n_success"
             if has_permission(request.user, VIEW,
                               "Ver equipos industriales") or request.user.is_superuser:
                 return HttpResponseRedirect("/buildings/industrial_equipments?msj=" +
                                             message +
-                                            "&ntype=" + type)
+                                            "&ntype=" + _type)
             template_vars["message"] = message
             template_vars["type"] = type
         template_vars["post"] = dict(ie_alias=industrial_eq.alias,
@@ -6036,11 +6040,11 @@ def status_ie(request, id_ie):
         ind_eq.save()
         mensaje = "El estatus del equipo industrial " + ind_eq.alias + \
                   ", ha cambiado a " + str_status
-        type = "n_success"
+        _type = "n_success"
 
         return HttpResponseRedirect(
             "/buildings/industrial_equipments/?msj=" + mensaje +
-            "&ntype=" + type)
+            "&ntype=" + _type)
     else:
         datacontext = get_buildings_context(request.user)
         template_vars = {}
@@ -6071,12 +6075,12 @@ def status_batch_ie(request):
 
             mensaje = "Los equipos industriales seleccionados han "\
                       "cambiado su estatus correctamente"
-            type = "n_success"
+            _type = "n_success"
         else:
             mensaje = str("No se ha seleccionado una acción").decode("utf-8")
-            type = "n_notif"
+            _type = "n_notif"
         return HttpResponseRedirect("/buildings/industrial_equipments/?msj="+
-                                    mensaje+"&ntype="+type)
+                                    mensaje+"&ntype="+_type)
     else:
         datacontext = get_buildings_context(request.user)
         template_vars = {}
@@ -6235,6 +6239,7 @@ def detach_pm(request, id_ie):
     else:
         raise Http404
 
+# noinspection PyArgumentList
 @login_required(login_url='/')
 def configure_ie(request, id_ie):
     datacontext = get_buildings_context(request.user)
@@ -6272,6 +6277,7 @@ def configure_ie(request, id_ie):
                 pm.read_time_rate = read_time_rate
                 pm.send_time_rate = send_time_rate
                 h = initial_send_time.split(":")
+                # noinspection PyCallByClass
                 hora_ = datetime.time(int(h[0]), int(h[1]))
                 hora = variety.convert_to_utc(hora_, tz)
                 pm.initial_send_time = hora[0]
@@ -6340,8 +6346,8 @@ def create_hierarchy(request, id_building):
                       "Alta de jerarquía de partes") or \
        request.user.is_superuser:
         building = get_object_or_404(Building, pk=id_building)
-        list = get_hierarchy_list(building, request.user)
-        template_vars['list'] = list
+        _list = get_hierarchy_list(building, request.user)
+        template_vars['list'] = _list
         template_vars['building'] = building
 
         cus = ConsumerUnit.objects.all()
@@ -6898,22 +6904,45 @@ def reset_hierarchy(request):
 @login_required(login_url='/')
 def pw_meditions(request, id_pw):
     if request.user.is_superuser:
-        pw = get_object_or_404(ProfilePowermeter, int(id_pw))
-        fechas = dict(f1_init=request.GET['inicio'],
-                      f1_end=request.GET['fin'])
-        f1, f2 = get_intervals_1(fechas)
+        datacontext = get_buildings_context(request.user)
+        template_vars = {}
 
-        ElectricDataTemp.objects.filter()
-        return HttpResponse(status=200)
+        if datacontext:
+            template_vars["datacontext"] = datacontext
+
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars["empresa"] = request.session['main_building']
+        template_vars["company"] = request.session['company']
+
+        pw = get_object_or_404(ProfilePowermeter, pk=int(id_pw))
+        if "inicio" not in request.GET:
+            f1 = ""
+        else:
+            f1 = request.GET['inicio']
+        if "fin" not in request.GET:
+            f2 = ""
+        else:
+            f2 = request.GET['fin']
+        fechas = dict(f1_init=f1, f1_end=f2)
+        f1, f2 = get_intervals_1(fechas)
+        data = ElectricDataTemp.objects.filter(
+            medition_date__range=(f1, f2),
+            profile_powermeter=pw)
+        data = ThemedElectricDataTempTable(data, prefix="")
+        RequestConfig(request, paginate={"per_page": 300}).configure(data)
+
+        template_vars["electric_data"] = data
+
+        return render(request, "consumption_centers/meditions_table.html",
+                      template_vars)
 
     else:
         raise Http404
 
 ##==========##
 
-
+# noinspection PyArgumentList
 def tarifaHM_2(building, consumer_unit, s_date, e_date, month, year):
-
     status = 'OK'
     diccionario_final_cfe = dict(status=status)
     #Variables que almacenan todos los campos
@@ -7152,11 +7181,10 @@ def tarifaHM_2(building, consumer_unit, s_date, e_date, month, year):
 
     return diccionario_final_cfe
 
-
+# noinspection PyArgumentList
 def tarifaDAC_2(building, consumer_unit, s_date, e_date, month, year):
     status = 'OK'
-    diccionario_final_cfe = {}
-    diccionario_final_cfe['status'] = status
+    diccionario_final_cfe = {'status': status}
 
     tarifa_kwh = 0
     tarifa_mes = 0
@@ -7171,7 +7199,7 @@ def tarifaDAC_2(building, consumer_unit, s_date, e_date, month, year):
 
     #Para las regiones BC y BCS es necesario obtener revisar si se aplica Tarifa de Verano o de Invierno
     if region.pk == 1 or region.pk == 2:
-        tf_ver_inv = obtenerHorarioVeranoInvierno(mes_facturacion, 2)
+        tf_ver_inv = obtenerHorarioVeranoInvierno(billing_mrates, 2)
         tarifasObj = DACElectricRateDetail.objects.filter(
             region=region.pk).filter(date_interval=tf_ver_inv).filter(
             date_init__lte=billing_mrates).filter(date_end__gte=billing_mrates)
@@ -7229,6 +7257,7 @@ def tarifaDAC_2(building, consumer_unit, s_date, e_date, month, year):
     return diccionario_final_cfe
 
 
+# noinspection PyArgumentList
 def tarifa_3_v1(building, consumer_unit, month, year):
     """
     Tarifa 3 v1. Realiza el calculo tomando unicamente una tarifa
@@ -7318,7 +7347,7 @@ def tarifa_3_v1(building, consumer_unit, month, year):
             sff = float(month_days[1] - (primer - 1)) / float(month_days[1])
             if cont_mes_act == 1: #Es el primer mes
                 primer = s_date.day
-                sff = float(month_days[1] - (primer)) / float(month_days[1])
+                sff = float(month_days[1] - primer) / float(month_days[1])
             if cont_mes_act == num_meses: #Es el ultimo mes
                 ultimo = e_date.day
                 sff = float(ultimo - (primer - 1)) / float(month_days[1])
@@ -7423,7 +7452,7 @@ def tarifa_3_v1(building, consumer_unit, month, year):
 
     return diccionario_final_cfe
 
-
+# noinspection PyArgumentList
 def tarifa_3_v2(building, consumer_unit, s_date, e_date, month, year):
     status = 'OK'
     diccionario_final_cfe = dict(status=status)
@@ -7711,6 +7740,7 @@ def view_cutdates(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+# noinspection PyArgumentList
 def set_cutdate(request, id_cutdate):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
@@ -7720,7 +7750,7 @@ def set_cutdate(request, id_cutdate):
         post = ''
 
         message = ""
-        type = ""
+        _type = ""
 
         cutdate_obj = get_object_or_404(MonthlyCutDates, pk=id_cutdate)
 
@@ -7810,7 +7840,7 @@ def set_cutdate(request, id_cutdate):
                     cd_before_flag = True
                     if s_date_utc <= cutdate_before[0].date_init:
                         message = "La fecha de inicio invade todo el periodo del mes anterior."
-                        type = "n_notif"
+                        _type = "n_notif"
                         continue_flag = False
                     else:
                         cd_before = cutdate_before[0]
@@ -7827,7 +7857,7 @@ def set_cutdate(request, id_cutdate):
                     if cutdate_after[0].date_end:
                         if e_date_utc >= cutdate_after[0].date_end:
                             message = "La fecha final invade todo el periodo del mes siguiente."
-                            type = "n_notif"
+                            _type = "n_notif"
                             continue_flag = False
                         else:
                             cd_after = cutdate_after[0]
@@ -7881,7 +7911,7 @@ def set_cutdate(request, id_cutdate):
 
             template_vars["post"] = post
             template_vars["message"] = message
-            template_vars["type"] = type
+            template_vars["type"] = _type
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
             "consumption_centers/buildings/set_cutdate.html",
@@ -8125,6 +8155,8 @@ def cfe_desglose(request):
                                                                        "datacontext": datacontext}))
 
 
+
+# noinspection PyArgumentList
 def cfe_desglose_calcs(request):
     """Estoy en los calculos del desglose
     Renders the cfe bill and the historic data chart
@@ -8135,7 +8167,7 @@ def cfe_desglose_calcs(request):
     if has_permission(request.user, VIEW,
                       "Consultar recibo CFE") or request.user.is_superuser:
         if not request.session['consumer_unit']:
-            context = {}
+
             if datacontext:
                 context = {"datacontext": datacontext}
             return HttpResponse(
@@ -8233,5 +8265,26 @@ def cfe_desglose_calcs(request):
         if datacontext:
             template_vars = {"datacontext": datacontext}
         template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
+
+@login_required(login_url='/')
+def montly_analitics(request, id_building):
+    edificio = get_object_or_404(Building, pk=int(id_building))
+    datacontext = get_buildings_context(request.user)
+    template_vars = {}
+    if datacontext:
+        template_vars["datacontext"] = datacontext
+    template_vars['building'] = edificio
+    template_vars["sidebar"] = request.session['sidebar']
+    template_vars["empresa"] = request.session['main_building']
+    template_vars["company"] = request.session['company']
+    if has_permission(request.user, VIEW, "Consultar recibo CFE") or request.user.is_superuser:
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response(
+            "consumption_centers/montly_analitics.html",
+            template_vars_template)
+    else:
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)

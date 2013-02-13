@@ -4,14 +4,14 @@
 <link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
 <link rel="stylesheet" href="/static/js/external/jqueryUniform/css/uniform.default.css" type="text/css" media="screen" charset="utf-8" />
 <link href="/static/js/external/messi/messi.css" rel="stylesheet" type="text/css" media="screen" />
-<link rel="stylesheet" href="{{ STATIC_URL }}css/ui.spinner.css"/>
+<link rel="stylesheet" href="/static/css/ui.spinner.css"/>
 <script type="text/javascript" src="/static/js/external/jquery.tools.min.js"></script>
 <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
 <script type="text/javascript" src="/static/js/external/jqueryUniform/jquery.uniform.min.js"></script>
 <script type="text/javascript" src="/static/js/external/jsapi.js"></script>
 <script type="text/javascript" src="/static/js/functions.js"></script>
 <script src="/static/js/external/messi/messi.min.js"></script>
-<script src="{{ STATIC_URL}}js/external/ui.spinner.min.js"></script>
+<script src="/static/js/external/ui.spinner.min.js"></script>
 <script type="text/javascript">
     google.load('visualization', '1.1', {packages: ['corechart', 'controls']});
 </script>
@@ -50,7 +50,6 @@
                 $(this).addClass("active");
             });
         });
-
 
     });
     function changeRange(interval) {
@@ -122,6 +121,7 @@
             // Filter by the date axis.
             'filterColumnIndex': 0,
             'ui': {
+                'enableInteractivity': false,
                 'chartType': 'LineChart',
                 'chartOptions': {
                     'chartArea': {'width': '90%'},
@@ -195,6 +195,16 @@
 
         dashboard.bind(control, chart);
         dashboard.draw(view);
+
+        /* Code needed to disable the control
+
+        google.visualization.events.addListener(dashboard, 'ready', onDashboardReady);
+
+        function onDashboardReady(){
+            $("#control svg").attr("pointer-events","none");
+        }
+
+        */
 
         $(".chart-column").click(function(){
             var active_counter = 0;

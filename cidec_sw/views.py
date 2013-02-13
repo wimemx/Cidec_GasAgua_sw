@@ -18,12 +18,15 @@ from collections import defaultdict
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from django.db.models import Q
-from c_center.models import ProfilePowermeter, ElectricData, ElectricDataTemp
+from django.core.exceptions import ObjectDoesNotExist
+
+from c_center.models import ProfilePowermeter, ElectricData, ElectricDataTemp, \
+    ConsumerUnit, Powermeter
 from c_center.views import main_page, week_report_kwh
 from c_center.c_center_functions import set_default_session_vars
 from rbac.models import DataContextPermission, Object, PermissionAsigment, UserRole, GroupObject
 from rbac.rbac_functions import get_buildings_context
-from variety import unique_from_array
+from variety import unique_from_array, timed
 
 from django.shortcuts import redirect, render
 
@@ -215,86 +218,22 @@ def logout_page(request):
     logout(request)
     return HttpResponseRedirect('/main/?logout')
 
-def changedate(key):
+def changedate(profile_pk, initial_date, delta):
     """
     sets all the data in intervals of 3 hours
+    profile_pk = profile_powermeter__pk
+    initial_date = starting datetime
+    delta = number of minutes for the interval
     """
-    data = ElectricData.objects.filter(profile_powermeter__pk=key).order_by("-medition_date")
-    initial_date = ElectricData.objects.filter(profile_powermeter__pk=3).order_by("-medition_date")[:1]
-    initial_date = initial_date[0].medition_date
-    print "initial_date", initial_date
+    data = ElectricData.objects.filter(
+        profile_powermeter__pk=profile_pk).order_by("medition_date")
+    delta = timedelta(minutes=delta)
     for dato in data:
         print "antes", dato.medition_date
-        initial_date -= timedelta(minutes=5)
+        initial_date += delta
         dato.medition_date = initial_date
         dato.save()
         print "despues", dato.medition_date
-
-def dummy_data_generator_2000():
-    """
-    Generates dummy electric meditions
-    """
-    for item in ['1', '2', '3']:
-        i=0
-        initial_date = datetime.datetime(2012,01,01,00,00)
-        profile = ProfilePowermeter.objects.get(pk=int(item))
-        kwh=Decimal(900090)
-        kvarh_net=Decimal(388.6)
-        for item in cycle(['1.8','2']):
-            i += 1
-            initial_date += timedelta(minutes=5)
-            kwh += Decimal(randrange(0, 100010))
-            kvarh_net += Decimal(uniform(0, 12.1))
-            elec_data = ElectricData(
-                profile_powermeter = profile,
-                powermeter_serial = "9304404",
-                medition_date = initial_date,
-                V1 = round(Decimal(uniform(127.5, 128.9)),6),
-                V2 = round(Decimal(uniform(127.5, 128.9)),6),
-                V3 = round(Decimal(uniform(127.5, 128.9)),6),
-                I1 = round(Decimal(uniform(1.168, 1.219)),6),
-                I2 = round(Decimal(uniform(1.168, 1.219)),6),
-                I3 = round(Decimal(uniform(1.168, 1.219)),6),
-                kWL1 = round(Decimal(uniform(83.8, 87.5)),6),
-                kWL2 = round(Decimal(uniform(83.8, 87.5)),6),
-                kWL3 = round(Decimal(uniform(83.8, 87.5)),6),
-                kvarL1 = round(Decimal(uniform(-129.6, -125.3)),6),
-                kvarL2 = round(Decimal(uniform(-129.6, -125.3)),6),
-                kvarL3 = round(Decimal(uniform(-129.6, -125.3)),6),
-                kVAL1 = round(Decimal(uniform(150.6, 155.03)),6),
-                kVAL2 = round(Decimal(uniform(150.6, 155.03)),6),
-                kVAL3 = round(Decimal(uniform(150.6, 155.03)),6),
-                PFL1 = round(Decimal(uniform(-.5549, 1)),6),
-                PFL2 = round(Decimal(uniform(-.5549, 1)),6),
-                PFL3 = round(Decimal(uniform(-.5549, 1)),6),
-                kW = round(Decimal(uniform(251.5, 258.7)),6),
-                kvar = round(Decimal(uniform(-388.8, -376.7)),6),
-                kVA = round(Decimal(uniform(453.08, 466.3)),6),
-                PF = round(Decimal(uniform(-.5549, 1)),6),
-                In = round(Decimal(uniform(3.51, 3.65)),6),
-                FREQ = round(Decimal(uniform(59.97, 59.99)),6),
-                kWIMPSDMAX = round(Decimal(0.043204),6),
-                kWIMPACCDMD = round(Decimal(uniform(1.16, 2.1)),6),
-                kVASDMAX = round(Decimal(.129613),6),
-                kVAACCDMD = round(Decimal(uniform(2.11, 3.7)),6),
-                I1DMDMAX = round(Decimal(.000200),6),
-                I2DMDMAX = round(Decimal(.000200),6),
-                I3DMDMAX = round(Decimal(.000200),6),
-                kWhIMPORT = round(kwh,6),
-                kWhEXPORT = Decimal(0),
-                kvarhNET = round(kvarh_net,6),
-                kvarhIMPORT = round(kvarh_net,6),
-                V1THD = Decimal(item),
-                V2THD = Decimal(item),
-                V3THD = Decimal(item),
-                I1THD = Decimal(142.3),
-                I2THD = Decimal(142.3),
-                I3THD = Decimal(142.3)
-            )
-            elec_data.save()
-            print i, " - ", elec_data
-            if i >= 65512:
-                break
 
 def data_exchange():
     electric_d=ElectricData.objects.all()
@@ -389,3 +328,51 @@ def data_multiplier_3000():
         print dato
     print "EXITO!!!!!!"
     return True
+
+@timed
+def asign_electric_data_to_pw(serials):
+    """ change the profile_powermeter of all the meditions with an specific
+    power_meter_serial
+    serials: an array containing strings: powermeter_serials
+    """
+    for serial in serials:
+        profile = ProfilePowermeter.objects.get(powermeter__powermeter_serial=serial)
+        ed = ElectricDataTemp.objects.filter(powermeter_serial=serial)
+        for e in ed:
+            e.profile_powermeter=profile
+            e.save()
+
+    return "done"
+
+@timed
+def migrate_electric_data(serials):
+    """ searches for electric data with a given serial,
+    then searches for that serial in a remote database and gets or creates a
+    profile powermeter, then save each electic data in the remote database
+    serials = Array of strings: powermeter_serials
+    """
+    for serial in serials:
+        loc_profile = ProfilePowermeter.objects.get(
+            powermeter__powermeter_serial=serial)
+        try:
+            profile = ProfilePowermeter.objects.using('production').get(
+                powermeter__powermeter_serial=serial)
+        except ObjectDoesNotExist:
+            pw, created = Powermeter.objects.using(
+                "production"
+            ).get_or_create(
+                powermeter_model=loc_profile.powermeter.powermeter_model,
+                powermeter_anotation=loc_profile.powermeter.powermeter_anotation,
+                powermeter_serial=loc_profile.powermeter.powermeter_serial
+                )
+            profile, created = ProfilePowermeter.objects.using(
+                "production"
+            ).get_or_create(powermeter=pw)
+
+        ed = ElectricDataTemp.objects.filter(powermeter_serial=serial)
+        for e in ed:
+            f = e
+            f.save(using="production")
+            f.profile_powermeter=profile
+            f.save(using="production")
+    return "done"
