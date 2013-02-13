@@ -150,7 +150,7 @@
 				locale: {
 					days: ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"],
 					daysShort: ["Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"],
-					daysMin: ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa", "Do"],
+					daysMin: ["Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"],
 					months: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"],
 					monthsShort: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"],
 					weekMin: 's'
@@ -380,6 +380,7 @@
 				}
 				return parts.join('');
 			},
+            changed_date,
 			extendDate = function(options) {
 				if (Date.prototype.tempDate) {
 					return;
@@ -406,6 +407,7 @@
 					this.setDate(1);
 					this.setMonth(this.getMonth() + n);
 					this.setDate(Math.min(this.tempDate, this.getMaxDays()));
+                    changed_date = this;
 				};
 				Date.prototype.addYears = function (n) {
 					if (this.tempDate == null) {
@@ -528,6 +530,7 @@
 									break;
 							}
 							fillIt = true;
+                            changed = true;
 						}
 					} else if (parentEl.is('td') && !parentEl.hasClass('datepickerDisabled')) {
 						switch (tblEl.get(0).className) {
@@ -594,10 +597,12 @@
 				return false;
 			},
 			prepareDate = function (options) {
-				var tmp;
+				var tmp, tmp2;
+                changed_date.setMonth(changed_date.getMonth() - 1);
 				if (options.mode == 'single') {
 					tmp = new Date(options.date);
-					return [formatDate(tmp, options.format), tmp, options.el];
+                    tmp2 = changed_date;
+					return [formatDate(tmp2, options.format), formatDate(tmp, options.format), tmp, options.el];
 				} else {
 					tmp = [[],[], options.el];
 					$.each(options.date, function(nr, val){

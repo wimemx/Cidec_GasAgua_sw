@@ -8,19 +8,26 @@
 {% endblock %}
 {% block externaljs %}
     <script type="text/javascript" src="/static/date_picker/js/datepicker.js"></script>
+    <script type="text/javascript">
+        var fecha_act = new Date();
+        var current_mont = fecha_act.getMonth()+1;
+        var current_year = fecha_act.getFullYear();
+    </script>
 {% endblock %}
 {% block document_ready %}
     $('#widgetCal').DatePicker({
         flat: true,
         format: 'Y-m-d',
-        date: [new Date()],
+        date: [fecha_act],
         calendars: 1,
         starts: 7,
-        onChange: function(formated) {
-            console.log("changed!", formated);
+        onChange: function(month, selected) {
+            current = month.split("-");
+            c_month = current[1];
+            c_year = current[0];
+            console.log("changed!", c_month, c_year, selected);
         }
     });
-    $('#widgetCal').DatePickerClear();
 {% endblock %}
 {% block contenido %}
     <div id="bread_crumbs">
