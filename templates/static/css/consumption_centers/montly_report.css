@@ -1,0 +1,166 @@
+table.datepickerViewDays th{
+    font-weight: lighter;
+    text-transform: capitalize;
+}
+.ringl, .ringr{
+    top: 36px;
+    background: url("../images/bgs/ring.png");
+    display: inline-block;
+    width: 17px;
+    height: 42px;
+    position: relative;
+    z-index: 2;
+}
+.ringl{
+    left: 50px;
+
+}
+.ringr{
+    right: -695px;
+}
+#widgetCal{
+    width: 760px;
+    display: block;
+    margin: 0 auto;
+}
+.datepickerContainer{
+    width: 760px;
+}
+table.datepickerViewDays{
+
+}
+table.datepickerViewDays thead tr:first-child,
+table.datepickerViewMonths thead tr:first-child,
+table.datepickerViewYears thead tr:first-child{
+    background-image: linear-gradient(bottom, #353741 11%, #696B7B 56%);
+    background-image: -o-linear-gradient(bottom, #353741 11%, #696B7B 56%);
+    background-image: -moz-linear-gradient(bottom, #353741 11%, #696B7B 56%);
+    background-image: -webkit-linear-gradient(bottom, #353741 11%, #696B7B 56%);
+    background-image: -ms-linear-gradient(bottom, #353741 11%, #696B7B 56%);
+
+    background-image: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(0.11, #353741),
+        color-stop(0.56, #696B7B)
+    );
+    width: 760px;
+}
+table.datepickerViewDays thead tr:first-child th,
+table.datepickerViewMonths thead tr:first-child th,
+table.datepickerViewYears thead tr:first-child th{
+    height: 36px;
+}
+table.datepickerViewDays th.datepickerMonth a,
+table.datepickerViewMonths th.datepickerMonth a,
+table.datepickerViewYears th.datepickerMonth a
+{
+    height: 36px;
+}
+table.datepickerViewDays th.datepickerMonth a span,
+table.datepickerViewMonths th.datepickerMonth a span,
+table.datepickerViewYears th.datepickerMonth a span{
+    color: #fff;
+    font-family: helvetica,sans-serif;
+    font-weight: bold !important;
+    text-shadow: -1px -1px #666;
+    font-size: 18px !important;
+    line-height: 36px !important;
+}
+
+.datepickerGoPrev a span, .datepickerGoNext a span{
+
+    display: inline-block;
+    width: 13px;
+    height: 18px;
+}
+.datepickerGoPrev a span{
+    background: url("../images/bgs/calendar_arrow_l.png") no-repeat;
+}
+.datepickerGoNext a span{
+    background: url("../images/bgs/calendar_arrow_r.png") no-repeat;
+}
+table.datepickerViewDays tr.datepickerDoW{
+    background-image: linear-gradient(bottom, #DBE2E7 11%, #F3F5F7 56%);
+    background-image: -o-linear-gradient(bottom, #DBE2E7 11%, #F3F5F7 56%);
+    background-image: -moz-linear-gradient(bottom, #DBE2E7 11%, #F3F5F7 56%);
+    background-image: -webkit-linear-gradient(bottom, #DBE2E7 11%, #F3F5F7 56%);
+    background-image: -ms-linear-gradient(bottom, #DBE2E7 11%, #F3F5F7 56%);
+
+    background-image: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(0.11, #DBE2E7),
+        color-stop(0.56, #F3F5F7)
+    );
+    height: 25px;
+
+
+}
+table.datepickerViewDays tr.datepickerDoW th span{
+    text-shadow: 1px 1px #fff;
+    font-size: 17px !important;
+    line-height: 25px;
+    font-family: helvetica, sans-serif;
+    color: #6e6e6e;
+}
+table.datepickerViewDays tr.datepickerDoW th{
+    width: 113px;
+}
+table.datepickerViewDays tr.datepickerDoW th:first-child{
+    width: 23px;
+}
+table.datepickerViewDays td{
+    height: 104px;
+    border: solid 2px #e7e9ea;
+    padding: 2px 7px;
+}
+table.datepickerViewDays td.datepickerNotInMonth{
+    background: rgba(230, 230, 230, 0.2);
+}
+table.datepickerViewDays td:not(.datepickerNotInMonth){
+
+    background-image: linear-gradient(bottom, #F2F6F8 11%, #F3F5F7 56%);
+    background-image: -o-linear-gradient(bottom, #F2F6F8 11%, #F3F5F7 56%);
+    background-image: -moz-linear-gradient(bottom, #F2F6F8 11%, #F3F5F7 56%);
+    background-image: -webkit-linear-gradient(bottom, #F2F6F8 11%, #F3F5F7 56%);
+    background-image: -ms-linear-gradient(bottom, #F2F6F8 11%, #F3F5F7 56%);
+
+    background-image: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(0.11, #F2F6F8),
+        color-stop(0.56, #F3F5F7)
+    );
+    -moz-box-shadow: inset 0 0 2px #fff;
+    -webkit-box-shadow: inset 0 0 2px #fff;
+    box-shadow: inner 0 0 2px #fff;
+}
+table.datepickerViewDays td a span{
+    color: #930c50;
+    font-size: 13px;
+}
+/*-----MONTH PICKER-----*/
+table.datepickerViewMonths,
+table.datepickerViewYears{
+    width: 760px;
+}
+table.datepickerViewMonths td,
+table.datepickerViewYears td{
+    width: 190px;
+    height: 104px;
+    vertical-align: middle !important;
+}
+table.datepickerViewMonths td a,
+table.datepickerViewYears td a{
+    display: block;
+    margin: 0 auto;
+}
+table.datepickerViewMonths td a span,
+table.datepickerViewYears td a span{
+    font-size: 18px;
+    font-weight: bold;
+}

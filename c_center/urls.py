@@ -264,4 +264,10 @@ urlpatterns = patterns('',
                        url(r'^desglose/', 'c_center.views.cfe_desglose'),
                        url(r'^desglose_calculos/',
                            'c_center.views.cfe_desglose_calcs'),
+
+                       url(r'^analisis_mensual/(?P<id_building>\d+)/',
+                           'c_center.views.montly_analitics'),
+                       url(r'^node/',
+                           'django.views.generic.simple.direct_to_template',
+                           {'template': 'test.html'}),
 )

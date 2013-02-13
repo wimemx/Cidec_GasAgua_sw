@@ -1,0 +1,17 @@
+<html>
+    <head>
+        <script src="http://node.wimelabs.com:9999/socket.io/socket.io.js"></script>
+        <script>
+            var socket = io.connect('http://node.wimelabs.com:9999/');
+            socket.on('news', function (data) {
+                console.log(data);
+                socket.emit('my other event', { my: 'data' });
+            });
+
+        </script>
+    </head>
+    <body>
+
+    </body>
+</html>
+

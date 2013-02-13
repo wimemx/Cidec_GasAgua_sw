@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block titulo %} Mediciones El&eacute;ctricas{% endblock %}
+{% block externalcss %}
+    <!--suppress HtmlUnknownTarget -->
+    <link rel="stylesheet" href="/static/css/consumption_centers/main.css" type="text/css" />
+    <link rel="stylesheet" href="/static/date_picker/css/datepicker2.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/consumption_centers/montly_report.css" type="text/css" />
+{% endblock %}
+{% block externaljs %}
+    <script type="text/javascript" src="/static/date_picker/js/datepicker.js"></script>
+{% endblock %}
+{% block document_ready %}
+    $('#widgetCal').DatePicker({
+        flat: true,
+        format: 'Y-m-d',
+        date: [new Date()],
+        calendars: 1,
+        starts: 7,
+        onChange: function(formated) {
+            console.log("changed!", formated);
+        }
+    });
+    $('#widgetCal').DatePickerClear();
+{% endblock %}
+{% block contenido %}
+    <div id="bread_crumbs">
+        <ul>
+            <li><a href="/main/">Inicio</a></li>
+            <li><a href="/reportes/analisis_mensual/">An&aacute;lisis Mensual</a></li>
+        </ul>
+    </div>
+
+    <div id="contenido_interno">
+        <h2 id="titulo_reporte">An&aacute;lisis Mensual</h2>
+
+        <div class="divider" id="divider_top">&nbsp;</div>
+
+
+        <div id="widgetCal">
+            <span class="ringl"></span>
+            <span class="ringr"></span>
+
+        </div>
+    </div>
+{% endblock %}
