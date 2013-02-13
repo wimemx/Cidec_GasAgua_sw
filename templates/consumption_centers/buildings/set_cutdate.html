@@ -177,14 +177,48 @@ onChange: function(formated) {
                     <input type="text" name="date_init" id="date_init" class="g9" value="{{ cutdate.date_init|date:'Y-m-d' }}" readonly  />
                     <span></span>
                 </div>
+                <div class="fields_row g9 select_hours">
+                    <label for="init_hour" class="g2">Hora Inicial<span class="required">*</span></label>
+                    <select name="init_hour">
+                        {% for i_hour in i_hours %}
+                            <option value="{{ i_hour }}" {% if i_hour == s_ihour %} selected {% endif %} >{{ i_hour }}</option>
+                        {% endfor %}
+                    </select>:
+                    <select name="init_minutes">
+                        {% for i_minute in i_minutes %}
+                            <option value="{{ i_minute }}" {% if i_minute == s_iminute %} selected {% endif %} >{{ i_minute }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="init_ampm">
+                        <option value="AM" {% if "AM" == s_ampm %} selected {% endif %} >AM</option>
+                        <option value="PM" {% if "PM" == s_ampm %} selected {% endif %} >PM</option>
+                    </select>
+                </div>
                 <div class="fields_row g9">
                     <label for="date_end" class="g2">Fecha Final</label>
                     <input type="text" name="date_end" id="date_end" class="g9" value="{{ cutdate.date_end|date:'Y-m-d' }}" readonly  />
                     <span></span>
                 </div>
+                <div class="fields_row g9 select_hours">
+                    <label for="end_hour" class="g2">Hora Final<span class="required">*</span></label>
+                    <select name="end_hour">
+                        {% for i_hour in i_hours %}
+                            <option value="{{ i_hour }}" {% if i_hour == e_ihour %} selected {% endif %} >{{ i_hour }}</option>
+                        {% endfor %}
+                    </select>:
+                    <select name="end_minutes">
+                        {% for i_minute in i_minutes %}
+                            <option value="{{ i_minute }}" {% if i_minute == e_iminute %} selected {% endif %} >{{ i_minute }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="end_ampm">
+                        <option value="AM" {% if "AM" == e_ampm %} selected {% endif %} >AM</option>
+                        <option value="PM" {% if "PM" == e_ampm %} selected {% endif %} >PM</option>
+                    </select>
+                </div>
                 <div class="fields_row g9">
                     <label for="date_end" class="g2"></label>
-                    <div id="date_cutdates"></p>
+                    <div id="date_cutdates"></div>
                 </div>
 
 

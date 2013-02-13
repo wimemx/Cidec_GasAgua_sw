@@ -767,8 +767,8 @@ class PowermeterForIndustrialEquipment(models.Model):
 class MonthlyCutDates(models.Model):
     building = models.ForeignKey(Building, on_delete=models.PROTECT)
     billing_month = models.DateField("Fecha de Inicio")
-    date_init = models.DateField("Fecha de Inicio")
-    date_end = models.DateField("Fecha de Fin", null=True, blank=True)
+    date_init = models.DateTimeField("Fecha de Inicio")
+    date_end = models.DateTimeField("Fecha de Fin", null=True, blank=True)
 
     def __unicode__(self):
         return "Edificio: " + self.building.building_name + " - Mes:" + str(
