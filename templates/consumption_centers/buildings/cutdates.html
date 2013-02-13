@@ -185,11 +185,11 @@ window.location = base_url;
                             {{ cutdate.billing_month|date:"M Y" }}
                         </td>
                         <td class="c">
-                            {{ cutdate.date_init|date:"d/m/Y" }}
+                            {{ cutdate.date_init|date:"d/m/Y h:i a" }}
                         </td>
                         <td class="c">
                             {% if cutdate.date_end %}
-                                {{ cutdate.date_end|date:"d/m/Y" }}
+                                {{ cutdate.date_end|date:"d/m/Y h:i a" }}
                             {% else %}
                                 -
                             {% endif %}

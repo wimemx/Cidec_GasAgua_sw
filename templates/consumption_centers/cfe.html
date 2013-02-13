@@ -3,17 +3,17 @@
 {% block externalcss %}
 <link rel="stylesheet" href="/static/css/consumption_centers/graphs.css">
 <link rel="stylesheet" href="/static/css/consumption_centers/cfe_bill.css">
-<!--<link rel="stylesheet" href="/static/datepicker/css/datepicker.css" type="text/css" />-->
+<link rel="stylesheet" href="/static/js/external/fancybox/jquery.fancybox.css" type="text/css" />
+
+
 {% endblock %}
 {% block externaljs %}
-<!--<script type="text/javascript" src="/static/datepicker/js/datepicker.js"></script>-->
 <script type="text/javascript" src="http://www.google.com/jsapi"></script>
-
+<script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
 <script type="text/javascript">
     google.load('visualization', '1', {packages: ['corechart']});
 </script>
 <script type="text/javascript">
-
 
     function graphsReload(){
         /* Takes the date in the range inputs and reloads the graph data */
@@ -105,9 +105,7 @@ var now4 = new Date();
 refresh_iframe_height();
 
 var state = false;
-$('#widgetField').click(function(){
-$('#datepicker').slideToggle();
-});
+
 {% endblock %}
 {% block contenido %}
 

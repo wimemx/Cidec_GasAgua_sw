@@ -101,7 +101,7 @@ h2{
 #datepicker_component{
     position: relative;
     float: right;
-    width: 350px;
+    width: 360px;
     margin-right: 20px;
 }
 
@@ -441,7 +441,54 @@ iframe{
 }
 
 #date_cutdates{
-    margin-left: 120px
+    float:left;
 }
+
+
+.select_hours div.selector{
+    width: 50px !important;
+}
+
+.select_hours div.selector select{
+    width: 20px !important;
+    min-width: 55px !important;
+}
+
+.select_hours div.selector span{
+    width: 20px !important;
+}
+
+#cut_date_fb{
+    float: none;
+}
+
+#body_fb{
+    background: none;
+}
+
+#corte_container{
+    width: 380px;
+    text-align: center;
+    margin: 10px;"
+    overflow: auto;
+}
+
+#corte_title{
+    padding-bottom: 10px;
+    font-size: 20px;
+}
+
+#corte_input{
+    padding: 10px 0px;
+}
+
+#corte_calendarios{
+    margin-left: 90px;
+}
+
+#corte_selects{
+    padding: 15px 0px;
+}
+
 
 

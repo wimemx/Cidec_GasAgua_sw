@@ -1,8 +1,15 @@
+
 <html>
 <head>
     <link rel="stylesheet" href="/static/css/theme.css">
     <link rel="stylesheet" href="/static/css/consumption_centers/cfe_bill.css">
+    <link rel="stylesheet" href="/static/js/external/fancybox/jquery.fancybox.css" type="text/css" />
+    <script type="text/javascript" src="/static/js/external/jquery.tools.min.js"></script>
+    <script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
     <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+
+    <link rel="stylesheet" href="/static/date_picker/css/datepicker.css" type="text/css" />
+    <script type="text/javascript" src="/static/date_picker/js/date_picker.js"></script>
     <script type="text/javascript">
         google.load('visualization', '1', {packages: ['corechart']});
     </script>
@@ -37,11 +44,51 @@
             );
         }
 
+        $(function() {
+            $('a#cut_date_fb').click(function() {
+                window.parent.$.fancybox({
+                    href        :'/buildings/corte_recibo/54',
+                    type        :'iframe',
+                    maxWidth	: 400,
+                    maxHeight	: 340,
+                    width		: '70%',
+                    height		: '70%'
+                });
+            });
+        });
+
+
+
+
+        $(document).ready(function(){
+
+            //$(this).contents().find("#cal").DatePicker();
+        });
+
+
         google.setOnLoadCallback(drawVisualization);
     </script>
 
 </head>
+
 <body>
+
+<div>
+    {% if message %}
+        {% if morethan30 %}
+            <span class="notif n_error">
+            La facturación para este mes ya rebasa los 30 días. Selecciona la fecha de corte <a id="cut_date_fb" href="#">AQUÍ</a>
+            <a href="#" onclick="$(this).parent().remove();">X</a>
+            </span>
+        {% else %}
+            <span class="notif {{ type }}">
+            {% autoescape off %}{{ message }}{% endautoescape %}
+            <a href="#" onclick="$(this).parent().remove();">X</a>
+            </span>
+        {% endif %}
+    {% endif %}
+
+</div>
 <h4>Estado de Cuenta</h4>
 <div id="left_col" class="fl inner_col">
 
@@ -101,6 +148,10 @@
         </tr>
         </thead>
         <tbody>
+        <tr>
+            <td>kWh Totales</td>
+            <td>{{ resultados.kwh_totales }}</td>
+        </tr>
         <tr>
             <td>kWh Base</td>
             <td>{{ resultados.kwh_base }}</td>

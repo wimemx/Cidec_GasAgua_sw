@@ -267,6 +267,9 @@ urlpatterns = patterns('',
                        url(r'^desglose_calculos/',
                            'c_center.views.cfe_desglose_calcs'),
 
+                       url(r'^corte_recibo/(?P<id_cutdate>\d+)/', 'c_center.views.set_cutdate_bill_show'),
+                       url(r'^set_cutdate_ajax/', 'c_center.views.set_cutdate_bill'),
+
                        url(r'^analisis_mensual/(?P<id_building>\d+)/',
                            'c_center.views.montly_analitics'),
                        url(r'^node/',
