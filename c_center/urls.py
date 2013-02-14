@@ -8,9 +8,11 @@ urlpatterns = patterns('',
                        url(r'^grafica_datos_csv/',
                            'c_center.views.grafica_datoscsv'),
                        url(r'^grafica_tendencia_consumo_mensual/',
-                           'c_center.graphics.render_graphics_month_consumption_trend'),
+                           'c_center.graphics'
+                           '.render_graphics_month_consumption_trend'),
                        url(r'^verificar_graficas_intervalos/',
-                           'c_center.graphics.render_graphics_interval_verification'),
+                           'c_center.graphics'
+                           '.render_graphics_interval_verification'),
 
                        url(r'^medition_rate/',
                            'c_center.calculations.tag_reading'),
@@ -141,7 +143,8 @@ urlpatterns = patterns('',
                        url(r'^alta_tipo_atributo_edificio/',
                            'c_center.views.add_b_attributes_type'),
                        url(
-                           r'^editar_tipo_atributo_edificio/(?P<id_batype>\d+)/',
+                           r'^editar_tipo_atributo_edificio/('
+                           r'?P<id_batype>\d+)/',
                            'c_center.views.edit_b_attributes_type'),
                        url(r'^tipos_atributos_edificios/',
                            'c_center.views.view_b_attributes_type'),
@@ -267,8 +270,10 @@ urlpatterns = patterns('',
                        url(r'^desglose_calculos/',
                            'c_center.views.cfe_desglose_calcs'),
 
-                       url(r'^corte_recibo/(?P<id_cutdate>\d+)/', 'c_center.views.set_cutdate_bill_show'),
-                       url(r'^set_cutdate_ajax/', 'c_center.views.set_cutdate_bill'),
+                       url(r'^corte_recibo/(?P<id_cutdate>\d+)/',
+                           'c_center.views.set_cutdate_bill_show'),
+                       url(r'^set_cutdate_ajax/',
+                           'c_center.views.set_cutdate_bill'),
 
                        url(r'^analisis_mensual/(?P<id_building>\d+)/',
                            'c_center.views.montly_analitics'),

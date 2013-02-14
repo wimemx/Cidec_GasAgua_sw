@@ -9,6 +9,8 @@ from math import *
 from decimal import *
 from calendar import monthrange
 
+from variety import timed
+
 #related third party imports
 from django.template import RequestContext
 from django.http import *
@@ -1706,6 +1708,7 @@ def recibocfe(request):
     return render_to_response('consumption_centers/cfe.html', variables)
 
 
+@timed
 def tag_reading_batch():
     #readingsObj = ElectricDataTemp.objects.filter(pk__gte=1241619)
     #readingsObj = ElectricDataTemp.objects.all()
@@ -1713,69 +1716,69 @@ def tag_reading_batch():
     #Obtener los medidores
     #Obtener sus lecturas, ordenandolos por fechas
 
-    profiles_pwmt = ElectricDataTemp.objects.all().values(
-        "profile_powermeter").annotate(Count("profile_powermeter"))
-    for pf in profiles_pwmt:
-        readingsObj = ElectricDataTemp.objects.filter(
-            profile_powermeter=pf['profile_powermeter']).order_by(
-            "medition_date")
+    print "entra"
+    readingsObj = ElectricDataTemp.objects.filter(
+        profile_powermeter__in=[35, 34, 28,29,31, 32, 33, 24, 25, 26, 27, 22, 7, 6, 3]).order_by(
+        "medition_date")
 
-        for readingObj in readingsObj:
-            #Si la lectura proviene de cualquier medidor menos del No Asignado
-            if readingObj.profile_powermeter.pk != 4:
-                tag = None
-                #Se revisa que esa medicion no este etiquetada ya.
-                tagged_reading = ElectricRateForElectricData.objects.filter(
-                    electric_data=readingObj)
-                if not tagged_reading:
-                    #Se obtiene el Consumer Unit, para poder obtener el edificio, una vez obtenido el edificio, se puede obtener la region y la tarifa
-                    consumerUnitObj = ConsumerUnit.objects.filter(
-                        profile_powermeter=readingObj.profile_powermeter)
-                    buildingObj = Building.objects.get(
-                        id=consumerUnitObj[0].building.id)
+    for readingObj in readingsObj:
+        print "por cada lectura"
+        #Si la lectura proviene de cualquier medidor menos del No Asignado
+        if readingObj.profile_powermeter.pk != 4:
+            tag = None
+            #Se revisa que esa medicion no este etiquetada ya.
+            tagged_reading = ElectricRateForElectricData.objects.filter(
+                electric_data=readingObj)
+            #if not tagged_reading:
+            #Se obtiene el Consumer Unit, para poder obtener el edificio, una vez obtenido el edificio, se puede obtener la region y la tarifa
+            consumerUnitObj = ConsumerUnit.objects.filter(
+                profile_powermeter=readingObj.profile_powermeter)
+            buildingObj = Building.objects.get(
+                id=consumerUnitObj[0].building.id)
 
-                    #Obtiene el periodo de la lectura actual
-                    fecha_zhor = readingObj.medition_date.astimezone(
-                        tz=timezone.get_current_timezone())
-                    #reading_period_type = obtenerTipoPeriodoObj(readingObj.medition_date, buildingObj.region, buildingObj.electric_rate)
-                    reading_period_type = obtenerTipoPeriodoObj(fecha_zhor,
-                                                                buildingObj.region)
+            #Obtiene el periodo de la lectura actual
+            fecha_zhor = readingObj.medition_date.astimezone(
+                tz=timezone.get_current_timezone())
+            #reading_period_type = obtenerTipoPeriodoObj(readingObj.medition_date, buildingObj.region, buildingObj.electric_rate)
+            reading_period_type = obtenerTipoPeriodoObj(fecha_zhor,
+                                                        buildingObj.region)
+            print reading_period_type
 
-                    #Obtiene las ultimas lecturas de ese medidor
-                    last_reading = ElectricRateForElectricData.objects.filter(
-                        electric_data__profile_powermeter=readingObj.profile_powermeter).order_by(
-                        "-electric_data__medition_date")
-                    #Si existen registros para ese medidor
-                    if last_reading:
-                        #Obtiene el periodo de la ultima lectura de ese medidor
-                        last_reading_type = last_reading[
-                                            0].electric_rates_periods.period_type
+            #Obtiene las ultimas lecturas de ese medidor
+            last_reading = ElectricRateForElectricData.objects.filter(
+                electric_data__profile_powermeter=readingObj.profile_powermeter).order_by(
+                "-electric_data__medition_date")
+            #Si existen registros para ese medidor
+            if last_reading:
+                #Obtiene el periodo de la ultima lectura de ese medidor
+                last_reading_type = last_reading[
+                                    0].electric_rates_periods.period_type
 
-                        #    Se compara el periodo actual con el periodo del ultimo registro.
-                        #    Si los periodos son iguales, el identificador será el mismo
+                #    Se compara el periodo actual con el periodo del ultimo registro.
+                #    Si los periodos son iguales, el identificador será el mismo
 
-                        if reading_period_type.period_type == last_reading_type:
-                            tag = last_reading[0].identifier
-                        else:
-                            #Si los periodos son diferentes, al identificador anterior, se le sumara 1.
-                            tag = last_reading[0].identifier
-                            tag = hex(int(tag, 16) + int(1))
-                            #print "ID:", readingObj.pk, "-Tag Anterior:",
-                            #last_reading[
-                            #0].identifier, "-Nuevo Tag:", tag, "Tipo Actual:", reading_period_type.period_type, "Tipo Anterior:", last_reading_type, "ID Anterior:",
-                            #last_reading[0].pk
+                if reading_period_type.period_type == last_reading_type:
+                    tag = last_reading[0].identifier
+                else:
+                    #Si los periodos son diferentes, al identificador anterior, se le sumara 1.
+                    tag = last_reading[0].identifier
+                    tag = hex(int(tag, 16) + int(1))
+                    #print "ID:", readingObj.pk, "-Tag Anterior:",
+                    #last_reading[
+                    #0].identifier, "-Nuevo Tag:", tag, "Tipo Actual:", reading_period_type.period_type, "Tipo Anterior:", last_reading_type, "ID Anterior:",
+                    #last_reading[0].pk
 
-                    else: #Si será un registro para un nuevo medidor
-                        tag = hex(0)
+            else: #Si será un registro para un nuevo medidor
+                tag = hex(0)
 
 
-                    #Guarda el registro etiquetado
-                    newTaggedReading = ElectricRateForElectricData(
-                        electric_rates_periods=reading_period_type,
-                        electric_data=readingObj,
-                        identifier=tag
-                    )
-                    newTaggedReading.save()
+            #Guarda el registro etiquetado
+            newTaggedReading, created = ElectricRateForElectricData.objects.get_or_create(
+                electric_data=readingObj
+            )
+            newTaggedReading.electric_rates_periods=reading_period_type
+            newTaggedReading.identifier=tag
+            newTaggedReading.save()
 
     print "Acabe"
 
@@ -1859,15 +1862,6 @@ def tag_reading_ids(id_start, id_end):
 @csrf_exempt
 def tag_reading(request):
     if request.method == 'POST':
-        data = ElectricDataTemp.objects.filter(
-            medition_date__gte=datetime.datetime(2012, 9,
-                                                 20, 0, 0, 0)).order_by(
-            "-medition_date")[:5]
-        for dato in data:
-            if dato.TotalkWhIMPORT < 1000:
-                dato.TotalkWhIMPORT *= 1000
-                dato.TotalkvarhIMPORT *= 1000
-                dato.save()
 
         #Obtiene el Id de la medicion
         reading_id = request.REQUEST.get("id_reading", "")

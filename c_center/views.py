@@ -324,9 +324,9 @@ def cfe_calculations(request):
         return HttpResponseRedirect("/")
     datacontext = get_buildings_context(request.user)
     if has_permission(request.user, VIEW, "Consultar recibo CFE") or request.user.is_superuser :
+        if datacontext:
+            context = {"datacontext":datacontext}
         if not request.session['consumer_unit']:
-            if datacontext:
-                context = {"datacontext":datacontext}
             return HttpResponse(content="<h2 style='font-family: helvetica; color: #878787; font-size:14px;' text-align: center;>No hay unidades de consumo asignadas, por favor ponte en contacto con el administrador para remediar esta situaci&oacute;n</h2>")
 
         set_default_session_vars(request, datacontext)
@@ -470,7 +470,7 @@ def cfe_calculations(request):
                     cut_date_lb = s_date + relativedelta(days=+30)
                     template_vars['message'] = 'El corte para este mes se realizará automáticamente el día '+ cut_date_lb.strftime("%d/%m/%Y")
                     template_vars['type'] = "n_notif"
-                elif num_dias > 30 and num_dias <= 35:
+                elif 30 < num_dias <= 35:
                     template_vars['message'] = 'La facturación para este mes ya rebasa los 30 días. Selecciona la fecha de corte <a href="#">aquí</a>'
                     template_vars['type'] = "n_error"
                     template_vars['morethan30'] = True
@@ -516,6 +516,7 @@ def cfe_calculations(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+# noinspection PyArgumentList
 def getStartEndDateUTC(building, month, year):
 
     billing_month = datetime.date(year=year, month=month, day=1)
@@ -541,6 +542,7 @@ def getStartEndDateUTC(building, month, year):
 
     return s_date, e_date
 
+# noinspection PyArgumentList
 def inMonthlyCutdates(building, month, year):
     billing_month = datetime.date(year=year, month=month, day=1)
 
@@ -558,6 +560,7 @@ def inMonthlyCutdates(building, month, year):
 
     return True
 
+# noinspection PyArgumentList
 def getStartEndDate(building, month, year):
 
     billing_month = datetime.date(year=year, month=month, day=1)
@@ -4984,6 +4987,7 @@ def get_select_attributes(request, id_attribute_type):
 ###########
 #EDIFICIOS#
 ###########
+# noinspection PyArgumentList
 def add_building(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
@@ -6239,7 +6243,7 @@ def detach_pm(request, id_ie):
     else:
         raise Http404
 
-# noinspection PyArgumentList
+# noinspection PyArgumentList,PyTypeChecker
 @login_required(login_url='/')
 def configure_ie(request, id_ie):
     datacontext = get_buildings_context(request.user)
@@ -6986,15 +6990,14 @@ def tarifaHM_2(building, consumer_unit, s_date, e_date, month, year):
 
             pr_powermeter = c_unit.profile_powermeter.powermeter
 
-            """
-            lecturas_totales = ElectricRateForElectricData.objects.filter(
-            electric_data__profile_powermeter__powermeter__pk = pr_powermeter
-            .pk).\
-            filter(electric_data__medition_date__gte=s_date).filter(electric_data__medition_date__lte=e_date).\
-            order_by('electric_data__medition_date')
 
-            kw_t = obtenerDemanda_kw(lecturas_totales)
-            """
+            #lecturas_totales = ElectricRateForElectricData.objects.filter(
+            #electric_data__profile_powermeter__powermeter__pk = pr_powermeter
+            #.pk).\
+            #filter(electric_data__medition_date__gte=s_date).filter(electric_data__medition_date__lte=e_date).\
+            #order_by('electric_data__medition_date')
+            #kw_t = obtenerDemanda_kw(lecturas_totales)
+
 
             lecturas_base = ElectricRateForElectricData.objects.filter(
                 electric_data__profile_powermeter__powermeter__pk
@@ -7931,10 +7934,6 @@ def set_cutdate_bill_show(request, id_cutdate):
     datacontext = get_buildings_context(request.user)
     if request.user.is_superuser:
         empresa = request.session['main_building']
-        post = ''
-
-        message = ""
-        type = ""
 
         cutdate_obj = get_object_or_404(MonthlyCutDates, pk=id_cutdate)
 
