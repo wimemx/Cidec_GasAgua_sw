@@ -28,7 +28,7 @@ def get_hour_from_datetime(datetime_input):
 
     return hour_datetime
 
-def get_week_start_datetime_end_datetime_tuple(
+def get_week_start_datetime_end_datetime_tuple (
         year,
         month,
         week
@@ -53,6 +53,14 @@ def get_week_start_datetime_end_datetime_tuple(
     return week_start, week_end
 
 
+def get_weeks_number_in_month (
+        year,
+        month
+):
+    # TODO - Implement this function
+    pass
+
+
 def get_week_of_month_from_datetime(datetime_variable):
     """Get the week number of the month for a datetime
     datetime_variable = the date
@@ -70,23 +78,6 @@ def get_week_of_month_from_datetime(datetime_variable):
 
     return week_number
 
-def get_fist_last_day_of_week_from_dt(datetime_variable):
-    first_day_of_month = datetime(year=datetime_variable.year,
-                                  month=datetime_variable.month, day=1)
-    first_day_first_week = first_day_of_month - timedelta(days=first_day_of_month.weekday())
-    week_delta = timedelta(weeks = 1)
-
-    datetime_next = first_day_first_week + week_delta
-    fi = first_day_first_week
-    ff = datetime_next
-    week_number = 1
-    while datetime_next <= datetime_variable:
-        week_number += 1
-        fi = datetime_next
-        datetime_next += week_delta
-        ff = datetime_next - timedelta(days = 1)
-
-    return fi, ff
 
 def random_string_generator(size=6, chars=string.ascii_uppercase + string.digits):
     """Random String Generator
