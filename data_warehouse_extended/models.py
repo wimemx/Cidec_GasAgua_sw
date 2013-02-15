@@ -149,4 +149,3 @@ class ConsumerUnitInstantElectricalData(django.db.models):
             verbose_name=data_warehouse_extended.globals.ModelFieldName.
                              CONSUMER_UNIT_INSTANT_ELECTRIC_DATA__VALUE)
 
-    
