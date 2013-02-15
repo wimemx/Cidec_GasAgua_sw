@@ -1038,13 +1038,29 @@ def render_graphics_month_consumption_trend(
     if request.method == "GET":
         try:
             consumer_unit_id = request.GET['consumer-unit-id']
-            month = request.GET['month']
             year = request.GET['year']
+            month = request.GET['month']
 
         except KeyError:
             raise django.http.Http404
 
+        weeks_number_in_month = variety.get_weeks_number_in_month(year, month)
+        week_first_start_datetime, week_first_end_datetime =\
+            variety.get_week_start_datetime_end_datetime_tuple(year, month, 1)
 
+        week_last_start_datetime, week_last_end_datetime =\
+            variety.get_week_start_datetime_end_datetime_tuple(
+                year,
+                month,
+                weeks_number_in_month)
+
+        electric_data_interval_raw_dictionary_list =\
+            get_consumer_unit_electric_data_interval_raw_optimized(
+                "TotalkWhIMPORT",
+                consumer_unit_id,
+                week_first_start_datetime,
+                week_last_end_datetime
+            )
 
     template_context = django.template.context.RequestContext(
                            request,
