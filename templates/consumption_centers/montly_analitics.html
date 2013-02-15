@@ -10,8 +10,27 @@
     <script type="text/javascript" src="/static/date_picker/js/datepicker.js"></script>
     <script type="text/javascript">
         var fecha_act = new Date();
-        var current_mont = fecha_act.getMonth()+1;
+        var current_month = fecha_act.getMonth()+1;
         var current_year = fecha_act.getFullYear();
+        var f_day = null, l_day = null;
+    function get_full_month(){
+        $.ajax({
+            url: "/buildings/month_analitics/{{ building.pk }}/"+String(current_year)+"/"+String(current_month)+"/",
+            type: "GET",
+            success: function(data){ console.log(data)
+                $("td.day_cal").each(function(index){
+                    var td = $(this);
+                    var div = "<div class='inner_day fr'>";
+                    div += "<span class='title_inner'>Demanda M&aacute;x</span>";
+                    div += "<span class='demanda_max'>350 kW</span>";
+                    div += "<span class='title_inner'>Consumo</span>";
+                    div += "<span class='consumo'>35 kWh</span>";
+                    div += "</div>";
+                    td.append(div);
+                });
+            }
+        });
+    }
     </script>
 {% endblock %}
 {% block document_ready %}
@@ -25,20 +44,36 @@
             current = month.split("-");
             c_month = current[1];
             c_year = current[0];
-            console.log("changed!", c_month, c_year, selected);
+            if(c_month != current_month || c_year != current_year ){
+                console.log("cambio de mes");
+                f_day = null;
+                current_month = c_month;
+                current_year = c_year;
+                get_full_month();
+            }
+
+
+            console.log("++++changed!", c_month, c_year, selected);
+        },
+        onRender: function(date){
+            //maneja los eventos al cambiar de mes
+            console.log("----rendered");
+
+            return {selected: false, disabled: false, className: "day_cal"+" "+date.format("yyyy-mm-dd")};
         }
     });
+    get_full_month();
 {% endblock %}
 {% block contenido %}
     <div id="bread_crumbs">
         <ul>
             <li><a href="/main/">Inicio</a></li>
-            <li><a href="/reportes/analisis_mensual/">An&aacute;lisis Mensual</a></li>
+            <li><a href="/reportes/analisis_mensual/">An&aacute;lisis El&eacute;ctrico Mensual</a></li>
         </ul>
     </div>
 
     <div id="contenido_interno">
-        <h2 id="titulo_reporte">An&aacute;lisis Mensual</h2>
+        <h2 id="titulo_reporte">An&aacute;lisis El&eacute;ctrico Mensual - {{ building.building_name }}</h2>
 
         <div class="divider" id="divider_top">&nbsp;</div>
 

@@ -119,6 +119,7 @@ table.datepickerViewDays td{
 }
 table.datepickerViewDays td.datepickerNotInMonth{
     background: rgba(230, 230, 230, 0.2);
+    opacity: 0.6;
 }
 table.datepickerViewDays td:not(.datepickerNotInMonth){
 
@@ -163,4 +164,52 @@ table.datepickerViewMonths td a span,
 table.datepickerViewYears td a span{
     font-size: 18px;
     font-weight: bold;
+}
+
+/*----INNER TEXT----*/
+.inner_day{
+    display: block;
+    height: 85px;
+    width: 88px;
+}
+.inner_day span{
+    color: #666666;
+}
+.demanda_max, .title_inner, .consumo{
+    display: block;
+    text-align: left !important;
+}
+.title_inner{
+    display: block;
+    font-size: 11px !important;
+}
+.demanda_max, .consumo{
+    font-size: 12px !important;
+    font-weight: 700;
+    line-height: 25px;
+}
+.demanda_max{
+    padding-left: 23px;
+    background: url("../images/imgs_icns/demanda_calendar.png") no-repeat left 50%;
+    margin-left: 2px;
+}
+.consumo{
+    padding-left: 19px;
+    background: url("../images/imgs_icns/consumo_calendar.png") no-repeat left 50%;
+    margin-left: 4px;
+}
+.datepickerSelected{
+    background-image: linear-gradient(bottom, #E0E0E0 17%, #F0F0F0 59%) !important;
+    background-image: -o-linear-gradient(bottom, #E0E0E0 17%, #F0F0F0 59%) !important;
+    background-image: -moz-linear-gradient(bottom, #E0E0E0 17%, #F0F0F0 59%) !important;
+    background-image: -webkit-linear-gradient(bottom, #E0E0E0 17%, #F0F0F0 59%) !important;
+    background-image: -ms-linear-gradient(bottom, #E0E0E0 17%, #F0F0F0 59%) !important;
+
+    background-image: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(0.17, #E0E0E0),
+        color-stop(0.59, #F0F0F0)
+    ) !important;
 }

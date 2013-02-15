@@ -9,14 +9,13 @@ from math import *
 from decimal import *
 from calendar import monthrange
 
-from variety import timed
-
 #related third party imports
 from django.template import RequestContext
 from django.http import *
 from django.shortcuts import render_to_response
 from django.db.models.aggregates import *
 from django.db.models import Q
+from django.core.exceptions import ObjectDoesNotExist
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from dateutil.relativedelta import *
@@ -286,7 +285,7 @@ def obtenerCatalogoGrupos():
     semana.
 
     """
-    group_days_bd = Groupdays.objects.all();
+    group_days_bd = Groupdays.objects.all()
     group_days = {}
 
     if group_days_bd:
@@ -1708,8 +1707,6 @@ def recibocfe(request):
     variables = RequestContext(request, vars)
     return render_to_response('consumption_centers/cfe.html', variables)
 
-
-@timed
 def tag_reading_batch():
     #readingsObj = ElectricDataTemp.objects.filter(pk__gte=1241619)
     #readingsObj = ElectricDataTemp.objects.all()
@@ -1778,11 +1775,12 @@ def tag_reading_batch():
 
 
                 #Guarda el registro etiquetado
-                newTaggedReading, created = ElectricRateForElectricData.objects.get_or_create(
-                    electric_data=readingObj
+                newTaggedReading = ElectricRateForElectricData(
+                    electric_data=readingObj,
+                    electric_rates_periods=reading_period_type,
+                    identifier=tag
                 )
-                newTaggedReading.electric_rates_periods=reading_period_type
-                newTaggedReading.identifier=tag
+
                 newTaggedReading.save()
 
     print "Acabe"

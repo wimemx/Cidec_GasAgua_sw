@@ -8278,12 +8278,41 @@ def montly_analitics(request, id_building):
     template_vars["sidebar"] = request.session['sidebar']
     template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
-    if has_permission(request.user, VIEW, "Consultar recibo CFE") or request.user.is_superuser:
+    if has_permission(request.user, VIEW, "Consultar recibo CFE") or \
+            request.user.is_superuser:
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
             "consumption_centers/montly_analitics.html",
             template_vars_template)
+    else:
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
+
+@login_required(login_url='/')
+def montly_data_for_building(request, id_building, year, month):
+    edificio = get_object_or_404(Building, pk=int(id_building))
+    datacontext = get_buildings_context(request.user)
+    template_vars = {}
+    if datacontext:
+        template_vars["datacontext"] = datacontext
+    template_vars['building'] = edificio
+    template_vars["sidebar"] = request.session['sidebar']
+    template_vars["empresa"] = request.session['main_building']
+    template_vars["company"] = request.session['company']
+    if has_permission(request.user, VIEW, "Consultar recibo CFE") or \
+            request.user.is_superuser:
+        first_of_month = datetime.date(int(year), int(month), 1)
+        if first_of_month.weekday() == 6:
+            first_day = first_of_month
+        else:
+            first_day = first_of_month - timedelta(
+                days=first_of_month.weekday()+1)
+        last_day = first_day + timedelta(days=41)
+        response_data = simplejson.dumps([dict(inicia=str(first_day),
+                                         finaliza=str(last_day))])
+        return HttpResponse(content=response_data, content_type="application/json")
+
     else:
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)

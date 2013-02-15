@@ -280,4 +280,8 @@ urlpatterns = patterns('',
                        url(r'^node/',
                            'django.views.generic.simple.direct_to_template',
                            {'template': 'test.html'}),
+
+                       url(r'^month_analitics/(?P<id_building>\d+)/'
+                           r'(?P<year>\d+)/(?P<month>\d+)/',
+                           'c_center.views.montly_data_for_building'),
 )
