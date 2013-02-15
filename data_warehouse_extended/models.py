@@ -7,7 +7,7 @@ import django.db.models
 import data_warehouse_extended.globals
 
 
-class InstantDelta(django.db.models):
+class InstantDelta(django.db.models.Model):
 
     name =\
         django.db.models.CharField(
@@ -21,7 +21,7 @@ class InstantDelta(django.db.models):
                              INSTANT_DELTA__DELTA_SECONDS)
 
 
-class Instant(django.db.models):
+class Instant(django.db.models.Model):
 
     instant_delta =\
         django.db.models.ForeignKey(
@@ -37,7 +37,7 @@ class Instant(django.db.models):
                              INSTANT__INSTANT_DATETIME)
 
 
-class ConsumerUnitProfile(django.db.models):
+class ConsumerUnitProfile(django.db.models.Model):
 
     transactional_id =\
         django.db.models.IntegerField(
@@ -70,7 +70,7 @@ class ConsumerUnitProfile(django.db.models):
                              CONSUMER_UNIT_PROFILE__ELECTRIC_DEVICE_TYPE_NAME)
 
 
-class ElectricalParameter(django.db.models):
+class ElectricalParameter(django.db.models.Model):
 
     INSTANT = 1
     CUMULATIVE = 2
@@ -102,7 +102,7 @@ class ElectricalParameter(django.db.models):
                              ELECTRICAL_PARAMETER__TYPE)
 
 
-class ConsumerUnitInstantElectricalData(django.db.models):
+class ConsumerUnitInstantElectricalData(django.db.models.Model):
 
     id =\
         django.db.models.BigIntegerField(
