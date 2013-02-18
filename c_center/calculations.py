@@ -110,7 +110,7 @@ def costoenergia_total(kwbase, kwintermedio, kwpunta, tarifa_kwbase,
     costo_energia = 0
 
     costo_energia = kwbase * tarifa_kwbase + kwintermedio * \
-                                             tarifa_kwintermedio + kwpunta * \
+                    tarifa_kwintermedio + kwpunta * \
                     tarifa_kwpunta
 
     return costo_energia
@@ -137,10 +137,10 @@ def fpbonificacionrecargo(fp):
     if fp != 0:
         if fp < 90:
             fp_valor = Decimal(str(3.0 / 5.0)) * (
-            (Decimal(str(90.0)) / fp) - 1) * 100
+                (Decimal(str(90.0)) / fp) - 1) * 100
         else:
             fp_valor = Decimal(str(1.0 / 4.0)) * (
-            1 - (Decimal(str(90.0)) / fp)) * 100
+                1 - (Decimal(str(90.0)) / fp)) * 100
 
     return float(fp_valor)
 
@@ -191,7 +191,7 @@ def obtenerDemanda(arr_kw):
             if longitud >= 3:
                 for indice, demanda in enumerate(arr_kw):
                     if indice + 1 < (longitud - 1) and indice + 2 <= (
-                    longitud - 1):
+                            longitud - 1):
                         prom = (Decimal(str(arr_kw[indice])) + Decimal(
                             str(arr_kw[indice + 1])) + Decimal(
                             str(arr_kw[indice + 2]))) / Decimal(3.0)
@@ -249,7 +249,7 @@ def obtenerFestivos(year):
                     # mes)+" "+str(actual_year), "%d %m %Y")
                     st_time = time.strptime(
                         "%02d" % (dia_mes) + " " + "%02d" % (
-                        hday.month) + " " + str(actual_year), "%d %m %Y")
+                            hday.month) + " " + str(actual_year), "%d %m %Y")
                     week_day = strftime("%w", st_time)
                     if lst_days[week_day] == w_day:
                         if ahorita == int(n_day):
@@ -285,7 +285,7 @@ def obtenerCatalogoGrupos():
     semana.
 
     """
-    group_days_bd = Groupdays.objects.all()
+    group_days_bd = Groupdays.objects.all();
     group_days = {}
 
     if group_days_bd:
@@ -379,7 +379,7 @@ def obtenerTipoPeriodoObj(fecha, region):
     electric_type = ElectricRatesPeriods.objects.filter(region=region).filter(
         date_interval__in=horario_ver_inv).filter(groupdays=grupo_id).filter(
         Q(time_init__lte=fecha),Q(
-        time_end__gte=fecha))
+            time_end__gte=fecha))
 
     return electric_type[0]
 
@@ -402,8 +402,8 @@ def obtenerKWTarifa(pr_powermeter, tarifa_id):
     fecha_fin = str(tarifaObj.date_end) + " 23:59:59"
 
     lecturas_base = ElectricRateForElectricData.objects.filter(
-        electric_data__profile_powermeter__powermeter__pk=pr_powermeter.pk)\
-    .filter(
+        electric_data__profile_powermeter__powermeter__pk=pr_powermeter.pk) \
+        .filter(
         electric_data__medition_date__range=(fecha_inicio, fecha_fin)).filter(
         electric_rates_periods__period_type='base').order_by(
         'electric_data__medition_date')
@@ -411,8 +411,8 @@ def obtenerKWTarifa(pr_powermeter, tarifa_id):
     valores_periodo['base'] = kw_base_t
 
     lecturas_intermedio = ElectricRateForElectricData.objects.filter(
-        electric_data__profile_powermeter__powermeter__pk=pr_powermeter.pk)\
-    .filter(
+        electric_data__profile_powermeter__powermeter__pk=pr_powermeter.pk) \
+        .filter(
         electric_data__medition_date__range=(fecha_inicio, fecha_fin)).filter(
         electric_rates_periods__period_type='intermedio').order_by(
         'electric_data__medition_date')
@@ -420,8 +420,8 @@ def obtenerKWTarifa(pr_powermeter, tarifa_id):
     valores_periodo['intermedio'] = kw_intermedio_t
 
     lecturas_punta = ElectricRateForElectricData.objects.filter(
-        electric_data__profile_powermeter__powermeter__pk=pr_powermeter.pk)\
-    .filter(
+        electric_data__profile_powermeter__powermeter__pk=pr_powermeter.pk) \
+        .filter(
         electric_data__medition_date__range=(fecha_inicio, fecha_fin)).filter(
         electric_rates_periods__period_type='punta').order_by(
         'electric_data__medition_date')
@@ -599,9 +599,9 @@ def obtenerKVARHTarifa(pr_powermeter, tarifa_id):
 def obtenerKVARH_total(pr_powermeter, start_date, end_date):
     kvarh_netos = 0
     lecturasObj = ElectricDataTemp.objects.filter(
-        profile_powermeter=pr_powermeter).\
-        filter(medition_date__gte=start_date).filter(medition_date__lt=end_date).\
-        order_by('medition_date')
+        profile_powermeter__powermeter=pr_powermeter,
+        medition_date__gte=start_date,
+        medition_date__lte=end_date).order_by('medition_date')
     if lecturasObj:
         total_lecturas = len(lecturasObj)
         kvarh_inicial = lecturasObj[0].TotalkvarhIMPORT
@@ -623,8 +623,8 @@ def obtenerDemandaMaximaTarifa(pr_powermeter, tarifa_id):
     fecha_fin = str(tarifaObj.date_end) + " 23:59:59"
 
     lecturasObj = ElectricRateForElectricData.objects.filter(
-        electric_data__profile_powermeter__powermeter__pk=pr_powermeter.pk)\
-    .filter(
+        electric_data__profile_powermeter__powermeter__pk=pr_powermeter.pk) \
+        .filter(
         electric_data__medition_date__range=(fecha_inicio, fecha_fin)).order_by(
         'electric_data__medition_date')
 
@@ -752,7 +752,7 @@ def getMonths(start_date, end_date):
     dates = [datetime.datetime(year=yr, month=mn, day=1) for (yr, mn) in (
         ((m - 1) / 12 + dt1.tm_year, (m - 1) % 12 + 1) for m in range(
         start_month, end_months)
-        )]
+    )]
 
     final_months = []
     b_inicio = True
@@ -852,12 +852,12 @@ def tarifaHM_mensual(pr_powermeter, start_date, end_date, region_id,
             kw_punta_t = obtenerDemanda_kw(lecturas_punta)
             dict_mes["kw_punta"] = kw_punta_t
 
-            lecturas_identificadores = ElectricRateForElectricData.objects\
-            .filter(
+            lecturas_identificadores = ElectricRateForElectricData.objects \
+                .filter(
                 electric_data__profile_powermeter__powermeter__pk
-                =pr_powermeter.pk).\
-            filter(electric_data__medition_date__range=(m[0], m[1])).\
-            order_by("electric_data__medition_date").values(
+                =pr_powermeter.pk). \
+                filter(electric_data__medition_date__range=(m[0], m[1])). \
+                order_by("electric_data__medition_date").values(
                 "identifier").annotate(Count("identifier"))
 
             ultima_lectura = 0
@@ -865,24 +865,24 @@ def tarifaHM_mensual(pr_powermeter, start_date, end_date, region_id,
 
             for lectura in lecturas_identificadores:
                 electric_info = ElectricRateForElectricData.objects.filter(
-                    identifier=lectura["identifier"]).\
-                filter(
+                    identifier=lectura["identifier"]). \
+                    filter(
                     electric_data__profile_powermeter__powermeter__pk
-                    =pr_powermeter.pk).\
-                filter(electric_data__medition_date__range=(m[0], m[1])).\
-                order_by("electric_data__medition_date")
+                    =pr_powermeter.pk). \
+                    filter(electric_data__medition_date__range=(m[0], m[1])). \
+                    order_by("electric_data__medition_date")
 
                 num_lecturas = len(electric_info)
                 #print "Num Lecturas:",num_lecturas
                 primer_lectura = electric_info[0].electric_data.TotalkWhIMPORT
                 ultima_lectura = electric_info[
-                                 num_lecturas - 1].electric_data.TotalkWhIMPORT
+                    num_lecturas - 1].electric_data.TotalkWhIMPORT
                 #print "Primer:",primer_lectura
                 #print "Ultima:",ultima_lectura
 
                 #Obtener el tipo de periodo: Base, punta, intermedio
                 tipo_periodo = electric_info[
-                               0].electric_rates_periods.period_type
+                    0].electric_rates_periods.period_type
                 t = primer_lectura, tipo_periodo
                 kwh_por_periodo.append(t)
 
@@ -1057,33 +1057,33 @@ def tarifaHM_total(pr_powermeter, start_date, end_date, region_id,
     numero_tarifas = len(months)
 
     lecturas_base = ElectricRateForElectricData.objects.filter(
-        electric_data__profile_powermeter__powermeter__pk=pr_powermeter.pk)\
-    .filter(
+        electric_data__profile_powermeter__powermeter__pk=pr_powermeter.pk) \
+        .filter(
         electric_data__medition_date__range=(start_date, end_date)).filter(
         electric_rates_periods__period_type='base').order_by(
         'electric_data__medition_date')
     kw_base_totales = obtenerDemanda_kw(lecturas_base)
 
     lecturas_intermedio = ElectricRateForElectricData.objects.filter(
-        electric_data__profile_powermeter__powermeter__pk=pr_powermeter.pk)\
-    .filter(
+        electric_data__profile_powermeter__powermeter__pk=pr_powermeter.pk) \
+        .filter(
         electric_data__medition_date__range=(start_date, end_date)).filter(
         electric_rates_periods__period_type='intermedio').order_by(
         'electric_data__medition_date')
     kw_intermedio_totales = obtenerDemanda_kw(lecturas_intermedio)
 
     lecturas_punta = ElectricRateForElectricData.objects.filter(
-        electric_data__profile_powermeter__powermeter__pk=pr_powermeter.pk)\
-    .filter(
+        electric_data__profile_powermeter__powermeter__pk=pr_powermeter.pk) \
+        .filter(
         electric_data__medition_date__range=(start_date, end_date)).filter(
         electric_rates_periods__period_type='punta').order_by(
         'electric_data__medition_date')
     kw_punta_totales = obtenerDemanda_kw(lecturas_punta)
 
     lecturas_identificadores = ElectricRateForElectricData.objects.filter(
-        electric_data__profile_powermeter__powermeter__pk=pr_powermeter.pk).\
-    filter(electric_data__medition_date__range=(start_date, end_date)).\
-    order_by("electric_data__medition_date").values("identifier").annotate(
+        electric_data__profile_powermeter__powermeter__pk=pr_powermeter.pk). \
+        filter(electric_data__medition_date__range=(start_date, end_date)). \
+        order_by("electric_data__medition_date").values("identifier").annotate(
         Count("identifier"))
 
     ultima_lectura = 0
@@ -1091,16 +1091,16 @@ def tarifaHM_total(pr_powermeter, start_date, end_date, region_id,
 
     for lectura in lecturas_identificadores:
         electric_info = ElectricRateForElectricData.objects.filter(
-            identifier=lectura["identifier"]).\
-        filter(
+            identifier=lectura["identifier"]). \
+            filter(
             electric_data__profile_powermeter__powermeter__pk=pr_powermeter
-            .pk).\
-        order_by("electric_data__medition_date")
+            .pk). \
+            order_by("electric_data__medition_date")
 
         num_lecturas = len(electric_info)
         primer_lectura = electric_info[0].electric_data.TotalkWhIMPORT
         ultima_lectura = electric_info[
-                         num_lecturas - 1].electric_data.TotalkWhIMPORT
+            num_lecturas - 1].electric_data.TotalkWhIMPORT
 
         #Obtener el tipo de periodo: Base, punta, intermedio
         tipo_periodo = electric_info[0].electric_rates_periods.period_type
@@ -1330,9 +1330,9 @@ def tarifaHM(building, pr_powermeter, month, year):
 
         #Se obtienen todos los identificadores para los KWH
         lecturas_identificadores = ElectricRateForElectricData.objects.filter(
-            electric_data__profile_powermeter__powermeter__pk=pr_powermeter.pk).\
-        filter(electric_data__medition_date__range=(s_date, e_date)).\
-        order_by("electric_data__medition_date").values("identifier").annotate(
+            electric_data__profile_powermeter__powermeter__pk=pr_powermeter.pk). \
+            filter(electric_data__medition_date__range=(s_date, e_date)). \
+            order_by("electric_data__medition_date").values("identifier").annotate(
             Count("identifier"))
 
         ultima_lectura = 0
@@ -1340,16 +1340,16 @@ def tarifaHM(building, pr_powermeter, month, year):
 
         for lectura in lecturas_identificadores:
             electric_info = ElectricRateForElectricData.objects.filter(
-                identifier=lectura["identifier"]).\
-            filter(
-                electric_data__profile_powermeter__powermeter__pk=pr_powermeter.pk).\
-            filter(electric_data__medition_date__range=(s_date, e_date)).\
-            order_by("electric_data__medition_date")
+                identifier=lectura["identifier"]). \
+                filter(
+                electric_data__profile_powermeter__powermeter__pk=pr_powermeter.pk). \
+                filter(electric_data__medition_date__range=(s_date, e_date)). \
+                order_by("electric_data__medition_date")
 
             num_lecturas = len(electric_info)
             primer_lectura = electric_info[0].electric_data.TotalkWhIMPORT
             ultima_lectura = electric_info[
-                             num_lecturas - 1].electric_data.TotalkWhIMPORT
+                num_lecturas - 1].electric_data.TotalkWhIMPORT
             #print electric_info[0].electric_data.pk,"Primer Lectura:",primer_lectura,"-",electric_info[num_lecturas-1].electric_data.pk," Ultima Lectura:",ultima_lectura
 
             #Obtener el tipo de periodo: Base, punta, intermedio
@@ -1548,9 +1548,9 @@ def tarifaDAC(building, pr_powermeter, month, year):
                 tz=timezone.get_current_timezone()), " Id:", kwh_lecturas[0].id
             kwh_inicial = kwh_lecturas[0].TotalkWhIMPORT
             print "2da Lectura:", kwh_lecturas[
-                                  total_lecturas - 1].medition_date.astimezone(
+                total_lecturas - 1].medition_date.astimezone(
                 tz=timezone.get_current_timezone()), " Id:", kwh_lecturas[
-                                                             total_lecturas - 1].id
+                total_lecturas - 1].id
             kwh_final = kwh_lecturas[total_lecturas - 1].TotalkWhIMPORT
 
         kwh_netos = int(ceil(kwh_final - kwh_inicial))
@@ -1716,11 +1716,11 @@ def tag_reading_batch():
 
     print "entra"
     readingsObj = ElectricDataTemp.objects.filter(
-        profile_powermeter__in=[35, 34, 28,29,31, 32, 33, 24, 25, 26, 27, 22, 7, 6, 3]).order_by(
+        profile_powermeter__pk=28, medition_date__gte=datetime.datetime(2013,01,01)).order_by(
         "medition_date")
 
     for readingObj in readingsObj:
-        print "por cada lectura"
+        print "por cada lectura", readingObj.pk
         #Si la lectura proviene de cualquier medidor menos del No Asignado
         if readingObj.profile_powermeter.pk != 4:
             tag = None
@@ -1754,7 +1754,7 @@ def tag_reading_batch():
                 if last_reading:
                     #Obtiene el periodo de la ultima lectura de ese medidor
                     last_reading_type = last_reading[
-                                        0].electric_rates_periods.period_type
+                        0].electric_rates_periods.period_type
 
                     #    Se compara el periodo actual con el periodo del ultimo registro.
                     #    Si los periodos son iguales, el identificador será el mismo
@@ -1775,12 +1775,11 @@ def tag_reading_batch():
 
 
                 #Guarda el registro etiquetado
-                newTaggedReading = ElectricRateForElectricData(
-                    electric_data=readingObj,
-                    electric_rates_periods=reading_period_type,
-                    identifier=tag
+                newTaggedReading, created = ElectricRateForElectricData.objects.get_or_create(
+                    electric_data=readingObj
                 )
-
+                newTaggedReading.electric_rates_periods=reading_period_type
+                newTaggedReading.identifier=tag
                 newTaggedReading.save()
 
     print "Acabe"
@@ -1822,7 +1821,7 @@ def tag_reading_ids(id_start, id_end):
                     tz=timezone.get_current_timezone())
                 #reading_period_type = obtenerTipoPeriodoObj(readingObj.medition_date, buildingObj.region, buildingObj.electric_rate)
                 reading_period_type = obtenerTipoPeriodoObj(fecha_zhor,
-                    buildingObj.region)
+                                                            buildingObj.region)
 
                 #Obtiene las ultimas lecturas de ese medidor
                 last_reading = ElectricRateForElectricData.objects.filter(
@@ -1832,7 +1831,7 @@ def tag_reading_ids(id_start, id_end):
                 if last_reading:
                     #Obtiene el periodo de la ultima lectura de ese medidor
                     last_reading_type = last_reading[
-                                        0].electric_rates_periods.period_type
+                        0].electric_rates_periods.period_type
 
                     #    Se compara el periodo actual con el periodo del ultimo registro.
                     #    Si los periodos son iguales, el identificador será el mismo
@@ -1897,8 +1896,8 @@ def tag_reading(request):
                     #Si existen registros para ese medidor
                     if last_reading:
                         #Obtiene el periodo de la ultima lectura de ese medidor
-                        last_reading_type = last_reading[
-                                            0].electric_rates_periods.period_type
+                        last_reading_type = last_reading[0].\
+                            electric_rates_periods.period_type
 
                         #    Se compara el periodo actual con el periodo del ultimo registro.
                         #    Si los periodos son iguales, el identificador será el mismo

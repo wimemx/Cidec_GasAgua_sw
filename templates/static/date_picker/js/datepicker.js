@@ -621,7 +621,6 @@
                     tmp2 = changed_date;
                 }else{
                     changed_date = new Date(changed_date);
-                    console.log(changed_date);
                     tmp2 = new Date(changed_date.setMonth(changed_date.getMonth()));
 
                 }

@@ -12,7 +12,8 @@
         var fecha_act = new Date();
         var current_month = fecha_act.getMonth()+1;
         var current_year = fecha_act.getFullYear();
-        var f_day = null, l_day = null;
+        var current_day = fecha_act.format("yyyy-mm-dd");
+
     function get_full_month(){
         $.ajax({
             url: "/buildings/month_analitics/{{ building.pk }}/"+String(current_year)+"/"+String(current_month)+"/",
@@ -34,6 +35,13 @@
     </script>
 {% endblock %}
 {% block document_ready %}
+    var lateral = $("#lateral");
+    $("#close").click(function(e){
+        lateral.animate({width: 'toggle', right: "0"}, 500, function(){
+            $(this).addClass("collapsed");
+        });
+    });
+
     $('#widgetCal').DatePicker({
         flat: true,
         format: 'Y-m-d',
@@ -41,24 +49,54 @@
         calendars: 1,
         starts: 7,
         onChange: function(month, selected) {
+            var display_day = false;
+            console.log("selected", selected)
             current = month.split("-");
             c_month = current[1];
             c_year = current[0];
+
+            //month name as auxiliar for the events of loading info
+            var mes = parseInt(current_month);
+            if(mes < 10){
+                mes = "0" + String(mes);
+            }else{
+                mes = String(mes);
+            }
             if(c_month != current_month || c_year != current_year ){
-                console.log("cambio de mes");
-                f_day = null;
-                current_month = c_month;
-                current_year = c_year;
-                get_full_month();
+                var class_name = "."+String(current_year) + "-" + mes + "-15";
+                if(!$(class_name).size()){
+                    console.log("cambio de mes");
+                    current_month = c_month;
+                    current_year = c_year;
+                    lateral.animate({width: 'toggle', right: "0"}, 500, function(){
+                        $(this).addClass("collapsed");
+                    });
+                    display_day = false;
+                    get_full_month();
+                }else{
+                    display_day = true;
+                }
+            }else{
+                display_day = true;
             }
 
+            if(display_day){
+                if(current_day != selected){
+                    current_day = selected;
+                    console.log("carga la información del día");
+                }else{
+                    console.log("muestra solamente");
+                }
+                if(lateral.hasClass("collapsed")){
+                    lateral.removeClass("collapsed");
+                    lateral.show().animate({width: '240px', right: "-249px"}, 500);
+                }
 
-            console.log("++++changed!", c_month, c_year, selected);
+            }
+
         },
         onRender: function(date){
-            //maneja los eventos al cambiar de mes
-            console.log("----rendered");
-
+            //maneja los eventos al generar cada día
             return {selected: false, disabled: false, className: "day_cal"+" "+date.format("yyyy-mm-dd")};
         }
     });
@@ -77,10 +115,81 @@
 
         <div class="divider" id="divider_top">&nbsp;</div>
 
+        <div id="month_sumary">
+            <div class="icon_sumary consumo_t">
+                <span id="cons_total">
+                    3,404 kWh
+                </span>
+                <span>Consumo acumulado/ m</span>
+            </div>
+            <div class="icon_sumary demanda">
+                <span id="dem_total">
+                    304 kW
+                </span>
+                <span>Demanda Máxima / m</span>
+            </div>
+            <div class="icon_sumary emisiones">
+                <span id="emit_total">
+                    404 ton
+                </span>
+                <span>Emisiones de CO2</span>
+            </div>
+            <div class="icon_sumary potencia">
+                <span id="pp_total">
+                    97%
+                </span>
+                <span>Factor de Potencia</span>
+            </div>
+            <div class="month_totals">
+                <span class="label_tot">Demanda Mínima</span>
+                <span class="value_tot">204W</span>
+
+                <span class="label_tot">Comsumo promedio</span>
+                <span class="value_tot">340kWh</span>
+
+                <span class="label_tot">Consumo media</span>
+                <span class="value_tot">200kWh</span>
+
+                <span class="label_tot">Consumo desviación</span>
+                <span class="value_tot">100kWh</span>
+            </div>
+        </div>
 
         <div id="widgetCal">
             <span class="ringl"></span>
             <span class="ringr"></span>
+            <div id="week_s">
+                Ver resumen semanal
+            </div>
+            <div id="lateral">
+                <span id="close"></span>
+                <h2>Lunes x de Yyyyyy</h2>
+                <span class="lat_sep"></span>
+                <h3>Consumo</h3>
+                <div id="lat_consumo">
+                    <span class="m_value">35 kWh</span>
+                    <span class="s_value">15kWh base</span>
+                    <span class="s_value">15kWh intermedia</span>
+                    <span class="s_value">15kWh punta</span>
+                </div>
+                <a href="/main/">Ver en una gr&aacute;fica</a>
+
+                <h3>Demanda M&aacute;x</h3>
+                <div id="lat_demanda">
+                    <span class="m_value">320 kW</span>
+                    <span class="s_value">02:45 PM</span>
+                </div>
+                <a href="/main/">Ver en una gr&aacute;fica</a>
+
+                <h3>Costo Promedio</h3>
+                <div id="lat_costo">
+                    <span class="m_value">$420.25</span>
+                    <span class="s_value">MXN</span>
+                </div>
+
+                <span class="aditional">Factor Potencia: 98%</span>
+                <span class="aditional">kVArh: 450 KVar</span>
+            </div>
 
         </div>
     </div>
