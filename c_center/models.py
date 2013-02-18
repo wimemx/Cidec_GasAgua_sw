@@ -852,3 +852,22 @@ class T3HistoricData(models.Model):
 
     class Meta:
         verbose_name_plural = "Información Historica de Tarifa 3"
+
+class DailyData(models.Model):
+    building = models.ForeignKey(Building, on_delete=models.PROTECT)
+    data_day = models.DateField("Fecha del dia")
+    KWH_total = models.IntegerField(null=True, blank=True)
+    KWH_base = models.IntegerField(null=True, blank=True)
+    KWH_intermedio = models.IntegerField(null=True, blank=True)
+    KWH_punta = models.IntegerField(null=True, blank=True)
+    max_demand = models.IntegerField(null=True, blank=True)
+    max_demand_time = models.TimeField("Hora de la demanda maxima")
+    KWH_cost = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    power_factor = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    KVARH = models.IntegerField(null=True, blank=True)
+
+    def __unicode__(self):
+        return "Building: " + self.building.building_name + " - Dia:" + str(self.data_day)
+
+    class Meta:
+        verbose_name_plural = "Información Diaria"

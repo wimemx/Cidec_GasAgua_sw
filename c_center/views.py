@@ -391,6 +391,14 @@ def cfe_calculations(request):
                 resultado_mensual['total'] = cfe_historico[0].total
                 resultado_mensual['status'] = 'OK'
 
+                #Prueba del dailyreport
+
+                today = datetime.datetime(year=2013, month=1, day=6, tzinfo=timezone.get_current_timezone())
+
+                dailyReport(request.session['main_building'], request.session['consumer_unit'], today)
+                print getDailyReports(request.session['main_building'], 1, 2013)
+                getWeeklyReport(request.session['main_building'], 1, 2013)
+
             if tipo_tarifa.pk == 2: #Tarifa Dac
 
                 periodo = str(cfe_historico[0].monthly_cut_dates.date_init.day)+'/'+str(cfe_historico[0].monthly_cut_dates.date_init.month)+"/"+str(cfe_historico[0].monthly_cut_dates.date_init.year)+" "\
@@ -482,15 +490,12 @@ def cfe_calculations(request):
             #Se general el recibo.
             if tipo_tarifa.pk == 1: #Tarifa HM
                 resultado_mensual = tarifaHM_2(request.session['main_building'], request.session['consumer_unit'], s_date, e_date, month, year)
-                template_vars['historico'] = obtenerHistoricoHM
 
             elif tipo_tarifa.pk == 2: #Tarifa DAC
                 resultado_mensual = tarifaDAC_2(request.session['main_building'],request.session['consumer_unit'], s_date, e_date, month, year)
-                template_vars['historico'] = obtenerHistoricoHM
 
             elif tipo_tarifa.pk == 3: #Tarifa 3
                 resultado_mensual = tarifa_3_v2(request.session['main_building'],request.session['consumer_unit'], s_date, e_date, month, year)
-
 
         if resultado_mensual['status'] == 'OK':
             template_vars['resultados'] = resultado_mensual
@@ -7063,7 +7068,7 @@ def tarifaHM_2(building, consumer_unit, s_date, e_date, month, year):
                 primer_lectura = electric_info[0].electric_data.TotalkWhIMPORT
                 ultima_lectura = electric_info[
                                  num_lecturas - 1].electric_data.TotalkWhIMPORT
-                print electric_info[0].electric_data.pk,"Primer Lectura:", primer_lectura,"-",electric_info[num_lecturas-1].electric_data.pk," Ultima Lectura:",ultima_lectura
+                #print electric_info[0].electric_data.pk,"Primer Lectura:", primer_lectura,"-",electric_info[num_lecturas-1].electric_data.pk," Ultima Lectura:",ultima_lectura
 
                 #Obtener el tipo de periodo: Base, punta, intermedio
                 tipo_periodo = electric_info[
@@ -7078,7 +7083,7 @@ def tarifaHM_2(building, consumer_unit, s_date, e_date, month, year):
             kwh_punta_t = 0
 
             for idx, kwh_p in enumerate(kwh_por_periodo):
-                print "Lectura:", kwh_p[0], "-:",kwh_p[1]
+                #print "Lectura:", kwh_p[0], "-:",kwh_p[1]
                 inicial = kwh_p[0]
                 periodo_t = kwh_p[1]
                 if idx + 1 <= kwh_periodo_long - 1:
@@ -8287,3 +8292,244 @@ def montly_analitics(request, id_building):
     else:
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
+
+
+def dailyReport(building, consumer_unit, today):
+
+    #Inicializacion de variables
+    kwh_totales = 0
+    kwh_punta = 0
+    kwh_intermedio = 0
+    kwh_base = 0
+    demanda_max = 0
+    dem_max_time = None
+    kvarh_totales = 0
+    tarifa_kwh_base = 0
+    tarifa_kwh_intermedio = 0
+    tarifa_kwh_punta = 0
+
+    #Se agregan las horas
+    today_s_str = time.strptime(str(today.year)+"-"+str(today.month)+"-"+str(today.day)+" 00:00:00", "%Y-%m-%d  %H:%M:%S")
+    today_s_tuple = time.gmtime(time.mktime(today_s_str))
+    today_s_utc = datetime.datetime(year= today_s_tuple[0], month=today_s_tuple[1], day=today_s_tuple[2], hour=today_s_tuple[3], minute=today_s_tuple[4], second=today_s_tuple[5], tzinfo = pytz.utc)
+
+    today_e_str = time.strptime(str(today.year)+"-"+str(today.month)+"-"+str(today.day)+" 23:59:59", "%Y-%m-%d  %H:%M:%S")
+    today_e_tuple = time.gmtime(time.mktime(today_e_str))
+    today_e_utc = datetime.datetime(year= today_e_tuple[0], month=today_e_tuple[1], day=today_e_tuple[2], hour=today_e_tuple[3], minute=today_e_tuple[4], second=today_e_tuple[5], tzinfo = pytz.utc)
+
+    #print "Today s_utc", today_s_utc
+    #print "Today e_utc", today_e_utc
+
+    #Se obtiene la región
+    region = building.region
+
+    consumer_units = get_consumer_units(consumer_unit)
+    demanda_max = 0
+
+    if consumer_units:
+        for c_unit in consumer_units:
+            pr_powermeter = c_unit.profile_powermeter.powermeter
+
+            #Se obtiene la demanda max
+            demanda_max_obj = ElectricDataTemp.objects.\
+                filter(profile_powermeter__powermeter__pk=pr_powermeter.pk).\
+                filter(medition_date__gte=today_s_utc).filter(medition_date__lte=today_e_utc).\
+                order_by('-kW_import_sliding_window_demand')
+
+            demanda_max = demanda_max_obj[0].kW_import_sliding_window_demand
+            dem_max_time = demanda_max_obj[0].medition_date.time()
+
+            #print "Demanda_max_obj", demanda_max
+
+
+            #KWH
+            #Se obtienen todos los identificadores para los KWH
+            lecturas_identificadores = ElectricRateForElectricData.objects\
+            .filter(
+                electric_data__profile_powermeter__powermeter__pk
+                =pr_powermeter.pk).\
+            filter(electric_data__medition_date__gte=today_s_utc).filter(electric_data__medition_date__lte=today_e_utc).\
+            order_by("electric_data__medition_date").values(
+                "identifier").annotate(Count("identifier"))
+
+            ultima_lectura = 0
+            ultimo_id = None
+            kwh_por_periodo = []
+
+            for lectura in lecturas_identificadores:
+
+                electric_info = ElectricRateForElectricData.objects.filter(
+                    identifier=lectura["identifier"]).\
+                filter(
+                    electric_data__profile_powermeter__powermeter__pk
+                    =pr_powermeter.pk).\
+                filter(electric_data__medition_date__gte=today_s_utc).filter(electric_data__medition_date__lte=today_e_utc).\
+                order_by("electric_data__medition_date")
+
+                num_lecturas = len(electric_info)
+                ultimo_id = electric_info[num_lecturas-1].electric_data.pk
+                primer_lectura = electric_info[0].electric_data.TotalkWhIMPORT
+                ultima_lectura = electric_info[
+                                 num_lecturas - 1].electric_data.TotalkWhIMPORT
+                print electric_info[0].electric_data.pk,"Primer Lectura:", primer_lectura,"-",electric_info[num_lecturas-1].electric_data.pk," Ultima Lectura:",ultima_lectura
+
+                #Obtener el tipo de periodo: Base, punta, intermedio
+                tipo_periodo = electric_info[
+                               0].electric_rates_periods.period_type
+                t = primer_lectura, tipo_periodo
+                kwh_por_periodo.append(t)
+
+            kwh_periodo_long = len(kwh_por_periodo)
+
+            kwh_base_t = 0
+            kwh_intermedio_t = 0
+            kwh_punta_t = 0
+
+
+            #Se obtiene la primer lectura del dia siguiente para que concuerde la suma de los KWH
+            #Si el dia actual es igual al ultimo dia del mes, no se hace nada.
+            diasmes_arr = monthrange(today.year, today.month)
+            if not today.day is diasmes_arr[0]:
+                nextReading = ElectricDataTemp.objects.filter(
+                    profile_powermeter__powermeter__pk=pr_powermeter.pk).\
+                filter(pk__gt = ultimo_id)[0]
+                #print "Next Reading:", nextReading.pk
+                ultima_lectura = nextReading.TotalkWhIMPORT
+
+
+            for idx, kwh_p in enumerate(kwh_por_periodo):
+                #print "Lectura:", kwh_p[0], "-:",kwh_p[1]
+                inicial = kwh_p[0]
+                periodo_t = kwh_p[1]
+                if idx + 1 <= kwh_periodo_long - 1:
+                    kwh_p2 = kwh_por_periodo[idx + 1]
+                    final = kwh_p2[0]
+                else:
+                    final = ultima_lectura
+
+                kwh_netos = final - inicial
+                #print "Inicial:",inicial,"Final:",final, "Netos:",kwh_netos
+
+                if periodo_t == 'base':
+                    kwh_base_t += kwh_netos
+                elif periodo_t == 'intermedio':
+                    kwh_intermedio_t += kwh_netos
+                elif periodo_t == 'punta':
+                    kwh_punta_t += kwh_netos
+
+            kwh_base_t = int(ceil(kwh_base_t))
+            kwh_base += kwh_base_t
+
+            kwh_intermedio_t = int(ceil(kwh_intermedio_t))
+            kwh_intermedio += kwh_intermedio_t
+
+            kwh_punta_t = int(ceil(ceil(kwh_punta_t)))
+            kwh_punta += kwh_punta_t
+
+            kwh_t = kwh_base_t + kwh_intermedio_t + kwh_punta_t
+            kwh_totales += kwh_t
+
+            #Se obtienen los kvarhs por medidor
+            kvarh_totales += obtenerKVARH_total(
+                pr_powermeter, today_s_utc, today_e_utc)
+
+    #Obtiene el id de la tarifa correspondiente para el mes en cuestion
+    tarifasObj = ElectricRatesDetail.objects.filter(electric_rate=1).filter(
+        region=region).filter(date_init__lte=today).filter(
+        date_end__gte=today)
+
+    if tarifasObj:
+        tarifa_kwh_base = tarifasObj[0].KWHB
+        tarifa_kwh_intermedio = tarifasObj[0].KWHI
+        tarifa_kwh_punta = tarifasObj[0].KWHP
+
+    #Se obtiene Factor de Potencia
+    factor_potencia_total = factorpotencia(kwh_totales, kvarh_totales)
+
+    #Se obtiene costo de energía
+    costo_energia_total = costoenergia(kwh_base, kwh_intermedio,
+        kwh_punta, tarifa_kwh_base, tarifa_kwh_intermedio,
+        tarifa_kwh_punta)
+
+    #Se guarda en la BD
+    new_daily = DailyData(
+        building = building,
+        data_day = today,
+        KWH_total = kwh_totales,
+        KWH_base = kwh_base,
+        KWH_intermedio = kwh_intermedio,
+        KWH_punta = kwh_punta,
+        max_demand = int(ceil(demanda_max)),
+        max_demand_time = dem_max_time,
+        KWH_cost = costo_energia_total,
+        power_factor = factor_potencia_total,
+        KVARH = kvarh_totales
+    )
+    #new_daily.save()
+
+    return 'OK'
+
+
+def getDailyReports(building, month, year):
+
+    #Se obtienen los dias del mes
+    month_days = getMonthDaysForDailyReport(building, month, year)
+
+    #Se crea un arreglo para almacenar los datos
+    dailyreport_arr = []
+
+    for day in month_days:
+        print "Dia:", day
+        try:
+            ddata_obj = DailyData.objects.get(building=building, data_day=day)
+            dailyreport_arr.append(ddata_obj)
+        except DailyData.DoesNotExist:
+            dailyreport_arr.append(None)
+
+    return dailyreport_arr
+
+def getWeeklyReport(building, month, year):
+    #Se obtienen los dias del mes
+    month_days = getMonthDaysForDailyReport(building, month, year)
+
+    while len(month_days) > 0:
+        semana_array = []
+        no_days = 0
+        while no_days < 7:
+            semana_array.append(month_days.pop(0))
+            no_days += 1
+
+        print "Semana:--"
+        print semana_array
+
+
+        print "Aqui puedo hacer los calculos"
+        semana_array = []
+
+def getMonthDaysForDailyReport(building, month, year):
+    actual_day = datetime.date(year=year, month=month, day=1)
+    weekday = actual_day.weekday()
+
+    notSunday = False
+    if not weekday is 6:
+        notSunday = True
+
+    #Si el primer dia del mes es domingo
+    while notSunday:
+
+        actual_day = actual_day + relativedelta(days=-1)
+        #Se obtiene el dia de la semana del dia anterior
+        weekday = actual_day.weekday()
+        if weekday is 6:
+            notSunday = False
+
+    #Se crea el arreglo que almacenara los dias del mes
+    month_days = []
+
+    no_dia =  0
+    while no_dia < 42:
+        month_days.append(actual_day)
+        actual_day = actual_day + relativedelta(days=+1)
+        no_dia += 1
+
+    return month_days
