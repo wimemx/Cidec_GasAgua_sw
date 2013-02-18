@@ -3,6 +3,7 @@ from celery.task.schedules import crontab
 from celery.decorators import periodic_task
 
 from data_warehouse.views import *
+from c_center.c_center_functions import *
 
 from datetime import date
 
@@ -27,6 +28,14 @@ def datawarehouse_run(
 def calculate_dw(granularity):
     data_warehouse_update(granularity)
 
+@task(ignore_resulset=True)
+def daily_report():
+    dailyReportAll()
+
+@task(ignore_resulset=True)
+def save_historic(request, cd_b, building):
+    save_historic(request, cd_b, building)
+
 # this will run every minute, see http://celeryproject.org/docs/reference/celery.task.schedules.html#celery.task.schedules.crontab
 @periodic_task(run_every=crontab(minute='*/60'))
 def data_warehouse_one_hour():
@@ -38,6 +47,11 @@ def data_warehouse_one_hour():
 def data_warehouse_one_day():
     calculate_dw.delay("day")
     print "firing periodic task - DW Day"
+
+@periodic_task(run_every=crontab(minute=0, hour=0))
+def reporte_diario_para_reporte_mensual():
+    daily_report.delay()
+    print "firing periodic task - Raily Report"
 
 @periodic_task(run_every=crontab(minute=0, hour=0, day_of_week='sun'))
 def data_warehouse_one_week():
