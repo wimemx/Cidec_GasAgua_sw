@@ -903,6 +903,8 @@ class DailyData(models.Model):
     KWH_punta = models.IntegerField(null=True, blank=True)
     max_demand = models.IntegerField(null=True, blank=True)
     max_demand_time = models.TimeField("Hora de la demanda maxima")
+    min_demand = models.IntegerField(null=True, blank=True, default=0)
+    min_demand_time = models.TimeField("Hora de la demanda minima", default=datetime.time(0,0,0))
     KWH_cost = models.DecimalField(max_digits=20, decimal_places=2, null=True,
                                    blank=True, default=0)
     power_factor = models.DecimalField(max_digits=20, decimal_places=2,

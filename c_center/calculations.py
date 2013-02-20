@@ -24,6 +24,57 @@ from dateutil.relativedelta import *
 from c_center.models import *
 from electric_rates.models import *
 
+
+def consumoAcumuladoKWH(building, fecha_inicio, fecha_fin):
+    suma_lecturas = 0
+    suma_lecturas = DailyData.objects.filter(building = building, data_day__gte = fecha_inicio, data_day__lte = fecha_fin).aggregate(Sum('KWH_total'))
+    return suma_lecturas
+
+def demandaMaxima(building, fecha_inicio, fecha_fin):
+    demanda_max = 0
+    lecturas = DailyData.objects.filter(building = building, data_day__gte= fecha_inicio, data_day__lte= fecha_fin).order_by('-max_demand')
+    if lecturas:
+        demanda_max = lecturas[0].max_demand
+    return demanda_max
+
+def demandaMinima(building, fecha_inicio, fecha_fin):
+    demanda_min = 0
+    lecturas = DailyData.objects.filter(building = building, data_day__gte= fecha_inicio, data_day__lte= fecha_fin).order_by('min_demand')
+    if lecturas:
+        demanda_min = lecturas[0].min_demand
+    return  demanda_min
+
+def promedioKWH(building, fecha_inicio, fecha_fin):
+    promedio = 0
+    t_lecturas = DailyData.objects.filter(building = building, data_day__gte = fecha_inicio, data_day__lte = fecha_fin)
+    suma_lecturas = DailyData.objects.filter(building = building, data_day__gte = fecha_inicio, data_day__lte = fecha_fin).aggregate(Sum('KWH_total'))
+    total_lecturas = len(t_lecturas)
+    promedio = suma_lecturas['KWH_total__sum'] / total_lecturas
+    return promedio
+
+def desviacionStandardKWH(building, fecha_inicio, fecha_fin):
+    suma = 0
+    desviacion = 0
+    lecturas = DailyData.objects.filter(building = building, data_day__gte = fecha_inicio, data_day__lte = fecha_fin)
+    promedio = promedioKWH(building, fecha_inicio, fecha_fin)
+    nmenosuno = len(lecturas)-1
+    for kwh in lecturas:
+        n_m = kwh.KWH_total - promedio
+        suma += n_m**2
+    desviacion = sqrt(suma/nmenosuno)
+    return desviacion
+
+def medianaKWH(building, fecha_inicio, fecha_fin):
+    mediana = 0
+    lecturas = DailyData.objects.filter(building = building, data_day__gte = fecha_inicio, data_day__lte = fecha_fin).order_by('KWH_total')
+    if lecturas:
+        longitud = len(lecturas)
+        if longitud % 2 is 0: #Si es par
+            mediana = (lecturas[longitud / 2].KWH_total + lecturas[(longitud / 2) - 1].KWH_total) / 2
+        else: #Si es impar
+            mediana = lecturas[longitud / 2].KWH_total
+    return mediana
+
 def demandafacturable(kwbase, kwintermedio, kwpunta, fri, frb):
     df = 0
 

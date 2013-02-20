@@ -395,7 +395,6 @@ def cfe_calculations(request):
 
                 periodo = str(cfe_historico[0].monthly_cut_dates.date_init.day)+'/'+str(cfe_historico[0].monthly_cut_dates.date_init.month)+"/"+str(cfe_historico[0].monthly_cut_dates.date_init.year)+" "\
                                                                                                                                                                                                        "- "+str(cfe_historico[0].monthly_cut_dates.date_end.day)+'/'+str(cfe_historico[0].monthly_cut_dates.date_end.month)+"/"+str(cfe_historico[0].monthly_cut_dates.date_end.year)
-
                 resultado_mensual['periodo'] = periodo
                 resultado_mensual['kwh_totales'] = cfe_historico[0].KWH_total
                 resultado_mensual['tarifa_kwh'] = cfe_historico[0].KWH_rate
