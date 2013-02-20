@@ -54,27 +54,31 @@
                 var lateral_content = '<span id="close"></span>';
                 lateral_content +=     '<h2>'+ fecha+'</h2>';
                 lateral_content +=     '<span class="lat_sep"></span>';
-                lateral_content +=     '<h3>Consumo</h3>';
-                lateral_content +=     '<div id="lat_consumo">';
-                lateral_content +=     '<span class="m_value">'+ addCommas(data.c_tot)+' kWh</span>';
-                lateral_content +=     '<span class="s_value">'+ addCommas(data.c_base)+'kWh base</span>';
-                lateral_content +=     '<span class="s_value">'+ addCommas(data.c_int)+'kWh intermedia</span>';
-                lateral_content +=     '<span class="s_value">'+ addCommas(data.c_punta)+'kWh punta</span>';
-                lateral_content +=     '</div>';
-                lateral_content +=     '<a href="/main/">Ver en una gr&aacute;fica</a>';
-                lateral_content +=     '<h3>Demanda M&aacute;x</h3>';
-                lateral_content +=     '<div id="lat_demanda">';
-                lateral_content +=     '<span class="m_value">'+ addCommas(data.d_max)+' kW</span>';
-                lateral_content +=     '<span class="s_value">'+ addCommas(data.d_max_time)+'</span>';
-                lateral_content +=     '</div>';
-                lateral_content +=     '<a href="/main/">Ver en una gr&aacute;fica</a>';
-                lateral_content +=     '<h3>Costo Promedio</h3>';
-                lateral_content +=     '<div id="lat_costo">';
-                lateral_content +=     '<span class="m_value">$'+ addCommas(data.cost_p)+'</span>';
-                lateral_content +=     '<span class="s_value">MXN</span>';
-                lateral_content +=     '</div>';
-                lateral_content +=     '<span class="aditional">Factor Potencia: '+ data.pf+'%</span>';
-                lateral_content +=     '<span class="aditional">kVArh: '+ addCommas(data.kvarh) +' KVar</span>';
+                if(data.empty == "true"){
+                    lateral_content +=     '<span class="no_data">No hay informaci&oacute;n para este d&iacute;a</span>';
+                }else{
+                    lateral_content +=     '<h3>Consumo</h3>';
+                    lateral_content +=     '<div id="lat_consumo">';
+                    lateral_content +=     '<span class="m_value">'+ addCommas(data.c_tot)+' kWh</span>';
+                    lateral_content +=     '<span class="s_value">'+ addCommas(data.c_base)+'kWh base</span>';
+                    lateral_content +=     '<span class="s_value">'+ addCommas(data.c_int)+'kWh intermedia</span>';
+                    lateral_content +=     '<span class="s_value">'+ addCommas(data.c_punta)+'kWh punta</span>';
+                    lateral_content +=     '</div>';
+                    lateral_content +=     '<a href="/main/">Ver en una gr&aacute;fica</a>';
+                    lateral_content +=     '<h3>Demanda M&aacute;x</h3>';
+                    lateral_content +=     '<div id="lat_demanda">';
+                    lateral_content +=     '<span class="m_value">'+ addCommas(data.d_max)+' kW</span>';
+                    lateral_content +=     '<span class="s_value">'+ addCommas(data.d_max_time)+'</span>';
+                    lateral_content +=     '</div>';
+                    lateral_content +=     '<a href="/main/">Ver en una gr&aacute;fica</a>';
+                    lateral_content +=     '<h3>Costo Promedio</h3>';
+                    lateral_content +=     '<div id="lat_costo">';
+                    lateral_content +=     '<span class="m_value">$'+ addCommas(data.cost_p)+'</span>';
+                    lateral_content +=     '<span class="s_value">MXN</span>';
+                    lateral_content +=     '</div>';
+                    lateral_content +=     '<span class="aditional">Factor Potencia: '+ data.pf+'%</span>';
+                    lateral_content +=     '<span class="aditional">kVArh: '+ addCommas(data.kvarh) +' KVar</span>';
+                }
                 $("#lateral").html(lateral_content);
             }
         });
