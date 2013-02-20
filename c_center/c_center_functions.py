@@ -1148,8 +1148,8 @@ def dailyReport(building, consumer_unit, today):
     today_e_tuple = time.gmtime(time.mktime(today_e_str))
     today_e_utc = datetime(year= today_e_tuple[0], month=today_e_tuple[1], day=today_e_tuple[2], hour=today_e_tuple[3], minute=today_e_tuple[4], second=today_e_tuple[5], tzinfo = pytz.utc)
 
-    print "Today s_utc", today_s_utc
-    print "Today e_utc", today_e_utc
+    #print "Today s_utc", today_s_utc
+    #print "Today e_utc", today_e_utc
 
     #Se obtiene la región
     region = building.region
@@ -1162,7 +1162,6 @@ def dailyReport(building, consumer_unit, today):
             pr_powermeter = c_unit.profile_powermeter.powermeter
 
             #Se obtiene la demanda max
-
             demanda_max_obj = ElectricDataTemp.objects. \
                 filter(profile_powermeter__powermeter__pk=pr_powermeter.pk). \
                 filter(medition_date__gte=today_s_utc).filter(medition_date__lte=today_e_utc). \
@@ -1318,18 +1317,26 @@ def dailyReport(building, consumer_unit, today):
 def getDailyReports(building, month, year):
 
     #Se obtienen los dias del mes
-    month_days = getMonthDaysForDailyReport(building, month, year)
+    month_days = getMonthDaysForDailyReport(month, year)
 
     #Se crea un arreglo para almacenar los datos
     dailyreport_arr = []
 
     for day in month_days:
-        print "Dia:", day
+        print "Dia:", str(day)
         try:
-            ddata_obj = DailyData.objects.get(building=building, data_day=day)
-            dailyreport_arr.append(ddata_obj)
+            ddata_obj = DailyData.objects.get(building=building,
+                                              data_day=day).values(
+                "max_demand", "KWH_total")
+            data = dict(fecha=str(day),
+                        max_demand=ddata_obj['max_demand'],
+                        KWH_total=ddata_obj['KWH_total'],
+                        empty="false"
+            )
+            dailyreport_arr.append(data)
         except DailyData.DoesNotExist:
-            dailyreport_arr.append(None)
+            dailyreport_arr.append(dict(fecha=str(day),
+                                        empty="true"))
 
     return dailyreport_arr
 
@@ -1338,7 +1345,7 @@ def getWeeklyReport(building, month, year):
     semanas = {}
     num_semana = 1
     #Se obtienen los dias del mes
-    month_days = getMonthDaysForDailyReport(building, month, year)
+    month_days = getMonthDaysForDailyReport(month, year)
 
     while len(month_days) > 0:
 
@@ -1368,7 +1375,7 @@ def getWeeklyReport(building, month, year):
     return semanas
 
 
-def getMonthDaysForDailyReport(building, month, year):
+def getMonthDaysForDailyReport(month, year):
     actual_day = date(year=year, month=month, day=1)
     weekday = actual_day.weekday()
 

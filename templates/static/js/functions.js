@@ -175,12 +175,12 @@ dateFormat.masks = {
 // Internationalization strings
 dateFormat.i18n = {
     dayNames: [
-        "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat",
-        "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
+        "Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab",
+        "Domingo", "Lunes", "Martes", "Mi&eacute;rcoles", "Jueves", "Viernes", "S&aacute;bado"
     ],
     monthNames: [
-        "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-        "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"
+        "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic",
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
     ]
 };
 

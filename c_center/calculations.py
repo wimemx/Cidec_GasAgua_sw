@@ -753,7 +753,7 @@ def tag_reading_batch():
 
     print "entra"
     readingsObj = ElectricDataTemp.objects.filter(
-        profile_powermeter__in=[35, 34, 28,29,31, 32, 33, 24, 25, 26, 27, 22, 7, 6, 3]).order_by(
+        profile_powermeter__in=[35, 34, 29,31, 32, 33, 24, 25, 26, 27, 22, 7, 6, 3]).order_by(
         "medition_date")
 
     for readingObj in readingsObj:
