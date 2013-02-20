@@ -391,13 +391,6 @@ def cfe_calculations(request):
                 resultado_mensual['total'] = cfe_historico[0].total
                 resultado_mensual['status'] = 'OK'
 
-                #Se obtienen los dias
-
-                print getWeeklyReport(request.session['main_building'], 1, 2013)
-                #days = getMonthDaysForDailyReport(request.session['main_building'], 1, 2013)
-                #for day in days:
-                    #dailyReport(request.session['main_building'], request.session['consumer_unit'] , day)
-
             if tipo_tarifa.pk == 2: #Tarifa Dac
 
                 periodo = str(cfe_historico[0].monthly_cut_dates.date_init.day)+'/'+str(cfe_historico[0].monthly_cut_dates.date_init.month)+"/"+str(cfe_historico[0].monthly_cut_dates.date_init.year)+" "\

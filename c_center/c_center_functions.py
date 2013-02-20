@@ -1342,8 +1342,7 @@ def getDailyReports(building, month, year):
 
 def getWeeklyReport(building, month, year):
 
-    semanas = {}
-    num_semana = 1
+    semanas = []
     #Se obtienen los dias del mes
     month_days = getMonthDaysForDailyReport(month, year)
 
@@ -1367,13 +1366,9 @@ def getWeeklyReport(building, month, year):
         no_semana['consumo_desviacion'] = desviacionStandardKWH(building, fecha_inicial, fecha_final)
         no_semana['consumo_mediana'] = medianaKWH(building, fecha_inicial, fecha_final)
 
-        semanas['semana_'+str(num_semana)] = no_semana
-        num_semana += 1
-
-        semana_array = []
+        semanas.append(no_semana)
 
     return semanas
-
 
 def getMonthDaysForDailyReport(month, year):
     actual_day = date(year=year, month=month, day=1)
