@@ -8,22 +8,32 @@ import os
 import cStringIO
 import Image
 import hashlib
+import pytz
+from math import ceil
 
 #local application/library specific imports
 from django.shortcuts import HttpResponse, get_object_or_404
 from django.http import Http404
 from django.utils import simplejson
 from django.db.models import Q
+from django.db.models.aggregates import *
 from django.core.exceptions import ObjectDoesNotExist
 from django.views.decorators.csrf import csrf_exempt
 
+from calendar import monthrange
+
 from cidec_sw import settings
+from c_center.calculations import consumoAcumuladoKWH, demandaMaxima, demandaMinima,\
+    promedioKWH,desviacionStandardKWH, medianaKWH, factorpotencia, costoenergia, obtenerKVARH_total
+#from c_center.views import tarifaHM_2, tarifaDAC_2, tarifa_3_v2
 from c_center.models import Cluster, ClusterCompany, Company,\
     CompanyBuilding, Building, PartOfBuilding, HierarchyOfPart, ConsumerUnit, \
-    ProfilePowermeter, ElectricDataTemp
+    ProfilePowermeter, ElectricDataTemp, DailyData, DacHistoricData, HMHistoricData,  \
+    T3HistoricData, ElectricRateForElectricData
 from rbac.models import PermissionAsigment, DataContextPermission, Role,\
     UserRole, Object, Operation
 from location.models import *
+from electric_rates.models import ElectricRatesDetail
 
 from rbac.rbac_functions import is_allowed_operation_for_object,\
     default_consumerUnit
@@ -1121,7 +1131,9 @@ def dailyReport(building, consumer_unit, today):
     kwh_intermedio = 0
     kwh_base = 0
     demanda_max = 0
-    dem_max_time = None
+    dem_max_time = '00:00:00'
+    demanda_min = 0
+    dem_min_time = '00:00:00'
     kvarh_totales = 0
     tarifa_kwh_base = 0
     tarifa_kwh_intermedio = 0
@@ -1136,8 +1148,8 @@ def dailyReport(building, consumer_unit, today):
     today_e_tuple = time.gmtime(time.mktime(today_e_str))
     today_e_utc = datetime(year= today_e_tuple[0], month=today_e_tuple[1], day=today_e_tuple[2], hour=today_e_tuple[3], minute=today_e_tuple[4], second=today_e_tuple[5], tzinfo = pytz.utc)
 
-    #print "Today s_utc", today_s_utc
-    #print "Today e_utc", today_e_utc
+    print "Today s_utc", today_s_utc
+    print "Today e_utc", today_e_utc
 
     #Se obtiene la región
     region = building.region
@@ -1150,16 +1162,25 @@ def dailyReport(building, consumer_unit, today):
             pr_powermeter = c_unit.profile_powermeter.powermeter
 
             #Se obtiene la demanda max
+
             demanda_max_obj = ElectricDataTemp.objects. \
                 filter(profile_powermeter__powermeter__pk=pr_powermeter.pk). \
                 filter(medition_date__gte=today_s_utc).filter(medition_date__lte=today_e_utc). \
                 order_by('-kW_import_sliding_window_demand')
 
-            demanda_max = demanda_max_obj[0].kW_import_sliding_window_demand
-            dem_max_time = demanda_max_obj[0].medition_date.time()
+            if demanda_max_obj:
+                demanda_max = demanda_max_obj[0].kW_import_sliding_window_demand
+                dem_max_time = demanda_max_obj[0].medition_date.time()
 
-            #print "Demanda_max_obj", demanda_max
+            #Se obtiene la demanda min
+            demanda_min_obj = ElectricDataTemp.objects.\
+                filter(profile_powermeter__powermeter__pk=pr_powermeter.pk).\
+                filter(medition_date__gte=today_s_utc).filter(medition_date__lte=today_e_utc).\
+                order_by('kW')
 
+            if demanda_min_obj:
+                demanda_min = demanda_min_obj[0].kW
+                dem_min_time = demanda_min_obj[0].medition_date.time()
 
             #KWH
             #Se obtienen todos los identificadores para los KWH
@@ -1171,82 +1192,85 @@ def dailyReport(building, consumer_unit, today):
                 order_by("electric_data__medition_date").values(
                 "identifier").annotate(Count("identifier"))
 
-            ultima_lectura = 0
-            ultimo_id = None
-            kwh_por_periodo = []
-
-            for lectura in lecturas_identificadores:
-
-                electric_info = ElectricRateForElectricData.objects.filter(
-                    identifier=lectura["identifier"]). \
-                    filter(
-                    electric_data__profile_powermeter__powermeter__pk
-                    =pr_powermeter.pk). \
-                    filter(electric_data__medition_date__gte=today_s_utc).filter(electric_data__medition_date__lte=today_e_utc). \
-                    order_by("electric_data__medition_date")
-
-                num_lecturas = len(electric_info)
-                ultimo_id = electric_info[num_lecturas-1].electric_data.pk
-                primer_lectura = electric_info[0].electric_data.TotalkWhIMPORT
-                ultima_lectura = electric_info[
-                    num_lecturas - 1].electric_data.TotalkWhIMPORT
-                print electric_info[0].electric_data.pk,"Primer Lectura:", primer_lectura,"-",electric_info[num_lecturas-1].electric_data.pk," Ultima Lectura:",ultima_lectura
-
-                #Obtener el tipo de periodo: Base, punta, intermedio
-                tipo_periodo = electric_info[
-                    0].electric_rates_periods.period_type
-                t = primer_lectura, tipo_periodo
-                kwh_por_periodo.append(t)
-
-            kwh_periodo_long = len(kwh_por_periodo)
-
-            kwh_base_t = 0
-            kwh_intermedio_t = 0
-            kwh_punta_t = 0
+            if lecturas_identificadores:
+                ultima_lectura = 0
+                ultimo_id = None
+                kwh_por_periodo = []
 
 
-            #Se obtiene la primer lectura del dia siguiente para que concuerde la suma de los KWH
-            #Si el dia actual es igual al ultimo dia del mes, no se hace nada.
-            diasmes_arr = monthrange(today.year, today.month)
-            if not today.day is diasmes_arr[0]:
-                nextReading = ElectricDataTemp.objects.filter(
-                    profile_powermeter__powermeter__pk=pr_powermeter.pk). \
-                    filter(pk__gt = ultimo_id)[0]
-                #print "Next Reading:", nextReading.pk
-                ultima_lectura = nextReading.TotalkWhIMPORT
+                for lectura in lecturas_identificadores:
+
+                    electric_info = ElectricRateForElectricData.objects.filter(
+                        identifier=lectura["identifier"]). \
+                        filter(
+                        electric_data__profile_powermeter__powermeter__pk
+                        =pr_powermeter.pk). \
+                        filter(electric_data__medition_date__gte=today_s_utc).filter(electric_data__medition_date__lte=today_e_utc). \
+                        order_by("electric_data__medition_date")
+
+                    num_lecturas = len(electric_info)
+                    ultimo_id = electric_info[num_lecturas-1].electric_data.pk
+                    print "Ultimo ID", ultimo_id
+                    primer_lectura = electric_info[0].electric_data.TotalkWhIMPORT
+                    ultima_lectura = electric_info[
+                        num_lecturas - 1].electric_data.TotalkWhIMPORT
+                    print electric_info[0].electric_data.pk,"Primer Lectura:", primer_lectura,"-",electric_info[num_lecturas-1].electric_data.pk," Ultima Lectura:",ultima_lectura
+
+                    #Obtener el tipo de periodo: Base, punta, intermedio
+                    tipo_periodo = electric_info[
+                        0].electric_rates_periods.period_type
+                    t = primer_lectura, tipo_periodo
+                    kwh_por_periodo.append(t)
+
+                kwh_periodo_long = len(kwh_por_periodo)
+
+                kwh_base_t = 0
+                kwh_intermedio_t = 0
+                kwh_punta_t = 0
 
 
-            for idx, kwh_p in enumerate(kwh_por_periodo):
-                #print "Lectura:", kwh_p[0], "-:",kwh_p[1]
-                inicial = kwh_p[0]
-                periodo_t = kwh_p[1]
-                if idx + 1 <= kwh_periodo_long - 1:
-                    kwh_p2 = kwh_por_periodo[idx + 1]
-                    final = kwh_p2[0]
-                else:
-                    final = ultima_lectura
+                #Se obtiene la primer lectura del dia siguiente para que concuerde la suma de los KWH
+                #Si el dia actual es igual al ultimo dia del mes, no se hace nada.
+                diasmes_arr = monthrange(today.year, today.month)
+                if not today.day is diasmes_arr[0]:
+                    nextReading = ElectricDataTemp.objects.filter(
+                        profile_powermeter__powermeter__pk=pr_powermeter.pk). \
+                        filter(pk__gt = ultimo_id)
+                    if nextReading:
+                        ultima_lectura = nextReading[0].TotalkWhIMPORT
 
-                kwh_netos = final - inicial
-                #print "Inicial:",inicial,"Final:",final, "Netos:",kwh_netos
 
-                if periodo_t == 'base':
-                    kwh_base_t += kwh_netos
-                elif periodo_t == 'intermedio':
-                    kwh_intermedio_t += kwh_netos
-                elif periodo_t == 'punta':
-                    kwh_punta_t += kwh_netos
+                for idx, kwh_p in enumerate(kwh_por_periodo):
+                    #print "Lectura:", kwh_p[0], "-:",kwh_p[1]
+                    inicial = kwh_p[0]
+                    periodo_t = kwh_p[1]
+                    if idx + 1 <= kwh_periodo_long - 1:
+                        kwh_p2 = kwh_por_periodo[idx + 1]
+                        final = kwh_p2[0]
+                    else:
+                        final = ultima_lectura
 
-            kwh_base_t = int(ceil(kwh_base_t))
-            kwh_base += kwh_base_t
+                    kwh_netos = final - inicial
+                    #print "Inicial:",inicial,"Final:",final, "Netos:",kwh_netos
 
-            kwh_intermedio_t = int(ceil(kwh_intermedio_t))
-            kwh_intermedio += kwh_intermedio_t
+                    if periodo_t == 'base':
+                        kwh_base_t += kwh_netos
+                    elif periodo_t == 'intermedio':
+                        kwh_intermedio_t += kwh_netos
+                    elif periodo_t == 'punta':
+                        kwh_punta_t += kwh_netos
 
-            kwh_punta_t = int(ceil(ceil(kwh_punta_t)))
-            kwh_punta += kwh_punta_t
+                kwh_base_t = int(ceil(kwh_base_t))
+                kwh_base += kwh_base_t
 
-            kwh_t = kwh_base_t + kwh_intermedio_t + kwh_punta_t
-            kwh_totales += kwh_t
+                kwh_intermedio_t = int(ceil(kwh_intermedio_t))
+                kwh_intermedio += kwh_intermedio_t
+
+                kwh_punta_t = int(ceil(ceil(kwh_punta_t)))
+                kwh_punta += kwh_punta_t
+
+                kwh_t = kwh_base_t + kwh_intermedio_t + kwh_punta_t
+                kwh_totales += kwh_t
 
             #Se obtienen los kvarhs por medidor
             kvarh_totales += obtenerKVARH_total(
@@ -1280,6 +1304,8 @@ def dailyReport(building, consumer_unit, today):
         KWH_punta = kwh_punta,
         max_demand = int(ceil(demanda_max)),
         max_demand_time = dem_max_time,
+        min_demand = int(ceil(demanda_min)),
+        min_demand_time = dem_min_time,
         KWH_cost = costo_energia_total,
         power_factor = factor_potencia_total,
         KVARH = kvarh_totales
@@ -1308,22 +1334,39 @@ def getDailyReports(building, month, year):
     return dailyreport_arr
 
 def getWeeklyReport(building, month, year):
+
+    semanas = {}
+    num_semana = 1
     #Se obtienen los dias del mes
     month_days = getMonthDaysForDailyReport(building, month, year)
 
     while len(month_days) > 0:
+
         semana_array = []
         no_days = 0
+
         while no_days < 7:
             semana_array.append(month_days.pop(0))
             no_days += 1
 
-        print "Semana:--"
-        print semana_array
+        fecha_inicial = semana_array[0]
+        fecha_final = semana_array[6]
 
+        no_semana = {}
+        no_semana['demanda_max'] = demandaMaxima(building, fecha_inicial, fecha_final)
+        no_semana['demanda_min'] = demandaMinima(building, fecha_inicial, fecha_final)
+        no_semana['consumo_acumulado'] = consumoAcumuladoKWH(building, fecha_inicial, fecha_final)
+        no_semana['consumo_promedio'] = promedioKWH(building, fecha_inicial, fecha_final)
+        no_semana['consumo_desviacion'] = desviacionStandardKWH(building, fecha_inicial, fecha_final)
+        no_semana['consumo_mediana'] = medianaKWH(building, fecha_inicial, fecha_final)
 
-        print "Aqui puedo hacer los calculos"
+        semanas['semana_'+str(num_semana)] = no_semana
+        num_semana += 1
+
         semana_array = []
+
+    return semanas
+
 
 def getMonthDaysForDailyReport(building, month, year):
     actual_day = date(year=year, month=month, day=1)
