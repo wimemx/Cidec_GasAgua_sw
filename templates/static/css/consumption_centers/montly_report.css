@@ -281,7 +281,8 @@ table.datepickerViewYears td a span{
 }
 #lateral .lat_sep, #lateral h2, #lateral h3, #lateral #lat_consumo,
 #lateral #lat_costo,#lateral #lat_demanda, #lateral .aditional,
-#lateral .s_value, #lateral .m_value{
+#lateral .s_value, #lateral .m_value, #lateral .semana_cont,
+#lateral .label_wvalue{
     display: block;
 }
 .lat_sep{
@@ -289,6 +290,16 @@ table.datepickerViewYears td a span{
     width: 100%;
     background: url(../images/bgs/lat_separator.png) center no-repeat;
 }
+#lateral #close{
+    background: url("../images/imgs_icns/close_lat.png") no-repeat center;
+    width: 25px;
+    height: 25px;
+    display: block;
+    top: -12px;
+    right: -15px;
+    position: absolute;
+}
+/*--------BARRA LATERAL DIA------*/
 #lat_consumo{
     background: url(../images/imgs_icns/foco.png) left center no-repeat;
     height: 80px;
@@ -333,14 +344,26 @@ table.datepickerViewYears td a span{
     margin-left: 40px;
     line-height: 125%;
 }
-#lateral #close{
-    background: url("../images/imgs_icns/close_lat.png") no-repeat center;
-    width: 25px;
-    height: 25px;
-    display: block;
-    top: -12px;
-    right: -15px;
-    position: absolute;
+/*--------BARRA LATERAL SEMANA------*/
+.semana_cont{
+    height: 80px;
+    margin: 5px 0;
+}
+.week_num{
+    color: #a8a8a8;
+    font-size: 32px;
+    font-weight: 700;
+    text-shadow: -1px -1px 0 #999,0 1px 0 #fefefe;
+    line-height: 75px;
+    margin-left: 7px;
+}
+.week_values_cont{
+    color: #595959;
+    font-size: 12px;
+    margin-left: 8px;
+}
+.wvalue{
+    font-weight: 700;
 }
 /*-------TOP-------*/
 #month_sumary{
@@ -418,7 +441,7 @@ table.datepickerViewYears td a span{
 #week_s{
     position: absolute;
     color: #960f54;
-    font-size: 11px;
+    font-size: 12px;
     background-image: linear-gradient(bottom, #C4C4C4 0%, #E9E9E9 50%);
     background-image: -o-linear-gradient(bottom, #C4C4C4 0%, #E9E9E9 50%);
     background-image: -moz-linear-gradient(bottom, #C4C4C4 0%, #E9E9E9 50%);
@@ -445,4 +468,6 @@ table.datepickerViewYears td a span{
     border-bottom-left-radius: 5px;
     cursor: pointer;
     text-align: center;
+    top: 122px;
+    left: -132px;
 }

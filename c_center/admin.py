@@ -398,3 +398,4 @@ class ElectricRateForElectricDataAdmin(admin.ModelAdmin):
 admin.site.register(c_center.models.ElectricRateForElectricData,
                     ElectricRateForElectricDataAdmin)
 admin.site.register(c_center.models.MonthlyCutDates)
+admin.site.register(c_center.models.DailyData)

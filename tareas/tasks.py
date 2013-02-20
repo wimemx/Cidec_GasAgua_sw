@@ -4,6 +4,7 @@ from celery.decorators import periodic_task
 
 from data_warehouse.views import *
 from c_center.c_center_functions import *
+from c_center.calculations import *
 
 from datetime import date
 
@@ -23,6 +24,10 @@ def datawarehouse_run(
         populate_instant_facts,
         populate_interval_facts
     )
+
+@task(ignore_result=True)
+def tag_batch():
+    tag_reading_batch()
 
 @task(ignore_result=True)
 def calculate_dw(granularity):
@@ -48,7 +53,7 @@ def data_warehouse_one_day():
     calculate_dw.delay("day")
     print "firing periodic task - DW Day"
 
-@periodic_task(run_every=crontab(minute=0, hour=0))
+@periodic_task(run_every=crontab(minute=1, hour=0))
 def reporte_diario_para_reporte_mensual():
     daily_report.delay()
     print "firing periodic task - Raily Report"

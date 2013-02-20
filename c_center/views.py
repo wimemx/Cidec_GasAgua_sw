@@ -11,7 +11,7 @@ import csv
 import re
 import time
 import pytz
-import calendar
+import locale
 #related third party imports
 import variety
 
@@ -8156,27 +8156,43 @@ def montly_analitics(request, id_building):
 @login_required(login_url='/')
 def montly_data_for_building(request, id_building, year, month):
     edificio = get_object_or_404(Building, pk=int(id_building))
-    datacontext = get_buildings_context(request.user)
     template_vars = {}
-    if datacontext:
-        template_vars["datacontext"] = datacontext
-    template_vars['building'] = edificio
-    template_vars["sidebar"] = request.session['sidebar']
-    template_vars["empresa"] = request.session['main_building']
-    template_vars["company"] = request.session['company']
     if has_permission(request.user, VIEW, "Consultar recibo CFE") or \
             request.user.is_superuser:
-        first_of_month = datetime.date(int(year), int(month), 1)
-        if first_of_month.weekday() == 6:
-            first_day = first_of_month
-        else:
-            first_day = first_of_month - timedelta(
-                days=first_of_month.weekday()+1)
-        last_day = first_day + timedelta(days=41)
-        response_data = simplejson.dumps([dict(inicia=str(first_day),
-                                         finaliza=str(last_day))])
-        return HttpResponse(content=response_data, content_type="application/json")
+        data = getDailyReports(edificio, int(month), int(year))
 
+        response_data = simplejson.dumps(data)
+        return HttpResponse(content=response_data, content_type="application/json")
     else:
-        template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("generic_error.html", template_vars_template)
+        raise Http404
+
+@login_required(login_url='/')
+def montly_data_w_for_building(request, id_building, year, month):
+    edificio = get_object_or_404(Building, pk=int(id_building))
+    if has_permission(request.user, VIEW, "Consultar recibo CFE") or \
+            request.user.is_superuser:
+        data = getWeeklyReport(edificio, int(month), int(year))
+
+        response_data = simplejson.dumps(["semana1", "semana2", "semana3",
+                                          "semana4", "semana5", "semana6"])
+                                          #)data)
+        return HttpResponse(content=response_data, content_type="application/json")
+    else:
+        raise Http404
+
+@login_required(login_url='/')
+def month_analitics_day(request, id_building):
+    edificio = get_object_or_404(Building, pk=int(id_building))
+    if has_permission(request.user, VIEW, "Consultar recibo CFE") or \
+            request.user.is_superuser:
+        fecha = request.GET['date'].split("-")
+        fecha = date(int(fecha[0]), int(fecha[1]), int(fecha[2]))
+        response_data = simplejson.dumps([dict(c_tot=str(35), c_base=str(20),
+                                               c_int=str(30), c_punta=str(20),
+                                               d_max=str(316),
+                                               d_max_time="03:38 PM",
+                                               cost_p=str(420.66),
+                                               pf=str(99), kvarh=str(400))])
+        return HttpResponse(content=response_data, content_type="application/json")
+    else:
+        raise Http404

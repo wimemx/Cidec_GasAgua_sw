@@ -8,6 +8,7 @@ import os
 import cStringIO
 import Image
 import hashlib
+import pytz
 
 #local application/library specific imports
 from django.shortcuts import HttpResponse, get_object_or_404
@@ -20,7 +21,7 @@ from django.views.decorators.csrf import csrf_exempt
 from cidec_sw import settings
 from c_center.models import Cluster, ClusterCompany, Company,\
     CompanyBuilding, Building, PartOfBuilding, HierarchyOfPart, ConsumerUnit, \
-    ProfilePowermeter, ElectricDataTemp
+    ProfilePowermeter, ElectricDataTemp, DailyData
 from rbac.models import PermissionAsigment, DataContextPermission, Role,\
     UserRole, Object, Operation
 from location.models import *
@@ -1292,24 +1293,32 @@ def dailyReport(building, consumer_unit, today):
 def getDailyReports(building, month, year):
 
     #Se obtienen los dias del mes
-    month_days = getMonthDaysForDailyReport(building, month, year)
+    month_days = getMonthDaysForDailyReport(month, year)
 
     #Se crea un arreglo para almacenar los datos
     dailyreport_arr = []
 
     for day in month_days:
-        print "Dia:", day
+        print "Dia:", str(day)
         try:
-            ddata_obj = DailyData.objects.get(building=building, data_day=day)
-            dailyreport_arr.append(ddata_obj)
+            ddata_obj = DailyData.objects.get(building=building,
+                                              data_day=day).values(
+                "max_demand", "KWH_total")
+            data = dict(fecha=str(day),
+                        max_demand=ddata_obj['max_demand'],
+                        KWH_total=ddata_obj['KWH_total'],
+                        empty="false"
+            )
+            dailyreport_arr.append(data)
         except DailyData.DoesNotExist:
-            dailyreport_arr.append(None)
+            dailyreport_arr.append(dict(fecha=str(day),
+                                        empty="true"))
 
     return dailyreport_arr
 
 def getWeeklyReport(building, month, year):
     #Se obtienen los dias del mes
-    month_days = getMonthDaysForDailyReport(building, month, year)
+    month_days = getMonthDaysForDailyReport(month, year)
 
     while len(month_days) > 0:
         semana_array = []
@@ -1321,11 +1330,10 @@ def getWeeklyReport(building, month, year):
         print "Semana:--"
         print semana_array
 
-
         print "Aqui puedo hacer los calculos"
         semana_array = []
 
-def getMonthDaysForDailyReport(building, month, year):
+def getMonthDaysForDailyReport(month, year):
     actual_day = date(year=year, month=month, day=1)
     weekday = actual_day.weekday()
 
