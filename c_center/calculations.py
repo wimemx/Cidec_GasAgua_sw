@@ -753,11 +753,11 @@ def tag_reading_batch():
 
     print "entra"
     readingsObj = ElectricDataTemp.objects.filter(
-        profile_powermeter__in=[35, 34, 29,31, 32, 33, 24, 25, 26, 27, 22, 7, 6, 3]).order_by(
+        profile_powermeter=7).order_by(
         "medition_date")
 
     for readingObj in readingsObj:
-        print "por cada lectura"
+        print "solo Piso22 AC", readingObj.medition_date
         #Si la lectura proviene de cualquier medidor menos del No Asignado
         if readingObj.profile_powermeter.pk != 4:
             tag = None
@@ -807,16 +807,14 @@ def tag_reading_batch():
                         #0].identifier, "-Nuevo Tag:", tag, "Tipo Actual:", reading_period_type.period_type, "Tipo Anterior:", last_reading_type, "ID Anterior:",
                         #last_reading[0].pk
 
-                else: #Si será un registro para un nuevo medidor
+                else:  # Si será un registro para un nuevo medidor
                     tag = hex(0)
-
-
                 #Guarda el registro etiquetado
-                newTaggedReading, created = ElectricRateForElectricData.objects.get_or_create(
-                    electric_data=readingObj
+                newTaggedReading = ElectricRateForElectricData(
+                    electric_rates_periods=reading_period_type,
+                    electric_data=readingObj,
+                    identifier=tag
                 )
-                newTaggedReading.electric_rates_periods=reading_period_type
-                newTaggedReading.identifier=tag
                 newTaggedReading.save()
 
     print "Acabe"
@@ -835,9 +833,9 @@ def multiply():
     print ":D"
 
 #Etiquetado de datos por rango de ids
-def tag_reading_ids(id_start, id_end):
+def tag_reading_ids():
 
-    readingsObj = ElectricDataTemp.objects.filter(id__gte = id_start).filter(id__lte = id_end).order_by("medition_date")
+    readingsObj = ElectricDataTemp.objects.filter(profile_powermeter__pk=28).filter(medition_date__gte = datetime.datetime(2012,12,31)).filter(medition_date__lte = datetime.datetime(2013,1,12)).order_by("medition_date")
 
     for readingObj in readingsObj:
         #Si la lectura proviene de cualquier medidor menos del No Asignado

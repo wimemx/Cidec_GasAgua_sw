@@ -19,7 +19,6 @@ urlpatterns = patterns('',
     url(r'^rbac/', include(rbac_urls)),
     url(r'^location/', include(location_urls)),
     url(r'^configuracion/', include(alarms_urls)),
-    url(r'^prueba_cfe/', 'c_center.calculations.recibocfe'),
     url(r'^set_timezone/', 'cidec_sw.views.set_timezone', name="set_timezone"),
 
     # Url used for prototypes

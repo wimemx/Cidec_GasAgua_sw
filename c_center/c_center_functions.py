@@ -1118,6 +1118,7 @@ def dailyReportAll():
             continue
         else:
             dia = timedelta(days=1)
+            print buil, main_cu, datetime.today()-dia
             dailyReport(buil, main_cu, datetime.today()-dia)
     print "Done dailyReportAll"
 
@@ -1156,7 +1157,6 @@ def dailyReport(building, consumer_unit, today):
 
     consumer_units = get_consumer_units(consumer_unit)
     demanda_max = 0
-
     if consumer_units:
         for c_unit in consumer_units:
             pr_powermeter = c_unit.profile_powermeter.powermeter
@@ -1166,7 +1166,6 @@ def dailyReport(building, consumer_unit, today):
                 filter(profile_powermeter__powermeter__pk=pr_powermeter.pk). \
                 filter(medition_date__gte=today_s_utc).filter(medition_date__lte=today_e_utc). \
                 order_by('-kW_import_sliding_window_demand')
-
             if demanda_max_obj:
                 demanda_max = demanda_max_obj[0].kW_import_sliding_window_demand
                 dem_max_time = demanda_max_obj[0].medition_date.time()
@@ -1176,7 +1175,6 @@ def dailyReport(building, consumer_unit, today):
                 filter(profile_powermeter__powermeter__pk=pr_powermeter.pk).\
                 filter(medition_date__gte=today_s_utc).filter(medition_date__lte=today_e_utc).\
                 order_by('kW')
-
             if demanda_min_obj:
                 demanda_min = demanda_min_obj[0].kW
                 dem_min_time = demanda_min_obj[0].medition_date.time()
@@ -1323,20 +1321,19 @@ def getDailyReports(building, month, year):
     dailyreport_arr = []
 
     for day in month_days:
-        print "Dia:", str(day)
         try:
             ddata_obj = DailyData.objects.get(building=building,
-                                              data_day=day).values(
-                "max_demand", "KWH_total")
-            data = dict(fecha=str(day),
-                        max_demand=ddata_obj['max_demand'],
-                        KWH_total=ddata_obj['KWH_total'],
-                        empty="false"
-            )
-            dailyreport_arr.append(data)
+                                              data_day=day)
         except DailyData.DoesNotExist:
             dailyreport_arr.append(dict(fecha=str(day),
                                         empty="true"))
+        else:
+            data = dict(fecha=str(day),
+                        max_demand=ddata_obj.max_demand,
+                        KWH_total=ddata_obj.KWH_total,
+                        empty="false"
+            )
+            dailyreport_arr.append(data)
 
     return dailyreport_arr
 
