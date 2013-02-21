@@ -7,21 +7,26 @@ import django.db.models
 import data_warehouse_extended.globals
 
 
-class InstantDelta(django.db.models):
+class InstantDelta(django.db.models.Model):
 
     name =\
         django.db.models.CharField(
+            unique=True,
             max_length=data_warehouse_extended.globals.Constant.NAME_LENGTH,
             verbose_name=data_warehouse_extended.globals.ModelFieldName.
                              INSTANT_DELTA__NAME)
 
     delta_seconds =\
         django.db.models.IntegerField(
+            unique=True,
             verbose_name=data_warehouse_extended.globals.ModelFieldName.
                              INSTANT_DELTA__DELTA_SECONDS)
 
+    def __unicode__(self):
+        return self.name + u" - " + str(self.delta_seconds)
 
-class Instant(django.db.models):
+
+class Instant(django.db.models.Model):
 
     instant_delta =\
         django.db.models.ForeignKey(
@@ -36,8 +41,16 @@ class Instant(django.db.models):
             verbose_name=data_warehouse_extended.globals.ModelFieldName.
                              INSTANT__INSTANT_DATETIME)
 
+    class Meta:
+        unique_together = ("instant_delta", "instant_datetime")
 
-class ConsumerUnitProfile(django.db.models):
+
+    def __unicode__(self):
+        return self.instant_delta.name + u" - " +\
+               self.instant_datetime.strftime(u"%Y/%m/%d %H:%M")
+
+
+class ConsumerUnitProfile(django.db.models.Model):
 
     transactional_id =\
         django.db.models.IntegerField(
@@ -69,8 +82,11 @@ class ConsumerUnitProfile(django.db.models):
             verbose_name=data_warehouse_extended.globals.ModelFieldName.
                              CONSUMER_UNIT_PROFILE__ELECTRIC_DEVICE_TYPE_NAME)
 
+    def __unicode__(self):
+        return str(self.transactional_id) + u" - " + self.building_name
 
-class ElectricalParameter(django.db.models):
+
+class ElectricalParameter(django.db.models.Model):
 
     INSTANT = 1
     CUMULATIVE = 2
@@ -84,12 +100,14 @@ class ElectricalParameter(django.db.models):
 
     name =\
         django.db.models.CharField(
+            unique=True,
             max_length=data_warehouse_extended.globals.Constant.NAME_LENGTH,
             verbose_name=data_warehouse_extended.globals.ModelFieldName.
                              ELECTRICAL_PARAMETER__NAME)
 
     name_transactional =\
         django.db.models.CharField(
+            unique=True,
             max_length=data_warehouse_extended.globals.Constant.NAME_LENGTH,
             verbose_name=data_warehouse_extended.globals.ModelFieldName.
                              ELECTRICAL_PARAMETER__NAME_TRANSACTIONAL)
@@ -101,8 +119,11 @@ class ElectricalParameter(django.db.models):
             verbose_name=data_warehouse_extended.globals.ModelFieldName.
                              ELECTRICAL_PARAMETER__TYPE)
 
+    def __unicode__(self):
+        return self.name + self.name_transactional + self.TYPES[self.type][1]
 
-class ConsumerUnitInstantElectricalData(django.db.models):
+
+class ConsumerUnitInstantElectricalData(django.db.models.Model):
 
     id =\
         django.db.models.BigIntegerField(
@@ -149,3 +170,11 @@ class ConsumerUnitInstantElectricalData(django.db.models):
             verbose_name=data_warehouse_extended.globals.ModelFieldName.
                              CONSUMER_UNIT_INSTANT_ELECTRIC_DATA__VALUE)
 
+    class Meta:
+        unique_together =\
+            ("consumer_unit_profile", "instant", "electrical_parameter")
+
+    def __unicode__(self):
+        return self.consumer_unit_profile.building_name + u" - " +\
+               self.instant.__unicode__() + self.electrical_parameter.name +\
+               str(self.value)
