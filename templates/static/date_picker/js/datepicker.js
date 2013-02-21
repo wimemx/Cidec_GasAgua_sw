@@ -163,7 +163,7 @@
 				cal.find('td>table tbody').remove();
 				for (var i = 0; i < options.calendars; i++) {
 					date = new Date(options.current);
-					date.addMonths(-currentCal + i);
+					date.addMonths(-currentCal + i, true);
 					tblCal = cal.find('table').eq(i+1);
 
 					switch (tblCal[0].className) {
@@ -380,7 +380,7 @@
 				}
 				return parts.join('');
 			},
-            changed_date,
+            changed_date, changed_date_flag=false, initial_date,
 			extendDate = function(options) {
 				if (Date.prototype.tempDate) {
 					return;
@@ -400,7 +400,7 @@
 					this.setDate(this.getDate() + n);
 					this.tempDate = this.getDate();
 				};
-				Date.prototype.addMonths = function (n) {
+				Date.prototype.addMonths = function (n, change_flag) {
 					if (this.tempDate == null) {
 						this.tempDate = this.getDate();
 					}
@@ -408,6 +408,8 @@
 					this.setMonth(this.getMonth() + n);
 					this.setDate(Math.min(this.tempDate, this.getMaxDays()));
                     changed_date = this;
+                    if(change_flag)
+                        changed_date_flag = true;
 				};
 				Date.prototype.addYears = function (n) {
 					if (this.tempDate == null) {
@@ -489,7 +491,7 @@
 					if (parentEl.is('th')) {
 						if (parentEl.hasClass('datepickerWeek') && options.mode == 'range' && !parentEl.next().hasClass('datepickerDisabled')) {
 							var val = parseInt(parentEl.next().text(), 10);
-							tmp.addMonths(tblIndex - Math.floor(options.calendars/2));
+							tmp.addMonths(tblIndex - Math.floor(options.calendars/2), true);
 							if (parentEl.next().hasClass('datepickerNotInMonth')) {
 								tmp.addMonths(val > 15 ? -1 : 1);
 							}
@@ -502,7 +504,7 @@
 							changed = true;
 							options.lastSel = false;
 						} else if (parentEl.hasClass('datepickerMonth')) {
-							tmp.addMonths(tblIndex - Math.floor(options.calendars/2));
+							tmp.addMonths(tblIndex - Math.floor(options.calendars/2), true);
 							switch (tblEl.get(0).className) {
 								case 'datepickerViewDays':
 									tblEl.get(0).className = 'datepickerViewMonths';
@@ -520,7 +522,7 @@
 						} else if (parentEl.parent().parent().is('thead')) {
 							switch (tblEl.get(0).className) {
 								case 'datepickerViewDays':
-									options.current.addMonths(parentEl.hasClass('datepickerGoPrev') ? -1 : 1);
+									options.current.addMonths(parentEl.hasClass('datepickerGoPrev') ? -1 : 1, true);
 									break;
 								case 'datepickerViewMonths':
 									options.current.addYears(parentEl.hasClass('datepickerGoPrev') ? -1 : 1);
@@ -537,20 +539,25 @@
 							case 'datepickerViewMonths':
 								options.current.setMonth(tblEl.find('tbody.datepickerMonths td').index(parentEl));
 								options.current.setFullYear(parseInt(tblEl.find('thead th.datepickerMonth span').text(), 10));
-								options.current.addMonths(Math.floor(options.calendars/2) - tblIndex);
+								options.current.addMonths(Math.floor(options.calendars/2) - tblIndex, true);
 								tblEl.get(0).className = 'datepickerViewDays';
+                                fillIt = true;
+                                changed = true;
 								break;
 							case 'datepickerViewYears':
 								options.current.setFullYear(parseInt(el.text(), 10));
 								tblEl.get(0).className = 'datepickerViewMonths';
+                                fillIt = true;
+                                changed = true;
 								break;
 							default:
 								var val = parseInt(el.text(), 10);
-								tmp.addMonths(tblIndex - Math.floor(options.calendars/2));
+								tmp.addMonths(tblIndex - Math.floor(options.calendars/2), false);
 								if (parentEl.hasClass('datepickerNotInMonth')) {
-									tmp.addMonths(val > 15 ? -1 : 1);
+									tmp.addMonths(val > 15 ? -1 : 1, false);
 								}
 								tmp.setDate(val);
+                                changed_date_flag = false;
 								switch (options.mode) {
 									case 'multiple':
 										val = (tmp.setHours(0,0,0,0)).valueOf();
@@ -564,6 +571,8 @@
 										} else {
 											options.date.push(val);
 										}
+                                        fillIt = true;
+                                        changed = true;
 										break;
 									case 'range':
 										if (!options.lastSel) {
@@ -577,15 +586,24 @@
 											options.date[1] = val;
 										}
 										options.lastSel = !options.lastSel;
+                                        fillIt = true;
+                                        changed = true;
 										break;
 									default:
+                                        changed_date = options.date;
 										options.date = tmp.valueOf();
+                                        $(".datepickerSelected").each(function(){
+                                            $(this).removeClass("datepickerSelected");
+                                        });
+                                        parentEl.toggleClass("datepickerSelected");
+                                        fillIt = false;
+                                        changed = true;
 										break;
 								}
 								break;
 						}
-						fillIt = true;
-						changed = true;
+
+
 					}
 					if (fillIt) {
 						fill(this);
@@ -598,10 +616,17 @@
 			},
 			prepareDate = function (options) {
 				var tmp, tmp2;
-                changed_date.setMonth(changed_date.getMonth() - 1);
+                if(changed_date_flag){
+                    changed_date.setMonth(changed_date.getMonth() - 1);
+                    tmp2 = changed_date;
+                }else{
+                    changed_date = new Date(changed_date);
+                    tmp2 = new Date(changed_date.setMonth(changed_date.getMonth()));
+
+                }
 				if (options.mode == 'single') {
 					tmp = new Date(options.date);
-                    tmp2 = changed_date;
+
 					return [formatDate(tmp2, options.format), formatDate(tmp, options.format), tmp, options.el];
 				} else {
 					tmp = [[],[], options.el];

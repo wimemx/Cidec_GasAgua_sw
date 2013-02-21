@@ -20,11 +20,17 @@ table.datepickerViewDays th{
 }
 #widgetCal{
     width: 760px;
+    height: 850px;
     display: block;
     margin: 0 auto;
+    position: relative;
 }
 .datepickerContainer{
     width: 760px;
+}
+.datepickerContainer table{
+    box-shadow: 2px 2px 5px #ccc;
+    -moz-box-shadow: 2px 2px 5px #ccc;
 }
 table.datepickerViewDays{
 
@@ -119,6 +125,7 @@ table.datepickerViewDays td{
 }
 table.datepickerViewDays td.datepickerNotInMonth{
     background: rgba(230, 230, 230, 0.2);
+    opacity: 0.6;
 }
 table.datepickerViewDays td:not(.datepickerNotInMonth){
 
@@ -163,4 +170,304 @@ table.datepickerViewMonths td a span,
 table.datepickerViewYears td a span{
     font-size: 18px;
     font-weight: bold;
+}
+
+/*----INNER TEXT----*/
+.inner_day{
+    margin-top: 24px;
+    display: block;
+    height: 68px;
+    width: 92px;
+}
+.inner_day span{
+    color: #666666;
+}
+.demanda_max, .title_inner, .consumo{
+    display: block;
+    text-align: left !important;
+}
+.title_inner{
+    display: block;
+    font-size: 11px !important;
+}
+.demanda_max, .consumo{
+    font-size: 12px !important;
+    font-weight: 700;
+    line-height: 25px;
+}
+.demanda_max{
+    padding-left: 23px;
+    background: url("../images/imgs_icns/demanda_calendar.png") no-repeat left 50%;
+    margin-left: 2px;
+}
+.consumo{
+    padding-left: 19px;
+    background: url("../images/imgs_icns/consumo_calendar.png") no-repeat left 50%;
+    margin-left: 4px;
+}
+.datepickerSelected{
+    background-image: linear-gradient(bottom, #E0E0E0 17%, #F0F0F0 59%) !important;
+    background-image: -o-linear-gradient(bottom, #E0E0E0 17%, #F0F0F0 59%) !important;
+    background-image: -moz-linear-gradient(bottom, #E0E0E0 17%, #F0F0F0 59%) !important;
+    background-image: -webkit-linear-gradient(bottom, #E0E0E0 17%, #F0F0F0 59%) !important;
+    background-image: -ms-linear-gradient(bottom, #E0E0E0 17%, #F0F0F0 59%) !important;
+
+    background-image: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(0.17, #E0E0E0),
+        color-stop(0.59, #F0F0F0)
+    ) !important;
+}
+
+.day_cal a{
+    font-size: 13px !important;
+    width: 98px;
+    position: absolute;
+    height: 98px;
+    text-align: left;
+    padding: 3px 4px;
+}
+.day_cal.datepickerSelected a span{
+    font-weight: 700;
+}
+
+/*--------BARRA LATERAL------*/
+#lateral.collapsed{
+    display: none !important;
+}
+#lateral{
+    background-image: linear-gradient(bottom, #F0F4F7 13%, #E0E2E3 57%, #D3D3D3 79%);
+    background-image: -o-linear-gradient(bottom, #F0F4F7 13%, #E0E2E3 57%, #D3D3D3 79%);
+    background-image: -moz-linear-gradient(bottom, #F0F4F7 13%, #E0E2E3 57%, #D3D3D3 79%);
+    background-image: -webkit-linear-gradient(bottom, #F0F4F7 13%, #E0E2E3 57%, #D3D3D3 79%);
+    background-image: -ms-linear-gradient(bottom, #F0F4F7 13%, #E0E2E3 57%, #D3D3D3 79%);
+
+    background-image: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(0.13, #F0F4F7),
+        color-stop(0.57, #E0E2E3),
+        color-stop(0.79, #D3D3D3)
+    );
+    width: 240px;
+    height: 555px;
+    display: block;
+    -moz-border-radius: 2px;
+    border-radius: 2px;
+    -moz-box-shadow: 2px 2px 2px #ccc;
+    -webkit-box-shadow: 2px 2px 2px #ccc;
+    box-shadow: 2px 2px 2px #ccc;
+    top: 91px;
+    right: -249px;
+    position: absolute;
+}
+#lateral h2{
+    float: none;
+    color: #393b46;
+    font-weight: 700;
+    font-size: 18px;
+    text-align: center;
+    margin: 13px auto 5px auto;
+}
+#lateral h3{
+    color: #950f52;
+    font-size: 22px;
+    font-weight: 300;
+    text-align: center;
+    margin-top: 25px;
+}
+#lateral .lat_sep, #lateral h2, #lateral h3, #lateral #lat_consumo,
+#lateral #lat_costo,#lateral #lat_demanda, #lateral .aditional,
+#lateral .s_value, #lateral .m_value, #lateral .semana_cont,
+#lateral .label_wvalue{
+    display: block;
+}
+.lat_sep{
+    height: 4px;
+    width: 100%;
+    background: url(../images/bgs/lat_separator.png) center no-repeat;
+}
+#lateral #close{
+    background: url("../images/imgs_icns/close_lat.png") no-repeat center;
+    width: 25px;
+    height: 25px;
+    display: block;
+    top: -12px;
+    right: -15px;
+    position: absolute;
+}
+/*--------BARRA LATERAL DIA------*/
+#lat_consumo{
+    background: url(../images/imgs_icns/foco.png) left center no-repeat;
+    height: 80px;
+    padding-left: 60px;
+    padding-top: 20px;
+    margin-left: 40px;
+}
+#lat_demanda{
+    background: url(../images/imgs_icns/grafica.png) left center no-repeat;
+    height: 70px;
+    padding-left: 60px;
+    padding-top: 20px;
+    margin-left: 40px;
+}
+#lat_costo{
+    background: url(../images/imgs_icns/costo.png) left center no-repeat;
+    height: 50px;
+    padding-left: 60px;
+    padding-top: 20px;
+    margin-left: 40px;
+}
+.m_value{
+    color: #393b46;
+    font-size: 22px;
+    font-weight: 700;
+}
+.s_value{
+    color: #595959;
+    font-size: 13px;
+    font-weight: 300;
+    margin-left: 12px;
+}
+#lateral a, #lateral a:active, #lateral a:visited{
+    display: block;
+    text-align: center;
+    color: #00569e;
+    text-decoration: underline;
+}
+#lateral .aditional{
+    font-size: 14px;
+    color: #595959;
+    margin-left: 40px;
+    line-height: 125%;
+}
+/*--------BARRA LATERAL SEMANA------*/
+.semana_cont{
+    height: 80px;
+    margin: 5px 0;
+}
+.week_num{
+    color: #a8a8a8;
+    font-size: 32px;
+    font-weight: 700;
+    text-shadow: -1px -1px 0 #999,0 1px 0 #fefefe;
+    line-height: 75px;
+    margin-left: 7px;
+}
+.week_values_cont{
+    color: #595959;
+    font-size: 12px;
+    margin-left: 8px;
+}
+.wvalue{
+    font-weight: 700;
+}
+/*-------TOP-------*/
+#month_sumary{
+    display: block;
+    margin: 30px auto 0 auto;
+    width: 760px;
+    height: 50px;
+}
+.icon_sumary{
+    display: inline-block;
+    height: 100%;
+    text-align: center;
+    margin-right: 5px;
+}
+.icon_sumary.consumo_t{
+    width: 150px;
+}
+.icon_sumary.demanda{
+    width: 130px;
+}
+.icon_sumary.emisiones{
+    width: 130px;
+}
+.icon_sumary.potencia{
+    width: 125px;
+}
+.month_totals{
+    display: inline-block;
+    width: 190px;
+}
+.month_totals, .icon_sumary{
+    height: 100px;
+}
+
+.icon_sumary span{
+    display: block;
+    color: #898989;
+    font-weight: 700;
+    font-size: 12px;
+}
+.icon_sumary #cons_total{
+    background: url(../images/imgs_icns/yellow_bulb.png) left center no-repeat;
+    padding-left: 30px;
+}
+.icon_sumary #dem_total{
+    background: url(../images/imgs_icns/graph_blue.png) left center no-repeat;
+    padding-left: 40px;
+}
+.icon_sumary #emit_total{
+    background: url(../images/imgs_icns/green_leaf.png) left center no-repeat;
+    padding-left: 35px;
+}
+.icon_sumary #pp_total{
+    background: url(../images/imgs_icns/power.png) left center no-repeat;
+    padding-left: 30px;
+}
+#cons_total, #dem_total, #emit_total, #pp_total{
+    font-size: 22px !important;
+    font-weight: 300 !important;
+    height: 55px;
+    line-height: 55px;
+}
+.month_totals span{
+    display: inline-block;
+    color: #898989;
+    font-size: 13px;
+}
+.month_totals .label_tot{
+    width: 135px;
+}
+.month_totals .value_tot{
+    font-weight: 700;
+}
+/*--------boton lateral - semana---------*/
+#week_s{
+    position: absolute;
+    color: #960f54;
+    font-size: 12px;
+    background-image: linear-gradient(bottom, #C4C4C4 0%, #E9E9E9 50%);
+    background-image: -o-linear-gradient(bottom, #C4C4C4 0%, #E9E9E9 50%);
+    background-image: -moz-linear-gradient(bottom, #C4C4C4 0%, #E9E9E9 50%);
+    background-image: -webkit-linear-gradient(bottom, #C4C4C4 0%, #E9E9E9 50%);
+    background-image: -ms-linear-gradient(bottom, #C4C4C4 0%, #E9E9E9 50%);
+
+    background-image: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(0, #C4C4C4),
+        color-stop(0.5, #E9E9E9)
+    );
+    display: block;
+    width: 140px;
+    height: 30px;
+    line-height: 30px;
+    border: solid 1px #c7c7c7;
+    -webkit-border-top-left-radius: 5px;
+    -webkit-border-bottom-left-radius: 5px;
+    -moz-border-radius-topleft: 5px;
+    -moz-border-radius-bottomleft: 5px;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    cursor: pointer;
+    text-align: center;
+    top: 122px;
+    left: -132px;
 }

@@ -10,7 +10,8 @@ STATUS = (
     (1, 'Activo'),
     (0, 'Inactivo'),
     (2, 'Eliminado')
-    )
+)
+
 
 class SectoralType(models.Model):
     """ Sector Type Catalog
@@ -56,8 +57,8 @@ class Cluster(models.Model):
     cluster_image = models.CharField(max_length=200, null=True, blank=True)
 
     def __unicode__(self):
-        return self.cluster_name + " - " + self.sectoral_type\
-        .sectorial_type_name
+        return self.cluster_name + " - " + self.sectoral_type \
+            .sectorial_type_name
 
     @staticmethod
     def autocomplete_search_fields():
@@ -76,8 +77,8 @@ class Company(models.Model):
                                      upload_to="logotipos/")
 
     def __unicode__(self):
-        return self.company_name + " - " + self.sectoral_type\
-        .sectorial_type_name
+        return self.company_name + " - " + self.sectoral_type \
+            .sectorial_type_name
 
 
 class ClusterCompany(models.Model):
@@ -225,7 +226,7 @@ class BuildingAttributesForBuilding(models.Model):
 
     def __unicode__(self):
         return self.building.building_name + " - " + str(
-            self.building_attributes_value)\
+            self.building_attributes_value) \
                + self.building_attributes.building_attributes_name
 
     class Meta:
@@ -245,6 +246,7 @@ class PowermeterModel(models.Model):
 
     def __unicode__(self):
         return self.powermeter_brand + " " + self.powermeter_model
+
 
 class Powermeter(models.Model):
     """ Medidores
@@ -376,8 +378,8 @@ class BuildingTypeForBuilding(models.Model):
                                                               blank=True)
 
     def __unicode__(self):
-        return self.building.building_name + " - " + self.building_type\
-        .building_type_name
+        return self.building.building_name + " - " + self.building_type \
+            .building_type_name
 
 
 class PartOfBuilding(models.Model):
@@ -426,7 +428,7 @@ class BuilAttrsForPartOfBuil(models.Model):
                                                     decimal_places=6)
 
     def __unicode__(self):
-        return self.part_of_building.part_of_building_name + " - " +\
+        return self.part_of_building.part_of_building_name + " - " + \
                self.building_attributes.building_attributes_name
 
 
@@ -449,8 +451,8 @@ class ConsumerUnit(models.Model):
                                            on_delete=models.PROTECT)
 
     def __unicode__(self):
-        return self.building.building_name + " - " +\
-               self.electric_device_type.electric_device_type_name + " - " +\
+        return self.building.building_name + " - " + \
+               self.electric_device_type.electric_device_type_name + " - " + \
                self.profile_powermeter.powermeter.powermeter_anotation
 
 
@@ -497,7 +499,7 @@ class HierarchyOfPart(models.Model):
 
     class Meta:
         unique_together = (
-        'part_of_building_composite', 'part_of_building_leaf')
+            'part_of_building_composite', 'part_of_building_leaf')
 
 
 class ElectricData(models.Model):
@@ -607,7 +609,7 @@ class ElectricData(models.Model):
                                                     blank=True, default=0)
 
     def __unicode__(self):
-        return self.profile_powermeter.powermeter.powermeter_anotation +\
+        return self.profile_powermeter.powermeter.powermeter_anotation + \
                " " + str(self.medition_date)
 
 
@@ -704,10 +706,11 @@ class ElectricDataTemp(models.Model):
                                     blank=True)
 
     def __unicode__(self):
-        return "\n" + self.profile_powermeter.powermeter.powermeter_anotation +\
-               " " + str(self.medition_date) + "\nkWL1 = " + str(self.kWL1) +\
-               "\nkWL2 = " + str(self.kWL2) +\
+        return "\n" + self.profile_powermeter.powermeter.powermeter_anotation + \
+               " " + str(self.medition_date) + "\nkWL1 = " + str(self.kWL1) + \
+               "\nkWL2 = " + str(self.kWL2) + \
                "\nkWL3 = " + str(self.kWL3)
+
     class Meta:
         verbose_name = "Electric Data"
 
@@ -718,10 +721,12 @@ class ElectricRateForElectricData(models.Model):
     electric_data = models.ForeignKey(ElectricDataTemp,
                                       on_delete=models.PROTECT)
     identifier = models.CharField(max_length=128)
+
     def __unicode__(self):
         return "Electric Data: " + str(self.electric_data.pk) + " " + \
                self.identifier + " - " + \
                self.electric_rates_periods.electric_rate.electric_rate_name
+
     class META:
         unique_together = ('electric_rates_periods', 'electric_data')
 
@@ -760,11 +765,12 @@ class PowermeterForIndustrialEquipment(models.Model):
                                              on_delete=models.PROTECT)
 
     def __unicode__(self):
-        return self.powermeter.powermeter_anotation + " - " +\
+        return self.powermeter.powermeter_anotation + " - " + \
                self.industrial_equipment.indistrial_equipment_identifier
 
     class Meta:
         unique_together = ('powermeter', 'industrial_equipment')
+
 
 class MonthlyCutDates(models.Model):
     building = models.ForeignKey(Building, on_delete=models.PROTECT)
@@ -774,14 +780,16 @@ class MonthlyCutDates(models.Model):
 
     def __unicode__(self):
         return "Edificio: " + self.building.building_name + " - Mes:" + str(
-            self.billing_month) + ": Del " +\
+            self.billing_month) + ": Del " + \
                str(self.date_init) + " al " + str(self.date_end)
 
     class Meta:
         verbose_name_plural = "Fechas Mensuales de Corte"
 
+
 class HMHistoricData(models.Model):
-    monthly_cut_dates = models.ForeignKey(MonthlyCutDates, on_delete=models.PROTECT)
+    monthly_cut_dates = models.ForeignKey(MonthlyCutDates,
+                                          on_delete=models.PROTECT)
     KWH_total = models.IntegerField(null=True, blank=True)
     KWH_base = models.IntegerField(null=True, blank=True)
     KWH_intermedio = models.IntegerField(null=True, blank=True)
@@ -790,19 +798,32 @@ class HMHistoricData(models.Model):
     KW_punta = models.IntegerField(null=True, blank=True)
     KW_intermedio = models.IntegerField(null=True, blank=True)
     KVARH = models.IntegerField(null=True, blank=True)
-    power_factor = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
-    charge_factor = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    power_factor = models.DecimalField(max_digits=20, decimal_places=2,
+                                       null=True, blank=True, default=0)
+    charge_factor = models.DecimalField(max_digits=20, decimal_places=2,
+                                        null=True, blank=True, default=0)
     billable_demand = models.IntegerField(null=True, blank=True)
-    KWH_base_rate = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
-    KWH_intermedio_rate = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
-    KWH_punta_rate = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
-    billable_demand_rate = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
-    average_rate = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
-    energy_cost = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
-    billable_demand_cost = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
-    power_factor_bonification = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
-    subtotal = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
-    iva = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    KWH_base_rate = models.DecimalField(max_digits=20, decimal_places=2,
+                                        null=True, blank=True, default=0)
+    KWH_intermedio_rate = models.DecimalField(max_digits=20, decimal_places=2,
+                                              null=True, blank=True, default=0)
+    KWH_punta_rate = models.DecimalField(max_digits=20, decimal_places=2,
+                                         null=True, blank=True, default=0)
+    billable_demand_rate = models.DecimalField(max_digits=20, decimal_places=2,
+                                               null=True, blank=True, default=0)
+    average_rate = models.DecimalField(max_digits=20, decimal_places=2,
+                                       null=True, blank=True, default=0)
+    energy_cost = models.DecimalField(max_digits=20, decimal_places=2,
+                                      null=True, blank=True, default=0)
+    billable_demand_cost = models.DecimalField(max_digits=20, decimal_places=2,
+                                               null=True, blank=True, default=0)
+    power_factor_bonification = models.DecimalField(max_digits=20,
+                                                    decimal_places=2, null=True,
+                                                    blank=True, default=0)
+    subtotal = models.DecimalField(max_digits=20, decimal_places=2, null=True,
+                                   blank=True, default=0)
+    iva = models.DecimalField(max_digits=20, decimal_places=2, null=True,
+                              blank=True, default=0)
     total = models.DecimalField(max_digits=20, decimal_places=2, default=0)
 
     def __unicode__(self):
@@ -813,14 +834,21 @@ class HMHistoricData(models.Model):
 
 
 class DacHistoricData(models.Model):
-    monthly_cut_dates = models.ForeignKey(MonthlyCutDates, on_delete=models.PROTECT)
+    monthly_cut_dates = models.ForeignKey(MonthlyCutDates,
+                                          on_delete=models.PROTECT)
     KWH_total = models.IntegerField(null=True, blank=True)
-    KWH_rate = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
-    monthly_rate = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
-    average_rate = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
-    energy_cost = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
-    subtotal = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
-    iva = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    KWH_rate = models.DecimalField(max_digits=20, decimal_places=2, null=True,
+                                   blank=True, default=0)
+    monthly_rate = models.DecimalField(max_digits=20, decimal_places=2,
+                                       null=True, blank=True, default=0)
+    average_rate = models.DecimalField(max_digits=20, decimal_places=2,
+                                       null=True, blank=True, default=0)
+    energy_cost = models.DecimalField(max_digits=20, decimal_places=2,
+                                      null=True, blank=True, default=0)
+    subtotal = models.DecimalField(max_digits=20, decimal_places=2, null=True,
+                                   blank=True, default=0)
+    iva = models.DecimalField(max_digits=20, decimal_places=2, null=True,
+                              blank=True, default=0)
     total = models.DecimalField(max_digits=20, decimal_places=2, default=0)
 
     def __unicode__(self):
@@ -831,20 +859,32 @@ class DacHistoricData(models.Model):
 
 
 class T3HistoricData(models.Model):
-    monthly_cut_dates = models.ForeignKey(MonthlyCutDates, on_delete=models.PROTECT)
+    monthly_cut_dates = models.ForeignKey(MonthlyCutDates,
+                                          on_delete=models.PROTECT)
     KWH_total = models.IntegerField(null=True, blank=True)
     KVARH = models.IntegerField(null=True, blank=True)
-    power_factor = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
-    charge_factor = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    power_factor = models.DecimalField(max_digits=20, decimal_places=2,
+                                       null=True, blank=True, default=0)
+    charge_factor = models.DecimalField(max_digits=20, decimal_places=2,
+                                        null=True, blank=True, default=0)
     max_demand = models.IntegerField(null=True, blank=True)
-    KWH_rate = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
-    demand_rate = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
-    average_rate = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
-    energy_cost = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
-    demand_cost = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
-    power_factor_bonification = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
-    subtotal = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
-    iva = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True, default=0)
+    KWH_rate = models.DecimalField(max_digits=20, decimal_places=2, null=True,
+                                   blank=True, default=0)
+    demand_rate = models.DecimalField(max_digits=20, decimal_places=2,
+                                      null=True, blank=True, default=0)
+    average_rate = models.DecimalField(max_digits=20, decimal_places=2,
+                                       null=True, blank=True, default=0)
+    energy_cost = models.DecimalField(max_digits=20, decimal_places=2,
+                                      null=True, blank=True, default=0)
+    demand_cost = models.DecimalField(max_digits=20, decimal_places=2,
+                                      null=True, blank=True, default=0)
+    power_factor_bonification = models.DecimalField(max_digits=20,
+                                                    decimal_places=2, null=True,
+                                                    blank=True, default=0)
+    subtotal = models.DecimalField(max_digits=20, decimal_places=2, null=True,
+                                   blank=True, default=0)
+    iva = models.DecimalField(max_digits=20, decimal_places=2, null=True,
+                              blank=True, default=0)
     total = models.DecimalField(max_digits=20, decimal_places=2, default=0)
 
     def __unicode__(self):
@@ -852,3 +892,28 @@ class T3HistoricData(models.Model):
 
     class Meta:
         verbose_name_plural = "Información Historica de Tarifa 3"
+
+
+class DailyData(models.Model):
+    building = models.ForeignKey(Building, on_delete=models.PROTECT)
+    data_day = models.DateField("Fecha del dia")
+    KWH_total = models.IntegerField(null=True, blank=True)
+    KWH_base = models.IntegerField(null=True, blank=True)
+    KWH_intermedio = models.IntegerField(null=True, blank=True)
+    KWH_punta = models.IntegerField(null=True, blank=True)
+    max_demand = models.IntegerField(null=True, blank=True)
+    max_demand_time = models.TimeField("Hora de la demanda maxima")
+    min_demand = models.IntegerField(null=True, blank=True, default=0)
+    min_demand_time = models.TimeField("Hora de la demanda minima", default=datetime.time(0,0,0))
+    KWH_cost = models.DecimalField(max_digits=20, decimal_places=2, null=True,
+                                   blank=True, default=0)
+    power_factor = models.DecimalField(max_digits=20, decimal_places=2,
+                                       null=True, blank=True, default=0)
+    KVARH = models.IntegerField(null=True, blank=True)
+
+    def __unicode__(self):
+        return "Building: " + self.building.building_name + " - Dia:" + str(
+            self.data_day)
+
+    class Meta:
+        verbose_name_plural = "Información Diaria"

@@ -10,11 +10,134 @@
     <script type="text/javascript" src="/static/date_picker/js/datepicker.js"></script>
     <script type="text/javascript">
         var fecha_act = new Date();
-        var current_mont = fecha_act.getMonth()+1;
+        var current_month = fecha_act.getMonth()+1;
         var current_year = fecha_act.getFullYear();
+        var current_day = fecha_act.format("yyyy-mm-dd");
+        var lateral;
+    function get_full_month(){
+        $.ajax({
+            url: "/buildings/month_analitics/{{ building.pk }}/"+String(current_year)+"/"+String(current_month)+"/",
+            type: "GET",
+            success: function(data){ console.log(data);
+                for(var i=0; i<data.length; i++){
+                    var dato = data[i];
+                    var div = "<div class='inner_day fr'>";
+                    if(data[i].empty == "true"){
+                        div += "<span class='title_inner'>Demanda M&aacute;x</span>";
+                        div += "<span class='demanda_max'>Sin info.</span>";
+                        div += "<span class='title_inner'>Consumo</span>";
+                        div += "<span class='consumo'>Sin info.</span>";
+                        div += "</div>";
+                    }else{
+                        div += "<span class='title_inner'>Demanda M&aacute;x</span>";
+                        div += "<span class='demanda_max'>"+ dato.max_demand +" kW</span>";
+                        div += "<span class='title_inner'>Consumo</span>";
+                        div += "<span class='consumo'>"+ dato.KWH_total +" kWh</span>";
+                        div += "</div>";
+                    }
+                    $("."+dato.fecha).append(div);
+                }
+            }
+        });
+    }
+
+    function load_day(day){
+        var fecha = day.split("-");
+        fecha = new Date(parseInt(fecha[0]), parseInt(fecha[1])-1, parseInt(fecha[2]));
+        fecha = dateFormat(fecha, "dddd d, mmmm");
+        $.ajax({
+            url: "/buildings/month_analitics_day/{{ building.pk }}/?date="+day,
+            type: "GET",
+            success: function(data){
+
+                data = data[0];
+                var lateral_content = '<span id="close"></span>';
+                lateral_content +=     '<h2>'+ fecha+'</h2>';
+                lateral_content +=     '<span class="lat_sep"></span>';
+                lateral_content +=     '<h3>Consumo</h3>';
+                lateral_content +=     '<div id="lat_consumo">';
+                lateral_content +=     '<span class="m_value">'+ addCommas(data.c_tot)+' kWh</span>';
+                lateral_content +=     '<span class="s_value">'+ addCommas(data.c_base)+'kWh base</span>';
+                lateral_content +=     '<span class="s_value">'+ addCommas(data.c_int)+'kWh intermedia</span>';
+                lateral_content +=     '<span class="s_value">'+ addCommas(data.c_punta)+'kWh punta</span>';
+                lateral_content +=     '</div>';
+                lateral_content +=     '<a href="/main/">Ver en una gr&aacute;fica</a>';
+                lateral_content +=     '<h3>Demanda M&aacute;x</h3>';
+                lateral_content +=     '<div id="lat_demanda">';
+                lateral_content +=     '<span class="m_value">'+ addCommas(data.d_max)+' kW</span>';
+                lateral_content +=     '<span class="s_value">'+ addCommas(data.d_max_time)+'</span>';
+                lateral_content +=     '</div>';
+                lateral_content +=     '<a href="/main/">Ver en una gr&aacute;fica</a>';
+                lateral_content +=     '<h3>Costo Promedio</h3>';
+                lateral_content +=     '<div id="lat_costo">';
+                lateral_content +=     '<span class="m_value">$'+ addCommas(data.cost_p)+'</span>';
+                lateral_content +=     '<span class="s_value">MXN</span>';
+                lateral_content +=     '</div>';
+                lateral_content +=     '<span class="aditional">Factor Potencia: '+ data.pf+'%</span>';
+                lateral_content +=     '<span class="aditional">kVArh: '+ addCommas(data.kvarh) +' KVar</span>';
+                $("#lateral").html(lateral_content);
+            }
+        });
+    }
+
+    function close_lat(){
+        lateral.animate({width: 'toggle', right: "0"}, 500, function(){
+            $(this).addClass("collapsed");
+            $(this).css('opacity', '0');
+        });
+    }
+    function open_lat(){
+        if(lateral.hasClass("collapsed")){
+            lateral.removeClass("collapsed");
+            lateral.show().animate({width: '240px', right: "-249px", opacity: "1"}, 500);
+        }
+    }
+
     </script>
 {% endblock %}
 {% block document_ready %}
+    lateral = $("#lateral");
+    close_lat();
+    $("#close").live("click", function(e){
+        close_lat();
+    });
+    $("#week_s").click(function(){
+        $.ajax({
+            url: "/buildings/month_analitics_week/{{ building.pk }}/"+String(current_year)+"/"+String(current_month)+"/",
+            type: "GET",
+            success: function(data){ console.log(data);
+                lateral.html('<span id="close"></span><h2>Reporte Semanal</h2><span class="lat_sep"></span>');
+                var cont = 0;
+                $(".datepickerWeek a span").each(function(){
+                    valor = $(this).text();
+                    semana = parseInt(valor)
+                    if(semana){
+                        console.log(data[cont]);
+                        var div = "<div class='semana_cont'>";
+                        div += "<span class='week_num fl'>S"+ String(semana) +"</span>";
+                        div += "<div class='week_values_cont fl'>";
+                        div += "<span class='label_wvalue'>Consumo Acumulado:";
+                        div += "<span class='wvalue'> 800 kWh</span></span>";
+                        div += "<span class='label_wvalue'>Demanda M&aacute;x:";
+                        div += "<span class='wvalue'> 200 kW</span></span>";
+                        div += "<span class='label_wvalue'>Demanda Mínima:";
+                        div += "<span class='wvalue'> 100 kW</span></span>";
+                        div += "<span class='label_wvalue'>Consumo Promedio:";
+                        div += "<span class='wvalue'> 300 kWh</span></span>";
+                        div += "<span class='label_wvalue'>Consumo Media:";
+                        div += "<span class='wvalue'> 250 kWh</span></span>";
+                        div += "<span class='label_wvalue'>Consumo Desviación:";
+                        div += "<span class='wvalue'>350 kWh</span></span>";
+                        div += "</div>";
+                        lateral.append(div);
+                        cont++;
+                    }
+                });
+                open_lat();
+            }
+        });
+    });
+
     $('#widgetCal').DatePicker({
         flat: true,
         format: 'Y-m-d',
@@ -22,30 +145,117 @@
         calendars: 1,
         starts: 7,
         onChange: function(month, selected) {
+            var display_day = false;
+            console.log("selected", selected)
             current = month.split("-");
             c_month = current[1];
             c_year = current[0];
-            console.log("changed!", c_month, c_year, selected);
+
+            //month name as auxiliar for the events of loading info
+            var mes = parseInt(current_month);
+            if(mes < 10){
+                mes = "0" + String(mes);
+            }else{
+                mes = String(mes);
+            }
+            if(c_month != current_month || c_year != current_year ){
+                var class_name = "."+String(current_year) + "-" + mes + "-15";
+                if(!$(class_name).size()){
+                    console.log("cambio de mes");
+                    current_month = c_month;
+                    current_year = c_year;
+                    close_lat();
+                    display_day = false;
+                    get_full_month();
+                }else{
+                    display_day = true;
+                }
+            }else{
+                display_day = true;
+            }
+
+            if(display_day){
+                if(current_day != selected){
+                    current_day = selected;
+                    console.log("carga la información del día");
+                    load_day(selected);
+                }else{
+                    console.log("muestra solamente");
+                }
+                open_lat();
+
+            }
+
+        },
+        onRender: function(date){
+            //maneja los eventos al generar cada día
+            return {selected: false, disabled: false, className: "day_cal"+" "+date.format("yyyy-mm-dd")};
         }
     });
+    get_full_month();
 {% endblock %}
 {% block contenido %}
     <div id="bread_crumbs">
         <ul>
             <li><a href="/main/">Inicio</a></li>
-            <li><a href="/reportes/analisis_mensual/">An&aacute;lisis Mensual</a></li>
+            <li><a href="/reportes/analisis_mensual/">An&aacute;lisis El&eacute;ctrico Mensual</a></li>
         </ul>
     </div>
 
     <div id="contenido_interno">
-        <h2 id="titulo_reporte">An&aacute;lisis Mensual</h2>
+        <h2 id="titulo_reporte">An&aacute;lisis El&eacute;ctrico Mensual - {{ building.building_name }}</h2>
 
         <div class="divider" id="divider_top">&nbsp;</div>
 
+        <div id="month_sumary">
+            <div class="icon_sumary consumo_t">
+                <span id="cons_total">
+                    3,404 kWh
+                </span>
+                <span>Consumo acumulado/ m</span>
+            </div>
+            <div class="icon_sumary demanda">
+                <span id="dem_total">
+                    304 kW
+                </span>
+                <span>Demanda Máxima / m</span>
+            </div>
+            <div class="icon_sumary emisiones">
+                <span id="emit_total">
+                    404 ton
+                </span>
+                <span>Emisiones de CO2</span>
+            </div>
+            <div class="icon_sumary potencia">
+                <span id="pp_total">
+                    97%
+                </span>
+                <span>Factor de Potencia</span>
+            </div>
+            <div class="month_totals">
+                <span class="label_tot">Demanda Mínima</span>
+                <span class="value_tot">204W</span>
+
+                <span class="label_tot">Comsumo promedio</span>
+                <span class="value_tot">340kWh</span>
+
+                <span class="label_tot">Consumo media</span>
+                <span class="value_tot">200kWh</span>
+
+                <span class="label_tot">Consumo desviación</span>
+                <span class="value_tot">100kWh</span>
+            </div>
+        </div>
 
         <div id="widgetCal">
             <span class="ringl"></span>
             <span class="ringr"></span>
+            <div id="week_s">
+                Ver resumen semanal
+            </div>
+            <div id="lateral">
+
+            </div>
 
         </div>
     </div>

@@ -11,7 +11,7 @@ import csv
 import re
 import time
 import pytz
-import calendar
+import locale
 #related third party imports
 import variety
 
@@ -395,7 +395,6 @@ def cfe_calculations(request):
 
                 periodo = str(cfe_historico[0].monthly_cut_dates.date_init.day)+'/'+str(cfe_historico[0].monthly_cut_dates.date_init.month)+"/"+str(cfe_historico[0].monthly_cut_dates.date_init.year)+" "\
                                                                                                                                                                                                        "- "+str(cfe_historico[0].monthly_cut_dates.date_end.day)+'/'+str(cfe_historico[0].monthly_cut_dates.date_end.month)+"/"+str(cfe_historico[0].monthly_cut_dates.date_end.year)
-
                 resultado_mensual['periodo'] = periodo
                 resultado_mensual['kwh_totales'] = cfe_historico[0].KWH_total
                 resultado_mensual['tarifa_kwh'] = cfe_historico[0].KWH_rate
@@ -482,15 +481,12 @@ def cfe_calculations(request):
             #Se general el recibo.
             if tipo_tarifa.pk == 1: #Tarifa HM
                 resultado_mensual = tarifaHM_2(request.session['main_building'], request.session['consumer_unit'], s_date, e_date, month, year)
-                template_vars['historico'] = obtenerHistoricoHM
 
             elif tipo_tarifa.pk == 2: #Tarifa DAC
                 resultado_mensual = tarifaDAC_2(request.session['main_building'],request.session['consumer_unit'], s_date, e_date, month, year)
-                template_vars['historico'] = obtenerHistoricoHM
 
             elif tipo_tarifa.pk == 3: #Tarifa 3
                 resultado_mensual = tarifa_3_v2(request.session['main_building'],request.session['consumer_unit'], s_date, e_date, month, year)
-
 
         if resultado_mensual['status'] == 'OK':
             template_vars['resultados'] = resultado_mensual
@@ -7556,139 +7552,6 @@ def tarifa_3_v2(building, consumer_unit, s_date, e_date, month, year):
 
     return diccionario_final_cfe
 
-
-def save_historic(request, monthly_cutdate, building):
-    try:
-        if building.electric_rate.pk == 1:
-            exist_historic = HMHistoricData.objects.get(
-                monthly_cut_dates=monthly_cutdate)
-        elif building.electric_rate.pk == 2:
-            exist_historic = DacHistoricData.objects.get(
-                monthly_cut_dates=monthly_cutdate)
-        else:#if building.electric_rate.pk == 3:
-            exist_historic = T3HistoricData.objects.get(
-                monthly_cut_dates=monthly_cutdate)
-    except ObjectDoesNotExist:
-        pass
-    else:
-        exist_historic.delete()
-
-    month = monthly_cutdate.billing_month.month
-    year = monthly_cutdate.billing_month.year
-
-    #Se obtiene el tipo de tarifa del edificio (HM o DAC)
-    if building.electric_rate.pk == 1: #Tarifa HM
-        resultado_mensual = tarifaHM_2(building,
-                                       request.session['consumer_unit'], monthly_cutdate.date_init,
-                                       monthly_cutdate.date_end, month, year)
-
-        if resultado_mensual['kwh_totales'] == 0:
-            aver_rate = 0
-        else:
-            aver_rate = resultado_mensual['subtotal'] / resultado_mensual[
-                                                        'kwh_totales']
-        aver_rate = str(aver_rate)
-        resultado_mensual['factor_carga'] = str(
-            resultado_mensual['factor_carga'])
-        resultado_mensual['costo_fpotencia'] = str(
-            resultado_mensual['costo_fpotencia'])
-        resultado_mensual['subtotal'] = str(resultado_mensual['subtotal'])
-        resultado_mensual['iva'] = str(resultado_mensual['iva'])
-        resultado_mensual['total'] = str(resultado_mensual['total'])
-        newHistoric = HMHistoricData(
-            monthly_cut_dates=monthly_cutdate,
-            KWH_total=resultado_mensual['kwh_totales'],
-            KWH_base=resultado_mensual['kwh_base'],
-            KWH_intermedio=resultado_mensual['kwh_intermedio'],
-            KWH_punta=resultado_mensual['kwh_punta'],
-            KW_base=resultado_mensual['kw_base'],
-            KW_punta=resultado_mensual['kw_punta'],
-            KW_intermedio=resultado_mensual['kw_intermedio'],
-            KVARH=resultado_mensual['kvarh_totales'],
-            power_factor=resultado_mensual['factor_potencia'],
-            charge_factor=resultado_mensual['factor_carga'],
-            billable_demand=resultado_mensual['demanda_facturable'],
-            KWH_base_rate=resultado_mensual['tarifa_kwhb'],
-            KWH_intermedio_rate=resultado_mensual['tarifa_kwhi'],
-            KWH_punta_rate=resultado_mensual['tarifa_kwhp'],
-            billable_demand_rate=resultado_mensual['tarifa_df'],
-            average_rate=aver_rate,
-            energy_cost=resultado_mensual['costo_energia'],
-            billable_demand_cost=resultado_mensual['costo_dfacturable'],
-            power_factor_bonification=resultado_mensual['costo_fpotencia'],
-            subtotal=resultado_mensual['subtotal'],
-            iva=resultado_mensual['iva'],
-            total=resultado_mensual['total']
-        )
-        newHistoric.save()
-
-    elif building.electric_rate.pk == 2:#Tarifa DAC
-        resultado_mensual = tarifaDAC_2(building,
-                                        request.session['consumer_unit'],monthly_cutdate.date_init,
-                                        monthly_cutdate.date_end, month, year)
-
-        if resultado_mensual['kwh_totales'] == 0:
-            aver_rate = 0
-        else:
-            aver_rate = resultado_mensual['costo_energia'] / resultado_mensual[
-                                                             'kwh_totales']
-        aver_rate = str(aver_rate)
-
-        resultado_mensual['subtotal'] = str(resultado_mensual['subtotal'])
-        resultado_mensual['iva'] = str(resultado_mensual['iva'])
-        resultado_mensual['total'] = str(resultado_mensual['total'])
-        newHistoric = DacHistoricData(
-            monthly_cut_dates=monthly_cutdate,
-            KWH_total=resultado_mensual['kwh_totales'],
-            KWH_rate=resultado_mensual['tarifa_kwh'],
-            monthly_rate=resultado_mensual['tarifa_mes'],
-            energy_cost=resultado_mensual['importe'],
-            average_rate=aver_rate,
-            subtotal=resultado_mensual['costo_energia'],
-            iva=resultado_mensual['iva'],
-            total=resultado_mensual['total']
-        )
-        newHistoric.save()
-
-    elif building.electric_rate.pk == 3:#Tarifa 3
-        resultado_mensual = tarifa_3_v2(building,
-                                        request.session['consumer_unit'], monthly_cutdate.date_init,
-                                        monthly_cutdate.date_end, month, year)
-
-        if resultado_mensual['kwh_totales'] == 0:
-            aver_rate = 0
-        else:
-            aver_rate = resultado_mensual['subtotal'] / resultado_mensual[
-                                                        'kwh_totales']
-
-        aver_rate = str(aver_rate)
-        resultado_mensual['factor_carga'] = str(
-            resultado_mensual['factor_carga'])
-        resultado_mensual['costo_fpotencia'] = str(
-            resultado_mensual['costo_fpotencia'])
-        resultado_mensual['subtotal'] = str(resultado_mensual['subtotal'])
-        resultado_mensual['iva'] = str(resultado_mensual['iva'])
-        resultado_mensual['total'] = str(resultado_mensual['total'])
-        newHistoric = T3HistoricData(
-            monthly_cut_dates=monthly_cutdate,
-            KWH_total=resultado_mensual['kwh_totales'],
-            KVARH=resultado_mensual['kvarh_totales'],
-            power_factor=resultado_mensual['factor_potencia'],
-            charge_factor=resultado_mensual['factor_carga'],
-            max_demand=resultado_mensual['kw_totales'],
-            KWH_rate=resultado_mensual['tarifa_kwh'],
-            demand_rate=resultado_mensual['tarifa_kw'],
-            average_rate=aver_rate,
-            energy_cost=resultado_mensual['costo_energia'],
-            demand_cost=resultado_mensual['costo_demanda'],
-            power_factor_bonification=resultado_mensual['costo_fpotencia'],
-            subtotal=resultado_mensual['subtotal'],
-            iva=resultado_mensual['iva'],
-            total=resultado_mensual['total']
-        )
-        newHistoric.save()
-
-
 def view_cutdates(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
@@ -7875,7 +7738,7 @@ def set_cutdate(request, id_cutdate):
                     cd_before.save()
 
                     #Se recalcula el mes anterior ya con las nuevas fechas.
-                    save_historic(request, cd_before, request.session['main_building'])
+                    save_historic.delay(request, cd_before, request.session['main_building'])
 
                 #Si hay cambio de fechas en mes siguiente
                 if cd_after_flag:
@@ -7885,7 +7748,7 @@ def set_cutdate(request, id_cutdate):
 
                     #Si la fecha final del mes siguiente no es nula, se crea el historico
                     if cd_after.date_end:
-                        save_historic(request, cd_after, request.session['main_building'])
+                        save_historic.delay(request, cd_after, request.session['main_building'])
                 else:
                     #Se crea el nuevo mes
                     new_cut = MonthlyCutDates(
@@ -7901,7 +7764,7 @@ def set_cutdate(request, id_cutdate):
                 cutdate_obj.save()
 
                 #Se calcula el mes actual
-                save_historic(request, cutdate_obj, request.session['main_building'])
+                save_historic.delay(request, cutdate_obj, request.session['main_building'])
 
                 template_vars[
                 "message"] = "Fechas de Corte establecidas correctamente"
@@ -8013,7 +7876,7 @@ def set_cutdate_bill(request):
             )
             new_cut.save()
             #Se guarda el historico
-            save_historic(request, cutdate_obj, request.session['main_building'])
+            save_historic.delay(request, cutdate_obj, request.session['main_building'])
 
             status = 'OK'
 
@@ -8278,7 +8141,8 @@ def montly_analitics(request, id_building):
     template_vars["sidebar"] = request.session['sidebar']
     template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
-    if has_permission(request.user, VIEW, "Consultar recibo CFE") or request.user.is_superuser:
+    if has_permission(request.user, VIEW, "Consultar recibo CFE") or \
+            request.user.is_superuser:
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -8287,3 +8151,47 @@ def montly_analitics(request, id_building):
     else:
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
+
+@login_required(login_url='/')
+def montly_data_for_building(request, id_building, year, month):
+    edificio = get_object_or_404(Building, pk=int(id_building))
+    template_vars = {}
+    if has_permission(request.user, VIEW, "Consultar recibo CFE") or \
+            request.user.is_superuser:
+        data = getDailyReports(edificio, int(month), int(year))
+
+        response_data = simplejson.dumps(data)
+        return HttpResponse(content=response_data, content_type="application/json")
+    else:
+        raise Http404
+
+@login_required(login_url='/')
+def montly_data_w_for_building(request, id_building, year, month):
+    edificio = get_object_or_404(Building, pk=int(id_building))
+    if has_permission(request.user, VIEW, "Consultar recibo CFE") or \
+            request.user.is_superuser:
+        data = getWeeklyReport(edificio, int(month), int(year))
+
+        response_data = simplejson.dumps(["semana1", "semana2", "semana3",
+                                          "semana4", "semana5", "semana6"])
+                                          #)data)
+        return HttpResponse(content=response_data, content_type="application/json")
+    else:
+        raise Http404
+
+@login_required(login_url='/')
+def month_analitics_day(request, id_building):
+    edificio = get_object_or_404(Building, pk=int(id_building))
+    if has_permission(request.user, VIEW, "Consultar recibo CFE") or \
+            request.user.is_superuser:
+        fecha = request.GET['date'].split("-")
+        fecha = date(int(fecha[0]), int(fecha[1]), int(fecha[2]))
+        response_data = simplejson.dumps([dict(c_tot=str(35), c_base=str(20),
+                                               c_int=str(30), c_punta=str(20),
+                                               d_max=str(316),
+                                               d_max_time="03:38 PM",
+                                               cost_p=str(420.66),
+                                               pf=str(99), kvarh=str(400))])
+        return HttpResponse(content=response_data, content_type="application/json")
+    else:
+        raise Http404
