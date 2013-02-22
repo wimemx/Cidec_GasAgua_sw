@@ -27,7 +27,7 @@ def datawarehouse_run(
 
 @task(ignore_result=True)
 def tag_batch():
-    tag_reading_batch()
+    batch_tag()
 
 @task(ignore_result=True)
 def calculate_dw(granularity):

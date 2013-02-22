@@ -21,7 +21,7 @@ MANAGERS = ADMINS
 
 DATABASES = {
 
-    'default': {
+    'test': {
         'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
         'NAME': 'audiwime_db',                      # Or path to database file if using sqlite3.
         'USER': 'audiwime_user',                      # Not used with sqlite3.
@@ -29,7 +29,7 @@ DATABASES = {
         'HOST': 'audiwime.wimelabs.com',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     },
-    'production': {
+    'default': {
         'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
         'NAME': 'satest_cidec',                      # Or path to database file if using sqlite3.
         'USER': 'satest_cidec',                      # Not used with sqlite3.
@@ -160,6 +160,7 @@ INSTALLED_APPS = (
     'electric_rates',
     'south',
     'data_warehouse',
+    'data_warehouse_extended',
     'alarms',
     'django_tables2',
     #'djcelery',
