@@ -776,10 +776,9 @@ def batch_tag():
     pw_arr = [3, 5, 28, 29, 30, 31, 32, 33, 6, 7, 22, 24, 25, 26, 27]
     pwermeters = ProfilePowermeter.objects.filter(pk__in=pw_arr)
     for pw in pwermeters:
-        t = threading.Thread(target=tag_reading_batch, args=(pw, ))
-        t.start()
-        print "thread sent"
-    return "all sent"
+        print pw
+        tag_reading_batch(pw)
+    print "all powermeters sent"
 
 
 def tag_reading_batch(profile_pm):
@@ -789,13 +788,14 @@ def tag_reading_batch(profile_pm):
     #Obtener los medidores
     #Obtener sus lecturas, ordenandolos por fechas
 
-    print "tagging...", profile_pm
+    print "tagging..." + profile_pm.powermeter.powermeter_anotation
     readingsObj = ElectricDataTemp.objects.filter(
         profile_powermeter=profile_pm).order_by(
         "medition_date")
 
     for readingObj in readingsObj:
-        print "medition_date: ", readingObj.medition_date
+        print "medition_date: " + str(readingObj.pk) + \
+              str(readingObj.medition_date)
         #Si la lectura proviene de cualquier medidor menos del No Asignado
         if readingObj.profile_powermeter.pk != 4:
             tag = None

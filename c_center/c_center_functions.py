@@ -967,7 +967,12 @@ def get_profile(request):
                 profile = ProfilePowermeter.objects.get(
                     powermeter__powermeter_serial=serial
                 )
-                srls.append(dict(profile=profile.pk, serial=serial))
+                consumer = ConsumerUnit.objects.get(
+                    profile_powermeter = profile
+                )
+                srls.append(dict(profile=profile.pk,
+                                 consumer=consumer.pk,
+                                 serial=serial))
             data = simplejson.dumps(srls)
             return HttpResponse(content=data, content_type="application/json")
         else:
@@ -1106,6 +1111,25 @@ def save_historic(request, monthly_cutdate, building):
         )
         newHistoric.save()
 
+def all_dailyreportAll():
+    buildings = Building.objects.all()
+
+    initial_d = datetime(2012,8,1)
+    dia = timedelta(days=1)
+    while initial_d < datetime.today():
+        for buil in buildings:
+            try:
+                main_cu = ConsumerUnit.objects.get(
+                    building=buil,
+                    electric_device_type__electric_device_type_name="Total Edificio"
+                )
+            except ObjectDoesNotExist:
+                continue
+            else:
+                dailyReport(buil, main_cu, initial_d)
+        initial_d += dia
+    print "Done AlldailyReportAll"
+
 def dailyReportAll():
     buildings = Building.objects.all()
     for buil in buildings:
@@ -1118,10 +1142,8 @@ def dailyReportAll():
             continue
         else:
             dia = timedelta(days=1)
-            print buil, main_cu, datetime.today()-dia
             dailyReport(buil, main_cu, datetime.today()-dia)
     print "Done dailyReportAll"
-
 
 
 def dailyReport(building, consumer_unit, today):
