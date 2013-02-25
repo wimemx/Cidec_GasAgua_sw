@@ -160,6 +160,7 @@ INSTALLED_APPS = (
     'electric_rates',
     'south',
     'data_warehouse',
+    'data_warehouse_extended',
     'alarms',
     'django_tables2',
     #'djcelery',

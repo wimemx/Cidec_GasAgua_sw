@@ -8186,12 +8186,22 @@ def month_analitics_day(request, id_building):
             request.user.is_superuser:
         fecha = request.GET['date'].split("-")
         fecha = date(int(fecha[0]), int(fecha[1]), int(fecha[2]))
-        response_data = simplejson.dumps([dict(c_tot=str(35), c_base=str(20),
-                                               c_int=str(30), c_punta=str(20),
-                                               d_max=str(316),
-                                               d_max_time="03:38 PM",
-                                               cost_p=str(420.66),
-                                               pf=str(99), kvarh=str(400))])
+        try:
+            day_data = DailyData.objects.get(building=edificio, data_day=fecha)
+        except ObjectDoesNotExist:
+            diccionario = dict(empty="true")
+        else:
+            diccionario = dict(empty="false",
+                               c_tot=str(day_data.KWH_total),
+                               c_base=str(day_data.KWH_base),
+                               c_int=str(day_data.KWH_intermedio),
+                               c_punta=str(day_data.KWH_punta),
+                               d_max=str(day_data.max_demand),
+                               d_max_time=str(day_data.max_demand_time),
+                               cost_p=str(day_data.KWH_cost),
+                               pf=str(day_data.power_factor),
+                               kvarh=str(day_data.KVARH))
+        response_data = simplejson.dumps([diccionario])
         return HttpResponse(content=response_data, content_type="application/json")
     else:
         raise Http404

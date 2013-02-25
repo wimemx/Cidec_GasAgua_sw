@@ -967,7 +967,12 @@ def get_profile(request):
                 profile = ProfilePowermeter.objects.get(
                     powermeter__powermeter_serial=serial
                 )
-                srls.append(dict(profile=profile.pk, serial=serial))
+                consumer = ConsumerUnit.objects.get(
+                    profile_powermeter = profile
+                )
+                srls.append(dict(profile=profile.pk,
+                                 consumer=consumer.pk,
+                                 serial=serial))
             data = simplejson.dumps(srls)
             return HttpResponse(content=data, content_type="application/json")
         else:
@@ -1106,6 +1111,25 @@ def save_historic(request, monthly_cutdate, building):
         )
         newHistoric.save()
 
+def all_dailyreportAll():
+    buildings = Building.objects.all()
+
+    initial_d = datetime(2012,8,1)
+    dia = timedelta(days=1)
+    while initial_d < datetime.today():
+        for buil in buildings:
+            try:
+                main_cu = ConsumerUnit.objects.get(
+                    building=buil,
+                    electric_device_type__electric_device_type_name="Total Edificio"
+                )
+            except ObjectDoesNotExist:
+                continue
+            else:
+                dailyReport(buil, main_cu, initial_d)
+        initial_d += dia
+    print "Done AlldailyReportAll"
+
 def dailyReportAll():
     buildings = Building.objects.all()
     for buil in buildings:
@@ -1120,7 +1144,6 @@ def dailyReportAll():
             dia = timedelta(days=1)
             dailyReport(buil, main_cu, datetime.today()-dia)
     print "Done dailyReportAll"
-
 
 
 def dailyReport(building, consumer_unit, today):
@@ -1156,7 +1179,6 @@ def dailyReport(building, consumer_unit, today):
 
     consumer_units = get_consumer_units(consumer_unit)
     demanda_max = 0
-
     if consumer_units:
         for c_unit in consumer_units:
             pr_powermeter = c_unit.profile_powermeter.powermeter
@@ -1166,7 +1188,6 @@ def dailyReport(building, consumer_unit, today):
                 filter(profile_powermeter__powermeter__pk=pr_powermeter.pk). \
                 filter(medition_date__gte=today_s_utc).filter(medition_date__lte=today_e_utc). \
                 order_by('-kW_import_sliding_window_demand')
-
             if demanda_max_obj:
                 demanda_max = demanda_max_obj[0].kW_import_sliding_window_demand
                 dem_max_time = demanda_max_obj[0].medition_date.time()
@@ -1176,7 +1197,6 @@ def dailyReport(building, consumer_unit, today):
                 filter(profile_powermeter__powermeter__pk=pr_powermeter.pk).\
                 filter(medition_date__gte=today_s_utc).filter(medition_date__lte=today_e_utc).\
                 order_by('kW')
-
             if demanda_min_obj:
                 demanda_min = demanda_min_obj[0].kW
                 dem_min_time = demanda_min_obj[0].medition_date.time()
@@ -1323,20 +1343,19 @@ def getDailyReports(building, month, year):
     dailyreport_arr = []
 
     for day in month_days:
-        print "Dia:", str(day)
         try:
             ddata_obj = DailyData.objects.get(building=building,
-                                              data_day=day).values(
-                "max_demand", "KWH_total")
-            data = dict(fecha=str(day),
-                        max_demand=ddata_obj['max_demand'],
-                        KWH_total=ddata_obj['KWH_total'],
-                        empty="false"
-            )
-            dailyreport_arr.append(data)
+                                              data_day=day)
         except DailyData.DoesNotExist:
             dailyreport_arr.append(dict(fecha=str(day),
                                         empty="true"))
+        else:
+            data = dict(fecha=str(day),
+                        max_demand=ddata_obj.max_demand,
+                        KWH_total=ddata_obj.KWH_total,
+                        empty="false"
+            )
+            dailyreport_arr.append(data)
 
     return dailyreport_arr
 
