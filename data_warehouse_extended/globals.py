@@ -57,5 +57,14 @@ class ModelFieldRelatedName:
     #
 
     INSTANT = "instants"
-
     CONSUMER_UNIT_INSTANT_ELECTRIC_DATA = "electric_data"
+
+
+class SystemError:
+
+    INSTANT_ALREADY_EXISTS = "INSTANT_ALREADY_EXISTS"
+
+
+class SystemInfo:
+
+    INSTANT_SAVED = "INSTANT_SAVED"
