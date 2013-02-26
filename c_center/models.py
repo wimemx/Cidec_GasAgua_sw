@@ -464,21 +464,27 @@ class HierarchyOfPart(models.Model):
     Una empresa puede estar operando en diferentes espacios fisicos.
 
     """
-    part_of_building_composite = models.ForeignKey(PartOfBuilding,
-                                                   on_delete=models.PROTECT,
-                                                   related_name="hyerarchy_of_part_composite",
-                                                   null=True,
-                                                   blank=True, default=None)
-    part_of_building_leaf = models.ForeignKey(PartOfBuilding,
-                                              on_delete=models.PROTECT,
-                                              related_name="hyerarchy_of_part_leaf",
-                                              null=True,
-                                              blank=True, default=None)
-    consumer_unit_composite = models.ForeignKey(ConsumerUnit,
-                                                on_delete=models.PROTECT,
-                                                related_name="consumer_unit_composite",
-                                                null=True,
-                                                blank=True, default=None)
+    part_of_building_composite = models.ForeignKey(
+        PartOfBuilding,
+        on_delete=models.PROTECT,
+        related_name="hyerarchy_of_part_composite",
+        null=True,
+        blank=True,
+        default=None)
+    part_of_building_leaf = models.ForeignKey(
+        PartOfBuilding,
+        on_delete=models.PROTECT,
+        related_name="hyerarchy_of_part_leaf",
+        null=True,
+        blank=True,
+        default=None)
+    consumer_unit_composite = models.ForeignKey(
+        ConsumerUnit,
+        on_delete=models.PROTECT,
+        related_name="consumer_unit_composite",
+        null=True,
+        blank=True,
+        default=None)
     consumer_unit_leaf = models.ForeignKey(ConsumerUnit,
                                            on_delete=models.PROTECT,
                                            related_name="consumer_unit_leaf",
@@ -505,7 +511,8 @@ class HierarchyOfPart(models.Model):
 class ElectricData(models.Model):
     """ Historico de datos electricos
 
-    Almacena los datos historicos de las mediciones electricas de un medidor segun su id interno
+    Almacena los datos historicos de las mediciones electricas de un medidor
+    segun su id interno
 
     """
     profile_powermeter = models.ForeignKey(ProfilePowermeter,
@@ -734,7 +741,8 @@ class ElectricRateForElectricData(models.Model):
 class IndustrialEquipment(models.Model):
     """
 
-    Almacena los equipos industriales (computadoras a las que se conectan los medidores electricos)
+    Almacena los equipos industriales (computadoras a las que se conectan
+    los medidores electricos)
 
     """
     alias = models.CharField(max_length=128)
@@ -758,7 +766,8 @@ class IndustrialEquipment(models.Model):
 class PowermeterForIndustrialEquipment(models.Model):
     """
 
-    Asocia los medidores instalados con un perfil para su manejo interno en el sistema
+    Asocia los medidores instalados con un perfil para su manejo
+    interno en el sistema
 
     """
     powermeter = models.ForeignKey(Powermeter, on_delete=models.PROTECT)
@@ -905,7 +914,8 @@ class DailyData(models.Model):
     max_demand = models.IntegerField(null=True, blank=True)
     max_demand_time = models.TimeField("Hora de la demanda maxima")
     min_demand = models.IntegerField(null=True, blank=True, default=0)
-    min_demand_time = models.TimeField("Hora de la demanda minima", default=datetime.time(0,0,0))
+    min_demand_time = models.TimeField("Hora de la demanda minima",
+                                       default=datetime.time(0,0,0))
     KWH_cost = models.DecimalField(max_digits=20, decimal_places=2, null=True,
                                    blank=True, default=0)
     power_factor = models.DecimalField(max_digits=20, decimal_places=2,

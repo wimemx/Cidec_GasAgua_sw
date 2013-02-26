@@ -116,14 +116,14 @@
     </div>
     <table id="table_container">
         <tbody>
-            <tr>
-                <td id="sidebar">{% include "sidebar.html" %}</td>
-                <td id="toggle_bar"><span id="nav_toggle"><a></a></span>
-                </td>
-                <td id="content">
-                    {% block contenido %}{% endblock %}
-                </td>
-            </tr>
+        <tr>
+            <td id="sidebar">{% include "sidebar.html" %}</td>
+        </tr>
+        <tr>
+            <td id="content">
+                {% block contenido %}{% endblock %}
+            </td>
+        </tr>
         </tbody>
     </table>
 </body>

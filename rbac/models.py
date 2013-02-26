@@ -209,12 +209,53 @@ class OperationForGroup(models.Model):
 
 
 class OperationForGroupObjects(models.Model):
-    """Agrupa los tipos de operaciones que se pueden realizar para cada objeto"""
+    """
+
+    Agrupa los tipos de operaciones que se pueden realizar
+    para cada objeto
+
+    """
     operation = models.ForeignKey(Operation, on_delete=models.PROTECT)
     group_object = models.ForeignKey(GroupObject, on_delete=models.PROTECT)
 
     def __unicode__(self):
-        return self.operation.operation_name + " - " + self.group_object.object.object_name
+        return self.operation.operation_name + " - " + \
+               self.group_object.object.object_name
 
     class Meta:
         unique_together = ('operation', 'group_object')
+
+
+class MenuCategs(models.Model):
+    categ_name = models.CharField(max_length=32)
+    main = models.BooleanField(default=False)
+    categ_access_point = models.CharField(max_length=256, blank=True, null=True)
+    added_class = models.CharField(max_length=64, blank=True, null=True)
+    order = models.IntegerField()
+
+    def __unicode__(self):
+        return self.categ_name
+
+
+class MenuHierarchy(models.Model):
+    parent_cat = models.ForeignKey(MenuCategs,
+                                   related_name="parent_cat_composite",
+                                   on_delete=models.PROTECT,
+                                   null=True,
+                                   blank=True,
+                                   default=None)
+    child_cat = models.ForeignKey(MenuCategs,
+                                  related_name="parent_cat_leaf",
+                                  on_delete=models.PROTECT,
+                                  blank=True,
+                                  null=True,
+                                  default=None)
+
+    def __unicode__(self):
+        s = ""
+        t = ""
+        if self.parent_cat:
+            s = self.parent_cat.categ_name
+        if self.child_cat:
+            t = self.child_cat.categ_name
+        return s + " > " + t
