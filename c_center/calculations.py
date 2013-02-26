@@ -25,13 +25,14 @@ from dateutil.relativedelta import *
 from c_center.models import *
 from electric_rates.models import *
 
-
 def consumoAcumuladoKWH(building, fecha_inicio, fecha_fin):
     suma_lecturas = 0
-    suma_lecturas = DailyData.objects.filter(building=building,
-                                             data_day__gte=fecha_inicio,
-                                             data_day__lte=fecha_fin).aggregate(
+    lecturas = DailyData.objects.filter(building = building, 
+                                        data_day__gte = fecha_inicio, 
+                                        data_day__lte = fecha_fin).aggregate(
         Sum('KWH_total'))
+    if lecturas:
+        suma_lecturas = lecturas['KWH_total__sum']
     return suma_lecturas
 
 
@@ -59,30 +60,32 @@ def demandaMinima(building, fecha_inicio, fecha_fin):
 
 def promedioKWH(building, fecha_inicio, fecha_fin):
     promedio = 0
-    t_lecturas = DailyData.objects.filter(building=building,
-                                          data_day__gte=fecha_inicio,
-                                          data_day__lte=fecha_fin)
-    suma_lecturas = DailyData.objects.filter(building=building,
-                                             data_day__gte=fecha_inicio,
-                                             data_day__lte=fecha_fin).aggregate(
-        Sum('KWH_total'))
-    total_lecturas = len(t_lecturas)
-    promedio = suma_lecturas['KWH_total__sum'] / total_lecturas
+    t_lecturas = DailyData.objects.filter(building = building, 
+                                        data_day__gte = fecha_inicio, 
+                                        data_day__lte = fecha_fin)
+    if t_lecturas:
+        suma_lecturas = DailyData.objects.filter(building = building, 
+                                                data_day__gte = fecha_inicio, 
+                                                data_day__lte = fecha_fin).aggregate(
+            Sum('KWH_total'))
+        total_lecturas = len(t_lecturas)
+        promedio = suma_lecturas['KWH_total__sum'] / total_lecturas
     return promedio
 
 
 def desviacionStandardKWH(building, fecha_inicio, fecha_fin):
     suma = 0
     desviacion = 0
-    lecturas = DailyData.objects.filter(building=building,
-                                        data_day__gte=fecha_inicio,
-                                        data_day__lte=fecha_fin)
-    promedio = promedioKWH(building, fecha_inicio, fecha_fin)
-    nmenosuno = len(lecturas) - 1
-    for kwh in lecturas:
-        n_m = kwh.KWH_total - promedio
-        suma += n_m ** 2
-    desviacion = sqrt(suma / nmenosuno)
+    lecturas = DailyData.objects.filter(building = building, 
+                                        data_day__gte = fecha_inicio, 
+                                        data_day__lte = fecha_fin)
+    if lecturas:
+        promedio = promedioKWH(building, fecha_inicio, fecha_fin)
+        nmenosuno = len(lecturas)-1
+        for kwh in lecturas:
+            n_m = kwh.KWH_total - promedio
+            suma += n_m**2
+        desviacion = sqrt(suma/nmenosuno)
     return desviacion
 
 
@@ -606,26 +609,6 @@ def obtenerKWhTarifa(pr_powermeter, tarifa_id, region, tarifa_hm):
 
     return valores_kwh
 
-
-def obtenerKVARHTarifa(pr_powermeter, tarifa_id):
-    tarifaObj = ElectricRatesDetail.objects.get(id=tarifa_id)
-    fecha_inicio = str(tarifaObj.date_init) + " 00:00:00"
-    fecha_fin = str(tarifaObj.date_end) + " 23:59:59"
-
-    kvarh_netos = 0
-    lecturasObj = ElectricDataTemp.objects.filter(
-        profile_powermeter=pr_powermeter,
-        medition_date__range=(fecha_inicio, fecha_fin)).order_by(
-        'medition_date')
-    if lecturasObj:
-        total_lecturas = len(lecturasObj)
-        kvarh_inicial = lecturasObj[0].TotalkvarhIMPORT
-        kvarh_final = lecturasObj[total_lecturas - 1].TotalkvarhIMPORT
-        kvarh_netos = kvarh_final - kvarh_inicial
-
-    return kvarh_netos
-
-
 def obtenerKVARH_total(pr_powermeter, start_date, end_date):
     kvarh_netos = 0
     lecturasObj = ElectricDataTemp.objects.filter(
@@ -636,6 +619,48 @@ def obtenerKVARH_total(pr_powermeter, start_date, end_date):
         total_lecturas = len(lecturasObj)
         kvarh_inicial = lecturasObj[0].TotalkvarhIMPORT
         kvarh_final = lecturasObj[total_lecturas - 1].TotalkvarhIMPORT
+        kvarh_netos = kvarh_final - kvarh_inicial
+
+    return int(ceil(kvarh_netos))
+
+def obtenerKVARH(profile_powermeter, start_date, end_date):
+    kvarh_netos = 0
+    lecturasObj = ElectricDataTemp.objects.filter(
+        profile_powermeter=profile_powermeter,
+        medition_date__gte=start_date,
+        medition_date__lt=end_date).order_by('medition_date')
+    if lecturasObj:
+        total_lecturas = len(lecturasObj)
+        kvarh_inicial = lecturasObj[0].TotalkvarhIMPORT
+        kvarh_final = lecturasObj[total_lecturas - 1].TotalkvarhIMPORT
+        kvarh_netos = kvarh_final - kvarh_inicial
+
+    return int(ceil(kvarh_netos))
+
+def obtenerKVARH_dia(profile_powermeter, start_date, end_date, kvarh_anterior):
+    kvarh_netos = 0
+    lecturasObj = ElectricDataTemp.objects.filter(
+        profile_powermeter=profile_powermeter,
+        medition_date__gte=start_date,
+        medition_date__lt=end_date).order_by('medition_date')
+    if lecturasObj:
+        total_lecturas = len(lecturasObj)
+        #Obtengo la primer lectura
+        kvarh_inicial = lecturasObj[0].TotalkvarhIMPORT
+        kvarh_final = lecturasObj[total_lecturas - 1].TotalkvarhIMPORT
+
+        #Se verifica el kvarh_anterior
+        if kvarh_anterior:
+            #Se obtiene la siguiente lectura
+            last_id = lecturasObj[total_lecturas-1].id
+            siguiente_lectura = ElectricDataTemp.objects.filter(
+                profile_powermeter=profile_powermeter, pk__gt = last_id).order_by('medition_date')
+            if siguiente_lectura:
+                print "Id:", siguiente_lectura[0].id
+                kvarh_final = siguiente_lectura[0].TotalkvarhIMPORT
+
+        print "1er KVARH", kvarh_inicial
+        print "2da KVARH", kvarh_final
         kvarh_netos = kvarh_final - kvarh_inicial
 
     return int(ceil(kvarh_netos))

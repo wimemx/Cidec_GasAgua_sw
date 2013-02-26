@@ -120,7 +120,8 @@ class ElectricalParameter(django.db.models.Model):
                              ELECTRICAL_PARAMETER__TYPE)
 
     def __unicode__(self):
-        return self.name + self.name_transactional + self.TYPES[self.type][1]
+        return self.name + u" - " + self.name_transactional + u" - " +\
+               self.TYPES[self.type - 1][1]
 
 
 class ConsumerUnitInstantElectricalData(django.db.models.Model):

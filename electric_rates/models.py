@@ -148,12 +148,11 @@ class DACElectricRateDetail(models.Model):
     class Meta:
         verbose_name_plural = "Dac Electric Rate Detail"
 
-
 class ThreeElectricRateDetail(models.Model):
     kw_rate = models.DecimalField(u"Cargo Demanda ", max_digits=12,
-                                  decimal_places=6)
+        decimal_places=6)
     kwh_rate = models.DecimalField(u"Cargo por kilowatt - hora", max_digits=12,
-                                   decimal_places=6)
+        decimal_places=6)
     date_init = models.DateField("Fecha de Inicio")
     date_end = models.DateField("Fecha de Fin")
 
