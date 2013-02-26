@@ -749,6 +749,7 @@ class IndustrialEquipment(models.Model):
     last_changed = models.DateTimeField(auto_now=True)
     realtime = models.BooleanField(default=False)
     status = models.BooleanField(default=True)
+    building = models.OneToOneField(Building, on_delete=models.PROTECT)
 
     def __unicode__(self):
         return self.alias

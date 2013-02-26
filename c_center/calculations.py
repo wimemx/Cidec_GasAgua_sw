@@ -4,6 +4,7 @@
 #standard library imports
 import collections
 import pytz, datetime
+import threading
 from time import strftime
 from math import *
 from decimal import *
@@ -26,38 +27,58 @@ from electric_rates.models import *
 
 def consumoAcumuladoKWH(building, fecha_inicio, fecha_fin):
     suma_lecturas = 0
-    lecturas = DailyData.objects.filter(building = building, data_day__gte = fecha_inicio, data_day__lte = fecha_fin).aggregate(Sum('KWH_total'))
+    lecturas = DailyData.objects.filter(building = building, 
+                                        data_day__gte = fecha_inicio, 
+                                        data_day__lte = fecha_fin).aggregate(
+        Sum('KWH_total'))
     if lecturas:
         suma_lecturas = lecturas['KWH_total__sum']
     return suma_lecturas
 
+
 def demandaMaxima(building, fecha_inicio, fecha_fin):
     demanda_max = 0
-    lecturas = DailyData.objects.filter(building = building, data_day__gte= fecha_inicio, data_day__lte= fecha_fin).order_by('-max_demand')
+    lecturas = DailyData.objects.filter(building=building,
+                                        data_day__gte=fecha_inicio,
+                                        data_day__lte=fecha_fin).order_by(
+        '-max_demand')
     if lecturas:
         demanda_max = lecturas[0].max_demand
     return demanda_max
 
+
 def demandaMinima(building, fecha_inicio, fecha_fin):
     demanda_min = 0
-    lecturas = DailyData.objects.filter(building = building, data_day__gte= fecha_inicio, data_day__lte= fecha_fin).order_by('min_demand')
+    lecturas = DailyData.objects.filter(building=building,
+                                        data_day__gte=fecha_inicio,
+                                        data_day__lte=fecha_fin).order_by(
+        'min_demand')
     if lecturas:
         demanda_min = lecturas[0].min_demand
-    return  demanda_min
+    return demanda_min
+
 
 def promedioKWH(building, fecha_inicio, fecha_fin):
     promedio = 0
-    t_lecturas = DailyData.objects.filter(building = building, data_day__gte = fecha_inicio, data_day__lte = fecha_fin)
+    t_lecturas = DailyData.objects.filter(building = building, 
+                                        data_day__gte = fecha_inicio, 
+                                        data_day__lte = fecha_fin)
     if t_lecturas:
-        suma_lecturas = DailyData.objects.filter(building = building, data_day__gte = fecha_inicio, data_day__lte = fecha_fin).aggregate(Sum('KWH_total'))
+        suma_lecturas = DailyData.objects.filter(building = building, 
+                                                data_day__gte = fecha_inicio, 
+                                                data_day__lte = fecha_fin).aggregate(
+            Sum('KWH_total'))
         total_lecturas = len(t_lecturas)
         promedio = suma_lecturas['KWH_total__sum'] / total_lecturas
     return promedio
 
+
 def desviacionStandardKWH(building, fecha_inicio, fecha_fin):
     suma = 0
     desviacion = 0
-    lecturas = DailyData.objects.filter(building = building, data_day__gte = fecha_inicio, data_day__lte = fecha_fin)
+    lecturas = DailyData.objects.filter(building = building, 
+                                        data_day__gte = fecha_inicio, 
+                                        data_day__lte = fecha_fin)
     if lecturas:
         promedio = promedioKWH(building, fecha_inicio, fecha_fin)
         nmenosuno = len(lecturas)-1
@@ -67,16 +88,22 @@ def desviacionStandardKWH(building, fecha_inicio, fecha_fin):
         desviacion = sqrt(suma/nmenosuno)
     return desviacion
 
+
 def medianaKWH(building, fecha_inicio, fecha_fin):
     mediana = 0
-    lecturas = DailyData.objects.filter(building = building, data_day__gte = fecha_inicio, data_day__lte = fecha_fin).order_by('KWH_total')
+    lecturas = DailyData.objects.filter(building=building,
+                                        data_day__gte=fecha_inicio,
+                                        data_day__lte=fecha_fin).order_by(
+        'KWH_total')
     if lecturas:
         longitud = len(lecturas)
         if longitud % 2 is 0: #Si es par
-            mediana = (lecturas[longitud / 2].KWH_total + lecturas[(longitud / 2) - 1].KWH_total) / 2
+            mediana = (lecturas[longitud / 2].KWH_total + lecturas[
+                (longitud / 2) - 1].KWH_total) / 2
         else: #Si es impar
             mediana = lecturas[longitud / 2].KWH_total
     return mediana
+
 
 def demandafacturable(kwbase, kwintermedio, kwpunta, fri, frb):
     df = 0
@@ -163,7 +190,7 @@ def costoenergia_total(kwbase, kwintermedio, kwpunta, tarifa_kwbase,
     costo_energia = 0
 
     costo_energia = kwbase * tarifa_kwbase + kwintermedio * \
-                    tarifa_kwintermedio + kwpunta * \
+                                             tarifa_kwintermedio + kwpunta * \
                     tarifa_kwpunta
 
     return costo_energia
@@ -297,7 +324,7 @@ def obtenerFestivos(year):
                 n_day = f_var[0]
                 w_day = f_var[1]
                 month_days = monthrange(actual_year, hday.month)
-                while(dia_mes < month_days[1] - 1):
+                while (dia_mes < month_days[1] - 1):
                     #st_time = time.strptime("%02d" % (c_day)+" "+"%02d" % (
                     # mes)+" "+str(actual_year), "%d %m %Y")
                     st_time = time.strptime(
@@ -431,7 +458,7 @@ def obtenerTipoPeriodoObj(fecha, region):
 
     electric_type = ElectricRatesPeriods.objects.filter(region=region).filter(
         date_interval__in=horario_ver_inv).filter(groupdays=grupo_id).filter(
-        Q(time_init__lte=fecha),Q(
+        Q(time_init__lte=fecha), Q(
             time_end__gte=fecha))
 
     return electric_type[0]
@@ -582,26 +609,6 @@ def obtenerKWhTarifa(pr_powermeter, tarifa_id, region, tarifa_hm):
 
     return valores_kwh
 
-
-def obtenerKVARHTarifa(pr_powermeter, tarifa_id):
-    tarifaObj = ElectricRatesDetail.objects.get(id=tarifa_id)
-    fecha_inicio = str(tarifaObj.date_init) + " 00:00:00"
-    fecha_fin = str(tarifaObj.date_end) + " 23:59:59"
-
-    kvarh_netos = 0
-    lecturasObj = ElectricDataTemp.objects.filter(
-        profile_powermeter=pr_powermeter,
-        medition_date__range=(fecha_inicio, fecha_fin)).order_by(
-        'medition_date')
-    if lecturasObj:
-        total_lecturas = len(lecturasObj)
-        kvarh_inicial = lecturasObj[0].TotalkvarhIMPORT
-        kvarh_final = lecturasObj[total_lecturas - 1].TotalkvarhIMPORT
-        kvarh_netos = kvarh_final - kvarh_inicial
-
-    return kvarh_netos
-
-
 def obtenerKVARH_total(pr_powermeter, start_date, end_date):
     kvarh_netos = 0
     lecturasObj = ElectricDataTemp.objects.filter(
@@ -629,7 +636,6 @@ def obtenerKVARH(profile_powermeter, start_date, end_date):
         kvarh_netos = kvarh_final - kvarh_inicial
 
     return int(ceil(kvarh_netos))
-
 
 def obtenerKVARH_dia(profile_powermeter, start_date, end_date, kvarh_anterior):
     kvarh_netos = 0
@@ -702,6 +708,7 @@ def obtenerCostoPromedioKWH(tarifa_id):
     costo = (tarifaObj.KWHB + tarifaObj.KWHI + tarifaObj.KWHP) / Decimal(
         str(3.0))
     return costo
+
 
 def obtenerDemanda_kw(lecturas_kw):
     demanda_maxima = 0
@@ -790,20 +797,30 @@ def getMonths(start_date, end_date):
     return final_months
 
 
-def tag_reading_batch():
+def batch_tag():
+    pw_arr = [3, 5, 28, 29, 30, 31, 32, 33, 6, 7, 22, 24, 25, 26, 27]
+    pwermeters = ProfilePowermeter.objects.filter(pk__in=pw_arr)
+    for pw in pwermeters:
+        print pw
+        tag_reading_batch(pw)
+    print "all powermeters sent"
+
+
+def tag_reading_batch(profile_pm):
     #readingsObj = ElectricDataTemp.objects.filter(pk__gte=1241619)
     #readingsObj = ElectricDataTemp.objects.all()
 
     #Obtener los medidores
     #Obtener sus lecturas, ordenandolos por fechas
 
-    print "entra"
+    print "tagging..." + profile_pm.powermeter.powermeter_anotation
     readingsObj = ElectricDataTemp.objects.filter(
-        profile_powermeter__in=[35, 34, 29,31, 32, 33, 24, 25, 26, 27, 22, 7, 6, 3]).order_by(
+        profile_powermeter=profile_pm).order_by(
         "medition_date")
 
     for readingObj in readingsObj:
-        print "por cada lectura"
+        print "medition_date: " + str(readingObj.pk) + \
+              str(readingObj.medition_date)
         #Si la lectura proviene de cualquier medidor menos del No Asignado
         if readingObj.profile_powermeter.pk != 4:
             tag = None
@@ -853,19 +870,17 @@ def tag_reading_batch():
                         #0].identifier, "-Nuevo Tag:", tag, "Tipo Actual:", reading_period_type.period_type, "Tipo Anterior:", last_reading_type, "ID Anterior:",
                         #last_reading[0].pk
 
-                else: #Si será un registro para un nuevo medidor
+                else:  # Si será un registro para un nuevo medidor
                     tag = hex(0)
-
-
-                #Guarda el registro etiquetado
-                newTaggedReading, created = ElectricRateForElectricData.objects.get_or_create(
-                    electric_data=readingObj
+                    #Guarda el registro etiquetado
+                newTaggedReading = ElectricRateForElectricData(
+                    electric_rates_periods=reading_period_type,
+                    electric_data=readingObj,
+                    identifier=tag
                 )
-                newTaggedReading.electric_rates_periods=reading_period_type
-                newTaggedReading.identifier=tag
                 newTaggedReading.save()
 
-    print "Acabe"
+    print "Done", profile_pm
 
 
 def multiply():
@@ -881,9 +896,12 @@ def multiply():
     print ":D"
 
 #Etiquetado de datos por rango de ids
-def tag_reading_ids(id_start, id_end):
-
-    readingsObj = ElectricDataTemp.objects.filter(id__gte = id_start).filter(id__lte = id_end).order_by("medition_date")
+def tag_reading_ids():
+    readingsObj = ElectricDataTemp.objects.filter(
+        profile_powermeter__pk=28).filter(
+        medition_date__gte=datetime.datetime(2012, 12, 31)).filter(
+        medition_date__lte=datetime.datetime(2013, 1, 12)).order_by(
+        "medition_date")
 
     for readingObj in readingsObj:
         #Si la lectura proviene de cualquier medidor menos del No Asignado
@@ -944,6 +962,7 @@ def tag_reading_ids(id_start, id_end):
 
     print "Acabe"
 
+
 @csrf_exempt
 def tag_reading(request):
     if request.method == 'POST':
@@ -979,7 +998,7 @@ def tag_reading(request):
                     #Si existen registros para ese medidor
                     if last_reading:
                         #Obtiene el periodo de la ultima lectura de ese medidor
-                        last_reading_type = last_reading[0].\
+                        last_reading_type = last_reading[0]. \
                             electric_rates_periods.period_type
 
                         #    Se compara el periodo actual con el periodo del ultimo registro.
