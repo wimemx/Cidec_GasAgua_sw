@@ -372,8 +372,9 @@ def cfe_calculations(request):
                 resultado_mensual["kwh_punta"] = cfe_historico[0].KWH_punta
                 resultado_mensual["kwh_totales"] = cfe_historico[0].KWH_total
 
-                periodo = str(cfe_historico[0].monthly_cut_dates.date_init.day)+'/'+str(cfe_historico[0].monthly_cut_dates.date_init.month)+"/"+str(cfe_historico[0].monthly_cut_dates.date_init.year)+" "\
-                                                                                                                                                                                                       "- "+str(cfe_historico[0].monthly_cut_dates.date_end.day)+'/'+str(cfe_historico[0].monthly_cut_dates.date_end.month)+"/"+str(cfe_historico[0].monthly_cut_dates.date_end.year)
+                periodo = cfe_historico[0].monthly_cut_dates.date_init.astimezone(timezone.get_current_timezone()).\
+                          strftime('%d/%m/%Y %I:%M %p') + " - " + cfe_historico[0].monthly_cut_dates.date_end.\
+                astimezone(timezone.get_current_timezone()).strftime('%d/%m/%Y %I:%M %p')
 
                 resultado_mensual['periodo'] = periodo
                 resultado_mensual['demanda_facturable'] = cfe_historico[0].billable_demand
@@ -393,8 +394,10 @@ def cfe_calculations(request):
 
             if tipo_tarifa.pk == 2: #Tarifa Dac
 
-                periodo = str(cfe_historico[0].monthly_cut_dates.date_init.day)+'/'+str(cfe_historico[0].monthly_cut_dates.date_init.month)+"/"+str(cfe_historico[0].monthly_cut_dates.date_init.year)+" "\
-                                                                                                                                                                                                       "- "+str(cfe_historico[0].monthly_cut_dates.date_end.day)+'/'+str(cfe_historico[0].monthly_cut_dates.date_end.month)+"/"+str(cfe_historico[0].monthly_cut_dates.date_end.year)
+                periodo = cfe_historico[0].monthly_cut_dates.date_init.astimezone(timezone.get_current_timezone()).\
+                          strftime('%d/%m/%Y %I:%M %p') + " - " + cfe_historico[0].monthly_cut_dates.date_end.\
+                          astimezone(timezone.get_current_timezone()).strftime('%d/%m/%Y %I:%M %p')
+
                 resultado_mensual['periodo'] = periodo
                 resultado_mensual['kwh_totales'] = cfe_historico[0].KWH_total
                 resultado_mensual['tarifa_kwh'] = cfe_historico[0].KWH_rate
@@ -407,8 +410,9 @@ def cfe_calculations(request):
 
             if tipo_tarifa.pk == 3: #Tarifa 3
 
-                periodo = str(cfe_historico[0].monthly_cut_dates.date_init.day)+'/'+str(cfe_historico[0].monthly_cut_dates.date_init.month)+"/"+str(cfe_historico[0].monthly_cut_dates.date_init.year)+" "\
-                                                                                                                                                                                                       "- "+str(cfe_historico[0].monthly_cut_dates.date_end.day)+'/'+str(cfe_historico[0].monthly_cut_dates.date_end.month)+"/"+str(cfe_historico[0].monthly_cut_dates.date_end.year)
+                periodo = cfe_historico[0].monthly_cut_dates.date_init.astimezone(timezone.get_current_timezone()).\
+                          strftime('%d/%m/%Y %I:%M %p') + " - " + cfe_historico[0].monthly_cut_dates.date_end.\
+                          astimezone(timezone.get_current_timezone()).strftime('%d/%m/%Y %I:%M %p')
 
                 resultado_mensual['periodo'] = periodo
                 resultado_mensual['kwh_totales'] = cfe_historico[0].KWH_total
@@ -425,6 +429,8 @@ def cfe_calculations(request):
                 resultado_mensual['status'] = 'OK'
 
         else:#si no, hace el calculo al momento. NOTA: Se hace el calculo, pero no se guarda
+
+            #reTagHolidays()
 
             #print getMonthlyReport(request.session['main_building'], 1, 2013)
             """
@@ -7561,7 +7567,8 @@ def set_cutdate(request, id_cutdate):
                     cd_before.save()
 
                     #Se recalcula el mes anterior ya con las nuevas fechas.
-                    save_historic.delay(request, cd_before, request.session['main_building'])
+                    #save_historic.delay(request, cd_before, request.session['main_building'])
+                    save_historic(request, cd_before, request.session['main_building'])
 
                 #Si hay cambio de fechas en mes siguiente
                 if cd_after_flag:
@@ -7571,7 +7578,8 @@ def set_cutdate(request, id_cutdate):
 
                     #Si la fecha final del mes siguiente no es nula, se crea el historico
                     if cd_after.date_end:
-                        save_historic.delay(request, cd_after, request.session['main_building'])
+                        #save_historic.delay(request, cd_after, request.session['main_building'])
+                        save_historic(request, cd_after, request.session['main_building'])
                 else:
                     #Se crea el nuevo mes
                     new_cut = MonthlyCutDates(
@@ -7587,7 +7595,8 @@ def set_cutdate(request, id_cutdate):
                 cutdate_obj.save()
 
                 #Se calcula el mes actual
-                save_historic.delay(request, cutdate_obj, request.session['main_building'])
+                #save_historic.delay(request, cutdate_obj, request.session['main_building'])
+                save_historic(request, cutdate_obj, request.session['main_building'])
 
                 template_vars[
                 "message"] = "Fechas de Corte establecidas correctamente"
@@ -8028,3 +8037,135 @@ def month_analitics_day(request, id_building):
         return HttpResponse(content=response_data, content_type="application/json")
     else:
         raise Http404
+
+
+def save_historic(request, monthly_cutdate, building):
+    try:
+        if building.electric_rate.pk == 1:
+            exist_historic = HMHistoricData.objects.get(
+                monthly_cut_dates=monthly_cutdate)
+        elif building.electric_rate.pk == 2:
+            exist_historic = DacHistoricData.objects.get(
+                monthly_cut_dates=monthly_cutdate)
+        else:#if building.electric_rate.pk == 3:
+            exist_historic = T3HistoricData.objects.get(
+                monthly_cut_dates=monthly_cutdate)
+    except ObjectDoesNotExist:
+        pass
+    else:
+        exist_historic.delete()
+
+    month = monthly_cutdate.billing_month.month
+    year = monthly_cutdate.billing_month.year
+
+    #Se obtiene el tipo de tarifa del edificio (HM o DAC)
+    if building.electric_rate.pk == 1: #Tarifa HM
+        resultado_mensual = tarifaHM_2(building,
+            monthly_cutdate.date_init,
+            monthly_cutdate.date_end, month, year)
+
+        if resultado_mensual['kwh_totales'] == 0:
+            aver_rate = 0
+        else:
+            aver_rate = resultado_mensual['subtotal'] / resultado_mensual[
+                                                        'kwh_totales']
+        aver_rate = str(aver_rate)
+        resultado_mensual['factor_carga'] = str(
+            resultado_mensual['factor_carga'])
+        resultado_mensual['costo_fpotencia'] = str(
+            resultado_mensual['costo_fpotencia'])
+        resultado_mensual['subtotal'] = str(resultado_mensual['subtotal'])
+        resultado_mensual['iva'] = str(resultado_mensual['iva'])
+        resultado_mensual['total'] = str(resultado_mensual['total'])
+        newHistoric = HMHistoricData(
+            monthly_cut_dates=monthly_cutdate,
+            KWH_total=resultado_mensual['kwh_totales'],
+            KWH_base=resultado_mensual['kwh_base'],
+            KWH_intermedio=resultado_mensual['kwh_intermedio'],
+            KWH_punta=resultado_mensual['kwh_punta'],
+            KW_base=resultado_mensual['kw_base'],
+            KW_punta=resultado_mensual['kw_punta'],
+            KW_intermedio=resultado_mensual['kw_intermedio'],
+            KVARH=resultado_mensual['kvarh_totales'],
+            power_factor=resultado_mensual['factor_potencia'],
+            charge_factor=resultado_mensual['factor_carga'],
+            billable_demand=resultado_mensual['demanda_facturable'],
+            KWH_base_rate=resultado_mensual['tarifa_kwhb'],
+            KWH_intermedio_rate=resultado_mensual['tarifa_kwhi'],
+            KWH_punta_rate=resultado_mensual['tarifa_kwhp'],
+            billable_demand_rate=resultado_mensual['tarifa_df'],
+            average_rate=aver_rate,
+            energy_cost=resultado_mensual['costo_energia'],
+            billable_demand_cost=resultado_mensual['costo_dfacturable'],
+            power_factor_bonification=resultado_mensual['costo_fpotencia'],
+            subtotal=resultado_mensual['subtotal'],
+            iva=resultado_mensual['iva'],
+            total=resultado_mensual['total']
+        )
+        newHistoric.save()
+
+    elif building.electric_rate.pk == 2:#Tarifa DAC
+        resultado_mensual = tarifaDAC_2(building,
+            monthly_cutdate.date_init,
+            monthly_cutdate.date_end, month, year)
+
+        if resultado_mensual['kwh_totales'] == 0:
+            aver_rate = 0
+        else:
+            aver_rate = resultado_mensual['costo_energia'] / resultado_mensual[
+                                                             'kwh_totales']
+        aver_rate = str(aver_rate)
+
+        resultado_mensual['subtotal'] = str(resultado_mensual['subtotal'])
+        resultado_mensual['iva'] = str(resultado_mensual['iva'])
+        resultado_mensual['total'] = str(resultado_mensual['total'])
+        newHistoric = DacHistoricData(
+            monthly_cut_dates=monthly_cutdate,
+            KWH_total=resultado_mensual['kwh_totales'],
+            KWH_rate=resultado_mensual['tarifa_kwh'],
+            monthly_rate=resultado_mensual['tarifa_mes'],
+            energy_cost=resultado_mensual['importe'],
+            average_rate=aver_rate,
+            subtotal=resultado_mensual['costo_energia'],
+            iva=resultado_mensual['iva'],
+            total=resultado_mensual['total']
+        )
+        newHistoric.save()
+
+    elif building.electric_rate.pk == 3:#Tarifa 3
+        resultado_mensual = tarifa_3_v2(building,
+            monthly_cutdate.date_init,
+            monthly_cutdate.date_end, month, year)
+
+        if resultado_mensual['kwh_totales'] == 0:
+            aver_rate = 0
+        else:
+            aver_rate = resultado_mensual['subtotal'] / resultado_mensual[
+                                                        'kwh_totales']
+
+        aver_rate = str(aver_rate)
+        resultado_mensual['factor_carga'] = str(
+            resultado_mensual['factor_carga'])
+        resultado_mensual['costo_fpotencia'] = str(
+            resultado_mensual['costo_fpotencia'])
+        resultado_mensual['subtotal'] = str(resultado_mensual['subtotal'])
+        resultado_mensual['iva'] = str(resultado_mensual['iva'])
+        resultado_mensual['total'] = str(resultado_mensual['total'])
+        newHistoric = T3HistoricData(
+            monthly_cut_dates=monthly_cutdate,
+            KWH_total=resultado_mensual['kwh_totales'],
+            KVARH=resultado_mensual['kvarh_totales'],
+            power_factor=resultado_mensual['factor_potencia'],
+            charge_factor=resultado_mensual['factor_carga'],
+            max_demand=resultado_mensual['kw_totales'],
+            KWH_rate=resultado_mensual['tarifa_kwh'],
+            demand_rate=resultado_mensual['tarifa_kw'],
+            average_rate=aver_rate,
+            energy_cost=resultado_mensual['costo_energia'],
+            demand_cost=resultado_mensual['costo_demanda'],
+            power_factor_bonification=resultado_mensual['costo_fpotencia'],
+            subtotal=resultado_mensual['subtotal'],
+            iva=resultado_mensual['iva'],
+            total=resultado_mensual['total']
+        )
+        newHistoric.save()
