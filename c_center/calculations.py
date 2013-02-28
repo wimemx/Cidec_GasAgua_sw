@@ -970,58 +970,64 @@ def tag_reading(request):
         #Obtiene el Id de la medicion
         reading_id = request.REQUEST.get("id_reading", "")
         if reading_id:
-            tag = None
-            readingObj = ElectricDataTemp.objects.get(id=reading_id)
-            #Si la lectura proviene de cualquier medidor menos del No Asignado
-            if readingObj.profile_powermeter.pk != 4:
-                #Se revisa que esa medicion no este etiquetada ya.
-                tagged_reading = ElectricRateForElectricData.objects.filter(
-                    electric_data=readingObj)
-                if not tagged_reading:
-                    #Se obtiene el Consumer Unit, para poder obtener el edificio, una vez obtenido el edificio, se puede obtener la region y la tarifa
-                    consumerUnitObj = ConsumerUnit.objects.filter(
-                        profile_powermeter=readingObj.profile_powermeter)
-                    buildingObj = Building.objects.get(
-                        id=consumerUnitObj[0].building.id)
-
-                    #Obtiene el periodo de la lectura actual
-                    fecha_zhor = readingObj.medition_date.astimezone(
-                        tz=timezone.get_current_timezone())
-                    #reading_period_type = obtenerTipoPeriodoObj(readingObj.medition_date, buildingObj.region, buildingObj.electric_rate)
-                    reading_period_type = obtenerTipoPeriodoObj(fecha_zhor,
-                                                                buildingObj.region)
-
-                    #Obtiene las ultimas lecturas de ese medidor
-                    last_reading = ElectricRateForElectricData.objects.filter(
-                        electric_data__profile_powermeter=readingObj.profile_powermeter).order_by(
-                        "-electric_data__medition_date")
-                    #Si existen registros para ese medidor
-                    if last_reading:
-                        #Obtiene el periodo de la ultima lectura de ese medidor
-                        last_reading_type = last_reading[0]. \
-                            electric_rates_periods.period_type
-
-                        #    Se compara el periodo actual con el periodo del ultimo registro.
-                        #    Si los periodos son iguales, el identificador será el mismo
-
-                        if reading_period_type.period_type == last_reading_type:
-                            tag = last_reading[0].identifier
-                        else:
-                            #Si los periodos son diferentes, al identificador anterior, se le sumara 1.
-                            tag = last_reading[0].identifier
-                            tag = hex(int(tag, 16) + int(1))
-
-                    else: #Si será un registro para un nuevo medidor
-                        tag = hex(0)
-
-
-                    #Guarda el registro etiquetado
-                    newTaggedReading = ElectricRateForElectricData(
-                        electric_rates_periods=reading_period_type,
-                        electric_data=readingObj,
-                        identifier=tag
-                    )
-
-                    newTaggedReading.save()
+            tag_the_reading(reading_id)
         return HttpResponse(content='', content_type=None, status=200)
     return HttpResponse(content='', content_type=None, status=404)
+
+def tag_the_reading(reading_id):
+    tag = None
+    readingObj = ElectricDataTemp.objects.get(id=reading_id)
+    #Si la lectura proviene de cualquier medidor menos del No Asignado
+    if readingObj.profile_powermeter.pk != 4:
+        #Se revisa que esa medicion no este etiquetada ya.
+        tagged_reading = ElectricRateForElectricData.objects.filter(
+            electric_data=readingObj)
+        if not tagged_reading:
+            #Se obtiene el Consumer Unit, para poder obtener el edificio, una vez obtenido el edificio, se puede obtener la region y la tarifa
+            consumerUnitObj = ConsumerUnit.objects.filter(
+                profile_powermeter=readingObj.profile_powermeter)
+            buildingObj = Building.objects.get(
+                id=consumerUnitObj[0].building.id)
+
+            #Obtiene el periodo de la lectura actual
+            fecha_zhor = readingObj.medition_date.astimezone(
+                tz=timezone.get_current_timezone())
+            #reading_period_type = obtenerTipoPeriodoObj(readingObj.medition_date, buildingObj.region, buildingObj.electric_rate)
+            reading_period_type = obtenerTipoPeriodoObj(fecha_zhor,
+                                                        buildingObj.region)
+
+            #Obtiene las ultimas lecturas de ese medidor
+            last_reading = ElectricRateForElectricData.objects.filter(
+                electric_data__profile_powermeter=readingObj.profile_powermeter).order_by(
+                "-electric_data__medition_date")
+            #Si existen registros para ese medidor
+            if last_reading:
+                #Obtiene el periodo de la ultima lectura de ese medidor
+                last_reading_type = last_reading[0]. \
+                    electric_rates_periods.period_type
+
+                #    Se compara el periodo actual con el periodo del ultimo registro.
+                #    Si los periodos son iguales, el identificador será el mismo
+
+                if reading_period_type.period_type == last_reading_type:
+                    tag = last_reading[0].identifier
+                else:
+                    #Si los periodos son diferentes, al identificador anterior, se le sumara 1.
+                    tag = last_reading[0].identifier
+                    tag = hex(int(tag, 16) + int(1))
+
+            else: #Si será un registro para un nuevo medidor
+                tag = hex(0)
+
+
+            #Guarda el registro etiquetado
+            newTaggedReading = ElectricRateForElectricData(
+                electric_rates_periods=reading_period_type,
+                electric_data=readingObj,
+                identifier=tag
+            )
+
+            newTaggedReading.save()
+            return True
+    else:
+        return False

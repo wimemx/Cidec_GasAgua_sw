@@ -6,7 +6,8 @@ from itertools import cycle
 from random import uniform, randrange
 from datetime import timedelta
 from decimal import Decimal
-import pytz #for timezone support
+#for timezone support
+import pytz
 import datetime
 
 #related third party imports
@@ -22,6 +23,7 @@ from collections import defaultdict
 from c_center.models import ProfilePowermeter, ElectricData, ElectricDataTemp, \
     ConsumerUnit, Powermeter
 from c_center.views import main_page, week_report_kwh
+from c_center.calculations import tag_the_reading
 from c_center.c_center_functions import set_default_session_vars
 from rbac.models import DataContextPermission, Object, PermissionAsigment, \
     UserRole, GroupObject, MenuCategs, MenuHierarchy
@@ -58,7 +60,7 @@ def set_timezone(request):
 
 
 def parse_csv(request):
-    dir_path = '/Users/wime/Downloads/BaseDeDatosSATEC/'
+    dir_path = '/Users/wime/Downloads/datosperdidos222324y25defebrero_/'
     files = os.listdir(dir_path)
     dir_fd = os.open(dir_path, os.O_RDONLY)
     os.fchdir(dir_fd)
@@ -75,61 +77,68 @@ def parse_csv(request):
             item = {}
             # Add the value to our dictionary
             for (name, value) in items:
-                item[name] = value.strip()
+                item[name.strip()] = value.strip()
+            fecha = item['Fecha']
+            medition_date = datetime.datetime.strptime(
+                fecha, "%a %b %d %H:%M:%S %Z %Y")
+            timezone_ = pytz.timezone("US/Central")
+            medition_date.replace(tzinfo=timezone_)
 
-            powerp = ProfilePowermeter.objects.order_by('?')
+            powerp = ProfilePowermeter.objects.filter(
+                powermeter__powermeter_serial=item["Id medidor"])
+            try:
+                powerp = powerp[0]
+            except IndexError:
+                continue
+            else:
+                elec_data = ElectricDataTemp(
+                    profile_powermeter=powerp,
+                    medition_date=medition_date,
+                    V1=item['Voltaje Fase 1'],
+                    V2=item['Voltaje Fase 1'],
+                    V3=item['Voltaje Fase 1'],
+                    I1=item['Corriente Fase 1'],
+                    I2=item['Corriente Fase 2'],
+                    I3=item['Corriente Fase 3'],
+                    kWL1=item['KiloWatts Fase 1'],
+                    kWL2=item['KiloWatts Fase 2'],
+                    kWL3=item['KiloWatts Fase 3'],
+                    kvarL1=item['KiloVoltAmpereReactivo Fase 1'],
+                    kvarL2=item['KiloVoltAmpereReactivo Fase 2'],
+                    kvarL3=item['KiloVoltAmpereReactivo Fase 3'],
+                    kVAL1=item['KiloVoltAmpere Fase 1'],
+                    kVAL2=item['KiloVoltAmpere Fase 2'],
+                    kVAL3=item['KiloVoltAmpere Fase 3'],
+                    PFL1=item['Factor de Potencia Fase 1'],
+                    PFL2=item['Factor de Potencia Fase 2'],
+                    PFL3=item['Factor de Potencia Fase 3'],
+                    kW=item['KiloWatts Totales'],
+                    kvar=item['KiloVoltAmperesReactivo Totales'],
+                    TotalkVA=item['KiloVoltAmpere Totales'],
+                    PF=item['Factor de Potencia Total'],
+                    FREQ=item['Frecuencia Fase'],
+                    TotalkWhIMPORT=item['KiloWattHora Totales'],
+                    powermeter_serial=item['powermeter_serial'],
+                    TotalkvarhIMPORT=item['KiloVoltAmpereReactivoHora Totales'],
+                    kWhL1=item['KiloWattHora Fase 1'],
+                    kWhL2=item['KiloWattHora Fase 2'],
+                    kwhL3=item['KiloWattHora Fase 3'],
+                    kvarhL1=item['KiloVoltAmpereReactivoHora Fase 1'],
+                    kvarhL2=item['KiloVoltAmpereReactivoHora Fase 2'],
+                    kvarhL3=item['KiloVoltAmpereReactivoHora Fase 3'],
+                    kVAhL1=item['KiloVoltAmpereHora Fase 1'],
+                    kVAhL2=item['KiloVoltAmpereHora Fase 2'],
+                    kVAhL3=item['KiloVoltAmpereHora Fase 3'],
+                    kW_import_sliding_window_demand=item['kW import sliding window demand'],
+                    kvar_import_sliding_window_demand=item['kvar impor sliding window demand'],
+                    kVA_sliding_window_demand=item['kVA sliding window demand'],
+                    kvahTOTAL=item['KiloVoltAmpereHora Totales'],
+                )
 
-            elec_data = ElectricData(
-                profile_powermeter=powerp[0],
-                powermeter_serial=item['powermeter_serial'],
-                medition_date=datetime.datetime.now(),
-                V1=item['V1'],
-                V2=item['V2'],
-                V3=item['V3'],
-                I1=item['I1'],
-                I2=item['I2'],
-                I3=item['I3'],
-                kWL1=item['kWL1'],
-                kWL2=item['kWL2'],
-                kWL3=item['kWL3'],
-                kvarL1=item['kvarL1'],
-                kvarL2=item['kvarL2'],
-                kvarL3=item['kvarL3'],
-                kVAL1=item['kVAL1'],
-                kVAL2=item['kVAL2'],
-                kVAL3=item['kVAL3'],
-                PFL1=item['PFL1'],
-                PFL2=item['PFL2'],
-                PFL3=item['PFL3'],
-                kW=item['kW'],
-                kvar=item['kvar'],
-                kVA=item['kVA'],
-                PF=item['PF'],
-                In=item['In'],
-                FREQ=item['FREQ'],
-                kWIMPSDMAX=item['kWIMPSDMAX'],
-                kWIMPACCDMD=item['kWIMPACCDMD'],
-                kVASDMAX=item['kVASDMAX'],
-                kVAACCDMD=item['kVAACCDMD'],
-                I1DMDMAX=item['I1DMDMAX'],
-                I2DMDMAX=item['I2DMDMAX'],
-                I3DMDMAX=item['I3DMDMAX'],
-                kWhIMPORT=item['kWhIMPORT'],
-                kWhEXPORT=item['kWhEXPORT'],
-                kvarhNET=item['kvarhNET'],
-                kvarhIMPORT=item['kvarhIMPORT'],
-                V1THD=item['V1THD'],
-                V2THD=item['V2THD'],
-                V3THD=item['V3THD'],
-                I1THD=item['I1THD'],
-                I2THD=item['I2THD'],
-                I3THD=item['I3THD']
-            )
-
-            elec_data.save()
-
-            html += str(elec_data) + "<br/>"
-        html += "<hr/><br/>"
+                elec_data.save()
+                tag_the_reading(elec_data.pk)
+                html += str(elec_data) + "<br/>"
+            html += "<hr/><br/>"
     os.close(dir_fd)
 
     return HttpResponse(html)
@@ -182,12 +191,14 @@ def index(request):
                 object__object_name=permission.object.object_name)
             d[gObject.group.group_name].append(gObject.object)
 
-    groups = d.keys()
-    menu_option_str = "<ul id='main_menu'>"
+    menu_option_str = "<ul id='main_menu' class='fr'>"
     categories = MenuCategs.objects.filter(main=True).order_by("order")
-
     for category in categories:
-        menu_option_str += "<li class='" + category.added_class + "'>"
+        if category.added_class:
+            clase = category.added_class
+        else:
+            clase = ''
+        menu_option_str += "<li class='first_level " + clase + "'>"
         if category.categ_access_point:
             menu_option_str += "<a href='" + category.categ_access_point + "'>"
             menu_option_str += category.categ_name
@@ -197,9 +208,8 @@ def index(request):
             menu_option_str += get_sub_categs_items(category)
         menu_option_str += "</li>"
     menu_option_str += "</ul>"
-
-
-    #for gp in groups:
+    # groups = d.keys()
+    # for gp in groups:
     #    sd_opts = d[gp]
     #    sd_opts = unique_from_array(sd_opts)
     #    if gp == 'Unidades de consumo':
@@ -244,7 +254,11 @@ def get_sub_categs_items(parent):
     if sub_cat:
         sub_menu = "<ul>"
         for sub_c in sub_cat:
-            sub_menu += "<li class='" + sub_c.child_cat.added_class + "'>"
+            if sub_c.child_cat.added_class:
+                clase = category.added_class
+            else:
+                clase = ''
+            sub_menu += "<li class='sub_level " + clase + "'>"
             if sub_c.child_cat.categ_access_point:
                 sub_menu += "<a href='" + sub_c.child_cat.categ_access_point + "'>"
                 sub_menu += sub_c.child_cat.categ_name

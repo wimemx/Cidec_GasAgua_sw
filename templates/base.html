@@ -23,61 +23,95 @@
     <script type="text/javascript" src="/static/js/external/jqueryUniform/jquery.uniform.min.js"></script>
     {% block externaljs %}{% endblock %}
     <script type="text/javascript">
-        //<![CDATA[
 
-        $(document).ready(function(){
+        var data_context = {{ datacontext|safe }};
+        var buildings = new Array();
+        function building_list_gen(){
+            var ul_list ='';
+            var list;
+            for(var i=0; i<data_context.length; i++){
+                list = "<li class='company_list' rel='"+String(i)+"'>";
+                list += "<span class='company_name'>" +
+                        data_context[i].company_name +
+                        "</span>";
+                list += "<span class='building_count'>(" +
+                        data_context[i].building_count +
+                        ")</span>";
+                list += "<span class='cluster_company'>(" +
+                        data_context[i].cluster_company +
+                        ")</span>";
 
-            Date.prototype.addDays = function (n) {
-                this.setDate(this.getDate() + n);
-                this.tempDate = this.getDate();
-            };
-            Date.prototype.addHours= function(h){
-                this.setHours(this.getHours()+h);
-                return this;
+                buildings.push(data_context[i].buildings);
+                /*for(var j=0; j<data_context[i].buildings.length; j++){
+
+                     list += "<li class='building_list'>";
+                     list += "<span class='building_name' rel='"+data_context[i].buildings[j].building_id+"'>" +
+                     data_context[i].buildings[j].building_name +
+                     "</span>";
+                     list += "<span class='building_city'>" +
+                     data_context[i].buildings[j].building_city +
+                     "</span>";
+                     list += "</li>";
+
+
+                }*/
+
+                list += "</li>";
+                ul_list += list;
             }
-            String.prototype.format = function() {
-                var args = arguments;
-                return this.replace(/{(\d+)}/g, function(match, number) {
-                    return typeof args[number] != 'undefined'
-                            ? args[number]
-                            : match
-                            ;
-                });
-            };
+            $("#company_list").html(ul_list);
+
+        }
+        $(document).ready(function(){
+            building_list_gen();
+            $(".company_list").click(function(){
+                var lista_edificios = $("#building_list");
+                var edificios = buildings[parseInt($(this).attr("rel"))];
+                lista_edificios.html("");
+                for(var i=0; i<edificios.length; i++){
+                    var li = "<li class='building_list' rel='"+edificios[i].building_id+"'>";
+                    li += "<span class='building_name'>"+edificios[i].building_name+"</span>";
+                    li += "<span class='building_location'>"+edificios[i].building_city+"</span>";
+                    lista_edificios.append(li);
+                }
+                $("#building_container").show();
+            });
+            var search_building = $("#building_filter");
+            search_building.keyup(function(){
+                var texto = $.trim(search_building.val());
+                var list = $(".building_list");
+                console.log(texto);
+                if(texto != ''){
+                    list.each(function(){
+                        $(this).hide();
+                    });
+                    $(".building_list:Contains('"+texto+"')").show();
+                }else{
+                    list.each(function(){
+                        $(this).show();
+                    });
+                }
+            });
+
             $("#salir").click(function(e){
                 e.preventDefault();
                 History.replaceState({}, '', '/');
                 window.location = "/logout/";
             });
+            //forms uniforms
             $("select, input, input:checkbox, input:radio, input:file, textarea").uniform();
-            $("#nav_toggle").click(function(){
-                //maneja el evento de colapsar o mostrar la barra de navegacion
-                if($("#sidebar").hasClass("collapsed_nav")){
-
-                    $("#sidebar").animate({width: 'toggle'}, 500, function(){
-                        $(this).removeClass("collapsed_nav");
-                    });
-                    $("#sidebar_content").show('slide', {direction: 'right'}, 100);
-                    $("footer").show('slide', {direction: 'right'}, 100);
-
-                }else{
-                    $("#sidebar").addClass("collapsed_nav");
-                    $("#sidebar_content").hide('slide', {direction: 'left'}, 100);
-                    $("footer").hide('slide', {direction: 'left'}, 100);
-                    $("#sidebar").animate({width: 'toggle'}, 500);
-                }
-                $("#nav_toggle").toggleClass("closed");
-            });
-
             //custom select for sidebar
             $("#empresa").click(function(){
                 $("#company_list").slideToggle();
+                $("#building_container").hide();
+                $(this).toggleClass("expanded");
             });
-            $("#company_list li").click(function(){
-                var texto=$(this).text().replace(/^\s*|\s*$/g,'');
+            $("#building_list li").live('click', function(){
+                var texto=$(this).find("span.building_name").text().replace(/^\s*|\s*$/g,'');
                 var texto1 = texto.substring(0,17) + "...";
                 $("#empresa").text(texto1);
                 $("#company_list").slideUp();
+                $("#building_list").slideUp();
 
                 $.ajax({
                     url: "/reportes/set_default_building/" + $(this).attr("rel"),
@@ -89,35 +123,25 @@
                     }
                 });
             });
-
-
-            $(".desp").click(function(){
-                $(".sidebarsub_op").each(function(){$(this).slideUp();});
-                var prox = $(this).next();
-                if (!prox.is(":visible")){
-                    prox.slideDown();
-                }
-            });
             {% block document_ready %}{% endblock %}
             $("#user_menu li a[title]").tooltip({effect: 'slide'}).dynamic({ bottom: { direction: 'down', bounce: true } });
         });
-        //]]>
+
     </script>
 </head>
 <body>
 
     <div id="header">
         <div id="header-container">
-            <ul id="user_menu" class="fr">
-                {% include "user_menu.html" %}
-            </ul>
-            <div id="main_logo" class="fl"></div>
+            <div id="main_logo" class="fr"></div>
         </div>
     </div>
     <table id="table_container">
         <tbody>
         <tr>
-            <td id="sidebar">{% include "sidebar.html" %}</td>
+            <td>
+                {% include "top_menu.html" %}
+            </td>
         </tr>
         <tr>
             <td id="content">

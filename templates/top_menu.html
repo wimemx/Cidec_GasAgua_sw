@@ -1,0 +1,49 @@
+<div id="top_menu">
+    <div id="menu_container">
+
+        <div id="company_options" class="fl">
+            {% if company.company_logo %}
+                <div id="logo_container" class="c fl" style="background: url(/static/media/{{ company.company_logo }}) no-repeat 50% 50%; background-size: 100% auto;">
+            {% else %}
+                <div id="logo_container" class="c fl" style="background: url(/static/css/images/imgs_icns/company_placeholder.png) no-repeat 50% 50%; background-size: 100% auto;">
+            {% endif %}
+
+            </div>
+            <div id="companies_container" class="fl">
+                <span id="empresa">
+                {{empresa.building_name|slice:"17" }}
+                    {% if empresa.building_name|length > 17 %}...{% endif %}
+                </span>
+                <ul id="company_list" class="hidden">
+
+                </ul>
+                <div id="building_container" class="hidden">
+                    <label class="input" for="building_filter">
+                        <span>Filtrar edificios</span>
+                        <input type="text" id="building_filter" name="building_filter" autocomplete="off"/>
+                    </label>
+                    <ul id="building_list">
+                        <li class="building_list">
+                            <span class="building_name">Nombre Edificio</span>
+                            <span class="building_location">Quer&eacute;taro</span>
+                        </li>
+                        <li class="building_list">
+                            <span class="building_name">Nombre Edificio</span>
+                            <span class="building_location">Quer&eacute;taro</span>
+                        </li>
+                        <li class="building_list">
+                            <span class="building_name">Nombre Edificio</span>
+                            <span class="building_location">Quer&eacute;taro</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <a href="/profile/{{ request.user.pk }}/" class="fl username">{{ request.user.first_name }} {{ request.user.last_name }}</a>
+            </div>
+        </div>
+
+        <div id="navigation_menu" class="fr">
+            {{ sidebar|safe }}
+        </div>
+</div>

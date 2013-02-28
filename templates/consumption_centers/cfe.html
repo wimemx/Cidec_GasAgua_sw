@@ -15,25 +15,6 @@
 </script>
 <script type="text/javascript">
 
-    function graphsReload(){
-        /* Takes the date in the range inputs and reloads the graph data */
-
-        var f1_init = encodeURIComponent($("#range1_init").val());
-        var f1_end = encodeURIComponent($("#range1_end").val());
-
-        if(f1_init != ''){
-            var url = "/reportes/cfe/?";
-            url += "f1_init=" + f1_init;
-            if(f1_end != ''){
-                url += "&f1_end="+f1_end;
-            }else{
-                url += "&f1_end=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
-            }
-
-            window.location.href = url;
-        }
-    }
-
     function cfeReload(){
 
         var month = $("#month_01").val();
@@ -73,27 +54,6 @@
         }
         refresh_iframe_height()
     }
-
-    /*
-     function drawVisualization() {
-     // Create and populate the data table.
-     var data = google.visualization.arrayToDataTable([
-     ['Mes', 'Base', 'Media', 'Punta'],
-     {% for hist in  historico%}
-     ['{{ hist.fecha|date:"m/Y" }}', {{ hist.kw_base }}, {{ hist.kw_intermedio }}, {{ hist.kw_punta }}],
-     {% endfor %}
-     ]);
-
-     // Create and draw the visualization.
-     new google.visualization.ColumnChart(document.getElementById('visualization')).
-     draw(data,
-     {
-     width:570, height:325,}
-     );
-     }
-
-
-     google.setOnLoadCallback(drawVisualization);*/
 </script>
 {% endblock %}
 {% block document_ready %}

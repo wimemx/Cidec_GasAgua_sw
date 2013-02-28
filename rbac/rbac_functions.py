@@ -4,10 +4,11 @@ from datetime import date
 
 from django.db.models.aggregates import Count
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils import simplejson
 
-from rbac.models import  PermissionAsigment, UserRole, DataContextPermission,\
+from rbac.models import PermissionAsigment, UserRole, DataContextPermission, \
     Operation, Object
-from c_center.models import ConsumerUnit, Cluster, CompanyBuilding, Company,\
+from c_center.models import ConsumerUnit, Cluster, CompanyBuilding, Company, \
     ClusterCompany, Building
 import variety
 
@@ -16,14 +17,16 @@ CREATE = Operation.objects.get(operation_name="Crear")
 DELETE = Operation.objects.get(operation_name="Eliminar")
 UPDATE = Operation.objects.get(operation_name="Modificar")
 
-def check_roles_permission(object):
+
+def check_roles_permission(object_name):
     """ Check the roles that have an allowed operation over an object
 
-    object = string, the name of the object
+    object_name = string, the name of the object
     returns an array with a dict with keys: role and operation
 
     """
-    permissions = PermissionAsigment.objects.filter(object__object_name=object)
+    permissions = PermissionAsigment.objects.filter(
+        object__object_name=object_name)
     role_operations = []
     for perm in permissions:
         r_o = dict(role=perm.role, operation=perm.operation)
@@ -31,12 +34,12 @@ def check_roles_permission(object):
     return role_operations
 
 
-def has_permission(user, operation, object):
+def has_permission(user, operation, object_name):
     """ Checks if a user has certain permission over an object
 
     user.- django auth user object
     operation.- rbac operation object
-    object.- string, the name of the subject
+    object_name.- string, the name of the subject
 
     returns True if the user has permission, False if not
 
@@ -44,7 +47,7 @@ def has_permission(user, operation, object):
     user_role = UserRole.objects.filter(user=user)
     for u_role in user_role:
         permission = PermissionAsigment.objects.filter(
-            object__object_name=object,
+            object__object_name=object_name,
             role=u_role.role, operation=operation)
         if permission:
             return True
@@ -66,9 +69,10 @@ def get_all_clusters_for_operation(operation, permission, user):
                                                          part_of_building=None)
         clusters = []
         for dc in data_cntx:
-            p_a = PermissionAsigment.objects.filter(role=dc.user_role.role,
-                                                    operation=operation,
-                                                    object__object_name=permission)
+            p_a = PermissionAsigment.objects.filter(
+                role=dc.user_role.role,
+                operation=operation,
+                object__object_name=permission)
             if p_a:
                 clusters.append(dc.cluster)
         return clusters
@@ -88,9 +92,10 @@ def get_all_companies_for_operation(operation, permission, user):
                                                          part_of_building=None)
         companies = []
         for dc in data_cntx:
-            p_a = PermissionAsigment.objects.filter(role=dc.user_role.role,
-                                                    operation=operation,
-                                                    object__object_name=permission)
+            p_a = PermissionAsigment.objects.filter(
+                role=dc.user_role.role,
+                operation=operation,
+                object__object_name=permission)
             if p_a:
                 if not dc.company:
                     comp_clus = CompanyCluster.objects.filter(
@@ -103,26 +108,27 @@ def get_all_companies_for_operation(operation, permission, user):
         return companies
 
 
-def is_allowed_operation_for_object(operation, permission, user, object, type):
+def is_allowed_operation_for_object(operation, permission, user, _object,
+                                    obj_type):
     """returns true or false if the user has permission over the object or
     not
     operation = Operation class instance (ver, crear, modificar, etc)
     permission = Object class instance ("crear usuarios", "modificar roles",
                                         "etc")
     user = auth.User instance
-    object = Cluster, Company, Building or PartOfBuilding instance
-    type = string, the type of the object
+    _object = Cluster, Company, Building or PartOfBuilding instance
+    obj_type = string, the type of the object
     """
     #Get the data context(s) in wich the user has a role
     result = {
-                 'cluster': lambda: get_data_context_cluster(user,
-                                                             object),
-                 'company': lambda: get_data_context_company(user,
-                                                             object),
-                 'building': lambda: get_data_context_building(user,
-                                                               object),
-                 'part': lambda: get_data_context_part(user, object)
-             }[type]()
+        'cluster': lambda: get_data_context_cluster(user,
+                                                    _object),
+        'company': lambda: get_data_context_company(user,
+                                                    _object),
+        'building': lambda: get_data_context_building(user,
+                                                      _object),
+        'part': lambda: get_data_context_part(user, _object)
+    }[obj_type]()
     if result:
         for data_context in result:
             rol = data_context.user_role.role
@@ -183,18 +189,20 @@ def get_buildings_context(user):
     """
     datacontext = DataContextPermission.objects.filter(user_role__user=user)
     buildings = []
-
+    context_for_user = {'clusters': [], 'companies': [], 'buildings': []}
     for dcontext in datacontext:
         try:
             if dcontext.building:
-                buildings.append(dict(building_pk=dcontext.building.pk,
-                                      building_name=dcontext.building.building_name))
+                buildings.append(
+                    dict(building_pk=dcontext.building.pk,
+                         building_name=dcontext.building.building_name))
             elif dcontext.company:
                 building_comp = CompanyBuilding.objects.filter(
                     company=dcontext.company)
                 for bc in building_comp:
-                    buildings.append(dict(building_pk=bc.building.pk,
-                                          building_name=bc.building.building_name))
+                    buildings.append(
+                        dict(building_pk=bc.building.pk,
+                             building_name=bc.building.building_name))
             else:
                 clust_comp = ClusterCompany.objects.filter(
                     cluster=dcontext.cluster)
@@ -202,20 +210,54 @@ def get_buildings_context(user):
                     building_comp = CompanyBuilding.objects.filter(
                         company=cc.company)
                     for bc in building_comp:
-                        buildings.append(dict(building_pk=bc.building.pk,
-                                              building_name=bc.building.building_name))
+                        buildings.append(
+                            dict(building_pk=bc.building.pk,
+                                 building_name=bc.building.building_name))
         except ObjectDoesNotExist:
             continue
 
         else:
             buildings = variety.unique_from_array(buildings)
-    return buildings
+    companies_list = []
+    if buildings:
+        edificios_pk = [edif['building_pk'] for edif in buildings]
+        buil_comp = CompanyBuilding.objects.filter(
+            building__pk__in=edificios_pk
+        ).values("company__company_name", "company").annotate(Count("company"))
+        for company_building in buil_comp:
+            clust_comp = ClusterCompany.objects.filter(
+                company__pk=company_building['company']
+            ).values("cluster__cluster_name")
+            company_detail = dict(
+                company_name=company_building['company__company_name'],
+                cluster_company=clust_comp[0]['cluster__cluster_name'],
+                building_count=company_building['company__count'],
+                buildings=[])
+            comp_buildings = CompanyBuilding.objects.filter(
+                company__pk=company_building['company'],
+                building__pk__in=edificios_pk).values(
+                "building__building_name",
+                "building",
+                "building__estado__estado_name")
+            for com_buil in comp_buildings:
+                buil_detail = dict(
+                    building_name=com_buil['building__building_name'],
+                    building_city=com_buil[
+                        'building__estado__estado_name'],
+                    building_id=int(com_buil['building']))
+                company_detail['buildings'].append(buil_detail)
+            companies_list.append(company_detail)
+    # return buildings
+
+    return simplejson.dumps(companies_list)
 
 
-def default_consumerUnit(user, building):
-    cu = ConsumerUnit.objects.get(building=building,
-                                  electric_device_type__electric_device_type_name="Total Edificio")
+def default_consumerUnit(building):
+    cu = ConsumerUnit.objects.get(
+        building=building,
+        electric_device_type__electric_device_type_name="Total Edificio")
     return cu
+
 
 def save_perm(role, objs_ids, operation):
     """Add a PermissionAsigment for a given role
@@ -235,16 +277,17 @@ def save_perm(role, objs_ids, operation):
     for obj_id in objs_ids:
         if obj_id != "all" and obj_id != "_":
             try:
-                object = Object.objects.get(pk=int(obj_id))
+                _object = Object.objects.get(pk=int(obj_id))
             except ObjectDoesNotExist:
                 mensaje = "El privilegio no existe, por favor seleccione"
                 mensaje += " nuevamente la operaci&oacute;n y el privilegio"
                 return False, mensaje
             else:
                 perm = PermissionAsigment(role=role, operation=operation,
-                                          object=object)
+                                          object=_object)
                 perm.save()
     return True, "El registro se completó exitosamente"
+
 
 def validate_role(post):
     data = {}
@@ -259,6 +302,7 @@ def validate_role(post):
         else:
             return False
     return data
+
 
 def update_role_privs(role, objs_ids, operation):
     """Update a  list of PermissionAsigments for a given role
@@ -284,10 +328,13 @@ def update_role_privs(role, objs_ids, operation):
                 mensaje = "El privilegio no existe, por favor seleccione "
                 mensaje += "nuevamente la operaci&oacute;n y el privilegio"
                 return False, mensaje
-    for object in objs_arr:
-        perm = PermissionAsigment(role=role, operation=operation, object=object)
+    for _object in objs_arr:
+        perm = PermissionAsigment(role=role,
+                                  operation=operation,
+                                  object=_object)
         perm.save()
     return True, "El rol se modificó exitosamente"
+
 
 def validate_user(post):
     """ Validates the post info for the add user form
@@ -336,7 +383,9 @@ def validate_user(post):
         try:
             fnac = post['dob'].split("-")
             data['fnac'] = date(int(fnac[2]), int(fnac[1]), int(fnac[0]))
-        except IndexError, ValueError:
+        except IndexError:
+            return False
+        except ValueError:
             return False
     else:
         return False
@@ -351,6 +400,7 @@ def validate_user(post):
 
     return data
 
+
 def add_permission_to_parts(usuario, rol, cluster, company, building):
     """Asigns the role 'rol' for all the parts in the building 'building'
      usuario = django UserAuth object
@@ -361,16 +411,17 @@ def add_permission_to_parts(usuario, rol, cluster, company, building):
     """
     user_role, created = UserRole.objects.get_or_create(user=usuario,
                                                         role=rol)
+    # noinspection PyUnusedLocal
     data_context, created = DataContextPermission.objects.get_or_create(
         user_role=user_role,
         cluster=cluster,
         company=company,
         building=building
     )
-    message = "El rol, sus permisos y su asignación al edificio, se"\
+    message = "El rol, sus permisos y su asignación al edificio, se" \
               " ha guardado correctamente"
-    type = "n_success"
-    return message, type
+    type_ = "n_success"
+    return message, type_
 
 
 def add_permission_to_buildings(usuario, rol, cluster, company_pk):
@@ -383,23 +434,23 @@ def add_permission_to_buildings(usuario, rol, cluster, company_pk):
     try:
         company = Company.objects.get(pk=int(company_pk))
     except ObjectDoesNotExist:
-        message = "Ha ocurrido un error al seleccionar la empresa, por favor "\
+        message = "Ha ocurrido un error al seleccionar la empresa, por favor " \
                   "verifique e intente de nuevo"
-        type = "n_error"
+        type_ = "n_error"
     else:
         user_role, created = UserRole.objects.get_or_create(user=usuario,
                                                             role=rol)
-
+        # noinspection PyUnusedLocal
         data_context, created = DataContextPermission.objects.get_or_create(
             user_role=user_role,
             cluster=cluster,
             company=company
         )
 
-        message = "El rol, sus permisos y su asignación a los edificios"\
+        message = "El rol, sus permisos y su asignación a los edificios" \
                   "de la empresa se han guardado correctamente"
-        type = "n_success"
-    return message, type
+        type_ = "n_success"
+    return message, type_
 
 
 def add_permission_to_companies(usuario, rol, cluster):
@@ -411,12 +462,13 @@ def add_permission_to_companies(usuario, rol, cluster):
     """
     user_role, created = UserRole.objects.get_or_create(user=usuario,
                                                         role=rol)
+    # noinspection PyUnusedLocal
     data_context, created = DataContextPermission.objects.get_or_create(
         user_role=user_role,
         cluster=cluster
     )
-    message = "El rol, sus permisos y asignaciones al cluster y "\
+    message = "El rol, sus permisos y asignaciones al cluster y " \
               "sus empresas, se ha guardado correctamente"
-    type = "n_success"
+    type_ = "n_success"
 
-    return message, type
+    return message, type_

@@ -127,7 +127,7 @@ def get_all_companies_for_operation(permission, operation, user):
     clusters = get_clusters_for_operation(permission, operation, user)
     companies_array = []
     for cluster in clusters:
-        companies, all = get_companies_for_operation(permission, operation,
+        companies, all_companies = get_companies_for_operation(permission, operation,
                                                      user, cluster)
         companies_array.extend(companies)
     return companies_array
@@ -189,7 +189,7 @@ def get_all_buildings_for_operation(permission, operation, user):
     companies = get_all_companies_for_operation(permission, operation, user)
     buildings_arr = []
     for company in companies:
-        building, all = get_buildings_for_operation(permission, operation, user,
+        building, all_buildings = get_buildings_for_operation(permission, operation, user,
                                                     company)
 
         buildings_arr.extend(building)
@@ -442,8 +442,7 @@ def set_default_session_vars(request, datacontext):
                                                  'main_building']):
         #print "181"
         #sets the default ConsumerUnit (the first in ConsumerUnit for the main building)
-        request.session['consumer_unit'] = default_consumerUnit(request.user,
-                                                                request.session[
+        request.session['consumer_unit'] = default_consumerUnit(request.session[
                                                                 'main_building'])
     else:
         if not request.session[
@@ -591,7 +590,7 @@ def get_sons(parent, part, user, building, node_index):
             consumer_unit_composite=parent)
 
     if sons_of_parent:
-        list = '<ul>'
+        _list = '<ul>'
         for son in sons_of_parent:
             if son.part_of_building_leaf:
                 tag = son.part_of_building_leaf.part_of_building_name
@@ -612,17 +611,17 @@ def get_sons(parent, part, user, building, node_index):
                 if cu.profile_powermeter.powermeter.powermeter_anotation == "Medidor Virtual":
                     _class += " virtual"
             if allowed_cu(cu, user, building):
-                list += '<li class="' + _class + ' ' + node_index + "_" + \
+                _list += '<li class="' + _class + ' ' + node_index + "_" + \
                         str(node_number) + '"><a href="#" rel="' + str(
                     cu.pk) + '">'
-                list += tag + '</a>' + sons
+                _list += tag + '</a>' + sons
             else:
-                list += '<li>'
-                list += tag + sons
-            list += '</li>'
+                _list += '<li>'
+                _list += tag + sons
+            _list += '</li>'
             node_number += 1
-        list += '</ul>'
-        return list
+        _list += '</ul>'
+        return _list
     else:
         return ""
 
@@ -821,9 +820,9 @@ def graphs_permission(user, consumer_unit, graphs_type):
 
     graphs = []
     for u_role in user_role:
-        for object in graphs_type:
+        for _object in graphs_type:
             #ob = Object.objects.get(object_name=object)
-            permission = PermissionAsigment.objects.filter(object=object,
+            permission = PermissionAsigment.objects.filter(object=_object,
                                                            role=u_role.role,
                                                            operation=operation)
             if permission or user.is_superuser:
@@ -846,9 +845,9 @@ def handle_company_logo(i, company, is_new):
         files = os.listdir(dir_path)
         dir_fd = os.open(dir_path, os.O_RDONLY)
         os.fchdir(dir_fd)
-        for file in files:
-            if file == company.company_logo:
-                os.remove(file)
+        for _file in files:
+            if _file == company.company_logo:
+                os.remove(_file)
         os.close(dir_fd)
 
     dir_fd = os.open(os.path.join(settings.PROJECT_PATH,
@@ -981,7 +980,7 @@ def get_profile(request):
     else:
         raise Http404
 
-def save_historic(request, monthly_cutdate, building):
+def save_historic(monthly_cutdate, building):
     try:
         if building.electric_rate.pk == 1:
             exist_historic = HMHistoricData.objects.get(
@@ -1181,7 +1180,6 @@ def dailyReport(building, consumer_unit, today):
     region = building.region
 
     consumer_units = get_consumer_units(consumer_unit)
-    demanda_max = 0
     if consumer_units:
         for c_unit in consumer_units:
             pr_powermeter = c_unit.profile_powermeter.powermeter
@@ -1382,13 +1380,15 @@ def getWeeklyReport(building, month, year):
         fecha_inicial = semana_array[0]
         fecha_final = semana_array[6]
 
-        no_semana = {}
-        no_semana['demanda_max'] = demandaMaxima(building, fecha_inicial, fecha_final)
-        no_semana['demanda_min'] = demandaMinima(building, fecha_inicial, fecha_final)
-        no_semana['consumo_acumulado'] = consumoAcumuladoKWH(building, fecha_inicial, fecha_final)
-        no_semana['consumo_promedio'] = promedioKWH(building, fecha_inicial, fecha_final)
-        no_semana['consumo_desviacion'] = desviacionStandardKWH(building, fecha_inicial, fecha_final)
-        no_semana['consumo_mediana'] = medianaKWH(building, fecha_inicial, fecha_final)
+        no_semana = {
+        'demanda_max': demandaMaxima(building, fecha_inicial, fecha_final),
+        'demanda_min': demandaMinima(building, fecha_inicial, fecha_final),
+        'consumo_acumulado': consumoAcumuladoKWH(building, fecha_inicial,
+                                                 fecha_final),
+        'consumo_promedio': promedioKWH(building, fecha_inicial, fecha_final),
+        'consumo_desviacion': desviacionStandardKWH(building, fecha_inicial,
+                                                    fecha_final),
+        'consumo_mediana': medianaKWH(building, fecha_inicial, fecha_final)}
 
         semanas.append(no_semana)
 
@@ -1404,13 +1404,13 @@ def getMonthlyReport(building, month, year):
     diasmes_arr = monthrange(year, month)
 
     #Se agregan las horas
-    today_s_str = time.strptime(str(year)+"-"+str(month)+"-01 00:00:00", "%Y-%m-%d  %H:%M:%S")
-    today_s_tuple = time.gmtime(time.mktime(today_s_str))
-    fecha_inicio = datetime(year= today_s_tuple[0], month=today_s_tuple[1], day=today_s_tuple[2], hour=today_s_tuple[3], minute=today_s_tuple[4], second=today_s_tuple[5], tzinfo = pytz.utc)
+    #today_s_str = time.strptime(str(year)+"-"+str(month)+"-01 00:00:00", "%Y-%m-%d  %H:%M:%S")
+    #today_s_tuple = time.gmtime(time.mktime(today_s_str))
+    #fecha_inicio = datetime(year= today_s_tuple[0], month=today_s_tuple[1], day=today_s_tuple[2], hour=today_s_tuple[3], minute=today_s_tuple[4], second=today_s_tuple[5], tzinfo = pytz.utc)
 
-    today_e_str = time.strptime(str(year)+"-"+str(month)+"-"+str(diasmes_arr[1])+" 23:59:59", "%Y-%m-%d  %H:%M:%S")
-    today_e_tuple = time.gmtime(time.mktime(today_e_str))
-    fecha_final = datetime(year= today_e_tuple[0], month=today_e_tuple[1], day=today_e_tuple[2], hour=today_e_tuple[3], minute=today_e_tuple[4], second=today_e_tuple[5], tzinfo = pytz.utc)
+    #today_e_str = time.strptime(str(year)+"-"+str(month)+"-"+str(diasmes_arr[1])+" 23:59:59", "%Y-%m-%d  %H:%M:%S")
+    #today_e_tuple = time.gmtime(time.mktime(today_e_str))
+    #fecha_final = datetime(year= today_e_tuple[0], month=today_e_tuple[1], day=today_e_tuple[2], hour=today_e_tuple[3], minute=today_e_tuple[4], second=today_e_tuple[5], tzinfo = pytz.utc)
 
     fecha_inicio = datetime(year,month, 1)
     fecha_final = datetime(year, month, diasmes_arr[1])
