@@ -9,7 +9,7 @@ table.datepickerViewDays th{
     width: 17px;
     height: 42px;
     position: relative;
-    z-index: 2;
+    z-index: 1;
 }
 .ringl{
     left: 50px;

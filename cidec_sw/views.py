@@ -17,13 +17,14 @@ from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
+from django.contrib.auth.decorators import login_required
 from collections import defaultdict
 
 #local application/library specific imports
 from c_center.models import ProfilePowermeter, ElectricData, ElectricDataTemp, \
     ConsumerUnit, Powermeter
 from c_center.views import main_page, week_report_kwh
-from c_center.calculations import tag_the_reading
+from c_center.calculations import tag_this
 from c_center.c_center_functions import set_default_session_vars
 from rbac.models import DataContextPermission, Object, PermissionAsigment, \
     UserRole, GroupObject, MenuCategs, MenuHierarchy
@@ -60,7 +61,7 @@ def set_timezone(request):
 
 
 def parse_csv(request):
-    dir_path = '/Users/wime/Downloads/datosperdidos222324y25defebrero_/'
+    dir_path = '/home/audiwime/datosperdidos222324y25defebrero_/'
     files = os.listdir(dir_path)
     dir_fd = os.open(dir_path, os.O_RDONLY)
     os.fchdir(dir_fd)
@@ -68,7 +69,7 @@ def parse_csv(request):
     for file in files:
         if file == '.DS_Store':
             continue
-        data = csv.reader(open(file))
+        data = csv.reader(open(file, "U"))
         # Read the column names from the first line of the file
         fields = data.next()
         for row in data:
@@ -136,7 +137,7 @@ def parse_csv(request):
                 )
 
                 elec_data.save()
-                tag_the_reading(elec_data.pk)
+                tag_this(elec_data.pk)
                 html += str(elec_data) + "<br/>"
             html += "<hr/><br/>"
     os.close(dir_fd)
@@ -171,9 +172,8 @@ def _login(request):
     return render_to_response("login.html", variables_template)
 
 
+@login_required(login_url='/')
 def index(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if request.user.is_superuser:
         pa = PermissionAsigment.objects.all().exclude(
             object__object_access_point="/")
@@ -192,6 +192,7 @@ def index(request):
             d[gObject.group.group_name].append(gObject.object)
 
     menu_option_str = "<ul id='main_menu' class='fr'>"
+    #------------------------------------------------------------
     categories = MenuCategs.objects.filter(main=True).order_by("order")
     for category in categories:
         if category.added_class:
@@ -208,38 +209,39 @@ def index(request):
             menu_option_str += get_sub_categs_items(category)
         menu_option_str += "</li>"
     menu_option_str += "</ul>"
-    # groups = d.keys()
-    # for gp in groups:
-    #    sd_opts = d[gp]
-    #    sd_opts = unique_from_array(sd_opts)
-    #    if gp == 'Unidades de consumo':
-    #        gp = 'U. de consumo'
-    #    menu_option_str += "<span class='sidebar_option desp'>" \
-    #                       "<span>" + gp + "</span></span>" \
-    #                                       "<ul class='sidebarsub_op'>"
-    #    for option in sd_opts:
-    #        menu_option_str += "<li><a href='" + option.object_access_point + "'>" + option.object_name + "</a></li>"
-    #    if gp == 'Empresas':
-    #        menu_option_str += "<li><a href='/buildings/estructura/'>Organizaci&oacute;n Empresas</a></li>"
-    #    menu_option_str += "</ul>"
-
-    #if request.user.is_superuser:
-    #    menu_option_str += "<span class='sidebar_option desp'>" \
-    #                       "<span>Regiones</span></span>" \
-    #                       "<ul class='sidebarsub_op'>" \
-    #                       "<li><a href='/location/ver_regiones/'>Ver Regiones</a></li>" \
-    #                       "<li><a href='/location/ver_estados/'>Ver Estados</a></li>" \
-    #                       "<li><a href='/location/ver_municipios/'>Ver Municipios</a></li>" \
-    #                       "<li><a href='/location/ver_colonias/'>Ver Colonias</a></li>" \
-    #                       "<li><a href='/location/ver_calles/'>Ver Calles</a></li>" \
-    #                       "</ul>"
+    #-------------------------------------------------------
+    menu_option_str = ''
+    groups = d.keys()
+    for gp in groups:
+        sd_opts = d[gp]
+        sd_opts = unique_from_array(sd_opts)
+        if gp == 'Unidades de consumo':
+            gp = 'U. de consumo'
+        menu_option_str += "<span class='sidebar_option desp'>" \
+                           "<span>" + gp + "</span></span>" \
+                                           "<ul class='sidebarsub_op'>"
+        for option in sd_opts:
+            menu_option_str += "<li><a href='" + option.object_access_point + "'>" + option.object_name + "</a></li>"
+        if gp == 'Empresas':
+            menu_option_str += "<li><a href='/buildings/estructura/'>Organizaci&oacute;n Empresas</a></li>"
+        menu_option_str += "</ul>"
+    if request.user.is_superuser:
+        menu_option_str += "<span class='sidebar_option desp'>" \
+                           "<span>Regiones</span></span>" \
+                           "<ul class='sidebarsub_op'>" \
+                           "<li><a href='/location/ver_regiones/'>Ver Regiones</a></li>" \
+                           "<li><a href='/location/ver_estados/'>Ver Estados</a></li>" \
+                           "<li><a href='/location/ver_municipios/'>Ver Municipios</a></li>" \
+                           "<li><a href='/location/ver_colonias/'>Ver Colonias</a></li>" \
+                           "<li><a href='/location/ver_calles/'>Ver Calles</a></li>" \
+                           "</ul>"
     request.session['sidebar'] = menu_option_str
 
     if 'next' in request.GET:
-        datacontext = get_buildings_context(request.user)
+        datacontext, b_list = get_buildings_context(request.user)
         if not datacontext:
             request.session['consumer_unit'] = None
-        set_default_session_vars(request, datacontext)
+        set_default_session_vars(request, b_list)
         return HttpResponseRedirect(request.GET['next'])
     elif 'g_type' in request.GET:
         return main_page(request)
@@ -252,7 +254,7 @@ def get_sub_categs_items(parent):
         parent_cat=parent).order_by("child_cat__order")
     sub_menu = ''
     if sub_cat:
-        sub_menu = "<ul>"
+        sub_menu = "<ul class='sub_list hidden'>"
         for sub_c in sub_cat:
             if sub_c.child_cat.added_class:
                 clase = category.added_class
@@ -288,11 +290,11 @@ def changedate(profile_pk, initial_date, delta):
         profile_powermeter__pk=profile_pk).order_by("medition_date")
     delta = timedelta(minutes=delta)
     for dato in data:
-        print "antes", dato.medition_date
+        # "antes", dato.medition_date
         initial_date += delta
         dato.medition_date = initial_date
         dato.save()
-        print "despues", dato.medition_date
+        # "despues", dato.medition_date
 
 
 def data_exchange():
@@ -345,21 +347,13 @@ def data_exchange():
     print "success :D"
 
 
-def data_replication(
-        consumer_unit_original,
-        consumer_unit_copy
-):
-    pass
-
-
 def data_multiplier_3000():
     todos_los_datos = ElectricDataTemp.objects.filter(
         TotalkWhIMPORT__gt=1000000)
-    #datos = ElectricDataTemp.objects.filter(TotalkWhIMPORT__gt=30000, profile_powermeter__powermeter__powermeter_anotation__icontains="cidec").filter(Q(medition_date__lt=datetime.datetime(2012, 12, 14)), Q(medition_date__gt=datetime.datetime(2012, 12, 12)))
-    #datos = ElectricDataTemp.objects.filter(TotalkWhIMPORT__gt=51000, profile_powermeter__powermeter__powermeter_anotation__icontains="cidec").filter(Q(medition_date__lte=datetime.datetime(2012, 12, 13)), Q(medition_date__gt=datetime.datetime(2012, 12, 11)))
-    datos = ElectricDataTemp.objects.filter(TotalkWhIMPORT__gte=32000,
-                                            profile_powermeter__powermeter__powermeter_anotation__icontains="cidec").filter(
-
+    datos = ElectricDataTemp.objects.filter(
+        TotalkWhIMPORT__gte=32000,
+        profile_powermeter__powermeter__powermeter_anotation__icontains="cidec"
+    ).filter(
         Q(medition_date__lte=datetime.datetime(2012, 12, 14)),
         Q(medition_date__gt=datetime.datetime(2012, 12, 12)))
     for dato in datos:

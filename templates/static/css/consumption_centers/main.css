@@ -253,4 +253,5 @@ ul#permissions li a{
 }
 #graphic_container{
     width: 960px;
+    margin: 0 auto;
 }

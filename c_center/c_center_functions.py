@@ -441,8 +441,8 @@ def set_default_session_vars(request, datacontext):
                                                  'main_building']):
         #print "181"
         #sets the default ConsumerUnit (the first in ConsumerUnit for the main building)
-        request.session['consumer_unit'] = default_consumerUnit(request.session[
-                                                                'main_building'])
+        request.session['consumer_unit'] = default_consumerUnit(
+            request.session['main_building'])
     else:
         if not request.session[
                'consumer_unit'] or 'consumer_unit' not in request.session:
@@ -825,7 +825,7 @@ def graphs_permission(user, consumer_unit, graphs_type):
                                                            role=u_role.role,
                                                            operation=operation)
             if permission or user.is_superuser:
-                graphs.append(object)
+                graphs.append(_object)
     if graphs:
         return graphs
     else:

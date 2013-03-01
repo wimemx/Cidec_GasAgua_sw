@@ -2,12 +2,9 @@
     <div id="menu_container">
 
         <div id="company_options" class="fl">
-            {% if company.company_logo %}
-                <div id="logo_container" class="c fl" style="background: url(/static/media/{{ company.company_logo }}) no-repeat 50% 50%; background-size: 100% auto;">
-            {% else %}
-                <div id="logo_container" class="c fl" style="background: url(/static/css/images/imgs_icns/company_placeholder.png) no-repeat 50% 50%; background-size: 100% auto;">
+            <div id="logo_container"{% if company.company_logo %}class="c fl" style="background: url(/static/media/{{ company.company_logo }}) no-repeat 50% 50%; background-size: 100% auto;">
+            {% else %}class="c fl" style="background: url(/static/css/images/imgs_icns/company_placeholder.png) no-repeat 50% 50%; background-size: 100% auto;">
             {% endif %}
-
             </div>
             <div id="companies_container" class="fl">
                 <span id="empresa">
@@ -40,10 +37,10 @@
             </div>
 
             <a href="/profile/{{ request.user.pk }}/" class="fl username">{{ request.user.first_name }} {{ request.user.last_name }}</a>
-            </div>
         </div>
-
         <div id="navigation_menu" class="fr">
             {{ sidebar|safe }}
         </div>
+    </div>
+
 </div>

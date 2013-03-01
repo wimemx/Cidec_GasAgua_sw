@@ -64,6 +64,16 @@
         }
         $(document).ready(function(){
             building_list_gen();
+            $(".first_level").hover(function(){
+                $(this).find("> .sub_list").show();
+            }, function(){
+                $(this).find("> .sub_list").hide();
+            });
+            $(".sub_level").hover(function(){
+                $(this).find("> .sub_list").show();
+            }, function(){
+                $(this).find("> .sub_list").hide();
+            });
             $(".company_list").click(function(){
                 var lista_edificios = $("#building_list");
                 var edificios = buildings[parseInt($(this).attr("rel"))];
@@ -111,7 +121,7 @@
                 var texto1 = texto.substring(0,17) + "...";
                 $("#empresa").text(texto1);
                 $("#company_list").slideUp();
-                $("#building_list").slideUp();
+                $("#building_container").slideUp();
 
                 $.ajax({
                     url: "/reportes/set_default_building/" + $(this).attr("rel"),

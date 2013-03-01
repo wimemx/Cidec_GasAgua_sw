@@ -186,22 +186,18 @@ body{
 #table_container td{
     vertical-align: top;
 }
+#page_content{
+    border-top: solid 1px #2b87a3;
+    background: #fff;
+    margin-top: 10px;
+}
 #contenido_interno{
     width: 1162px;
     display: block;
     margin: 0 auto;
     min-height: 800px;
     margin-top: 10px;
-    border: solid 1px #9ebfc7;
     padding: 28px 18px;
-    background: #FFF;
-    background-image: url(images/bgs/main_content_bg.png); /* fallback */
-    background-image: url(images/bgs/main_content_bg.png), -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#ededed)); /* Saf4+, Chrome */
-    background-image: url(images/bgs/main_content_bg.png), -webkit-linear-gradient(top, #ffffff, #ededed); /* Chrome 10+, Saf5.1+ */
-    background-image: url(images/bgs/main_content_bg.png),    -moz-linear-gradient(top, #ffffff, #ededed); /* FF3.6+ */
-    background-image: url(images/bgs/main_content_bg.png),     -ms-linear-gradient(top, #ffffff, #ededed); /* IE10 */
-    background-image: url(images/bgs/main_content_bg.png),      -o-linear-gradient(top, #ffffff, #ededed); /* Opera 11.10+ */
-    background-image: url(images/bgs/main_content_bg.png),         linear-gradient(top, #ffffff, #ededed); /* W3C */
     /*
     overflow-y: auto;
     overflow-x: hidden;
@@ -346,7 +342,12 @@ h2{
     width: 180px;
 }
 /*-----NAV MENU------*/
+#navigation_menu{
+    position: relative;
+}
+
 #main_menu li.first_level{
+    vertical-align: middle;
     display: inline-block;
     width: 120px;
     height: 57px;
@@ -354,7 +355,55 @@ h2{
     font-size: 13px;
     font-weight: 700;
     color: #dbe2f2;
+    text-align: center;
 }
+/*all nested uls*/
+#main_menu li.first_level ul{
+    background: #fff;
+    border: solid 1px #2b87a3;
+}
+/*second level*/
+ul#main_menu ul{
+    width: 222px;
+}
+ul#main_menu ul ul{
+    position: absolute !important;
+    z-index: 2;
+    top: -1px;
+    right: -202px;
+}
+ul#main_menu ul li {
+    position: relative;
+    background: url(images/bgs/bread_crumb_sep.png) no-repeat 98% 50%;
+}
+ul#main_menu ul li:hover{
+    background: url(images/bgs/bread_crumb_sep.png) #ededed no-repeat 98% 50%;
+}
+/*third level*/
+ul#main_menu ul ul{
+    width: 200px;
+}
+ul#main_menu ul ul li{
+    background: url(images/bgs/bread_crumb_sep.png) no-repeat 6% 50%;
+}
+ul#main_menu ul ul li:hover{
+    background: url(images/bgs/bread_crumb_sep.png) #ededed no-repeat 6% 50%;
+}
+
+#main_menu li.sub_level{
+    display: block;
+    padding: 8px 16px;
+    height: 30px;
+    font-weight: 300;
+    text-align: left;
+}
+#main_menu li.sub_level, #main_menu li.sub_level a{
+    color: #666;
+    font-size: 12px !important;
+    text-decoration: none;
+    line-height: 30px;
+}
+
 /* tooltip styling. by default the element to be styled is .tooltip  */
 .tooltip {
     display:none;

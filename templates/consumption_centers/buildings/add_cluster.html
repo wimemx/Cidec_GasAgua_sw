@@ -96,6 +96,7 @@
 
 
 {% block contenido %}
+
 <div id="bread_crumbs">
     <ul>
         <li><a href="/main/">Inicio</a></li>
@@ -110,8 +111,8 @@
         {% endif %}
 
     </ul>
-
 </div>
+<div id="page_content">
 <div id="contenido_interno">
     <h2 id="titulo_form" class="cluster">
         {% if operation == "edit" %}Editar{% else %}Alta de{% endif %} grupo de empresas
@@ -176,5 +177,6 @@
     </div>
 
 
+</div>
 </div>
 {% endblock %}

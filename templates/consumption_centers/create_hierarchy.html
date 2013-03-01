@@ -440,6 +440,7 @@
 
 
 {% block contenido %}
+    
     <div id="bread_crumbs">
         <ul>
             <li><a href="/main/">Inicio</a></li>
@@ -447,8 +448,8 @@
             <li><a href="/buildings/industrial_equipments/">Equipos Industriales</a></li>
             <li>Configurar Jerarqu&iacute;a de Partes y Medidores</li>
         </ul>
-
     </div>
+    <div id="page_content">
     <div id="contenido_interno" class="card">
         <h2 id="titulo_form" class="powermeter">
             Configurar Jerarqu&iacute;a de Partes y Medidores - {{ building.building_name }}
@@ -562,5 +563,6 @@
                 </form>
             </div>
         </div>
+    </div>
     </div>
 {% endblock %}

@@ -23,10 +23,10 @@
                     var dato = data[i];
                     var div = "<div class='inner_day fr'>";
                     if(data[i].empty == "true"){
-                        div += "<span class='title_inner'>Demanda M&aacute;x</span>";
-                        div += "<span class='demanda_max'>Sin info.</span>";
-                        div += "<span class='title_inner'>Consumo</span>";
-                        div += "<span class='consumo'>Sin info.</span>";
+                        //div += "<span class='title_inner'>Demanda M&aacute;x</span>";
+                        div += "<span class='demanda_max'>-</span>";
+                        //div += "<span class='title_inner'>Consumo</span>";
+                        div += "<span class='consumo'>-</span>";
                         div += "</div>";
                     }else{
                         div += "<span class='title_inner'>Demanda M&aacute;x</span>";
@@ -119,7 +119,7 @@
                         console.log(data[cont]);
                         var div = "<div class='semana_cont'>";
                         div += "<span class='week_num fl'>S"+ String(semana) +"</span>";
-                        div += "<div class='week_values_cont fl'>";
+                        div += "<div class='week_values_cont fr'>";
                         div += "<span class='label_wvalue'>Consumo Acumulado:";
                         div += "<span class='wvalue'> 800 kWh</span></span>";
                         div += "<span class='label_wvalue'>Demanda M&aacute;x:";
@@ -199,13 +199,14 @@
     get_full_month();
 {% endblock %}
 {% block contenido %}
+    
     <div id="bread_crumbs">
         <ul>
             <li><a href="/main/">Inicio</a></li>
             <li><a href="/reportes/analisis_mensual/">An&aacute;lisis El&eacute;ctrico Mensual</a></li>
         </ul>
     </div>
-
+    <div id="page_content">
     <div id="contenido_interno">
         <h2 id="titulo_reporte">An&aacute;lisis El&eacute;ctrico Mensual - {{ building.building_name }}</h2>
 
@@ -262,5 +263,6 @@
             </div>
 
         </div>
+    </div>
     </div>
 {% endblock %}

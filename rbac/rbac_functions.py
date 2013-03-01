@@ -177,15 +177,10 @@ def get_data_context_part(user, part):
 
 
 def get_buildings_context(user):
-    """Gets and return a dict with the different buildings in the
-    DataContextPermission
-    for the active user
-    todo get ordered to show:
-    -company
-    --building1
-    --building2
-    -company2
-    --building3
+    """Gets and return a JSON with the different buildings in the
+    DataContextPermission for the active user, AND a dict with the ids and
+    names of the buildings
+
     """
     datacontext = DataContextPermission.objects.filter(user_role__user=user)
     buildings = []
@@ -249,7 +244,7 @@ def get_buildings_context(user):
             companies_list.append(company_detail)
     # return buildings
 
-    return simplejson.dumps(companies_list)
+    return simplejson.dumps(companies_list), buildings
 
 
 def default_consumerUnit(building):

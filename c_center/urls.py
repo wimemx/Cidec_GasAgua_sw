@@ -275,7 +275,7 @@ urlpatterns = patterns('',
                        url(r'^set_cutdate_ajax/',
                            'c_center.views.set_cutdate_bill'),
 
-                       url(r'^analisis_mensual/(?P<id_building>\d+)/',
+                       url(r'^analisis_mensual/',
                            'c_center.views.montly_analitics'),
                        url(r'^node/',
                            'django.views.generic.simple.direct_to_template',
