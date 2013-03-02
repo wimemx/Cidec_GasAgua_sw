@@ -260,7 +260,7 @@ def factorpotencia(kwh, kvarh):
         square_kvarh = Decimal(str(pow(kvarh, 2)))
         fp = (Decimal(str(kwh)) / Decimal(
             str(pow((square_kwh + square_kvarh), .5)))) * 100
-    return fp
+    return float(fp)
 
 
 def obtenerDemanda(arr_kw):

@@ -284,6 +284,9 @@ urlpatterns = patterns('',
                        url(r'^month_analitics/(?P<id_building>\d+)/'
                            r'(?P<year>\d+)/(?P<month>\d+)/',
                            'c_center.views.montly_data_for_building'),
+                       url(r'^month_analitics_h/(?P<id_building>\d+)/'
+                           r'(?P<year>\d+)/(?P<month>\d+)/',
+                           'c_center.views.montly_data_hfor_building'),
                        url(r'^month_analitics_week/(?P<id_building>\d+)/'
                            r'(?P<year>\d+)/(?P<month>\d+)/',
                            'c_center.views.montly_data_w_for_building'),

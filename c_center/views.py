@@ -8029,6 +8029,20 @@ def montly_data_for_building(request, id_building, year, month):
 
 
 @login_required(login_url='/')
+def montly_data_hfor_building(request, id_building, year, month):
+    edificio = get_object_or_404(Building, pk=int(id_building))
+    if has_permission(request.user, VIEW, "Consultar recibo CFE") or \
+            request.user.is_superuser:
+        data = getMonthlyReport(edificio, int(month), int(year))
+
+        response_data = simplejson.dumps([data])
+        return HttpResponse(content=response_data,
+                            content_type="application/json")
+    else:
+        raise Http404
+
+
+@login_required(login_url='/')
 def montly_data_w_for_building(request, id_building, year, month):
     edificio = get_object_or_404(Building, pk=int(id_building))
     if has_permission(request.user, VIEW, "Consultar recibo CFE") or \

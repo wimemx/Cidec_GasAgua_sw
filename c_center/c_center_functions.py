@@ -1296,6 +1296,9 @@ def getMonthlyReport(building, month, year):
         #Obtener consumo acumulado
         mes['consumo_acumulado'] = consumoAcumuladoKWH(building, fecha_inicio, fecha_final)
 
+        if not mes['consumo_acumulado']:
+            mes['consumo_acumulado'] = 0
+
         #Obtener demanda maxima
         mes['demanda_max'] = demandaMaxima(building, fecha_inicio, fecha_final)
 
