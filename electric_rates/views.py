@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-
 # Create your views here.
-import pytz, datetime
+import pytz
+import datetime
 from time import strftime
 from calendar import monthrange
 
@@ -9,13 +9,14 @@ from django.shortcuts import render_to_response, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.template.context import RequestContext
 from django.db.models import Q
-from rbac.rbac_functions import  get_buildings_context
+from rbac.rbac_functions import get_buildings_context
 from electric_rates.models import *
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 
-"""
-Tarifa 3
-"""
+#"""
+#Tarifa 3
+#"""
+
 
 def add_tarifa3(request):
     if not request.user.is_authenticated():
