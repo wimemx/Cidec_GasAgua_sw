@@ -9,7 +9,7 @@ table.datepickerViewDays th{
     width: 17px;
     height: 42px;
     position: relative;
-    z-index: 2;
+    z-index: 1;
 }
 .ringl{
     left: 50px;
@@ -20,11 +20,12 @@ table.datepickerViewDays th{
 }
 #widgetCal{
     width: 760px;
-    height: 850px;
+    height: 764px;
     display: block;
     margin: 0 auto;
     position: relative;
 }
+
 .datepickerContainer{
     width: 760px;
 }
@@ -181,6 +182,12 @@ table.datepickerViewYears td a span{
 }
 .inner_day span{
     color: #666666;
+}
+.inner_day .red{
+    color: #c30000;
+}
+.inner_day .green{
+    color: #58b11d;
 }
 .demanda_max, .title_inner, .consumo{
     display: block;
@@ -369,8 +376,19 @@ table.datepickerViewYears td a span{
 #month_sumary{
     display: block;
     margin: 30px auto 0 auto;
-    width: 760px;
-    height: 50px;
+    width: 777px;
+    height: 94px;
+    border: solid 1px #ddd;
+    padding: 17px;
+}
+#month_sumary h3{
+    display: block;
+    margin: 0 auto;
+    font-size: 15px;
+    color: #53607d;
+    font-weight: 700;
+    width: 135px;
+    text-align: center;
 }
 .icon_sumary{
     display: inline-block;
@@ -392,7 +410,7 @@ table.datepickerViewYears td a span{
 }
 .month_totals{
     display: inline-block;
-    width: 190px;
+    width: 210px;
 }
 .month_totals, .icon_sumary{
     height: 100px;
@@ -432,7 +450,7 @@ table.datepickerViewYears td a span{
     font-size: 13px;
 }
 .month_totals .label_tot{
-    width: 135px;
+    width: 130px;
 }
 .month_totals .value_tot{
     font-weight: 700;

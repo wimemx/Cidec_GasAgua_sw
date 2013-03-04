@@ -45,8 +45,8 @@ footer, header, hgroup, menu, nav, section {
     display: block;
 }
 .hidden{
-    display: none;
-}
+     display: none;
+ }
 .vacio{
     display: block;
     width: 100%;
@@ -153,6 +153,8 @@ a:hover{
 @media screen and (-webkit-min-device-pixel-ratio:0) {
     .input input, .input textarea, .input select { padding: 4px; }
 }
+
+/*--Overall look and feel--*/
 body{
     background: #f3f3f3;
     background-image: url(images/bgs/gray_steel.png); /* fallback */
@@ -184,7 +186,23 @@ body{
 #table_container td{
     vertical-align: top;
 }
-
+#page_content{
+    border-top: solid 1px #2b87a3;
+    background: #fff;
+    margin-top: 10px;
+}
+#contenido_interno{
+    width: 1162px;
+    display: block;
+    margin: 0 auto;
+    min-height: 800px;
+    margin-top: 10px;
+    padding: 28px 18px;
+    /*
+    overflow-y: auto;
+    overflow-x: hidden;
+    */
+}
 #content{
     min-width: 870px;
     width: 100%;
@@ -194,17 +212,198 @@ body{
     top: 0;
     width: 100%;
     height: 59px;
-    background: url(images/bgs/top_bar_bg.png) repeat-x;
-    box-shadow: 0 1px 3px black;
-    -webkit-box-shadow: 0 1px 3px black;
-    -moz-box-shadow: 0 1px 3px black;
+
 }
 #main_logo{
-    margin-left: 28px;
-    width: 280px;
-    height: 31px;
-    background: url(images/imgs_icns/auditem_topbar.png) no-repeat;
+    margin-right: 70px;
+    width: 250px;
+    height: 35px;
+    background: url(images/imgs_icns/myrios_auditem_logo_header.png) no-repeat;
 }
+h2{
+    line-height: 22px;
+    color: #878787;
+    font-weight: 700;
+    font-size: 14px;
+    float: left;
+}
+.various{
+    line-height: 23px;
+    color: #86A2AC;
+    float: left;
+    margin-left: 5px;
+}
+/*--Main menu--*/
+#top_menu{
+    height: 62px;
+    display: block;
+    width: 100%;
+    background: url(images/bgs/menu_bar_blue_green.png) repeat-x;
+}
+#top_menu #menu_container{
+    display: block;
+    width: 1162px;
+    padding: 0 28px;
+    margin: 0 auto;
+}
+/*-----Company-Building chooser*/
+#company_options #logo_container{
+    height: 57px;
+    width: 107px;
+}
+#company_options #logo_container img{
+    max-height: 57px;
+    max-width: 107px;
+}
+#company_options .companies_continer{
+
+}
+#companies_container{
+    position: relative;
+    margin-left: 7px;
+}
+#companies_container #empresa{
+    width: 130px;
+    display: block;
+    background: url(images/imgs_icns/company_arrow_d.png) no-repeat 100% 50%;
+    line-height: 56px;
+    color: #dbe2f2;
+    font-size: 13px;
+}
+#companies_container #empresa.expanded{
+    background: url(images/imgs_icns/company_arrow_u.png) no-repeat 100% 50%;
+}
+#company_options .username{
+    color: #91d6ec;
+    text-decoration: underline;
+    line-height: 56px;
+    margin-left: 10px;
+}
+
+#company_list{
+    background: #FFF;
+    border-bottom: solid 1px #2b87a3;
+    border-left: solid 1px #2b87a3;
+    border-right: solid 1px #2b87a3;
+    width: 228px;
+    margin-top: 6px;
+    position: absolute;
+    z-index: 2;
+    left: -7px;
+}
+.company_list{
+    display: block;
+    height: 30px;
+    padding: 6px 12px;
+}
+.company_list:hover, .building_list:hover{
+    background: #ededed;
+}
+.company_list .company_name{
+    font-size: 16px;
+    display: block;
+}
+.building_list, .company_list{
+    cursor: pointer;
+}
+.company_list .cluster_company, .building_list .building_location{
+    color: #2b87a3;
+    display: block;
+    margin-top: 3px;
+}
+.company_list .building_count{
+    color: #e15500;
+    float: right;
+    margin-top: -9px;
+}
+#building_container{
+    position: absolute;
+    right: -309px;
+    top: 61px;
+    width: 215px;
+    border: solid 1px #2b87a3;
+    background: #fff;
+    z-index: 2;
+}
+#building_container label{
+    width: 88%;
+    display: block;
+    margin: 10px auto 10px auto;
+}
+.building_list{
+    display: block;
+    height: 32px;
+    padding: 10px 10px;
+}
+.building_list .building_name{
+    font-size: 14px;
+}
+#building_filter{
+    width: 180px;
+}
+/*-----NAV MENU------*/
+#navigation_menu{
+    position: relative;
+}
+
+#main_menu li.first_level{
+    vertical-align: middle;
+    display: inline-block;
+    width: 120px;
+    height: 57px;
+    line-height: 57px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #dbe2f2;
+    text-align: center;
+}
+/*all nested uls*/
+#main_menu li.first_level ul{
+    background: #fff;
+    border: solid 1px #2b87a3;
+}
+/*second level*/
+ul#main_menu ul{
+    width: 222px;
+}
+ul#main_menu ul ul{
+    position: absolute !important;
+    z-index: 2;
+    top: -1px;
+    right: -202px;
+}
+ul#main_menu ul li {
+    position: relative;
+    background: url(images/bgs/bread_crumb_sep.png) no-repeat 98% 50%;
+}
+ul#main_menu ul li:hover{
+    background: url(images/bgs/bread_crumb_sep.png) #ededed no-repeat 98% 50%;
+}
+/*third level*/
+ul#main_menu ul ul{
+    width: 200px;
+}
+ul#main_menu ul ul li{
+    background: url(images/bgs/bread_crumb_sep.png) no-repeat 6% 50%;
+}
+ul#main_menu ul ul li:hover{
+    background: url(images/bgs/bread_crumb_sep.png) #ededed no-repeat 6% 50%;
+}
+
+#main_menu li.sub_level{
+    display: block;
+    padding: 8px 16px;
+    height: 30px;
+    font-weight: 300;
+    text-align: left;
+}
+#main_menu li.sub_level, #main_menu li.sub_level a{
+    color: #666;
+    font-size: 12px !important;
+    text-decoration: none;
+    line-height: 30px;
+}
+
 /* tooltip styling. by default the element to be styled is .tooltip  */
 .tooltip {
     display:none;
@@ -226,19 +425,6 @@ body{
     background:url(images/bgs/black_arrow_bottom.png) no-repeat;
 }
 
-#user_menu{
-    margin-right: 38px;
-    width: 137px;
-}
-#user_menu li, #user_menu li a{
-    display: inline-block;
-    width: 34px;
-    height: 27px;
-    position: relative;
-}
-#user_menu li{
-    margin-top: 7px;
-}
 #notificaciones a{ background: url(images/imgs_icns/notifications_icon_topbar.png) no-repeat;}
 #notification_number{
     background: #f6531a;
@@ -269,51 +455,7 @@ body{
     margin: 0 auto;
     height: 69%;
 }
-#sidebar{
-    width: 154px !important;
-    min-width:  154px;
-    height: 100%;
-    background: url(images/bgs/side_bar_bg.png) repeat-y;
-}
-#sidebar.collapsed_nav{
-    min-width: 0 !important;
-}
-#sidebar_content{
-    color: #fff;
-    width: 154px;
-}
-#toggle_bar{
-    width: 31px;
-    min-width: 31px;
-}
-#nav_toggle{
-    margin-top: 300px;
-    display: block;
-    width: 31px;
-    min-width: 31px;
-    height: 103px;
-    background: url(images/bgs/hide_bar.png) no-repeat;
-    line-height: 103px;
-    text-align: center;
-}
-#nav_toggle a{
-    background: url(images/bgs/hide_bar_arrow.png) 50% 50% no-repeat;
-    width: 100%;
-    height: 100%;
-    display: block;
-}
-#nav_toggle:hover{
-    cursor:w-resize;
-}
-#nav_toggle.closed:hover{
-    cursor:e-resize;
-}
-#nav_toggle.closed a{
-    background: url(images/bgs/show_bar_arrow.png) 50% 50% no-repeat;
-}
-#sidebar_content{
 
-}
 /* ----- Buttons -----*/
 button{
     height: 31px;
@@ -376,6 +518,12 @@ a.aqua_btn:hover, a.grey_btn:hover{
     margin-top: 10px;
     height: 32px;
     line-height: 32px;
+}
+#bread_crumbs ul{
+    display: block;
+    width: 1162px;
+    padding: 0 28px;
+    margin: 0 auto;
 }
 #bread_crumbs ul li:first-child{
     background: none;

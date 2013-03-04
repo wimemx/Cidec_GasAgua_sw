@@ -10,6 +10,7 @@ from django.db.models import Q, Count
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.db.models.deletion import ProtectedError
+from django.contrib.auth.decorators import login_required
 from location.models import *
 from rbac.models import Operation
 from rbac.rbac_functions import  has_permission, get_buildings_context
@@ -102,12 +103,11 @@ def validate_add_street(post):
     return valid
 
 
+@login_required(login_url='/')
 def add_state(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if request.user.is_superuser:
         template_vars = dict(
-            datacontext=get_buildings_context(request.user),
+            datacontext=get_buildings_context(request.user)[0],
             empresa=request.session['main_building'],
             company=request.session['company'],
             operation="add",
@@ -139,15 +139,14 @@ def add_state(request):
         return render_to_response("generic_error.html", RequestContext(request))
 
 
+@login_required(login_url='/')
 def edit_state(request, id_state_country):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if request.user.is_superuser:
         pais_estado = get_object_or_404(PaisEstado, pk=id_state_country)
         pais = pais_estado.pais.pais_name
         estado = pais_estado.estado.estado_name
         template_vars = dict(
-            datacontext=get_buildings_context(request.user),
+            datacontext=get_buildings_context(request.user)[0],
             empresa=request.session['main_building'],
             company=request.session['company'],
             operation="edit",
@@ -176,12 +175,11 @@ def edit_state(request, id_state_country):
         return render_to_response("generic_error.html", RequestContext(request))
 
 
+@login_required(login_url='/')
 def add_municipality(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if request.user.is_superuser:
         template_vars = dict(
-            datacontext=get_buildings_context(request.user),
+            datacontext=get_buildings_context(request.user)[0],
             empresa=request.session['main_building'],
             company=request.session['company'],
             operation="add",
@@ -213,9 +211,8 @@ def add_municipality(request):
         return render_to_response("generic_error.html", RequestContext(request))
 
 
+@login_required(login_url='/')
 def edit_municipality(request, id_edo_munip):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if request.user.is_superuser:
         estado_municipio = get_object_or_404(EstadoMunicipio, pk=id_edo_munip)
         pais_est = PaisEstado.objects.get(estado=estado_municipio.estado)
@@ -223,7 +220,7 @@ def edit_municipality(request, id_edo_munip):
         estado = pais_est.estado.estado_name
         pais = pais_est.pais.pais_name
         template_vars = dict(
-            datacontext=get_buildings_context(request.user),
+            datacontext=get_buildings_context(request.user)[0],
             empresa=request.session['main_building'],
             company=request.session['company'],
             operation="edit",
@@ -254,12 +251,11 @@ def edit_municipality(request, id_edo_munip):
         return render_to_response("generic_error.html", RequestContext(request))
 
 
+@login_required(login_url='/')
 def add_neighboorhood(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if request.user.is_superuser:
         template_vars = dict(
-            datacontext=get_buildings_context(request.user),
+            datacontext=get_buildings_context(request.user)[0],
             empresa=request.session['main_building'],
             company=request.session['company'],
             operation="add",
@@ -291,9 +287,8 @@ def add_neighboorhood(request):
         return render_to_response("generic_error.html", RequestContext(request))
 
 
+@login_required(login_url='/')
 def edit_neighboorhood(request, id_munip_col):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if request.user.is_superuser:
         municipio_colonia = get_object_or_404(MunicipioColonia, pk=id_munip_col)
         est_mun = EstadoMunicipio.objects.get(
@@ -304,7 +299,7 @@ def edit_neighboorhood(request, id_munip_col):
         estado = pais_est.estado.estado_name
         pais = pais_est.pais.pais_name
         template_vars = dict(
-            datacontext=get_buildings_context(request.user),
+            datacontext=get_buildings_context(request.user)[0],
             empresa=request.session['main_building'],
             company=request.session['company'],
             operation="edit",
@@ -336,12 +331,11 @@ def edit_neighboorhood(request, id_munip_col):
         return render_to_response("generic_error.html", RequestContext(request))
 
 
+@login_required(login_url='/')
 def add_street(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if request.user.is_superuser:
         template_vars = dict(
-            datacontext=get_buildings_context(request.user),
+            datacontext=get_buildings_context(request.user)[0],
             empresa=request.session['main_building'],
             company=request.session['company'],
             operation="add",
@@ -373,9 +367,8 @@ def add_street(request):
         return render_to_response("generic_error.html", RequestContext(request))
 
 
+@login_required(login_url='/')
 def edit_street(request, id_col_calle):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if request.user.is_superuser:
         calle_colonia = get_object_or_404(ColoniaCalle, pk=id_col_calle)
         mun_col = MunicipioColonia.objects.get(colonia=calle_colonia.colonia)
@@ -387,7 +380,7 @@ def edit_street(request, id_col_calle):
         estado = pais_est.estado.estado_name
         pais = pais_est.pais.pais_name
         template_vars = dict(
-            datacontext=get_buildings_context(request.user),
+            datacontext=get_buildings_context(request.user)[0],
             empresa=request.session['main_building'],
             company=request.session['company'],
             operation="edit",
@@ -419,12 +412,11 @@ def edit_street(request, id_col_calle):
         return render_to_response("generic_error.html", RequestContext(request))
 
 
+@login_required(login_url='/')
 def state_list(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if request.user.is_superuser:
         template_vars = dict(
-            datacontext=get_buildings_context(request.user),
+            datacontext=get_buildings_context(request.user)[0],
             empresa=request.session['main_building'],
             company=request.session['company'],
             sidebar=request.session['sidebar']
@@ -497,12 +489,11 @@ def state_list(request):
         return render_to_response("generic_error.html", RequestContext(request))
 
 
+@login_required(login_url='/')
 def municipality_list(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if request.user.is_superuser:
         template_vars = dict(
-            datacontext=get_buildings_context(request.user),
+            datacontext=get_buildings_context(request.user)[0],
             empresa=request.session['main_building'],
             company=request.session['company'],
             sidebar=request.session['sidebar']
@@ -574,12 +565,11 @@ def municipality_list(request):
         return render_to_response("generic_error.html", RequestContext(request))
 
 
+@login_required(login_url='/')
 def neighboorhood_list(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if request.user.is_superuser:
         template_vars = dict(
-            datacontext=get_buildings_context(request.user),
+            datacontext=get_buildings_context(request.user)[0],
             empresa=request.session['main_building'],
             company=request.session['company'],
             sidebar=request.session['sidebar']
@@ -667,12 +657,11 @@ def neighboorhood_list(request):
         return render_to_response("generic_error.html", RequestContext(request))
 
 
+@login_required(login_url='/')
 def street_list(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if request.user.is_superuser:
         template_vars = dict(
-            datacontext=get_buildings_context(request.user),
+            datacontext=get_buildings_context(request.user)[0],
             empresa=request.session['main_building'],
             company=request.session['company'],
             sidebar=request.session['sidebar']
@@ -769,9 +758,8 @@ def street_list(request):
         return render_to_response("generic_error.html", RequestContext(request))
 
 
+@login_required(login_url='/')
 def search_country(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if "term" in request.GET:
         term = request.GET['term']
         countries = Pais.objects.filter(Q(pais_name__icontains=term))
@@ -785,11 +773,10 @@ def search_country(request):
         raise Http404
 
 
+@login_required(login_url='/')
 def search_state(request):
     """get a list of states wich contains 'term' and are in a certain
     'country'"""
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if "term" in request.GET:
         term = request.GET['term']
 
@@ -815,11 +802,10 @@ def search_state(request):
         raise Http404
 
 
+@login_required(login_url='/')
 def search_municipality(request):
     """get a list of municipalities wich contains 'term' and are in a certain
      'state'"""
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if "term" in request.GET:
         term = request.GET['term']
 
@@ -848,11 +834,10 @@ def search_municipality(request):
         raise Http404
 
 
+@login_required(login_url='/')
 def search_neighboorhood(request):
     """get a list of neighboorhoods wich contains 'term' and are in a certain
      'municipality'"""
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if "term" in request.GET:
         term = request.GET['term']
 
@@ -880,11 +865,11 @@ def search_neighboorhood(request):
     else:
         raise Http404
 
+
+@login_required(login_url='/')
 def search_street(request):
     """get a list of streets wich contains 'term' and are in a certain
     'neighboorhood'"""
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if "term" in request.GET:
         term = request.GET['term']
 
@@ -1016,9 +1001,8 @@ def delete_street_neighboor(request, id_col_calle):
         return render_to_response("generic_error.html", RequestContext(request))
 
 
+@login_required(login_url='/')
 def delete_state_country_batch(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if request.user.is_superuser:
         if request.method == "GET":
             raise Http404
@@ -1055,9 +1039,8 @@ def delete_state_country_batch(request):
         return render_to_response("generic_error.html", RequestContext(request))
 
 
+@login_required(login_url='/')
 def delete_municipality_state_batch(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if request.user.is_superuser:
         if request.method == "GET":
             raise Http404
@@ -1094,9 +1077,8 @@ def delete_municipality_state_batch(request):
         return render_to_response("generic_error.html", RequestContext(request))
 
 
+@login_required(login_url='/')
 def delete_neighboorhood_municipality_batch(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if request.user.is_superuser:
         if request.method == "GET":
             raise Http404
@@ -1134,9 +1116,8 @@ def delete_neighboorhood_municipality_batch(request):
         return render_to_response("generic_error.html", RequestContext(request))
 
 
+@login_required(login_url='/')
 def delete_street_neighboor_batch(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if request.user.is_superuser:
         if request.method == "GET":
             raise Http404
@@ -1201,10 +1182,8 @@ def delete_municipalities(state):
 #"""
 #Regiones
 #"""
-
+@login_required(login_url='/')
 def add_region(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if request.user.is_superuser:
         #Se obtienen los estados que ya estan completamente ocupados
         #Primero obtengo todos los e
@@ -1245,7 +1224,7 @@ def add_region(request):
         type = ''
         message = ''
         template_vars = dict(
-            datacontext=get_buildings_context(request.user),
+            datacontext=get_buildings_context(request.user)[0],
             empresa=request.session['main_building'],
             company=request.session['company'],
             sidebar=request.session['sidebar'],
@@ -1341,9 +1320,8 @@ def add_region(request):
         return render_to_response("generic_error.html", RequestContext(request))
 
 
+@login_required(login_url='/')
 def edit_region(request, id_region):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if request.user.is_superuser:
         regionObj = get_object_or_404(Region, pk=id_region)
 
@@ -1423,7 +1401,7 @@ def edit_region(request, id_region):
                 'region_tags': html_string_tags,
                 'region_inputs': html_string_inputs}
 
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         message = ''
         type = ''
@@ -1518,11 +1496,10 @@ def edit_region(request, id_region):
         return render_to_response("generic_error.html", RequestContext(request))
 
 
+@login_required(login_url='/')
 def view_regions(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
         if "search" in request.GET:
@@ -1586,11 +1563,10 @@ def view_regions(request):
         return render_to_response("generic_error.html", RequestContext(request))
 
 
+@login_required(login_url='/')
 def see_region(request, id_region):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
 
         region = get_object_or_404(Region, pk=id_region)
@@ -1668,11 +1644,10 @@ def region_municipalities(request, id_region, id_state):
                               template_vars_template)
 
 
+@login_required(login_url='/')
 def get_select_municipalities(request, id_state, id_region):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-
-    #Obtiene los municipios de ese estado que ya estan asignados a una region
+    """Obtiene los municipios de ese estado que ya estan asignados a una region
+    """
     reg_est_exc = RegionEstado.objects.filter(estado__pk=id_state).exclude(
         region__pk=id_region)
     list_exception = []

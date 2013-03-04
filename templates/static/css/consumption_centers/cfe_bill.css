@@ -1,110 +1,19 @@
-body{
-    background-image: none !important;
-}
-
-#company_profile_pic{
-    max-width: 154px;
-    max-height: 154px;
+.iframe_container{
+    background: #fff !important;
     display: block;
-    margin: 30px auto 10px auto;
-}
-#empresa{
-    line-height: 125%;
-    cursor: pointer;
-    background: url(../images/imgs_icns/arrow_down_sm_white.png) 100% 50% no-repeat;
-    display: block;
-    width: 115px;
-    margin: 10px auto;
-    font-size: 12px;
-    border: none;
-    color: white;
-}
-#company_list{
-    border: solid 1px #666;
-    left: 18px;
-    position: absolute;
-    background: #505e68;
-    width: 200px;
-    display: none;
-}
-
-#company_list li{
-    cursor: pointer;
-    padding: 3px 10px;
-}
-#company_list li:hover{
-    font-weight: 700;
-    background-color: #fff;
-    color: #505e68;
-}
-#sidebar_content{
-    color: #fff;
-}
-h2{
-    line-height: 22px;
-    color: #878787;
-    font-weight: 700;
-    font-size: 14px;
-    float: left;
+    height: 110%;
 }
 #titulo_reporte{
     height: 22px;
     background: url(../images/imgs_icns/electric_icon.png) no-repeat;
     padding-left: 39px;
 }
-.sidebar_option{
-    padding-left: 11px;
-    line-height: 40px;
-    display: block;
-    height: 41px;
-    background: url(../images/bgs/sidebar_separator.png) no-repeat 0 100%;
-    font-size: 14px !important;
-}
-.sidebar_option span{
-    height: 100%;
-    padding-left: 38px;
-    background: url(../images/imgs_icns/electric_icon.png) no-repeat 0 50%;
-    display: block;
-}
-.sidebar_option.first{
-    background: url(../images/bgs/sidebar_first.png) repeat-x;
-}
-.sidebarsub_op{
-    margin-top: 5px;
-}
-.sidebarsub_op li{
-    display: block;
-    color: #fff;
-    margin-left: 25%;
-    height: 20px;
-}
-.sidebarsub_op li a{
-    color: #fff;
-}
-#contenido_interno{
-    overflow: auto;
-    width: 96%;
-    min-height: 800px;
-    margin-top: 10px;
-    border: solid 1px #9ebfc7;
-    padding: 28px 18px;
-    background: #FFF;
-    background-image: url(../images/bgs/main_content_bg.png); /* fallback */
-    background-image: url(../images/bgs/main_content_bg.png), -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#ededed)); /* Saf4+, Chrome */
-    background-image: url(../images/bgs/main_content_bg.png), -webkit-linear-gradient(top, #ffffff, #ededed); /* Chrome 10+, Saf5.1+ */
-    background-image: url(../images/bgs/main_content_bg.png),    -moz-linear-gradient(top, #ffffff, #ededed); /* FF3.6+ */
-    background-image: url(../images/bgs/main_content_bg.png),     -ms-linear-gradient(top, #ffffff, #ededed); /* IE10 */
-    background-image: url(../images/bgs/main_content_bg.png),      -o-linear-gradient(top, #ffffff, #ededed); /* Opera 11.10+ */
-    background-image: url(../images/bgs/main_content_bg.png),         linear-gradient(top, #ffffff, #ededed); /* W3C */
-}
-
-#datepicker_component{
+#datepicker_component {
     position: relative;
     float: right;
     width: 360px;
     margin-right: 20px;
 }
-
 #uniform-month_01{
     width: 100px;
 }
@@ -129,75 +38,6 @@ h2{
     min-width: 70px;
 }
 
-#date_ranges{
-    display: block;
-    float: left;
-    width: 200px;
-    color: #666;
-}
-#date_ranges span{
-    font-weight: 700;
-    display: inline-block;
-
-}
-#date_ranges div{
-    display: inline-block;
-    width: 87px;
-}
-#date_ranges div label{
-    display: block;
-}
-#date_ranges div{
-    display: inline-block;
-}
-#date_ranges div input[type=text]{
-    width: 80px;
-}
-#date_ranges .checker{
-    width: 15px;
-}
-#date_ranges .aqua_btn{
-    display: block;
-    margin: 4px auto;
-    width: 103px;
-}
-#widgetField{
-    text-align: center;
-    width: 320px;
-    height: 26px;
-    float: right;
-    line-height: 26px;
-    background: url(../images/bgs/datepicker_select_bg.png) repeat-x;
-    border: solid 1px #BDBDBD;
-    border-radius: 5px;
-    -webkit-border-radius: 5px;
-    -moz-border-radius: 5px;
-}
-#widgetField a{
-    float: right;
-    width: 21px;
-    background: url(../images/imgs_icns/arrow_down_sm_gray.png) no-repeat 0 50%;
-    display: inline-block;
-}
-#datepicker{
-    z-index: 2;
-    padding: 11px 3px 0 3px;
-    width: 592px;
-    left: -223px;
-    top: 27px;
-    position: absolute;
-    border: solid 1px #BDBDBD;
-    border-radius: 5px;
-    -webkit-border-radius: 5px;
-    -moz-border-radius: 5px;
-    background: whiteSmoke;
-    display: none;
-}
-#widgetCalendar{
-    float: left;
-    width: 392px;
-    height: 170px;
-}
 #divider_top.divider{
     margin-top: 40px;
 }
@@ -207,35 +47,6 @@ h2{
     margin-top: 10px;
     height: 37px;
     line-height: 32px;
-}
-#types_graphs ul li.active{
-    background: #fff;
-}
-#types_graphs ul li{
-    -webkit-border-top-left-radius: 5px;
-    -webkit-border-top-right-radius: 5px;
-    -moz-border-radius-topleft: 5px;
-    -moz-border-radius-topright: 5px;
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
-    border-right: solid 1px #D6D6D6;
-    border-left: solid 1px #D6D6D6;
-    border-top: solid 1px #D6D6D6;
-    padding: 0 8px;
-    display: inline-block;
-    background: #E4E4E4;
-    height: 27px;
-    margin-top: 4px;
-}
-#types_graphs ul li:hover{
-    background: #fff;
-}
-#types_graphs ul li a{
-    color: #424242;
-    font-size: 12px;
-}
-#types_graphs ul li a:hover{
-    text-decoration: none;
 }
 #left_col, #right_col{
     display:block;

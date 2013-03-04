@@ -188,3 +188,26 @@ dateFormat.i18n = {
 Date.prototype.format = function (mask, utc) {
     return dateFormat(this, mask, utc);
 };
+
+// Custom prototype functions for added operations on date objects
+Date.prototype.addDays = function (n) {
+    this.setDate(this.getDate() + n);
+    this.tempDate = this.getDate();
+};
+Date.prototype.addHours= function(h){
+    this.setHours(this.getHours()+h);
+    return this;
+};
+String.prototype.format = function() {
+    var args = arguments;
+    return this.replace(/{(\d+)}/g, function(match, number) {
+        return typeof args[number] != 'undefined'
+            ? args[number]
+            : match
+            ;
+    });
+};
+//makes a ":Contains" filter wich is case insensitive
+jQuery.expr[':'].Contains = function(a, i, m) {
+    return jQuery(a).text().toUpperCase().indexOf(m[3].toUpperCase()) >= 0;
+};

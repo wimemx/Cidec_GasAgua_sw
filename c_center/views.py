@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #standard library imports
-from datetime import  timedelta, datetime
+from datetime import timedelta, datetime
 from dateutil.relativedelta import relativedelta
 import Image
 import cStringIO
@@ -35,17 +35,17 @@ from c_center.calculations import *
 from c_center.models import *
 from location.models import *
 from electric_rates.models import ElectricRatesDetail, DACElectricRateDetail, ThreeElectricRateDetail
-from rbac.models import Operation, DataContextPermission, UserRole, Object,\
+from rbac.models import Operation, DataContextPermission, UserRole, Object, \
     PermissionAsigment, GroupObject
-from rbac.rbac_functions import  has_permission, get_buildings_context,\
+from rbac.rbac_functions import has_permission, get_buildings_context, \
     default_consumerUnit
 from c_center_functions import *
 
 from c_center.graphics import *
-from data_warehouse.views import get_consumer_unit_electric_data_csv,\
-    get_consumer_unit_electric_data_interval_csv,\
-    DataWarehouseInformationRetrieveException,\
-    get_consumer_unit_by_id as get_data_warehouse_consumer_unit_by_id,\
+from data_warehouse.views import get_consumer_unit_electric_data_csv, \
+    get_consumer_unit_electric_data_interval_csv, \
+    DataWarehouseInformationRetrieveException, \
+    get_consumer_unit_by_id as get_data_warehouse_consumer_unit_by_id, \
     get_consumer_unit_electric_data_interval_tuple_list
 
 from .tables import ElectricDataTempTable, ThemedElectricDataTempTable
@@ -72,7 +72,8 @@ GRAPHS = dict(energia=GRAPHS_ENERGY, corriente=GRAPHS_I, voltaje=GRAPHS_V,
               factor_potencia=GRAPHS_PF)
 
 VIRTUAL_PROFILE = ProfilePowermeter.objects.get(
-    powermeter__powermeter_anotation = "Medidor Virtual")
+    powermeter__powermeter_anotation="Medidor Virtual")
+
 
 def call_celery_delay(request):
     if request.user.is_superuser:
@@ -135,8 +136,8 @@ def set_default_building(request, id_building):
     request.session['main_building'] = Building.objects.get(pk=id_building)
     c_b = CompanyBuilding.objects.get(building=request.session['main_building'])
     request.session['company'] = c_b.company
-    request.session['consumer_unit'] =\
-    default_consumerUnit(request.user, request.session['main_building'])
+    request.session['consumer_unit'] = \
+        default_consumerUnit(request.session['main_building'])
 
     if request.session['consumer_unit']:
         dicc = dict(edificio=request.session['main_building'].building_name,
@@ -173,7 +174,7 @@ def week_report_kwh(request):
     """ Index page?
     shows a report of the consumed kwh in the current week
     """
-    datacontext = get_buildings_context(request.user)
+    datacontext = get_buildings_context(request.user)[0]
     if not datacontext:
         request.session['consumer_unit'] = None
     set_default_session_vars(request, datacontext)
@@ -187,22 +188,24 @@ def week_report_kwh(request):
             datetime_current = datetime.datetime.now()
             year_current = datetime_current.year
             month_current = datetime_current.month
-            week_current = variety.get_week_of_month_from_datetime(datetime_current)
-            week_report_cumulative, week_report_cumulative_total =\
+            week_current = variety.get_week_of_month_from_datetime(
+                datetime_current)
+            week_report_cumulative, week_report_cumulative_total = \
                 get_consumer_unit_week_report_cumulative(consumer_unit,
                                                          year_current,
                                                          month_current,
                                                          week_current,
                                                          "kWh")
 
-            week_start_datetime, week_end_datetime =\
+            week_start_datetime, week_end_datetime = \
                 variety.get_week_start_datetime_end_datetime_tuple(year_current,
                                                                    month_current,
                                                                    week_current)
 
             template_vars = {"datacontext": datacontext,
                              'fi': week_start_datetime.date(),
-                             'ff': (week_end_datetime -timedelta(days=1)).date(),
+                             'ff': (
+                                 week_end_datetime - timedelta(days=1)).date(),
                              'empresa': request.session['main_building'],
                              'company': request.session['company'],
                              'consumer_unit': request.session['consumer_unit'],
@@ -229,16 +232,17 @@ def week_report_kwh(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("empty.html", template_vars_template)
 
+
 def main_page(request):
     """Main Page
     in the mean time the main view is the graphics view
     sets the session variables needed to show graphs
     """
-    datacontext = get_buildings_context(request.user)
+    datacontext, b_list = get_buildings_context(request.user)
     if not datacontext:
         request.session['consumer_unit'] = None
         print "set consumer unit to none"
-    set_default_session_vars(request, datacontext)
+    set_default_session_vars(request, b_list)
 
     if request.session['consumer_unit'] and request.session['main_building']:
         if "g_type" not in request.GET:
@@ -281,11 +285,11 @@ def main_page(request):
         return render_to_response("empty.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def cfe_bill(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    datacontext = get_buildings_context(request.user)
-    if has_permission(request.user, VIEW, "Consultar recibo CFE") or request.user.is_superuser:
+    datacontext = get_buildings_context(request.user)[0]
+    if has_permission(request.user, VIEW,
+                      "Consultar recibo CFE") or request.user.is_superuser:
         set_default_session_vars(request, datacontext)
 
         today = datetime.datetime.today().replace(hour=0, minute=0, second=0,
@@ -318,29 +322,29 @@ def cfe_bill(request):
 
 
 # noinspection PyArgumentList
+@login_required(login_url='/')
 def cfe_calculations(request):
     """Renders the cfe bill and the historic data chart"""
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    datacontext = get_buildings_context(request.user)
-    if has_permission(request.user, VIEW, "Consultar recibo CFE") or request.user.is_superuser :
-        if datacontext:
-            context = {"datacontext":datacontext}
+    datacontext = get_buildings_context(request.user)[0]
+    if has_permission(request.user, VIEW,
+                      "Consultar recibo CFE") or request.user.is_superuser:
         if not request.session['consumer_unit']:
-            return HttpResponse(content="<h2 style='font-family: helvetica; color: #878787; font-size:14px;' text-align: center;>No hay unidades de consumo asignadas, por favor ponte en contacto con el administrador para remediar esta situaci&oacute;n</h2>")
+            return HttpResponse(
+                content="<h2 style='font-family: helvetica; color: #878787; font-size:14px;' text-align: center;>No hay unidades de consumo asignadas, por favor ponte en contacto con el administrador para remediar esta situaci&oacute;n</h2>")
 
         set_default_session_vars(request, datacontext)
 
-        template_vars={"type":"cfe", "datacontext":datacontext,
-                       'empresa':request.session['main_building']
-        }
+        template_vars = dict(type="cfe", datacontext=datacontext,
+                             empresa=request.session['main_building'])
 
         if request.GET:
             month = int(request.GET['month'])
             year = int(request.GET['year'])
         else:
         #Obtener la fecha actual
-            today = datetime.datetime.today().replace(hour=0,minute=0,second=0,tzinfo=timezone.get_current_timezone())
+            today = datetime.datetime.today().replace(hour=0, minute=0,
+                                                      second=0,
+                                                      tzinfo=timezone.get_current_timezone())
             month = int(today.month)
             year = int(today.year)
 
@@ -352,11 +356,20 @@ def cfe_calculations(request):
         tipo_tarifa = request.session['main_building'].electric_rate
 
         if tipo_tarifa.pk == 1: #Tarifa HM
-            cfe_historico = HMHistoricData.objects.filter(monthly_cut_dates__building = request.session['main_building']).filter(monthly_cut_dates__billing_month = billing_month)
+            cfe_historico = HMHistoricData.objects.filter(
+                monthly_cut_dates__building=request.session[
+                    'main_building']).filter(
+                monthly_cut_dates__billing_month=billing_month)
         elif tipo_tarifa.pk == 2: #Tarifa DAC
-            cfe_historico = DacHistoricData.objects.filter(monthly_cut_dates__building = request.session['main_building']).filter(monthly_cut_dates__billing_month = billing_month)
+            cfe_historico = DacHistoricData.objects.filter(
+                monthly_cut_dates__building=request.session[
+                    'main_building']).filter(
+                monthly_cut_dates__billing_month=billing_month)
         else: #if tipo_tarifa.pk == 3: #Tarifa 3
-            cfe_historico = T3HistoricData.objects.filter(monthly_cut_dates__building = request.session['main_building']).filter(monthly_cut_dates__billing_month = billing_month)
+            cfe_historico = T3HistoricData.objects.filter(
+                monthly_cut_dates__building=request.session[
+                    'main_building']).filter(
+                monthly_cut_dates__billing_month=billing_month)
 
         #Si hay información en la tabla del historico, toma los datos
         resultado_mensual = {}
@@ -364,11 +377,13 @@ def cfe_calculations(request):
 
             if tipo_tarifa.pk == 1: #Tarifa HM
                 resultado_mensual["kw_base"] = cfe_historico[0].KW_base
-                resultado_mensual["kw_intermedio"] = cfe_historico[0].KW_intermedio
+                resultado_mensual["kw_intermedio"] = cfe_historico[
+                    0].KW_intermedio
                 resultado_mensual["kw_punta"] = cfe_historico[0].KW_punta
 
                 resultado_mensual["kwh_base"] = cfe_historico[0].KWH_base
-                resultado_mensual["kwh_intermedio"] = cfe_historico[0].KWH_intermedio
+                resultado_mensual["kwh_intermedio"] = cfe_historico[
+                    0].KWH_intermedio
                 resultado_mensual["kwh_punta"] = cfe_historico[0].KWH_punta
                 resultado_mensual["kwh_totales"] = cfe_historico[0].KWH_total
 
@@ -377,16 +392,25 @@ def cfe_calculations(request):
                 astimezone(timezone.get_current_timezone()).strftime('%d/%m/%Y %I:%M %p')
 
                 resultado_mensual['periodo'] = periodo
-                resultado_mensual['demanda_facturable'] = cfe_historico[0].billable_demand
-                resultado_mensual['factor_potencia'] = cfe_historico[0].power_factor
+                resultado_mensual['demanda_facturable'] = cfe_historico[
+                    0].billable_demand
+                resultado_mensual['factor_potencia'] = cfe_historico[
+                    0].power_factor
                 resultado_mensual['kvarh_totales'] = cfe_historico[0].KVARH
-                resultado_mensual['tarifa_kwhb'] = cfe_historico[0].KWH_base_rate
-                resultado_mensual['tarifa_kwhi'] = cfe_historico[0].KWH_intermedio_rate
-                resultado_mensual['tarifa_kwhp'] = cfe_historico[0].KWH_punta_rate
-                resultado_mensual['tarifa_df'] = cfe_historico[0].billable_demand_rate
-                resultado_mensual['costo_energia'] = cfe_historico[0].energy_cost
-                resultado_mensual['costo_dfacturable'] = cfe_historico[0].billable_demand_cost
-                resultado_mensual['costo_fpotencia'] = cfe_historico[0].billable_demand_cost
+                resultado_mensual['tarifa_kwhb'] = cfe_historico[
+                    0].KWH_base_rate
+                resultado_mensual['tarifa_kwhi'] = cfe_historico[
+                    0].KWH_intermedio_rate
+                resultado_mensual['tarifa_kwhp'] = cfe_historico[
+                    0].KWH_punta_rate
+                resultado_mensual['tarifa_df'] = cfe_historico[
+                    0].billable_demand_rate
+                resultado_mensual['costo_energia'] = cfe_historico[
+                    0].energy_cost
+                resultado_mensual['costo_dfacturable'] = cfe_historico[
+                    0].billable_demand_cost
+                resultado_mensual['costo_fpotencia'] = cfe_historico[
+                    0].billable_demand_cost
                 resultado_mensual['subtotal'] = cfe_historico[0].subtotal
                 resultado_mensual['iva'] = cfe_historico[0].iva
                 resultado_mensual['total'] = cfe_historico[0].total
@@ -419,10 +443,14 @@ def cfe_calculations(request):
                 resultado_mensual['tarifa_kwh'] = cfe_historico[0].KWH_rate
                 resultado_mensual['kw_totales'] = cfe_historico[0].max_demand
                 resultado_mensual['tarifa_kw'] = cfe_historico[0].demand_rate
-                resultado_mensual['factor_potencia'] = cfe_historico[0].power_factor
-                resultado_mensual['costo_energia'] = cfe_historico[0].energy_cost
-                resultado_mensual['costo_demanda'] = cfe_historico[0].demand_cost
-                resultado_mensual['costo_fpotencia'] = cfe_historico[0].power_factor_bonification
+                resultado_mensual['factor_potencia'] = cfe_historico[
+                    0].power_factor
+                resultado_mensual['costo_energia'] = cfe_historico[
+                    0].energy_cost
+                resultado_mensual['costo_demanda'] = cfe_historico[
+                    0].demand_cost
+                resultado_mensual['costo_fpotencia'] = cfe_historico[
+                    0].power_factor_bonification
                 resultado_mensual['subtotal'] = cfe_historico[0].subtotal
                 resultado_mensual['iva'] = cfe_historico[0].iva
                 resultado_mensual['total'] = cfe_historico[0].total
@@ -430,17 +458,14 @@ def cfe_calculations(request):
 
         else:#si no, hace el calculo al momento. NOTA: Se hace el calculo, pero no se guarda
 
-            #reTagHolidays()
-
             #print getMonthlyReport(request.session['main_building'], 1, 2013)
-            """
-            days_arr = getMonthDaysForDailyReport(1, 2013)
-            for day_n in days_arr:
-                dailyReport(request.session['main_building'], request.session['consumer_unit'], day_n)
-            """
+
+            # days_arr = getMonthDaysForDailyReport(1, 2013)
+            # for day_n in days_arr:
+            #     dailyReport(request.session['main_building'], request.session['consumer_unit'], day_n)
+
 
             #Se obtiene la fecha inicial y la fecha final
-            billing_month = datetime.date(year=year, month=month, day=1)
             building = request.session['main_building']
 
             hasDates = inMonthlyCutdates(building, month, year)
@@ -465,7 +490,8 @@ def cfe_calculations(request):
                         last_cutdate = last_cutdates[0]
 
                         #A la fecha inicial se le suman 30 dias, para obtener la fecha final y se guarda
-                        last_cutdate.date_end = last_cutdate.date_init + relativedelta(days=+30)
+                        last_cutdate.date_end = last_cutdate.date_init + relativedelta(
+                            days=+30)
                         last_cutdate.save()
 
                         #Se guarda el siguiente mes de facturación. Fecha inicial = fecha final del mes anterior. Fecha final = vacía
@@ -480,10 +506,13 @@ def cfe_calculations(request):
                         c_meses += 1
                 elif num_dias < 30:
                     cut_date_lb = s_date + relativedelta(days=+30)
-                    template_vars['message'] = 'El corte para este mes se realizará automáticamente el día '+ cut_date_lb.strftime("%d/%m/%Y")
+                    template_vars[
+                        'message'] = 'El corte para este mes se realizará automáticamente el día ' + cut_date_lb.strftime(
+                        "%d/%m/%Y")
                     template_vars['type'] = "n_notif"
                 elif 30 < num_dias <= 35:
-                    template_vars['message'] = 'La facturación para este mes ya rebasa los 30 días. Selecciona la fecha de corte <a href="#">aquí</a>'
+                    template_vars[
+                        'message'] = 'La facturación para este mes ya rebasa los 30 días. Selecciona la fecha de corte <a href="#">aquí</a>'
                     template_vars['type'] = "n_error"
                     template_vars['morethan30'] = True
 
@@ -494,33 +523,42 @@ def cfe_calculations(request):
 
             #Se general el recibo.
             if tipo_tarifa.pk == 1: #Tarifa HM
-                resultado_mensual = tarifaHM_2(request.session['main_building'], s_date, e_date, month, year)
+                resultado_mensual = tarifaHM_2(request.session['main_building'],
+                                               s_date, e_date, month, year)
 
             elif tipo_tarifa.pk == 2: #Tarifa DAC
-                resultado_mensual = tarifaDAC_2(request.session['main_building'], s_date, e_date, month, year)
+                resultado_mensual = tarifaDAC_2(
+                    request.session['main_building'], s_date, e_date, month,
+                    year)
 
             elif tipo_tarifa.pk == 3: #Tarifa 3
-                resultado_mensual = tarifa_3_v2(request.session['main_building'], s_date, e_date, month, year)
+                resultado_mensual = tarifa_3_v2(
+                    request.session['main_building'], s_date, e_date, month,
+                    year)
 
         if resultado_mensual['status'] == 'OK':
             template_vars['resultados'] = resultado_mensual
             template_vars['tipo_tarifa'] = tipo_tarifa
 
-            monthly_cutdate = MonthlyCutDates.objects.filter(building = request.session['main_building']).order_by("-billing_month")
+            monthly_cutdate = MonthlyCutDates.objects.filter(
+                building=request.session['main_building']).order_by(
+                "-billing_month")
 
             template_vars['historico'] = obtenerHistorico_r(monthly_cutdate[0])
             template_vars_template = RequestContext(request, template_vars)
-            return render_to_response("consumption_centers/graphs/cfe_bill.html",
-                                      template_vars_template)
+            return render_to_response(
+                "consumption_centers/graphs/cfe_bill.html",
+                template_vars_template)
         if resultado_mensual['status'] == 'ERROR':
             template_vars['mensaje'] = resultado_mensual['mensaje']
             template_vars_template = RequestContext(request, template_vars)
-            return render_to_response("consumption_centers/graphs/cfe_bill_error.html",
-                                      template_vars_template)
+            return render_to_response(
+                "consumption_centers/graphs/cfe_bill_error.html",
+                template_vars_template)
     else:
         template_vars = {}
         if datacontext:
-            template_vars = {"datacontext":datacontext}
+            template_vars = {"datacontext": datacontext}
         template_vars["sidebar"] = request.session['sidebar']
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
@@ -528,7 +566,6 @@ def cfe_calculations(request):
 
 # noinspection PyArgumentList
 def getStartEndDateUTC(building, month, year):
-
     billing_month = datetime.date(year=year, month=month, day=1)
 
     #Se obtienen las fechas de inicio y de fin para ese mes
@@ -548,7 +585,7 @@ def getStartEndDateUTC(building, month, year):
     if month_cut_dates.date_end:
         e_date = month_cut_dates.date_end
     else:#Si no tiene fecha final, se toma el día de hoy (debe estar en formato, UTC)
-        e_date = datetime.datetime.today().utcnow().replace(tzinfo = pytz.utc)
+        e_date = datetime.datetime.today().utcnow().replace(tzinfo=pytz.utc)
 
     return s_date, e_date
 
@@ -572,7 +609,6 @@ def inMonthlyCutdates(building, month, year):
 
 # noinspection PyArgumentList
 def getStartEndDate(building, month, year):
-
     billing_month = datetime.date(year=year, month=month, day=1)
 
     try:
@@ -585,17 +621,17 @@ def getStartEndDate(building, month, year):
 
         #Se obtiene la fecha de inicio
     s_date = datetime.datetime(year=month_cut_dates.date_init.year,
-        month=month_cut_dates.date_init.month,
-        day=month_cut_dates.date_init.day,
-        tzinfo=timezone.get_current_timezone()
+                               month=month_cut_dates.date_init.month,
+                               day=month_cut_dates.date_init.day,
+                               tzinfo=timezone.get_current_timezone()
     )
 
     #Si la fecha de fin no es nula
     if month_cut_dates.date_end:
         e_date = datetime.datetime(year=month_cut_dates.date_end.year,
-            month=month_cut_dates.date_end.month,
-            day=month_cut_dates.date_end.day,
-            tzinfo=timezone.get_current_timezone()
+                                   month=month_cut_dates.date_end.month,
+                                   day=month_cut_dates.date_end.day,
+                                   tzinfo=timezone.get_current_timezone()
         )
     else: #Si la fecha de fin es nula, se toma el dia de hoy
         e_date = datetime.datetime.today().replace(
@@ -603,6 +639,7 @@ def getStartEndDate(building, month, year):
             .get_current_timezone())
 
     return s_date, e_date
+
 
 def grafica_datoscsv(request):
     if request.method == "GET":
@@ -616,7 +653,7 @@ def grafica_datoscsv(request):
             return Http404
 
         response = HttpResponse(mimetype='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="datos_' +\
+        response['Content-Disposition'] = 'attachment; filename="datos_' + \
                                           electric_data + '.csv"'
         writer = csv.writer(response)
 
@@ -635,14 +672,15 @@ def grafica_datoscsv(request):
         while request.GET.has_key(consumer_unit_get_key):
             consumer_unit_id = request.GET[consumer_unit_get_key]
 
-            if request.GET.has_key(date_start_get_key) and\
-               request.GET.has_key(date_end_get_key):
+            if request.GET.has_key(date_start_get_key) and \
+                    request.GET.has_key(date_end_get_key):
                 datetime_start = datetime.datetime.strptime(
                     request.GET[date_start_get_key],
                     "%Y-%m-%d")
-                datetime_end =\
-                    datetime.datetime.strptime(request.GET[date_end_get_key], "%Y-%m-%d") +\
-                        timedelta(days=1)
+                datetime_end = \
+                    datetime.datetime.strptime(request.GET[date_end_get_key],
+                                               "%Y-%m-%d") + \
+                    timedelta(days=1)
 
             else:
                 datetime_start = get_default_datetime_start()
@@ -652,19 +690,19 @@ def grafica_datoscsv(request):
                 consumer_unit = get_data_warehouse_consumer_unit_by_id(
                     consumer_unit_id)
 
-            except DataWarehouseInformationRetrieveException as\
-            consumer_unit_information_exception:
+            except DataWarehouseInformationRetrieveException as \
+                consumer_unit_information_exception:
                 print str(consumer_unit_information_exception)
                 continue
 
             if is_interval:
-                electric_data_csv_rows =\
-                get_consumer_unit_electric_data_interval_csv(
-                    electric_data,
-                    granularity,
-                    consumer_unit,
-                    datetime_start,
-                    datetime_end)
+                electric_data_csv_rows = \
+                    get_consumer_unit_electric_data_interval_csv(
+                        electric_data,
+                        granularity,
+                        consumer_unit,
+                        datetime_start,
+                        datetime_end)
             else:
                 electric_data_csv_rows = get_consumer_unit_electric_data_csv(
                     electric_data,
@@ -705,27 +743,28 @@ def render_cumulative_comparison_in_week(request):
             week_get_key = "week%02d" % consumer_unit_counter
             while request.GET.has_key(consumer_unit_get_key):
                 consumer_unit_id_current = request.GET[consumer_unit_get_key]
-                if request.GET.has_key(year_get_key) and\
-                   request.GET.has_key(month_get_key) and\
-                   request.GET.has_key(week_get_key):
+                if request.GET.has_key(year_get_key) and \
+                        request.GET.has_key(month_get_key) and \
+                        request.GET.has_key(week_get_key):
                     year_current = int(request.GET[year_get_key])
                     month_current = int(request.GET[month_get_key])
                     week_current = int(request.GET[week_get_key])
-                    start_datetime, end_datetime = variety.\
-                    get_week_start_datetime_end_datetime_tuple(
+                    start_datetime, end_datetime = variety. \
+                        get_week_start_datetime_end_datetime_tuple(
                         year_current,
                         month_current,
                         week_current)
 
                     try:
-                        consumer_unit_current =\
-                            ConsumerUnit.objects.get(pk=consumer_unit_id_current)
+                        consumer_unit_current = \
+                            ConsumerUnit.objects.get(
+                                pk=consumer_unit_id_current)
 
                     except ConsumerUnit.DoesNotExist:
                         return HttpResponse("")
 
                     (electric_data_days_tuple_list,
-                     consumer_unit_electric_data_tuple_list_current) =\
+                     consumer_unit_electric_data_tuple_list_current) = \
                         get_consumer_unit_week_report_cumulative(
                             consumer_unit_current,
                             year_current,
@@ -735,10 +774,12 @@ def render_cumulative_comparison_in_week(request):
 
                     week_day_date = start_datetime.date()
                     for index in range(0, 7):
-                        week_day_name, electric_data_value =\
-                            consumer_unit_electric_data_tuple_list_current[index]
+                        week_day_name, electric_data_value = \
+                            consumer_unit_electric_data_tuple_list_current[
+                                index]
 
-                        consumer_unit_electric_data_tuple_list_current[index] =\
+                        consumer_unit_electric_data_tuple_list_current[index] \
+                            = \
                             (week_day_date, electric_data_value)
 
                         week_day_date += timedelta(days=1)
@@ -748,7 +789,7 @@ def render_cumulative_comparison_in_week(request):
                          consumer_unit_electric_data_tuple_list_current))
 
                     consumer_unit_counter += 1
-                    consumer_unit_get_key = "consumer-unit%02d" %\
+                    consumer_unit_get_key = "consumer-unit%02d" % \
                                             consumer_unit_counter
                     year_get_key = "year%02d" % consumer_unit_counter
                     month_get_key = "month%02d" % consumer_unit_counter
@@ -764,23 +805,25 @@ def render_cumulative_comparison_in_week(request):
 
             consumer_unit_electric_data_total_tuple_list = []
             all_meditions = True
-            for consumer_unit, electric_data_tuple_list in\
+            for consumer_unit, electric_data_tuple_list in \
                 consumer_units_data_tuple_list:
 
-                consumer_unit_total =\
-                reduce(lambda x, y: x + y,
-                       [electric_data_value for week_day_date, electric_data_value in
-                        electric_data_tuple_list])
+                consumer_unit_total = \
+                    reduce(lambda x, y: x + y,
+                           [electric_data_value for
+                            week_day_date, electric_data_value in
+                            electric_data_tuple_list])
 
                 consumer_unit_electric_data_total_tuple_list.append(
                     (consumer_unit, consumer_unit_total))
 
                 week_day_index = 0
                 for week_day_date, electric_data_value in electric_data_tuple_list:
-                    electric_data_percentage =\
-                    0 if consumer_unit_total == 0 else electric_data_value /\
-                                                       consumer_unit_total\
-                                                       * 100
+                    electric_data_percentage = \
+                        0 if consumer_unit_total == 0 else \
+                            electric_data_value / \
+                            consumer_unit_total \
+                            * 100
 
                     week_days_data_tuple_list[week_day_index][1].append(
                         (consumer_unit,
@@ -792,11 +835,11 @@ def render_cumulative_comparison_in_week(request):
                     week_day_index += 1
 
             template_variables = dict()
-            template_variables["week_days_data_tuple_list"] =\
+            template_variables["week_days_data_tuple_list"] = \
                 week_days_data_tuple_list
 
             template_variables['all_meditions'] = all_meditions
-            template_variables["consumer_unit_electric_data_total_tuple_list"] =\
+            template_variables["consumer_unit_electric_data_total_tuple_list"] = \
                 consumer_unit_electric_data_total_tuple_list
 
             template_context = RequestContext(request, template_variables)
@@ -807,12 +850,11 @@ def render_cumulative_comparison_in_week(request):
         return Http404
 
 
+@login_required(login_url='/')
 def add_building_attr(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    datacontext = get_buildings_context(request.user)
-    if has_permission(request.user, CREATE, "Alta de atributos de edificios")\
-    or request.user.is_superuser:
+    datacontext = get_buildings_context(request.user)[0]
+    if has_permission(request.user, CREATE, "Alta de atributos de edificios") \
+        or request.user.is_superuser:
         empresa = request.session['main_building']
         company = request.session['company']
         _type = ""
@@ -835,13 +877,13 @@ def add_building_attr(request):
             desc = template_vars['post']['description']
             if not variety.validate_string(attr_name):
                 valid = False
-                template_vars['message'] =\
-                "Por favor solo ingrese caracteres v&aacute;lidos"
+                template_vars['message'] = \
+                    "Por favor solo ingrese caracteres v&aacute;lidos"
             if desc != '':
                 if not variety.validate_string(desc):
                     valid = False
-                    template_vars['message'] =\
-                    "Por favor solo ingrese caracteres v&aacute;lidos"
+                    template_vars['message'] = \
+                        "Por favor solo ingrese caracteres v&aacute;lidos"
 
             if int(template_vars['post']['value_boolean']) == 1:
                 _bool = True
@@ -851,7 +893,7 @@ def add_building_attr(request):
                 else:
                     if not variety.validate_string(unidades):
                         valid = False
-                        template_vars['message'] = "Por favor solo ingrese"\
+                        template_vars['message'] = "Por favor solo ingrese" \
                                                    " caracteres v&aacute;lidos"
             else:
                 _bool = False
@@ -865,13 +907,13 @@ def add_building_attr(request):
                     building_attributes_units_of_measurement=unidades
                 )
                 b_attr.save()
-                template_vars['message'] = "El atributo fue dado de alta"\
+                template_vars['message'] = "El atributo fue dado de alta" \
                                            " correctamente"
                 template_vars['type'] = "n_success"
-                if not(not has_permission(request.user,
-                                          VIEW,
-                                          "Ver atributos de edificios") and
-                       not request.user.is_superuser):
+                if not (not has_permission(request.user,
+                                           VIEW,
+                                           "Ver atributos de edificios") and
+                            not request.user.is_superuser):
                     return HttpResponseRedirect("/buildings/atributos?msj=" +
                                                 template_vars["message"] +
                                                 "&ntype=n_success")
@@ -891,12 +933,11 @@ def add_building_attr(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def b_attr_list(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    datacontext = get_buildings_context(request.user)
-    if has_permission(request.user, VIEW, "Ver atributos de edificios") or\
-       request.user.is_superuser:
+    datacontext = get_buildings_context(request.user)[0]
+    if has_permission(request.user, VIEW, "Ver atributos de edificios") or \
+            request.user.is_superuser:
         empresa = request.session['main_building']
         company = request.session['company']
         if "search" in request.GET:
@@ -917,12 +958,12 @@ def b_attr_list(request):
                 order_attrname = "desc"
         elif "order_type" in request.GET:
             if request.GET["order_type"] == "asc":
-                order =\
-                "building_attributes_type__building_attributes_type_name"
+                order = \
+                    "building_attributes_type__building_attributes_type_name"
                 order_type = "desc"
             else:
-                order =\
-                "-building_attributes_type__building_attributes_type_name"
+                order = \
+                    "-building_attributes_type__building_attributes_type_name"
                 order_type = "asc"
         elif "order_units" in request.GET:
             if request.GET["order_units"] == "asc":
@@ -992,12 +1033,11 @@ def b_attr_list(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def delete_b_attr(request, id_b_attr):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    datacontext = get_buildings_context(request.user)
-    if has_permission(request.user, DELETE, "Eliminar atributos de edificios")\
-    or request.user.is_superuser:
+    datacontext = get_buildings_context(request.user)[0]
+    if has_permission(request.user, DELETE, "Eliminar atributos de edificios") \
+        or request.user.is_superuser:
         b_attr = get_object_or_404(BuildingAttributes, pk=id_b_attr)
 
         if b_attr.building_attributes_status:
@@ -1020,12 +1060,11 @@ def delete_b_attr(request, id_b_attr):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def editar_b_attr(request, id_b_attr):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    datacontext = get_buildings_context(request.user)
-    if has_permission(request.user, VIEW, "Ver atributos de edificios") or\
-       request.user.is_superuser:
+    datacontext = get_buildings_context(request.user)[0]
+    if has_permission(request.user, VIEW, "Ver atributos de edificios") or \
+            request.user.is_superuser:
         b_attr = get_object_or_404(BuildingAttributes, pk=id_b_attr)
         empresa = request.session['main_building']
         company = request.session['company']
@@ -1055,10 +1094,10 @@ def editar_b_attr(request, id_b_attr):
             attr = get_object_or_404(BuildingAttributesType,
                                      pk=template_vars['post']['attr_type'])
             desc = template_vars['post']['description']
-            if not variety.validate_string(desc) or not\
-            variety.validate_string(attr_name):
+            if not variety.validate_string(desc) or not \
+                variety.validate_string(attr_name):
                 valid = False
-                template_vars['message'] = "Por favor solo ingrese "\
+                template_vars['message'] = "Por favor solo ingrese " \
                                            "caracteres v&aacute;lidos"
 
             if template_vars['post']['value_boolean'] == 1:
@@ -1069,7 +1108,7 @@ def editar_b_attr(request, id_b_attr):
                 else:
                     if not variety.validate_string(unidades):
                         valid = False
-                        template_vars['message'] = "Por favor solo ingrese"\
+                        template_vars['message'] = "Por favor solo ingrese" \
                                                    " caracteres v&aacute;lidos"
             else:
                 _bool = False
@@ -1081,12 +1120,12 @@ def editar_b_attr(request, id_b_attr):
                 b_attr.building_attributes_value_boolean = _bool
                 b_attr.building_attributes_units_of_measurement = unidades
                 b_attr.save()
-                template_vars['message'] = "El atributo fue editado"\
+                template_vars['message'] = "El atributo fue editado" \
                                            " correctamente"
                 template_vars['type'] = "n_success"
                 if has_permission(request.user, VIEW,
-                                  "Ver atributos de edificios") or\
-                   request.user.is_superuser:
+                                  "Ver atributos de edificios") or \
+                        request.user.is_superuser:
                     return HttpResponseRedirect("/buildings/atributos?msj=" +
                                                 template_vars["message"] +
                                                 "&ntype=n_success")
@@ -1106,12 +1145,11 @@ def editar_b_attr(request, id_b_attr):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def ver_b_attr(request, id_b_attr):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    datacontext = get_buildings_context(request.user)
-    if has_permission(request.user, VIEW, "Ver atributos de edificios") or\
-       request.user.is_superuser:
+    datacontext = get_buildings_context(request.user)[0]
+    if has_permission(request.user, VIEW, "Ver atributos de edificios") or \
+            request.user.is_superuser:
         b_attr = get_object_or_404(BuildingAttributes, pk=id_b_attr)
         empresa = request.session['main_building']
         company = request.session['company']
@@ -1131,7 +1169,8 @@ def ver_b_attr(request, id_b_attr):
             "building_attributes_type_sequence")
         template_vars = dict(datacontext=datacontext, empresa=empresa,
                              message=message, company=company, post=post,
-                             type=_type, operation="edit", attributes=attributes,
+                             type=_type, operation="edit",
+                             attributes=attributes,
                              sidebar=request.session['sidebar'])
 
         template_vars_template = RequestContext(request, template_vars)
@@ -1147,13 +1186,12 @@ def ver_b_attr(request, id_b_attr):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def status_batch_building_attr(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user,
                       UPDATE,
-                      "Modificar atributos de edificios") or\
-       request.user.is_superuser:
+                      "Modificar atributos de edificios") or \
+            request.user.is_superuser:
         if request.method == "GET":
             raise Http404
         if request.POST['actions'] != '0':
@@ -1168,7 +1206,7 @@ def status_batch_building_attr(request):
                         atributo.building_attributes_status = False
                     atributo.save()
 
-            mensaje = "Los atributos seleccionados han cambiado su estatus"\
+            mensaje = "Los atributos seleccionados han cambiado su estatus" \
                       " correctamente"
             return HttpResponseRedirect("/buildings/atributos/?msj=" + mensaje +
                                         "&ntype=n_success")
@@ -1177,7 +1215,7 @@ def status_batch_building_attr(request):
             return HttpResponseRedirect("/buildings/atributos/?msj=" + mensaje +
                                         "&ntype=n_success")
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -1186,13 +1224,11 @@ def status_batch_building_attr(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 #====
-
+@login_required(login_url='/')
 def add_cluster(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    datacontext = get_buildings_context(request.user)
-    if has_permission(request.user, CREATE, "Alta de grupos de empresas") or\
-       request.user.is_superuser:
+    datacontext = get_buildings_context(request.user)[0]
+    if has_permission(request.user, CREATE, "Alta de grupos de empresas") or \
+            request.user.is_superuser:
         empresa = request.session['main_building']
         message = ''
         _type = ''
@@ -1250,12 +1286,12 @@ def add_cluster(request):
                 )
                 newCluster.save()
 
-                template_vars["message"] = "Cluster de Empresas creado "\
+                template_vars["message"] = "Cluster de Empresas creado " \
                                            "exitosamente"
                 template_vars["type"] = "n_success"
 
-                if has_permission(request.user, VIEW, "Ver clusters") or\
-                   request.user.is_superuser:
+                if has_permission(request.user, VIEW, "Ver clusters") or \
+                        request.user.is_superuser:
                     return HttpResponseRedirect("/buildings/clusters?msj=" +
                                                 template_vars["message"] +
                                                 "&ntype=n_success")
@@ -1277,12 +1313,11 @@ def add_cluster(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def view_cluster(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    datacontext = get_buildings_context(request.user)
-    if has_permission(request.user, VIEW, "Ver grupos de empresas") or\
-       request.user.is_superuser:
+    datacontext = get_buildings_context(request.user)[0]
+    if has_permission(request.user, VIEW, "Ver grupos de empresas") or \
+            request.user.is_superuser:
         empresa = request.session['main_building']
         if "search" in request.GET:
             search = request.GET["search"]
@@ -1323,8 +1358,8 @@ def view_cluster(request):
                 cluster_status=2).order_by(order)
 
         else:
-            lista = Cluster.objects.all().exclude(cluster_status=2).\
-            order_by(order)
+            lista = Cluster.objects.all().exclude(cluster_status=2). \
+                order_by(order)
         paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
         template_vars = dict(order_name=order_name,
                              order_sector=order_sector,
@@ -1364,11 +1399,10 @@ def view_cluster(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def status_cluster(request, id_cluster):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    if has_permission(request.user, UPDATE, "Modificar cluster de empresas")\
-    or request.user.is_superuser:
+    if has_permission(request.user, UPDATE, "Modificar cluster de empresas") \
+        or request.user.is_superuser:
         cluster = get_object_or_404(Cluster, pk=id_cluster)
         if cluster.cluster_status == 1:
             cluster.cluster_status = 0
@@ -1377,14 +1411,14 @@ def status_cluster(request, id_cluster):
             cluster.cluster_status = 1
             action = "activo"
         cluster.save()
-        mensaje = "El estatus del cluster " + cluster.cluster_name +\
+        mensaje = "El estatus del cluster " + cluster.cluster_name + \
                   " ha cambiado a " + action
         _type = "n_success"
 
         return HttpResponseRedirect("/buildings/clusters/?msj=" + mensaje +
                                     "&ntype=" + _type)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -1393,11 +1427,10 @@ def status_cluster(request, id_cluster):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def status_batch_cluster(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    if has_permission(request.user, UPDATE, "Modificar cluster de empresas")\
-    or request.user.is_superuser:
+    if has_permission(request.user, UPDATE, "Modificar cluster de empresas") \
+        or request.user.is_superuser:
         if request.method == "GET":
             raise Http404
         if request.POST['actions'] == 'status':
@@ -1411,7 +1444,7 @@ def status_batch_cluster(request):
                         cluster.cluster_status = 1
                     cluster.save()
 
-            mensaje = "Los clusters seleccionados han cambiado su status "\
+            mensaje = "Los clusters seleccionados han cambiado su status " \
                       "correctamente"
             return HttpResponseRedirect("/buildings/clusters/?msj=" + mensaje +
                                         "&ntype=n_success")
@@ -1420,7 +1453,7 @@ def status_batch_cluster(request):
             return HttpResponseRedirect("/buildings/clusters/?msj=" + mensaje +
                                         "&ntype=n_success")
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -1429,12 +1462,11 @@ def status_batch_cluster(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def edit_cluster(request, id_cluster):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    datacontext = get_buildings_context(request.user)
-    if has_permission(request.user, UPDATE, "Modificar cluster de empresas")\
-    or request.user.is_superuser:
+    datacontext = get_buildings_context(request.user)[0]
+    if has_permission(request.user, UPDATE, "Modificar cluster de empresas") \
+        or request.user.is_superuser:
         cluster = get_object_or_404(Cluster, pk=id_cluster)
 
         #Se obtienen los sectores
@@ -1444,7 +1476,7 @@ def edit_cluster(request, id_cluster):
                 'clusterdescription': cluster.cluster_description,
                 'clustersector': cluster.sectoral_type.pk}
 
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         message = ''
         _type = ''
@@ -1495,8 +1527,8 @@ def edit_cluster(request, id_cluster):
                 _type = "n_success"
                 if has_permission(request.user,
                                   VIEW,
-                                  "Ver grupos de empresas") or\
-                   request.user.is_superuser:
+                                  "Ver grupos de empresas") or \
+                        request.user.is_superuser:
                     return HttpResponseRedirect("/buildings/clusters?msj=" +
                                                 message +
                                                 "&ntype=n_success")
@@ -1524,12 +1556,11 @@ def edit_cluster(request, id_cluster):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def see_cluster(request, id_cluster):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    datacontext = get_buildings_context(request.user)
-    if has_permission(request.user, VIEW, "Ver grupos de empresas") or\
-       request.user.is_superuser:
+    datacontext = get_buildings_context(request.user)[0]
+    if has_permission(request.user, VIEW, "Ver grupos de empresas") or \
+            request.user.is_superuser:
         empresa = request.session['main_building']
 
         cluster = Cluster.objects.get(pk=id_cluster)
@@ -1560,14 +1591,13 @@ def see_cluster(request, id_cluster):
 #POWERMETER MODELS#
 ###################
 
+@login_required(login_url='/')
 def add_powermetermodel(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    datacontext = get_buildings_context(request.user)
+    datacontext = get_buildings_context(request.user)[0]
     if has_permission(request.user,
                       CREATE,
-                      "Alta de modelos de medidores eléctricos")\
-    or request.user.is_superuser:
+                      "Alta de modelos de medidores eléctricos") \
+        or request.user.is_superuser:
         empresa = request.session['main_building']
 
         template_vars = dict(datacontext=datacontext,
@@ -1623,14 +1653,14 @@ def add_powermetermodel(request):
                 )
                 newPowerMeterModel.save()
 
-                template_vars["message"] = "Modelo de Medidor creado "\
+                template_vars["message"] = "Modelo de Medidor creado " \
                                            "exitosamente"
                 template_vars["type"] = "n_success"
 
                 if has_permission(request.user,
                                   VIEW,
-                                  "Ver modelos de medidores eléctricos") or\
-                   request.user.is_superuser:
+                                  "Ver modelos de medidores eléctricos") or \
+                        request.user.is_superuser:
                     return HttpResponseRedirect(
                         "/buildings/modelos_medidor?msj=" +
                         template_vars["message"] + "&ntype=n_success")
@@ -1652,21 +1682,20 @@ def add_powermetermodel(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def edit_powermetermodel(request, id_powermetermodel):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    datacontext = get_buildings_context(request.user)
+    datacontext = get_buildings_context(request.user)[0]
     if has_permission(request.user,
                       UPDATE,
-                      "Modificar modelos de medidores eléctricos")\
-    or request.user.is_superuser:
+                      "Modificar modelos de medidores eléctricos") \
+        or request.user.is_superuser:
         powermetermodel = get_object_or_404(PowermeterModel,
                                             pk=id_powermetermodel)
 
         post = {'pw_brand': powermetermodel.powermeter_brand,
                 'pw_model': powermetermodel.powermeter_model}
 
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         message = ''
         _type = ''
@@ -1697,8 +1726,8 @@ def edit_powermetermodel(request, id_powermetermodel):
                 continuar = False
 
             #Valida el nombre (para el caso de los repetidos)
-            if powermetermodel.powermeter_brand != pw_brand or\
-               powermetermodel.powermeter_model != pw_model:
+            if powermetermodel.powermeter_brand != pw_brand or \
+                            powermetermodel.powermeter_model != pw_model:
                 p_modelValidate = PowermeterModel.objects.filter(
                     powermeter_brand=pw_brand).filter(
                     powermeter_model=pw_model)
@@ -1718,8 +1747,8 @@ def edit_powermetermodel(request, id_powermetermodel):
                 _type = "n_success"
                 if has_permission(request.user,
                                   VIEW,
-                                  "Ver modelos de medidores eléctricos")\
-                or request.user.is_superuser:
+                                  "Ver modelos de medidores eléctricos") \
+                    or request.user.is_superuser:
                     return HttpResponseRedirect(
                         "/buildings/modelos_medidor?msj=" + message +
                         "&ntype=n_success")
@@ -1746,13 +1775,12 @@ def edit_powermetermodel(request, id_powermetermodel):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def view_powermetermodels(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    datacontext = get_buildings_context(request.user)
+    datacontext = get_buildings_context(request.user)[0]
     if has_permission(request.user, VIEW,
-                      "Ver modelos de medidores eléctricos") or\
-       request.user.is_superuser:
+                      "Ver modelos de medidores eléctricos") or \
+            request.user.is_superuser:
         empresa = request.session['main_building']
         company = request.session['company']
         if "search" in request.GET:
@@ -1790,8 +1818,8 @@ def view_powermetermodels(request):
         if search:
             lista = PowermeterModel.objects.filter(Q(
                 powermeter_brand__icontains=request.GET['search']) | Q(
-                powermeter_model__icontains=request.GET['search'])).\
-            order_by(order)
+                powermeter_model__icontains=request.GET['search'])). \
+                order_by(order)
 
         else:
             lista = PowermeterModel.objects.all().order_by(order)
@@ -1834,13 +1862,12 @@ def view_powermetermodels(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def status_batch_powermetermodel(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user,
                       UPDATE,
-                      "Modificar modelos de medidores eléctricos") or\
-       request.user.is_superuser:
+                      "Modificar modelos de medidores eléctricos") or \
+            request.user.is_superuser:
         if request.method == "GET":
             raise Http404
         if request.POST['actions'] == 'status':
@@ -1855,7 +1882,7 @@ def status_batch_powermetermodel(request):
                         powermetermodel.status = 0
                     powermetermodel.save()
 
-            mensaje = "Los modelos seleccionados han cambiado su estatus"\
+            mensaje = "Los modelos seleccionados han cambiado su estatus" \
                       " correctamente"
             return HttpResponseRedirect("/buildings/modelos_medidor/?msj=" +
                                         mensaje + "&ntype=n_success")
@@ -1864,7 +1891,7 @@ def status_batch_powermetermodel(request):
             return HttpResponseRedirect("/buildings/modelos_medidor/?msj=" +
                                         mensaje + "&ntype=n_success")
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -1873,13 +1900,12 @@ def status_batch_powermetermodel(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def status_powermetermodel(request, id_powermetermodel):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user,
                       UPDATE,
-                      "Modificar modelos de medidores eléctricos") or\
-       request.user.is_superuser:
+                      "Modificar modelos de medidores eléctricos") or \
+            request.user.is_superuser:
         powermetermodel = get_object_or_404(PowermeterModel,
                                             pk=id_powermetermodel)
         if powermetermodel.status == 0:
@@ -1901,11 +1927,9 @@ def status_powermetermodel(request, id_powermetermodel):
 #############
 #POWERMETERS#
 #############
-
+@login_required(login_url='/')
 def add_powermeter(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    datacontext = get_buildings_context(request.user)
+    datacontext = get_buildings_context(request.user)[0]
     if has_permission(request.user, CREATE,
                       "Alta de medidor electrico") or request.user.is_superuser:
         empresa = request.session['main_building']
@@ -1990,7 +2014,7 @@ def add_powermeter(request):
             "consumption_centers/buildings/add_powermeter.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -1999,10 +2023,9 @@ def add_powermeter(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def edit_powermeter(request, id_powermeter):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    datacontext = get_buildings_context(request.user)
+    datacontext = get_buildings_context(request.user)[0]
     if has_permission(request.user, UPDATE,
                       "Modificar medidores eléctricos") or request.user.is_superuser:
         powermeter = get_object_or_404(Powermeter, pk=id_powermeter)
@@ -2096,10 +2119,9 @@ def edit_powermeter(request, id_powermeter):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def view_powermeter(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    datacontext = get_buildings_context(request.user)
+    datacontext = get_buildings_context(request.user)[0]
     if has_permission(request.user, VIEW,
                       "Ver medidores eléctricos") or request.user.is_superuser:
         empresa = request.session['main_building']
@@ -2147,12 +2169,9 @@ def view_powermeter(request):
 
         if search:
             lista = Powermeter.objects.filter(
-                Q(powermeter_anotation__icontains=request.GET['search']) | Q(
-                    powermeter_model__powermeter_brand__icontains=request.GET[
-                                                                  'search']) | Q(
-                    powermeter_model__powermeter_model__icontains=request.GET[
-                                                                  'search'])).order_by(
-                order)
+                Q(powermeter_anotation__icontains=request.GET['search']) | 
+                Q(powermeter_model__powermeter_brand__icontains=request.GET['search']) | 
+                Q(powermeter_model__powermeter_model__icontains=request.GET['search'])).order_by(order)
         else:
             #powermeter_objs = Powermeter.objects.all()
             #powermeter_ids = [pw.pk for pw in powermeter_objs]
@@ -2197,9 +2216,8 @@ def view_powermeter(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def status_batch_powermeter(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE,
                       "Modificar medidores eléctricos") or request.user.is_superuser:
         if request.method == "GET":
@@ -2229,7 +2247,7 @@ def status_batch_powermeter(request):
             return HttpResponseRedirect("/buildings/medidores/?msj=" + mensaje +
                                         "&ntype=n_success")
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -2238,9 +2256,8 @@ def status_batch_powermeter(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def status_powermeter(request, id_powermeter):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE,
                       "Modificar medidores eléctricos") or request.user.is_superuser:
         powermeter = get_object_or_404(Powermeter, pk=id_powermeter)
@@ -2262,12 +2279,13 @@ def status_powermeter(request, id_powermeter):
                                             mensaje +
                                             "&ntype=" + _type)
             return HttpResponseRedirect("/buildings/editar_ie/" +
-                                        request.GET['ref'] + "/?msj=" + mensaje +
+                                        request.GET[
+                                            'ref'] + "/?msj=" + mensaje +
                                         "&ntype=" + _type)
         return HttpResponseRedirect("/buildings/medidores/?msj=" + mensaje +
                                     "&ntype=" + _type)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -2276,12 +2294,11 @@ def status_powermeter(request, id_powermeter):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def see_powermeter(request, id_powermeter):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, VIEW,
                       "Ver medidores eléctricos") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
 
         location = ''
@@ -2310,7 +2327,7 @@ def see_powermeter(request, id_powermeter):
             "consumption_centers/buildings/see_powermeter.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -2321,13 +2338,11 @@ def see_powermeter(request, id_powermeter):
 #######################
 #Electric Device Types#
 #######################
-
+@login_required(login_url='/')
 def add_electric_device_type(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, CREATE,
                       "Alta de dispositivos y sistemas eléctricos") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         post = ''
 
@@ -2375,7 +2390,7 @@ def add_electric_device_type(request):
                 newElectricDeviceType.save()
 
                 template_vars[
-                "message"] = "Tipo de Equipo Eléctrico creado exitosamente"
+                    "message"] = "Tipo de Equipo Eléctrico creado exitosamente"
                 template_vars["type"] = "n_success"
 
                 if has_permission(request.user, VIEW,
@@ -2393,7 +2408,7 @@ def add_electric_device_type(request):
             "consumption_centers/buildings/add_electricdevicetype.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -2402,9 +2417,8 @@ def add_electric_device_type(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def edit_electric_device_type(request, id_edt):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE,
                       "Modificar dispositivos y sistemas eléctricos") or request.user.is_superuser:
         edt_obj = get_object_or_404(ElectricDeviceType, pk=id_edt)
@@ -2412,7 +2426,7 @@ def edit_electric_device_type(request, id_edt):
         post = {'devicetypename': edt_obj.electric_device_type_name,
                 'devicetypedescription': edt_obj.electric_device_type_description}
 
-        datacontext = get_buildings_context(request.user)
+        datacontext, b_list = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         message = ''
         _type = ''
@@ -2473,7 +2487,7 @@ def edit_electric_device_type(request, id_edt):
             "consumption_centers/buildings/add_electricdevicetype.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -2482,12 +2496,11 @@ def edit_electric_device_type(request, id_edt):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def view_electric_device_type(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, VIEW,
                       "Ver dispositivos y sistemas eléctricos") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         if "search" in request.GET:
             search = request.GET["search"]
@@ -2524,7 +2537,7 @@ def view_electric_device_type(request):
             lista = ElectricDeviceType.objects.filter(Q(
                 electric_device_type_name__icontains=request.GET['search']) | Q(
                 electric_device_type_description__icontains=request.GET[
-                                                            'search'])).exclude(
+                    'search'])).exclude(
                 electric_device_type_status=2).order_by(order)
 
         else:
@@ -2561,7 +2574,7 @@ def view_electric_device_type(request):
             "consumption_centers/buildings/electricdevicetype.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -2570,9 +2583,8 @@ def view_electric_device_type(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def delete_batch_electric_device_type(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE,
                       "Modificar dispositivos y sistemas eléctricos") or request.user.is_superuser:
         if request.method == "GET":
@@ -2598,7 +2610,7 @@ def delete_batch_electric_device_type(request):
                 "/buildings/tipos_equipo_electrico/?msj=" + mensaje +
                 "&ntype=n_success")
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -2607,9 +2619,8 @@ def delete_batch_electric_device_type(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def status_batch_electric_device_type(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE,
                       "Modificar dispositivos y sistemas eléctricos") or request.user.is_superuser:
         if request.method == "GET":
@@ -2638,9 +2649,8 @@ def status_batch_electric_device_type(request):
         return render_to_response("generic_error.html", RequestContext(request))
 
 
+@login_required(login_url='/')
 def status_electric_device_type(request, id_edt):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE,
                       "Modificar dispositivos y sistemas eléctricos") or request.user.is_superuser:
         edt_obj = get_object_or_404(ElectricDeviceType, pk=id_edt)
@@ -2659,7 +2669,7 @@ def status_electric_device_type(request, id_edt):
             "/buildings/tipos_equipo_electrico/?msj=" + mensaje +
             "&ntype=" + _type)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -2670,13 +2680,11 @@ def status_electric_device_type(request, id_edt):
 ###########
 #Companies#
 ###########
-
+@login_required(login_url='/')
 def add_company(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, CREATE,
                       "Alta de empresas") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         post = ''
         message = ''
@@ -2780,7 +2788,7 @@ def add_company(request):
             "consumption_centers/buildings/add_company.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -2789,9 +2797,8 @@ def add_company(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def edit_company(request, id_cpy):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE,
                       "Modificar empresas") or request.user.is_superuser:
         company_clusters = ClusterCompany.objects.filter(id=id_cpy)
@@ -2799,7 +2806,7 @@ def edit_company(request, id_cpy):
         post = {'cmp_id': company_clusters[0].company.id,
                 'cmp_name': company_clusters[0].company.company_name,
                 'cmp_description': company_clusters[
-                                   0].company.company_description,
+                    0].company.company_description,
                 'cmp_cluster': company_clusters[0].cluster.pk,
                 'cmp_sector': company_clusters[0].company.sectoral_type.pk,
                 'cmp_logo': company_clusters[0].company.company_logo}
@@ -2811,7 +2818,7 @@ def edit_company(request, id_cpy):
         #Get Sectors
         sectors = SectoralType.objects.filter(sectoral_type_status=1)
 
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         message = ''
         _type = ''
@@ -2909,7 +2916,7 @@ def edit_company(request, id_cpy):
             "consumption_centers/buildings/add_company.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -2918,12 +2925,11 @@ def edit_company(request, id_cpy):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def view_companies(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, VIEW,
                       "Ver empresas") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         if "search" in request.GET:
             search = request.GET["search"]
@@ -2968,7 +2974,7 @@ def view_companies(request):
             lista = ClusterCompany.objects.filter(
                 Q(company__company_name__icontains=request.GET['search']) | Q(
                     company__company_description__icontains=request.GET[
-                                                            'search']) | Q(
+                        'search']) | Q(
                     cluster__cluster_name__icontains=request.GET['search']) | Q(
                     company__sectoral_type__sectorial_type_name__icontains=
                     request.GET['search'])).exclude(
@@ -3009,7 +3015,7 @@ def view_companies(request):
             "consumption_centers/buildings/companies.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -3018,9 +3024,8 @@ def view_companies(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def status_batch_companies(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, DELETE,
                       "Baja de empresas") or request.user.is_superuser:
         if request.method == "GET":
@@ -3044,7 +3049,7 @@ def status_batch_companies(request):
             return HttpResponseRedirect("/buildings/empresas/?msj=" + mensaje +
                                         "&ntype=n_success")
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -3053,9 +3058,8 @@ def status_batch_companies(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def status_company(request, id_cpy):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE,
                       "Modificar empresas") or request.user.is_superuser:
         company = get_object_or_404(Company, pk=id_cpy)
@@ -3073,7 +3077,7 @@ def status_company(request, id_cpy):
         return HttpResponseRedirect("/buildings/empresas/?msj=" + mensaje +
                                     "&ntype=" + _type)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -3082,12 +3086,11 @@ def status_company(request, id_cpy):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def see_company(request, id_cpy):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, VIEW,
                       "Ver empresas") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
 
         company_cluster_objs = ClusterCompany.objects.filter(company__pk=id_cpy)
@@ -3104,7 +3107,7 @@ def see_company(request, id_cpy):
             "consumption_centers/buildings/see_company.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -3113,12 +3116,11 @@ def see_company(request, id_cpy):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def c_center_structures(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, VIEW,
                       "Ver empresas") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
 
         clustersObjs = Cluster.objects.all()
@@ -3152,7 +3154,7 @@ def c_center_structures(request):
             template_vars_template)
 
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -3165,13 +3167,11 @@ def c_center_structures(request):
 #Building Type#
 ###############
 
-
+@login_required(login_url='/')
 def add_buildingtype(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, CREATE,
                       "Alta de tipos de edificios") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
         post = ''
@@ -3218,7 +3218,7 @@ def add_buildingtype(request):
                 newBuildingType.save()
 
                 template_vars[
-                "message"] = "Tipo de Edificio creado exitosamente"
+                    "message"] = "Tipo de Edificio creado exitosamente"
                 template_vars["type"] = "n_success"
 
                 if has_permission(request.user, VIEW,
@@ -3236,7 +3236,7 @@ def add_buildingtype(request):
             "consumption_centers/buildings/add_buildingtype.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -3245,9 +3245,8 @@ def add_buildingtype(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def edit_buildingtype(request, id_btype):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE,
                       "Modificar tipo de edificio") or request.user.is_superuser:
         building_type = BuildingType.objects.get(id=id_btype)
@@ -3255,7 +3254,7 @@ def edit_buildingtype(request, id_btype):
         post = {'btype_name': building_type.building_type_name,
                 'btype_description': building_type.building_type_description}
 
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
         message = ''
@@ -3316,7 +3315,7 @@ def edit_buildingtype(request, id_btype):
             "consumption_centers/buildings/add_buildingtype.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -3325,12 +3324,11 @@ def edit_buildingtype(request, id_btype):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def view_buildingtypes(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, VIEW,
                       "Ver tipos de edificios") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
 
@@ -3369,7 +3367,7 @@ def view_buildingtypes(request):
             lista = BuildingType.objects.filter(
                 Q(building_type_name__icontains=request.GET['search']) | Q(
                     building_type_description__icontains=request.GET[
-                                                         'search'])).exclude(
+                        'search'])).exclude(
                 building_type_status=2).order_by(order)
 
         else:
@@ -3406,7 +3404,7 @@ def view_buildingtypes(request):
             "consumption_centers/buildings/buildingtype.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -3415,9 +3413,8 @@ def view_buildingtypes(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def status_batch_buildingtypes(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE,
                       "Modificar tipo de edificio") or request.user.is_superuser:
         if request.method == "GET":
@@ -3443,7 +3440,7 @@ def status_batch_buildingtypes(request):
                 "/buildings/tipos_edificios/?msj=" + mensaje +
                 "&ntype=n_success")
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -3452,9 +3449,8 @@ def status_batch_buildingtypes(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def status_buildingtype(request, id_btype):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE,
                       "Modificar tipo de edificio") or request.user.is_superuser:
         building_type = get_object_or_404(BuildingType, pk=id_btype)
@@ -3473,7 +3469,7 @@ def status_buildingtype(request, id_btype):
             "/buildings/tipos_edificios/?msj=" + mensaje +
             "&ntype=" + _type)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -3486,13 +3482,11 @@ def status_buildingtype(request, id_btype):
 #Sectoral Type#
 ###############
 
-
+@login_required(login_url='/')
 def add_sectoraltype(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, CREATE,
                       "Alta de sectores") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
         post = ''
@@ -3558,7 +3552,7 @@ def add_sectoraltype(request):
             "consumption_centers/buildings/add_sectoraltype.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -3567,9 +3561,8 @@ def add_sectoraltype(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def edit_sectoraltype(request, id_stype):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE,
                       "Modificar tipos de sectores") or request.user.is_superuser:
         sectoral_type = SectoralType.objects.get(id=id_stype)
@@ -3577,7 +3570,7 @@ def edit_sectoraltype(request, id_stype):
         post = {'stype_name': sectoral_type.sectorial_type_name,
                 'stype_description': sectoral_type.sectoral_type_description}
 
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
         message = ''
@@ -3639,7 +3632,7 @@ def edit_sectoraltype(request, id_stype):
             "consumption_centers/buildings/add_sectoraltype.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -3648,12 +3641,11 @@ def edit_sectoraltype(request, id_stype):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def view_sectoraltypes(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, VIEW,
                       "Ver tipos de sectores") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
 
@@ -3692,7 +3684,7 @@ def view_sectoraltypes(request):
             lista = SectoralType.objects.filter(
                 Q(sectorial_type_name__icontains=request.GET['search']) | Q(
                     sectoral_type_description__icontains=request.GET[
-                                                         'search'])).exclude(
+                        'search'])).exclude(
                 sectoral_type_status=2).order_by(order)
         else:
             lista = SectoralType.objects.all().exclude(
@@ -3728,7 +3720,7 @@ def view_sectoraltypes(request):
             "consumption_centers/buildings/sectoraltype.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -3737,9 +3729,8 @@ def view_sectoraltypes(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def status_batch_sectoraltypes(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE,
                       "Modificar tipos de sectores") or request.user.is_superuser:
         if request.method == "GET":
@@ -3765,7 +3756,7 @@ def status_batch_sectoraltypes(request):
                 "/buildings/tipos_sectores/?msj=" + mensaje +
                 "&ntype=n_success")
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -3774,9 +3765,8 @@ def status_batch_sectoraltypes(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def status_sectoraltype(request, id_stype):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE,
                       "Modificar tipos de sectores") or request.user.is_superuser:
         sectoral_type = get_object_or_404(SectoralType, pk=id_stype)
@@ -3795,7 +3785,7 @@ def status_sectoraltype(request, id_stype):
             "/buildings/tipos_sectores/?msj=" + mensaje +
             "&ntype=" + _type)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -3807,13 +3797,11 @@ def status_sectoraltype(request, id_stype):
 ##########################
 #Building Attributes Type#
 ##########################
-
+@login_required(login_url='/')
 def add_b_attributes_type(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, CREATE,
                       "Alta de tipos de atributos de edificios") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
         post = ''
@@ -3862,7 +3850,7 @@ def add_b_attributes_type(request):
                 newBuildingAttrType.save()
 
                 template_vars[
-                "message"] = "Tipo de Atributo de Edificio creado exitosamente"
+                    "message"] = "Tipo de Atributo de Edificio creado exitosamente"
                 template_vars["type"] = "n_success"
 
                 if has_permission(request.user, VIEW,
@@ -3880,7 +3868,7 @@ def add_b_attributes_type(request):
             "consumption_centers/buildings/add_buildingattributetype.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -3889,9 +3877,8 @@ def add_b_attributes_type(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def edit_b_attributes_type(request, id_batype):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE,
                       "Modificar tipos de atributos de edificios") or request.user.is_superuser:
         b_attr_typeObj = BuildingAttributesType.objects.get(id=id_batype)
@@ -3899,7 +3886,7 @@ def edit_b_attributes_type(request, id_batype):
         post = {'batype_name': b_attr_typeObj.building_attributes_type_name,
                 'batype_description': b_attr_typeObj.building_attributes_type_description}
 
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
         message = ''
@@ -3961,7 +3948,7 @@ def edit_b_attributes_type(request, id_batype):
             "consumption_centers/buildings/add_buildingattributetype.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -3970,12 +3957,11 @@ def edit_b_attributes_type(request, id_batype):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def view_b_attributes_type(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, VIEW,
                       "Ver tipos de atributos") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
 
@@ -4012,10 +3998,10 @@ def view_b_attributes_type(request):
         if search:
             lista = BuildingAttributesType.objects.filter(Q(
                 building_attributes_type_name__icontains=request.GET[
-                                                         'search']) | Q(
+                    'search']) | Q(
                 building_attributes_type_description__icontains=request.GET[
-                                                                'search'])).\
-            exclude(building_attributes_type_status=2).order_by(order)
+                    'search'])). \
+                exclude(building_attributes_type_status=2).order_by(order)
         else:
             lista = BuildingAttributesType.objects.all().exclude(
                 building_attributes_type_status=2).order_by(order)
@@ -4050,7 +4036,7 @@ def view_b_attributes_type(request):
             "consumption_centers/buildings/buildingattributetype.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -4059,9 +4045,8 @@ def view_b_attributes_type(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def status_b_attributes_type(request, id_batype):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE,
                       "Modificar tipos de atributos de edificios") or request.user.is_superuser:
         b_att_type = get_object_or_404(BuildingAttributesType, pk=id_batype)
@@ -4083,9 +4068,8 @@ def status_b_attributes_type(request, id_batype):
         return render_to_response("generic_error.html", RequestContext(request))
 
 
+@login_required(login_url='/')
 def status_batch_b_attributes_type(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE,
                       "Modificar tipos de atributos de edificios") or request.user.is_superuser:
         if request.method == "GET":
@@ -4119,13 +4103,11 @@ def status_batch_b_attributes_type(request):
 #Part of Building Type#
 #######################
 
-
+@login_required(login_url='/')
 def add_partbuildingtype(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, CREATE,
                       "Alta de tipos de partes de edificio") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
         post = ''
@@ -4174,7 +4156,7 @@ def add_partbuildingtype(request):
                 newPartBuildingType.save()
 
                 template_vars[
-                "message"] = "Tipo de Parte de Edificio creado exitosamente"
+                    "message"] = "Tipo de Parte de Edificio creado exitosamente"
                 template_vars["type"] = "n_success"
 
                 if has_permission(request.user, VIEW,
@@ -4192,7 +4174,7 @@ def add_partbuildingtype(request):
             "consumption_centers/buildings/add_partbuilding_type.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -4201,9 +4183,8 @@ def add_partbuildingtype(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def edit_partbuildingtype(request, id_pbtype):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE,
                       "Modificar tipos de atributos de edificios") or request.user.is_superuser:
         building_part_type = PartOfBuildingType.objects.get(id=id_pbtype)
@@ -4212,7 +4193,7 @@ def edit_partbuildingtype(request, id_pbtype):
             'b_part_type_name': building_part_type.part_of_building_type_name,
             'b_part_type_description': building_part_type.part_of_building_type_description}
 
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
         message = ''
@@ -4270,7 +4251,7 @@ def edit_partbuildingtype(request, id_pbtype):
             "consumption_centers/buildings/add_partbuilding_type.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -4279,12 +4260,11 @@ def edit_partbuildingtype(request, id_pbtype):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def view_partbuildingtype(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, VIEW,
                       "Ver tipos de partes de un edificio") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
 
@@ -4322,11 +4302,11 @@ def view_partbuildingtype(request):
         if search:
             lista = PartOfBuildingType.objects.filter(Q(
                 part_of_building_type_name__icontains=request.GET[
-                                                      'search']) | Q(
+                    'search']) | Q(
                 part_of_building_type_description__icontains=request.GET[
-                                                             'search'])).exclude(
-                part_of_building_type_status=2).\
-            order_by(order)
+                    'search'])).exclude(
+                part_of_building_type_status=2). \
+                order_by(order)
         else:
             lista = PartOfBuildingType.objects.all().exclude(
                 part_of_building_type_status=2).order_by(order)
@@ -4361,7 +4341,7 @@ def view_partbuildingtype(request):
             "consumption_centers/buildings/partofbuildingtype.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -4370,9 +4350,8 @@ def view_partbuildingtype(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def status_batch_partbuildingtype(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE,
                       "Modificar tipos de atributos de edificios") or request.user.is_superuser:
         if request.method == "GET":
@@ -4399,7 +4378,7 @@ def status_batch_partbuildingtype(request):
                 "/buildings/tipos_partes_edificio/?msj=" + mensaje +
                 "&ntype=n_success")
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -4408,9 +4387,8 @@ def status_batch_partbuildingtype(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def status_partbuildingtype(request, id_pbtype):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE,
                       "Modificar tipos de atributos de edificios") or request.user.is_superuser:
         part_building_type = get_object_or_404(PartOfBuildingType, pk=id_pbtype)
@@ -4430,7 +4408,7 @@ def status_partbuildingtype(request, id_pbtype):
             "/buildings/tipos_partes_edificio/?msj=" + mensaje +
             "&ntype=" + _type)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -4443,13 +4421,11 @@ def status_partbuildingtype(request, id_pbtype):
 #Part of Building#
 ##################
 
-
+@login_required(login_url='/')
 def add_partbuilding(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, CREATE,
                       "Alta de partes de edificio") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
         post = ''
@@ -4538,12 +4514,13 @@ def add_partbuilding(request):
                     mts2_built=b_part_mt2
                 )
                 newPartBuilding.save()
-                deviceType = ElectricDeviceType.objects.get(electric_device_type_name="Total parte de un edificio")
+                deviceType = ElectricDeviceType.objects.get(
+                    electric_device_type_name="Total parte de un edificio")
                 newConsumerUnit = ConsumerUnit(
-                    building = buildingObj,
-                    part_of_building = newPartBuilding,
-                    electric_device_type = deviceType,
-                    profile_powermeter = VIRTUAL_PROFILE
+                    building=buildingObj,
+                    part_of_building=newPartBuilding,
+                    electric_device_type=deviceType,
+                    profile_powermeter=VIRTUAL_PROFILE
                 )
                 newConsumerUnit.save()
                 #Add the consumer_unit instance for the DW
@@ -4573,7 +4550,7 @@ def add_partbuilding(request):
                         newBldPartAtt.save()
 
                 template_vars[
-                "message"] = "Parte de Edificio creado exitosamente"
+                    "message"] = "Parte de Edificio creado exitosamente"
                 template_vars["type"] = "n_success"
 
                 if has_permission(request.user, VIEW,
@@ -4591,7 +4568,7 @@ def add_partbuilding(request):
             "consumption_centers/buildings/add_partbuilding.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -4600,9 +4577,8 @@ def add_partbuilding(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def edit_partbuilding(request, id_bpart):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE,
                       "Modificar partes de un edificio") or request.user.is_superuser:
         #Se obtienen los tipos de partes de edificios
@@ -4623,25 +4599,28 @@ def edit_partbuilding(request, id_bpart):
         string_attributes = ''
         if building_part_attributes:
             for bp_att in building_part_attributes:
-                string_attributes += '<div  class="extra_attributes_div"><span class="delete_attr_icon"><a href="#eliminar" class="delete hidden_icon" ' +\
-                                     'title="eliminar atributo"></a></span>' +\
-                                     '<span class="tip_attribute_part">' +\
-                                     bp_att.building_attributes.building_attributes_type.building_attributes_type_name +\
-                                     '</span>' +\
-                                     '<span class="attribute_part">' +\
-                                     bp_att.building_attributes.building_attributes_name +\
-                                     '</span>' +\
-                                     '<span class="attribute_value_part">' +\
-                                     str(bp_att.building_attributes_value) +\
-                                     '</span>' +\
+                string_attributes += '<div  class="extra_attributes_div"><span class="delete_attr_icon"><a href="#eliminar" class="delete hidden_icon" ' + \
+                                     'title="eliminar atributo"></a></span>' + \
+                                     '<span class="tip_attribute_part">' + \
+                                     bp_att.building_attributes \
+                                         .building_attributes_type \
+                                         .building_attributes_type_name + \
+                                     '</span>' + \
+                                     '<span class="attribute_part">' + \
+                                     bp_att.building_attributes.building_attributes_name + \
+                                     '</span>' + \
+                                     '<span class="attribute_value_part">' + \
+                                     str(bp_att.building_attributes_value) + \
+                                     '</span>' + \
                                      '<input type="hidden" name="atributo_' + str(
-                    bp_att.building_attributes.building_attributes_type.pk) +\
+                    bp_att.building_attributes.building_attributes_type.pk) + \
                                      '_' + str(
-                    bp_att.building_attributes.pk) + '" ' +\
+                    bp_att.building_attributes.pk) + '" ' + \
                                      'value="' + str(
-                    bp_att.building_attributes.building_attributes_type.pk) + ',' + str(
+                    bp_att.building_attributes.building_attributes_type.pk) + \
+                                     ',' + str(
                     bp_att.building_attributes.pk) + ',' + str(
-                    bp_att.building_attributes_value) +\
+                    bp_att.building_attributes_value) + \
                                      '"/></div>'
 
         post = {'b_part_name': building_part.part_of_building_name,
@@ -4653,7 +4632,7 @@ def edit_partbuilding(request, id_bpart):
                 'b_part_attributes': string_attributes,
         }
 
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
         message = ''
@@ -4767,7 +4746,7 @@ def edit_partbuilding(request, id_bpart):
             "consumption_centers/buildings/add_partbuilding.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -4776,12 +4755,11 @@ def edit_partbuilding(request, id_bpart):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def view_partbuilding(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, VIEW,
                       "Ver partes de un edificio") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
 
@@ -4831,7 +4809,7 @@ def view_partbuilding(request):
                     part_of_building_type__part_of_building_type_name__icontains=
                     request.GET['search']) | Q(
                     building__building_name__icontains=request.GET[
-                                                       'search'])).order_by(
+                        'search'])).order_by(
                 order)
         else:
             lista = PartOfBuilding.objects.all().order_by(order)
@@ -4866,7 +4844,7 @@ def view_partbuilding(request):
             "consumption_centers/buildings/partofbuilding.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -4875,9 +4853,8 @@ def view_partbuilding(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def status_batch_partofbuilding(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE,
                       "Modificar partes de un edificio") or request.user.is_superuser:
         if request.method == "GET":
@@ -4908,9 +4885,8 @@ def status_batch_partofbuilding(request):
         return render_to_response("generic_error.html", RequestContext(request))
 
 
+@login_required(login_url='/')
 def status_partofbuilding(request, id_bpart):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE,
                       "Modificar partes de un edificio") or request.user.is_superuser:
         building_part = get_object_or_404(PartOfBuilding, pk=id_bpart)
@@ -4936,6 +4912,7 @@ def status_partofbuilding(request, id_bpart):
         return render_to_response("generic_error.html", RequestContext(request))
 
 
+@login_required(login_url='/')
 def search_buildings(request):
     """ recieves three parameters in request.GET:
     term = string, the name of the building to search
@@ -4943,8 +4920,6 @@ def search_buildings(request):
     op = string, the operation to check the permission (view, create, update, delete)
     """
 
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if "term" in request.GET and "perm" in request.GET and "op" in request.GET:
         operation = {
             'view': VIEW,
@@ -4974,10 +4949,8 @@ def search_buildings(request):
         raise Http404
 
 
+@login_required(login_url='/')
 def get_select_attributes(request, id_attribute_type):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-        #print "ID Att:", id_attribute_type
 
     building_attributes = BuildingAttributes.objects.filter(
         building_attributes_type__pk=id_attribute_type)
@@ -4998,12 +4971,11 @@ def get_select_attributes(request, id_attribute_type):
 #EDIFICIOS#
 ###########
 # noinspection PyArgumentList
+@login_required(login_url='/')
 def add_building(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, CREATE,
                       "Alta de edificios") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
         post = ''
@@ -5202,16 +5174,18 @@ def add_building(request):
 
                 #Se da de alta la fecha de corte
 
-                date_init = datetime.datetime.today().utcnow().replace(tzinfo = pytz.utc)
-                billing_month = datetime.date(year=date_init.year, month=date_init.month, day=1)
+                date_init = datetime.datetime.today().utcnow().replace(
+                    tzinfo=pytz.utc)
+                billing_month = datetime.date(year=date_init.year,
+                                              month=date_init.month, day=1)
 
                 new_cut = MonthlyCutDates(
                     building=newBuilding,
-                    billing_month= billing_month,
-                    date_init = date_init,
+                    billing_month=billing_month,
+                    date_init=date_init,
                 )
                 new_cut.save()
-                
+
 
                 #Se relaciona la compania con el edificio
                 newBldComp = CompanyBuilding(
@@ -5248,8 +5222,9 @@ def add_building(request):
                         )
                         newBldAtt.save()
 
-                electric_device_type = ElectricDeviceType.objects.get(electric_device_type_name="Total Edificio")
-                cu =  ConsumerUnit(
+                electric_device_type = ElectricDeviceType.objects.get(
+                    electric_device_type_name="Total Edificio")
+                cu = ConsumerUnit(
                     building=newBuilding,
                     electric_device_type=electric_device_type,
                     profile_powermeter=VIRTUAL_PROFILE
@@ -5263,7 +5238,6 @@ def add_building(request):
                     populate_instant_facts=None,
                     populate_interval_facts=None
                 )
-
 
                 template_vars["message"] = "Edificio creado exitosamente"
                 template_vars["type"] = "n_success"
@@ -5282,7 +5256,7 @@ def add_building(request):
             "consumption_centers/buildings/add_building.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -5291,12 +5265,11 @@ def add_building(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def edit_building(request, id_bld):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE,
                       "Modificar edificios") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
         message = ''
@@ -5340,25 +5313,27 @@ def edit_building(request, id_bld):
             for bp_att in building_attributes:
                 string_attributes += '<div  class="extra_attributes_div">' \
                                      '<span class="delete_attr_icon">' \
-                                     '<a href="#eliminar" class="delete hidden_icon" ' +\
-                                     'title="eliminar atributo"></a></span>' +\
-                                     '<span class="tip_attribute_part">' +\
-                                     bp_att.building_attributes.building_attributes_type.building_attributes_type_name +\
-                                     '</span>' +\
-                                     '<span class="attribute_part">' +\
-                                     bp_att.building_attributes.building_attributes_name +\
-                                     '</span>' +\
-                                     '<span class="attribute_value_part">' +\
-                                     str(bp_att.building_attributes_value) +\
-                                     '</span>' +\
-                                     '<input type="hidden" name="atributo_' + str(
-                    bp_att.building_attributes.building_attributes_type.pk) +\
+                                     '<a href="#eliminar" class="delete ' \
+                                     'hidden_icon" ' + \
+                                     'title="eliminar atributo"></a></span>' + \
+                                     '<span class="tip_attribute_part">' + \
+                                     bp_att.building_attributes.building_attributes_type.building_attributes_type_name + \
+                                     '</span>' + \
+                                     '<span class="attribute_part">' + \
+                                     bp_att.building_attributes.building_attributes_name + \
+                                     '</span>' + \
+                                     '<span class="attribute_value_part">' + \
+                                     str(bp_att.building_attributes_value) + \
+                                     '</span>' + \
+                                     '<input type="hidden" name="atributo_' + \
+                                     str(
+                                         bp_att.building_attributes.building_attributes_type.pk) + \
                                      '_' + str(
-                    bp_att.building_attributes.pk) + '" ' +\
+                    bp_att.building_attributes.pk) + '" ' + \
                                      'value="' + str(
                     bp_att.building_attributes.building_attributes_type.pk) + ',' + str(
                     bp_att.building_attributes.pk) + ',' + str(
-                    bp_att.building_attributes_value) +\
+                    bp_att.building_attributes_value) + \
                                      '"/></div>'
 
         post = {
@@ -5516,7 +5491,7 @@ def edit_building(request, id_bld):
                                      countryObj.pais_name + "C.P." + b_zip
                 if b_mt2 == '':
                     b_mt2 = 0
-                #Se edita la info el edificio
+                    #Se edita la info el edificio
                 buildingObj.building_name = b_name
                 buildingObj.building_description = b_description
                 buildingObj.building_formatted_address = formatted_address
@@ -5613,7 +5588,7 @@ def edit_building(request, id_bld):
             "consumption_centers/buildings/add_building.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -5622,12 +5597,11 @@ def edit_building(request, id_bld):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def view_building(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, VIEW,
                       "Ver edificios") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
 
@@ -5684,11 +5658,11 @@ def view_building(request):
             lista = CompanyBuilding.objects.filter(
                 Q(building__building_name__icontains=request.GET['search']) | Q(
                     building__estado__estado_name__icontains=request.GET[
-                                                             'search']) | Q(
+                        'search']) | Q(
                     building__municipio__municipio_name__icontains=request.GET[
-                                                                   'search']) | Q(
+                        'search']) | Q(
                     company__company_name__icontains=request.GET[
-                                                     'search'])).exclude(
+                        'search'])).exclude(
                 building__building_status=2).order_by(order)
 
         else:
@@ -5725,7 +5699,7 @@ def view_building(request):
         return render_to_response("consumption_centers/buildings/building.html",
                                   template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -5734,9 +5708,8 @@ def view_building(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
 def status_batch_building(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE,
                       "Modificar edificios") or request.user.is_superuser:
         if request.method == "GET":
@@ -5760,7 +5733,7 @@ def status_batch_building(request):
             return HttpResponseRedirect("/buildings/edificios/?msj=" + mensaje +
                                         "&ntype=n_success")
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         context = {}
         if datacontext:
             context = {"datacontext": datacontext}
@@ -5768,9 +5741,8 @@ def status_batch_building(request):
                                   RequestContext(request, context))
 
 
+@login_required(login_url='/')
 def status_building(request, id_bld):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
     if has_permission(request.user, UPDATE,
                       "Modificar edificios") or request.user.is_superuser:
         building = get_object_or_404(Building, pk=id_bld)
@@ -5791,7 +5763,7 @@ def status_building(request, id_bld):
         return HttpResponseRedirect("/buildings/edificios/?msj=" + mensaje +
                                     "&ntype=" + _type)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -5805,7 +5777,7 @@ def status_building(request, id_bld):
 
 @login_required(login_url='/')
 def add_ie(request):
-    datacontext = get_buildings_context(request.user)
+    datacontext = get_buildings_context(request.user)[0]
     template_vars = {}
 
     if datacontext:
@@ -5823,28 +5795,31 @@ def add_ie(request):
                 alias=request.POST['ie_alias'].strip(),
                 description=request.POST['ie_desc'].strip(),
                 server=request.POST['ie_server'].strip()
-                )
+            )
             ie.save()
             message = "El equipo industrial se ha creado exitosamente"
             _type = "n_success"
             if has_permission(request.user, VIEW,
                               "Ver equipos industriales") or request.user.is_superuser:
-                return HttpResponseRedirect("/buildings/industrial_equipments?msj=" +
-                                            message +
-                                            "&ntype=" + _type)
+                return HttpResponseRedirect(
+                    "/buildings/industrial_equipments?msj=" +
+                    message +
+                    "&ntype=" + _type)
             template_vars["message"] = message
             template_vars["type"] = type
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
-            "consumption_centers/consumer_units/ind_eq.html", template_vars_template)
+            "consumption_centers/consumer_units/ind_eq.html",
+            template_vars_template)
     else:
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+
 @login_required(login_url='/')
 def edit_ie(request, id_ie):
-    datacontext = get_buildings_context(request.user)
+    datacontext = get_buildings_context(request.user)[0]
     template_vars = {}
 
     if datacontext:
@@ -5860,10 +5835,10 @@ def edit_ie(request, id_ie):
                       "Modificar equipos industriales") or request.user.is_superuser:
         #Asociated powermeters
         if has_permission(
-            request.user,
-            CREATE,
-            "Asignación de medidores eléctricos a equipos industriales")\
-        or request.user.is_superuser:
+                request.user,
+                CREATE,
+                "Asignación de medidores eléctricos a equipos industriales") \
+            or request.user.is_superuser:
             order_alias = 'asc'
             order_serial = 'asc'
             order_model = 'asc'
@@ -5926,15 +5901,15 @@ def edit_ie(request, id_ie):
             _type = "n_success"
             if has_permission(request.user, VIEW,
                               "Ver equipos industriales") or request.user.is_superuser:
-                return HttpResponseRedirect("/buildings/industrial_equipments?msj=" +
-                                            message +
-                                            "&ntype=" + _type)
+                return HttpResponseRedirect(
+                    "/buildings/industrial_equipments?msj=" +
+                    message +
+                    "&ntype=" + _type)
             template_vars["message"] = message
             template_vars["type"] = type
         template_vars["post"] = dict(ie_alias=industrial_eq.alias,
                                      ie_desc=industrial_eq.description,
                                      ie_server=industrial_eq.server)
-
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -5944,9 +5919,10 @@ def edit_ie(request, id_ie):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+
 @login_required(login_url='/')
 def see_ie(request, id_ie):
-    datacontext = get_buildings_context(request.user)
+    datacontext = get_buildings_context(request.user)[0]
     template_vars = {}
 
     if datacontext:
@@ -6002,7 +5978,7 @@ def see_ie(request, id_ie):
 
             lista = PowermeterForIndustrialEquipment.objects.filter(
                 industrial_equipment=template_vars["industrial_eq"]
-                ).order_by(order)
+            ).order_by(order)
             template_vars['order_alias'] = order_alias
             template_vars['order_model'] = order_model
             template_vars['order_serial'] = order_serial
@@ -6015,10 +5991,10 @@ def see_ie(request, id_ie):
 
             template_vars['ver_medidores'] = True
             if has_permission(
-                request.user,
-                CREATE,
-                "Asignación de medidores eléctricos a equipos industriales")\
-            or request.user.is_superuser:
+                    request.user,
+                    CREATE,
+                    "Asignación de medidores eléctricos a equipos industriales") \
+                or request.user.is_superuser:
                 template_vars['show_asign'] = True
             else:
                 template_vars['show_asign'] = False
@@ -6027,10 +6003,11 @@ def see_ie(request, id_ie):
         else:
             template_vars['ver_medidores'] = False
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("consumption_centers/consumer_units/see_ie.html",
-                                  template_vars_template)
+        return render_to_response(
+            "consumption_centers/consumer_units/see_ie.html",
+            template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -6038,12 +6015,13 @@ def see_ie(request, id_ie):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+
 @login_required(login_url='/')
 def status_ie(request, id_ie):
     if has_permission(request.user,
                       UPDATE,
-                      "Modificar equipos industriales") or\
-       request.user.is_superuser:
+                      "Modificar equipos industriales") or \
+            request.user.is_superuser:
         ind_eq = get_object_or_404(IndustrialEquipment, pk=id_ie)
         if ind_eq.status:
             ind_eq.status = False
@@ -6060,7 +6038,7 @@ def status_ie(request, id_ie):
             "/buildings/industrial_equipments/?msj=" + mensaje +
             "&ntype=" + _type)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -6068,12 +6046,13 @@ def status_ie(request, id_ie):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+
 @login_required(login_url='/')
 def status_batch_ie(request):
     if has_permission(request.user,
                       UPDATE,
-                      "Modificar equipos industriales") or\
-       request.user.is_superuser:
+                      "Modificar equipos industriales") or \
+            request.user.is_superuser:
         if request.POST['actions'] != '0':
             for key in request.POST:
                 if re.search('^equipo_\w+', key):
@@ -6087,16 +6066,16 @@ def status_batch_ie(request):
 
                     equipo_ind.save()
 
-            mensaje = "Los equipos industriales seleccionados han "\
+            mensaje = "Los equipos industriales seleccionados han " \
                       "cambiado su estatus correctamente"
             _type = "n_success"
         else:
             mensaje = str("No se ha seleccionado una acción").decode("utf-8")
             _type = "n_notif"
-        return HttpResponseRedirect("/buildings/industrial_equipments/?msj="+
-                                    mensaje+"&ntype="+_type)
+        return HttpResponseRedirect("/buildings/industrial_equipments/?msj=" +
+                                    mensaje + "&ntype=" + _type)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -6104,9 +6083,10 @@ def status_batch_ie(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+
 @login_required(login_url='/')
 def view_ie(request):
-    datacontext = get_buildings_context(request.user)
+    datacontext = get_buildings_context(request.user)[0]
     template_vars = {}
 
     if datacontext:
@@ -6181,11 +6161,13 @@ def view_ie(request):
             template_vars['msg_type'] = request.GET['ntype']
 
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("consumption_centers/consumer_units/ie_list.html",
-                                  template_vars_template)
+        return render_to_response(
+            "consumption_centers/consumer_units/ie_list.html",
+            template_vars_template)
     else:
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
+
 
 @login_required(login_url='/')
 def search_pm(request):
@@ -6200,7 +6182,7 @@ def search_pm(request):
         powermeters = Powermeter.objects.exclude(
             pk__in=pm_in_ie
         ).filter(
-            Q(powermeter_anotation__icontains=term)|
+            Q(powermeter_anotation__icontains=term) |
             Q(powermeter_serial__icontains=term)
         ).filter(status=1)
         medidores = []
@@ -6212,12 +6194,13 @@ def search_pm(request):
     else:
         raise Http404
 
+
 @login_required(login_url='/')
 def asign_pm(request, id_ie):
-    if (not(not has_permission(
-        request.user,
-        CREATE,
-        "Asignación de medidores eléctricos a equipos industriales") and not
+    if (not (not has_permission(
+            request.user,
+            CREATE,
+            "Asignación de medidores eléctricos a equipos industriales") and not
     request.user.is_superuser)) and "pm" in request.GET:
         ie = get_object_or_404(IndustrialEquipment, pk=int(id_ie))
         pm = get_object_or_404(Powermeter, pk=int(request.GET['pm']))
@@ -6235,17 +6218,18 @@ def asign_pm(request, id_ie):
     else:
         raise Http404
 
+
 @login_required(login_url='/')
 def detach_pm(request, id_ie):
-    if (not(not has_permission(
-        request.user,
-        UPDATE,
-        "Modificar asignaciones de medidores eléctricos a equipos industriales")
-            and not request.user.is_superuser)) and "pm" in request.GET:
+    if (not (not has_permission(
+            request.user,
+            UPDATE,
+            "Modificar asignaciones de medidores eléctricos a equipos industriales")
+             and not request.user.is_superuser)) and "pm" in request.GET:
         pm = get_object_or_404(Powermeter, pk=int(request.GET['pm']))
         ie = get_object_or_404(IndustrialEquipment, pk=int(id_ie))
-        PowermeterForIndustrialEquipment.objects.\
-        filter(powermeter=pm,industrial_equipment=ie).delete()
+        PowermeterForIndustrialEquipment.objects. \
+            filter(powermeter=pm, industrial_equipment=ie).delete()
         mensaje = "El medidor se ha desvinculado"
         return HttpResponseRedirect("/buildings/editar_ie/" +
                                     id_ie + "/?msj=" + mensaje +
@@ -6256,7 +6240,7 @@ def detach_pm(request, id_ie):
 # noinspection PyArgumentList,PyTypeChecker
 @login_required(login_url='/')
 def configure_ie(request, id_ie):
-    datacontext = get_buildings_context(request.user)
+    datacontext = get_buildings_context(request.user)[0]
     template_vars = {}
 
     if datacontext:
@@ -6281,7 +6265,6 @@ def configure_ie(request, id_ie):
             settings_pm = []
             template_vars['powermeters'] = []
             for pm in powermeters:
-
                 read_time_rate = request.POST['read_time_rate_' + str(pm.pk)]
                 send_time_rate = request.POST['send_time_rate_' + str(pm.pk)]
                 initial_send_time = request.POST['initial_send_time_h_' +
@@ -6304,14 +6287,14 @@ def configure_ie(request, id_ie):
                          send_time_rate=pm.send_time_rate,
                          initial_send_time=hora_,
                          send_time_duration=pm.send_time_duration
-                        ))
+                    ))
 
-                settings_pm.append(dict(identifier = pm.identifier,
+                settings_pm.append(dict(identifier=pm.identifier,
                                         read_time_rate=read_time_rate,
                                         send_time_rate=send_time_rate,
                                         initial_send_time=str(hora[0]),
                                         send_time_duration=send_time_duration
-                                        ))
+                ))
             ie.monitor_time_rate = request.POST['monitor_time_rate']
             ie.check_config_time_rate = request.POST['check_config_time_rate']
             ie.has_new_config = True
@@ -6335,7 +6318,7 @@ def configure_ie(request, id_ie):
                          send_time_rate=pm.send_time_rate,
                          initial_send_time=time,
                          send_time_duration=pm.send_time_duration
-                ))
+                    ))
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
             "consumption_centers/consumer_units/configure_times.html",
@@ -6344,9 +6327,10 @@ def configure_ie(request, id_ie):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+
 @login_required(login_url='/')
 def create_hierarchy(request, id_building):
-    datacontext = get_buildings_context(request.user)
+    datacontext = get_buildings_context(request.user)[0]
     template_vars = {}
 
     if datacontext:
@@ -6358,7 +6342,7 @@ def create_hierarchy(request, id_building):
 
     if has_permission(request.user, CREATE,
                       "Alta de jerarquía de partes") or \
-       request.user.is_superuser:
+            request.user.is_superuser:
         building = get_object_or_404(Building, pk=id_building)
         _list = get_hierarchy_list(building, request.user)
         template_vars['list'] = _list
@@ -6381,6 +6365,7 @@ def create_hierarchy(request, id_building):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+
 @login_required(login_url='/')
 def add_partbuilding_pop(request, id_building):
     if has_permission(request.user, CREATE,
@@ -6396,18 +6381,18 @@ def add_partbuilding_pop(request, id_building):
             'building_attributes_type_name')
 
         template_vars = dict(
-                             tipos_parte=tipos_parte,
-                             tipos_atributos=tipos_atributos,
-                             building = get_object_or_404(Building,
-                                                          pk=id_building),
-                             operation = "pop_add"
+            tipos_parte=tipos_parte,
+            tipos_atributos=tipos_atributos,
+            building=get_object_or_404(Building,
+                                       pk=id_building),
+            operation="pop_add"
         )
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
             "consumption_centers/buildings/popup_add_partbuilding.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -6415,13 +6400,14 @@ def add_partbuilding_pop(request, id_building):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+
 @login_required(login_url='/')
 def save_add_part_popup(request):
     if (has_permission(
-        request.user,
-        CREATE,
-        "Alta de partes de edificio") or request.user.is_superuser) \
-    and request.method == "POST":
+            request.user,
+            CREATE,
+            "Alta de partes de edificio") or request.user.is_superuser) \
+        and request.method == "POST":
         b_part_name = request.POST.get('b_part_name').strip()
         b_part_description = request.POST.get('b_part_description').strip()
         b_part_type_id = request.POST.get('b_part_type')
@@ -6460,12 +6446,13 @@ def save_add_part_popup(request):
                     mts2_built=b_part_mt2
                 )
                 newPartBuilding.save()
-                deviceType = ElectricDeviceType.objects.get(electric_device_type_name="Total parte de un edificio")
+                deviceType = ElectricDeviceType.objects.get(
+                    electric_device_type_name="Total parte de un edificio")
                 newConsumerUnit = ConsumerUnit(
-                    building = buildingObj,
-                    part_of_building = newPartBuilding,
-                    electric_device_type = deviceType,
-                    profile_powermeter = VIRTUAL_PROFILE
+                    building=buildingObj,
+                    part_of_building=newPartBuilding,
+                    electric_device_type=deviceType,
+                    profile_powermeter=VIRTUAL_PROFILE
                 )
                 newConsumerUnit.save()
                 #Add the consumer_unit instance for the DW
@@ -6476,7 +6463,6 @@ def save_add_part_popup(request):
                     populate_instant_facts=None,
                     populate_interval_facts=None
                 )
-
 
                 for key in request.POST:
                     if re.search('^atributo_\w+', key):
@@ -6495,11 +6481,12 @@ def save_add_part_popup(request):
                         )
                         newBldPartAtt.save()
                 return HttpResponse(content=newConsumerUnit.pk,
-                             content_type="text/plain",
-                             status=200)
+                                    content_type="text/plain",
+                                    status=200)
         else:
             return HttpResponse(status=400)
     raise Http404
+
 
 @login_required(login_url='/')
 def add_powermeter_popup(request):
@@ -6514,7 +6501,7 @@ def add_powermeter_popup(request):
             "consumption_centers/buildings/popup_add_powermeter.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -6522,12 +6509,13 @@ def add_powermeter_popup(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+
 @login_required(login_url='/')
 def save_add_powermeter_popup(request):
     if (has_permission(request.user,
                        CREATE,
-                      "Alta de medidor electrico") or
-        request.user.is_superuser) and request.method == "POST":
+                       "Alta de medidor electrico") or
+            request.user.is_superuser) and request.method == "POST":
 
         pw_alias = request.POST.get('pw_alias').strip()
         pw_model = request.POST.get('pw_model')
@@ -6574,19 +6562,20 @@ def save_add_powermeter_popup(request):
     else:
         raise Http404
 
+
 @login_required(login_url='/')
 def add_electric_device_popup(request):
     if has_permission(request.user, CREATE,
                       "Alta de dispositivos y sistemas eléctricos") or \
-       request.user.is_superuser:
+            request.user.is_superuser:
 
         template_vars_template = RequestContext(request,
-                                                {"operation":"add_popup"})
+                                                {"operation": "add_popup"})
         return render_to_response(
             "consumption_centers/buildings/popup_add_electric_device.html",
             template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -6594,11 +6583,12 @@ def add_electric_device_popup(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+
 @login_required(login_url='/')
 def save_add_electric_device_popup(request):
     if has_permission(request.user, CREATE,
                       "Alta de dispositivos y sistemas eléctricos") or \
-           request.user.is_superuser and request.method == "POST":
+                    request.user.is_superuser and request.method == "POST":
 
         edt_name = request.POST['devicetypename'].strip()
         edt_description = request.POST['devicetypedescription'].strip()
@@ -6631,12 +6621,13 @@ def save_add_electric_device_popup(request):
     else:
         raise Http404
 
+
 @login_required(login_url='/')
 def add_cu(request):
     if (has_permission(request.user, UPDATE,
                        "Modificar unidades de consumo") or has_permission(
-        request.user, CREATE, "Alta de unidades de consumo") or
-        request.user.is_superuser) and request.method == "POST":
+            request.user, CREATE, "Alta de unidades de consumo") or
+            request.user.is_superuser) and request.method == "POST":
         post = request.POST
         if post['type_node'] == "1":
             cu = post["node_part"].split("_")
@@ -6647,7 +6638,7 @@ def add_cu(request):
                                             pk=int(post['prof_pwr']))
                 consumer_unit.profile_powermeter = profile
                 consumer_unit.save()
-            c_type="*part"
+            c_type = "*part"
         else:
             profile = get_object_or_404(ProfilePowermeter,
                                         pk=int(post['prof_pwr']))
@@ -6655,9 +6646,9 @@ def add_cu(request):
             electric_device_type = get_object_or_404(ElectricDeviceType,
                                                      pk=int(post['node_part']))
             consumer_unit = ConsumerUnit(
-                building = building,
-                electric_device_type = electric_device_type,
-                profile_powermeter = profile
+                building=building,
+                electric_device_type=electric_device_type,
+                profile_powermeter=profile
             )
             consumer_unit.save()
             #Add the consumer_unit instance for the DW
@@ -6668,19 +6659,20 @@ def add_cu(request):
                 populate_instant_facts=None,
                 populate_interval_facts=None
             )
-            c_type="*consumer_unit"
+            c_type = "*consumer_unit"
         content = str(consumer_unit.pk) + c_type
         return HttpResponse(content=content,
-                        content_type="text/plain",
-                        status=200)
+                            content_type="text/plain",
+                            status=200)
     else:
         raise Http404
+
 
 @login_required(login_url='/')
 def del_cu(request, id_cu):
     if (has_permission(request.user, DELETE,
-                       "Eliminar unidades de consumo")  or
-        request.user.is_superuser):
+                       "Eliminar unidades de consumo") or
+            request.user.is_superuser):
         cu = get_object_or_404(ConsumerUnit, pk=int(id_cu))
         cu.delete()
         return HttpResponse(content="",
@@ -6688,6 +6680,7 @@ def del_cu(request, id_cu):
                             status=200)
     else:
         raise Http404
+
 
 @login_required(login_url='/')
 def popup_edit_partbuilding(request, cu_id):
@@ -6714,28 +6707,31 @@ def popup_edit_partbuilding(request, cu_id):
             for bp_att in building_part_attributes:
                 string_attributes += '<div  class="extra_attributes_div">' \
                                      '<span class="delete_attr_icon">' \
-                                     '<a href="#eliminar" class="delete hidden_icon" ' +\
-                                     'title="eliminar atributo"></a></span>' +\
-                                     '<span class="tip_attribute_part">' +\
-                                     bp_att.building_attributes\
-                                     .building_attributes_type\
-                                     .building_attributes_type_name +\
-                                     '</span>' +\
-                                     '<span class="attribute_part">' +\
-                                     bp_att.building_attributes\
-                                     .building_attributes_name +\
-                                     '</span>' +\
-                                     '<span class="attribute_value_part">' +\
-                                     str(bp_att.building_attributes_value) +\
-                                     '</span>' +\
+                                     '<a href="#eliminar" class="delete ' \
+                                     'hidden_icon" ' + \
+                                     'title="eliminar atributo"></a></span>' + \
+                                     '<span class="tip_attribute_part">' + \
+                                     bp_att.building_attributes \
+                                         .building_attributes_type \
+                                         .building_attributes_type_name + \
+                                     '</span>' + \
+                                     '<span class="attribute_part">' + \
+                                     bp_att.building_attributes \
+                                         .building_attributes_name + \
+                                     '</span>' + \
+                                     '<span class="attribute_value_part">' + \
+                                     str(bp_att.building_attributes_value) + \
+                                     '</span>' + \
                                      '<input type="hidden" name="atributo_' + \
                                      str(bp_att.building_attributes
-                                     .building_attributes_type.pk) +\
+                                     .building_attributes_type.pk) + \
                                      '_' + str(bp_att.building_attributes.pk) \
                                      + '" ' + 'value="' + \
-                                     str(bp_att.building_attributes.building_attributes_type.pk) + \
+                                     str(
+                                         bp_att.building_attributes.building_attributes_type.pk) + \
                                      ',' + str(bp_att.building_attributes.pk) \
-                                     + ',' + str(bp_att.building_attributes_value) +\
+                                     + ',' + str(
+                    bp_att.building_attributes_value) + \
                                      '"/></div>'
 
         post = {'b_part_name': building_part.part_of_building_name,
@@ -6744,13 +6740,13 @@ def popup_edit_partbuilding(request, cu_id):
                 'b_part_type': building_part.part_of_building_type.id,
                 'b_part_mt2': building_part.mts2_built,
                 'b_part_attributes': string_attributes,
-                }
+        }
         template_vars = dict(post=post,
                              tipos_parte=tipos_parte,
                              tipos_atributos=tipos_atributos,
                              operation="pop_edit",
                              building=building_part.building,
-                             cu = cu.pk
+                             cu=cu.pk
         )
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -6759,11 +6755,12 @@ def popup_edit_partbuilding(request, cu_id):
     else:
         raise Http404
 
+
 @login_required(login_url='/')
 def save_edit_part_popup(request, cu_id):
     if (has_permission(request.user, UPDATE,
-                      "Modificar partes de un edificio") or
-        request.user.is_superuser) and request.method == "POST":
+                       "Modificar partes de un edificio") or
+            request.user.is_superuser) and request.method == "POST":
         b_part_name = request.POST.get('b_part_name').strip()
         b_part_description = request.POST.get('b_part_description').strip()
         b_part_type_id = request.POST.get('b_part_type')
@@ -6826,12 +6823,13 @@ def save_edit_part_popup(request, cu_id):
     else:
         raise Http404
 
+
 @login_required(login_url='/')
 def edit_cu(request, cu_id):
     if (has_permission(request.user, UPDATE,
                        "Modificar unidades de consumo") or has_permission(
-        request.user, CREATE, "Alta de unidades de consumo") or
-        request.user.is_superuser) and request.method == "POST":
+            request.user, CREATE, "Alta de unidades de consumo") or
+            request.user.is_superuser) and request.method == "POST":
         post = request.POST
 
         consumer_unit = get_object_or_404(ConsumerUnit, pk=int(cu_id))
@@ -6854,11 +6852,12 @@ def edit_cu(request, cu_id):
     else:
         raise Http404
 
+
 @login_required(login_url='/')
 def add_hierarchy_node(request):
     if (has_permission(request.user, CREATE,
-                      "Alta de jerarquía de partes") or
-       request.user.is_superuser) and request.method == "POST":
+                       "Alta de jerarquía de partes") or
+            request.user.is_superuser) and request.method == "POST":
         parent_cu = get_object_or_404(ConsumerUnit, pk=int(request.POST['pp']))
         parent_part = parent_cu.part_of_building
 
@@ -6888,11 +6887,12 @@ def add_hierarchy_node(request):
     else:
         raise Http404
 
+
 @login_required(login_url='/')
 def reset_hierarchy(request):
     if (has_permission(request.user, UPDATE,
                        "Modificar jerarquía de partes de edificios") or
-        request.user.is_superuser) and request.method == "POST":
+            request.user.is_superuser) and request.method == "POST":
         building = get_object_or_404(Building, pk=int(request.POST['building']))
         cus = ConsumerUnit.objects.filter(building=building)
         parts = []
@@ -6903,9 +6903,9 @@ def reset_hierarchy(request):
             else:
                 consumer_u.append(cu.pk)
         h = HierarchyOfPart.objects.filter(
-            Q(part_of_building_composite__pk__in=parts)|
-            Q(part_of_building_leaf__pk__in=parts)|
-            Q(consumer_unit_composite__pk__in=consumer_u)|
+            Q(part_of_building_composite__pk__in=parts) |
+            Q(part_of_building_leaf__pk__in=parts) |
+            Q(consumer_unit_composite__pk__in=consumer_u) |
             Q(consumer_unit_leaf__pk__in=consumer_u)
         )
         if h:
@@ -6915,10 +6915,11 @@ def reset_hierarchy(request):
     else:
         raise Http404
 
+
 @login_required(login_url='/')
 def pw_meditions(request, id_pw):
     if request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
 
         if datacontext:
@@ -6984,8 +6985,10 @@ def tarifaHM_2(building, s_date, e_date, month, year):
 
     #Se convierten las fechas a zona horaria
 
-    periodo = s_date.astimezone(timezone.get_current_timezone()).strftime('%d/%m/%Y %I:%M %p') +\
-              " - " + e_date.astimezone(timezone.get_current_timezone()).strftime('%d/%m/%Y %I:%M %p')
+    periodo = s_date.astimezone(timezone.get_current_timezone()).strftime(
+        '%d/%m/%Y %I:%M %p') + \
+              " - " + e_date.astimezone(
+        timezone.get_current_timezone()).strftime('%d/%m/%Y %I:%M %p')
     periodo_dias = (e_date - s_date).days
     periodo_horas = periodo_dias * 24
 
@@ -7001,7 +7004,6 @@ def tarifaHM_2(building, s_date, e_date, month, year):
     if consumer_units:
         for c_unit in consumer_units:
             #Se obtienen directamente los kw Base, Intermedio y Punta.
-            dict_mes = {}
 
             profile_powermeter = c_unit.profile_powermeter
 
@@ -7013,30 +7015,31 @@ def tarifaHM_2(building, s_date, e_date, month, year):
 
 
             lecturas_base = ElectricRateForElectricData.objects.filter(
-                electric_data__profile_powermeter
-                =profile_powermeter).\
-            filter(electric_data__medition_date__gte=s_date).filter(electric_data__medition_date__lt=e_date).\
-            filter(electric_rates_periods__period_type='base').order_by(
+                electric_data__profile_powermeter=profile_powermeter). \
+                filter(electric_data__medition_date__gte=s_date).filter(
+                electric_data__medition_date__lt=e_date). \
+                filter(electric_rates_periods__period_type='base').order_by(
                 'electric_data__medition_date')
             kw_base_t = obtenerDemanda_kw(lecturas_base)
             if kw_base_t > diccionario_final_cfe["kw_base"]:
                 diccionario_final_cfe["kw_base"] = kw_base_t
 
             lecturas_intermedio = ElectricRateForElectricData.objects.filter(
-                electric_data__profile_powermeter
-                =profile_powermeter).\
-            filter(electric_data__medition_date__gte=s_date).filter(electric_data__medition_date__lt=e_date).\
-            filter(electric_rates_periods__period_type='intermedio').order_by(
+                electric_data__profile_powermeter=profile_powermeter). \
+                filter(electric_data__medition_date__gte=s_date).filter(
+                electric_data__medition_date__lt=e_date). \
+                filter(
+                electric_rates_periods__period_type='intermedio').order_by(
                 'electric_data__medition_date')
             kw_intermedio_t = obtenerDemanda_kw(lecturas_intermedio)
             if kw_intermedio_t > diccionario_final_cfe["kw_intermedio"]:
                 diccionario_final_cfe["kw_intermedio"] = kw_intermedio_t
 
             lecturas_punta = ElectricRateForElectricData.objects.filter(
-                electric_data__profile_powermeter
-                =profile_powermeter).\
-            filter(electric_data__medition_date__gte=s_date).filter(electric_data__medition_date__lt=e_date).\
-            filter(electric_rates_periods__period_type='punta').order_by(
+                electric_data__profile_powermeter=profile_powermeter). \
+                filter(electric_data__medition_date__gte=s_date).filter(
+                electric_data__medition_date__lt=e_date). \
+                filter(electric_rates_periods__period_type='punta').order_by(
                 'electric_data__medition_date')
             kw_punta_t = obtenerDemanda_kw(lecturas_punta)
             if kw_punta_t > diccionario_final_cfe["kw_punta"]:
@@ -7051,36 +7054,36 @@ def tarifaHM_2(building, s_date, e_date, month, year):
 
             #KWH
             #Se obtienen todos los identificadores para los KWH
-            lecturas_identificadores = ElectricRateForElectricData.objects\
-            .filter(
+            lecturas_identificadores = ElectricRateForElectricData.objects \
+                .filter(
                 electric_data__profile_powermeter
-                =profile_powermeter).\
-            filter(electric_data__medition_date__gte=s_date).filter(electric_data__medition_date__lt=e_date).\
-            order_by("electric_data__medition_date").values(
+                =profile_powermeter). \
+                filter(electric_data__medition_date__gte=s_date).filter(
+                electric_data__medition_date__lt=e_date). \
+                order_by("electric_data__medition_date").values(
                 "identifier").annotate(Count("identifier"))
 
             ultima_lectura = 0
             kwh_por_periodo = []
 
             for lectura in lecturas_identificadores:
-
                 electric_info = ElectricRateForElectricData.objects.filter(
-                    identifier=lectura["identifier"]).\
-                filter(
+                    identifier=lectura["identifier"]). \
+                    filter(
                     electric_data__profile_powermeter
-                    =profile_powermeter).\
-                filter(electric_data__medition_date__gte=s_date).filter(electric_data__medition_date__lt=e_date).\
-                order_by("electric_data__medition_date")
+                    =profile_powermeter). \
+                    filter(electric_data__medition_date__gte=s_date).filter(
+                    electric_data__medition_date__lt=e_date). \
+                    order_by("electric_data__medition_date")
 
                 num_lecturas = len(electric_info)
                 primer_lectura = electric_info[0].electric_data.TotalkWhIMPORT
                 ultima_lectura = electric_info[
-                                 num_lecturas - 1].electric_data.TotalkWhIMPORT
-                print electric_info[0].electric_data.pk,"Primer Lectura:", primer_lectura,"-",electric_info[num_lecturas-1].electric_data.pk," Ultima Lectura:",ultima_lectura
+                    num_lecturas - 1].electric_data.TotalkWhIMPORT
 
                 #Obtener el tipo de periodo: Base, punta, intermedio
                 tipo_periodo = electric_info[
-                               0].electric_rates_periods.period_type
+                    0].electric_rates_periods.period_type
                 t = primer_lectura, tipo_periodo
                 kwh_por_periodo.append(t)
 
@@ -7091,7 +7094,7 @@ def tarifaHM_2(building, s_date, e_date, month, year):
             kwh_punta_t = 0
 
             for idx, kwh_p in enumerate(kwh_por_periodo):
-                print "Lectura:", kwh_p[0], "-:",kwh_p[1]
+                print "Lectura:", kwh_p[0], "-:", kwh_p[1]
                 inicial = kwh_p[0]
                 periodo_t = kwh_p[1]
                 if idx + 1 <= kwh_periodo_long - 1:
@@ -7148,7 +7151,7 @@ def tarifaHM_2(building, s_date, e_date, month, year):
     #Factor de Potencia
     factor_potencia_total = factorpotencia(diccionario_final_cfe["kwh_totales"],
                                            diccionario_final_cfe[
-                                           'kvarh_totales'])
+                                               'kvarh_totales'])
 
     #Costo Energía
     costo_energia_total = costoenergia(diccionario_final_cfe["kwh_base"],
@@ -7211,8 +7214,10 @@ def tarifaDAC_2(building, s_date, e_date, month, year):
 
     billing_mrates = datetime.date(year=year, month=month, day=1)
 
-    periodo = s_date.astimezone(timezone.get_current_timezone()).strftime('%d/%m/%Y %I:%M %p') +\
-              " - " + e_date.astimezone(timezone.get_current_timezone()).strftime('%d/%m/%Y %I:%M %p')
+    periodo = s_date.astimezone(timezone.get_current_timezone()).strftime(
+        '%d/%m/%Y %I:%M %p') + \
+              " - " + e_date.astimezone(
+        timezone.get_current_timezone()).strftime('%d/%m/%Y %I:%M %p')
 
     #Para las regiones BC y BCS es necesario obtener revisar si se aplica Tarifa de Verano o de Invierno
     if region.pk == 1 or region.pk == 2:
@@ -7248,15 +7253,19 @@ def tarifaDAC_2(building, s_date, e_date, month, year):
 
             #Se obtienen los kwh de ese periodo de tiempo.
             kwh_lecturas = ElectricDataTemp.objects.filter(
-                profile_powermeter=profile_powermeter).\
-                filter(medition_date__gte=s_date).filter(medition_date__lt=e_date).\
+                profile_powermeter=profile_powermeter). \
+                filter(medition_date__gte=s_date).filter(
+                medition_date__lt=e_date). \
                 order_by('medition_date')
             total_lecturas = len(kwh_lecturas)
 
             if kwh_lecturas:
                 print "Profile", kwh_lecturas[0].profile_powermeter_id
-                print "Primer Lectura", kwh_lecturas[0].id, "-", kwh_lecturas[0].medition_date
-                print "Ultima Lectura", kwh_lecturas[total_lecturas - 1].id, "-",  kwh_lecturas[total_lecturas - 1].medition_date
+                print "Primer Lectura", kwh_lecturas[0].id, "-", kwh_lecturas[
+                    0].medition_date
+                print "Ultima Lectura", kwh_lecturas[
+                    total_lecturas - 1].id, "-", kwh_lecturas[
+                    total_lecturas - 1].medition_date
                 kwh_inicial = kwh_lecturas[0].TotalkWhIMPORT
                 kwh_final = kwh_lecturas[total_lecturas - 1].TotalkWhIMPORT
 
@@ -7290,13 +7299,15 @@ def tarifa_3_v2(building, s_date, e_date, month, year):
     kwh_netos = 0
     kvarh_netos = 0
 
-    #Se obtiene la region
-    region = building.region
+    # Se obtiene la region
+    # region = building.region
 
     billing_mrates = datetime.date(year=year, month=month, day=1)
 
-    periodo = s_date.astimezone(timezone.get_current_timezone()).strftime('%d/%m/%Y %I:%M %p') +\
-              " - " + e_date.astimezone(timezone.get_current_timezone()).strftime('%d/%m/%Y %I:%M %p')
+    periodo = s_date.astimezone(timezone.get_current_timezone()).strftime(
+        '%d/%m/%Y %I:%M %p') + \
+              " - " + e_date.astimezone(
+        timezone.get_current_timezone()).strftime('%d/%m/%Y %I:%M %p')
     periodo_dias = (e_date - s_date).days
     periodo_horas = periodo_dias * 24
 
@@ -7315,13 +7326,13 @@ def tarifa_3_v2(building, s_date, e_date, month, year):
 
     if consumer_units:
         for c_unit in consumer_units:
-            pr_powermeter = c_unit.profile_powermeter.powermeter
             profile_powermeter = c_unit.profile_powermeter
 
             #Se obtienen los KW, para obtener la demanda maxima
             lecturas_totales = ElectricRateForElectricData.objects.filter(
-                electric_data__profile_powermeter=profile_powermeter).\
-                filter(electric_data__medition_date__gte=s_date).filter(electric_data__medition_date__lt=e_date).\
+                electric_data__profile_powermeter=profile_powermeter). \
+                filter(electric_data__medition_date__gte=s_date).filter(
+                electric_data__medition_date__lt=e_date). \
                 order_by('electric_data__medition_date')
             kw_t = obtenerDemanda_kw(lecturas_totales)
 
@@ -7330,8 +7341,9 @@ def tarifa_3_v2(building, s_date, e_date, month, year):
 
             #Se obtienen los kwh de ese periodo de tiempo.
             kwh_lecturas = ElectricDataTemp.objects.filter(
-                profile_powermeter=profile_powermeter).\
-                filter(medition_date__gte=s_date).filter(medition_date__lt=e_date).\
+                profile_powermeter=profile_powermeter). \
+                filter(medition_date__gte=s_date).filter(
+                medition_date__lt=e_date). \
                 order_by('medition_date')
             total_lecturas = len(kwh_lecturas)
 
@@ -7381,10 +7393,10 @@ def tarifa_3_v2(building, s_date, e_date, month, year):
 
     return diccionario_final_cfe
 
+
+@login_required(login_url='/')
 def view_cutdates(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    datacontext = get_buildings_context(request.user)
+    datacontext = get_buildings_context(request.user)[0]
     if request.user.is_superuser:
         empresa = request.session['main_building']
 
@@ -7436,10 +7448,9 @@ def view_cutdates(request):
 
 
 # noinspection PyArgumentList
+@login_required(login_url='/')
 def set_cutdate(request, id_cutdate):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    datacontext = get_buildings_context(request.user)
+    datacontext = get_buildings_context(request.user)[0]
     if request.user.is_superuser:
         empresa = request.session['main_building']
         post = ''
@@ -7513,13 +7524,27 @@ def set_cutdate(request, id_cutdate):
             cd_after_flag = False
             continue_flag = True
 
-            s_date_str = time.strptime(init_str+" "+init_hour+":"+init_minutes+" "+init_ampm, "%Y-%m-%d  %I:%M %p")
+            s_date_str = time.strptime(
+                init_str + " " + init_hour + ":" + init_minutes + " " + init_ampm,
+                "%Y-%m-%d  %I:%M %p")
             s_date_utc_tuple = time.gmtime(time.mktime(s_date_str))
-            s_date_utc = datetime.datetime(year= s_date_utc_tuple[0], month=s_date_utc_tuple[1], day=s_date_utc_tuple[2], hour=s_date_utc_tuple[3], minute=s_date_utc_tuple[4], tzinfo = pytz.utc)
+            s_date_utc = datetime.datetime(year=s_date_utc_tuple[0],
+                                           month=s_date_utc_tuple[1],
+                                           day=s_date_utc_tuple[2],
+                                           hour=s_date_utc_tuple[3],
+                                           minute=s_date_utc_tuple[4],
+                                           tzinfo=pytz.utc)
 
-            e_date_str = time.strptime(end_str+" "+end_hour+":"+end_minutes+" "+end_ampm, "%Y-%m-%d  %I:%M %p")
+            e_date_str = time.strptime(
+                end_str + " " + end_hour + ":" + end_minutes + " " + end_ampm,
+                "%Y-%m-%d  %I:%M %p")
             e_date_utc_tuple = time.gmtime(time.mktime(e_date_str))
-            e_date_utc = datetime.datetime(year= e_date_utc_tuple[0], month=e_date_utc_tuple[1], day=e_date_utc_tuple[2], hour=e_date_utc_tuple[3], minute=e_date_utc_tuple[4], tzinfo = pytz.utc)
+            e_date_utc = datetime.datetime(year=e_date_utc_tuple[0],
+                                           month=e_date_utc_tuple[1],
+                                           day=e_date_utc_tuple[2],
+                                           hour=e_date_utc_tuple[3],
+                                           minute=e_date_utc_tuple[4],
+                                           tzinfo=pytz.utc)
 
             template_vars['post'] = post
 
@@ -7567,8 +7592,7 @@ def set_cutdate(request, id_cutdate):
                     cd_before.save()
 
                     #Se recalcula el mes anterior ya con las nuevas fechas.
-                    #save_historic.delay(request, cd_before, request.session['main_building'])
-                    save_historic(request, cd_before, request.session['main_building'])
+                    save_historic.delay(request, cd_before, request.session['main_building'])
 
                 #Si hay cambio de fechas en mes siguiente
                 if cd_after_flag:
@@ -7578,8 +7602,7 @@ def set_cutdate(request, id_cutdate):
 
                     #Si la fecha final del mes siguiente no es nula, se crea el historico
                     if cd_after.date_end:
-                        #save_historic.delay(request, cd_after, request.session['main_building'])
-                        save_historic(request, cd_after, request.session['main_building'])
+                        save_historic.delay(request, cd_after, request.session['main_building'])
                 else:
                     #Se crea el nuevo mes
                     new_cut = MonthlyCutDates(
@@ -7595,11 +7618,10 @@ def set_cutdate(request, id_cutdate):
                 cutdate_obj.save()
 
                 #Se calcula el mes actual
-                #save_historic.delay(request, cutdate_obj, request.session['main_building'])
-                save_historic(request, cutdate_obj, request.session['main_building'])
+                save_historic.delay(request, cutdate_obj, request.session['main_building'])
 
                 template_vars[
-                "message"] = "Fechas de Corte establecidas correctamente"
+                    "message"] = "Fechas de Corte establecidas correctamente"
                 template_vars["type"] = "n_success"
 
                 if request.user.is_superuser:
@@ -7623,10 +7645,10 @@ def set_cutdate(request, id_cutdate):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+
+@login_required(login_url='/')
 def set_cutdate_bill_show(request, id_cutdate):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    datacontext = get_buildings_context(request.user)
+    datacontext = get_buildings_context(request.user)[0]
     if request.user.is_superuser:
         empresa = request.session['main_building']
 
@@ -7647,16 +7669,17 @@ def set_cutdate_bill_show(request, id_cutdate):
             mn += 1
 
         #Se genera el string de la fecha de inicio
-        s_date_str = cutdate_obj.date_init.astimezone(timezone.get_current_timezone()).strftime("%d/%m/%Y %I:%M %p")
+        s_date_str = cutdate_obj.date_init.astimezone(
+            timezone.get_current_timezone()).strftime("%d/%m/%Y %I:%M %p")
 
         template_vars = dict(datacontext=datacontext,
-            empresa=empresa,
-            cutdate=cutdate_obj,
-            s_date_str=s_date_str,
-            i_hours=horas,
-            i_minutes=minutos,
-            company=request.session['company'],
-            sidebar=request.session['sidebar']
+                             empresa=empresa,
+                             cutdate=cutdate_obj,
+                             s_date_str=s_date_str,
+                             i_hours=horas,
+                             i_minutes=minutos,
+                             company=request.session['company'],
+                             sidebar=request.session['sidebar']
         )
 
         template_vars_template = RequestContext(request, template_vars)
@@ -7672,6 +7695,7 @@ def set_cutdate_bill_show(request, id_cutdate):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+
 def set_cutdate_bill(request):
     print "Estoy en el ajax"
     if "date" in request.GET and "cutdate" in request.GET:
@@ -7683,7 +7707,12 @@ def set_cutdate_bill(request):
 
         e_date_str = time.strptime(date, "%d/%m/%Y  %I:%M %p")
         e_date_utc_tuple = time.gmtime(time.mktime(e_date_str))
-        e_date_utc = datetime.datetime(year= e_date_utc_tuple[0], month=e_date_utc_tuple[1], day=e_date_utc_tuple[2], hour=e_date_utc_tuple[3], minute=e_date_utc_tuple[4], tzinfo = pytz.utc)
+        e_date_utc = datetime.datetime(year=e_date_utc_tuple[0],
+                                       month=e_date_utc_tuple[1],
+                                       day=e_date_utc_tuple[2],
+                                       hour=e_date_utc_tuple[3],
+                                       minute=e_date_utc_tuple[4],
+                                       tzinfo=pytz.utc)
 
         continuar = True
         message = ''
@@ -7708,18 +7737,20 @@ def set_cutdate_bill(request):
             )
             new_cut.save()
             #Se guarda el historico
-            save_historic.delay(request, cutdate_obj, request.session['main_building'])
+            save_historic.delay(cutdate_obj,
+                                request.session['main_building'])
 
             status = 'OK'
 
         response = dict(status=status,
-            message = message
+                        message=message
         )
 
         data = simplejson.dumps(response)
         return HttpResponse(content=data, content_type="application/json")
     else:
         raise Http404
+
 
 def obtenerHistorico_r(f_monthly_cutdate):
     arr_historico = []
@@ -7814,10 +7845,9 @@ def obtenerHistorico_r(f_monthly_cutdate):
     return arr_historico
 
 
+@login_required(login_url='/')
 def cfe_desglose(request):
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    datacontext = get_buildings_context(request.user)
+    datacontext = get_buildings_context(request.user)[0]
     if has_permission(request.user, VIEW,
                       "Consultar recibo CFE") or request.user.is_superuser:
         set_default_session_vars(request, datacontext)
@@ -7846,24 +7876,19 @@ def cfe_desglose(request):
     else:
         return render_to_response("generic_error.html", RequestContext(request,
                                                                        {
-                                                                       "datacontext": datacontext}))
-
+                                                                           "datacontext": datacontext}))
 
 
 # noinspection PyArgumentList
+@login_required(login_url='/')
 def cfe_desglose_calcs(request):
     """Estoy en los calculos del desglose
     Renders the cfe bill and the historic data chart
     """
-    if not request.user.is_authenticated():
-        return HttpResponseRedirect("/")
-    datacontext = get_buildings_context(request.user)
+    datacontext = get_buildings_context(request.user)[0]
     if has_permission(request.user, VIEW,
                       "Consultar recibo CFE") or request.user.is_superuser:
         if not request.session['consumer_unit']:
-
-            if datacontext:
-                context = {"datacontext": datacontext}
             return HttpResponse(
                 content="<h2 style='font-family: helvetica; color: #878787; font-size:14px;' text-align: center;>No hay unidades de consumo asignadas, por favor ponte en contacto con el administrador para remediar esta situaci&oacute;n</h2>")
 
@@ -7877,7 +7902,6 @@ def cfe_desglose_calcs(request):
         kvarh_netos = 0
         demanda_max = 0
         demanda_min = 1000000
-        factor_potencia = 0
 
         if request.method == "GET":
             s_date_str = request.GET['init_d']
@@ -7898,7 +7922,7 @@ def cfe_desglose_calcs(request):
             building = request.session['main_building']
 
             #Se obtiene la tarifa del edificio
-            electric_rate = building.electric_rate_id
+            # electric_rate = building.electric_rate_id
 
             #Se obtiene el medidor padre del edificio
             main_cu = ConsumerUnit.objects.get(
@@ -7915,7 +7939,8 @@ def cfe_desglose_calcs(request):
                     lecturas_totales = ElectricRateForElectricData.objects.filter(
                         electric_data__profile_powermeter__powermeter__pk=pr_powermeter.pk).filter(
                         electric_data__medition_date__range=(
-                        s_date, e_date)).order_by('electric_data__medition_date')
+                            s_date, e_date)).order_by(
+                        'electric_data__medition_date')
                     kw_t = obtenerDemanda_kw(lecturas_totales)
                     kw_mt = obtenerDemandaMin_kw(lecturas_totales)
 
@@ -7934,12 +7959,14 @@ def cfe_desglose_calcs(request):
 
                     if kwh_lecturas:
                         kwh_inicial = kwh_lecturas[0].TotalkWhIMPORT
-                        kwh_final = kwh_lecturas[total_lecturas - 1].TotalkWhIMPORT
+                        kwh_final = kwh_lecturas[
+                            total_lecturas - 1].TotalkWhIMPORT
 
                         kwh_netos += int(ceil(kwh_final - kwh_inicial))
 
                     #Se obtienen los kvarhs por medidor
-                    kvarh_netos += obtenerKVARH_total(pr_powermeter, s_date, e_date)
+                    kvarh_netos += obtenerKVARH_total(pr_powermeter, s_date,
+                                                      e_date)
 
             #Factor de Potencia
             factor_potencia_total = factorpotencia(kwh_netos, kvarh_netos)
@@ -7950,8 +7977,9 @@ def cfe_desglose_calcs(request):
 
             template_vars['resultados'] = resultado
             template_vars_template = RequestContext(request, template_vars)
-            return render_to_response("consumption_centers/graphs/desglose.html",
-                                      template_vars_template)
+            return render_to_response(
+                "consumption_centers/graphs/desglose.html",
+                template_vars_template)
         else:
             raise Http404
     else:
@@ -7962,10 +7990,11 @@ def cfe_desglose_calcs(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+
 @login_required(login_url='/')
-def montly_analitics(request, id_building):
-    edificio = get_object_or_404(Building, pk=int(id_building))
-    datacontext = get_buildings_context(request.user)
+def montly_analitics(request):
+    edificio = request.session['main_building']
+    datacontext = get_buildings_context(request.user)[0]
     template_vars = {}
     if datacontext:
         template_vars["datacontext"] = datacontext
@@ -7984,32 +8013,49 @@ def montly_analitics(request, id_building):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+
 @login_required(login_url='/')
 def montly_data_for_building(request, id_building, year, month):
     edificio = get_object_or_404(Building, pk=int(id_building))
-    template_vars = {}
     if has_permission(request.user, VIEW, "Consultar recibo CFE") or \
             request.user.is_superuser:
         data = getDailyReports(edificio, int(month), int(year))
 
         response_data = simplejson.dumps(data)
-        return HttpResponse(content=response_data, content_type="application/json")
+        return HttpResponse(content=response_data,
+                            content_type="application/json")
     else:
         raise Http404
+
+
+@login_required(login_url='/')
+def montly_data_hfor_building(request, id_building, year, month):
+    edificio = get_object_or_404(Building, pk=int(id_building))
+    if has_permission(request.user, VIEW, "Consultar recibo CFE") or \
+            request.user.is_superuser:
+        data = getMonthlyReport(edificio, int(month), int(year))
+
+        response_data = simplejson.dumps([data])
+        return HttpResponse(content=response_data,
+                            content_type="application/json")
+    else:
+        raise Http404
+
 
 @login_required(login_url='/')
 def montly_data_w_for_building(request, id_building, year, month):
     edificio = get_object_or_404(Building, pk=int(id_building))
     if has_permission(request.user, VIEW, "Consultar recibo CFE") or \
             request.user.is_superuser:
-        data = getWeeklyReport(edificio, int(month), int(year))
+        datos = getWeeklyReport(edificio, int(month), int(year))
 
-        response_data = simplejson.dumps(["semana1", "semana2", "semana3",
-                                          "semana4", "semana5", "semana6"])
-                                          #)data)
-        return HttpResponse(content=response_data, content_type="application/json")
+        response_data = simplejson.dumps(datos)
+
+        return HttpResponse(content=response_data,
+                            content_type="application/json")
     else:
         raise Http404
+
 
 @login_required(login_url='/')
 def month_analitics_day(request, id_building):
@@ -8034,7 +8080,8 @@ def month_analitics_day(request, id_building):
                                pf=str(day_data.power_factor),
                                kvarh=str(day_data.KVARH))
         response_data = simplejson.dumps([diccionario])
-        return HttpResponse(content=response_data, content_type="application/json")
+        return HttpResponse(content=response_data,
+                            content_type="application/json")
     else:
         raise Http404
 
