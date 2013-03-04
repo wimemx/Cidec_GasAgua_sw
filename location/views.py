@@ -107,7 +107,7 @@ def validate_add_street(post):
 def add_state(request):
     if request.user.is_superuser:
         template_vars = dict(
-            datacontext=get_buildings_context(request.user)[1],
+            datacontext=get_buildings_context(request.user)[0],
             empresa=request.session['main_building'],
             company=request.session['company'],
             operation="add",
@@ -146,7 +146,7 @@ def edit_state(request, id_state_country):
         pais = pais_estado.pais.pais_name
         estado = pais_estado.estado.estado_name
         template_vars = dict(
-            datacontext=get_buildings_context(request.user)[1],
+            datacontext=get_buildings_context(request.user)[0],
             empresa=request.session['main_building'],
             company=request.session['company'],
             operation="edit",
@@ -179,7 +179,7 @@ def edit_state(request, id_state_country):
 def add_municipality(request):
     if request.user.is_superuser:
         template_vars = dict(
-            datacontext=get_buildings_context(request.user)[1],
+            datacontext=get_buildings_context(request.user)[0],
             empresa=request.session['main_building'],
             company=request.session['company'],
             operation="add",
@@ -220,7 +220,7 @@ def edit_municipality(request, id_edo_munip):
         estado = pais_est.estado.estado_name
         pais = pais_est.pais.pais_name
         template_vars = dict(
-            datacontext=get_buildings_context(request.user)[1],
+            datacontext=get_buildings_context(request.user)[0],
             empresa=request.session['main_building'],
             company=request.session['company'],
             operation="edit",
@@ -255,7 +255,7 @@ def edit_municipality(request, id_edo_munip):
 def add_neighboorhood(request):
     if request.user.is_superuser:
         template_vars = dict(
-            datacontext=get_buildings_context(request.user)[1],
+            datacontext=get_buildings_context(request.user)[0],
             empresa=request.session['main_building'],
             company=request.session['company'],
             operation="add",
@@ -299,7 +299,7 @@ def edit_neighboorhood(request, id_munip_col):
         estado = pais_est.estado.estado_name
         pais = pais_est.pais.pais_name
         template_vars = dict(
-            datacontext=get_buildings_context(request.user)[1],
+            datacontext=get_buildings_context(request.user)[0],
             empresa=request.session['main_building'],
             company=request.session['company'],
             operation="edit",
@@ -335,7 +335,7 @@ def edit_neighboorhood(request, id_munip_col):
 def add_street(request):
     if request.user.is_superuser:
         template_vars = dict(
-            datacontext=get_buildings_context(request.user)[1],
+            datacontext=get_buildings_context(request.user)[0],
             empresa=request.session['main_building'],
             company=request.session['company'],
             operation="add",
@@ -380,7 +380,7 @@ def edit_street(request, id_col_calle):
         estado = pais_est.estado.estado_name
         pais = pais_est.pais.pais_name
         template_vars = dict(
-            datacontext=get_buildings_context(request.user)[1],
+            datacontext=get_buildings_context(request.user)[0],
             empresa=request.session['main_building'],
             company=request.session['company'],
             operation="edit",
@@ -416,7 +416,7 @@ def edit_street(request, id_col_calle):
 def state_list(request):
     if request.user.is_superuser:
         template_vars = dict(
-            datacontext=get_buildings_context(request.user)[1],
+            datacontext=get_buildings_context(request.user)[0],
             empresa=request.session['main_building'],
             company=request.session['company'],
             sidebar=request.session['sidebar']
@@ -493,7 +493,7 @@ def state_list(request):
 def municipality_list(request):
     if request.user.is_superuser:
         template_vars = dict(
-            datacontext=get_buildings_context(request.user)[1],
+            datacontext=get_buildings_context(request.user)[0],
             empresa=request.session['main_building'],
             company=request.session['company'],
             sidebar=request.session['sidebar']
@@ -569,7 +569,7 @@ def municipality_list(request):
 def neighboorhood_list(request):
     if request.user.is_superuser:
         template_vars = dict(
-            datacontext=get_buildings_context(request.user)[1],
+            datacontext=get_buildings_context(request.user)[0],
             empresa=request.session['main_building'],
             company=request.session['company'],
             sidebar=request.session['sidebar']
@@ -661,7 +661,7 @@ def neighboorhood_list(request):
 def street_list(request):
     if request.user.is_superuser:
         template_vars = dict(
-            datacontext=get_buildings_context(request.user)[1],
+            datacontext=get_buildings_context(request.user)[0],
             empresa=request.session['main_building'],
             company=request.session['company'],
             sidebar=request.session['sidebar']
@@ -1224,7 +1224,7 @@ def add_region(request):
         type = ''
         message = ''
         template_vars = dict(
-            datacontext=get_buildings_context(request.user)[1],
+            datacontext=get_buildings_context(request.user)[0],
             empresa=request.session['main_building'],
             company=request.session['company'],
             sidebar=request.session['sidebar'],
@@ -1401,7 +1401,7 @@ def edit_region(request, id_region):
                 'region_tags': html_string_tags,
                 'region_inputs': html_string_inputs}
 
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         message = ''
         type = ''
@@ -1499,7 +1499,7 @@ def edit_region(request, id_region):
 @login_required(login_url='/')
 def view_regions(request):
     if request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
         if "search" in request.GET:
@@ -1566,7 +1566,7 @@ def view_regions(request):
 @login_required(login_url='/')
 def see_region(request, id_region):
     if request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
 
         region = get_object_or_404(Region, pk=id_region)

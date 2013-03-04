@@ -210,31 +210,31 @@ def index(request):
         menu_option_str += "</li>"
     menu_option_str += "</ul>"
     #-------------------------------------------------------
-    menu_option_str = ''
-    groups = d.keys()
-    for gp in groups:
-        sd_opts = d[gp]
-        sd_opts = unique_from_array(sd_opts)
-        if gp == 'Unidades de consumo':
-            gp = 'U. de consumo'
-        menu_option_str += "<span class='sidebar_option desp'>" \
-                           "<span>" + gp + "</span></span>" \
-                                           "<ul class='sidebarsub_op'>"
-        for option in sd_opts:
-            menu_option_str += "<li><a href='" + option.object_access_point + "'>" + option.object_name + "</a></li>"
-        if gp == 'Empresas':
-            menu_option_str += "<li><a href='/buildings/estructura/'>Organizaci&oacute;n Empresas</a></li>"
-        menu_option_str += "</ul>"
-    if request.user.is_superuser:
-        menu_option_str += "<span class='sidebar_option desp'>" \
-                           "<span>Regiones</span></span>" \
-                           "<ul class='sidebarsub_op'>" \
-                           "<li><a href='/location/ver_regiones/'>Ver Regiones</a></li>" \
-                           "<li><a href='/location/ver_estados/'>Ver Estados</a></li>" \
-                           "<li><a href='/location/ver_municipios/'>Ver Municipios</a></li>" \
-                           "<li><a href='/location/ver_colonias/'>Ver Colonias</a></li>" \
-                           "<li><a href='/location/ver_calles/'>Ver Calles</a></li>" \
-                           "</ul>"
+    #menu_option_str = ''
+    #groups = d.keys()
+    #for gp in groups:
+    #    sd_opts = d[gp]
+    #    sd_opts = unique_from_array(sd_opts)
+    #    if gp == 'Unidades de consumo':
+    #        gp = 'U. de consumo'
+    #    menu_option_str += "<span class='sidebar_option desp'>" \
+    #                       "<span>" + gp + "</span></span>" \
+    #                                       "<ul class='sidebarsub_op'>"
+    #    for option in sd_opts:
+    #        menu_option_str += "<li><a href='" + option.object_access_point + "'>" + option.object_name + "</a></li>"
+    #    if gp == 'Empresas':
+    #        menu_option_str += "<li><a href='/buildings/estructura/'>Organizaci&oacute;n Empresas</a></li>"
+    #    menu_option_str += "</ul>"
+    #if request.user.is_superuser:
+    #    menu_option_str += "<span class='sidebar_option desp'>" \
+    #                       "<span>Regiones</span></span>" \
+    #                       "<ul class='sidebarsub_op'>" \
+    #                       "<li><a href='/location/ver_regiones/'>Ver Regiones</a></li>" \
+    #                       "<li><a href='/location/ver_estados/'>Ver Estados</a></li>" \
+    #                       "<li><a href='/location/ver_municipios/'>Ver Municipios</a></li>" \
+    #                       "<li><a href='/location/ver_colonias/'>Ver Colonias</a></li>" \
+    #                       "<li><a href='/location/ver_calles/'>Ver Calles</a></li>" \
+    #                       "</ul>"
     request.session['sidebar'] = menu_option_str
 
     if 'next' in request.GET:

@@ -1,3 +1,8 @@
+.iframe_container{
+    background: #fff !important;
+    display: block;
+    height: 110%;
+}
 #titulo_reporte{
     height: 22px;
     background: url(../images/imgs_icns/electric_icon.png) no-repeat;

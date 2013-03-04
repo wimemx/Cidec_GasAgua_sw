@@ -8,7 +8,7 @@
 
 {% endblock %}
 {% block externaljs %}
-<script type="text/javascript" src="http://www.google.com/jsapi"></script>
+<script type="text/javascript" src="/static/js/external/jsapi.js"></script>
 <script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
 <script type="text/javascript">
     google.load('visualization', '1', {packages: ['corechart']});
@@ -80,12 +80,6 @@ var state = false;
     <h2 id="titulo_reporte">Reporte de CFE</h2>
 
     <div class="divider" id="divider_top">&nbsp;</div>
-
-    <div id="types_graphs">
-        <ul>
-            <li class="active"><a href="#">Reporte CFE</a></li>
-        </ul>
-    </div>
     <div id="data_container">
         <h3>{{ empresa.building_name }}</h3>
 

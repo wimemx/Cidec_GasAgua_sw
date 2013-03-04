@@ -47,7 +47,7 @@ def control_panel(request):
 
     template_vars = dict(
         sidebar=request.session['sidebar'],
-        datacontext=get_buildings_context(request.user)[1],
+        datacontext=get_buildings_context(request.user)[0],
         empresa=request.session['main_building'],
         operations=Operation.objects.all(),
         company=request.session['company'],
@@ -62,7 +62,7 @@ def add_role(request):
     """Add role web form"""
     if has_permission(request.user, CREATE, "Alta de rol") or \
             request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
         if request.method == "POST":
@@ -165,7 +165,7 @@ def add_role(request):
             return render_to_response("rbac/add_role.html",
                                       template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -180,7 +180,7 @@ def edit_role(request, id_role):
                                "Modificar asignaciones de permisos a roles")
             and not request.user.is_superuser):
         rol = get_object_or_404(Role, pk=id_role)
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
         ntype = ""
@@ -336,7 +336,7 @@ def edit_role(request, id_role):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("rbac/edit_role.html", template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -350,7 +350,7 @@ def see_role(request, id_role):
     if has_permission(request.user, VIEW, "Ver roles") or \
             request.user.is_superuser:
         rol = get_object_or_404(Role, pk=id_role)
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
         template_vars = dict(sidebar=request.session['sidebar'],
@@ -444,7 +444,7 @@ def see_role(request, id_role):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("rbac/edit_role.html", template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -482,7 +482,7 @@ def switch_status_user_role(request, id_ur):
         return HttpResponseRedirect("/panel_de_control/roles/?msj=" + mensaje +
                                     "&ntype=" + type_)
     else:
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -576,7 +576,7 @@ def status_batch_user_role(request):
                                     request.GET['ref'] + "/?msj=" +
                                     mensaje + "&ntype=" + type_)
     else:
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -589,7 +589,7 @@ def status_batch_user_role(request):
 def view_roles(request):
     if has_permission(request.user, VIEW, "Ver roles") or \
             request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
         if "search" in request.GET:
@@ -662,7 +662,7 @@ def view_roles(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("rbac/role_list.html", template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -687,7 +687,7 @@ def delete_role(request, id_role):
         return HttpResponseRedirect("/panel_de_control/roles/?msj=" + mensaje +
                                     "&ntype=success")
     else:
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -730,7 +730,7 @@ def delete_batch(request):
             return HttpResponseRedirect("/panel_de_control/roles/?msj=" +
                                         mensaje + "&ntype=success")
     else:
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -782,7 +782,7 @@ def get_select_object(request, id_group):
 def add_user(request):
     if has_permission(request.user, CREATE, "Alta de usuarios") or \
             request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
         template_vars = dict(sidebar=request.session['sidebar'],
@@ -858,7 +858,7 @@ def add_user(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("rbac/add_user.html", template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -871,7 +871,7 @@ def add_user(request):
 def view_users(request):
     if has_permission(request.user, VIEW,
                       "Ver usuarios") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
         if "search" in request.GET:
@@ -952,7 +952,7 @@ def view_users(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("rbac/user_list.html", template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -984,7 +984,7 @@ def delete_user(request, id_user):
             "/panel_de_control/usuarios/?msj=" + mensaje +
             "&ntype=" + type_)
     else:
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -1009,7 +1009,7 @@ def edit_user(request, id_user):
                 'tel_o': profile.user_profile_office_phone1,
                 'tel_m': profile.user_profile_mobile_phone}
 
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
         message = ''
@@ -1076,7 +1076,7 @@ def edit_user(request, id_user):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("rbac/add_user.html", template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -1121,7 +1121,7 @@ def delete_batch_user(request):
                 "/panel_de_control/usuarios/?msj=" + mensaje +
                 "&ntype=n_success")
     else:
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -1135,7 +1135,7 @@ def see_user(request, id_user):
     if has_permission(request.user, VIEW,
                       "Ver usuarios") or request.user.is_superuser:
         user1 = get_object_or_404(User, pk=id_user)
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
         profile = UserProfile.objects.get(user=user1)
@@ -1148,7 +1148,7 @@ def see_user(request, id_user):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("rbac/see_user.html", template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -1164,7 +1164,7 @@ def add_data_context_permissions(request):
     """
     if has_permission(request.user, CREATE,
                       "Asignar roles a usuarios") or request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         roles = Role.objects.all().exclude(status=False)
 
         clusters = get_clusters_for_operation("Asignar roles a usuarios",
@@ -1280,7 +1280,7 @@ def add_data_context_permissions(request):
         return render_to_response("rbac/asign_data_context.html",
                                   template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -1294,7 +1294,7 @@ def added_data_context_permissions(request):
     if has_permission(request.user, VIEW,
                       "Ver asignaciones de roles a usuarios") or \
             request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
 
@@ -1387,7 +1387,7 @@ def added_data_context_permissions(request):
         return render_to_response("rbac/added_data_context.html",
                                   template_vars_template)
     else:
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -1408,7 +1408,7 @@ def delete_data_context(request, id_data_context):
             "/panel_de_control/roles_asignados/?msj=" + mensaje +
             "&ntype=n_success")
     else:
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}
@@ -1440,7 +1440,7 @@ def delete_batch_data_context(request):
                 "/panel_de_control/roles/?msj=" + mensaje +
                 "&ntype=n_success")
     else:
-        datacontext = get_buildings_context(request.user)[1]
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}

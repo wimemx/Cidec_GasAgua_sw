@@ -40,7 +40,8 @@
             new google.visualization.ColumnChart(document.getElementById('visualization')).
                     draw(data,
                     {
-                        width:570, height:325,}
+                        width:570, height:325, colors: ['#79b80d','#f08d00','#0a9bc7']
+                    }
             );
         }
 
@@ -72,6 +73,8 @@
 </head>
 
 <body>
+<div class="iframe_container">
+
 
 <div>
     {% if message %}
@@ -300,6 +303,11 @@
     <table id="sumary_month">
         <thead>
         <tr>
+            <th colspan="6">
+                Resumen Hist&oacute;rico
+            </th>
+        </tr>
+        <tr>
             <th>Mes</th>
             <th>Demanda M&aacute;xima</th>
             <th>Consumo Total (KWh)</th>
@@ -346,6 +354,6 @@
         </tbody>
     </table>
 </div>
-
+</div>
 </body>
 </html>
