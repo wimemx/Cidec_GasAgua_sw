@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+{% block titulo %}Ver cuotas de Tarifa DAC{% endblock %}
+{% block externalcss %}
+<link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
+<link rel="stylesheet" href="/static/css/forms/rbac_user_list.css" type="text/css" />
+<link rel="stylesheet" href="/static/css/forms/c_centers.css" type="text/css" />
+<link href="/static/js/external/messi/messi.css" rel="stylesheet" type="text/css" media="screen" />
+{% endblock %}
+{% block externaljs %}
+<script src="/static/js/external/messi/messi.min.js"></script>
+<script type="text/javascript">
+    function search_submit(pagina){
+        if (typeof pagina == "object") {
+            pagina = "1";
+        }
+
+        var base_url = window.location.pathname;
+        base_url+="?page="+pagina;
+        base_url=append_page(base_url);
+        window.location = base_url;
+    }
+    function append_page(base_url){
+        var get = getUrlVars();
+        if(get.length>0){
+            if (get[0]!=window.location.protocol+"//"+window.location
+                    .host+window.location.pathname){
+                for(var i=0; i<get.length; i++){
+                    if (get[i]!="msj" && get[i]!="ntype" && get[i]!="page"){
+                        base_url+="&"+get[i]+"="+get[get[i]];
+                    }
+                }
+            }
+
+        }
+        return base_url
+    }
+</script>
+{% endblock %}
+{% block document_ready %}
+
+//custom select for sidebar
+$("#empresa").click(function(){
+$("#company_list").slideToggle();
+});
+$("#company_list li").click(function(){
+var texto=$(this).text().replace(/^\s*|\s*$/g,'');
+var texto1 = texto.substring(0,17) + "...";
+$("#empresa").text(texto1);
+$("#company_list").slideUp();
+
+$.ajax({
+url: "/reportes/set_default_building/" + $(this).attr("rel"),
+type: "GET",
+dataType: 'json',
+async: 'true',
+success: function(datos){
+window.location.reload();
+}
+});
+});
+
+$("a.switch").click(function(event){
+event.preventDefault();
+var url="/buildings/status_cluster/"+$(this).attr("rel")+"/";
+var action = $(this).attr("title");
+new Messi('&iquest;Est&aacute; seguro de que desea '+ action +' este grupo de empresas?',
+{title: action+' cluster', modal: true, buttons: [{id: 0,
+label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
+}],
+callback: function(val) {
+if(val=='Y'){
+document.location.href=url;
+} else return false; }
+});
+});
+
+$("#aplicar").click(function(e){
+e.preventDefault();
+if($("#actions").val()!="0"){
+var check = false;
+$("tbody input:checkbox").each(function(){
+if($(this).is(":checked")){
+check = true;
+}
+});
+if(check){
+new Messi('&iquest;Est&aacute; seguro que desea cambiar el estatus de estos grupos de empresas?',
+{title: 'Cambiar estatus', modal: true, buttons: [{id: 0,
+label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
+}],
+callback: function(val) {
+if(val=='Y'){
+document.forms["operations_batch"].submit();
+} else return false;
+}
+});
+}
+}else{
+return false;
+}
+});
+
+$("#sort_name").click(function(e){
+e.preventDefault();
+var get = getUrlVars();
+
+var base_url = window.location.pathname;
+base_url+="?order_name="+$("#sort_name").attr("rel");
+if(get.length>0){
+if (get[0]!=window.location.protocol+"//"+window.location
+.host+window.location.pathname){
+for(var i=0; i<get.length; i++){
+if (get[i]!="order_name" && get[i]!="order_sector" && get[i]!="order_status"){
+base_url+="&"+get[i]+"="+get[get[i]];
+}
+}
+}
+}
+window.location = base_url;
+});
+$("#sort_sector").click(function(e){
+e.preventDefault();
+var get = getUrlVars();
+
+var base_url = window.location.pathname;
+base_url+="?order_sector="+$("#sort_sector").attr("rel");
+if(get.length>0){
+if (get[0]!=window.location.protocol+"//"+window.location
+.host+window.location.pathname){
+for(var i=0; i<get.length; i++){
+if (get[i]!="order_name" && get[i]!="order_sector" && get[i]!="order_status"){
+base_url+="&"+get[i]+"="+get[get[i]];
+}
+}
+}
+
+}
+
+window.location = base_url;
+});
+
+
+$("#sort_status").click(function(e){
+e.preventDefault();
+var get = getUrlVars();
+
+var base_url = window.location.pathname;
+base_url+="?order_status="+$("#sort_status").attr("rel");
+if(get.length>0){
+if (get[0]!=window.location.protocol+"//"+window.location
+.host+window.location.pathname){
+for(var i=0; i<get.length; i++){
+if (get[i]!="order_name" && get[i]!="order_sector" && get[i]!="order_status"){
+base_url+="&"+get[i]+"="+get[get[i]];
+}
+}
+}
+}
+window.location = base_url;
+});
+
+{% endblock %}
+
+
+{% block contenido %}
+<div id="bread_crumbs">
+    <ul>
+        <li><a href="/main/">Inicio</a></li>
+        <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
+        <li>Cuotas de Tarifa DAC</li>
+    </ul>
+
+</div>
+<div id="contenido_interno">
+    <h2 id="titulo_form" class="cluster">Cuotas de Tarifa DAC</h2>
+
+
+    <div class="divider" id="divider_top">&nbsp;</div>
+    {% if message %}
+            <span class="notif {{ msg_type }}">
+                    {% autoescape off %}{{ message }}{% endautoescape %}
+                <a href="#" onclick="$(this).parent().remove(); History.replaceState({}, '', '?page=1');">X</a>
+                </span>
+    {% endif %}
+    <div id="form_container">
+
+        <p class="description">
+            Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
+            <br/>
+            Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
+        </p>
+
+        <div id="user_actions">
+
+            <a href="/electric_rates/alta_tarifaDac/"><span class="plus"></span>
+                Nueva Cuota
+            </a>
+            <span class="hz_divider"></span>
+            <form method="get" action=".">
+                <label class="input">
+                    <span>Inserte su texto aqu&iacute;</span>
+                    <input type="text" name="search" id="search"/>
+                </label>
+                <button class="aqua_btn">
+                    Buscar
+                </button>
+            </form>
+        </div>
+        <form id="operations_batch" action="" method="post">
+            {% csrf_token %}
+            <div id="grid_container">
+                <table>
+                    <thead>
+                    <tr>
+                        <th style="width: 15%;">
+                            <a href="#" id="sort_region" rel="{{ order_region }}">
+                                Región
+                                <span class="sort"></span>
+                            </a>
+                        </th>
+                        <th style="width: 15%;">
+                            <a href="#" id="sort_name" rel="{{ order_name }}">
+                                Mes
+                                <span class="sort"></span>
+                            </a>
+                        </th>
+                        <th style="width: 15%;">
+                            <a href="#" id="sort_horario" rel="{{ order_name }}">
+                                Horario
+                                <span class="sort"></span>
+                            </a>
+                        </th>
+
+                        <th style="width: 10%;">
+                            <a href="#" id="sort_sector" rel="{{ order_sector }}">
+                                Cargo Mensual
+                            </a>
+                        </th>
+                        <th style="width: 10%;">
+                            <a href="#" id="sort_status" rel="{{ order_status }}">
+                                Cargo por KWH
+                            </a>
+                        </th>
+                        <th style="width: 10%;">Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for cuota in paginacion.object_list %}
+
+                    <tr class="{% cycle 'row1' 'row2' %}">
+                        <td class="c">
+                            {{cuota.region.region_name}}
+                        </td>
+                        <td class="c">
+                            {% if cuota.date_init.month = 01 %}
+                            Enero
+                            {% elif cuota.date_init.month = 02 %}
+                            Febrero
+                            {% elif cuota.date_init.month = 03 %}
+                            Marzo
+                            {% elif cuota.date_init.month = 04 %}
+                            Abril
+                            {% elif cuota.date_init.month = 05 %}
+                            Mayo
+                            {% elif cuota.date_init.month = 06 %}
+                            Junio
+                            {% elif cuota.date_init.month = 07 %}
+                            Julio
+                            {% elif cuota.date_init.month = 08 %}
+                            Agosto
+                            {% elif cuota.date_init.month = 09 %}
+                            Septiembre
+                            {% elif cuota.date_init.month = 10 %}
+                            Octubre
+                            {% elif cuota.date_init.month = 11 %}
+                            Noviembre
+                            {% elif cuota.date_init.month = 12 %}
+                            Diciembre
+                            {% endif %}
+                            {{cuota.date_init.year}}
+                        </td>
+                        <td class="c">
+                            {% if cuota.date_interval %}
+                                {{ cuota.date_interval.interval_identifier}}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="c">
+                            $ {{ cuota.month_rate|floatformat:2 }}
+                        </td>
+                        <td class="c">
+                            $ {{ cuota.kwh_rate|floatformat:4 }}
+                        </td>
+
+                        <td class="c">
+                            <a class="edit" title="Editar Cuota"
+                               href="/electric_rates/editar_tarifaDac/{{ cuota.pk }}/"></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                <div id="table_footer">
+
+                    <div class="pagination">
+                            <span class="step-links">
+                                {% if paginacion.has_previous %}
+                                    <a href="#" onclick="search_submit({{ paginacion.previous_page_number }})">Anterior</a> &ndash;
+                                {% endif %}
+
+                                <span class="current">
+                                    P&aacute;gina {{ paginacion.number }} de {{ paginacion.paginator.num_pages }}
+                                </span>
+
+                                {% if paginacion.has_next %}
+                                &ndash; <a href="#" onclick="search_submit({{ paginacion.next_page_number }})">Siguiente</a>
+                                {% endif %}
+                            </span>
+                    </div>
+
+                </div>
+            </div>
+        </form>
+
+
+
+
+    </div>
+
+
+</div>
+{% endblock %}

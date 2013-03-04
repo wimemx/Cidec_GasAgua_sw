@@ -27,7 +27,7 @@ def datawarehouse_run(
 
 @task(ignore_result=True)
 def tag_batch():
-    batch_tag()
+    reTagHolidays()
 
 @task(ignore_result=True)
 def calculate_dw(granularity):

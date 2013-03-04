@@ -1,0 +1,368 @@
+{% extends "base.html" %}
+{% block titulo %}
+{% if operation == "edit" %}Editar un {% else %}Alta de {% endif %}cuota Tarifa HM
+{% endblock %}
+{% block externalcss %}
+<link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
+<link rel="stylesheet" href="/static/css/forms/building_add_attr.css" type="text/css" />
+<link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
+{% endblock %}
+{% block externaljs %}
+<script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+<script type="text/javascript" src="/static/js/external/monthpicker.js"></script>
+<script type="text/javascript" src="/static/js/external/autoNumeric-1.7.4.js"></script>
+<script type="text/javascript">
+    var form_valid = true;
+    var send_form = 0;
+    $(document).ready(function(){
+
+        $('#demand_rate').autoNumeric({asep:',', vMin: "000.00", vMax: "999.99"});
+        $('#kwh_punta').autoNumeric({asep:',', vMin: "0.0000", vMax: "9.9999"});
+        $('#kwh_int').autoNumeric({asep:',', vMin: "0.0000", vMax: "9.9999"});
+        $('#kwh_base').autoNumeric({asep:',', vMin: "0.0000", vMax: "9.9999"});
+        $('#fri').autoNumeric({asep:',', vMin: "0.000", vMax: "9.999"});
+        $('#frb').autoNumeric({asep:',', vMin: "0.000", vMax: "9.999"});
+
+        $(".required").each(function(){
+            var _span;
+            if ($(this).parent().next()[0].nodeName.toLowerCase() == 'input'){
+                $(this).parent().next().blur(function(e){
+                    if($.trim(e.delegateTarget.value)==''){
+                        _span = "incorrect";
+                        form_valid = false;
+                    }else{
+                        if(e.delegateTarget.id == "demand_rate" || e.delegateTarget.id == "kwh_punta" ||
+                                e.delegateTarget.id == "kwh_int" || e.delegateTarget.id == "kwh_base" ||
+                                e.delegateTarget.id == "fri" || e.delegateTarget.id == "frb"){
+                            if(/^\d+\.?\d*$/.test(e.delegateTarget.value)){
+                                _span = "correct";
+                                form_valid = true;
+                            }else{
+                                _span = "incorrect";
+                                form_valid = false;
+                            }
+                        }
+                    }
+
+                    var n_span = $("#"+e.delegateTarget.id).next();
+                    n_span.removeClass("incorrect");
+                    n_span.removeClass("correct");
+                    n_span.addClass(_span);
+                });
+            }else if ($(this).parent().next()[0].nodeName.toLowerCase() == 'select'){
+                var id_select = $(this).parent().next().attr('id')
+                $("#"+id_select).change(function(e){
+                    if($.trim(e.delegateTarget.value)==''){
+                        _span = "incorrect";
+                        form_valid = false;
+                    }else{
+                        _span = "correct";
+                        form_valid = true;
+                    }
+
+                    var n_span =  $("#"+id_select).parent().next();
+                    n_span.removeClass("incorrect");
+                    n_span.removeClass("correct");
+                    n_span.addClass(_span);
+                });
+            }
+        });
+
+
+        $("#save").click(function(){
+            validate_form();
+            return send_form == 1;
+        });
+
+        $('#month').monthpicker();
+
+        $('#month').monthpicker().bind('monthpicker-hide', function () {
+            var sp = ''
+            if($('#month').val() == ''){
+                sp = "incorrect";
+            }else{
+                sp = "correct";
+                form_valid = true;
+            }
+            $('#month').next().removeClass("incorrect");
+            $('#month').next().removeClass("correct");
+            $('#month').next().addClass(sp);
+
+
+        });
+
+    });
+    function validate_form(){
+
+        var _span;
+
+        var b_month = $("#month");
+        if($.trim(b_month.val())==''){
+            _span = "incorrect";
+            form_valid = false;
+        }else{
+            _span = "correct";
+        }
+        b_month.next().removeClass("incorrect");
+        b_month.next().removeClass("correct");
+        b_month.next().addClass(_span);
+
+        var t_region = $("#t_region");
+        if($.trim(t_region.val())==''){
+            _span = "incorrect";
+            form_valid = false;
+        }else{
+            _span = "correct";
+        }
+        $("#sel_region").next().removeClass("incorrect");
+        $("#sel_region").removeClass("correct");
+        $("#sel_region").addClass(_span);
+
+        var demand_rate = $("#demand_rate");
+        if($.trim(demand_rate.val())==''){
+            _span = "incorrect";
+            form_valid = false;
+        }else{
+            if(/^\d+\.?\d*$/.test(demand_rate.val())){
+                _span = "correct";
+            }else{
+                _span = "incorrect";
+                form_valid = false;
+            }
+        }
+        demand_rate.next().removeClass("incorrect");
+        demand_rate.next().removeClass("correct");
+        demand_rate.next().addClass(_span);
+
+        var kwh_punta = $("#kwh_punta");
+        if($.trim(kwh_punta.val())==''){
+            _span = "incorrect";
+            form_valid = false;
+        }else{
+            if(/^\d+\.?\d*$/.test(kwh_punta.val())){
+                _span = "correct";
+            }else{
+                _span = "incorrect";
+                form_valid = false;
+            }
+        }
+        kwh_punta.next().removeClass("incorrect");
+        kwh_punta.next().removeClass("correct");
+        kwh_punta.next().addClass(_span);
+
+        var kwh_int = $("#kwh_int");
+        if($.trim(kwh_int.val())==''){
+            _span = "incorrect";
+            form_valid = false;
+        }else{
+            if(/^\d+\.?\d*$/.test(kwh_int.val())){
+                _span = "correct";
+            }else{
+                _span = "incorrect";
+                form_valid = false;
+            }
+        }
+        kwh_int.next().removeClass("incorrect");
+        kwh_int.next().removeClass("correct");
+        kwh_int.next().addClass(_span);
+
+        var kwh_base = $("#kwh_base");
+        if($.trim(kwh_base.val())==''){
+            _span = "incorrect";
+            form_valid = false;
+        }else{
+            if(/^\d+\.?\d*$/.test(kwh_base.val())){
+                _span = "correct";
+            }else{
+                _span = "incorrect";
+                form_valid = false;
+            }
+        }
+        kwh_base.next().removeClass("incorrect");
+        kwh_base.next().removeClass("correct");
+        kwh_base.next().addClass(_span);
+
+        var fri = $("#fri");
+        if($.trim(fri.val())==''){
+            _span = "incorrect";
+            form_valid = false;
+        }else{
+            if(/^\d+\.?\d*$/.test(fri.val())){
+                _span = "correct";
+            }else{
+                _span = "incorrect";
+                form_valid = false;
+            }
+        }
+        fri.next().removeClass("incorrect");
+        fri.next().removeClass("correct");
+        fri.next().addClass(_span);
+
+        var frb = $("#frb");
+        if($.trim(frb.val())==''){
+            _span = "incorrect";
+            form_valid = false;
+        }else{
+            if(/^\d+\.?\d*$/.test(frb.val())){
+                _span = "correct";
+            }else{
+                _span = "incorrect";
+                form_valid = false;
+            }
+        }
+        frb.next().removeClass("incorrect");
+        frb.next().removeClass("correct");
+        frb.next().addClass(_span);
+
+        if (form_valid){
+            send_form++;
+        }
+
+        return form_valid
+    }
+</script>
+{% endblock %}
+
+
+
+{% block document_ready %}
+
+//custom select for sidebar
+$("#empresa").click(function(){
+$("#company_list").slideToggle();
+});
+$("#company_list li").click(function(){
+var texto=$(this).text().replace(/^\s*|\s*$/g,'');
+var texto1 = texto.substring(0,17) + "...";
+$("#empresa").text(texto1);
+$("#company_list").slideUp();
+
+$.ajax({
+url: "/reportes/set_default_building/" + $(this).attr("rel"),
+type: "GET",
+dataType: 'json',
+async: 'true',
+success: function(datos){
+window.location.reload();
+}
+});
+});
+
+$("a.back").click(function(e){e.preventDefault(); History.back();});
+
+{% endblock %}
+
+
+{% block contenido %}
+<div id="bread_crumbs">
+    <ul>
+        <li><a href="/main/">Inicio</a></li>
+        <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
+        <li><a href="/electric_rates/tarifaHM/">Tarifa HM</a></li>
+        {% if operation == "edit" %}
+        <li>
+            Editar cuota de Tarifa HM
+        </li>
+        {% else %}
+        <li>Alta de cuota de Tarifa HM</li>
+        {% endif %}
+    </ul>
+
+</div>
+<div id="contenido_interno">
+    <h2 id="titulo_form" class="building_attr">
+        {% if operation == "edit" %}Editar un {% else %}Alta de {% endif %}cuota de Tarifa HM
+    </h2>
+
+
+    <div class="divider" id="divider_top">&nbsp;</div>
+    <div id="form_container">
+        {% if message %}
+                <span class="notif {{ type }}">
+                    {% autoescape off %}{{ message }}{% endautoescape %}
+                    <a href="#" onclick="$(this).parent().remove();">X</a>
+                </span>
+        {% endif %}
+        <p class="description">
+            Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
+            <br/>
+            Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
+        </p>
+        <form method="post" action=".">
+            {% csrf_token %}
+
+            <div id="attr_info">
+                <div class="fields_row g12">
+                    <label for="month" class="g2">Mes<span class="required">*</span></label>
+                    <input type="text" name="month" id="month" class="g4" value="{{ post.month }}"/>
+                    <span></span>
+                </div>
+                <div class="fields_row g12">
+                    <label for="t_region" class="g2">Regi&oacute;n<span class="required">*</span></label>
+                    <select name="t_region" id="t_region" class="g4">
+                        <option value="">Selecciona una región</option>
+                        {% if regiones_lst %}
+                        {% for rgn in regiones_lst %}
+                        <option value="{{rgn.id}}" {% if post.region == rgn.id %} selected {% endif %}>{{ rgn.region_name }}</option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+                    <span id="sel_region"></span>
+                </div>
+                <div class="fields_row g12">
+                    <label for="demand_rate" class="g2">
+                        Demanda Facturable<span class="required">*</span>
+                    </label>
+                    <input type="text" name="demand_rate" id="demand_rate" class="g4" value="{{ post.demand_rate }}"/>
+                    <span></span>
+                </div>
+                <div class="fields_row g12">
+                    <label for="kwh_punta" class="g2">
+                        KWH Punta<span class="required">*</span>
+                    </label>
+                    <input type="text" name="kwh_punta" id="kwh_punta" class="g4" value="{{ post.kwh_punta }}"/>
+                    <span></span>
+                </div>
+                <div class="fields_row g12">
+                    <label for="kwh_int" class="g2">
+                        KWH Intermedia<span class="required">*</span>
+                    </label>
+                    <input type="text" name="kwh_int" id="kwh_int" class="g4" value="{{ post.kwh_int }}"/>
+                    <span></span>
+                </div>
+                <div class="fields_row g12">
+                    <label for="kwh_base" class="g2">
+                        KWH Base<span class="required">*</span>
+                    </label>
+                    <input type="text" name="kwh_base" id="kwh_base" class="g4" value="{{ post.kwh_base }}"/>
+                    <span></span>
+                </div>
+                <div class="fields_row g12">
+                    <label for="fri" class="g2">
+                        FRI<span class="required">*</span>
+                    </label>
+                    <input type="text" name="fri" id="fri" class="g4" value="{{ post.fri }}"/>
+                    <span></span>
+                </div>
+                <div class="fields_row g12">
+                    <label for="frb" class="g2">
+                        FRB<span class="required">*</span>
+                    </label>
+                    <input type="text" name="frb" id="frb" class="g4" value="{{ post.frb }}"/>
+                    <span></span>
+                </div>
+            </div>
+            <div class="buttons g12">
+                <div class="g9">
+                    <button class="aqua_btn fl" id="save">
+                        Guardar
+                    </button>
+                </div>
+            </div>
+        </form>
+
+    </div>
+
+
+</div>
+{% endblock %}
