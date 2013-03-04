@@ -48,7 +48,7 @@
         $(function() {
             $('a#cut_date_fb').click(function() {
                 window.parent.$.fancybox({
-                    href        :'/buildings/corte_recibo/54',
+                    href        :'/buildings/corte_recibo/{{ resultados.corte.pk }}',
                     type        :'iframe',
                     maxWidth	: 400,
                     maxHeight	: 340,
@@ -57,8 +57,6 @@
                 });
             });
         });
-
-
 
 
         $(document).ready(function(){
@@ -112,7 +110,7 @@
         <span class="l">Total</span>
         <span class="r total">${{ resultados.total|floatformat:2 }}</span>
     </div>
-    {% elif tipo_tarifa.pk = 2 %}
+    {% elif tipo_tarifa.pk == 2 %}
     <div id="sumary">
         <span class="l">Periodo</span>
         <span class="r">{{ resultados.periodo }}</span>
@@ -123,7 +121,7 @@
         <span class="l">Total</span>
         <span class="r total">${{ resultados.total|floatformat:2 }}</span>
     </div>
-    {% elif tipo_tarifa.pk = 3 %}
+    {% elif tipo_tarifa.pk == 3 %}
     <div id="sumary">
         <span class="l">Periodo</span>
         <span class="r">{{ resultados.periodo }}</span>
@@ -225,7 +223,7 @@
         </tr>
         </tbody>
     </table>
-    {% elif tipo_tarifa.pk = 2 %}
+    {% elif tipo_tarifa.pk == 2 %}
     <table id="function_period">
         <thead>
         <tr>
@@ -252,7 +250,7 @@
         </tr>
         </tbody>
     </table>
-    {% elif tipo_tarifa.pk = 3 %}
+    {% elif tipo_tarifa.pk == 3 %}
     <table id="function_period">
         <thead>
         <tr>
@@ -328,7 +326,7 @@
                     <td>{{ hist.costo_promedio|floatformat:4 }}</td>
                 </tr>
             {% endfor %}
-        {% elif tipo_tarifa.pk = 2 %}
+        {% elif tipo_tarifa.pk == 2 %}
             {% for hist in  historico%}
                 <tr>
                     <td>{{ hist.fecha }}</td>
@@ -339,7 +337,7 @@
                     <td>{{ hist.costo_promedio|floatformat:4 }}</td>
                 </tr>
             {% endfor %}
-        {% elif tipo_tarifa.pk = 3 %}
+        {% elif tipo_tarifa.pk == 3 %}
             {% for hist in  historico%}
                 <tr>
                     <td>{{ hist.fecha }}</td>

@@ -392,6 +392,7 @@ def cfe_calculations(request):
                 astimezone(timezone.get_current_timezone()).strftime('%d/%m/%Y %I:%M %p')
 
                 resultado_mensual['periodo'] = periodo
+                resultado_mensual['corte'] = cfe_historico[0].monthly_cut_dates
                 resultado_mensual['demanda_facturable'] = cfe_historico[
                     0].billable_demand
                 resultado_mensual['factor_potencia'] = cfe_historico[
@@ -423,6 +424,7 @@ def cfe_calculations(request):
                           astimezone(timezone.get_current_timezone()).strftime('%d/%m/%Y %I:%M %p')
 
                 resultado_mensual['periodo'] = periodo
+                resultado_mensual['corte'] = cfe_historico[0].monthly_cut_dates
                 resultado_mensual['kwh_totales'] = cfe_historico[0].KWH_total
                 resultado_mensual['tarifa_kwh'] = cfe_historico[0].KWH_rate
                 resultado_mensual['tarifa_mes'] = cfe_historico[0].monthly_rate
@@ -439,6 +441,7 @@ def cfe_calculations(request):
                           astimezone(timezone.get_current_timezone()).strftime('%d/%m/%Y %I:%M %p')
 
                 resultado_mensual['periodo'] = periodo
+                resultado_mensual['corte'] = cfe_historico[0].monthly_cut_dates
                 resultado_mensual['kwh_totales'] = cfe_historico[0].KWH_total
                 resultado_mensual['tarifa_kwh'] = cfe_historico[0].KWH_rate
                 resultado_mensual['kw_totales'] = cfe_historico[0].max_demand
@@ -471,6 +474,7 @@ def cfe_calculations(request):
             hasDates = inMonthlyCutdates(building, month, year)
             if hasDates:
                 s_date, e_date = getStartEndDateUTC(building, month, year)
+                mcorte = getMonthlyCutDate(building, month, year)
             else:
                 s_date, e_date = getStartEndDateUTC(building, month, year)
                 #La siguiente sección sirve para poner al corriente las fechas de corte.
@@ -519,7 +523,7 @@ def cfe_calculations(request):
 
                 #Se obtienen nuevamente las fechas
                 s_date, e_date = getStartEndDateUTC(building, month, year)
-
+                mcorte = getMonthlyCutDate(building, month, year)
 
             #Se general el recibo.
             if tipo_tarifa.pk == 1: #Tarifa HM
@@ -536,6 +540,7 @@ def cfe_calculations(request):
                     request.session['main_building'], s_date, e_date, month,
                     year)
 
+        resultado_mensual['corte'] = mcorte
         if resultado_mensual['status'] == 'OK':
             template_vars['resultados'] = resultado_mensual
             template_vars['tipo_tarifa'] = tipo_tarifa
@@ -590,6 +595,22 @@ def getStartEndDateUTC(building, month, year):
     return s_date, e_date
 
 # noinspection PyArgumentList
+def getMonthlyCutDate(building, month, year):
+    billing_month = datetime.date(year=year, month=month, day=1)
+
+    #Se obtienen las fechas de inicio y de fin para ese mes
+    try:
+        month_cut_dates = MonthlyCutDates.objects.get(
+            building=building, billing_month=billing_month
+        )
+    except MonthlyCutDates.DoesNotExist:
+        month_all_cut_dates = MonthlyCutDates.objects.filter(
+            building=building).order_by("-billing_month")
+        month_cut_dates = month_all_cut_dates[0]
+
+    return month_cut_dates
+
+# noinspection PyArgumentList
 def inMonthlyCutdates(building, month, year):
     billing_month = datetime.date(year=year, month=month, day=1)
 
@@ -639,7 +660,6 @@ def getStartEndDate(building, month, year):
             .get_current_timezone())
 
     return s_date, e_date
-
 
 def grafica_datoscsv(request):
     if request.method == "GET":
@@ -7697,7 +7717,6 @@ def set_cutdate_bill_show(request, id_cutdate):
 
 
 def set_cutdate_bill(request):
-    print "Estoy en el ajax"
     if "date" in request.GET and "cutdate" in request.GET:
 
         date = request.GET['date']

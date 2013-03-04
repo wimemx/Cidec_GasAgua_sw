@@ -239,17 +239,17 @@ class MenuCategs(models.Model):
 
 class MenuHierarchy(models.Model):
     parent_cat = models.ForeignKey(MenuCategs,
-                                   related_name="parent_cat_composite",
-                                   on_delete=models.PROTECT,
-                                   null=True,
-                                   blank=True,
-                                   default=None)
+        related_name="parent_cat_composite",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        default=None)
     child_cat = models.ForeignKey(MenuCategs,
-                                  related_name="parent_cat_leaf",
-                                  on_delete=models.PROTECT,
-                                  blank=True,
-                                  null=True,
-                                  default=None)
+        related_name="parent_cat_leaf",
+        on_delete=models.PROTECT,
+        blank=True,
+        null=True,
+        default=None)
 
     def __unicode__(self):
         s = ""
