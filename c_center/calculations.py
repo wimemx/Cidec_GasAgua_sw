@@ -76,16 +76,17 @@ def promedioKWH(building, fecha_inicio, fecha_fin):
 def desviacionStandardKWH(building, fecha_inicio, fecha_fin):
     suma = 0
     desviacion = 0
-    lecturas = DailyData.objects.filter(building = building, 
-                                        data_day__gte = fecha_inicio, 
-                                        data_day__lte = fecha_fin)
+    lecturas = DailyData.objects.filter(building=building,
+                                        data_day__gte=fecha_inicio,
+                                        data_day__lte=fecha_fin)
     if lecturas:
         promedio = promedioKWH(building, fecha_inicio, fecha_fin)
-        nmenosuno = len(lecturas)-1
+        nmenosuno = len(lecturas) - 1
         for kwh in lecturas:
             n_m = kwh.KWH_total - promedio
-            suma += n_m**2
-        desviacion = sqrt(suma/nmenosuno)
+            suma += n_m ** 2
+        if nmenosuno != 0:
+            desviacion = sqrt(suma / nmenosuno)
     return desviacion
 
 

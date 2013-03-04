@@ -77,33 +77,33 @@ var state = false;
 </div>
 <div id="page_content">
 <div id="contenido_interno">
-    <h2 id="titulo_reporte">Reporte de CFE</h2>
-
-    <div class="divider" id="divider_top">&nbsp;</div>
-    <div id="data_container">
-        <h3>{{ empresa.building_name }}</h3>
-
-        <input type="hidden" name="empresa_act" id="empresa_act" value="{{ empresa.pk }}"/>
-        <div id="datepicker_component">
-            <span class="period_tag">Periodo</span>
-            {% if month_list %}
+    <h3 class="fl">{{ empresa.building_name }}</h3>
+    <div id="datepicker_component">
+        <span class="period_tag">Periodo</span>
+        {% if month_list %}
             <select name="month_01" id="month_01">
                 {% for key,value in month_list.items %}
-                <option value="{{key}}" {% if month == key %} selected{% endif %}>{{value}}</option>
+                    <option value="{{key}}" {% if month == key %} selected{% endif %}>{{value}}</option>
                 {% endfor %}
             </select>
-            {% endif %}
-            {% if year %}
+        {% endif %}
+        {% if year %}
             <select name="year_01" id="year_01">
                 {% for key,value in year_list.items %}
-                <option value="{{key}}" {% if year == key %} selected{% endif %}>{{value}}</option>
+                    <option value="{{key}}" {% if year == key %} selected{% endif %}>{{value}}</option>
                 {% endfor %}
             </select>
-            {% endif %}
+        {% endif %}
 
-            <button class="aqua_btn" onclick="cfeReload();">Reporte</button>
+        <button class="aqua_btn" onclick="cfeReload();">Reporte</button>
 
-        </div>
+    </div>
+    <div class="divider" id="divider_top">&nbsp;</div>
+    <div id="data_container">
+        <h2 id="titulo_reporte">Reporte de CFE</h2>
+
+        <input type="hidden" name="empresa_act" id="empresa_act" value="{{ empresa.pk }}"/>
+
         <div class="vacio"></div>
         <div id="cfe_container">
             <iframe src="/reportes/cfe_calculos/" id="graphFrame"></iframe>

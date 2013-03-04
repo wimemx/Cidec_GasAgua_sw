@@ -280,7 +280,7 @@ table.datepickerViewYears td a span{
     margin: 13px auto 5px auto;
 }
 #lateral h3{
-    color: #950f52;
+    color: #1f728b;
     font-size: 22px;
     font-weight: 300;
     text-align: center;
@@ -458,7 +458,7 @@ table.datepickerViewYears td a span{
 /*--------boton lateral - semana---------*/
 #week_s{
     position: absolute;
-    color: #960f54;
+    color: #1f728b;
     font-size: 12px;
     background-image: linear-gradient(bottom, #C4C4C4 0%, #E9E9E9 50%);
     background-image: -o-linear-gradient(bottom, #C4C4C4 0%, #E9E9E9 50%);
