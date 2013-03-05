@@ -160,8 +160,6 @@ def get_curve_fit_function_regression(
         dependent_data_list
 ):
 
-    logger.info(str(independent_data_list))
-    logger.info(str(dependent_data_list))
     if len(independent_data_list) <= 0 or len(dependent_data_list) <= 0:
         return None
 
@@ -204,8 +202,6 @@ def process_consumer_unit_electrical_parameter(
         electrical_parameter,
         instant_delta
 ):
-    logger.info(str(consumer_unit))
-
     #
     # Get a consumer unit profile object
     #
@@ -267,13 +263,10 @@ def process_consumer_unit_electrical_parameter_instant_group(
 
         return
 
-    logger.info(str(instants_group))
     instant_delta = instants_group[0].instant_delta
     timedelta = datetime.timedelta(seconds=instant_delta.delta_seconds)
     datetime_from = instants_group[0].instant_datetime - timedelta
     datetime_to = instants_group[-1].instant_datetime + timedelta
-    logger.info(str(datetime_from))
-    logger.info(str(datetime_to))
     electric_data_raw_dictionaries_list =\
         c_center.models.ElectricDataTemp.objects.filter(
             profile_powermeter=consumer_unit.profile_powermeter,
@@ -326,7 +319,6 @@ def process_consumer_unit_electrical_parameter_instant_group(
 
         return
 
-    logger.info(str(curve_fit_function))
     for instant in instants_group:
         instant_timedelta_current = instant.instant_datetime - datetime_from
         instant_timedelta_current_seconds =\
@@ -373,12 +365,12 @@ def process_consumer_unit_electrical_parameter_instant_group(
 
     return
 
-
 ################################################################################
 #
 # Data Retrieve Scripts
 #
 ################################################################################
+
 
 
 ################################################################################

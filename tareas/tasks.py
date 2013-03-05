@@ -3,8 +3,8 @@ from celery.task.schedules import crontab
 from celery.decorators import periodic_task
 
 from data_warehouse.views import *
-from c_center.c_center_functions import *
-from c_center.calculations import *
+from c_center.c_center_functions import save_historic
+from c_center.calculations import reTagHolidays
 
 from datetime import date
 
