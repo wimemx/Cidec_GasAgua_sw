@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block titulo %} Mediciones El&eacute;ctricas{% endblock %}
+{% block titulo %}An&aacute;lisis de Consumo El&eacute;ctrico Mensual - {{ building.building_name }}{% endblock %}
 {% block externalcss %}
     <!--suppress HtmlUnknownTarget -->
     <link rel="stylesheet" href="/static/css/consumption_centers/main.css" type="text/css" />
@@ -15,28 +15,83 @@
         var current_day = fecha_act.format("yyyy-mm-dd");
         var lateral;
     function get_full_month(){
+        var maxx_d = 0;
+        var minn_d = 9000000;
+        var maxx_kwh = 0;
+        var min_kwh = 9000000;
+        var index_maxd, index_mind, index_maxkwh, index_minkwh;
         $.ajax({
             url: "/buildings/month_analitics/{{ building.pk }}/"+String(current_year)+"/"+String(current_month)+"/",
             type: "GET",
-            success: function(data){ console.log(data);
+            success: function(data){
+                for(var j=0; j<data.length; j++){
+                    var datoi = data[j];
+                    if(datoi.empty == "false"){
+                        if(datoi.max_demand > maxx_d){
+                            maxx_d = datoi.max_demand;
+                            index_maxd = j;
+                        }
+                        if(datoi.KWH_total > maxx_kwh){
+                            maxx_kwh = datoi.KWH_total;
+                            index_maxkwh = j;
+                        }
+                        if(datoi.max_demand < minn_d){
+                            minn_d = datoi.max_demand;
+                            index_mind = j;
+                        }
+                        if(datoi.KWH_total < min_kwh){
+                            min_kwh = datoi.KWH_total;
+                            index_minkwh = j;
+                        }
+                    }
+                }
+
                 for(var i=0; i<data.length; i++){
                     var dato = data[i];
                     var div = "<div class='inner_day fr'>";
+                    var class_d = '';
+                    var class_k = '';
                     if(data[i].empty == "true"){
-                        div += "<span class='title_inner'>Demanda M&aacute;x</span>";
-                        div += "<span class='demanda_max'>Sin info.</span>";
-                        div += "<span class='title_inner'>Consumo</span>";
-                        div += "<span class='consumo'>Sin info.</span>";
+                        //div += "<span class='title_inner'>&nbsp;</span>";
+                        div += "<span class='demanda_max'>-</span>";
+                        div += "<span class='title_inner'>&nbsp;</span>";
+                        div += "<span class='consumo'>-</span>";
                         div += "</div>";
                     }else{
-                        div += "<span class='title_inner'>Demanda M&aacute;x</span>";
-                        div += "<span class='demanda_max'>"+ dato.max_demand +" kW</span>";
-                        div += "<span class='title_inner'>Consumo</span>";
-                        div += "<span class='consumo'>"+ dato.KWH_total +" kWh</span>";
+                        //div += "<span class='title_inner'>&nbsp;</span>";
+                        if(i == index_maxd){
+                            class_d = "red";
+                        }
+                        if(i == index_mind){
+                            class_d = "green";
+                        }
+                        if(i == index_maxkwh){
+                            class_k = "red";
+                        }
+                        if(i == index_minkwh){
+                            class_k = "green";
+                        }
+                        div += "<span class='demanda_max "+class_d+"'>"+ dato.max_demand +" kW</span>";
+                        div += "<span class='title_inner'>&nbsp;</span>";
+                        div += "<span class='consumo "+class_k+"'>"+ dato.KWH_total +" kWh</span>";
                         div += "</div>";
                     }
                     $("."+dato.fecha).append(div);
                 }
+            }
+        });
+        $.ajax({
+            url: "/buildings/month_analitics_h/{{ building.pk }}/"+String(current_year)+"/"+String(current_month)+"/",
+            type: "GET",
+            success: function(data){
+                $("#cons_total").text(addCommas(data[0].consumo_acumulado) + "kWh");
+                $("#dem_total").text(addCommas(data[0].demanda_max) + "kW");
+                $("#pp_total").text(String(data[0].factor_potencia.toFixed(2)) + "%");
+                var month_totals = $(".month_totals");
+                month_totals.find("#month_dem_min").text(addCommas(data[0].demanda_min) + "kW");
+                month_totals.find("#month_cons_prom").text(addCommas(data[0].consumo_promedio.toFixed(2)) + "kWh");
+                month_totals.find("#month_cons_med").text(addCommas(data[0].consumo_mediana.toFixed(2)) + "kWh");
+                month_totals.find("#month_cons_des").text(addCommas(data[0].consumo_desviacion.toFixed(2)) + "kWh");
             }
         });
     }
@@ -109,29 +164,34 @@
         $.ajax({
             url: "/buildings/month_analitics_week/{{ building.pk }}/"+String(current_year)+"/"+String(current_month)+"/",
             type: "GET",
-            success: function(data){ console.log(data);
+            success: function(data){
+
                 lateral.html('<span id="close"></span><h2>Reporte Semanal</h2><span class="lat_sep"></span>');
                 var cont = 0;
                 $(".datepickerWeek a span").each(function(){
                     valor = $(this).text();
                     semana = parseInt(valor)
                     if(semana){
-                        console.log(data[cont]);
+                        var acum=0;
+                        if(data[cont].consumo_acumulado != null){
+                            acum = data[cont].consumo_acumulado
+                        }
+
                         var div = "<div class='semana_cont'>";
                         div += "<span class='week_num fl'>S"+ String(semana) +"</span>";
-                        div += "<div class='week_values_cont fl'>";
+                        div += "<div class='week_values_cont fr'>";
                         div += "<span class='label_wvalue'>Consumo Acumulado:";
-                        div += "<span class='wvalue'> 800 kWh</span></span>";
+                        div += "<span class='wvalue'> "+acum+" kWh</span></span>";
                         div += "<span class='label_wvalue'>Demanda M&aacute;x:";
-                        div += "<span class='wvalue'> 200 kW</span></span>";
+                        div += "<span class='wvalue'> "+data[cont].demanda_max+" kW</span></span>";
                         div += "<span class='label_wvalue'>Demanda Mínima:";
-                        div += "<span class='wvalue'> 100 kW</span></span>";
+                        div += "<span class='wvalue'> "+data[cont].demanda_min+" kW</span></span>";
                         div += "<span class='label_wvalue'>Consumo Promedio:";
-                        div += "<span class='wvalue'> 300 kWh</span></span>";
+                        div += "<span class='wvalue'> "+data[cont].consumo_promedio.toFixed(2)+" kWh</span></span>";
                         div += "<span class='label_wvalue'>Consumo Media:";
-                        div += "<span class='wvalue'> 250 kWh</span></span>";
+                        div += "<span class='wvalue'> "+data[cont].consumo_mediana.toFixed(2)+" kWh</span></span>";
                         div += "<span class='label_wvalue'>Consumo Desviación:";
-                        div += "<span class='wvalue'>350 kWh</span></span>";
+                        div += "<span class='wvalue'>"+data[cont].consumo_desviacion.toFixed(2)+" kWh</span></span>";
                         div += "</div>";
                         lateral.append(div);
                         cont++;
@@ -199,28 +259,31 @@
     get_full_month();
 {% endblock %}
 {% block contenido %}
+    
     <div id="bread_crumbs">
         <ul>
             <li><a href="/main/">Inicio</a></li>
-            <li><a href="/reportes/analisis_mensual/">An&aacute;lisis El&eacute;ctrico Mensual</a></li>
+            <li><a href="/reportes/analisis_mensual/">An&aacute;lisis de Consumo El&eacute;ctrico Mensual</a></li>
         </ul>
     </div>
-
+    <div id="page_content">
     <div id="contenido_interno">
-        <h2 id="titulo_reporte">An&aacute;lisis El&eacute;ctrico Mensual - {{ building.building_name }}</h2>
+        <h2 class="titulo_reporte"><span class="building">{{ building.building_name }}</span> - <span class="device">{{ request.session.consumer_unit.electric_device_type.electric_device_type_name }}</span></h2>
 
         <div class="divider" id="divider_top">&nbsp;</div>
+        <h3 id="titulo_reporte" class="titulo_reporte report_icon">An&aacute;lisis de Consumo El&eacute;ctrico Mensual</h3>
 
         <div id="month_sumary">
+            <h3>Reporte Mensual</h3>
             <div class="icon_sumary consumo_t">
                 <span id="cons_total">
-                    3,404 kWh
+                    -
                 </span>
                 <span>Consumo acumulado/ m</span>
             </div>
             <div class="icon_sumary demanda">
                 <span id="dem_total">
-                    304 kW
+                    -
                 </span>
                 <span>Demanda Máxima / m</span>
             </div>
@@ -232,22 +295,22 @@
             </div>
             <div class="icon_sumary potencia">
                 <span id="pp_total">
-                    97%
+                    -
                 </span>
                 <span>Factor de Potencia</span>
             </div>
             <div class="month_totals">
                 <span class="label_tot">Demanda Mínima</span>
-                <span class="value_tot">204W</span>
+                <span class="value_tot" id="month_dem_min">-</span>
 
                 <span class="label_tot">Comsumo promedio</span>
-                <span class="value_tot">340kWh</span>
+                <span class="value_tot" id="month_cons_prom">-</span>
 
                 <span class="label_tot">Consumo media</span>
-                <span class="value_tot">200kWh</span>
+                <span class="value_tot" id="month_cons_med">-</span>
 
                 <span class="label_tot">Consumo desviación</span>
-                <span class="value_tot">100kWh</span>
+                <span class="value_tot"  id="month_cons_des">-</span>
             </div>
         </div>
 
@@ -262,5 +325,6 @@
             </div>
 
         </div>
+    </div>
     </div>
 {% endblock %}

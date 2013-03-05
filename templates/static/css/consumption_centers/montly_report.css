@@ -9,7 +9,7 @@ table.datepickerViewDays th{
     width: 17px;
     height: 42px;
     position: relative;
-    z-index: 2;
+    z-index: 1;
 }
 .ringl{
     left: 50px;
@@ -20,11 +20,12 @@ table.datepickerViewDays th{
 }
 #widgetCal{
     width: 760px;
-    height: 850px;
+    height: 764px;
     display: block;
     margin: 0 auto;
     position: relative;
 }
+
 .datepickerContainer{
     width: 760px;
 }
@@ -182,6 +183,12 @@ table.datepickerViewYears td a span{
 .inner_day span{
     color: #666666;
 }
+.inner_day .red{
+    color: #c30000;
+}
+.inner_day .green{
+    color: #58b11d;
+}
 .demanda_max, .title_inner, .consumo{
     display: block;
     text-align: left !important;
@@ -232,7 +239,25 @@ table.datepickerViewYears td a span{
 .day_cal.datepickerSelected a span{
     font-weight: 700;
 }
-
+h2.titulo_reporte span{
+    color: #4d5b65;
+    font-size: 20px !important;
+}
+h2.titulo_reporte .building{
+    font-weight: 700;
+}
+h2.titulo_reporte .device{
+    font-weight: 300;
+}
+h3.titulo_reporte{
+    font-size: 14px;
+    color: #878787;
+}
+#titulo_reporte.report_icon{
+    background: url("../images/imgs_icns/graph_icon.png") no-repeat;
+    height: 22px;
+    padding-left: 39px;
+}
 /*--------BARRA LATERAL------*/
 #lateral.collapsed{
     display: none !important;
@@ -273,7 +298,7 @@ table.datepickerViewYears td a span{
     margin: 13px auto 5px auto;
 }
 #lateral h3{
-    color: #950f52;
+    color: #1f728b;
     font-size: 22px;
     font-weight: 300;
     text-align: center;
@@ -369,8 +394,21 @@ table.datepickerViewYears td a span{
 #month_sumary{
     display: block;
     margin: 30px auto 0 auto;
-    width: 760px;
-    height: 50px;
+    width: 777px;
+    height: 94px;
+    border: solid 1px #ddd;
+    padding: 17px;
+    box-shadow: 0 6px 17px 0 #ddd;
+    -moz-box-shadow: 0 6px 17px 0 #ddd;
+}
+#month_sumary h3{
+    display: block;
+    margin: 0 auto;
+    font-size: 15px;
+    color: #53607d;
+    font-weight: 700;
+    width: 135px;
+    text-align: center;
 }
 .icon_sumary{
     display: inline-block;
@@ -392,7 +430,7 @@ table.datepickerViewYears td a span{
 }
 .month_totals{
     display: inline-block;
-    width: 190px;
+    width: 210px;
 }
 .month_totals, .icon_sumary{
     height: 100px;
@@ -432,7 +470,7 @@ table.datepickerViewYears td a span{
     font-size: 13px;
 }
 .month_totals .label_tot{
-    width: 135px;
+    width: 130px;
 }
 .month_totals .value_tot{
     font-weight: 700;
@@ -440,7 +478,7 @@ table.datepickerViewYears td a span{
 /*--------boton lateral - semana---------*/
 #week_s{
     position: absolute;
-    color: #960f54;
+    color: #1f728b;
     font-size: 12px;
     background-image: linear-gradient(bottom, #C4C4C4 0%, #E9E9E9 50%);
     background-image: -o-linear-gradient(bottom, #C4C4C4 0%, #E9E9E9 50%);

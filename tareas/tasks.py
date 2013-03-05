@@ -27,7 +27,7 @@ def datawarehouse_run(
 
 @task(ignore_result=True)
 def tag_batch():
-    batch_tag()
+    reTagHolidays()
 
 @task(ignore_result=True)
 def calculate_dw(granularity):
@@ -38,8 +38,8 @@ def daily_report():
     dailyReportAll()
 
 @task(ignore_resulset=True)
-def save_historic(request, cd_b, building):
-    save_historic(request, cd_b, building)
+def save_historic(cd_b, building):
+    save_historic(cd_b, building)
 
 # this will run every minute, see http://celeryproject.org/docs/reference/celery.task.schedules.html#celery.task.schedules.crontab
 @periodic_task(run_every=crontab(minute='*/60'))

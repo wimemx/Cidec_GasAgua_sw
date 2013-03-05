@@ -8,31 +8,12 @@
 
 {% endblock %}
 {% block externaljs %}
-<script type="text/javascript" src="http://www.google.com/jsapi"></script>
+<script type="text/javascript" src="/static/js/external/jsapi.js"></script>
 <script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
 <script type="text/javascript">
     google.load('visualization', '1', {packages: ['corechart']});
 </script>
 <script type="text/javascript">
-
-    function graphsReload(){
-        /* Takes the date in the range inputs and reloads the graph data */
-
-        var f1_init = encodeURIComponent($("#range1_init").val());
-        var f1_end = encodeURIComponent($("#range1_end").val());
-
-        if(f1_init != ''){
-            var url = "/reportes/cfe/?";
-            url += "f1_init=" + f1_init;
-            if(f1_end != ''){
-                url += "&f1_end="+f1_end;
-            }else{
-                url += "&f1_end=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
-            }
-
-            window.location.href = url;
-        }
-    }
 
     function cfeReload(){
 
@@ -73,27 +54,6 @@
         }
         refresh_iframe_height()
     }
-
-    /*
-     function drawVisualization() {
-     // Create and populate the data table.
-     var data = google.visualization.arrayToDataTable([
-     ['Mes', 'Base', 'Media', 'Punta'],
-     {% for hist in  historico%}
-     ['{{ hist.fecha|date:"m/Y" }}', {{ hist.kw_base }}, {{ hist.kw_intermedio }}, {{ hist.kw_punta }}],
-     {% endfor %}
-     ]);
-
-     // Create and draw the visualization.
-     new google.visualization.ColumnChart(document.getElementById('visualization')).
-     draw(data,
-     {
-     width:570, height:325,}
-     );
-     }
-
-
-     google.setOnLoadCallback(drawVisualization);*/
 </script>
 {% endblock %}
 {% block document_ready %}
@@ -115,41 +75,35 @@ var state = false;
         <li><a href="/reportes/cfe/">Recibo CFE</a></li>
     </ul>
 </div>
-
+<div id="page_content">
 <div id="contenido_interno">
-    <h2 id="titulo_reporte">Reporte de CFE</h2>
-
-    <div class="divider" id="divider_top">&nbsp;</div>
-
-    <div id="types_graphs">
-        <ul>
-            <li class="active"><a href="#">Reporte CFE</a></li>
-        </ul>
-    </div>
-    <div id="data_container">
-        <h3>{{ empresa.building_name }}</h3>
-
-        <input type="hidden" name="empresa_act" id="empresa_act" value="{{ empresa.pk }}"/>
-        <div id="datepicker_component">
-            <span class="period_tag">Periodo</span>
-            {% if month_list %}
+    <h3 class="fl">{{ empresa.building_name }}</h3>
+    <div id="datepicker_component">
+        <span class="period_tag">Periodo</span>
+        {% if month_list %}
             <select name="month_01" id="month_01">
                 {% for key,value in month_list.items %}
-                <option value="{{key}}" {% if month == key %} selected{% endif %}>{{value}}</option>
+                    <option value="{{key}}" {% if month == key %} selected{% endif %}>{{value}}</option>
                 {% endfor %}
             </select>
-            {% endif %}
-            {% if year %}
+        {% endif %}
+        {% if year %}
             <select name="year_01" id="year_01">
                 {% for key,value in year_list.items %}
-                <option value="{{key}}" {% if year == key %} selected{% endif %}>{{value}}</option>
+                    <option value="{{key}}" {% if year == key %} selected{% endif %}>{{value}}</option>
                 {% endfor %}
             </select>
-            {% endif %}
+        {% endif %}
 
-            <button class="aqua_btn" onclick="cfeReload();">Reporte</button>
+        <button class="aqua_btn" onclick="cfeReload();">Reporte</button>
 
-        </div>
+    </div>
+    <div class="divider" id="divider_top">&nbsp;</div>
+    <div id="data_container">
+        <h2 id="titulo_reporte" class="report_icon">Reporte de CFE</h2>
+
+        <input type="hidden" name="empresa_act" id="empresa_act" value="{{ empresa.pk }}"/>
+
         <div class="vacio"></div>
         <div id="cfe_container">
             <iframe src="/reportes/cfe_calculos/" id="graphFrame"></iframe>
@@ -159,5 +113,6 @@ var state = false;
     </div>
 
 
+</div>
 </div>
 {% endblock %}

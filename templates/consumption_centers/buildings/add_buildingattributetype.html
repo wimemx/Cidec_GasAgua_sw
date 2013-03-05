@@ -70,6 +70,7 @@
 {% endblock %}
 
 {% block contenido %}
+
 <div id="bread_crumbs">
     <ul>
         <li><a href="/main/">Inicio</a></li>
@@ -84,8 +85,8 @@
         {% endif %}
 
     </ul>
-
 </div>
+<div id="page_content">
 <div id="contenido_interno">
     <h2 id="titulo_form" class="building_attr">
         {% if operation == "edit" %}Edici&oacute;n de{% else %}Alta de{% endif %} tipo de atributo de edificio
@@ -136,4 +137,5 @@
 
 
 </div>
+    </div>
 {% endblock %}
