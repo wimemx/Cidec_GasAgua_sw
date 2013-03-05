@@ -161,6 +161,11 @@ def get_curve_fit_function_regression(
         dependent_data_list
 ):
 
+    logger.info(str(independent_data_list))
+    logger.info(str(dependent_data_list))
+    if len(independent_data_list) <= 0 or len(dependent_data_list) <= 0:
+        return None
+
     curve_fit_coefficients =\
         pylab.polyfit(independent_data_list, dependent_data_list, 2)
 
@@ -200,6 +205,7 @@ def process_consumer_unit_electrical_parameter(
         electrical_parameter,
         instant_delta
 ):
+    logger.info(str(consumer_unit))
 
     #
     # Get a consumer unit profile object
@@ -242,13 +248,16 @@ def process_consumer_unit_electrical_parameter(
     for instants_group in instants_groups:
         process_consumer_unit_electrical_parameter_instant_group(
             consumer_unit,
+            consumer_unit_profile,
             electrical_parameter,
             instants_group)
 
+    return
 
 
 def process_consumer_unit_electrical_parameter_instant_group(
         consumer_unit,
+        consumer_unit_profile,
         electrical_parameter,
         instants_group
 ):
@@ -259,10 +268,13 @@ def process_consumer_unit_electrical_parameter_instant_group(
 
         return
 
+    logger.info(str(instants_group))
     instant_delta = instants_group[0].instant_delta
     timedelta = datetime.timedelta(seconds=instant_delta.delta_seconds)
     datetime_from = instants_group[0].instant_datetime - timedelta
     datetime_to = instants_group[-1].instant_datetime + timedelta
+    logger.info(str(datetime_from))
+    logger.info(str(datetime_to))
     electric_data_raw_dictionaries_list =\
         c_center.models.ElectricDataTemp.objects.filter(
             profile_powermeter=consumer_unit.profile_powermeter,
@@ -286,8 +298,11 @@ def process_consumer_unit_electrical_parameter_instant_group(
 
         independent_data_list.append(timedelta_current_seconds)
         dependent_data_list.append(
-            electric_data_raw_dictionary[
-                electrical_parameter.name_transactional])
+            float(
+                electric_data_raw_dictionary[
+                    electrical_parameter.name_transactional]
+            )
+        )
 
     if electrical_parameter.type ==\
            data_warehouse_extended.models.ElectricalParameter.INSTANT:
@@ -312,6 +327,32 @@ def process_consumer_unit_electrical_parameter_instant_group(
 
         return
 
+    logger.info(str(curve_fit_function))
+    for instant in instants_group:
+        instant_timedelta_current = instant.instant_datetime - datetime_from
+        instant_timedelta_current_seconds =\
+            instant_timedelta_current.seconds + \
+            (instant_timedelta_current.days * 24 * 3600)
+
+        curve_fit_function_evaluation =\
+            curve_fit_function(instant_timedelta_current_seconds)
+
+        try:
+            consumer_unit_instant_electric_data =\
+                data_warehouse_extended.models.ConsumerUnitInstantElectricalData.objects.get(
+                    consumer_unit_profile=consumer_unit_profile,
+                    instant=instant,
+                    electrical_parameter=electrical_parameter)
+
+        except data_warehouse_extended.models.ConsumerUnitInstantElectricalData.DoesNotExist:
+            consumer_unit_instant_electric_data =\
+                data_warehouse_extended.models.ConsumerUnitInstantElectricalData.objects.get(
+                    consumer_unit_profile=consumer_unit_profile,
+                    instant=instant,
+                    electrical_parameter=electrical_parameter)
+
+
+
     return
 
 
@@ -324,3 +365,19 @@ def process_consumer_unit_electrical_parameter_instant_group(
 def test_process_consumer_unit_electrical_parameter():
 
     consumer_unit = c_center.models.ConsumerUnit.objects.get(pk=7)
+    datetime_from = datetime.datetime(year=2012, month=10, day=10)
+    datetime_to = datetime.datetime(year=2012, month=10, day=15)
+    electrical_parameter =\
+        data_warehouse_extended.models.ElectricalParameter.objects.get(name="kW")
+    instant_delta =\
+        data_warehouse_extended.models.InstantDelta.objects.get(
+            delta_seconds=3600)
+
+    process_consumer_unit_electrical_parameter(
+        consumer_unit,
+        datetime_from,
+        datetime_to,
+        electrical_parameter,
+        instant_delta
+    )
+
