@@ -239,7 +239,25 @@ table.datepickerViewYears td a span{
 .day_cal.datepickerSelected a span{
     font-weight: 700;
 }
-
+h2.titulo_reporte span{
+    color: #4d5b65;
+    font-size: 20px !important;
+}
+h2.titulo_reporte .building{
+    font-weight: 700;
+}
+h2.titulo_reporte .device{
+    font-weight: 300;
+}
+h3.titulo_reporte{
+    font-size: 14px;
+    color: #878787;
+}
+#titulo_reporte.report_icon{
+    background: url("../images/imgs_icns/graph_icon.png") no-repeat;
+    height: 22px;
+    padding-left: 39px;
+}
 /*--------BARRA LATERAL------*/
 #lateral.collapsed{
     display: none !important;
@@ -380,6 +398,8 @@ table.datepickerViewYears td a span{
     height: 94px;
     border: solid 1px #ddd;
     padding: 17px;
+    box-shadow: 0 6px 17px 0 #ddd;
+    -moz-box-shadow: 0 6px 17px 0 #ddd;
 }
 #month_sumary h3{
     display: block;

@@ -268,9 +268,10 @@
     </div>
     <div id="page_content">
     <div id="contenido_interno">
-        <h2 id="titulo_reporte">An&aacute;lisis de Consumo El&eacute;ctrico Mensual - {{ building.building_name }}</h2>
+        <h2 class="titulo_reporte"><span class="building">{{ building.building_name }}</span> - <span class="device">{{ request.session.consumer_unit.electric_device_type.electric_device_type_name }}</span></h2>
 
         <div class="divider" id="divider_top">&nbsp;</div>
+        <h3 id="titulo_reporte" class="titulo_reporte report_icon">An&aacute;lisis de Consumo El&eacute;ctrico Mensual</h3>
 
         <div id="month_sumary">
             <h3>Reporte Mensual</h3>

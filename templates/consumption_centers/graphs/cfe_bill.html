@@ -48,7 +48,7 @@
         $(function() {
             $('a#cut_date_fb').click(function() {
                 window.parent.$.fancybox({
-                    href        :'/buildings/corte_recibo/{{ resultados.corte.pk }}',
+                    href        :'/buildings/corte_recibo/{{ control }}',
                     type        :'iframe',
                     maxWidth	: 400,
                     maxHeight	: 350,
@@ -72,8 +72,6 @@
 
 <body>
 <div class="iframe_container">
-
-
 <div>
     {% if message %}
         {% if morethan30 %}

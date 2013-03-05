@@ -188,8 +188,9 @@ body{
 }
 #page_content{
     border-top: solid 1px #2b87a3;
-    background: #fff;
+    background: url("images/bgs/bg_pattern.png") #fff;
     margin-top: 10px;
+
 }
 #contenido_interno{
     width: 1162px;
@@ -393,6 +394,7 @@ h2{
 }
 /*second level*/
 ul#main_menu ul{
+    margin-left: -19px;
     width: 222px;
 }
 ul#main_menu ul ul{
