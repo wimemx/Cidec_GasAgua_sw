@@ -6,8 +6,6 @@ import django.db.models
 # Data Warehouse Extended imports
 import data_warehouse_extended.globals
 
-# TODO - Check for on_delete=PROTECT for all foreign keys
-
 class InstantDelta(django.db.models.Model):
 
     name =\
@@ -30,6 +28,7 @@ class Instant(django.db.models.Model):
     instant_delta =\
         django.db.models.ForeignKey(
             InstantDelta,
+            on_delete=django.db.models.PROTECT,
             related_name=data_warehouse_extended.globals.ModelFieldRelatedName.INSTANT,
             verbose_name=data_warehouse_extended.globals.ModelFieldName.INSTANT__INSTANT_DELTA)
 
@@ -110,10 +109,11 @@ class ElectricalParameter(django.db.models.Model):
 
 class ConsumerUnitInstantElectricalData(django.db.models.Model):
 
-    id =\
-        django.db.models.BigIntegerField(
-            primary_key=True,
-            verbose_name=data_warehouse_extended.globals.ModelFieldName.CONSUMER_UNIT_INSTANT_ELECTRIC_DATA__ID)
+    # TODO - Use south to migrate model changes
+    #id =\
+    #    django.db.models.BigIntegerField(
+    #        primary_key=True,
+    #        verbose_name=data_warehouse_extended.globals.ModelFieldName.CONSUMER_UNIT_INSTANT_ELECTRIC_DATA__ID)
 
     consumer_unit_profile =\
         django.db.models.ForeignKey(
