@@ -45,7 +45,6 @@ def populate_data_warehouse_extended(
         instant_deltas =\
             data_warehouse_extended.models.InstantDelta.objects.all()
 
-        logger.info(str(instant_deltas))
         for instant_delta in instant_deltas:
             create_instant_instances(datetime_from, datetime_to, instant_delta)
 
@@ -153,7 +152,7 @@ def get_curve_fit_function_interpolation(
         dependent_data_list
 ):
 
-    pass
+    return None
 
 
 def get_curve_fit_function_regression(
@@ -334,8 +333,10 @@ def process_consumer_unit_electrical_parameter_instant_group(
             instant_timedelta_current.seconds + \
             (instant_timedelta_current.days * 24 * 3600)
 
-        curve_fit_function_evaluation =\
-            curve_fit_function(instant_timedelta_current_seconds)
+        curve_fit_function_evaluation = None
+        if curve_fit_function is not None:
+            curve_fit_function_evaluation =\
+                curve_fit_function(instant_timedelta_current_seconds)
 
         try:
             consumer_unit_instant_electric_data =\
@@ -346,14 +347,38 @@ def process_consumer_unit_electrical_parameter_instant_group(
 
         except data_warehouse_extended.models.ConsumerUnitInstantElectricalData.DoesNotExist:
             consumer_unit_instant_electric_data =\
-                data_warehouse_extended.models.ConsumerUnitInstantElectricalData.objects.get(
+                data_warehouse_extended.models.ConsumerUnitInstantElectricalData(
                     consumer_unit_profile=consumer_unit_profile,
                     instant=instant,
                     electrical_parameter=electrical_parameter)
 
+        consumer_unit_instant_electric_data.value =\
+            curve_fit_function_evaluation
 
+        try:
+            consumer_unit_instant_electric_data.full_clean()
+
+        except django.core.exceptions.ValidationError:
+            logger.error(
+                data_warehouse_extended.globals.SystemError.
+                CONSUMER_UNIT_INSTANT_ELECTRIC_DATA_VALIDATION_ERROR + " - " +
+                str(consumer_unit_instant_electric_data))
+
+            continue
+
+        consumer_unit_instant_electric_data.save()
+        logger.info(data_warehouse_extended.globals.SystemInfo.
+                    CONSUMER_UNIT_INSTANT_ELECTRIC_DATA_SAVED + " - " +\
+                    str(consumer_unit_instant_electric_data))
 
     return
+
+
+################################################################################
+#
+# Data Retrieve Scripts
+#
+################################################################################
 
 
 ################################################################################
