@@ -275,6 +275,8 @@ iframe{
 
 #body_fb{
     background: none;
+    min-height: 90% !important;
+    height: 95% !important;
 }
 
 #corte_container{

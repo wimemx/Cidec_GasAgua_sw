@@ -174,10 +174,10 @@ def week_report_kwh(request):
     """ Index page?
     shows a report of the consumed kwh in the current week
     """
-    datacontext = get_buildings_context(request.user)[0]
+    datacontext, buildings = get_buildings_context(request.user)
     if not datacontext:
         request.session['consumer_unit'] = None
-    set_default_session_vars(request, datacontext)
+    set_default_session_vars(request, buildings)
 
     if request.session['consumer_unit'] and request.session['main_building']:
         graphs = graphs_permission(request.user,
