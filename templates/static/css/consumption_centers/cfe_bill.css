@@ -5,8 +5,10 @@
 }
 #titulo_reporte{
     height: 22px;
-    background: url(../images/imgs_icns/electric_icon.png) no-repeat;
     padding-left: 39px;
+}
+#titulo_reporte.report_icon{
+    background: url("../images/imgs_icns/graph_icon.png") no-repeat;
 }
 #datepicker_component {
     position: relative;

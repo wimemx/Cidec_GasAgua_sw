@@ -474,8 +474,10 @@ def cfe_calculations(request):
             hasDates = inMonthlyCutdates(building, month, year)
             if hasDates:
                 s_date, e_date = getStartEndDateUTC(building, month, year)
-                mcorte = getMonthlyCutDate(building, month, year)
+                resultado_mensual['corte'] = getMonthlyCutDate(building, month, year)
+                template_vars['control'] = resultado_mensual['corte'].pk
             else:
+                template_vars['control'] = "NO tiene fechas"
                 s_date, e_date = getStartEndDateUTC(building, month, year)
                 #La siguiente sección sirve para poner al corriente las fechas de corte.
 
@@ -523,7 +525,8 @@ def cfe_calculations(request):
 
                 #Se obtienen nuevamente las fechas
                 s_date, e_date = getStartEndDateUTC(building, month, year)
-                mcorte = getMonthlyCutDate(building, month, year)
+                resultado_mensual['corte'] = getMonthlyCutDate(building, month, year)
+                template_vars['control'] = resultado_mensual['corte'].pk
 
             #Se general el recibo.
             if tipo_tarifa.pk == 1: #Tarifa HM
@@ -540,7 +543,6 @@ def cfe_calculations(request):
                     request.session['main_building'], s_date, e_date, month,
                     year)
 
-        resultado_mensual['corte'] = mcorte
         if resultado_mensual['status'] == 'OK':
             template_vars['resultados'] = resultado_mensual
             template_vars['tipo_tarifa'] = tipo_tarifa
