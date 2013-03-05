@@ -1352,7 +1352,7 @@ def getMonthDaysForDailyReport(month, year):
     return month_days
 
 
-def save_historic(request, monthly_cutdate, building):
+def save_historic(monthly_cutdate, building):
     try:
         if building.electric_rate.pk == 1:
             exist_historic = HMHistoricData.objects.get(

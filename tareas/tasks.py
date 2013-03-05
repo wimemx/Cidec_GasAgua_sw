@@ -38,7 +38,7 @@ def daily_report():
     dailyReportAll()
 
 @task(ignore_resulset=True)
-def save_historic(cd_b, building):
+def save_historic_delay(cd_b, building):
     save_historic(cd_b, building)
 
 # this will run every minute, see http://celeryproject.org/docs/reference/celery.task.schedules.html#celery.task.schedules.crontab

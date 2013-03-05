@@ -52,7 +52,7 @@ from .tables import ElectricDataTempTable, ThemedElectricDataTempTable
 
 import json as simplejson
 import sys
-from tareas.tasks import datawarehouse_run
+from tareas.tasks import datawarehouse_run, save_historic_delay
 
 VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
@@ -7176,7 +7176,7 @@ def set_cutdate(request, id_cutdate):
                     cd_before.save()
 
                     #Se recalcula el mes anterior ya con las nuevas fechas.
-                    save_historic.delay(request, cd_before, request.session['main_building'])
+                    save_historic.delay(cd_before, request.session['main_building'])
 
                 #Si hay cambio de fechas en mes siguiente
                 if cd_after_flag:
@@ -7186,7 +7186,7 @@ def set_cutdate(request, id_cutdate):
 
                     #Si la fecha final del mes siguiente no es nula, se crea el historico
                     if cd_after.date_end:
-                        save_historic.delay(request, cd_after, request.session['main_building'])
+                        save_historic.delay(cd_after, request.session['main_building'])
                 else:
                     #Se crea el nuevo mes
                     new_cut = MonthlyCutDates(
@@ -7202,7 +7202,7 @@ def set_cutdate(request, id_cutdate):
                 cutdate_obj.save()
 
                 #Se calcula el mes actual
-                save_historic.delay(request, cutdate_obj, request.session['main_building'])
+                save_historic.delay(cutdate_obj, request.session['main_building'])
 
                 template_vars[
                     "message"] = "Fechas de Corte establecidas correctamente"
