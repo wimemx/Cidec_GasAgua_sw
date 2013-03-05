@@ -35,11 +35,11 @@
                             maxx_kwh = datoi.KWH_total;
                             index_maxkwh = j;
                         }
-                        if(datoi.max_demand < minn_d){
+                        if(datoi.max_demand < minn_d && datoi.max_demand != 0){
                             minn_d = datoi.max_demand;
                             index_mind = j;
                         }
-                        if(datoi.KWH_total < min_kwh){
+                        if(datoi.KWH_total < min_kwh && datoi.KWH_total != 0){
                             min_kwh = datoi.KWH_total;
                             index_minkwh = j;
                         }

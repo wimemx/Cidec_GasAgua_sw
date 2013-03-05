@@ -7614,7 +7614,7 @@ def set_cutdate(request, id_cutdate):
                     cd_before.save()
 
                     #Se recalcula el mes anterior ya con las nuevas fechas.
-                    save_historic.delay(request, cd_before, request.session['main_building'])
+                    save_historic(cd_before, request.session['main_building'])
 
                 #Si hay cambio de fechas en mes siguiente
                 if cd_after_flag:
@@ -7624,7 +7624,7 @@ def set_cutdate(request, id_cutdate):
 
                     #Si la fecha final del mes siguiente no es nula, se crea el historico
                     if cd_after.date_end:
-                        save_historic.delay(request, cd_after, request.session['main_building'])
+                        save_historic(cd_after, request.session['main_building'])
                 else:
                     #Se crea el nuevo mes
                     new_cut = MonthlyCutDates(
@@ -7640,7 +7640,7 @@ def set_cutdate(request, id_cutdate):
                 cutdate_obj.save()
 
                 #Se calcula el mes actual
-                save_historic.delay(request, cutdate_obj, request.session['main_building'])
+                save_historic(cutdate_obj, request.session['main_building'])
 
                 template_vars[
                     "message"] = "Fechas de Corte establecidas correctamente"
@@ -7758,7 +7758,7 @@ def set_cutdate_bill(request):
             )
             new_cut.save()
             #Se guarda el historico
-            save_historic.delay(cutdate_obj,
+            save_historic(cutdate_obj,
                                 request.session['main_building'])
 
             status = 'OK'
@@ -8107,7 +8107,7 @@ def month_analitics_day(request, id_building):
         raise Http404
 
 
-def save_historic(request, monthly_cutdate, building):
+def save_historic(monthly_cutdate, building):
     try:
         if building.electric_rate.pk == 1:
             exist_historic = HMHistoricData.objects.get(
@@ -8155,7 +8155,7 @@ def save_historic(request, monthly_cutdate, building):
             KW_punta=resultado_mensual['kw_punta'],
             KW_intermedio=resultado_mensual['kw_intermedio'],
             KVARH=resultado_mensual['kvarh_totales'],
-            power_factor=resultado_mensual['factor_potencia'],
+            power_factor=Decimal(str(resultado_mensual['factor_potencia'])),
             charge_factor=resultado_mensual['factor_carga'],
             billable_demand=resultado_mensual['demanda_facturable'],
             KWH_base_rate=resultado_mensual['tarifa_kwhb'],
