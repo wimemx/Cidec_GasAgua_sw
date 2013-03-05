@@ -34,8 +34,7 @@ DATABASES = {
         'USER': 'satest_cidec',                      # Not used with sqlite3.
         'PASSWORD': '5MnT)HXnm_pT',                  # Not used with sqlite3.
         'HOST': 'auditem.mx',                      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '',                      # Set to empty string for default. Not used with
-        # sqlite3.
+        'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     },
     'local': {
         'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
