@@ -34,19 +34,18 @@ def populate_data_warehouse_extended(
             datetime.datetime(
                 year=2012,
                 month=1,
-                day=1,
-                tzinfo=django.utils.timezone.utc)
+                day=1)
 
         datetime_to =\
             datetime.datetime(
                 year=2015,
                 month=12,
-                day=31,
-                tzinfo=django.utils.timezone.utc)
+                day=31)
 
         instant_deltas =\
             data_warehouse_extended.models.InstantDelta.objects.all()
 
+        logger.info(str(instant_deltas))
         for instant_delta in instant_deltas:
             create_instant_instances(datetime_from, datetime_to, instant_delta)
 
@@ -313,12 +312,15 @@ def process_consumer_unit_electrical_parameter_instant_group(
 
         return
 
+    return
+
 
 ################################################################################
 #
-# External Communication Scripts
+# Test Scripts
 #
 ################################################################################
 
 def test_process_consumer_unit_electrical_parameter():
-    pass
+
+    consumer_unit = c_center.models.ConsumerUnit.objects.get(pk=7)
