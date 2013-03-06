@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 __author__ = 'wime'
 #standard library imports
-from datetime import  timedelta, datetime, date
+import datetime
 from dateutil.relativedelta import relativedelta
 import time
 import os
@@ -983,9 +983,9 @@ def get_profile(request):
 def all_dailyreportAll():
     buildings = Building.objects.all()
 
-    initial_d = datetime(2012,8,1)
-    dia = timedelta(days=1)
-    while initial_d < datetime.today():
+    initial_d = datetime.datetime(2012,8,1)
+    dia = datetime.timedelta(days=1)
+    while initial_d < datetime.datetime.today():
         for buil in buildings:
             try:
                 main_cu = ConsumerUnit.objects.get(
@@ -1010,8 +1010,8 @@ def dailyReportAll():
         except ObjectDoesNotExist:
             continue
         else:
-            dia = timedelta(days=1)
-            dailyReport(buil, main_cu, datetime.today()-dia)
+            dia = datetime.timedelta(days=1)
+            dailyReport(buil, main_cu, datetime.datetime.today()-dia)
     print "Done dailyReportAll"
 
 
@@ -1036,11 +1036,11 @@ def dailyReport(building, consumer_unit, today):
     #Se agregan las horas
     today_s_str = time.strptime(str(today.year)+"-"+str(today.month)+"-"+str(today.day)+" 00:00:00", "%Y-%m-%d  %H:%M:%S")
     today_s_tuple = time.gmtime(time.mktime(today_s_str))
-    today_s_utc = datetime(year= today_s_tuple[0], month=today_s_tuple[1], day=today_s_tuple[2], hour=today_s_tuple[3], minute=today_s_tuple[4], second=today_s_tuple[5], tzinfo = pytz.utc)
+    today_s_utc = datetime.datetime(year= today_s_tuple[0], month=today_s_tuple[1], day=today_s_tuple[2], hour=today_s_tuple[3], minute=today_s_tuple[4], second=today_s_tuple[5], tzinfo = pytz.utc)
 
     today_e_str = time.strptime(str(today.year)+"-"+str(today.month)+"-"+str(today.day)+" 23:59:59", "%Y-%m-%d  %H:%M:%S")
     today_e_tuple = time.gmtime(time.mktime(today_e_str))
-    today_e_utc = datetime(year= today_e_tuple[0], month=today_e_tuple[1], day=today_e_tuple[2], hour=today_e_tuple[3], minute=today_e_tuple[4], second=today_e_tuple[5], tzinfo = pytz.utc)
+    today_e_utc = datetime.datetime(year= today_e_tuple[0], month=today_e_tuple[1], day=today_e_tuple[2], hour=today_e_tuple[3], minute=today_e_tuple[4], second=today_e_tuple[5], tzinfo = pytz.utc)
 
     #print "Today s_utc", today_s_utc
     #print "Today e_utc", today_e_utc
@@ -1273,8 +1273,8 @@ def getMonthlyReport(building, month, year):
     diasmes_arr = monthrange(year, month)
 
     #Se agregan las horas
-    fecha_inicio = datetime(year,month, 1)
-    fecha_final = datetime(year, month, diasmes_arr[1])
+    fecha_inicio = datetime.datetime(year,month, 1)
+    fecha_final = datetime.datetime(year, month, diasmes_arr[1])
 
     #Se obtiene el profile_powermeter
     try:
@@ -1324,7 +1324,7 @@ def getMonthlyReport(building, month, year):
     return mes
 
 def getMonthDaysForDailyReport(month, year):
-    actual_day = date(year=year, month=month, day=1)
+    actual_day = datetime.date(year=year, month=month, day=1)
     weekday = actual_day.weekday()
 
     notSunday = False
