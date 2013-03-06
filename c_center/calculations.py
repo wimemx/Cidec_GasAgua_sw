@@ -281,8 +281,6 @@ def obtenerFestivos(year):
     Ejemplo:
     1, 01 -> 1 de enero de 2012
     1-Lun, 02 = 1er Lunes de Febrero 2012 -> 6 de febrero de 2012
-
-
     """
     lista_festivos = []
 
