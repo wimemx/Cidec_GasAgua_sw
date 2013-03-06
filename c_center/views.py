@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #standard library imports
-from datetime import timedelta, datetime
+import datetime
 from dateutil.relativedelta import relativedelta
 import Image
 import cStringIO
@@ -34,7 +34,8 @@ from cidec_sw import settings
 from c_center.calculations import *
 from c_center.models import *
 from location.models import *
-from electric_rates.models import ElectricRatesDetail, DACElectricRateDetail, ThreeElectricRateDetail
+from electric_rates.models import ElectricRatesDetail, DACElectricRateDetail, \
+    ThreeElectricRateDetail
 from rbac.models import Operation, DataContextPermission, UserRole, Object, \
     PermissionAsigment, GroupObject
 from rbac.rbac_functions import has_permission, get_buildings_context, \
@@ -73,6 +74,12 @@ GRAPHS = dict(energia=GRAPHS_ENERGY, corriente=GRAPHS_I, voltaje=GRAPHS_V,
 
 VIRTUAL_PROFILE = ProfilePowermeter.objects.get(
     powermeter__powermeter_anotation="Medidor Virtual")
+
+MSG_PERMIT_ERROR = "<h2 style='font-family: helvetica; color: #878787; " \
+                   "font-size:14px;' text-align: center;>" \
+                   "No hay unidades de consumo asignadas, " \
+                   "por favor ponte en contacto con el administrador para " \
+                   "remediar esta situaci&oacute;n</h2>"
 
 
 def call_celery_delay(request):
@@ -198,31 +205,27 @@ def week_report_kwh(request):
                                                          "kWh")
 
             week_start_datetime, week_end_datetime = \
-                variety.get_week_start_datetime_end_datetime_tuple(year_current,
-                                                                   month_current,
-                                                                   week_current)
+                variety.get_week_start_datetime_end_datetime_tuple(
+                    year_current, month_current, week_current)
 
-            template_vars = {"datacontext": datacontext,
-                             'fi': week_start_datetime.date(),
-                             'ff': (
-                                 week_end_datetime - timedelta(days=1)).date(),
-                             'empresa': request.session['main_building'],
-                             'company': request.session['company'],
-                             'consumer_unit': request.session['consumer_unit'],
-                             'sidebar': request.session['sidebar'],
-                             'electric_data_name': "kWh",
-                             'week_report_cumulative': week_report_cumulative,
-                             'week_report_cumulative_total': week_report_cumulative_total
-            }
+            template_vars = dict(
+                datacontext=datacontext, fi=week_start_datetime.date(),
+                ff=(week_end_datetime - datetime.timedelta(days=1)).date(),
+                empresa=request.session['main_building'],
+                company=request.session['company'],
+                consumer_unit=request.session['consumer_unit'],
+                sidebar=request.session['sidebar'],
+                electric_data_name="kWh",
+                week_report_cumulative=week_report_cumulative,
+                week_report_cumulative_total=week_report_cumulative_total)
 
             template_vars_template = RequestContext(request, template_vars)
             return render_to_response("consumption_centers/main.html",
                                       template_vars_template)
         else:
             return render_to_response("generic_error.html",
-                                      RequestContext(request,
-                                                     {
-                                                         "datacontext": datacontext}
+                                      RequestContext(
+                                          request, {"datacontext": datacontext}
                                       ))
     else:
         template_vars = {}
@@ -265,16 +268,15 @@ def main_page(request):
                              'empresa': request.session['main_building'],
                              'company': request.session['company'],
                              'consumer_unit': request.session['consumer_unit'],
-                             'sidebar': request.session['sidebar']
-            }
+                             'sidebar': request.session['sidebar']}
             template_vars_template = RequestContext(request, template_vars)
             return render_to_response("consumption_centers/graphs/main.html",
                                       template_vars_template)
         else:
             return render_to_response("generic_error.html",
-                                      RequestContext(request,
-                                                     {
-                                                         "datacontext": datacontext}
+                                      RequestContext(
+                                          request,
+                                          {"datacontext": datacontext}
                                       ))
     else:
         template_vars = {}
@@ -285,6 +287,7 @@ def main_page(request):
         return render_to_response("empty.html", template_vars_template)
 
 
+# noinspection PyArgumentList
 @login_required(login_url='/')
 def cfe_bill(request):
     datacontext = get_buildings_context(request.user)[0]
@@ -292,9 +295,8 @@ def cfe_bill(request):
                       "Consultar recibo CFE") or request.user.is_superuser:
         set_default_session_vars(request, datacontext)
 
-        today = datetime.datetime.today().replace(hour=0, minute=0, second=0,
-                                                  tzinfo=timezone.
-                                                  get_current_timezone())
+        today = datetime.datetime.today().replace(
+            hour=0, minute=0, second=0, tzinfo=timezone.get_current_timezone())
         month = int(today.month)
         year = int(today.year)
         dict(one=1, two=2)
@@ -309,8 +311,7 @@ def cfe_bill(request):
                          'company': request.session['company'],
                          'month': month, 'year': year, 'month_list': month_list,
                          'year_list': year_list,
-                         'sidebar': request.session['sidebar']
-        }
+                         'sidebar': request.session['sidebar']}
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("consumption_centers/cfe.html",
@@ -330,7 +331,7 @@ def cfe_calculations(request):
                       "Consultar recibo CFE") or request.user.is_superuser:
         if not request.session['consumer_unit']:
             return HttpResponse(
-                content="<h2 style='font-family: helvetica; color: #878787; font-size:14px;' text-align: center;>No hay unidades de consumo asignadas, por favor ponte en contacto con el administrador para remediar esta situaci&oacute;n</h2>")
+                content=MSG_PERMIT_ERROR)
 
         set_default_session_vars(request, datacontext)
 
@@ -342,9 +343,9 @@ def cfe_calculations(request):
             year = int(request.GET['year'])
         else:
         #Obtener la fecha actual
-            today = datetime.datetime.today().replace(hour=0, minute=0,
-                                                      second=0,
-                                                      tzinfo=timezone.get_current_timezone())
+            today = datetime.datetime.today().replace(
+                hour=0, minute=0,  second=0,
+                tzinfo=timezone.get_current_timezone())
             month = int(today.month)
             year = int(today.year)
 
@@ -355,73 +356,85 @@ def cfe_calculations(request):
         #Se obtiene el tipo de tarifa del edificio (HM o DAC)
         tipo_tarifa = request.session['main_building'].electric_rate
 
-        if tipo_tarifa.pk == 1: #Tarifa HM
+        if tipo_tarifa.pk == 1:
+        #Tarifa HM
             cfe_historico = HMHistoricData.objects.filter(
-                monthly_cut_dates__building=request.session[
-                    'main_building']).filter(
+                monthly_cut_dates__building=request.session['main_building']
+            ).filter(
                 monthly_cut_dates__billing_month=billing_month)
-        elif tipo_tarifa.pk == 2: #Tarifa DAC
+        elif tipo_tarifa.pk == 2:
+        #Tarifa DAC
             cfe_historico = DacHistoricData.objects.filter(
-                monthly_cut_dates__building=request.session[
-                    'main_building']).filter(
+                monthly_cut_dates__building=request.session['main_building']
+            ).filter(
                 monthly_cut_dates__billing_month=billing_month)
-        else: #if tipo_tarifa.pk == 3: #Tarifa 3
+        else:
+            #if tipo_tarifa.pk == 3: #Tarifa 3
             cfe_historico = T3HistoricData.objects.filter(
-                monthly_cut_dates__building=request.session[
-                    'main_building']).filter(
+                monthly_cut_dates__building=request.session['main_building']
+            ).filter(
                 monthly_cut_dates__billing_month=billing_month)
 
         #Si hay información en la tabla del historico, toma los datos
         resultado_mensual = {}
         if cfe_historico:
-
-            if tipo_tarifa.pk == 1: #Tarifa HM
+            #Tarifa HM
+            if tipo_tarifa.pk == 1:
                 resultado_mensual["kw_base"] = cfe_historico[0].KW_base
-                resultado_mensual["kw_intermedio"] = cfe_historico[
-                    0].KW_intermedio
+                resultado_mensual["kw_intermedio"] = \
+                    cfe_historico[0].KW_intermedio
                 resultado_mensual["kw_punta"] = cfe_historico[0].KW_punta
 
                 resultado_mensual["kwh_base"] = cfe_historico[0].KWH_base
-                resultado_mensual["kwh_intermedio"] = cfe_historico[
-                    0].KWH_intermedio
+                resultado_mensual["kwh_intermedio"] = \
+                    cfe_historico[0].KWH_intermedio
                 resultado_mensual["kwh_punta"] = cfe_historico[0].KWH_punta
                 resultado_mensual["kwh_totales"] = cfe_historico[0].KWH_total
 
-                periodo = cfe_historico[0].monthly_cut_dates.date_init.astimezone(timezone.get_current_timezone()).\
-                          strftime('%d/%m/%Y %I:%M %p') + " - " + cfe_historico[0].monthly_cut_dates.date_end.\
-                astimezone(timezone.get_current_timezone()).strftime('%d/%m/%Y %I:%M %p')
+                fecha_ini = cfe_historico[0].monthly_cut_dates.date_init.\
+                    astimezone(timezone.get_current_timezone()).\
+                    strftime('%d/%m/%Y %I:%M %p')
+                fecha_fin = cfe_historico[0].monthly_cut_dates.date_end.\
+                    astimezone(timezone.get_current_timezone()).\
+                    strftime('%d/%m/%Y %I:%M %p')
+
+                periodo = fecha_ini + " - " + fecha_fin
 
                 resultado_mensual['periodo'] = periodo
                 resultado_mensual['corte'] = cfe_historico[0].monthly_cut_dates
-                resultado_mensual['demanda_facturable'] = cfe_historico[
-                    0].billable_demand
-                resultado_mensual['factor_potencia'] = cfe_historico[
-                    0].power_factor
+                resultado_mensual['demanda_facturable'] = \
+                    cfe_historico[0].billable_demand
+                resultado_mensual['factor_potencia'] = \
+                    cfe_historico[0].power_factor
                 resultado_mensual['kvarh_totales'] = cfe_historico[0].KVARH
-                resultado_mensual['tarifa_kwhb'] = cfe_historico[
-                    0].KWH_base_rate
-                resultado_mensual['tarifa_kwhi'] = cfe_historico[
-                    0].KWH_intermedio_rate
-                resultado_mensual['tarifa_kwhp'] = cfe_historico[
-                    0].KWH_punta_rate
-                resultado_mensual['tarifa_df'] = cfe_historico[
-                    0].billable_demand_rate
-                resultado_mensual['costo_energia'] = cfe_historico[
-                    0].energy_cost
-                resultado_mensual['costo_dfacturable'] = cfe_historico[
-                    0].billable_demand_cost
-                resultado_mensual['costo_fpotencia'] = cfe_historico[
-                    0].billable_demand_cost
+                resultado_mensual['tarifa_kwhb'] = \
+                    cfe_historico[0].KWH_base_rate
+                resultado_mensual['tarifa_kwhi'] = \
+                    cfe_historico[0].KWH_intermedio_rate
+                resultado_mensual['tarifa_kwhp'] = \
+                    cfe_historico[0].KWH_punta_rate
+                resultado_mensual['tarifa_df'] = \
+                    cfe_historico[0].billable_demand_rate
+                resultado_mensual['costo_energia'] = \
+                    cfe_historico[0].energy_cost
+                resultado_mensual['costo_dfacturable'] = \
+                    cfe_historico[0].billable_demand_cost
+                resultado_mensual['costo_fpotencia'] = \
+                    cfe_historico[0].billable_demand_cost
                 resultado_mensual['subtotal'] = cfe_historico[0].subtotal
                 resultado_mensual['iva'] = cfe_historico[0].iva
                 resultado_mensual['total'] = cfe_historico[0].total
                 resultado_mensual['status'] = 'OK'
 
-            if tipo_tarifa.pk == 2: #Tarifa Dac
+            #Tarifa Dac
+            if tipo_tarifa.pk == 2:
 
-                periodo = cfe_historico[0].monthly_cut_dates.date_init.astimezone(timezone.get_current_timezone()).\
-                          strftime('%d/%m/%Y %I:%M %p') + " - " + cfe_historico[0].monthly_cut_dates.date_end.\
-                          astimezone(timezone.get_current_timezone()).strftime('%d/%m/%Y %I:%M %p')
+                periodo = cfe_historico[0].monthly_cut_dates.date_init. \
+                              astimezone(timezone.get_current_timezone()). \
+                              strftime('%d/%m/%Y %I:%M %p') + " - " + \
+                          cfe_historico[0].monthly_cut_dates.date_end. \
+                              astimezone(timezone.get_current_timezone()). \
+                              strftime('%d/%m/%Y %I:%M %p')
 
                 resultado_mensual['periodo'] = periodo
                 resultado_mensual['corte'] = cfe_historico[0].monthly_cut_dates
@@ -434,11 +447,15 @@ def cfe_calculations(request):
                 resultado_mensual['total'] = cfe_historico[0].total
                 resultado_mensual['status'] = 'OK'
 
-            if tipo_tarifa.pk == 3: #Tarifa 3
+            #Tarifa 3
+            if tipo_tarifa.pk == 3:
 
-                periodo = cfe_historico[0].monthly_cut_dates.date_init.astimezone(timezone.get_current_timezone()).\
-                          strftime('%d/%m/%Y %I:%M %p') + " - " + cfe_historico[0].monthly_cut_dates.date_end.\
-                          astimezone(timezone.get_current_timezone()).strftime('%d/%m/%Y %I:%M %p')
+                periodo = cfe_historico[0].monthly_cut_dates.date_init.\
+                              astimezone(timezone.get_current_timezone()).\
+                              strftime('%d/%m/%Y %I:%M %p') + " - " + \
+                          cfe_historico[0].monthly_cut_dates.date_end.\
+                              astimezone(timezone.get_current_timezone()).\
+                              strftime('%d/%m/%Y %I:%M %p')
 
                 resultado_mensual['periodo'] = periodo
                 resultado_mensual['corte'] = cfe_historico[0].monthly_cut_dates
@@ -446,45 +463,43 @@ def cfe_calculations(request):
                 resultado_mensual['tarifa_kwh'] = cfe_historico[0].KWH_rate
                 resultado_mensual['kw_totales'] = cfe_historico[0].max_demand
                 resultado_mensual['tarifa_kw'] = cfe_historico[0].demand_rate
-                resultado_mensual['factor_potencia'] = cfe_historico[
-                    0].power_factor
-                resultado_mensual['costo_energia'] = cfe_historico[
-                    0].energy_cost
-                resultado_mensual['costo_demanda'] = cfe_historico[
-                    0].demand_cost
-                resultado_mensual['costo_fpotencia'] = cfe_historico[
-                    0].power_factor_bonification
+                resultado_mensual['factor_potencia'] = \
+                    cfe_historico[0].power_factor
+                resultado_mensual['costo_energia'] = \
+                    cfe_historico[0].energy_cost
+                resultado_mensual['costo_demanda'] = \
+                    cfe_historico[0].demand_cost
+                resultado_mensual['costo_fpotencia'] = \
+                    cfe_historico[0].power_factor_bonification
                 resultado_mensual['subtotal'] = cfe_historico[0].subtotal
                 resultado_mensual['iva'] = cfe_historico[0].iva
                 resultado_mensual['total'] = cfe_historico[0].total
                 resultado_mensual['status'] = 'OK'
 
-        else:#si no, hace el calculo al momento. NOTA: Se hace el calculo, pero no se guarda
-
-            #print getMonthlyReport(request.session['main_building'], 1, 2013)
-
-            # days_arr = getMonthDaysForDailyReport(1, 2013)
-            # for day_n in days_arr:
-            #     dailyReport(request.session['main_building'], request.session['consumer_unit'], day_n)
-
-
+        else:
+        #si no, hace el calculo al momento. NOTA: Se hace el calculo,
+        # pero no se guarda
             #Se obtiene la fecha inicial y la fecha final
             building = request.session['main_building']
 
             hasDates = inMonthlyCutdates(building, month, year)
             if hasDates:
                 s_date, e_date = getStartEndDateUTC(building, month, year)
-                resultado_mensual['corte'] = getMonthlyCutDate(building, month, year)
+                resultado_mensual['corte'] = getMonthlyCutDate(building, month,
+                                                               year)
                 template_vars['control'] = resultado_mensual['corte'].pk
             else:
                 template_vars['control'] = "NO tiene fechas"
                 s_date, e_date = getStartEndDateUTC(building, month, year)
-                #La siguiente sección sirve para poner al corriente las fechas de corte.
+                #La siguiente sección sirve para poner al corriente las
+                #fechas de corte.
 
-                #Se obtiene el número de días entre la fecha final y la fecha inicial
+                #Se obtiene el número de días entre la fecha final y la
+                #fecha inicial
                 num_dias = (e_date - s_date).days
 
-                #Si son más de 30 dias es necesario poner al corriente las fechas de corte
+                #Si son más de 30 dias es necesario poner al corriente las
+                #fechas de corte
                 if num_dias > 35:
 
                     meses_restantes = num_dias / 30
@@ -495,16 +510,20 @@ def cfe_calculations(request):
                             building=building).order_by("-billing_month")
                         last_cutdate = last_cutdates[0]
 
-                        #A la fecha inicial se le suman 30 dias, para obtener la fecha final y se guarda
-                        last_cutdate.date_end = last_cutdate.date_init + relativedelta(
-                            days=+30)
+                        #A la fecha inicial se le suman 30 dias, para obtener
+                        #la fecha final y se guarda
+                        last_cutdate.date_end = last_cutdate.date_init + \
+                                                relativedelta(days=+30)
                         last_cutdate.save()
 
-                        #Se guarda el siguiente mes de facturación. Fecha inicial = fecha final del mes anterior. Fecha final = vacía
+                        #Se guarda el siguiente mes de facturación.
+                        #Fecha inicial = fecha final del mes anterior.
+                        #Fecha final = vacía
+                        billing_month = last_cutdate.billing_month + \
+                                        relativedelta(months=+1)
                         new_cut = MonthlyCutDates(
                             building=building,
-                            billing_month=last_cutdate.billing_month + relativedelta(
-                                months=+1),
+                            billing_month=billing_month,
                             date_init=last_cutdate.date_end
                         )
                         new_cut.save()
@@ -512,20 +531,24 @@ def cfe_calculations(request):
                         c_meses += 1
                 elif num_dias < 30:
                     cut_date_lb = s_date + relativedelta(days=+30)
-                    template_vars[
-                        'message'] = 'El corte para este mes se realizará automáticamente el día ' + cut_date_lb.strftime(
-                        "%d/%m/%Y")
+                    template_vars['message'] = \
+                        'El corte para este mes se realizará ' \
+                        'automáticamente el día ' + \
+                        cut_date_lb.strftime("%d/%m/%Y")
                     template_vars['type'] = "n_notif"
                 elif 30 < num_dias <= 35:
-                    template_vars[
-                        'message'] = 'La facturación para este mes ya rebasa los 30 días. Selecciona la fecha de corte <a href="#">aquí</a>'
+                    template_vars['message'] = 'La facturación para este ' \
+                                               'mes ya rebasa los 30 días. ' \
+                                               'Selecciona la fecha de corte ' \
+                                               '<a href="#">aquí</a>'
                     template_vars['type'] = "n_error"
                     template_vars['morethan30'] = True
 
 
                 #Se obtienen nuevamente las fechas
                 s_date, e_date = getStartEndDateUTC(building, month, year)
-                resultado_mensual['corte'] = getMonthlyCutDate(building, month, year)
+                resultado_mensual['corte'] = getMonthlyCutDate(building, month,
+                                                               year)
                 template_vars['control'] = resultado_mensual['corte'].pk
 
             #Se general el recibo.
@@ -591,7 +614,9 @@ def getStartEndDateUTC(building, month, year):
     #Se obtiene la fecha final
     if month_cut_dates.date_end:
         e_date = month_cut_dates.date_end
-    else:#Si no tiene fecha final, se toma el día de hoy (debe estar en formato, UTC)
+    else:
+        #Si no tiene fecha final, se toma el día de hoy
+        # (debe estar en formato, UTC)
         e_date = datetime.datetime.today().utcnow().replace(tzinfo=pytz.utc)
 
     return s_date, e_date
@@ -663,6 +688,7 @@ def getStartEndDate(building, month, year):
 
     return s_date, e_date
 
+
 def grafica_datoscsv(request):
     if request.method == "GET":
         #electric_data = ""
@@ -702,11 +728,12 @@ def grafica_datoscsv(request):
                 datetime_end = \
                     datetime.datetime.strptime(request.GET[date_end_get_key],
                                                "%Y-%m-%d") + \
-                    timedelta(days=1)
+                    datetime.timedelta(days=1)
 
             else:
                 datetime_start = get_default_datetime_start()
-                datetime_end = get_default_datetime_end() + timedelta(days=1)
+                datetime_end = get_default_datetime_end() + datetime.timedelta(
+                    days=1)
 
             try:
                 consumer_unit = get_data_warehouse_consumer_unit_by_id(
@@ -797,14 +824,13 @@ def render_cumulative_comparison_in_week(request):
                     week_day_date = start_datetime.date()
                     for index in range(0, 7):
                         week_day_name, electric_data_value = \
-                            consumer_unit_electric_data_tuple_list_current[
-                                index]
+                            consumer_unit_electric_data_tuple_list_current[index]
 
                         consumer_unit_electric_data_tuple_list_current[index] \
                             = \
                             (week_day_date, electric_data_value)
 
-                        week_day_date += timedelta(days=1)
+                        week_day_date += datetime.timedelta(days=1)
 
                     consumer_units_data_tuple_list.append(
                         (consumer_unit_current,
@@ -840,7 +866,8 @@ def render_cumulative_comparison_in_week(request):
                     (consumer_unit, consumer_unit_total))
 
                 week_day_index = 0
-                for week_day_date, electric_data_value in electric_data_tuple_list:
+                for week_day_date, \
+                        electric_data_value in electric_data_tuple_list:
                     electric_data_percentage = \
                         0 if consumer_unit_total == 0 else \
                             electric_data_value / \
@@ -861,8 +888,8 @@ def render_cumulative_comparison_in_week(request):
                 week_days_data_tuple_list
 
             template_variables['all_meditions'] = all_meditions
-            template_variables["consumer_unit_electric_data_total_tuple_list"] = \
-                consumer_unit_electric_data_total_tuple_list
+            template_variables["consumer_unit_electric_data_total_tuple_list"] \
+                = consumer_unit_electric_data_total_tuple_list
 
             template_context = RequestContext(request, template_variables)
             return render_to_response(
@@ -1451,8 +1478,11 @@ def status_cluster(request, id_cluster):
 
 @login_required(login_url='/')
 def status_batch_cluster(request):
-    if has_permission(request.user, UPDATE, "Modificar cluster de empresas") \
-        or request.user.is_superuser:
+    if has_permission(
+            request.user,
+            UPDATE,
+            "Modificar cluster de empresas") or request.user.is_superuser:
+
         if request.method == "GET":
             raise Http404
         if request.POST['actions'] == 'status':
@@ -1487,8 +1517,10 @@ def status_batch_cluster(request):
 @login_required(login_url='/')
 def edit_cluster(request, id_cluster):
     datacontext = get_buildings_context(request.user)[0]
-    if has_permission(request.user, UPDATE, "Modificar cluster de empresas") \
-        or request.user.is_superuser:
+    if has_permission(
+            request.user,
+            UPDATE,
+            "Modificar cluster de empresas") or request.user.is_superuser:
         cluster = get_object_or_404(Cluster, pk=id_cluster)
 
         #Se obtienen los sectores
@@ -2000,7 +2032,8 @@ def add_powermeter(request):
                 powermeter_model__pk=pw_model).filter(
                 powermeter_serial=pw_serial)
             if pwValidate:
-                message = "Ya existe un Medidor con ese Modelo y ese Número de Serie"
+                message = "Ya existe un Medidor con ese Modelo y ese " \
+                          "Número de Serie"
                 _type = "n_notif"
                 continuar = False
 
@@ -2023,7 +2056,8 @@ def add_powermeter(request):
                 template_vars["type"] = "n_success"
 
                 if has_permission(request.user, VIEW,
-                                  "Ver medidores eléctricos") or request.user.is_superuser:
+                                  "Ver medidores eléctricos") or \
+                        request.user.is_superuser:
                     return HttpResponseRedirect("/buildings/medidores?msj=" +
                                                 template_vars["message"] +
                                                 "&ntype=n_success")
@@ -2049,7 +2083,8 @@ def add_powermeter(request):
 def edit_powermeter(request, id_powermeter):
     datacontext = get_buildings_context(request.user)[0]
     if has_permission(request.user, UPDATE,
-                      "Modificar medidores eléctricos") or request.user.is_superuser:
+                      "Modificar medidores eléctricos") or \
+            request.user.is_superuser:
         powermeter = get_object_or_404(Powermeter, pk=id_powermeter)
 
         pw_models_list = PowermeterModel.objects.all().exclude(
@@ -2089,13 +2124,15 @@ def edit_powermeter(request, id_powermeter):
                 continuar = False
 
             #Valida el nombre (para el caso de los repetidos)
-            if powermeter.powermeter_model_id != pw_model and powermeter.powermeter_serial != pw_serial:
+            if powermeter.powermeter_model_id != pw_model and \
+                            powermeter.powermeter_serial != pw_serial:
                 #Valida por si le da muchos clics al boton
                 pwValidate = Powermeter.objects.filter(
                     powermeter_model__pk=pw_model).filter(
                     powermeter_serial=pw_serial)
                 if pwValidate:
-                    message = "Ya existe un Medidor con ese Modelo y ese Número de Serie"
+                    message = "Ya existe un medidor con ese modelo y ese " \
+                              "número de serie"
                     _type = "n_notif"
                     continuar = False
 
@@ -2113,7 +2150,8 @@ def edit_powermeter(request, id_powermeter):
                 message = "Medidor editado exitosamente"
                 _type = "n_success"
                 if has_permission(request.user, VIEW,
-                                  "Ver medidores eléctricos") or request.user.is_superuser:
+                                  "Ver medidores eléctricos") or \
+                        request.user.is_superuser:
                     return HttpResponseRedirect("/buildings/medidores?msj=" +
                                                 message +
                                                 "&ntype=n_success")
@@ -2191,13 +2229,12 @@ def view_powermeter(request):
 
         if search:
             lista = Powermeter.objects.filter(
-                Q(powermeter_anotation__icontains=request.GET['search']) | 
-                Q(powermeter_model__powermeter_brand__icontains=request.GET['search']) | 
-                Q(powermeter_model__powermeter_model__icontains=request.GET['search'])).order_by(order)
+                Q(powermeter_anotation__icontains=request.GET['search']) |
+                Q(powermeter_model__powermeter_brand__icontains=
+                    request.GET['search']) |
+                Q(powermeter_model__powermeter_model__icontains=
+                    request.GET['search'])).order_by(order)
         else:
-            #powermeter_objs = Powermeter.objects.all()
-            #powermeter_ids = [pw.pk for pw in powermeter_objs]
-            #profiles_pw_objs = ProfilePowermeter.objects.filter(powermeter__pk__in = powermeter_ids).filter(profile_powermeter_status = 1)
             lista = Powermeter.objects.all().order_by(order)
 
         paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
@@ -2240,8 +2277,10 @@ def view_powermeter(request):
 
 @login_required(login_url='/')
 def status_batch_powermeter(request):
-    if has_permission(request.user, UPDATE,
-                      "Modificar medidores eléctricos") or request.user.is_superuser:
+    if has_permission(
+            request.user,
+            UPDATE,
+            "Modificar medidores eléctricos") or request.user.is_superuser:
         if request.method == "GET":
             raise Http404
         if request.POST['actions'] == 'status':
@@ -2255,7 +2294,8 @@ def status_batch_powermeter(request):
                         powermeter.status = 0
                     powermeter.save()
 
-            mensaje = "Los medidores seleccionados han cambiado su estatus correctamente"
+            mensaje = "Los medidores seleccionados han cambiado su estatus " \
+                      "correctamente"
             if "ref" in request.GET:
                 return HttpResponseRedirect("/buildings/editar_ie/" +
                                             request.GET['ref'] + "/?msj=" +
@@ -2280,8 +2320,10 @@ def status_batch_powermeter(request):
 
 @login_required(login_url='/')
 def status_powermeter(request, id_powermeter):
-    if has_permission(request.user, UPDATE,
-                      "Modificar medidores eléctricos") or request.user.is_superuser:
+    if has_permission(
+            request.user,
+            UPDATE,
+            "Modificar medidores eléctricos") or request.user.is_superuser:
         powermeter = get_object_or_404(Powermeter, pk=id_powermeter)
         if powermeter.status == 0:
             powermeter.status = 1
@@ -2300,10 +2342,9 @@ def status_powermeter(request, id_powermeter):
                                             request.GET['ref'] + "/?msj=" +
                                             mensaje +
                                             "&ntype=" + _type)
-            return HttpResponseRedirect("/buildings/editar_ie/" +
-                                        request.GET[
-                                            'ref'] + "/?msj=" + mensaje +
-                                        "&ntype=" + _type)
+            url = "/buildings/editar_ie/" + request.GET['ref'] + "/?msj=" + \
+                  mensaje + "&ntype=" + _type
+            return HttpResponseRedirect(url)
         return HttpResponseRedirect("/buildings/medidores/?msj=" + mensaje +
                                     "&ntype=" + _type)
     else:
@@ -2363,7 +2404,8 @@ def see_powermeter(request, id_powermeter):
 @login_required(login_url='/')
 def add_electric_device_type(request):
     if has_permission(request.user, CREATE,
-                      "Alta de dispositivos y sistemas eléctricos") or request.user.is_superuser:
+                      "Alta de dispositivos y sistemas eléctricos") or \
+            request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         post = ''
@@ -2384,11 +2426,13 @@ def add_electric_device_type(request):
 
             continuar = True
             if edt_name == '':
-                message = "El nombre del Tipo de Equipo Eléctrico no puede quedar vacío"
+                message = "El nombre del Tipo de Equipo Eléctrico no puede " \
+                          "quedar vacío"
                 _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(edt_name):
-                message = "El nombre del Tipo de Equipo Eléctrico contiene caracteres inválidos"
+                message = "El nombre del Tipo de Equipo Eléctrico contiene " \
+                          "caracteres inválidos"
                 _type = "n_notif"
                 edt_name = ""
                 continuar = False
@@ -2411,12 +2455,13 @@ def add_electric_device_type(request):
                 )
                 newElectricDeviceType.save()
 
-                template_vars[
-                    "message"] = "Tipo de Equipo Eléctrico creado exitosamente"
+                template_vars["message"] = "Tipo de Equipo Eléctrico creado " \
+                                           "exitosamente"
                 template_vars["type"] = "n_success"
 
                 if has_permission(request.user, VIEW,
-                                  "Ver medidores eléctricos") or request.user.is_superuser:
+                                  "Ver medidores eléctricos") or \
+                        request.user.is_superuser:
                     return HttpResponseRedirect(
                         "/buildings/tipos_equipo_electrico?msj=" +
                         template_vars["message"] +
@@ -2442,11 +2487,13 @@ def add_electric_device_type(request):
 @login_required(login_url='/')
 def edit_electric_device_type(request, id_edt):
     if has_permission(request.user, UPDATE,
-                      "Modificar dispositivos y sistemas eléctricos") or request.user.is_superuser:
+                      "Modificar dispositivos y sistemas eléctricos") or \
+            request.user.is_superuser:
         edt_obj = get_object_or_404(ElectricDeviceType, pk=id_edt)
-
-        post = {'devicetypename': edt_obj.electric_device_type_name,
-                'devicetypedescription': edt_obj.electric_device_type_description}
+        devicetypename = edt_obj.electric_device_type_name
+        devicetypedescription = edt_obj.electric_device_type_description
+        post = {'devicetypename': devicetypename,
+                'devicetypedescription': devicetypedescription}
 
         datacontext, b_list = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
@@ -2459,11 +2506,13 @@ def edit_electric_device_type(request, id_edt):
 
             continuar = True
             if edt_name == '':
-                message = "El nombre del Tipo de Equipo Eléctrico no puede quedar vacío"
+                message = "El nombre del Tipo de Equipo Eléctrico no puede " \
+                          "quedar vacío"
                 _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(edt_name):
-                message = "El nombre del Tipo de Equipo Eléctrico contiene caracteres inválidos"
+                message = "El nombre del Tipo de Equipo Eléctrico contiene " \
+                          "caracteres inválidos"
                 _type = "n_notif"
                 edt_name = ""
                 continuar = False
@@ -2474,7 +2523,8 @@ def edit_electric_device_type(request, id_edt):
                 e_typeValidate = ElectricDeviceType.objects.filter(
                     electric_device_type_name=edt_name)
                 if e_typeValidate:
-                    message = "Ya existe un Tipo de Equipo Eléctrico con ese nombre"
+                    message = "Ya existe un Tipo de Equipo Eléctrico con ese " \
+                              "nombre"
                     _type = "n_notif"
                     continuar = False
 
@@ -2488,8 +2538,10 @@ def edit_electric_device_type(request, id_edt):
 
                 message = "Tipo de Equipo Eléctrico editado exitosamente"
                 _type = "n_success"
-                if has_permission(request.user, VIEW,
-                                  "Ver dispositivos y sistemas eléctricos") or request.user.is_superuser:
+                if has_permission(
+                        request.user, VIEW,
+                        "Ver dispositivos y sistemas eléctricos") or \
+                        request.user.is_superuser:
                     return HttpResponseRedirect(
                         "/buildings/tipos_equipo_electrico?msj=" +
                         message +
@@ -2521,7 +2573,8 @@ def edit_electric_device_type(request, id_edt):
 @login_required(login_url='/')
 def view_electric_device_type(request):
     if has_permission(request.user, VIEW,
-                      "Ver dispositivos y sistemas eléctricos") or request.user.is_superuser:
+                      "Ver dispositivos y sistemas eléctricos") or \
+            request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         if "search" in request.GET:
@@ -2556,11 +2609,14 @@ def view_electric_device_type(request):
                     order_status = "asc"
 
         if search:
-            lista = ElectricDeviceType.objects.filter(Q(
-                electric_device_type_name__icontains=request.GET['search']) | Q(
-                electric_device_type_description__icontains=request.GET[
-                    'search'])).exclude(
-                electric_device_type_status=2).order_by(order)
+            lista = ElectricDeviceType.objects.filter(
+                Q(
+                    electric_device_type_name__icontains=request.GET['search']
+                ) |
+                Q(
+                    electric_device_type_description__icontains=
+                    request.GET['search']
+                )).exclude(electric_device_type_status=2).order_by(order)
 
         else:
             lista = ElectricDeviceType.objects.all().exclude(
@@ -2608,7 +2664,8 @@ def view_electric_device_type(request):
 @login_required(login_url='/')
 def delete_batch_electric_device_type(request):
     if has_permission(request.user, UPDATE,
-                      "Modificar dispositivos y sistemas eléctricos") or request.user.is_superuser:
+                      "Modificar dispositivos y sistemas eléctricos") or \
+            request.user.is_superuser:
         if request.method == "GET":
             raise Http404
         if request.POST['actions'] == 'status':
@@ -2622,7 +2679,8 @@ def delete_batch_electric_device_type(request):
                         edt_obj.electric_device_type_status = 0
                     edt_obj.save()
 
-            mensaje = "Los Tipos de Equipo Eléctrico han cambiado su estatus correctamente"
+            mensaje = "Los Tipos de Equipo Eléctrico han cambiado su estatus " \
+                      "correctamente"
             return HttpResponseRedirect(
                 "/buildings/tipos_equipo_electrico/?msj=" + mensaje +
                 "&ntype=n_success")
@@ -2644,7 +2702,8 @@ def delete_batch_electric_device_type(request):
 @login_required(login_url='/')
 def status_batch_electric_device_type(request):
     if has_permission(request.user, UPDATE,
-                      "Modificar dispositivos y sistemas eléctricos") or request.user.is_superuser:
+                      "Modificar dispositivos y sistemas eléctricos") or \
+            request.user.is_superuser:
         if request.method == "GET":
             raise Http404
         if request.POST['actions'] == 'status':
@@ -2658,7 +2717,8 @@ def status_batch_electric_device_type(request):
                         edt_obj.electric_device_type_status = 0
                     edt_obj.save()
 
-            mensaje = "Los Tipos de Equipo Eléctrico han cambiado su estatus correctamente"
+            mensaje = "Los Tipos de Equipo Eléctrico han cambiado su estatus " \
+                      "correctamente"
             return HttpResponseRedirect(
                 "/buildings/tipos_equipo_electrico/?msj=" + mensaje +
                 "&ntype=n_success")
@@ -2674,7 +2734,8 @@ def status_batch_electric_device_type(request):
 @login_required(login_url='/')
 def status_electric_device_type(request, id_edt):
     if has_permission(request.user, UPDATE,
-                      "Modificar dispositivos y sistemas eléctricos") or request.user.is_superuser:
+                      "Modificar dispositivos y sistemas eléctricos") or \
+            request.user.is_superuser:
         edt_obj = get_object_or_404(ElectricDeviceType, pk=id_edt)
         if edt_obj.electric_device_type_status == 0:
             edt_obj.electric_device_type_status = 1
@@ -2684,7 +2745,8 @@ def status_electric_device_type(request, id_edt):
             str_status = "Inactivo"
 
         edt_obj.save()
-        mensaje = "El estatus del tipo de equipo eléctrico ha cambiado a " + str_status
+        mensaje = "El estatus del tipo de equipo eléctrico ha cambiado a " + \
+                  str_status
         _type = "n_success"
 
         return HttpResponseRedirect(
@@ -2742,7 +2804,8 @@ def add_company(request):
                 _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(cmp_name):
-                message = "El nombre de la empresa contiene caracteres inválidos"
+                message = "El nombre de la empresa contiene caracteres " \
+                          "inválidos"
                 _type = "n_notif"
                 cmp_name = ""
                 continuar = False
@@ -2825,13 +2888,13 @@ def edit_company(request, id_cpy):
                       "Modificar empresas") or request.user.is_superuser:
         company_clusters = ClusterCompany.objects.filter(id=id_cpy)
 
-        post = {'cmp_id': company_clusters[0].company.id,
-                'cmp_name': company_clusters[0].company.company_name,
-                'cmp_description': company_clusters[
-                    0].company.company_description,
-                'cmp_cluster': company_clusters[0].cluster.pk,
-                'cmp_sector': company_clusters[0].company.sectoral_type.pk,
-                'cmp_logo': company_clusters[0].company.company_logo}
+        c_clust = company_clusters[0]
+        post = {'cmp_id': c_clust.company.id,
+                'cmp_name': c_clust.company.company_name,
+                'cmp_description': c_clust.company.company_description,
+                'cmp_cluster': c_clust.cluster.pk,
+                'cmp_sector': c_clust.company.sectoral_type.pk,
+                'cmp_logo': c_clust.company.company_logo}
 
         #Get Clusters
         #clusters = Cluster.objects.all().exclude(cluster_status = 2)
@@ -2857,7 +2920,8 @@ def edit_company(request, id_cpy):
                 _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(cmp_name):
-                message = "El nombre de la empresa contiene caracteres inválidos"
+                message = "El nombre de la empresa contiene caracteres " \
+                          "inválidos"
                 _type = "n_notif"
                 cmp_name = ""
                 continuar = False
@@ -2994,10 +3058,14 @@ def view_companies(request):
 
         if search:
             lista = ClusterCompany.objects.filter(
-                Q(company__company_name__icontains=request.GET['search']) | Q(
-                    company__company_description__icontains=request.GET[
-                        'search']) | Q(
-                    cluster__cluster_name__icontains=request.GET['search']) | Q(
+                Q(
+                    company__company_name__icontains=request.GET['search']) |
+                Q(
+                    company__company_description__icontains=
+                    request.GET['search']) |
+                Q(
+                    cluster__cluster_name__icontains=request.GET['search']) |
+                Q(
                     company__sectoral_type__sectorial_type_name__icontains=
                     request.GET['search'])).exclude(
                 company__company_status=2).order_by(order)
@@ -3063,7 +3131,8 @@ def status_batch_companies(request):
                         cpy_obj.company_status = 0
                     cpy_obj.save()
 
-            mensaje = "Las empresas seleccionadas han cambiado su estatus correctamente"
+            mensaje = "Las empresas seleccionadas han cambiado su estatus " \
+                      "correctamente"
             return HttpResponseRedirect("/buildings/empresas/?msj=" + mensaje +
                                         "&ntype=n_success")
         else:
@@ -3093,7 +3162,8 @@ def status_company(request, id_cpy):
             str_status = "Inactivo"
 
         company.save()
-        mensaje = "El estatus de la empresa " + company.company_name + " ha cambiado a " + str_status
+        mensaje = "El estatus de la empresa " + company.company_name + \
+                  " ha cambiado a " + str_status
         _type = "n_success"
 
         return HttpResponseRedirect("/buildings/empresas/?msj=" + mensaje +
@@ -3148,16 +3218,23 @@ def c_center_structures(request):
         clustersObjs = Cluster.objects.all()
         visualizacion = "<div class='hierarchy_container'>"
         for clst in clustersObjs:
-            visualizacion += "<div class='hrchy_cluster'><span class='hrchy_cluster_label'>" + clst.cluster_name + "</span>"
+            visualizacion += "<div class='hrchy_cluster'>" \
+                             "<span class='hrchy_cluster_label'>" + \
+                             clst.cluster_name + "</span>"
             companiesObjs = ClusterCompany.objects.filter(cluster=clst)
             visualizacion += "<div>"
             for comp in companiesObjs:
-                visualizacion += "<div class='hrchy_company'><span class='hrchy_company_label'>" + comp.company.company_name + "</span>"
+                visualizacion += "<div class='hrchy_company'>" \
+                                 "<span class='hrchy_company_label'>" + \
+                                 comp.company.company_name + "</span>"
                 buildingsObjs = CompanyBuilding.objects.filter(company=comp)
                 if buildingsObjs:
                     visualizacion += "<div>"
                     for bld in buildingsObjs:
-                        visualizacion += "<div class='hrchy_building'><span> - Edificio: " + bld.building.building_name + "</span></div>"
+                        visualizacion += "<div class='hrchy_building'>" \
+                                         "<span> - Edificio: " + \
+                                         bld.building.building_name + \
+                                         "</span></div>"
                     visualizacion += "</div>"
                 visualizacion += "</div>"
             visualizacion += "</div>"
@@ -3192,7 +3269,8 @@ def c_center_structures(request):
 @login_required(login_url='/')
 def add_buildingtype(request):
     if has_permission(request.user, CREATE,
-                      "Alta de tipos de edificios") or request.user.is_superuser:
+                      "Alta de tipos de edificios") or \
+            request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
@@ -3216,7 +3294,8 @@ def add_buildingtype(request):
                 _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(btype_name):
-                message = "El nombre del Tipo de Edificio contiene caracteres inválidos"
+                message = "El nombre del Tipo de Edificio contiene caracteres" \
+                          " inválidos"
                 _type = "n_notif"
                 btype_name = ""
                 continuar = False
@@ -3239,8 +3318,8 @@ def add_buildingtype(request):
                 )
                 newBuildingType.save()
 
-                template_vars[
-                    "message"] = "Tipo de Edificio creado exitosamente"
+                template_vars["message"] = "Tipo de Edificio creado " \
+                                           "exitosamente"
                 template_vars["type"] = "n_success"
 
                 if has_permission(request.user, VIEW,
@@ -3270,7 +3349,8 @@ def add_buildingtype(request):
 @login_required(login_url='/')
 def edit_buildingtype(request, id_btype):
     if has_permission(request.user, UPDATE,
-                      "Modificar tipo de edificio") or request.user.is_superuser:
+                      "Modificar tipo de edificio") or \
+            request.user.is_superuser:
         building_type = BuildingType.objects.get(id=id_btype)
 
         post = {'btype_name': building_type.building_type_name,
@@ -3292,7 +3372,8 @@ def edit_buildingtype(request, id_btype):
                 _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(btype_name):
-                message = "El nombre del Tipo de Edificio contiene caracteres inválidos"
+                message = "El nombre del Tipo de Edificio contiene caracteres" \
+                          " inválidos"
                 _type = "n_notif"
                 btype_name = ""
                 continuar = False
@@ -3318,7 +3399,8 @@ def edit_buildingtype(request, id_btype):
                 message = "Tipo de Edificio editado exitosamente"
                 _type = "n_success"
                 if has_permission(request.user, VIEW,
-                                  "Ver tipos de edificios") or request.user.is_superuser:
+                                  "Ver tipos de edificios") or \
+                        request.user.is_superuser:
                     return HttpResponseRedirect(
                         "/buildings/tipos_edificios?msj=" +
                         message +
@@ -3387,10 +3469,11 @@ def view_buildingtypes(request):
 
         if search:
             lista = BuildingType.objects.filter(
-                Q(building_type_name__icontains=request.GET['search']) | Q(
-                    building_type_description__icontains=request.GET[
-                        'search'])).exclude(
-                building_type_status=2).order_by(order)
+                Q(building_type_name__icontains=request.GET['search']) |
+                Q(building_type_description__icontains=request.GET['search'])
+            ).exclude(
+                building_type_status=2
+            ).order_by(order)
 
         else:
             lista = BuildingType.objects.all().exclude(
@@ -3438,7 +3521,8 @@ def view_buildingtypes(request):
 @login_required(login_url='/')
 def status_batch_buildingtypes(request):
     if has_permission(request.user, UPDATE,
-                      "Modificar tipo de edificio") or request.user.is_superuser:
+                      "Modificar tipo de edificio") or \
+            request.user.is_superuser:
         if request.method == "GET":
             raise Http404
         if request.POST['actions'] == 'status':
@@ -3452,7 +3536,8 @@ def status_batch_buildingtypes(request):
                         btype_obj.building_type_status = 0
                     btype_obj.save()
 
-            mensaje = "Los tipos de edificios han cambiado su estatus correctamente"
+            mensaje = "Los tipos de edificios han cambiado su estatus " \
+                      "correctamente"
             return HttpResponseRedirect(
                 "/buildings/tipos_edificios/?msj=" + mensaje +
                 "&ntype=n_success")
@@ -3474,7 +3559,8 @@ def status_batch_buildingtypes(request):
 @login_required(login_url='/')
 def status_buildingtype(request, id_btype):
     if has_permission(request.user, UPDATE,
-                      "Modificar tipo de edificio") or request.user.is_superuser:
+                      "Modificar tipo de edificio") or \
+            request.user.is_superuser:
         building_type = get_object_or_404(BuildingType, pk=id_btype)
         if building_type.building_type_status == 0:
             building_type.building_type_status = 1
@@ -3484,7 +3570,9 @@ def status_buildingtype(request, id_btype):
             str_status = "Inactivo"
 
         building_type.save()
-        mensaje = "El estatus del tipo de edificio " + building_type.building_type_name + " ha cambiado a " + str_status
+        mensaje = "El estatus del tipo de edificio " + \
+                  building_type.building_type_name + " ha cambiado a " + \
+                  str_status
         _type = "n_success"
 
         return HttpResponseRedirect(
@@ -3533,7 +3621,8 @@ def add_sectoraltype(request):
                 continuar = False
 
             if not variety.validate_string(stype_name):
-                message = "El nombre del tipo de sector contiene caracteres inválidos"
+                message = "El nombre del tipo de sector contiene caracteres " \
+                          "inválidos"
                 _type = "n_notif"
                 stype_name = ""
                 continuar = False
@@ -3560,7 +3649,8 @@ def add_sectoraltype(request):
                 template_vars["type"] = "n_success"
 
                 if has_permission(request.user, VIEW,
-                                  "Ver tipos de sectores") or request.user.is_superuser:
+                                  "Ver tipos de sectores") or \
+                        request.user.is_superuser:
                     return HttpResponseRedirect(
                         "/buildings/tipos_sectores?msj=" +
                         template_vars["message"] +
@@ -3586,7 +3676,8 @@ def add_sectoraltype(request):
 @login_required(login_url='/')
 def edit_sectoraltype(request, id_stype):
     if has_permission(request.user, UPDATE,
-                      "Modificar tipos de sectores") or request.user.is_superuser:
+                      "Modificar tipos de sectores") or \
+            request.user.is_superuser:
         sectoral_type = SectoralType.objects.get(id=id_stype)
 
         post = {'stype_name': sectoral_type.sectorial_type_name,
@@ -3609,7 +3700,8 @@ def edit_sectoraltype(request, id_stype):
                 continuar = False
 
             if not variety.validate_string(stype_name):
-                message = "El nombre del tipo de sector contiene caracteres inválidos"
+                message = "El nombre del tipo de sector contiene caracteres " \
+                          "inválidos"
                 _type = "n_notif"
                 stype_name = ""
                 continuar = False
@@ -3635,7 +3727,8 @@ def edit_sectoraltype(request, id_stype):
                 message = "Tipo de Sector editado exitosamente"
                 _type = "n_success"
                 if has_permission(request.user, VIEW,
-                                  "Ver tipos de sectores") or request.user.is_superuser:
+                                  "Ver tipos de sectores") or \
+                        request.user.is_superuser:
                     return HttpResponseRedirect(
                         "/buildings/tipos_sectores?msj=" +
                         message +
@@ -3704,10 +3797,11 @@ def view_sectoraltypes(request):
 
         if search:
             lista = SectoralType.objects.filter(
-                Q(sectorial_type_name__icontains=request.GET['search']) | Q(
-                    sectoral_type_description__icontains=request.GET[
-                        'search'])).exclude(
-                sectoral_type_status=2).order_by(order)
+                Q(sectorial_type_name__icontains=request.GET['search']) |
+                Q(sectoral_type_description__icontains=request.GET['search'])
+            ).exclude(
+                sectoral_type_status=2
+            ).order_by(order)
         else:
             lista = SectoralType.objects.all().exclude(
                 sectoral_type_status=2).order_by(order)
@@ -3754,7 +3848,8 @@ def view_sectoraltypes(request):
 @login_required(login_url='/')
 def status_batch_sectoraltypes(request):
     if has_permission(request.user, UPDATE,
-                      "Modificar tipos de sectores") or request.user.is_superuser:
+                      "Modificar tipos de sectores") or \
+            request.user.is_superuser:
         if request.method == "GET":
             raise Http404
         if request.POST['actions'] == 'status':
@@ -3768,7 +3863,8 @@ def status_batch_sectoraltypes(request):
                         stype_obj.sectoral_type_status = 0
                     stype_obj.save()
 
-            mensaje = "Los tipos de sectores seleccionados han cambiado su estatus correctamente"
+            mensaje = "Los tipos de sectores seleccionados han cambiado su " \
+                      "estatus correctamente"
             return HttpResponseRedirect(
                 "/buildings/tipos_sectores/?msj=" + mensaje +
                 "&ntype=n_success")
@@ -3790,17 +3886,21 @@ def status_batch_sectoraltypes(request):
 @login_required(login_url='/')
 def status_sectoraltype(request, id_stype):
     if has_permission(request.user, UPDATE,
-                      "Modificar tipos de sectores") or request.user.is_superuser:
+                      "Modificar tipos de sectores") or \
+            request.user.is_superuser:
         sectoral_type = get_object_or_404(SectoralType, pk=id_stype)
         if sectoral_type.sectoral_type_status == 0:
             sectoral_type.sectoral_type_status = 1
             str_status = "Activo"
-        else: #if sectoral_type.sectoral_type_status == 1:
+        else:
+        #if sectoral_type.sectoral_type_status == 1:
             sectoral_type.sectoral_type_status = 0
             str_status = "Inactivo"
 
         sectoral_type.save()
-        mensaje = "El estatus del sector " + sectoral_type.sectorial_type_name + " ha cambiado a " + str_status
+        mensaje = "El estatus del sector " + \
+                  sectoral_type.sectorial_type_name + " ha cambiado a " + \
+                  str_status
         _type = "n_success"
 
         return HttpResponseRedirect(
@@ -3822,7 +3922,8 @@ def status_sectoraltype(request, id_stype):
 @login_required(login_url='/')
 def add_b_attributes_type(request):
     if has_permission(request.user, CREATE,
-                      "Alta de tipos de atributos de edificios") or request.user.is_superuser:
+                      "Alta de tipos de atributos de edificios") or \
+            request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
@@ -3848,7 +3949,8 @@ def add_b_attributes_type(request):
                 _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(b_attr_type_name):
-                message = "El nombre del Tipo de Atributo contiene caracteres inválidos"
+                message = "El nombre del Tipo de Atributo contiene " \
+                          "caracteres inválidos"
                 _type = "n_notif"
                 b_attr_type_name = ""
                 continuar = False
@@ -3871,12 +3973,13 @@ def add_b_attributes_type(request):
                 )
                 newBuildingAttrType.save()
 
-                template_vars[
-                    "message"] = "Tipo de Atributo de Edificio creado exitosamente"
+                template_vars["message"] = "Tipo de Atributo de Edificio " \
+                                           "creado exitosamente"
                 template_vars["type"] = "n_success"
 
-                if has_permission(request.user, VIEW,
-                                  "Ver tipos de atributos") or request.user.is_superuser:
+                if has_permission(
+                        request.user, VIEW,
+                        "Ver tipos de atributos") or request.user.is_superuser:
                     return HttpResponseRedirect(
                         "/buildings/tipos_atributos_edificios?msj=" +
                         template_vars["message"] +
@@ -3902,11 +4005,13 @@ def add_b_attributes_type(request):
 @login_required(login_url='/')
 def edit_b_attributes_type(request, id_batype):
     if has_permission(request.user, UPDATE,
-                      "Modificar tipos de atributos de edificios") or request.user.is_superuser:
+                      "Modificar tipos de atributos de edificios") or \
+            request.user.is_superuser:
         b_attr_typeObj = BuildingAttributesType.objects.get(id=id_batype)
 
+        batype_description = b_attr_typeObj.building_attributes_type_description
         post = {'batype_name': b_attr_typeObj.building_attributes_type_name,
-                'batype_description': b_attr_typeObj.building_attributes_type_description}
+                'batype_description': batype_description}
 
         datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
@@ -3925,7 +4030,8 @@ def edit_b_attributes_type(request, id_batype):
                 _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(b_attr_type_name):
-                message = "El nombre del Tipo de Atributo contiene caracteres inválidos"
+                message = "El nombre del Tipo de Atributo contiene " \
+                          "caracteres inválidos"
                 _type = "n_notif"
                 b_attr_type_name = ""
                 continuar = False
@@ -3933,8 +4039,9 @@ def edit_b_attributes_type(request, id_batype):
             #Valida el nombre (para el caso de los repetidos)
             if b_attr_typeObj.building_attributes_type_name != b_attr_type_name:
                 #Valida por si le da muchos clics al boton
-                b_attribute_typeValidate = BuildingAttributesType.objects.filter(
-                    building_attributes_type_name=b_attr_type_name)
+                b_attribute_typeValidate = \
+                    BuildingAttributesType.objects.filter(
+                        building_attributes_type_name=b_attr_type_name)
                 if b_attribute_typeValidate:
                     message = "Ya existe un Tipo de Atributo con ese nombre"
                     _type = "n_notif"
@@ -3945,13 +4052,15 @@ def edit_b_attributes_type(request, id_batype):
 
             if continuar:
                 b_attr_typeObj.building_attributes_type_name = b_attr_type_name
-                b_attr_typeObj.building_attributes_type_description = b_attr_type_description
+                b_attr_typeObj.building_attributes_type_description = \
+                    b_attr_type_description
                 b_attr_typeObj.save()
 
                 message = "Tipo de Atributo de Edificio editado exitosamente"
                 _type = "n_success"
-                if has_permission(request.user, VIEW,
-                                  "Ver tipos de atributos") or request.user.is_superuser:
+                if has_permission(
+                        request.user, VIEW,
+                        "Ver tipos de atributos") or request.user.is_superuser:
                     return HttpResponseRedirect(
                         "/buildings/tipos_atributos_edificios?msj=" +
                         message +
@@ -3995,7 +4104,8 @@ def view_b_attributes_type(request):
         order_name = 'asc'
         order_description = 'asc'
         order_status = 'asc'
-        order = "building_attributes_type_name" #default order
+        #default order
+        order = "building_attributes_type_name"
         if "order_name" in request.GET:
             if request.GET["order_name"] == "desc":
                 order = "-building_attributes_type_name"
@@ -4018,12 +4128,14 @@ def view_b_attributes_type(request):
                     order = "-building_attributes_type_status"
 
         if search:
-            lista = BuildingAttributesType.objects.filter(Q(
-                building_attributes_type_name__icontains=request.GET[
-                    'search']) | Q(
-                building_attributes_type_description__icontains=request.GET[
-                    'search'])). \
-                exclude(building_attributes_type_status=2).order_by(order)
+            lista = BuildingAttributesType.objects.filter(
+                Q(
+                    building_attributes_type_name__icontains=
+                    request.GET['search']) |
+                Q(
+                    building_attributes_type_description__icontains=
+                    request.GET['search'])
+            ).exclude(building_attributes_type_status=2).order_by(order)
         else:
             lista = BuildingAttributesType.objects.all().exclude(
                 building_attributes_type_status=2).order_by(order)
@@ -4070,17 +4182,21 @@ def view_b_attributes_type(request):
 @login_required(login_url='/')
 def status_b_attributes_type(request, id_batype):
     if has_permission(request.user, UPDATE,
-                      "Modificar tipos de atributos de edificios") or request.user.is_superuser:
+                      "Modificar tipos de atributos de edificios") or \
+            request.user.is_superuser:
         b_att_type = get_object_or_404(BuildingAttributesType, pk=id_batype)
         if b_att_type.building_attributes_type_status == 0:
             b_att_type.building_attributes_type_status = 1
             str_status = "Activo"
-        else: #if b_att_type.building_attributes_type_status == 1:
+        else:
+        #if b_att_type.building_attributes_type_status == 1:
             b_att_type.building_attributes_type_status = 0
             str_status = "Inactivo"
         b_att_type.save()
 
-        mensaje = "El estatus del Tipo de Atributo " + b_att_type.building_attributes_type_name + " ha cambiado a " + str_status
+        atributo = b_att_type.building_attributes_type_name
+        mensaje = "El estatus del Tipo de Atributo " + atributo + \
+                  " ha cambiado a " + str_status
         _type = "n_success"
 
         return HttpResponseRedirect(
@@ -4092,8 +4208,10 @@ def status_b_attributes_type(request, id_batype):
 
 @login_required(login_url='/')
 def status_batch_b_attributes_type(request):
-    if has_permission(request.user, UPDATE,
-                      "Modificar tipos de atributos de edificios") or request.user.is_superuser:
+    if has_permission(
+            request.user, UPDATE,
+            "Modificar tipos de atributos de edificios") or \
+            request.user.is_superuser:
         if request.method == "GET":
             raise Http404
         if request.POST['actions'] == 'status':
@@ -4108,7 +4226,8 @@ def status_batch_b_attributes_type(request):
                         b_att_type.building_attributes_type_status = 0
                     b_att_type.save()
 
-            mensaje = "Los Tipos de Atributos seleccionados han cambiado su estatus correctamente"
+            mensaje = "Los Tipos de Atributos seleccionados han cambiado su " \
+                      "estatus correctamente"
             return HttpResponseRedirect(
                 "/buildings/tipos_atributos_edificios/?msj=" + mensaje +
                 "&ntype=n_success")
@@ -4127,8 +4246,10 @@ def status_batch_b_attributes_type(request):
 
 @login_required(login_url='/')
 def add_partbuildingtype(request):
-    if has_permission(request.user, CREATE,
-                      "Alta de tipos de partes de edificio") or request.user.is_superuser:
+    if has_permission(
+            request.user,
+            CREATE,
+            "Alta de tipos de partes de edificio") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
@@ -4150,11 +4271,13 @@ def add_partbuildingtype(request):
 
             continuar = True
             if b_part_type_name == '':
-                message = "El nombre del Tipo de Parte de Edificio no puede quedar vacío"
+                message = "El nombre del Tipo de Parte de Edificio no puede " \
+                          "quedar vacío"
                 _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(b_part_type_name):
-                message = "El nombre del Tipo de Parte de Edificio contiene caracteres inválidos"
+                message = "El nombre del Tipo de Parte de Edificio contiene " \
+                          "caracteres inválidos"
                 _type = "n_notif"
                 b_part_type_name = ""
                 continuar = False
@@ -4163,7 +4286,8 @@ def add_partbuildingtype(request):
             partTypeValidate = PartOfBuildingType.objects.filter(
                 part_of_building_type_name=b_part_type_name)
             if partTypeValidate:
-                message = "Ya existe un Tipo de Parte de Edificio con ese nombre"
+                message = "Ya existe un Tipo de Parte de Edificio con ese " \
+                          "nombre"
                 _type = "n_notif"
                 continuar = False
 
@@ -4177,12 +4301,13 @@ def add_partbuildingtype(request):
                 )
                 newPartBuildingType.save()
 
-                template_vars[
-                    "message"] = "Tipo de Parte de Edificio creado exitosamente"
+                template_vars["message"] = "Tipo de Parte de Edificio creado " \
+                                           "exitosamente"
                 template_vars["type"] = "n_success"
 
                 if has_permission(request.user, VIEW,
-                                  "Ver tipos de partes de un edificio") or request.user.is_superuser:
+                                  "Ver tipos de partes de un edificio") or \
+                        request.user.is_superuser:
                     return HttpResponseRedirect(
                         "/buildings/tipos_partes_edificio?msj=" +
                         template_vars["message"] +
@@ -4208,12 +4333,15 @@ def add_partbuildingtype(request):
 @login_required(login_url='/')
 def edit_partbuildingtype(request, id_pbtype):
     if has_permission(request.user, UPDATE,
-                      "Modificar tipos de atributos de edificios") or request.user.is_superuser:
+                      "Modificar tipos de atributos de edificios") or \
+            request.user.is_superuser:
         building_part_type = PartOfBuildingType.objects.get(id=id_pbtype)
 
+        b_part_type_name = building_part_type.part_of_building_type_name
+        b_p_t_desc = building_part_type.part_of_building_type_description
         post = {
-            'b_part_type_name': building_part_type.part_of_building_type_name,
-            'b_part_type_description': building_part_type.part_of_building_type_description}
+            'b_part_type_name': b_part_type_name,
+            'b_part_type_description': b_p_t_desc}
 
         datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
@@ -4228,33 +4356,41 @@ def edit_partbuildingtype(request, id_pbtype):
 
             continuar = True
             if b_part_type_name == '':
-                message = "El nombre del Tipo de Parte de Edificio no puede quedar vacío"
+                message = "El nombre del Tipo de Parte de Edificio no puede " \
+                          "quedar vacío"
                 _type = "n_notif"
                 continuar = False
 
             #Valida el nombre (para el caso de los repetidos)
-            if building_part_type.part_of_building_type_name != b_part_type_name:
+            if building_part_type.part_of_building_type_name != \
+                    b_part_type_name:
                 #Valida por si le da muchos clics al boton
                 partTypeValidate = PartOfBuildingType.objects.filter(
                     part_of_building_type_name=b_part_type_name)
                 if partTypeValidate:
-                    message = "Ya existe un Tipo de Parte de Edificio con ese nombre"
+                    message = "Ya existe un Tipo de Parte de Edificio con " \
+                              "ese nombre"
                     _type = "n_notif"
                     continuar = False
-
+            b_part_type_name = building_part_type.part_of_building_type_name
+            b_part_type_description = building_part_type.\
+                part_of_building_type_description
             post = {
-                'b_part_type_name': building_part_type.part_of_building_type_name,
-                'b_part_type_description': building_part_type.part_of_building_type_description}
+                'b_part_type_name': b_part_type_name,
+                'b_part_type_description': b_part_type_description}
 
             if continuar:
                 building_part_type.part_of_building_type_name = b_part_type_name
-                building_part_type.part_of_building_type_description = b_part_type_description
+                building_part_type.part_of_building_type_description = \
+                    b_part_type_description
                 building_part_type.save()
 
                 message = "Tipo de Parte de Edificio editado exitosamente"
                 _type = "n_success"
-                if has_permission(request.user, VIEW,
-                                  "Ver tipos de partes de un edificio") or request.user.is_superuser:
+                if has_permission(request.user,
+                                  VIEW,
+                                  "Ver tipos de partes de un edificio") or \
+                        request.user.is_superuser:
                     return HttpResponseRedirect(
                         "/buildings/tipos_partes_edificio?msj=" +
                         message +
@@ -4284,8 +4420,10 @@ def edit_partbuildingtype(request, id_pbtype):
 
 @login_required(login_url='/')
 def view_partbuildingtype(request):
-    if has_permission(request.user, VIEW,
-                      "Ver tipos de partes de un edificio") or request.user.is_superuser:
+    if has_permission(
+            request.user,
+            VIEW,
+            "Ver tipos de partes de un edificio") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
@@ -4322,13 +4460,14 @@ def view_partbuildingtype(request):
                     order_status = "asc"
 
         if search:
-            lista = PartOfBuildingType.objects.filter(Q(
-                part_of_building_type_name__icontains=request.GET[
-                    'search']) | Q(
-                part_of_building_type_description__icontains=request.GET[
-                    'search'])).exclude(
-                part_of_building_type_status=2). \
-                order_by(order)
+            lista = PartOfBuildingType.objects.filter(
+                Q(
+                    part_of_building_type_name__icontains=
+                    request.GET['search']) |
+                Q(
+                    part_of_building_type_description__icontains=
+                    request.GET['search'])
+            ).exclude(part_of_building_type_status=2).order_by(order)
         else:
             lista = PartOfBuildingType.objects.all().exclude(
                 part_of_building_type_status=2).order_by(order)
@@ -4374,8 +4513,11 @@ def view_partbuildingtype(request):
 
 @login_required(login_url='/')
 def status_batch_partbuildingtype(request):
-    if has_permission(request.user, UPDATE,
-                      "Modificar tipos de atributos de edificios") or request.user.is_superuser:
+    if has_permission(
+            request.user,
+            UPDATE,
+            "Modificar tipos de atributos de edificios") or \
+            request.user.is_superuser:
         if request.method == "GET":
             raise Http404
         if request.POST['actions'] == 'status':
@@ -4390,7 +4532,8 @@ def status_batch_partbuildingtype(request):
                         part_building_type.part_of_building_type_status = 0
                     part_building_type.save()
 
-            mensaje = "Los Tipos de Partes de Edificio han cambiado su estatus correctamente"
+            mensaje = "Los Tipos de Partes de Edificio han cambiado " \
+                      "su estatus correctamente"
             return HttpResponseRedirect(
                 "/buildings/tipos_partes_edificio/?msj=" + mensaje +
                 "&ntype=n_success")
@@ -4411,8 +4554,11 @@ def status_batch_partbuildingtype(request):
 
 @login_required(login_url='/')
 def status_partbuildingtype(request, id_pbtype):
-    if has_permission(request.user, UPDATE,
-                      "Modificar tipos de atributos de edificios") or request.user.is_superuser:
+    if has_permission(
+            request.user,
+            UPDATE,
+            "Modificar tipos de atributos de edificios") or \
+            request.user.is_superuser:
         part_building_type = get_object_or_404(PartOfBuildingType, pk=id_pbtype)
 
         if part_building_type.part_of_building_type_status == 0:
@@ -4423,7 +4569,9 @@ def status_partbuildingtype(request, id_pbtype):
             str_status = "Inactivo"
         part_building_type.save()
 
-        mensaje = "El estatus del tipo de edificio " + part_building_type.part_of_building_type_name + " ha cambiado a " + str_status
+        mensaje = "El estatus del tipo de edificio " + \
+                  part_building_type.part_of_building_type_name + \
+                  " ha cambiado a " + str_status
         _type = "n_success"
 
         return HttpResponseRedirect(
@@ -4446,7 +4594,8 @@ def status_partbuildingtype(request, id_pbtype):
 @login_required(login_url='/')
 def add_partbuilding(request):
     if has_permission(request.user, CREATE,
-                      "Alta de partes de edificio") or request.user.is_superuser:
+                      "Alta de partes de edificio") or \
+            request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
@@ -4484,7 +4633,8 @@ def add_partbuilding(request):
 
             continuar = True
             if not b_part_name:
-                message = "El nombre de la Parte de Edificio no puede quedar vacío"
+                message = "El nombre de la Parte de Edificio no " \
+                          "puede quedar vacío"
                 _type = "n_notif"
                 continuar = False
 
@@ -4504,7 +4654,8 @@ def add_partbuilding(request):
                     part_of_building_type__pk=b_part_type_id).filter(
                     building__pk=b_part_building_id)
                 if partValidate:
-                    message = "Ya existe una Parte de Edificio con ese nombre, ese tipo de parte y en ese edificio"
+                    message = "Ya existe una Parte de Edificio con ese " \
+                              "nombre, ese tipo de parte y en ese edificio"
                     _type = "n_notif"
                     continuar = False
 
@@ -4559,7 +4710,7 @@ def add_partbuilding(request):
                         atr_value_complete = request.POST.get(key)
                         atr_value_arr = atr_value_complete.split(',')
                         #Se obtiene el objeto tipo de atributo
-                        #attribute_type_obj = BuildingAttributesType.objects.get(pk = atr_value_arr[0])
+
                         #Se obtiene el objeto atributo
                         attribute_obj = BuildingAttributes.objects.get(
                             pk=atr_value_arr[1])
@@ -4571,12 +4722,13 @@ def add_partbuilding(request):
                         )
                         newBldPartAtt.save()
 
-                template_vars[
-                    "message"] = "Parte de Edificio creado exitosamente"
+                template_vars["message"] = "Parte de Edificio creado " \
+                                           "exitosamente"
                 template_vars["type"] = "n_success"
 
                 if has_permission(request.user, VIEW,
-                                  "Ver partes de un edificio") or request.user.is_superuser:
+                                  "Ver partes de un edificio") or \
+                        request.user.is_superuser:
                     return HttpResponseRedirect(
                         "/buildings/partes_edificio?msj=" +
                         template_vars["message"] +
@@ -4602,7 +4754,8 @@ def add_partbuilding(request):
 @login_required(login_url='/')
 def edit_partbuilding(request, id_bpart):
     if has_permission(request.user, UPDATE,
-                      "Modificar partes de un edificio") or request.user.is_superuser:
+                      "Modificar partes de un edificio") or \
+            request.user.is_superuser:
         #Se obtienen los tipos de partes de edificios
         tipos_parte = PartOfBuildingType.objects.all().exclude(
             part_of_building_type_status=0).order_by(
@@ -4621,7 +4774,14 @@ def edit_partbuilding(request, id_bpart):
         string_attributes = ''
         if building_part_attributes:
             for bp_att in building_part_attributes:
-                string_attributes += '<div  class="extra_attributes_div"><span class="delete_attr_icon"><a href="#eliminar" class="delete hidden_icon" ' + \
+                b_attr_val = str(bp_att.building_attributes_value)
+                b_at_pk = str(bp_att.building_attributes.pk)
+                b_attr_pk = str(
+                    bp_att.building_attributes.building_attributes_type.pk)
+                string_attributes += '<div  class="extra_attributes_div">' \
+                                     '<span class="delete_attr_icon">' \
+                                     '<a href="#eliminar" ' \
+                                     'class="delete hidden_icon" ' + \
                                      'title="eliminar atributo"></a></span>' + \
                                      '<span class="tip_attribute_part">' + \
                                      bp_att.building_attributes \
@@ -4629,30 +4789,27 @@ def edit_partbuilding(request, id_bpart):
                                          .building_attributes_type_name + \
                                      '</span>' + \
                                      '<span class="attribute_part">' + \
-                                     bp_att.building_attributes.building_attributes_name + \
+                                     bp_att.building_attributes.\
+                                         building_attributes_name + \
                                      '</span>' + \
                                      '<span class="attribute_value_part">' + \
-                                     str(bp_att.building_attributes_value) + \
+                                     b_attr_val + \
                                      '</span>' + \
-                                     '<input type="hidden" name="atributo_' + str(
-                    bp_att.building_attributes.building_attributes_type.pk) + \
-                                     '_' + str(
-                    bp_att.building_attributes.pk) + '" ' + \
-                                     'value="' + str(
-                    bp_att.building_attributes.building_attributes_type.pk) + \
-                                     ',' + str(
-                    bp_att.building_attributes.pk) + ',' + str(
-                    bp_att.building_attributes_value) + \
+                                     '<input type="hidden" name="atributo_' + \
+                                     b_attr_pk + \
+                                     '_' + b_at_pk + '" ' + \
+                                     'value="' + b_attr_pk + \
+                                     ',' + b_at_pk + ',' + b_attr_val + \
                                      '"/></div>'
 
+        descr = building_part.part_of_building_description
         post = {'b_part_name': building_part.part_of_building_name,
-                'b_part_description': building_part.part_of_building_description,
+                'b_part_description': descr,
                 'b_part_building_name': building_part.building.building_name,
                 'b_part_building_id': str(building_part.building.pk),
                 'b_part_type': building_part.part_of_building_type.id,
                 'b_part_mt2': building_part.mts2_built,
-                'b_part_attributes': string_attributes,
-        }
+                'b_part_attributes': string_attributes}
 
         datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
@@ -4675,7 +4832,8 @@ def edit_partbuilding(request, id_bpart):
 
             continuar = True
             if b_part_name == '':
-                message = "El nombre de la Parte de Edificio no puede quedar vacío"
+                message = "El nombre de la Parte de Edificio no puede quedar" \
+                          " vacío"
                 _type = "n_notif"
                 continuar = False
 
@@ -4689,14 +4847,17 @@ def edit_partbuilding(request, id_bpart):
                 _type = "n_notif"
                 continuar = False
 
-            if building_part.part_of_building_name != b_part_name and building_part.building_id != b_part_building_id and building_part.part_of_building_type_id != b_part_type_id:
+            if building_part.part_of_building_name != b_part_name and \
+                            building_part.building_id != b_part_building_id \
+                and building_part.part_of_building_type_id != b_part_type_id:
                 #Valida por si le da muchos clics al boton
                 partValidate = PartOfBuilding.objects.filter(
                     part_of_building_name=b_part_name).filter(
                     part_of_building_type__pk=b_part_type_id).filter(
                     building__pk=b_part_building_id)
                 if partValidate:
-                    message = "Ya existe una Parte de Edificio con ese nombre, ese tipo de parte y en ese edificio"
+                    message = "Ya existe una Parte de Edificio con ese " \
+                              "nombre, ese tipo de parte y en ese edificio"
                     _type = "n_notif"
                     continuar = False
 
@@ -4747,7 +4908,8 @@ def edit_partbuilding(request, id_bpart):
                 message = "Parte de Edificio editado exitosamente"
                 _type = "n_success"
                 if has_permission(request.user, VIEW,
-                                  "Ver partes de un edificio") or request.user.is_superuser:
+                                  "Ver partes de un edificio") or \
+                        request.user.is_superuser:
                     return HttpResponseRedirect(
                         "/buildings/partes_edificio?msj=" +
                         message +
@@ -4827,16 +4989,16 @@ def view_partbuilding(request):
 
         if search:
             lista = PartOfBuilding.objects.filter(
-                Q(part_of_building_name__icontains=request.GET['search']) | Q(
-                    part_of_building_type__part_of_building_type_name__icontains=
-                    request.GET['search']) | Q(
-                    building__building_name__icontains=request.GET[
-                        'search'])).order_by(
-                order)
+                Q(part_of_building_name__icontains=request.GET['search']) |
+                Q(part_of_building_type__part_of_building_type_name__icontains=
+                  request.GET['search']) |
+                Q(building__building_name__icontains=request.GET['search'])
+            ).order_by(order)
         else:
             lista = PartOfBuilding.objects.all().order_by(order)
 
-        paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
+        # muestra 10 resultados por pagina
+        paginator = Paginator(lista, 10)
         template_vars = dict(order_name=order_name, order_type=order_type,
                              order_building=order_building,
                              order_status=order_status,
@@ -4894,7 +5056,8 @@ def status_batch_partofbuilding(request):
 
                     building_part.save()
 
-            mensaje = "Las partes de edificios han cambiado su estatus correctamente"
+            mensaje = "Las partes de edificios han cambiado su estatus " \
+                      "correctamente"
             return HttpResponseRedirect(
                 "/buildings/partes_edificio/?msj=" + mensaje +
                 "&ntype=n_success")
@@ -4910,13 +5073,15 @@ def status_batch_partofbuilding(request):
 @login_required(login_url='/')
 def status_partofbuilding(request, id_bpart):
     if has_permission(request.user, UPDATE,
-                      "Modificar partes de un edificio") or request.user.is_superuser:
+                      "Modificar partes de un edificio") or \
+            request.user.is_superuser:
         building_part = get_object_or_404(PartOfBuilding, pk=id_bpart)
 
         if building_part.part_of_building_status == 0:
             building_part.part_of_building_status = 1
             str_status = "activo"
-        else: #if building_part.part_of_building_status == 1:
+        else:
+        #if building_part.part_of_building_status == 1:
             building_part.part_of_building_status = 0
             str_status = "inactivo"
 
@@ -4938,8 +5103,10 @@ def status_partofbuilding(request, id_bpart):
 def search_buildings(request):
     """ recieves three parameters in request.GET:
     term = string, the name of the building to search
-    perm = string, the complete name of the operation we want to check if the user has permission
-    op = string, the operation to check the permission (view, create, update, delete)
+    perm = string, the complete name of the operation we want to check if
+        the user has permission
+    op = string, the operation to check the permission
+        (view, create, update, delete)
     """
 
     if "term" in request.GET and "perm" in request.GET and "op" in request.GET:
@@ -4973,7 +5140,6 @@ def search_buildings(request):
 
 @login_required(login_url='/')
 def get_select_attributes(request, id_attribute_type):
-
     building_attributes = BuildingAttributes.objects.filter(
         building_attributes_type__pk=id_attribute_type)
     string_to_return = ''
@@ -5004,7 +5170,6 @@ def add_building(request):
         message = ''
         _type = ''
         #Se obtienen las empresas
-        #empresas_lst = Company.objects.all().exclude(company_status=0).order_by('company_name')
         empresas_lst = get_all_companies_for_operation("Alta de edificios",
                                                        CREATE, request.user)
         #Se obtienen las tarifas
@@ -5073,7 +5238,8 @@ def add_building(request):
                 _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(b_name):
-                message += "El nombre del Edificio contiene caracteres inválidos"
+                message += "El nombre del Edificio contiene caracteres " \
+                           "inválidos"
                 _type = "n_notif"
                 b_name = ""
                 continuar = False
@@ -5220,10 +5386,12 @@ def add_building(request):
                 for b_type in b_type_arr:
                     #Se obtiene el objeto del tipo de edificio
                     typeObj = get_object_or_404(BuildingType, pk=b_type)
+                    bt_n = newBuilding.building_name + " - " + \
+                           typeObj.building_type_name
                     newBuildingTypeBuilding = BuildingTypeForBuilding(
                         building=newBuilding,
                         building_type=typeObj,
-                        building_type_for_building_name=newBuilding.building_name + " - " + typeObj.building_type_name
+                        building_type_for_building_name=bt_n
                     )
                     newBuildingTypeBuilding.save()
 
@@ -5232,7 +5400,6 @@ def add_building(request):
                         atr_value_complete = request.POST.get(key)
                         atr_value_arr = atr_value_complete.split(',')
                         #Se obtiene el objeto tipo de atributo
-                        #attribute_type_obj = BuildingAttributesType.objects.get(pk = atr_value_arr[0])
                         #Se obtiene el objeto atributo
                         attribute_obj = BuildingAttributes.objects.get(
                             pk=atr_value_arr[1])
@@ -5298,7 +5465,6 @@ def edit_building(request, id_bld):
         _type = ''
 
         #Se obtienen las empresas
-        #empresas_lst = Company.objects.all().exclude(company_status=0).order_by('company_name')
         empresas_lst = get_all_companies_for_operation("Modificar edificios",
                                                        UPDATE, request.user)
 
@@ -5333,29 +5499,41 @@ def edit_building(request, id_bld):
         string_attributes = ''
         if building_attributes:
             for bp_att in building_attributes:
+                building_attributes_type_name = bp_att.building_attributes.\
+                    building_attributes_type.building_attributes_type_name
+
+                building_attributes_name = bp_att.building_attributes.\
+                    building_attributes_name
+
+                building_attributes_type_pk = str(
+                    bp_att.building_attributes.building_attributes_type.pk)
+
+                bp_att_building_attributes_pk = str(
+                    bp_att.building_attributes.pk)
+
+                bp_att_building_attributes_value = str(
+                    bp_att.building_attributes_value)
                 string_attributes += '<div  class="extra_attributes_div">' \
                                      '<span class="delete_attr_icon">' \
                                      '<a href="#eliminar" class="delete ' \
                                      'hidden_icon" ' + \
                                      'title="eliminar atributo"></a></span>' + \
                                      '<span class="tip_attribute_part">' + \
-                                     bp_att.building_attributes.building_attributes_type.building_attributes_type_name + \
+                                     building_attributes_type_name + \
                                      '</span>' + \
                                      '<span class="attribute_part">' + \
-                                     bp_att.building_attributes.building_attributes_name + \
+                                     building_attributes_name + \
                                      '</span>' + \
                                      '<span class="attribute_value_part">' + \
                                      str(bp_att.building_attributes_value) + \
                                      '</span>' + \
                                      '<input type="hidden" name="atributo_' + \
-                                     str(
-                                         bp_att.building_attributes.building_attributes_type.pk) + \
-                                     '_' + str(
-                    bp_att.building_attributes.pk) + '" ' + \
-                                     'value="' + str(
-                    bp_att.building_attributes.building_attributes_type.pk) + ',' + str(
-                    bp_att.building_attributes.pk) + ',' + str(
-                    bp_att.building_attributes_value) + \
+                                     building_attributes_type_pk + \
+                                     '_' + bp_att_building_attributes_pk + \
+                                     '" ' + 'value="' + \
+                                     building_attributes_type_pk + ',' + \
+                                     bp_att_building_attributes_pk + ',' + \
+                                     bp_att_building_attributes_value + \
                                      '"/></div>'
 
         post = {
@@ -5561,7 +5739,8 @@ def edit_building(request, id_bld):
                     )
                     newBuildingTypeBuilding.save()
 
-                #Se eliminan los atributos del edificio y se dan de alta los nuevos
+                #Se eliminan los atributos del edificio y se dan de alta
+                # los nuevos
 
                 oldAtttributes = BuildingAttributesForBuilding.objects.filter(
                     building=buildingObj)
@@ -5678,14 +5857,13 @@ def view_building(request):
 
         if search:
             lista = CompanyBuilding.objects.filter(
-                Q(building__building_name__icontains=request.GET['search']) | Q(
-                    building__estado__estado_name__icontains=request.GET[
-                        'search']) | Q(
-                    building__municipio__municipio_name__icontains=request.GET[
-                        'search']) | Q(
-                    company__company_name__icontains=request.GET[
-                        'search'])).exclude(
-                building__building_status=2).order_by(order)
+                Q(building__building_name__icontains=request.GET['search']) |
+                Q(building__estado__estado_name__icontains=
+                  request.GET['search']) |
+                Q(building__municipio__municipio_name__icontains=
+                  request.GET['search']) |
+                Q(company__company_name__icontains=request.GET['search'])
+            ).exclude(building__building_status=2).order_by(order)
 
         else:
             lista = CompanyBuilding.objects.all().exclude(
@@ -5810,7 +5988,8 @@ def add_ie(request):
     template_vars["company"] = request.session['company']
 
     if has_permission(request.user, CREATE,
-                      "Alta de equipos industriales") or request.user.is_superuser:
+                      "Alta de equipos industriales") or \
+            request.user.is_superuser:
         if request.method == 'POST':
             template_vars["post"] = request.POST
             ie = IndustrialEquipment(
@@ -5822,7 +6001,8 @@ def add_ie(request):
             message = "El equipo industrial se ha creado exitosamente"
             _type = "n_success"
             if has_permission(request.user, VIEW,
-                              "Ver equipos industriales") or request.user.is_superuser:
+                              "Ver equipos industriales") or \
+                    request.user.is_superuser:
                 return HttpResponseRedirect(
                     "/buildings/industrial_equipments?msj=" +
                     message +
@@ -5854,7 +6034,8 @@ def edit_ie(request, id_ie):
     industrial_eq = get_object_or_404(IndustrialEquipment, pk=int(id_ie))
     template_vars["id_ie"] = id_ie
     if has_permission(request.user, UPDATE,
-                      "Modificar equipos industriales") or request.user.is_superuser:
+                      "Modificar equipos industriales") or \
+            request.user.is_superuser:
         #Asociated powermeters
         if has_permission(
                 request.user,
@@ -5878,7 +6059,8 @@ def edit_ie(request, id_ie):
                         order = "powermeter__powermeter_model__powermeter_brand"
                         order_model = "desc"
                     else:
-                        order = "-powermeter__powermeter_model__powermeter_brand"
+                        order = \
+                            "-powermeter__powermeter_model__powermeter_brand"
                         order_model = "asc"
 
                 if "order_serial" in request.GET:
@@ -5922,7 +6104,8 @@ def edit_ie(request, id_ie):
             message = "El equipo industrial se ha actualizado exitosamente"
             _type = "n_success"
             if has_permission(request.user, VIEW,
-                              "Ver equipos industriales") or request.user.is_superuser:
+                              "Ver equipos industriales") or \
+                    request.user.is_superuser:
                 return HttpResponseRedirect(
                     "/buildings/industrial_equipments?msj=" +
                     message +
@@ -5961,7 +6144,8 @@ def see_ie(request, id_ie):
 
         #Asociated powermeters
         if has_permission(request.user, VIEW,
-                          "Ver medidores eléctricos") or request.user.is_superuser:
+                          "Ver medidores eléctricos") or \
+                request.user.is_superuser:
             order_alias = 'asc'
             order_serial = 'asc'
             order_model = 'asc'
@@ -5979,7 +6163,8 @@ def see_ie(request, id_ie):
                         order = "powermeter__powermeter_model__powermeter_brand"
                         order_model = "desc"
                     else:
-                        order = "-powermeter__powermeter_model__powermeter_brand"
+                        order = \
+                            "-powermeter__powermeter_model__powermeter_brand"
                         order_model = "asc"
 
                 if "order_serial" in request.GET:
@@ -6015,8 +6200,8 @@ def see_ie(request, id_ie):
             if has_permission(
                     request.user,
                     CREATE,
-                    "Asignación de medidores eléctricos a equipos industriales") \
-                or request.user.is_superuser:
+                    "Asignación de medidores eléctricos a equipos industriales"
+            ) or request.user.is_superuser:
                 template_vars['show_asign'] = True
             else:
                 template_vars['show_asign'] = False
@@ -6209,7 +6394,8 @@ def search_pm(request):
         ).filter(status=1)
         medidores = []
         for medidor in powermeters:
-            texto = medidor.powermeter_anotation + " - " + medidor.powermeter_serial
+            texto = medidor.powermeter_anotation + " - " + \
+                    medidor.powermeter_serial
             medidores.append(dict(value=texto, pk=medidor.pk, label=texto))
         data = simplejson.dumps(medidores)
         return HttpResponse(content=data, content_type="application/json")
@@ -6243,11 +6429,12 @@ def asign_pm(request, id_ie):
 
 @login_required(login_url='/')
 def detach_pm(request, id_ie):
-    if (not (not has_permission(
+    if (has_permission(
             request.user,
             UPDATE,
-            "Modificar asignaciones de medidores eléctricos a equipos industriales")
-             and not request.user.is_superuser)) and "pm" in request.GET:
+            "Modificar asignaciones de medidores eléctricos a equipos "
+            "industriales") or
+            request.user.is_superuser) and "pm" in request.GET:
         pm = get_object_or_404(Powermeter, pk=int(request.GET['pm']))
         ie = get_object_or_404(IndustrialEquipment, pk=int(id_ie))
         PowermeterForIndustrialEquipment.objects. \
@@ -6321,9 +6508,10 @@ def configure_ie(request, id_ie):
             ie.check_config_time_rate = request.POST['check_config_time_rate']
             ie.has_new_config = True
             ie.save()
-            settings_ie = [dict(monitor_time_rate=ie.monitor_time_rate,
-                                check_config_time_rate=ie.check_config_time_rate,
-                                powermeters=settings_pm)]
+            settings_ie = [dict(
+                monitor_time_rate=ie.monitor_time_rate,
+                check_config_time_rate=ie.check_config_time_rate,
+                powermeters=settings_pm)]
             ie.new_config = simplejson.dumps(settings_ie)
             ie.save()
             template_vars['message'] = "El equipo industrial ha guardado su" \
@@ -6391,7 +6579,8 @@ def create_hierarchy(request, id_building):
 @login_required(login_url='/')
 def add_partbuilding_pop(request, id_building):
     if has_permission(request.user, CREATE,
-                      "Alta de partes de edificio") or request.user.is_superuser:
+                      "Alta de partes de edificio") or \
+            request.user.is_superuser:
         #Se obtienen los tipos de partes de edificios
         tipos_parte = PartOfBuildingType.objects.all().exclude(
             part_of_building_type_status=0).order_by(
@@ -6491,7 +6680,7 @@ def save_add_part_popup(request):
                         atr_value_complete = request.POST.get(key)
                         atr_value_arr = atr_value_complete.split(',')
                         #Se obtiene el objeto tipo de atributo
-                        #attribute_type_obj = BuildingAttributesType.objects.get(pk = atr_value_arr[0])
+
                         #Se obtiene el objeto atributo
                         attribute_obj = BuildingAttributes.objects.get(
                             pk=atr_value_arr[1])
@@ -6707,7 +6896,8 @@ def del_cu(request, id_cu):
 @login_required(login_url='/')
 def popup_edit_partbuilding(request, cu_id):
     if has_permission(request.user, UPDATE,
-                      "Modificar partes de un edificio") or request.user.is_superuser:
+                      "Modificar partes de un edificio") or \
+            request.user.is_superuser:
         #Se obtienen los tipos de partes de edificios
         tipos_parte = PartOfBuildingType.objects.all().exclude(
             part_of_building_type_status=0).order_by(
@@ -6727,37 +6917,33 @@ def popup_edit_partbuilding(request, cu_id):
         string_attributes = ''
         if building_part_attributes:
             for bp_att in building_part_attributes:
-                string_attributes += '<div  class="extra_attributes_div">' \
-                                     '<span class="delete_attr_icon">' \
-                                     '<a href="#eliminar" class="delete ' \
-                                     'hidden_icon" ' + \
-                                     'title="eliminar atributo"></a></span>' + \
-                                     '<span class="tip_attribute_part">' + \
-                                     bp_att.building_attributes \
-                                         .building_attributes_type \
-                                         .building_attributes_type_name + \
-                                     '</span>' + \
-                                     '<span class="attribute_part">' + \
-                                     bp_att.building_attributes \
-                                         .building_attributes_name + \
-                                     '</span>' + \
-                                     '<span class="attribute_value_part">' + \
-                                     str(bp_att.building_attributes_value) + \
-                                     '</span>' + \
-                                     '<input type="hidden" name="atributo_' + \
-                                     str(bp_att.building_attributes
-                                     .building_attributes_type.pk) + \
-                                     '_' + str(bp_att.building_attributes.pk) \
-                                     + '" ' + 'value="' + \
-                                     str(
-                                         bp_att.building_attributes.building_attributes_type.pk) + \
-                                     ',' + str(bp_att.building_attributes.pk) \
-                                     + ',' + str(
-                    bp_att.building_attributes_value) + \
-                                     '"/></div>'
+                string_attributes += \
+                    '<div  class="extra_attributes_div">' \
+                    '<span class="delete_attr_icon">' \
+                    '<a href="#eliminar" class="delete ' \
+                    'hidden_icon" ' + \
+                    'title="eliminar atributo"></a></span>' + \
+                    '<span class="tip_attribute_part">' + \
+                    bp_att.building_attributes.building_attributes_type.\
+                        building_attributes_type_name + \
+                    '</span>' + \
+                    '<span class="attribute_part">' + \
+                    bp_att.building_attributes.building_attributes_name + \
+                    '</span>' + \
+                    '<span class="attribute_value_part">' + \
+                    str(bp_att.building_attributes_value) + \
+                    '</span>' + \
+                    '<input type="hidden" name="atributo_' + \
+                    str(bp_att.building_attributes.building_attributes_type.pk
+                    ) + '_' + str(bp_att.building_attributes.pk) + '" ' + \
+                    'value="' + str(
+                        bp_att.building_attributes.building_attributes_type.pk
+                    ) + ',' + str(bp_att.building_attributes.pk) + ',' + \
+                    str(bp_att.building_attributes_value) + '"/></div>'
 
         post = {'b_part_name': building_part.part_of_building_name,
-                'b_part_description': building_part.part_of_building_description,
+                'b_part_description':
+                    building_part.part_of_building_description,
                 'b_part_building_id': str(building_part.building.pk),
                 'b_part_type': building_part.part_of_building_type.id,
                 'b_part_mt2': building_part.mts2_built,
@@ -7108,9 +7294,9 @@ def set_cutdate(request, id_cutdate):
             cd_after_flag = False
             continue_flag = True
 
-            s_date_str = time.strptime(
-                init_str + " " + init_hour + ":" + init_minutes + " " + init_ampm,
-                "%Y-%m-%d  %I:%M %p")
+            time_str = init_str + " " + init_hour + ":" + init_minutes + \
+                       " " + init_ampm
+            s_date_str = time.strptime(time_str, "%Y-%m-%d  %I:%M %p")
             s_date_utc_tuple = time.gmtime(time.mktime(s_date_str))
             s_date_utc = datetime.datetime(year=s_date_utc_tuple[0],
                                            month=s_date_utc_tuple[1],
@@ -7132,7 +7318,8 @@ def set_cutdate(request, id_cutdate):
 
             template_vars['post'] = post
 
-            #Si se modificó la fecha inicial es necesario modificar el mes anterior
+            #Si se modificó la fecha inicial es necesario modificar el
+            # mes anterior
             if cutdate_obj.date_init != s_date_utc:
                 month_before = cutdate_obj.billing_month + relativedelta(
                     months=-1)
@@ -7143,14 +7330,17 @@ def set_cutdate(request, id_cutdate):
                 if cutdate_before:
                     cd_before_flag = True
                     if s_date_utc <= cutdate_before[0].date_init:
-                        message = "La fecha de inicio invade todo el periodo del mes anterior."
+                        message = "La fecha de inicio invade todo el periodo" \
+                                  " del mes anterior."
                         _type = "n_notif"
                         continue_flag = False
                     else:
                         cd_before = cutdate_before[0]
 
             if cutdate_obj.date_end:
-                #Si el registro tiene fecha final, significa que se esta modificando un mes intermedio, y es necesario modificar el mes siguiente
+                #Si el registro tiene fecha final, significa que se esta
+                # modificando un mes intermedio, y es necesario modificar
+                # el mes siguiente
                 month_after = cutdate_obj.billing_month + relativedelta(
                     months=+1)
                 cutdate_after = MonthlyCutDates.objects.filter(
@@ -7160,7 +7350,8 @@ def set_cutdate(request, id_cutdate):
                     cd_after_flag = True
                     if cutdate_after[0].date_end:
                         if e_date_utc >= cutdate_after[0].date_end:
-                            message = "La fecha final invade todo el periodo del mes siguiente."
+                            message = "La fecha final invade todo el periodo" \
+                                      " del mes siguiente."
                             _type = "n_notif"
                             continue_flag = False
                         else:
@@ -7176,7 +7367,8 @@ def set_cutdate(request, id_cutdate):
                     cd_before.save()
 
                     #Se recalcula el mes anterior ya con las nuevas fechas.
-                    save_historic_delay.delay(cd_before, request.session['main_building'])
+                    save_historic_delay.delay(cd_before,
+                                              request.session['main_building'])
 
                 #Si hay cambio de fechas en mes siguiente
                 if cd_after_flag:
@@ -7184,9 +7376,11 @@ def set_cutdate(request, id_cutdate):
                     cd_after.date_init = e_date_utc
                     cd_after.save()
 
-                    #Si la fecha final del mes siguiente no es nula, se crea el historico
+                    #Si la fecha final del mes siguiente no es nula,
+                    # se crea el historico
                     if cd_after.date_end:
-                        save_historic_delay.delay(cd_after, request.session['main_building'])
+                        save_historic_delay.delay(
+                            cd_after, request.session['main_building'])
                 else:
                     #Se crea el nuevo mes
                     new_cut = MonthlyCutDates(
@@ -7202,10 +7396,11 @@ def set_cutdate(request, id_cutdate):
                 cutdate_obj.save()
 
                 #Se calcula el mes actual
-                save_historic_delay.delay(cutdate_obj, request.session['main_building'])
+                save_historic_delay.delay(cutdate_obj,
+                                          request.session['main_building'])
 
-                template_vars[
-                    "message"] = "Fechas de Corte establecidas correctamente"
+                template_vars["message"] = "Fechas de Corte establecidas " \
+                                           "correctamente"
                 template_vars["type"] = "n_success"
 
                 if request.user.is_superuser:
@@ -7304,7 +7499,8 @@ def set_cutdate_bill(request):
         if e_date_utc <= cutdate_obj.date_init:
             continuar = False
             status = 'Error'
-            message = 'La fecha final no puede ser menor o igual a la fecha de inicio'
+            message = 'La fecha final no puede ser menor o igual a la fecha' \
+                      ' de inicio'
 
         if continuar:
             #Se guarda la fecha de corte
@@ -7321,7 +7517,7 @@ def set_cutdate_bill(request):
             new_cut.save()
             #Se guarda el historico
             save_historic_delay.delay(cutdate_obj,
-                                request.session['main_building'])
+                                      request.session['main_building'])
 
             status = 'OK'
 
@@ -7428,6 +7624,7 @@ def obtenerHistorico_r(f_monthly_cutdate):
     return arr_historico
 
 
+# noinspection PyArgumentList
 @login_required(login_url='/')
 def cfe_desglose(request):
     datacontext = get_buildings_context(request.user)[0]
@@ -7435,8 +7632,8 @@ def cfe_desglose(request):
                       "Consultar recibo CFE") or request.user.is_superuser:
         set_default_session_vars(request, datacontext)
 
-        today = datetime.datetime.today().replace(hour=0, minute=0, second=0,
-                                                  tzinfo=timezone.get_current_timezone())
+        today = datetime.datetime.today().replace(
+            hour=0, minute=0, second=0, tzinfo=timezone.get_current_timezone())
         month = int(today.month)
         year = int(today.year)
         dict(one=1, two=2)
@@ -7457,9 +7654,9 @@ def cfe_desglose(request):
         return render_to_response("consumption_centers/cfe_desglose.html",
                                   template_vars_template)
     else:
-        return render_to_response("generic_error.html", RequestContext(request,
-                                                                       {
-                                                                           "datacontext": datacontext}))
+        return render_to_response("generic_error.html",
+                                  RequestContext(request,
+                                                 {"datacontext": datacontext}))
 
 
 # noinspection PyArgumentList
@@ -7473,7 +7670,7 @@ def cfe_desglose_calcs(request):
                       "Consultar recibo CFE") or request.user.is_superuser:
         if not request.session['consumer_unit']:
             return HttpResponse(
-                content="<h2 style='font-family: helvetica; color: #878787; font-size:14px;' text-align: center;>No hay unidades de consumo asignadas, por favor ponte en contacto con el administrador para remediar esta situaci&oacute;n</h2>")
+                content=MSG_PERMIT_ERROR)
 
         set_default_session_vars(request, datacontext)
 
@@ -7510,7 +7707,8 @@ def cfe_desglose_calcs(request):
             #Se obtiene el medidor padre del edificio
             main_cu = ConsumerUnit.objects.get(
                 building=building,
-                electric_device_type__electric_device_type_name="Total Edificio")
+                electric_device_type__electric_device_type_name=
+                "Total Edificio")
             #Se obtienen todos los medidores necesarios
             consumer_units = get_consumer_units(main_cu)
 
@@ -7519,11 +7717,13 @@ def cfe_desglose_calcs(request):
                     pr_powermeter = c_unit.profile_powermeter.powermeter
 
                     #Se obtienen los KW, para obtener la demanda maxima
-                    lecturas_totales = ElectricRateForElectricData.objects.filter(
-                        electric_data__profile_powermeter__powermeter__pk=pr_powermeter.pk).filter(
-                        electric_data__medition_date__range=(
-                            s_date, e_date)).order_by(
-                        'electric_data__medition_date')
+                    lecturas_totales = ElectricRateForElectricData.objects.\
+                        filter(
+                            electric_data__profile_powermeter__powermeter__pk=
+                            pr_powermeter.pk
+                        ).filter(
+                            electric_data__medition_date__range=(s_date, e_date)
+                        ).order_by('electric_data__medition_date')
                     kw_t = obtenerDemanda_kw(lecturas_totales)
                     kw_mt = obtenerDemandaMin_kw(lecturas_totales)
 
@@ -7536,14 +7736,14 @@ def cfe_desglose_calcs(request):
                     #Se obtienen los kwh de ese periodo de tiempo.
                     kwh_lecturas = ElectricDataTemp.objects.filter(
                         profile_powermeter=pr_powermeter,
-                        medition_date__range=(s_date, e_date)).order_by(
-                        'medition_date')
+                        medition_date__range=(s_date, e_date)
+                    ).order_by('medition_date')
                     total_lecturas = len(kwh_lecturas)
 
                     if kwh_lecturas:
                         kwh_inicial = kwh_lecturas[0].TotalkWhIMPORT
-                        kwh_final = kwh_lecturas[
-                            total_lecturas - 1].TotalkWhIMPORT
+                        kwh_final = kwh_lecturas[total_lecturas - 1].\
+                            TotalkWhIMPORT
 
                         kwh_netos += int(ceil(kwh_final - kwh_inicial))
 
@@ -7646,7 +7846,7 @@ def month_analitics_day(request, id_building):
     if has_permission(request.user, VIEW, "Consultar recibo CFE") or \
             request.user.is_superuser:
         fecha = request.GET['date'].split("-")
-        fecha = date(int(fecha[0]), int(fecha[1]), int(fecha[2]))
+        fecha = datetime.date(int(fecha[0]), int(fecha[1]), int(fecha[2]))
         try:
             day_data = DailyData.objects.get(building=edificio, data_day=fecha)
         except ObjectDoesNotExist:

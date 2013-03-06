@@ -45,7 +45,6 @@ def populate_data_warehouse_extended(
         instant_deltas =\
             data_warehouse_extended.models.InstantDelta.objects.all()
 
-        logger.info(str(instant_deltas))
         for instant_delta in instant_deltas:
             create_instant_instances(datetime_from, datetime_to, instant_delta)
 
@@ -153,13 +152,16 @@ def get_curve_fit_function_interpolation(
         dependent_data_list
 ):
 
-    pass
+    return None
 
 
 def get_curve_fit_function_regression(
         independent_data_list,
         dependent_data_list
 ):
+
+    if len(independent_data_list) <= 0 or len(dependent_data_list) <= 0:
+        return None
 
     curve_fit_coefficients =\
         pylab.polyfit(independent_data_list, dependent_data_list, 2)
@@ -200,7 +202,6 @@ def process_consumer_unit_electrical_parameter(
         electrical_parameter,
         instant_delta
 ):
-
     #
     # Get a consumer unit profile object
     #
@@ -242,13 +243,16 @@ def process_consumer_unit_electrical_parameter(
     for instants_group in instants_groups:
         process_consumer_unit_electrical_parameter_instant_group(
             consumer_unit,
+            consumer_unit_profile,
             electrical_parameter,
             instants_group)
 
+    return
 
 
 def process_consumer_unit_electrical_parameter_instant_group(
         consumer_unit,
+        consumer_unit_profile,
         electrical_parameter,
         instants_group
 ):
@@ -286,8 +290,11 @@ def process_consumer_unit_electrical_parameter_instant_group(
 
         independent_data_list.append(timedelta_current_seconds)
         dependent_data_list.append(
-            electric_data_raw_dictionary[
-                electrical_parameter.name_transactional])
+            float(
+                electric_data_raw_dictionary[
+                    electrical_parameter.name_transactional]
+            )
+        )
 
     if electrical_parameter.type ==\
            data_warehouse_extended.models.ElectricalParameter.INSTANT:
@@ -312,7 +319,58 @@ def process_consumer_unit_electrical_parameter_instant_group(
 
         return
 
+    for instant in instants_group:
+        instant_timedelta_current = instant.instant_datetime - datetime_from
+        instant_timedelta_current_seconds =\
+            instant_timedelta_current.seconds + \
+            (instant_timedelta_current.days * 24 * 3600)
+
+        curve_fit_function_evaluation = None
+        if curve_fit_function is not None:
+            curve_fit_function_evaluation =\
+                curve_fit_function(instant_timedelta_current_seconds)
+
+        try:
+            consumer_unit_instant_electric_data =\
+                data_warehouse_extended.models.ConsumerUnitInstantElectricalData.objects.get(
+                    consumer_unit_profile=consumer_unit_profile,
+                    instant=instant,
+                    electrical_parameter=electrical_parameter)
+
+        except data_warehouse_extended.models.ConsumerUnitInstantElectricalData.DoesNotExist:
+            consumer_unit_instant_electric_data =\
+                data_warehouse_extended.models.ConsumerUnitInstantElectricalData(
+                    consumer_unit_profile=consumer_unit_profile,
+                    instant=instant,
+                    electrical_parameter=electrical_parameter)
+
+        consumer_unit_instant_electric_data.value =\
+            curve_fit_function_evaluation
+
+        try:
+            consumer_unit_instant_electric_data.full_clean()
+
+        except django.core.exceptions.ValidationError:
+            logger.error(
+                data_warehouse_extended.globals.SystemError.
+                CONSUMER_UNIT_INSTANT_ELECTRIC_DATA_VALIDATION_ERROR + " - " +
+                str(consumer_unit_instant_electric_data))
+
+            continue
+
+        consumer_unit_instant_electric_data.save()
+        logger.info(data_warehouse_extended.globals.SystemInfo.
+                    CONSUMER_UNIT_INSTANT_ELECTRIC_DATA_SAVED + " - " +\
+                    str(consumer_unit_instant_electric_data))
+
     return
+
+################################################################################
+#
+# Data Retrieve Scripts
+#
+################################################################################
+
 
 
 ################################################################################
@@ -324,3 +382,19 @@ def process_consumer_unit_electrical_parameter_instant_group(
 def test_process_consumer_unit_electrical_parameter():
 
     consumer_unit = c_center.models.ConsumerUnit.objects.get(pk=7)
+    datetime_from = datetime.datetime(year=2012, month=10, day=10)
+    datetime_to = datetime.datetime(year=2012, month=10, day=15)
+    electrical_parameter =\
+        data_warehouse_extended.models.ElectricalParameter.objects.get(name="kW")
+    instant_delta =\
+        data_warehouse_extended.models.InstantDelta.objects.get(
+            delta_seconds=3600)
+
+    process_consumer_unit_electrical_parameter(
+        consumer_unit,
+        datetime_from,
+        datetime_to,
+        electrical_parameter,
+        instant_delta
+    )
+
