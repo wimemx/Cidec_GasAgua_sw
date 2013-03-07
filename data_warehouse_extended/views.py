@@ -2,6 +2,7 @@
 
 # Python imports
 import datetime
+import decimal
 import logging
 import pylab
 
@@ -346,6 +347,10 @@ def process_consumer_unit_electrical_parameter_instant_group(
 
         consumer_unit_instant_electric_data.value =\
             curve_fit_function_evaluation
+
+        if curve_fit_function_evaluation is not None:
+            consumer_unit_instant_electric_data.value =\
+                decimal.Decimal(str(curve_fit_function_evaluation))
 
         try:
             consumer_unit_instant_electric_data.full_clean()
