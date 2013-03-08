@@ -15,6 +15,7 @@ import data_warehouse_extended.globals
 import data_warehouse_extended.models
 
 # CCenter imports
+import c_center.c_center_functions
 import c_center.models
 
 logger = logging.getLogger("data_warehouse")
@@ -342,11 +343,10 @@ def process_consumer_unit_electrical_parameter(
 
         return
 
-    timezone_current = django.utils.timezone.get_current_timezone()
-
     #
     # Localize datetimes (if neccesary) and convert to UTC
     #
+    timezone_current = django.utils.timezone.get_current_timezone()
     datetime_from_local = datetime_from
     if datetime_from_local.tzinfo is None:
         datetime_from_local = timezone_current.localize(datetime_from)
@@ -546,6 +546,86 @@ def process_consumer_unit_electrical_parameter_instant_group(
 #
 ################################################################################
 
+def get_consumer_unit_electrical_parameter_data(
+        consumer_unit,
+        datetime_from,
+        datetime_to,
+        electrical_parameter,
+        instant_delta
+):
+    """
+        Description:
+
+
+        Arguments:
+            consumer_unit - A Consumer Unit object (from the transactional
+                database).
+
+            datetime_from - A Datetime object.
+
+            datetime_to - A Datetime object.
+
+            electrical_parameter - An Electrical Parameter object.
+
+            instant_delta - An Instant Delta object.
+
+        Return:
+            A list of dictionaries.
+    """
+
+    #
+    # Localize datetimes (if neccesary) and convert to UTC
+    #
+    timezone_current = django.utils.timezone.get_current_timezone()
+    datetime_from_local = datetime_from
+    if datetime_from_local.tzinfo is None:
+        datetime_from_local = timezone_current.localize(datetime_from)
+
+    datetime_from_utc =\
+        datetime_from_local.astimezone(django.utils.timezone.utc)
+
+    datetime_to_local = datetime_to
+    if datetime_to_local.tzinfo is None:
+        datetime_to_local = timezone_current.localize(datetime_to)
+
+    datetime_to_utc = datetime_to_local.astimezone(django.utils.timezone.utc)
+
+    #
+    # Get the dependent Consumer Units List and retrieve their data.
+    #
+    consumer_units_list =\
+        c_center.c_center_functions.get_consumer_units(consumer_unit)
+
+    consumer_units_data_list = []
+    for consumer_unit_item in consumer_units_list:
+
+        #
+        # Get a Consumer Unit Profile object
+        #
+        try:
+            consumer_unit_profile =\
+                data_warehouse_extended.models.ConsumerUnitProfile.objects.get(
+                    pk=consumer_unit_item.pk)
+
+        except data_warehouse_extended.models.ConsumerUnitProfile.DoesNotExist:
+            logger.error(
+                data_warehouse_extended.globals.SystemError.
+                CONSUMER_UNIT_PROFILE_DOES_NOT_EXIST +\
+                " " + str(consumer_unit.pk))
+
+            return None
+
+        consumer_unit_item_data =\
+            data_warehouse_extended.models.ConsumerUnitInstantElectricalData.objects.filter(
+                consumer_unit_profile=consumer_unit_profile,
+                instant__instant_delta=instant_delta,
+                instant__instant_datetime__gte=datetime_from_utc,
+                instant__instant_datetime__lte=datetime_to_utc,
+                electrical_parameter=electrical_parameter
+            )
+
+        consumer_units_data_list.append(consumer_unit_item_data)
+
 
 
 ################################################################################
@@ -565,7 +645,15 @@ def test_process_consumer_unit_electrical_parameter():
         data_warehouse_extended.models.InstantDelta.objects.get(
             delta_seconds=3600)
 
-    process_consumer_unit_electrical_parameter(
+    #process_consumer_unit_electrical_parameter(
+    #    consumer_unit,
+    #    datetime_from,
+    #    datetime_to,
+    #    electrical_parameter,
+    #    instant_delta
+    #)
+
+    get_consumer_unit_electrical_parameter_data(
         consumer_unit,
         datetime_from,
         datetime_to,
