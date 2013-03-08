@@ -109,12 +109,6 @@ class ElectricalParameter(django.db.models.Model):
 
 class ConsumerUnitInstantElectricalData(django.db.models.Model):
 
-    # TODO - Use south to migrate model changes
-    #id =\
-    #    django.db.models.BigIntegerField(
-    #        primary_key=True,
-    #        verbose_name=data_warehouse_extended.globals.ModelFieldName.CONSUMER_UNIT_INSTANT_ELECTRIC_DATA__ID)
-
     consumer_unit_profile =\
         django.db.models.ForeignKey(
             ConsumerUnitProfile,
