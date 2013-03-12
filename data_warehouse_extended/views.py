@@ -2,6 +2,7 @@
 
 # Python imports
 import datetime
+import decimal
 import logging
 import pylab
 
@@ -14,6 +15,7 @@ import data_warehouse_extended.globals
 import data_warehouse_extended.models
 
 # CCenter imports
+import c_center.c_center_functions
 import c_center.models
 
 logger = logging.getLogger("data_warehouse")
@@ -28,6 +30,22 @@ def populate_data_warehouse_extended(
         populate_instants=None,
         populate_consumer_unit_profiles=None
 ):
+    """
+        Description:
+            This function populates basic data for the Data Warehouse Extended
+            to start working.
+
+        Arguments:
+            populate_instants - If True the function creates Instants in the
+                interval embedded in the code.
+
+            populate_consumer_unit_profiles - If True the function updates the
+                information about the Consumer Unit Profiles using the
+                transactional database.
+
+        Return:
+            None.
+    """
 
     if populate_instants:
         datetime_from =\
@@ -51,6 +69,8 @@ def populate_data_warehouse_extended(
     if populate_consumer_unit_profiles:
         update_consumer_units()
 
+    return
+
 
 ################################################################################
 #
@@ -63,12 +83,46 @@ def create_instant_instances(
         datetime_to,
         instant_delta
 ):
+    """
+        Description:
+            This function creates Instants in the specified interval.
+
+        Arguments:
+            datetime_form - Datetime that specifies the start of the Instants
+                creation.
+
+            datetime_to - Datetime that specifies the end of the Instants
+                creation
+
+        Return:
+            None.
+    """
 
     logger.info(create_instant_instances.__name__)
     time_delta = datetime.timedelta(seconds=instant_delta.delta_seconds)
     timezone_utc = django.utils.timezone.utc
-    datetime_from_utc = timezone_utc.localize(datetime_from)
-    datetime_to_utc = timezone_utc.localize(datetime_to)
+
+    #
+    # Check if datetime_from is naive and make it UTC
+    #
+    if datetime_from.tzinfo is None:
+        datetime_from_utc = timezone_utc.localize(datetime_from)
+
+    else:
+        datetime_from_utc =  datetime_from.astimezone(timezone_utc)
+
+    #
+    # Check if datetime_from is naive and make it UTC
+    #
+    if datetime_to.tzinfo is None:
+        datetime_to_utc = timezone_utc.localize(datetime_to)
+
+    else:
+        datetime_to_utc =  datetime_to.astimezone(timezone_utc)
+
+    #
+    # Iterate and create Instants
+    #
     datetime_current_utc = datetime_from_utc
     while datetime_current_utc <= datetime_to_utc:
         instant_current = data_warehouse_extended.models.Instant(
@@ -96,6 +150,17 @@ def create_instant_instances(
 
 
 def update_consumer_units():
+    """
+        Description:
+            This function creates new Consumer Unit Profiles and updates the
+            information of the existent ones using the transactional database.
+
+        Arguments:
+            None
+
+        Return:
+            None.
+    """
 
     consumer_units = c_center.models.ConsumerUnit.objects.all()
     for consumer_unit in consumer_units:
@@ -110,6 +175,9 @@ def update_consumer_units():
             part_of_building_name =\
                 consumer_unit.part_of_building.part_of_building_name
 
+        #
+        # If the Consumer Unit exists, update it. Otherwise, create a new one.
+        #
         try:
             consumer_unit_profile =\
                 data_warehouse_extended.models.ConsumerUnitProfile.objects.get(
@@ -134,11 +202,16 @@ def update_consumer_units():
             logger.error(str(consumer_unit_profile_validation_error))
             continue
 
+        #
+        # Save the Consumer Unit Profile with up-to-date information.
+        #
         consumer_unit_profile.save()
         logger.info(
             data_warehouse_extended.globals.SystemInfo.
                 CONSUMER_UNIT_PROFILE_SAVED +\
             " " + str(consumer_unit_profile))
+
+    return
 
 
 ################################################################################
@@ -151,7 +224,7 @@ def get_curve_fit_function_interpolation(
         independent_data_list,
         dependent_data_list
 ):
-
+    # TODO - Implement this function
     return None
 
 
@@ -159,6 +232,21 @@ def get_curve_fit_function_regression(
         independent_data_list,
         dependent_data_list
 ):
+    """
+        Description:
+            This function generates a function using a quadratic regression in a
+            set of points.
+
+        Arguments:
+            independent_data_list - A list that contains the independent axis
+                values of a set of points.
+
+            dependent_data_list - A list that contains the dependent axis values
+                of a set of points.
+
+        Return:
+            A function of the form f(x).
+    """
 
     if len(independent_data_list) <= 0 or len(dependent_data_list) <= 0:
         return None
@@ -180,6 +268,20 @@ def get_instants_groups(
         instants_list,
         group_size
 ):
+    """
+        Description:
+            This function generates a List of Instant Lists that groups Instants
+            into groups of the specified size.
+
+        Arguments:
+            instants_list - A List that contains Instants.
+
+            group_size - The size of the Instant groups that are generated.
+
+        Return:
+            A List of Instant Lists.
+    """
+
     instants_number = len(instants_list)
     groups_number = instants_number / group_size
     instants_groups = []
@@ -202,6 +304,29 @@ def process_consumer_unit_electrical_parameter(
         electrical_parameter,
         instant_delta
 ):
+    """
+        Description:
+            This function processes data for the specified Consumer Unit, in the
+            specified time interval for the specified parameter and saves the
+            processed information in the Data Warehouse Extended database
+            according to the specified granularity.
+
+        Arguments:
+            consumer_unit - A Consumer Unit object (from the transactional
+                database).
+
+            datetime_from - A Datetime object.
+
+            datetime_to - A Datetime object.
+
+            electrical_parameter - An Electrical Parameter object.
+
+            instant_delta - An Instant Delta object.
+
+        Return:
+            None.
+    """
+
     #
     # Get a consumer unit profile object
     #
@@ -218,12 +343,21 @@ def process_consumer_unit_electrical_parameter(
 
         return
 
+    #
+    # Localize datetimes (if neccesary) and convert to UTC
+    #
     timezone_current = django.utils.timezone.get_current_timezone()
-    datetime_from_local = timezone_current.localize(datetime_from)
+    datetime_from_local = datetime_from
+    if datetime_from_local.tzinfo is None:
+        datetime_from_local = timezone_current.localize(datetime_from)
+
     datetime_from_utc =\
         datetime_from_local.astimezone(django.utils.timezone.utc)
 
-    datetime_to_local = timezone_current.localize(datetime_to)
+    datetime_to_local = datetime_to
+    if datetime_to_local.tzinfo is None:
+        datetime_to_local = timezone_current.localize(datetime_to)
+
     datetime_to_utc = datetime_to_local.astimezone(django.utils.timezone.utc)
 
     instants =\
@@ -235,6 +369,9 @@ def process_consumer_unit_electrical_parameter(
             'instant_datetime'
         )
 
+    #
+    # Divide instants into fixed-size groups.
+    #
     instants_groups =\
         get_instants_groups(
             instants,
@@ -256,6 +393,26 @@ def process_consumer_unit_electrical_parameter_instant_group(
         electrical_parameter,
         instants_group
 ):
+    """
+        Description:
+            This function processes data for the specified Consumer Unit, in the
+            time interval given by the instants' group for the specified
+            parameter and saves the processed information in the Data Warehouse
+            Extended database.
+
+        Arguments:
+            consumer_unit - A Consumer Unit object (from the transactional
+                database).
+
+            consumer_unit_profile - A Consumer Unit Profile object.
+
+            electrical_parameter - An Electrical Parameter object.
+
+            instants_group - A list of Instants (which cannot be naive).
+
+        Return:
+            None.
+    """
 
     if len(instants_group) < 1:
         logger.error(
@@ -263,6 +420,9 @@ def process_consumer_unit_electrical_parameter_instant_group(
 
         return
 
+    #
+    # Get all the data based on the first and last Instants in the list.
+    #
     instant_delta = instants_group[0].instant_delta
     timedelta = datetime.timedelta(seconds=instant_delta.delta_seconds)
     datetime_from = instants_group[0].instant_datetime - timedelta
@@ -279,6 +439,9 @@ def process_consumer_unit_electrical_parameter_instant_group(
             electrical_parameter.name_transactional
         )
 
+    #
+    # Get independent and dependent values.
+    #
     independent_data_list = []
     dependent_data_list = []
     for electric_data_raw_dictionary in electric_data_raw_dictionaries_list:
@@ -296,6 +459,10 @@ def process_consumer_unit_electrical_parameter_instant_group(
             )
         )
 
+    #
+    # Generate a function based on the points (interpolation for cumulative
+    # data and regression for instant data).
+    #
     if electrical_parameter.type ==\
            data_warehouse_extended.models.ElectricalParameter.INSTANT:
 
@@ -319,6 +486,10 @@ def process_consumer_unit_electrical_parameter_instant_group(
 
         return
 
+    #
+    # Evaluate the generated function on each Instant datetime and save the
+    # result in the Data Warehouse Extended.
+    #
     for instant in instants_group:
         instant_timedelta_current = instant.instant_datetime - datetime_from
         instant_timedelta_current_seconds =\
@@ -347,6 +518,10 @@ def process_consumer_unit_electrical_parameter_instant_group(
         consumer_unit_instant_electric_data.value =\
             curve_fit_function_evaluation
 
+        if curve_fit_function_evaluation is not None:
+            consumer_unit_instant_electric_data.value =\
+                decimal.Decimal(str(curve_fit_function_evaluation))
+
         try:
             consumer_unit_instant_electric_data.full_clean()
 
@@ -371,6 +546,86 @@ def process_consumer_unit_electrical_parameter_instant_group(
 #
 ################################################################################
 
+def get_consumer_unit_electrical_parameter_data(
+        consumer_unit,
+        datetime_from,
+        datetime_to,
+        electrical_parameter,
+        instant_delta
+):
+    """
+        Description:
+
+
+        Arguments:
+            consumer_unit - A Consumer Unit object (from the transactional
+                database).
+
+            datetime_from - A Datetime object.
+
+            datetime_to - A Datetime object.
+
+            electrical_parameter - An Electrical Parameter object.
+
+            instant_delta - An Instant Delta object.
+
+        Return:
+            A list of dictionaries.
+    """
+
+    #
+    # Localize datetimes (if neccesary) and convert to UTC
+    #
+    timezone_current = django.utils.timezone.get_current_timezone()
+    datetime_from_local = datetime_from
+    if datetime_from_local.tzinfo is None:
+        datetime_from_local = timezone_current.localize(datetime_from)
+
+    datetime_from_utc =\
+        datetime_from_local.astimezone(django.utils.timezone.utc)
+
+    datetime_to_local = datetime_to
+    if datetime_to_local.tzinfo is None:
+        datetime_to_local = timezone_current.localize(datetime_to)
+
+    datetime_to_utc = datetime_to_local.astimezone(django.utils.timezone.utc)
+
+    #
+    # Get the dependent Consumer Units List and retrieve their data.
+    #
+    consumer_units_list =\
+        c_center.c_center_functions.get_consumer_units(consumer_unit)
+
+    consumer_units_data_list = []
+    for consumer_unit_item in consumer_units_list:
+
+        #
+        # Get a Consumer Unit Profile object
+        #
+        try:
+            consumer_unit_profile =\
+                data_warehouse_extended.models.ConsumerUnitProfile.objects.get(
+                    pk=consumer_unit_item.pk)
+
+        except data_warehouse_extended.models.ConsumerUnitProfile.DoesNotExist:
+            logger.error(
+                data_warehouse_extended.globals.SystemError.
+                CONSUMER_UNIT_PROFILE_DOES_NOT_EXIST +\
+                " " + str(consumer_unit.pk))
+
+            return None
+
+        consumer_unit_item_data =\
+            data_warehouse_extended.models.ConsumerUnitInstantElectricalData.objects.filter(
+                consumer_unit_profile=consumer_unit_profile,
+                instant__instant_delta=instant_delta,
+                instant__instant_datetime__gte=datetime_from_utc,
+                instant__instant_datetime__lte=datetime_to_utc,
+                electrical_parameter=electrical_parameter
+            )
+
+        consumer_units_data_list.append(consumer_unit_item_data)
+
 
 
 ################################################################################
@@ -390,7 +645,15 @@ def test_process_consumer_unit_electrical_parameter():
         data_warehouse_extended.models.InstantDelta.objects.get(
             delta_seconds=3600)
 
-    process_consumer_unit_electrical_parameter(
+    #process_consumer_unit_electrical_parameter(
+    #    consumer_unit,
+    #    datetime_from,
+    #    datetime_to,
+    #    electrical_parameter,
+    #    instant_delta
+    #)
+
+    get_consumer_unit_electrical_parameter_data(
         consumer_unit,
         datetime_from,
         datetime_to,
