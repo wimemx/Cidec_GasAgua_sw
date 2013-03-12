@@ -44,10 +44,10 @@ def demandaMaxima(building, fecha_inicio, fecha_fin):
 
 def demandaMinima(building, fecha_inicio, fecha_fin):
     demanda_min = 0
-    lecturas = DailyData.objects.filter(building=building,
+    lecturas = DailyData.objects.filter(
+        building=building,
         data_day__gte=fecha_inicio,
-        data_day__lte=fecha_fin).order_by(
-        'min_demand')
+        data_day__lte=fecha_fin).order_by('min_demand')
     if lecturas:
         demanda_min = lecturas[0].min_demand
     return demanda_min
@@ -55,14 +55,15 @@ def demandaMinima(building, fecha_inicio, fecha_fin):
 
 def promedioKWH(building, fecha_inicio, fecha_fin):
     promedio = 0
-    t_lecturas = DailyData.objects.filter(building=building,
+    t_lecturas = DailyData.objects.filter(
+        building=building,
         data_day__gte=fecha_inicio,
         data_day__lte=fecha_fin)
     if t_lecturas:
-        suma_lecturas = DailyData.objects.filter(building=building,
+        suma_lecturas = DailyData.objects.filter(
+            building=building,
             data_day__gte=fecha_inicio,
-            data_day__lte=fecha_fin).aggregate(
-            Sum('KWH_total'))
+            data_day__lte=fecha_fin).aggregate(Sum('KWH_total'))
         total_lecturas = len(t_lecturas)
         promedio = suma_lecturas['KWH_total__sum'] / total_lecturas
     return promedio
@@ -93,10 +94,12 @@ def medianaKWH(building, fecha_inicio, fecha_fin):
         'KWH_total')
     if lecturas:
         longitud = len(lecturas)
-        if longitud % 2 is 0: #Si es par
+        if longitud % 2 is 0:
+            #Si es par
             mediana = (lecturas[longitud / 2].KWH_total + lecturas[
                       (longitud / 2) - 1].KWH_total) / 2
-        else: #Si es impar
+        else:
+            #Si es impar
             mediana = lecturas[longitud / 2].KWH_total
     return mediana
 
