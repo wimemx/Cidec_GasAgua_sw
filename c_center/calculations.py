@@ -782,7 +782,6 @@ def getMonths(start_date, end_date):
     b_inicio = True
     for idx, dt in enumerate(dates):
         days_m = monthrange(dt.year, dt.month)
-        days_m[1]
         if idx == 0:
             s_m = start_date
             b_inicio = False
@@ -897,12 +896,29 @@ def multiply():
             dato.save()
     print ":D"
 
+
+#etiquetado recursivo
+def recursive_tag(initial=None, last=None):
+
+    if not initial:
+        initial = 0
+    if not last:
+        last_pk = ElectricDataTemp.objects.all().values("pk").order_by("medition_date")[0]
+        last = last_pk['pk']
+    tag_reading_ids(initial, last)
+    last_last = ElectricDataTemp.objects.all().values("pk").order_by("medition_date")[0]
+    last_last = last_last['pk']
+    if last_last > last:
+        recursive_tag(last, last_last)
+    else:
+        print "acabe"
+        return "EXITO!"
+
+
 #Etiquetado de datos por rango de ids
-def tag_reading_ids():
+def tag_reading_ids(id_initial, id_max):
     readingsObj = ElectricDataTemp.objects.filter(
-        profile_powermeter__pk=28).filter(
-        medition_date__gte=datetime.datetime(2012, 12, 31)).filter(
-        medition_date__lte=datetime.datetime(2013, 1, 12)).order_by(
+        pk__lte=id_max).filter(pk__gte=id_initial).order_by(
         "medition_date")
 
     for readingObj in readingsObj:

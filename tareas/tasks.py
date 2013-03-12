@@ -2,11 +2,18 @@ from celery import task
 from celery.task.schedules import crontab
 from celery.decorators import periodic_task
 
-from data_warehouse.views import *
-from c_center.c_center_functions import save_historic
+from data_warehouse.views import populate_data_warehouse, \
+    data_warehouse_update
+from c_center.c_center_functions import save_historic, dailyReportAll, \
+    asign_electric_data_to_pw
 from c_center.calculations import reTagHolidays
 
 from datetime import date
+
+@task(ignore_result=True)
+def change_profile_electric_data(serials):
+    asign_electric_data_to_pw(serials)
+
 
 @task(ignore_result=True)
 def datawarehouse_run(
@@ -26,8 +33,8 @@ def datawarehouse_run(
     )
 
 @task(ignore_result=True)
-def tag_batch():
-    reTagHolidays()
+def tag_batch(initial, last):
+    recursive_tag(initial, last)
 
 @task(ignore_result=True)
 def calculate_dw(granularity):

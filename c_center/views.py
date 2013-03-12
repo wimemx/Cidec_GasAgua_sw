@@ -53,7 +53,8 @@ from .tables import ElectricDataTempTable, ThemedElectricDataTempTable
 
 import json as simplejson
 import sys
-from tareas.tasks import datawarehouse_run, save_historic_delay
+from tareas.tasks import datawarehouse_run, save_historic_delay, \
+    change_profile_electric_data
 
 VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
@@ -2051,6 +2052,7 @@ def add_powermeter(request):
                 )
                 newPowerMeter.save()
                 ProfilePowermeter(powermeter=newPowerMeter).save()
+                change_profile_electric_data.delay([pw_serial])
 
                 template_vars["message"] = "Medidor creado exitosamente"
                 template_vars["type"] = "n_success"
@@ -2146,6 +2148,7 @@ def edit_powermeter(request, id_powermeter):
                 powermeter.powermeter_serial = pw_serial
                 powermeter.powermeter_model = pw_model
                 powermeter.save()
+                change_profile_electric_data.delay([pw_serial])
 
                 message = "Medidor editado exitosamente"
                 _type = "n_success"
@@ -6764,6 +6767,7 @@ def save_add_powermeter_popup(request):
             newPowerMeter.save()
             profile = ProfilePowermeter(powermeter=newPowerMeter)
             profile.save()
+            change_profile_electric_data.delay([pw_serial])
 
             return HttpResponse(content=profile.pk,
                                 content_type="text/plain",
