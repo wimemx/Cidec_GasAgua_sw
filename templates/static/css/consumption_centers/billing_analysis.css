@@ -1,0 +1,194 @@
+body{
+    background: none !important;
+}
+
+iframe{
+    height: 100%;
+}
+
+#widgetField{
+    width: 255px !important;
+}
+
+#analisis_container{
+    height: 950px;
+}
+
+#b_analisis_drop{
+    z-index: 2;
+    padding: 11px 15px 0 15px;
+    width: 225px;
+    left: 143px;
+    top: 27px;
+    position: absolute;
+    border: solid 1px #BDBDBD;
+    border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    background: whiteSmoke;
+    display: none;
+    height: 200px;
+}
+
+.ba_h4{
+    font-weight: bold;
+}
+
+#btn_apply{
+    margin-top: 15px;
+    float: right;
+}
+
+.cl_temporalidad{
+    height: 100px;
+}
+
+#temp_container{
+    margin: 10px 0px;
+}
+
+#temp_container span{
+    margin-right: 10px;
+}
+
+.selects_container{
+    margin: 5px 0px;
+}
+
+.selects_short .selector{
+    width: 100px;
+}
+
+.selects_short .selector span{
+    width: 70px !important;
+}
+
+.selects_short .selector select{
+    min-width: 110px !important;
+}
+
+.selects_long .selector{
+    width: 220px;
+}
+
+.selects_long .selector span{
+    width: 190px !important;
+}
+
+.selects_long .selector select{
+    min-width: 225px !important;
+}
+
+.label_title_graph{
+    color: #1b6b84;
+    font-size: 18px;
+    padding: 10px 0px;
+}
+
+.graph_title{
+    text-align: center;
+    font-size: 20px;
+    padding: 10px 0px;
+    color: #1b6b84;
+}
+
+.label_data_graph{
+    color: #4d5b65;
+    font-size: 26px;
+    padding-bottom: 10px;
+}
+
+.info_compare{
+    color: #f78a3d;
+    font-size: 28px;
+    padding-bottom: 10px;
+}
+
+.label_data{
+    padding: 5px 0px;
+    font-size: 12px;
+    color: #4d5b65;
+}
+
+.left_bgraph{
+    width: 76%;
+    padding-left: 5px;
+    float: left;
+}
+
+.right_bgraph{
+    width: 22%;
+    padding-right: 5px;
+    float: left;
+}
+
+.left_bgraph_small{
+    width: 66%;
+    padding-left: 5px;
+    float: left;
+}
+
+.right_bgraph_small{
+    width: 32%;
+    padding-right: 5px;
+    float: left;
+}
+
+.graph_container{
+    width: 100%;
+}
+
+
+.right_info{
+    height: 300px;
+    padding-top: 130px;
+    padding-right: 40px;
+    text-align: center;
+}
+
+.right_info_small{
+    height: auto;
+    padding-top: 130px;
+    padding-right: 30px;
+    text-align: center;
+}
+
+.g_border{
+    border: solid 1px #9ebfc7;
+    border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    height: 400px;
+}
+
+.half_column{
+    width: 48%;
+    height: 400px;
+    float: left;
+    border: solid 1px #9ebfc7;
+    border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    margin: 10px;
+}
+
+#periodo_container{
+    height: 140px;
+    width: 500px;
+    margin: 0px auto;
+}
+
+
+.periodo_info{
+    float: left;
+    width: 33%;
+    padding-top: 30px;
+}
+
+.periodo_porcentajes{
+    font-size: 18px;
+}
+
+.periodo_label{
+    font-weight: bold;
+}

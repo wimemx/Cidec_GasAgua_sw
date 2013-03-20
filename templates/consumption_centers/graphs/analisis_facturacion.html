@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+{% block titulo %}Reportes{% endblock %}
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/consumption_centers/main.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/consumption_centers/billing_analysis.css" type="text/css" />
+    <link rel="stylesheet" href="/static/date_picker/css/datepicker.css" type="text/css" />
+    <link rel="stylesheet" href="/static/js/external/fancybox/jquery.fancybox.css" type="text/css" />
+{% endblock %}
+{% block externaljs %}
+    <script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
+    <script type="text/javascript" src="/static/date_picker/js/date_picker.js"></script>
+
+    <script type="text/javascript">
+        //<![CDATA[
+
+
+        function billingReload(){
+
+            var periodType = $("input:radio[name=period_type_rd]]:checked").val();
+
+            var url = '/reportes/analisis_fac_ajax/?report_type='+periodType
+            if(periodType == 0){
+
+                url += '&year01='+$("#a_year_01").val();
+                if($("#compare_year").is(':checked')){
+                    url += '&year02='+$("#a_year_02").val();
+                }
+
+            }else{
+                url += '&month_01='+$("#m_month_01").val()+'&year_01='+$("#m_year_01").val()+'&month_02='+$("#m_month_02").val()+'&year_02='+$("#m_year_02").val();
+            }
+
+            console.log(url);
+            $('#analisis_container').addClass('iframe_spinner');
+            makeIframe(url);
+
+        }
+
+        function refresh_iframe_height(){
+            // regresca el height del iframe para ajustarse a su conte
+            setTimeout("parent.document.getElementById('graphFrame').height = document['body'].offsetHeight;", 1000);
+        }
+        function makeIframe(src){
+            var graphFrame = document.createElement("IFRAME");
+            graphFrame.id = "graphFrame";
+            graphFrame.src = src;
+            $("#analisis_container").html(graphFrame);
+            refresh_iframe_height();
+        }
+        //]]>
+    </script>
+{% endblock %}
+{% block document_ready %}
+
+    var url = window.location.href;
+    url = url.replace("#", '');
+    History.replaceState(url,"Reporte electrico", url);
+
+    var state = false;
+    $('#widgetField').click(function(){
+    $('#b_analisis_drop').slideToggle();
+    });
+
+
+    $("[name=period_type_rd]").click(function(e){
+
+        var periodType = $("input:radio[name=period_type_rd]:checked").val()
+    console.log(periodType);
+        $('.cl_temporalidad').hide();
+        if(periodType == 0){
+            $("#anual_container").show();
+        }else{
+            $("#monthly_container").show();
+        }
+    });
+
+    $(".aqua_btn").click(function(e){
+    //aplicar el(los) rangos de fecha seleccionados
+    e.preventDefault();
+    $('#b_analisis_drop').slideUp();
+    billingReload();
+    });
+
+    $('#compare_year').click(function(){
+        //Se habilita/deshabilita
+
+        if ($("#compare_year").is(":checked")) {
+            $('#a_year_02').prop('disabled', false);
+            $('#uniform-a_year_02').removeClass('disabled');
+        }
+        else {
+            $('#a_year_02').prop('disabled', 'disabled');
+            $('#uniform-a_year_02').addClass('disabled');
+
+        }
+
+    });
+
+
+    $(".various").fancybox({
+    maxWidth	: 800,
+    maxHeight	: 800,
+    fitToView	: false,
+    width		: '70%',
+    height		: '70%',
+    autoSize	: false,
+    closeClick	: false,
+    openEffect	: 'none',
+    closeEffect	: 'none'
+    });
+
+{% endblock %}
+{% block contenido %}
+
+    <div id="bread_crumbs">
+        <ul>
+            <li><a href="/main/">Inicio</a></li>
+            <li><a href="/main/">Reportes</a></li>
+        </ul>
+
+    </div>
+    <div id="page_content">
+        <div id="contenido_interno">
+            <h2 id="titulo_reporte">{{ empresa.building_name }} -
+        <span>
+            {% if consumer_unit.part_of_building %}
+                {{ consumer_unit.part_of_building.part_of_building_name }}
+            {% else %}
+                {{ consumer_unit.electric_device_type.electric_device_type_name }}
+            {% endif %}
+        </span>
+            </h2><a class="various" data-fancybox-type="iframe"  href="/reportes/set_consumer_unit/">Cambiar</a>
+
+            <div id="datepicker_component">
+                <div id="widgetField">
+                    <span>Fecha Inicio &ndash; Fecha Fin</span>
+                    <a href="#">&nbsp;</a>
+                </div>
+
+                <div id="b_analisis_drop">
+
+                    <div>
+                        <label class="ba_h4">Selecciona temporalidad</label>
+                        <div id="temp_container">
+                            <span><input type="radio" name="period_type_rd" value="0" checked="checked"> Anual</span>
+                            <span><input type="radio" name="period_type_rd" value="1"> Mensual</span>
+                        </div>
+                    </div>
+                    <div class="cl_temporalidad" id="anual_container" style="display: block;">
+                        <div>
+                            <label>Selecciona un año:</label>
+                        </div>
+                        <div class="selects_container selects_long">
+                            <select name="a_year_01" id="a_year_01">
+                                <option value="2013" selected="selected">2013</option>
+                                <option value="2012">2012</option>
+                                <option value="2011">2011</option>
+                            </select>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="compare_year"/>Comparar con
+                        </div>
+                        <div class="selects_container selects_long">
+                            <select name="a_year_02" id="a_year_02" disabled="true">
+                                <option value="2013">2013</option>
+                                <option value="2012" selected="selected">2012</option>
+                                <option value="2011">2011</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="cl_temporalidad" id="monthly_container" style="display: none;">
+                        <div>
+                            <label>Selecciona un mes:</label>
+                        </div>
+                        <div class="selects_container selects_short">
+                            <select name="m_month_01" id="m_month_01">
+                                <option value="1" selected="selected">Enero</option>
+                                <option value="2">Febrero</option>
+                                <option value="3">Marzo</option>
+                                <option value="4">Abril</option>
+                                <option value="5">Mayo</option>
+                                <option value="6">Junio</option>
+                                <option value="7">Julio</option>
+                                <option value="8">Agosto</option>
+                                <option value="9">Septiembre</option>
+                                <option value="10">Octubre</option>
+                                <option value="11">Noviembre</option>
+                                <option value="12">Diciembre</option>
+                            </select>
+                            <select name="m_year_01" id="m_year_01">
+                                <option value="2013" selected="selected">2013</option>
+                                <option value="2012">2012</option>
+                                <option value="2011">2011</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Comparar con:</label>
+                        </div>
+                        <div class="selects_container selects_short">
+                            <select name="m_month_02" id="m_month_02">
+                                <option value="1" selected="selected">Enero</option>
+                                <option value="2">Febrero</option>
+                                <option value="3">Marzo</option>
+                                <option value="4">Abril</option>
+                                <option value="5">Mayo</option>
+                                <option value="6">Junio</option>
+                                <option value="7">Julio</option>
+                                <option value="8">Agosto</option>
+                                <option value="9">Septiembre</option>
+                                <option value="10">Octubre</option>
+                                <option value="11">Noviembre</option>
+                                <option value="12">Diciembre</option>
+                            </select>
+                            <select name="m_year_02" id="m_year_02">
+                                <option value="2013">2013</option>
+                                <option value="2012" selected="selected">2012</option>
+                                <option value="2011">2011</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="btn_apply">
+                        <a href="#" class="aqua_btn">Aplicar</a>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="divider" id="divider_top">&nbsp;</div>
+
+            <div id="graphs_container">
+                <div id="compare" class="fl">
+                    <input id="evaluated_companies" type="hidden" value="{{ empresa.pk }},"/>
+                    <!--<span>Comparar:</span>
+            <span class="compared">{{ empresa.building_name }}</span>
+            <span class="vs_tag">VS</span>
+            <select id="compare_to">
+                <option value="0">Selecciona</option>
+                {% for cntx in datacontext %}
+                    <option value="{{ cntx.building.pk }}">
+                        {{cntx.building.building_name}}
+                    </option>
+                {% endfor %}
+            </select>-->
+                </div>
+
+                <div id="analisis_container">
+                    <iframe src="/reportes/graficas/" id="graphFrame" seamless="seamless"></iframe>
+                </div>
+
+            </div>
+
+
+        </div>
+    </div>
+{% endblock %}
