@@ -7867,3 +7867,502 @@ def month_analitics_day(request, id_building):
                             content_type="application/json")
     else:
         raise Http404
+
+
+# noinspection PyArgumentList
+@login_required(login_url='/')
+def billing_analisis_header(request):
+    datacontext = get_buildings_context(request.user)[0]
+    if request.user.is_superuser:
+        set_default_session_vars(request, datacontext)
+
+        template_vars = {"type": "cfe", "datacontext": datacontext,
+                         'empresa': request.session['main_building'],
+                         'company': request.session['company'],
+                         'sidebar': request.session['sidebar']}
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response(
+            "consumption_centers/graphs/analisis_facturacion.html",
+                                  template_vars_template)
+    else:
+        return render_to_response("generic_error.html",
+                                  RequestContext(request,
+                                                 {"datacontext": datacontext}))
+
+
+def getMonthName(index):
+    if index == 1:
+        return 'Ene'
+    elif index == 2:
+        return 'Feb'
+    elif index == 3:
+        return 'Mar'
+    elif index == 4:
+        return 'Abr'
+    elif index == 5:
+        return 'May'
+    elif index == 6:
+        return 'Jun'
+    elif index == 7:
+        return 'Jul'
+    elif index == 8:
+        return 'Ago'
+    elif index == 9:
+        return 'Sep'
+    elif index == 10:
+        return 'Oct'
+    elif index == 11:
+        return 'Nov'
+    elif index == 12:
+        return 'Dic'
+
+
+def billing_analisis(request):
+    """Renders the cfe bill and the historic data chart"""
+    datacontext = get_buildings_context(request.user)[0]
+    if request.user.is_superuser:
+        if not request.session['consumer_unit']:
+            return HttpResponse(
+                content=MSG_PERMIT_ERROR)
+
+        set_default_session_vars(request, datacontext)
+
+        template_vars = dict(datacontext=datacontext,
+                             empresa=request.session['main_building'])
+
+        building = request.session['main_building']
+
+        #Se obtiene el tipo de tarifa del edificio
+        tipo_tarifa = building.electric_rate
+
+        compare_years_flag = False
+        graph_kwh_arr = []
+        graph_money_arr = []
+        y01_kwh = 0
+        y02_kwh = 0
+        y01_money = 0
+        y02_money = 0
+        difference_qty = 0
+        difference_money = 0
+        kwh_average = 0
+        money_average = 0
+
+        if request.GET:
+            report_type = int(request.GET['report_type'])
+
+            #Si el tipo de reporte es anual:
+            if report_type == 0:
+                template_vars['tipo_reporte'] = 1
+
+                year_01 = int(request.GET['year01'])
+                template_vars['year_01'] = year_01
+                if request.GET.__contains__('year02'):
+                    compare_years_flag = True
+                    year_02 = int(request.GET['year02'])
+                    template_vars['year_02'] = year_02
+
+                for i in range(12):
+                    datos_kwh = dict()
+                    datos_money = dict()
+                    mes = i+1
+                    if tipo_tarifa.pk == 1:
+                        year_01_data = HMHistoricData.objects.filter(
+                            monthly_cut_dates__building = building,
+                            monthly_cut_dates__billing_month__year = year_01,
+                            monthly_cut_dates__billing_month__month = mes)
+                    elif tipo_tarifa.pk == 2:
+                        year_01_data = DacHistoricData.objects.filter(
+                            monthly_cut_dates__building = building,
+                            monthly_cut_dates__billing_month__year = year_01,
+                            monthly_cut_dates__billing_month__month = mes)
+                    elif tipo_tarifa.pk == 3:
+                        year_01_data = T3HistoricData.objects.filter(
+                            monthly_cut_dates__building = building,
+                            monthly_cut_dates__billing_month__year = year_01,
+                            monthly_cut_dates__billing_month__month = mes)
+
+                    datos_kwh['mes'] = getMonthName(i+1)
+                    datos_money['mes'] = getMonthName(i+1)
+                    if year_01_data:
+                        datos_kwh['kwh_01'] = year_01_data[0].KWH_total
+                        datos_money['total_01'] = year_01_data[0].total
+                        #Se va haciendo la suma
+                        y01_kwh += year_01_data[0].KWH_total
+                        y01_money += year_01_data[0].total
+                    else:
+                        datos_kwh['kwh_01'] = 0
+                        datos_money['total_01'] = 0
+
+                    if compare_years_flag:
+                        if tipo_tarifa.pk == 1:
+                            year_02_data = HMHistoricData.objects.filter(
+                                monthly_cut_dates__building = building,
+                                monthly_cut_dates__billing_month__year = year_02,
+                                monthly_cut_dates__billing_month__month = mes)
+                        elif tipo_tarifa.pk == 2:
+                            year_02_data = DacHistoricData.objects.filter(
+                                monthly_cut_dates__building = building,
+                                monthly_cut_dates__billing_month__year = year_02,
+                                monthly_cut_dates__billing_month__month = mes)
+                        elif tipo_tarifa.pk == 3:
+                            year_02_data = T3HistoricData.objects.filter(
+                                monthly_cut_dates__building = building,
+                                monthly_cut_dates__billing_month__year = year_02,
+                                monthly_cut_dates__billing_month__month = mes)
+
+                        if year_02_data:
+                            datos_kwh['kwh_02'] = year_02_data[0].KWH_total
+                            datos_money['total_02'] = year_02_data[0].total
+                            #Se va haciendo la suma
+                            y02_kwh += year_02_data[0].KWH_total
+                            y02_money += year_02_data[0].total
+                        else:
+                            datos_kwh['kwh_02'] = 0
+                            datos_money['total_02'] = 0
+
+                    graph_kwh_arr.append(datos_kwh)
+                    graph_money_arr.append(datos_money)
+
+
+                template_vars['kwh_data'] = graph_kwh_arr
+                template_vars['money_data'] = graph_money_arr
+
+                if compare_years_flag:
+
+                    difference_qty = y02_kwh - y01_kwh
+                    if y02_kwh is not 0:
+                        difference_pc_kwh = (float(y01_kwh) * 100.0 / float(
+                            y02_kwh)) - 100.0
+                    else:
+                        difference_pc_kwh = '-'
+
+                    difference_money = y02_money - y01_money
+                    if y02_money is not 0:
+                        difference_pc_money = (float(y01_money) * 100.0 / float(
+                            y02_money)) - 100.0
+                    else:
+                        difference_pc_money = '-'
+
+                    template_vars['compare_years'] = True
+                    template_vars['kwh_total_01'] = y01_kwh
+                    template_vars['kwh_total_02'] = y02_kwh
+                    template_vars['diff_kwh_pc'] = difference_pc_kwh
+                    template_vars['diff_kwh_qty'] = difference_qty
+
+                    template_vars['money_total_01'] = y01_money
+                    template_vars['money_total_02'] = y02_money
+                    template_vars['diff_money_pc'] = difference_pc_money
+                    template_vars['diff_money_qty'] = difference_money
+
+                else:
+                    kwh_average = float(y01_kwh)/12.0
+                    money_average = float(y01_money)/12.0
+
+                    template_vars['compare_years'] = False
+                    template_vars['kwh_average'] = kwh_average
+                    template_vars['money_average'] = money_average
+                    template_vars['kwh_total'] = y01_kwh
+                    template_vars['money_total'] = y01_money
+
+
+            else: #Si el tipo de reporte es mensual
+                template_vars['tipo_reporte'] = 2
+
+                month_01 = int(request.GET['month_01'])
+                year_01 = int(request.GET['year_01'])
+                month_02 = int(request.GET['month_02'])
+                year_02 = int(request.GET['year_02'])
+
+                template_vars['mes_01'] = getMonthName(month_01) \
+                                          + ' ' + str(year_01)
+                template_vars['mes_02'] = getMonthName(month_02) \
+                                          + ' ' + str(year_02)
+
+                if tipo_tarifa.pk == 1:
+                    template_vars['tarifa'] = 1
+                    m01_data = HMHistoricData.objects.filter(
+                        monthly_cut_dates__building = building,
+                        monthly_cut_dates__billing_month__month = month_01,
+                        monthly_cut_dates__billing_month__year = year_01)
+                    m02_data = HMHistoricData.objects.filter(
+                        monthly_cut_dates__building = building,
+                        monthly_cut_dates__billing_month__month = month_02,
+                        monthly_cut_dates__billing_month__year = year_02)
+
+                    if m01_data:
+
+                        template_vars['m01_kwh'] = m01_data[0].KWH_total
+                        template_vars['m01_money'] = m01_data[0].total
+                        template_vars['m01_kw'] = m01_data[0].KW_base +\
+                                                  m01_data[0].KW_intermedio + \
+                                                  m01_data[0].KW_punta
+                        template_vars['m01_base'] = m01_data[0].KWH_base
+                        template_vars['m01_intermedio'] = m01_data[0].KWH_intermedio
+                        template_vars['m01_punta'] = m01_data[0].KWH_punta
+                        template_vars['m01_t_base'] = m01_data[0].KWH_base_rate
+                        template_vars['m01_t_intermedio'] = m01_data[0].KWH_intermedio_rate
+                        template_vars['m01_t_punta'] = m01_data[0].KWH_punta_rate
+                    else:
+                        template_vars['m01_kwh'] = 0
+                        template_vars['m01_money'] = 0
+                        template_vars['m01_kw'] = 0
+                        template_vars['m01_base'] = 0
+                        template_vars['m01_intermedio'] = 0
+                        template_vars['m01_punta'] = 0
+                        #Obtiene la tarifa directamente de su tabla
+
+                        tarifasObj = ElectricRatesDetail.objects.filter(
+                            electric_rate=1, region=building.region,
+                            date_init__month=month_01, date_init__year=year_01)
+                        if tarifasObj:
+                            template_vars['m01_t_base'] = tarifasObj[0].KWHB
+                            template_vars['m01_t_intermedio'] = tarifasObj[0].KWHI
+                            template_vars['m01_t_punta'] = tarifasObj[0].KWHP
+                        else:
+                            template_vars['m01_t_base'] = 0
+                            template_vars['m01_t_intermedio'] = 0
+                            template_vars['m01_t_punta'] = 0
+
+                    if m02_data:
+                        template_vars['m02_kwh'] = m02_data[0].KWH_total
+                        template_vars['m02_money'] = m02_data[0].total
+                        template_vars['m02_kw'] = m02_data[0].KW_base\
+                                                  + m02_data[0].KW_intermedio \
+                                                  + m02_data[0].KW_punta
+                        template_vars['m02_base'] = m02_data[0].KWH_base
+                        template_vars['m02_intermedio'] = m02_data[0].KWH_intermedio
+                        template_vars['m02_punta'] = m02_data[0].KWH_punta
+                        template_vars['m02_t_base'] = m02_data[0].KWH_base_rate
+                        template_vars['m02_t_intermedio'] = m02_data[0].KWH_intermedio_rate
+                        template_vars['m02_t_punta'] = m02_data[0].KWH_punta_rate
+                    else:
+                        template_vars['m02_kwh'] = 0
+                        template_vars['m02_money'] = 0
+                        template_vars['m02_kw'] = 0
+                        template_vars['m02_base'] = 0
+                        template_vars['m02_intermedio'] = 0
+                        template_vars['m02_punta'] = 0
+                        #Obtiene la tarifa directamente de su tabla
+
+                        tarifasObj = ElectricRatesDetail.objects.filter(
+                            electric_rate=1, region=building.region,
+                            date_init__month=month_02, date_init__year=year_02)
+                        if tarifasObj:
+                            template_vars['m02_t_base'] = tarifasObj[0].KWHB
+                            template_vars['m02_t_intermedio'] = tarifasObj[0].KWHI
+                            template_vars['m02_t_punta'] = tarifasObj[0].KWHP
+                        else:
+                            template_vars['m02_t_base'] = 0
+                            template_vars['m02_t_intermedio'] = 0
+                            template_vars['m02_t_punta'] = 0
+
+                    #Si estan los datos, obtiene los porcentajes de diferencia
+                    #Porcentaje de Kilowatts hora
+                    if template_vars['m02_kwh'] is not 0:
+                        template_vars['diff_kwh'] = (float(
+                            template_vars['m01_kwh']) *
+                             100.0 / float(template_vars['m02_kwh'])) - 100.0
+                    else:
+                        template_vars['diff_kwh'] = '-'
+
+                    #Porcentaje de Dinero
+                    if template_vars['m02_money'] is not 0:
+                        template_vars['diff_money'] = (float(
+                            template_vars['m01_money']) *
+                            100.0 / float(template_vars['m02_money'])) - 100.0
+                    else:
+                        template_vars['diff_money'] = '-'
+
+                    #Porcentaje de Kilowatts
+                    if template_vars['m02_kw'] is not 0:
+                        template_vars['diff_kw'] = (float(
+                            template_vars['m01_kw']) *
+                            100.0 / float(template_vars['m02_kw'])) - 100.0
+                    else:
+                        template_vars['diff_kw'] = '-'
+
+                    #Porcentaje de Tarifa Base
+                    if template_vars['m02_t_base'] is not 0:
+                        template_vars['diff_tbase'] = (float(
+                            template_vars['m01_t_base']) *
+                            100.0 / float(template_vars['m02_t_base'])) - 100.0
+                    else:
+                        template_vars['diff_tbase'] = '-'
+
+                    #Porcentaje de Tarifa Intermedio
+                    if template_vars['m02_t_intermedio'] is not 0:
+                        template_vars['diff_tint'] = (float(
+                            template_vars['m01_t_intermedio']) *
+                            100.0 / float(template_vars['m02_t_intermedio'])) \
+                                                     - 100.0
+                    else:
+                        template_vars['diff_tint'] = '-'
+
+                    #Porcentaje de Tarifa Punta
+                    if template_vars['m02_t_punta'] is not 0:
+                        template_vars['diff_tpunta'] = (float(
+                            template_vars['m01_t_punta']) * 100.0 /
+                            float(template_vars['m02_t_punta'])) - 100.0
+                    else:
+                        template_vars['diff_tpunta'] = '-'
+
+
+                elif tipo_tarifa.pk == 2:
+
+                    template_vars['tarifa'] = 2
+                    m01_data = DacHistoricData.objects.filter(
+                        monthly_cut_dates__building = building,
+                        monthly_cut_dates__billing_month = month_01,
+                        monthly_cut_dates__billing_month__year = year_01)
+                    m02_data = DacHistoricData.objects.filter(
+                        monthly_cut_dates__building = building,
+                        monthly_cut_dates__billing_month = month_02,
+                        monthly_cut_dates__billing_month__year = year_02)
+                    if m01_data:
+                        template_vars['m01_kwh'] = m01_data[0].KWH_total
+                        template_vars['m01_money'] = m01_data[0].total
+                        template_vars['m01_t_kwh'] = m01_data[0].KWH_rate
+                        template_vars['m01_t_month'] = m01_data[0].monthly_rate
+                    else:
+                        template_vars['m01_kwh'] = 0
+                        template_vars['m01_money'] = 0
+                        template_vars['m01_t_kwh'] = 0
+                        template_vars['m01_t_month'] = 0
+
+
+                    if m02_data:
+                        template_vars['m02_kwh'] = m02_data[0].KWH_total
+                        template_vars['m02_money'] = m02_data[0].total
+                        template_vars['m02_t_kwh'] = m02_data[0].KWH_rate
+                        template_vars['m02_t_month'] = m02_data[0].monthly_rate
+                    else:
+                        template_vars['m02_kwh'] = 0
+                        template_vars['m02_money'] = 0
+                        template_vars['m02_t_kwh'] = 0
+                        template_vars['m02_t_month'] = 0
+
+                    #Si estan los datos, obtiene los porcentajes de diferencia
+                    #Porcentaje de Kilowatts hora
+                    if template_vars['m02_kwh'] is not 0:
+                        template_vars['diff_kwh'] = (float(
+                            template_vars['m01_kwh']) * 100.0 /
+                            float(template_vars['m02_kwh'])) - 100.0
+                    else:
+                        template_vars['diff_kwh'] = '-'
+
+                    #Porcentaje de Dinero
+                    if template_vars['m02_money'] is not 0:
+                        template_vars['diff_money'] = (float(
+                            template_vars['m01_money']) * 100.0 /
+                            float(template_vars['m02_money'])) - 100.0
+                    else:
+                        template_vars['diff_money'] = '-'
+
+                    #Porcentaje de Tarifa por Kilowatt Hora
+                    if template_vars['m02_t_kwh'] is not 0:
+                        template_vars['diff_t_kwh'] = (float(
+                            template_vars['m01_t_kwh']) * 100.0 /
+                            float(template_vars['m02_t_kwh'])) - 100.0
+                    else:
+                        template_vars['diff_t_kwh'] = '-'
+
+                    #Porcentaje de Tarifa Mensual
+                    if template_vars['m02_t_month'] is not 0:
+                        template_vars['diff_t_month'] = (float(
+                            template_vars['m01_t_month']) * 100.0 /
+                            float(template_vars['m02_t_month'])) - 100.0
+                    else:
+                        template_vars['diff_t_month'] = '-'
+
+
+                elif tipo_tarifa.pk == 3:
+
+                    template_vars['tarifa'] = 3
+                    m01_data = T3HistoricData.objects.filter(
+                        monthly_cut_dates__building = building,
+                        monthly_cut_dates__billing_month = month_01,
+                        monthly_cut_dates__billing_month__year = year_01)
+                    m02_data = T3HistoricData.objects.filter(
+                        monthly_cut_dates__building = building,
+                        monthly_cut_dates__billing_month = month_02,
+                        monthly_cut_dates__billing_month__year = year_02)
+                    if m01_data:
+                        template_vars['m01_kwh'] = m01_data[0].KWH_total
+                        template_vars['m01_money'] = m01_data[0].total
+                        template_vars['m01_kw'] = m01_data[0].max_demand
+                        template_vars['m01_t_kwh'] = m01_data[0].KWH_rate
+                        template_vars['m01_t_kw'] = m01_data[0].demand_rate
+                    else:
+                        template_vars['m01_kwh'] = 0
+                        template_vars['m01_money'] = 0
+                        template_vars['m01_kw'] = 0
+                        template_vars['m01_t_kwh'] = 0
+                        template_vars['m01_t_kw'] = 0
+
+                    if m02_data:
+                        template_vars['m02_kwh'] = m02_data[0].KWH_total
+                        template_vars['m02_money'] = m02_data[0].total
+                        template_vars['m02_kw'] = m02_data[0].max_demand
+                        template_vars['m02_t_kwh'] = m02_data[0].KWH_rate
+                        template_vars['m02_t_kw'] = m02_data[0].demand_rate
+                    else:
+                        template_vars['m02_kwh'] = 0
+                        template_vars['m02_money'] = 0
+                        template_vars['m02_kw'] = 0
+                        template_vars['m02_t_kwh'] = 0
+                        template_vars['m02_t_kw'] = 0
+
+                    #Si estan los datos, obtiene los porcentajes de diferencia
+                    #Porcentaje de Kilowatts hora
+                    if template_vars['m02_kwh'] is not 0:
+                        template_vars['diff_kwh'] = (float(
+                            template_vars['m01_kwh']) * 100.0 / float(
+                            template_vars['m02_kwh'])) - 100.0
+                    else:
+                        template_vars['diff_kwh'] = '-'
+
+                    #Porcentaje de Dinero
+                    if template_vars['m02_money'] is not 0:
+                        template_vars['diff_money'] = (float(
+                            template_vars['m01_money']) * 100.0 / float(
+                            template_vars['m02_money'])) - 100.0
+                    else:
+                        template_vars['diff_money'] = '-'
+
+                    #Porcentaje de Kilowatts
+                    if template_vars['m02_kw'] is not 0:
+                        template_vars['diff_kw'] = (float(
+                            template_vars['m01_kw']) * 100.0 / float(
+                            template_vars['m02_kw'])) - 100.0
+                    else:
+                        template_vars['diff_kw'] = '-'
+
+                    #Porcentaje de Tarifa por Kilowatt Hora
+                    if template_vars['m02_t_kwh'] is not 0:
+                        template_vars['diff_t_kwh'] = (float(
+                            template_vars['m01_t_kwh']) * 100.0 / float(
+                            template_vars['m02_t_kwh'])) - 100.0
+                    else:
+                        template_vars['diff_t_kwh'] = '-'
+
+                    #Porcentaje de Tarifa por Kilowatt
+                    if template_vars['m02_t_kw'] is not 0:
+                        template_vars['diff_t_kw'] = (float(
+                            template_vars['m01_t_kw']) * 100.0 / float(
+                            template_vars['m02_t_kw'])) - 100.0
+                    else:
+                        template_vars['diff_t_kw'] = '-'
+
+            template_vars_template = RequestContext(request, template_vars)
+            return render_to_response(
+                "consumption_centers/graphs/analisis_facturacion_frame.html",
+                template_vars_template)
+
+    else:
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)

@@ -277,6 +277,12 @@ urlpatterns = patterns('',
 
                        url(r'^analisis_mensual/',
                            'c_center.views.montly_analitics'),
+                       url(r'^analisis_facturacion/',
+                           'c_center.views.billing_analisis_header'),
+                       url(r'^analisis_fac_ajax/',
+                           'c_center.views.billing_analisis'),
+
+
                        url(r'^node/',
                            'django.views.generic.simple.direct_to_template',
                            {'template': 'test.html'}),

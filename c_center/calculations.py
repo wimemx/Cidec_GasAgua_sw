@@ -64,7 +64,7 @@ def promedioKWH(building, fecha_inicio, fecha_fin):
             data_day__lte=fecha_fin).aggregate(
             Sum('KWH_total'))
         total_lecturas = len(t_lecturas)
-        promedio = suma_lecturas['KWH_total__sum'] / total_lecturas
+        promedio = float(suma_lecturas['KWH_total__sum']) / float(total_lecturas)
     return promedio
 
 
@@ -94,8 +94,8 @@ def medianaKWH(building, fecha_inicio, fecha_fin):
     if lecturas:
         longitud = len(lecturas)
         if longitud % 2 is 0: #Si es par
-            mediana = (lecturas[longitud / 2].KWH_total + lecturas[
-                      (longitud / 2) - 1].KWH_total) / 2
+            mediana = float((lecturas[longitud / 2].KWH_total + lecturas[
+                      (longitud / 2) - 1].KWH_total)) / 2.0
         else: #Si es impar
             mediana = lecturas[longitud / 2].KWH_total
     return mediana
