@@ -23,13 +23,13 @@ from django.views.decorators.csrf import csrf_exempt
 from calendar import monthrange
 
 from cidec_sw import settings
-from c_center.calculations import consumoAcumuladoKWH, demandaMaxima, demandaMinima,\
-    promedioKWH,desviacionStandardKWH, medianaKWH, factorpotencia, costoenergia, obtenerKVARH_total,\
-    obtenerKVARH_dia
-from c_center.models import Cluster, ClusterCompany, Company,\
-    CompanyBuilding, Building, PartOfBuilding, HierarchyOfPart, ConsumerUnit, \
-    ProfilePowermeter, ElectricDataTemp, DailyData, DacHistoricData, HMHistoricData,  \
-    T3HistoricData, ElectricRateForElectricData
+from c_center.calculations import consumoAcumuladoKWH, demandaMaxima, \
+    demandaMinima, promedioKWH, desviacionStandardKWH, medianaKWH, \
+    factorpotencia, costoenergia, obtenerKVARH_total, obtenerKVARH_dia
+from c_center.models import Cluster, ClusterCompany, Company, CompanyBuilding, \
+    Building, PartOfBuilding, HierarchyOfPart, ConsumerUnit, \
+    ProfilePowermeter, ElectricDataTemp, DailyData, DacHistoricData, \
+    HMHistoricData, T3HistoricData, ElectricRateForElectricData
 from rbac.models import PermissionAsigment, DataContextPermission, Role,\
     UserRole, Object, Operation
 from location.models import *
@@ -126,8 +126,9 @@ def get_all_companies_for_operation(permission, operation, user):
     clusters = get_clusters_for_operation(permission, operation, user)
     companies_array = []
     for cluster in clusters:
-        companies, all_companies = get_companies_for_operation(permission, operation,
-                                                     user, cluster)
+        companies, all_companies = get_companies_for_operation(permission,
+                                                               operation,
+                                                               user, cluster)
         companies_array.extend(companies)
     return companies_array
 
@@ -188,8 +189,10 @@ def get_all_buildings_for_operation(permission, operation, user):
     companies = get_all_companies_for_operation(permission, operation, user)
     buildings_arr = []
     for company in companies:
-        building, all_buildings = get_buildings_for_operation(permission, operation, user,
-                                                    company)
+        building, all_buildings = get_buildings_for_operation(permission,
+                                                              operation,
+                                                              user,
+                                                              company)
 
         buildings_arr.extend(building)
     return buildings_arr
@@ -247,8 +250,8 @@ def get_partsofbuilding_for_operation(permission, operation, user, building):
                     return get_all_active_parts_for_building(building), True
                 else:
                     parts_pks.append(data_c.part_of_building.pk)
-            return PartOfBuilding.objects.filter(pk__in=parts_pks,
-                                                 part_of_building_status=True), False
+            return PartOfBuilding.objects.filter(
+                pk__in=parts_pks, part_of_building_status=True), False
 
 def get_cluster_companies(request, id_cluster):
     """
@@ -258,7 +261,6 @@ def get_cluster_companies(request, id_cluster):
     cluster = get_object_or_404(Cluster, pk=id_cluster)
     companies_for_user, all_cluster = get_companies_for_operation(
         "Asignar roles a usuarios", CREATE, request.user, cluster)
-    #c_buildings= ClusterCompany.objects.filter(cluster=cluster, company__company_status=1)
     companies = []
     if companies_for_user:
         for company in companies_for_user:
@@ -276,7 +278,6 @@ def get_company_buildings(request, id_company):
     company = get_object_or_404(Company, pk=id_company)
     buildings_for_user, all_company = get_buildings_for_operation(
         "Asignar roles a usuarios", CREATE, request.user, company)
-    #c_buildings= CompanyBuilding.objects.filter(company=company, building__building_status=1)
     buildings = []
     if buildings_for_user:
         for building in buildings_for_user:
@@ -342,7 +343,8 @@ def get_all_profiles_for_user(user):
         for consumerUnit in consumer_units:
             if consumerUnit.profile_powermeter.powermeter.powermeter_anotation != "Medidor Virtual":
                 if context.part_of_building:
-                    #if the user has permission over a part of building, and the consumer unit is
+                    #if the user has permission over a part of building,
+                    # and the consumer unit is
                     #the cu for the part of building
                     if consumerUnit.part_of_building == context.part_of_building:
                         c_us.append(consumerUnit)
@@ -366,11 +368,11 @@ def get_intervals_1(get):
     if "f1_init" in get:
         if get["f1_init"] != '':
             f1_init = time.strptime(get['f1_init'], "%d/%m/%Y")
-            f1_init = datetime(f1_init.tm_year, f1_init.tm_mon,
+            f1_init = datetime.datetime(f1_init.tm_year, f1_init.tm_mon,
                                         f1_init.tm_mday)
         if get["f1_end"] != '':
             f1_end = time.strptime(get['f1_end'], "%d/%m/%Y")
-            f1_end = datetime(f1_end.tm_year, f1_end.tm_mon,
+            f1_end = datetime.datetime(f1_end.tm_year, f1_end.tm_mon,
                                        f1_end.tm_mday)
 
     return f1_init, f1_end
@@ -440,7 +442,8 @@ def set_default_session_vars(request, datacontext):
        (not request.session['consumer_unit'] and request.session[
                                                  'main_building']):
         #print "181"
-        #sets the default ConsumerUnit (the first in ConsumerUnit for the main building)
+        #sets the default ConsumerUnit
+        # (the first in ConsumerUnit for the main building)
         request.session['consumer_unit'] = default_consumerUnit(
             request.session['main_building'])
     else:
@@ -448,13 +451,7 @@ def set_default_session_vars(request, datacontext):
                'consumer_unit'] or 'consumer_unit' not in request.session:
             #print "186"
             request.session['consumer_unit'] = None
-            #try:
-            #    c_unit = ConsumerUnit.objects.filter(building=request.session['main_building'])
-            #    request.session['consumer_unit'] = c_unit[0]
-            #except ObjectDoesNotExist:
-            #    request.session['main_building'] = None
-            #except IndexError:
-            #    request.session['main_building'] = None
+
 
     return True
 
@@ -497,10 +494,9 @@ def get_hierarchy_list(building, user):
         pass
     else:
         for parent in parents:
-            c_unit_parent = ConsumerUnit.objects.filter(building=building,
-                                                        part_of_building=parent).exclude(
-                electric_device_type__electric_device_type_name=
-                "Total Edificio")
+            c_unit_parent = ConsumerUnit.objects.filter(
+                building=building, part_of_building=parent).exclude(
+                electric_device_type__electric_device_type_name="Total Edificio")
             clase = "class='part_of_building "
             clase += "disabled" if not parent.part_of_building_status else ""
             cu_part = ConsumerUnit.objects.get(part_of_building=parent)
@@ -516,7 +512,11 @@ def get_hierarchy_list(building, user):
                 hierarchy_list += "<li " + clase + ">" +\
                                   parent.part_of_building_name
                 #obtengo la jerarquia de cada rama del arbol
-            hierarchy_list += get_sons(parent, "part", user, building, node_cont)
+            hierarchy_list += get_sons(parent,
+                                       "part",
+                                       user,
+                                       building,
+                                       node_cont)
             hierarchy_list += "</li>"
             node_cont += 1
 
@@ -531,7 +531,8 @@ def get_hierarchy_list(building, user):
         if hy.consumer_unit_leaf:
             ids_hierarchy.append(hy.consumer_unit_leaf.pk)
     #sacar el padre(ConsumerUnits que no son hijos de nadie)
-    parents = ConsumerUnit.objects.filter(building=building, part_of_building=None).exclude(
+    parents = ConsumerUnit.objects.filter(
+        building=building, part_of_building=None).exclude(
         Q(pk__in=ids_hierarchy) |
         Q(electric_device_type__electric_device_type_name="Total Edificio")
         )
@@ -665,7 +666,8 @@ def get_total_consumer_unit(consumerUnit, total):
             if hy.consumer_unit_leaf:
                 ids_hierarchy_cu.append(hy.consumer_unit_leaf.pk)
 
-        #sacar los padres(partes de edificios y consumerUnits que no son hijos de nadie)
+        #sacar los padres(partes de edificios y consumerUnits que no son
+        # hijos de nadie)
         parents = PartOfBuilding.objects.filter(
             building=consumerUnit.building).exclude(
             pk__in=ids_hierarchy)
@@ -681,7 +683,10 @@ def get_total_consumer_unit(consumerUnit, total):
 
 
 def get_consumer_units(consumerUnit):
-    """ Gets an array of consumer units which sum equals the given consumerUnit"""
+    """ Gets an array of consumer units which sum equals the given
+    consumerUnit
+    :param consumerUnit: ConsumerUnit object
+    """
     if consumerUnit.profile_powermeter.powermeter.powermeter_anotation == "Medidor Virtual":
         if consumerUnit.electric_device_type.electric_device_type_name == "Total Edificio":
             total = True
@@ -694,7 +699,8 @@ def get_consumer_units(consumerUnit):
 
 
 def allowed_cu(consumerUnit, user, building):
-    """returns true or false if the user has permission over the consumerUnit or not
+    """returns true or false if the user has permission over the
+    consumerUnit or not
     consumerUnit = ConsumerUnit instance
     user = auth.User instance
     building = Building instance
@@ -726,7 +732,8 @@ def allowed_cu(consumerUnit, user, building):
                                                        building=building)
         for cntx in context:
             if cntx.part_of_building:
-                #if the user has permission over a part of building, and the consumer unit is
+                #if the user has permission over a part of building, and the
+                # consumer unit is
                 #the cu for the part of building
                 if consumerUnit.part_of_building == cntx.part_of_building:
                     return True
@@ -767,7 +774,8 @@ def is_in_part_of_building(consumerUnit, part_of_building):
 
 
 def is_in_consumer_unit(cunit, cuParent):
-    """ checks if consumerUnit is part of an electric system (another consumer unit)
+    """ checks if consumerUnit is part of an electric system (another consumer
+    unit)
     returns True if consumerUnit is inside the system
     cunit = ConsumerUnit instance *without part_of_building*
     cuParent = ConsumerUnit instance
@@ -791,7 +799,8 @@ def graphs_permission(user, consumer_unit, graphs_type):
     user.- django auth user object
     consumer_unit.- ConsumerUnit object
 
-    returns an array of objects of permission, False if user is not allowed to see graphs
+    returns an array of objects of permission, False if user is not allowed
+    to see graphs
 
     """
 
@@ -803,7 +812,8 @@ def graphs_permission(user, consumer_unit, graphs_type):
     contextos = []
     for cntx in context:
         if cntx.part_of_building:
-            #if the user has permission over a part of building, and the consumer unit is
+            #if the user has permission over a part of building, and the
+            # consumer unit is
             #the cu for the part of building
             if consumer_unit.part_of_building == cntx.part_of_building:
                 contextos.append(cntx)
@@ -890,7 +900,8 @@ def location_objects(country_id, country_name, state_id, state_name,
         )
         countryObj.save()
 
-    #Se obtiene el objeto de Estado, sino esta Estado, se da de alta un estado nuevo.
+    #Se obtiene el objeto de Estado, sino esta Estado, se da de alta un estado
+    # nuevo.
     if state_id:
         stateObj = get_object_or_404(Estado, pk=state_id)
     else:
@@ -906,7 +917,8 @@ def location_objects(country_id, country_name, state_id, state_name,
         )
         country_stateObj.save()
 
-    #Se obtiene el objeto de Municipio, sino esta Municipio, se da de alta un municipio nuevo.
+    #Se obtiene el objeto de Municipio, sino esta Municipio, se da de alta un
+    # municipio nuevo.
     if municipality_id:
         municipalityObj = get_object_or_404(Municipio, pk=municipality_id)
     else:
@@ -922,7 +934,8 @@ def location_objects(country_id, country_name, state_id, state_name,
         )
         state_munObj.save()
 
-    #Se obtiene el objeto de Colonia, sino esta Colonia, se da de alta una Colonia nueva.
+    #Se obtiene el objeto de Colonia, sino esta Colonia, se da de alta una
+    # Colonia nueva.
     if neighborhood_id:
         neighborhoodObj = get_object_or_404(Colonia, pk=neighborhood_id)
     else:
@@ -938,7 +951,8 @@ def location_objects(country_id, country_name, state_id, state_name,
         )
         mun_neighObj.save()
 
-    #Se obtiene el objeto de Calle, sino esta Calle, se da de alta una Calle nueva.
+    #Se obtiene el objeto de Calle, sino esta Calle, se da de alta una
+    # Calle nueva.
     if street_id:
         streetObj = get_object_or_404(Calle, pk=street_id)
     else:
@@ -1033,13 +1047,29 @@ def dailyReport(building, consumer_unit, today):
     tarifa_kwh_punta = 0
 
     #Se agregan las horas
-    today_s_str = time.strptime(str(today.year)+"-"+str(today.month)+"-"+str(today.day)+" 00:00:00", "%Y-%m-%d  %H:%M:%S")
+    today_s_str = str(today.year) + "-" + str(today.month) + "-" + \
+                  str(today.day)+" 00:00:00"
+    today_s_str = time.strptime(today_s_str, "%Y-%m-%d  %H:%M:%S")
     today_s_tuple = time.gmtime(time.mktime(today_s_str))
-    today_s_utc = datetime.datetime(year= today_s_tuple[0], month=today_s_tuple[1], day=today_s_tuple[2], hour=today_s_tuple[3], minute=today_s_tuple[4], second=today_s_tuple[5], tzinfo = pytz.utc)
+    today_s_utc = datetime.datetime(year= today_s_tuple[0],
+                                    month=today_s_tuple[1],
+                                    day=today_s_tuple[2],
+                                    hour=today_s_tuple[3],
+                                    minute=today_s_tuple[4],
+                                    second=today_s_tuple[5],
+                                    tzinfo = pytz.utc)
 
-    today_e_str = time.strptime(str(today.year)+"-"+str(today.month)+"-"+str(today.day)+" 23:59:59", "%Y-%m-%d  %H:%M:%S")
+    today_e_str = str(today.year) + "-" + str(today.month) + "-" + \
+                  str(today.day)+" 23:59:59"
+    today_e_str = time.strptime(today_e_str, "%Y-%m-%d  %H:%M:%S")
     today_e_tuple = time.gmtime(time.mktime(today_e_str))
-    today_e_utc = datetime.datetime(year= today_e_tuple[0], month=today_e_tuple[1], day=today_e_tuple[2], hour=today_e_tuple[3], minute=today_e_tuple[4], second=today_e_tuple[5], tzinfo = pytz.utc)
+    today_e_utc = datetime.datetime(year= today_e_tuple[0],
+                                    month=today_e_tuple[1],
+                                    day=today_e_tuple[2],
+                                    hour=today_e_tuple[3],
+                                    minute=today_e_tuple[4],
+                                    second=today_e_tuple[5],
+                                    tzinfo = pytz.utc)
 
     #print "Today s_utc", today_s_utc
     #print "Today e_utc", today_e_utc
@@ -1077,7 +1107,8 @@ def dailyReport(building, consumer_unit, today):
                 .filter(
                 electric_data__profile_powermeter__powermeter__pk
                 =pr_powermeter.pk). \
-                filter(electric_data__medition_date__gte=today_s_utc).filter(electric_data__medition_date__lte=today_e_utc). \
+                filter(electric_data__medition_date__gte=today_s_utc).filter(
+                electric_data__medition_date__lte=today_e_utc). \
                 order_by("electric_data__medition_date").values(
                 "identifier").annotate(Count("identifier"))
 
@@ -1094,7 +1125,9 @@ def dailyReport(building, consumer_unit, today):
                         filter(
                         electric_data__profile_powermeter__powermeter__pk
                         =pr_powermeter.pk). \
-                        filter(electric_data__medition_date__gte=today_s_utc).filter(electric_data__medition_date__lte=today_e_utc). \
+                        filter(
+                        electric_data__medition_date__gte=today_s_utc
+                    ).filter(electric_data__medition_date__lte=today_e_utc). \
                         order_by("electric_data__medition_date")
 
                     num_lecturas = len(electric_info)
@@ -1103,7 +1136,10 @@ def dailyReport(building, consumer_unit, today):
                     primer_lectura = electric_info[0].electric_data.TotalkWhIMPORT
                     ultima_lectura = electric_info[
                         num_lecturas - 1].electric_data.TotalkWhIMPORT
-                    #print electric_info[0].electric_data.pk,"Primer Lectura:", primer_lectura,"-",electric_info[num_lecturas-1].electric_data.pk," Ultima Lectura:",ultima_lectura
+                    #print electric_info[0].electric_data.pk,"Primer Lectura:",
+                    # primer_lectura,"-",
+                    # electric_info[num_lecturas-1].electric_data.pk,
+                    # " Ultima Lectura:",ultima_lectura
 
                     #Obtener el tipo de periodo: Base, punta, intermedio
                     tipo_periodo = electric_info[
@@ -1117,8 +1153,10 @@ def dailyReport(building, consumer_unit, today):
                 kwh_intermedio_t = 0
                 kwh_punta_t = 0
 
-                #Se obtiene la primer lectura del dia siguiente para que concuerde la suma de los KWH
-                #Si el dia actual es igual al ultimo dia del mes, no se hace nada.
+                #Se obtiene la primer lectura del dia siguiente para que
+                # concuerde la suma de los KWH
+                #Si el dia actual es igual al ultimo dia del mes, no se hace
+                # nada.
                 diasmes_arr = monthrange(today.year, today.month)
                 if not today.day is diasmes_arr[1]:
                     nextReading = ElectricDataTemp.objects.filter(
@@ -1164,7 +1202,10 @@ def dailyReport(building, consumer_unit, today):
                 kwh_totales += kwh_t
 
             #Se obtienen los kvarhs por medidor
-            kvarh_totales += obtenerKVARH_dia(profile_powermeter, today_s_utc, today_e_utc, kvarhs_anterior)
+            kvarh_totales += obtenerKVARH_dia(profile_powermeter,
+                                              today_s_utc,
+                                              today_e_utc,
+                                              kvarhs_anterior)
 
     #Obtiene el id de la tarifa correspondiente para el mes en cuestion
     tarifasObj = ElectricRatesDetail.objects.filter(electric_rate=1).filter(
@@ -1181,7 +1222,8 @@ def dailyReport(building, consumer_unit, today):
 
     #Se obtiene costo de energía
     costo_energia_total = costoenergia(kwh_base, kwh_intermedio,
-                                       kwh_punta, tarifa_kwh_base, tarifa_kwh_intermedio,
+                                       kwh_punta, tarifa_kwh_base,
+                                       tarifa_kwh_intermedio,
                                        tarifa_kwh_punta)
 
     #Se guarda en la BD
@@ -1294,7 +1336,9 @@ def getMonthlyReport(building, month, year):
         mes['consumo_desviacion'] = 0
     else:
         #Obtener consumo acumulado
-        mes['consumo_acumulado'] = consumoAcumuladoKWH(building, fecha_inicio, fecha_final)
+        mes['consumo_acumulado'] = consumoAcumuladoKWH(building,
+                                                       fecha_inicio,
+                                                       fecha_final)
 
         if not mes['consumo_acumulado']:
             mes['consumo_acumulado'] = 0
@@ -1306,16 +1350,22 @@ def getMonthlyReport(building, month, year):
         mes['demanda_min'] = demandaMinima(building, fecha_inicio, fecha_final)
 
         #Obtener factor de potencia.
-        #Para obtener el factor potencia son necesarios los KWH Totales (consumo acumulado) y los KVARH
-        kvarh = obtenerKVARH_total(profile_powermeter.powermeter, fecha_inicio, fecha_final)
+        #Para obtener el factor potencia son necesarios los KWH Totales
+        # (consumo acumulado) y los KVARH
+        kvarh = obtenerKVARH_total(profile_powermeter.powermeter, fecha_inicio,
+                                   fecha_final)
         print "kvarh", kvarh
-        mes['factor_potencia'] = factorpotencia(float(mes['consumo_acumulado']), kvarh)
+        mes['factor_potencia'] = factorpotencia(float(mes['consumo_acumulado']),
+                                                kvarh)
 
         #Consumo promedio
-        mes['consumo_promedio'] = promedioKWH(building, fecha_inicio, fecha_final)
+        mes['consumo_promedio'] = promedioKWH(building, fecha_inicio,
+                                              fecha_final)
 
         #Consumo mediana
-        mes['consumo_desviacion'] = desviacionStandardKWH(building, fecha_inicio, fecha_final)
+        mes['consumo_desviacion'] = desviacionStandardKWH(building,
+                                                          fecha_inicio,
+                                                          fecha_final)
 
         #Consumo desviación
         mes['consumo_mediana'] = medianaKWH(building, fecha_inicio, fecha_final)
@@ -1536,7 +1586,8 @@ def tarifaHM_2(building, s_date, e_date, month, year):
 
             #lecturas_totales = ElectricRateForElectricData.objects.filter(
             #electric_data__profile_powermeter = profile_powermeter).\
-            #filter(electric_data__medition_date__gte=s_date).filter(electric_data__medition_date__lte=e_date).\
+            #filter(electric_data__medition_date__gte=s_date).filter(
+            # electric_data__medition_date__lte=e_date).\
             #order_by('electric_data__medition_date')
             #kw_t = obtenerDemanda_kw(lecturas_totales)
 
@@ -1746,7 +1797,8 @@ def tarifaDAC_2(building, s_date, e_date, month, year):
               " - " + e_date.astimezone(
         timezone.get_current_timezone()).strftime('%d/%m/%Y %I:%M %p')
 
-    #Para las regiones BC y BCS es necesario obtener revisar si se aplica Tarifa de Verano o de Invierno
+    #Para las regiones BC y BCS es necesario obtener revisar si se aplica
+    # Tarifa de Verano o de Invierno
     if region.pk == 1 or region.pk == 2:
         tf_ver_inv = obtenerHorarioVeranoInvierno(billing_mrates, 2)
         tarifasObj = DACElectricRateDetail.objects.filter(
@@ -1787,12 +1839,12 @@ def tarifaDAC_2(building, s_date, e_date, month, year):
             total_lecturas = len(kwh_lecturas)
 
             if kwh_lecturas:
-                print "Profile", kwh_lecturas[0].profile_powermeter_id
-                print "Primer Lectura", kwh_lecturas[0].id, "-", kwh_lecturas[
-                                                                 0].medition_date
-                print "Ultima Lectura", kwh_lecturas[
-                                        total_lecturas - 1].id, "-", kwh_lecturas[
-                                                                     total_lecturas - 1].medition_date
+                #print "Profile",
+                # kwh_lecturas[0].profile_powermeter_id
+                #print "Primer Lectura",
+                # kwh_lecturas[0].id, "-", kwh_lecturas[0].medition_date
+                #print "Ultima Lectura", kwh_lecturas[total_lecturas - 1].id,
+                # "-", kwh_lecturas[total_lecturas - 1].medition_date
                 kwh_inicial = kwh_lecturas[0].TotalkWhIMPORT
                 kwh_final = kwh_lecturas[total_lecturas - 1].TotalkWhIMPORT
 

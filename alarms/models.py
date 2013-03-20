@@ -4,12 +4,14 @@ import django.contrib.auth.models
 import hashlib
 import variety
 
+
 class ElectricParameters(models.Model):
     name = models.CharField(max_length=64)
     position = models.IntegerField()
 
     def __unicode__(self):
         return self.name
+
 
 class Alarms(models.Model):
     alarm_identifier = models.CharField(max_length=256, default=hashlib.md5(

@@ -126,7 +126,6 @@ def call_celery_delay(request):
                     populate_instant_facts,
                     populate_interval_facts
                 )
-                pass
             else:
                 text = "No se realizar&aacute; ninguna acci&oacute;n"
         else:
