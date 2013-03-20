@@ -8034,14 +8034,14 @@ def billing_analisis(request):
                 if compare_years_flag:
 
                     difference_qty = y02_kwh - y01_kwh
-                    if y02_kwh is not 0:
+                    if y02_kwh:
                         difference_pc_kwh = (float(y01_kwh) * 100.0 / float(
                             y02_kwh)) - 100.0
                     else:
                         difference_pc_kwh = '-'
 
                     difference_money = y02_money - y01_money
-                    if y02_money is not 0:
+                    if y02_money:
                         difference_pc_money = (float(y01_money) * 100.0 / float(
                             y02_money)) - 100.0
                     else:
@@ -8162,7 +8162,7 @@ def billing_analisis(request):
 
                     #Si estan los datos, obtiene los porcentajes de diferencia
                     #Porcentaje de Kilowatts hora
-                    if template_vars['m02_kwh'] is not 0:
+                    if template_vars['m02_kwh']:
                         template_vars['diff_kwh'] = (float(
                             template_vars['m01_kwh']) *
                              100.0 / float(template_vars['m02_kwh'])) - 100.0
@@ -8170,7 +8170,7 @@ def billing_analisis(request):
                         template_vars['diff_kwh'] = '-'
 
                     #Porcentaje de Dinero
-                    if template_vars['m02_money'] is not 0:
+                    if template_vars['m02_money']:
                         template_vars['diff_money'] = (float(
                             template_vars['m01_money']) *
                             100.0 / float(template_vars['m02_money'])) - 100.0
@@ -8178,7 +8178,7 @@ def billing_analisis(request):
                         template_vars['diff_money'] = '-'
 
                     #Porcentaje de Kilowatts
-                    if template_vars['m02_kw'] is not 0:
+                    if template_vars['m02_kw']:
                         template_vars['diff_kw'] = (float(
                             template_vars['m01_kw']) *
                             100.0 / float(template_vars['m02_kw'])) - 100.0
@@ -8186,7 +8186,7 @@ def billing_analisis(request):
                         template_vars['diff_kw'] = '-'
 
                     #Porcentaje de Tarifa Base
-                    if template_vars['m02_t_base'] is not 0:
+                    if template_vars['m02_t_base']:
                         template_vars['diff_tbase'] = (float(
                             template_vars['m01_t_base']) *
                             100.0 / float(template_vars['m02_t_base'])) - 100.0
@@ -8194,7 +8194,7 @@ def billing_analisis(request):
                         template_vars['diff_tbase'] = '-'
 
                     #Porcentaje de Tarifa Intermedio
-                    if template_vars['m02_t_intermedio'] is not 0:
+                    if template_vars['m02_t_intermedio']:
                         template_vars['diff_tint'] = (float(
                             template_vars['m01_t_intermedio']) *
                             100.0 / float(template_vars['m02_t_intermedio'])) \
@@ -8203,7 +8203,7 @@ def billing_analisis(request):
                         template_vars['diff_tint'] = '-'
 
                     #Porcentaje de Tarifa Punta
-                    if template_vars['m02_t_punta'] is not 0:
+                    if template_vars['m02_t_punta']:
                         template_vars['diff_tpunta'] = (float(
                             template_vars['m01_t_punta']) * 100.0 /
                             float(template_vars['m02_t_punta'])) - 100.0
@@ -8247,7 +8247,7 @@ def billing_analisis(request):
 
                     #Si estan los datos, obtiene los porcentajes de diferencia
                     #Porcentaje de Kilowatts hora
-                    if template_vars['m02_kwh'] is not 0:
+                    if template_vars['m02_kwh']:
                         template_vars['diff_kwh'] = (float(
                             template_vars['m01_kwh']) * 100.0 /
                             float(template_vars['m02_kwh'])) - 100.0
@@ -8255,7 +8255,7 @@ def billing_analisis(request):
                         template_vars['diff_kwh'] = '-'
 
                     #Porcentaje de Dinero
-                    if template_vars['m02_money'] is not 0:
+                    if template_vars['m02_money']:
                         template_vars['diff_money'] = (float(
                             template_vars['m01_money']) * 100.0 /
                             float(template_vars['m02_money'])) - 100.0
@@ -8263,7 +8263,7 @@ def billing_analisis(request):
                         template_vars['diff_money'] = '-'
 
                     #Porcentaje de Tarifa por Kilowatt Hora
-                    if template_vars['m02_t_kwh'] is not 0:
+                    if template_vars['m02_t_kwh']:
                         template_vars['diff_t_kwh'] = (float(
                             template_vars['m01_t_kwh']) * 100.0 /
                             float(template_vars['m02_t_kwh'])) - 100.0
@@ -8271,7 +8271,7 @@ def billing_analisis(request):
                         template_vars['diff_t_kwh'] = '-'
 
                     #Porcentaje de Tarifa Mensual
-                    if template_vars['m02_t_month'] is not 0:
+                    if template_vars['m02_t_month']:
                         template_vars['diff_t_month'] = (float(
                             template_vars['m01_t_month']) * 100.0 /
                             float(template_vars['m02_t_month'])) - 100.0
@@ -8318,7 +8318,7 @@ def billing_analisis(request):
 
                     #Si estan los datos, obtiene los porcentajes de diferencia
                     #Porcentaje de Kilowatts hora
-                    if template_vars['m02_kwh'] is not 0:
+                    if template_vars['m02_kwh']:
                         template_vars['diff_kwh'] = (float(
                             template_vars['m01_kwh']) * 100.0 / float(
                             template_vars['m02_kwh'])) - 100.0
@@ -8326,7 +8326,7 @@ def billing_analisis(request):
                         template_vars['diff_kwh'] = '-'
 
                     #Porcentaje de Dinero
-                    if template_vars['m02_money'] is not 0:
+                    if template_vars['m02_money']:
                         template_vars['diff_money'] = (float(
                             template_vars['m01_money']) * 100.0 / float(
                             template_vars['m02_money'])) - 100.0
@@ -8334,7 +8334,7 @@ def billing_analisis(request):
                         template_vars['diff_money'] = '-'
 
                     #Porcentaje de Kilowatts
-                    if template_vars['m02_kw'] is not 0:
+                    if template_vars['m02_kw']:
                         template_vars['diff_kw'] = (float(
                             template_vars['m01_kw']) * 100.0 / float(
                             template_vars['m02_kw'])) - 100.0
@@ -8342,7 +8342,7 @@ def billing_analisis(request):
                         template_vars['diff_kw'] = '-'
 
                     #Porcentaje de Tarifa por Kilowatt Hora
-                    if template_vars['m02_t_kwh'] is not 0:
+                    if template_vars['m02_t_kwh']:
                         template_vars['diff_t_kwh'] = (float(
                             template_vars['m01_t_kwh']) * 100.0 / float(
                             template_vars['m02_t_kwh'])) - 100.0
@@ -8350,7 +8350,7 @@ def billing_analisis(request):
                         template_vars['diff_t_kwh'] = '-'
 
                     #Porcentaje de Tarifa por Kilowatt
-                    if template_vars['m02_t_kw'] is not 0:
+                    if template_vars['m02_t_kw']:
                         template_vars['diff_t_kw'] = (float(
                             template_vars['m01_t_kw']) * 100.0 / float(
                             template_vars['m02_t_kw'])) - 100.0

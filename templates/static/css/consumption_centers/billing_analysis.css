@@ -1,9 +1,6 @@
-body{
-    background: none !important;
-}
-
 iframe{
     height: 100%;
+    background: #fff !important;
 }
 
 #widgetField{
