@@ -44,10 +44,10 @@ def demandaMaxima(building, fecha_inicio, fecha_fin):
 
 def demandaMinima(building, fecha_inicio, fecha_fin):
     demanda_min = 0
-    lecturas = DailyData.objects.filter(building=building,
+    lecturas = DailyData.objects.filter(
+        building=building,
         data_day__gte=fecha_inicio,
-        data_day__lte=fecha_fin).order_by(
-        'min_demand')
+        data_day__lte=fecha_fin).order_by('min_demand')
     if lecturas:
         demanda_min = lecturas[0].min_demand
     return demanda_min
@@ -55,14 +55,15 @@ def demandaMinima(building, fecha_inicio, fecha_fin):
 
 def promedioKWH(building, fecha_inicio, fecha_fin):
     promedio = 0
-    t_lecturas = DailyData.objects.filter(building=building,
+    t_lecturas = DailyData.objects.filter(
+        building=building,
         data_day__gte=fecha_inicio,
         data_day__lte=fecha_fin)
     if t_lecturas:
-        suma_lecturas = DailyData.objects.filter(building=building,
+        suma_lecturas = DailyData.objects.filter(
+            building=building,
             data_day__gte=fecha_inicio,
-            data_day__lte=fecha_fin).aggregate(
-            Sum('KWH_total'))
+            data_day__lte=fecha_fin).aggregate(Sum('KWH_total'))
         total_lecturas = len(t_lecturas)
         promedio = float(suma_lecturas['KWH_total__sum']) / float(total_lecturas)
     return promedio
@@ -93,10 +94,12 @@ def medianaKWH(building, fecha_inicio, fecha_fin):
         'KWH_total')
     if lecturas:
         longitud = len(lecturas)
-        if longitud % 2 is 0: #Si es par
-            mediana = float((lecturas[longitud / 2].KWH_total + lecturas[
-                      (longitud / 2) - 1].KWH_total)) / 2.0
-        else: #Si es impar
+        if longitud % 2 is 0:
+            #Si es par
+            mediana = (lecturas[longitud / 2].KWH_total + lecturas[
+                      (longitud / 2) - 1].KWH_total) / 2
+        else:
+            #Si es impar
             mediana = lecturas[longitud / 2].KWH_total
     return mediana
 
@@ -841,12 +844,29 @@ def multiply():
             dato.save()
     print ":D"
 
+
+#etiquetado recursivo
+def recursive_tag(initial=None, last=None):
+
+    if not initial:
+        initial = 0
+    if not last:
+        last_pk = ElectricDataTemp.objects.all().values("pk").order_by("medition_date")[0]
+        last = last_pk['pk']
+    tag_reading_ids(initial, last)
+    last_last = ElectricDataTemp.objects.all().values("pk").order_by("medition_date")[0]
+    last_last = last_last['pk']
+    if last_last > last:
+        recursive_tag(last, last_last)
+    else:
+        print "acabe"
+        return "EXITO!"
+
+
 #Etiquetado de datos por rango de ids
-def tag_reading_ids():
+def tag_reading_ids(id_initial, id_max):
     readingsObj = ElectricDataTemp.objects.filter(
-        profile_powermeter__pk=28).filter(
-        medition_date__gte=datetime.datetime(2012, 12, 31)).filter(
-        medition_date__lte=datetime.datetime(2013, 1, 12)).order_by(
+        pk__lte=id_max).filter(pk__gte=id_initial).order_by(
         "medition_date")
 
     for readingObj in readingsObj:

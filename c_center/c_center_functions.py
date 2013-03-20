@@ -34,7 +34,6 @@ from rbac.models import PermissionAsigment, DataContextPermission, Role,\
     UserRole, Object, Operation
 from location.models import *
 from electric_rates.models import ElectricRatesDetail
-from c_center.calculations import *
 
 from rbac.rbac_functions import is_allowed_operation_for_object,\
     default_consumerUnit
@@ -1920,3 +1919,19 @@ def tarifa_3_v2(building, s_date, e_date, month, year):
     diccionario_final_cfe['total'] = float(total)
 
     return diccionario_final_cfe
+
+
+def asign_electric_data_to_pw(serials):
+    """ change the profile_powermeter of all the meditions with an specific
+    power_meter_serial
+    serials: an array containing strings: powermeter_serials
+    """
+    for serial in serials:
+        profile = ProfilePowermeter.objects.get(
+            powermeter__powermeter_serial=serial)
+        ed = ElectricDataTemp.objects.filter(powermeter_serial=serial)
+        for e in ed:
+            e.profile_powermeter = profile
+            e.save()
+
+    return "done"

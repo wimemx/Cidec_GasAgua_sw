@@ -848,6 +848,8 @@ def render_graphics(request):
                                               electric_data_list,
                                               limits)
 
+        print template_variables['rows_data']
+
         template_variables['columns'] = consumer_unit_and_time_interval_information_list
         template_variables['limits'] = limits
         template_variables['granularity'] = granularity

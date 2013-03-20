@@ -318,6 +318,8 @@ h2{
     margin-top: -9px;
 }
 #building_container{
+    max-height: 313px;
+    overflow: auto;
     position: absolute;
     right: -309px;
     top: 61px;
@@ -346,15 +348,16 @@ h2{
 #navigation_menu{
     position: relative;
 }
-
+#main_menu{
+    width: 562px;
+}
 #main_menu li.first_level{
     vertical-align: middle;
-    display: inline-block;
+    float: left;
     width: 100px;
     height: 57px;
     line-height: 57px;
     font-size: 13px;
-    font-weight: 700;
     color: #dbe2f2;
     text-align: center;
     margin-left: 5px;

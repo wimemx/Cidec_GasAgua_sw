@@ -24,28 +24,6 @@
             url: "/buildings/month_analitics/{{ building.pk }}/"+String(current_year)+"/"+String(current_month)+"/",
             type: "GET",
             success: function(data){
-                for(var j=0; j<data.length; j++){
-                    var datoi = data[j];
-                    if(datoi.empty == "false"){
-                        if(datoi.max_demand > maxx_d){
-                            maxx_d = datoi.max_demand;
-                            index_maxd = j;
-                        }
-                        if(datoi.KWH_total > maxx_kwh){
-                            maxx_kwh = datoi.KWH_total;
-                            index_maxkwh = j;
-                        }
-                        if(datoi.max_demand < minn_d && datoi.max_demand != 0){
-                            minn_d = datoi.max_demand;
-                            index_mind = j;
-                        }
-                        if(datoi.KWH_total < min_kwh && datoi.KWH_total != 0){
-                            min_kwh = datoi.KWH_total;
-                            index_minkwh = j;
-                        }
-                    }
-                }
-
                 for(var i=0; i<data.length; i++){
                     var dato = data[i];
                     var div = "<div class='inner_day fr'>";
@@ -58,40 +36,100 @@
                         div += "<span class='consumo'>-</span>";
                         div += "</div>";
                     }else{
-                        //div += "<span class='title_inner'>&nbsp;</span>";
-                        if(i == index_maxd){
-                            class_d = "red";
-                        }
-                        if(i == index_mind){
-                            class_d = "green";
-                        }
-                        if(i == index_maxkwh){
-                            class_k = "red";
-                        }
-                        if(i == index_minkwh){
-                            class_k = "green";
-                        }
-                        div += "<span class='demanda_max "+class_d+"'>"+ dato.max_demand +" kW</span>";
+                        div += "<span class='demanda_max "+class_d+"' id='demand_"+i+"'>"+ dato.max_demand +" kW</span>";
                         div += "<span class='title_inner'>&nbsp;</span>";
-                        div += "<span class='consumo "+class_k+"'>"+ dato.KWH_total +" kWh</span>";
+                        div += "<span class='consumo "+class_k+"' id='cons_"+i+"'>"+ dato.KWH_total +" kWh</span>";
                         div += "</div>";
+
+                        var mes = parseInt(dato.fecha.split("-")[1], 10);
+                        mes = String(mes);
+                        current_month = parseInt(current_month, 10);
+                        current_month = String(current_month);
+                        if(mes === String(current_month)){
+                            if(dato.max_demand > maxx_d){
+                                maxx_d = dato.max_demand;
+                                index_maxd = i;
+                            }
+                            if(dato.KWH_total > maxx_kwh){
+                                maxx_kwh = dato.KWH_total;
+                                index_maxkwh = i;
+                            }
+                            if(dato.max_demand < minn_d && dato.max_demand != 0){
+                                minn_d = dato.max_demand;
+                                index_mind = i;
+                            }
+                            if(dato.KWH_total < min_kwh && dato.KWH_total != 0){
+                                min_kwh = dato.KWH_total;
+                                index_minkwh = i;
+                            }
+                        }
                     }
-                    $("."+dato.fecha).append(div);
+
+                    $("."+dato.fecha).each(function(){
+                        var dia = $(this).find("a span").text();
+                        div = "<a href='#'><span>"+dia+"</span></a>"+div;
+                        $(this).html(div);
+                    });
                 }
+                $("#demand_"+index_maxd).addClass("red");
+                $("#demand_"+index_mind).addClass("green");
+                $("#cons_"+index_maxkwh).addClass("red");
+                $("#cons_"+index_minkwh).addClass("green");
             }
         });
+        //clean month data
+        var month_totals = $(".month_totals");
+        $("#cons_total").text("-");
+        $("#dem_total").text("-");
+        $("#pp_total").text("-");
+        month_totals.find("#month_dem_min").text("-");
+        month_totals.find("#month_cons_prom").text("-");
+        month_totals.find("#month_cons_med").text("-");
+        month_totals.find("#month_cons_des").text("-");
         $.ajax({
             url: "/buildings/month_analitics_h/{{ building.pk }}/"+String(current_year)+"/"+String(current_month)+"/",
             type: "GET",
             success: function(data){
-                $("#cons_total").text(addCommas(data[0].consumo_acumulado) + "kWh");
-                $("#dem_total").text(addCommas(data[0].demanda_max) + "kW");
-                $("#pp_total").text(String(data[0].factor_potencia.toFixed(2)) + "%");
-                var month_totals = $(".month_totals");
-                month_totals.find("#month_dem_min").text(addCommas(data[0].demanda_min) + "kW");
-                month_totals.find("#month_cons_prom").text(addCommas(data[0].consumo_promedio.toFixed(2)) + "kWh");
-                month_totals.find("#month_cons_med").text(addCommas(data[0].consumo_mediana.toFixed(2)) + "kWh");
-                month_totals.find("#month_cons_des").text(addCommas(data[0].consumo_desviacion.toFixed(2)) + "kWh");
+                var texto_kwh = '-';
+                if(data[0].consumo_acumulado != undefined){
+                    texto_kwh = addCommas(data[0].consumo_acumulado) + "kWh";
+                }
+                $("#cons_total").text(texto_kwh);
+
+                var texto_dt = '-';
+                if(data[0].demanda_max != undefined){
+                    texto_dt = addCommas(data[0].demanda_max) + "kW";
+                }
+                $("#dem_total").text(texto_dt);
+
+                var texto_pf = '-';
+                if(data[0].factor_potencia != undefined){
+                    texto_pf = String(data[0].factor_potencia.toFixed(2)) + "%";
+                }
+                $("#pp_total").text(texto_pf);
+
+
+
+                var month_dem_min = '-';
+                var month_cons_prom = '-';
+                var month_cons_med = '-';
+                var month_cons_des = '-';
+                if(data[0].demanda_min != undefined){
+                    month_dem_min = addCommas(data[0].demanda_min) + "kW";
+                }
+                if(data[0].consumo_promedio != undefined){
+                    month_cons_prom = addCommas(data[0].consumo_promedio.toFixed(2)) + "kWh";
+                }
+                if(data[0].consumo_mediana != undefined){
+                    month_cons_med = addCommas(data[0].consumo_mediana.toFixed(2)) + "kWh";
+                }
+                if(data[0].consumo_desviacion != undefined){
+                    month_cons_des = addCommas(data[0].consumo_desviacion.toFixed(2)) + "kWh";
+                }
+                month_totals.find("#month_dem_min").text(month_dem_min);
+                month_totals.find("#month_cons_prom").text(month_cons_prom);
+                month_totals.find("#month_cons_med").text(month_cons_med);
+                month_totals.find("#month_cons_des").text(month_cons_des);
             }
         });
     }
@@ -148,7 +186,7 @@
     function open_lat(){
         if(lateral.hasClass("collapsed")){
             lateral.removeClass("collapsed");
-            lateral.show().animate({width: '240px', right: "-249px", opacity: "1"}, 500);
+            lateral.show().animate({width: '255px', right: "-264px", opacity: "1"}, 500);
         }
     }
 
@@ -179,7 +217,7 @@
 
                         var div = "<div class='semana_cont'>";
                         div += "<span class='week_num fl'>S"+ String(semana) +"</span>";
-                        div += "<div class='week_values_cont fr'>";
+                        div += "<div class='week_values_cont fl'>";
                         div += "<span class='label_wvalue'>Consumo Acumulado:";
                         div += "<span class='wvalue'> "+acum+" kWh</span></span>";
                         div += "<span class='label_wvalue'>Demanda M&aacute;x:";
@@ -188,7 +226,7 @@
                         div += "<span class='wvalue'> "+data[cont].demanda_min+" kW</span></span>";
                         div += "<span class='label_wvalue'>Consumo Promedio:";
                         div += "<span class='wvalue'> "+data[cont].consumo_promedio.toFixed(2)+" kWh</span></span>";
-                        div += "<span class='label_wvalue'>Consumo Media:";
+                        div += "<span class='label_wvalue'>Consumo Mediana:";
                         div += "<span class='wvalue'> "+data[cont].consumo_mediana.toFixed(2)+" kWh</span></span>";
                         div += "<span class='label_wvalue'>Consumo Desviación:";
                         div += "<span class='wvalue'>"+data[cont].consumo_desviacion.toFixed(2)+" kWh</span></span>";
@@ -210,7 +248,7 @@
         starts: 7,
         onChange: function(month, selected) {
             var display_day = false;
-            console.log("selected", selected)
+            //console.log("selected", selected)
             current = month.split("-");
             c_month = current[1];
             c_year = current[0];
@@ -225,7 +263,7 @@
             if(c_month != current_month || c_year != current_year ){
                 var class_name = "."+String(current_year) + "-" + mes + "-15";
                 if(!$(class_name).size()){
-                    console.log("cambio de mes");
+                    //console.log("cambio de mes");
                     current_month = c_month;
                     current_year = c_year;
                     close_lat();
@@ -241,10 +279,10 @@
             if(display_day){
                 if(current_day != selected){
                     current_day = selected;
-                    console.log("carga la información del día");
+                    //console.log("carga la información del día");
                     load_day(selected);
                 }else{
-                    console.log("muestra solamente");
+                    //console.log("muestra solamente");
                 }
                 open_lat();
 
@@ -303,10 +341,10 @@
                 <span class="label_tot">Demanda Mínima</span>
                 <span class="value_tot" id="month_dem_min">-</span>
 
-                <span class="label_tot">Comsumo promedio</span>
+                <span class="label_tot">Consumo promedio</span>
                 <span class="value_tot" id="month_cons_prom">-</span>
 
-                <span class="label_tot">Consumo media</span>
+                <span class="label_tot">Consumo mediana</span>
                 <span class="value_tot" id="month_cons_med">-</span>
 
                 <span class="label_tot">Consumo desviación</span>
