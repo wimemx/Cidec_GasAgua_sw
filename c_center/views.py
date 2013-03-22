@@ -7894,6 +7894,28 @@ def billing_analisis_header(request):
                                                  {"datacontext": datacontext}))
 
 
+# noinspection PyArgumentList
+@login_required(login_url='/')
+def billing_c_analisis_header(request):
+    datacontext = get_buildings_context(request.user)[0]
+    if request.user.is_superuser:
+        set_default_session_vars(request, datacontext)
+
+        template_vars = {"type": "cfe", "datacontext": datacontext,
+                         'empresa': request.session['main_building'],
+                         'company': request.session['company'],
+                         'sidebar': request.session['sidebar']}
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response(
+            "consumption_centers/graphs/analisis_costo_facturacion.html",
+            template_vars_template)
+    else:
+        return render_to_response("generic_error.html",
+                                  RequestContext(request,
+                                                 {"datacontext": datacontext}))
+
+
 def getMonthName(index):
     if index == 1:
         return 'Ene'
@@ -8216,11 +8238,11 @@ def billing_analisis(request):
                     template_vars['tarifa'] = 2
                     m01_data = DacHistoricData.objects.filter(
                         monthly_cut_dates__building = building,
-                        monthly_cut_dates__billing_month = month_01,
+                        monthly_cut_dates__billing_month__month = month_01,
                         monthly_cut_dates__billing_month__year = year_01)
                     m02_data = DacHistoricData.objects.filter(
                         monthly_cut_dates__building = building,
-                        monthly_cut_dates__billing_month = month_02,
+                        monthly_cut_dates__billing_month__month = month_02,
                         monthly_cut_dates__billing_month__year = year_02)
                     if m01_data:
                         template_vars['m01_kwh'] = m01_data[0].KWH_total
@@ -8284,11 +8306,11 @@ def billing_analisis(request):
                     template_vars['tarifa'] = 3
                     m01_data = T3HistoricData.objects.filter(
                         monthly_cut_dates__building = building,
-                        monthly_cut_dates__billing_month = month_01,
+                        monthly_cut_dates__billing_month__month = month_01,
                         monthly_cut_dates__billing_month__year = year_01)
                     m02_data = T3HistoricData.objects.filter(
                         monthly_cut_dates__building = building,
-                        monthly_cut_dates__billing_month = month_02,
+                        monthly_cut_dates__billing_month__month = month_02,
                         monthly_cut_dates__billing_month__year = year_02)
                     if m01_data:
                         template_vars['m01_kwh'] = m01_data[0].KWH_total
@@ -8360,6 +8382,206 @@ def billing_analisis(request):
             template_vars_template = RequestContext(request, template_vars)
             return render_to_response(
                 "consumption_centers/graphs/analisis_facturacion_frame.html",
+                template_vars_template)
+
+    else:
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
+
+
+
+def billing_cost_analisis(request):
+    """Renders the cfe bill and the historic data chart"""
+    datacontext = get_buildings_context(request.user)[0]
+    if request.user.is_superuser:
+        if not request.session['consumer_unit']:
+            return HttpResponse(
+                content=MSG_PERMIT_ERROR)
+
+        set_default_session_vars(request, datacontext)
+
+        template_vars = dict(datacontext=datacontext,
+                             empresa=request.session['main_building'])
+
+        building = request.session['main_building']
+
+        #Se obtiene el tipo de tarifa del edificio
+        tipo_tarifa = building.electric_rate
+
+        compare_years_flag = False
+
+        graph_kdf_arr = []
+        graph_kwhp_arr = []
+        graph_kwhi_arr = []
+        graph_kwhb_arr = []
+
+        graph_m_rate_arr = []
+        graph_kwh_arr = []
+        graph_kw_arr = []
+
+        if request.GET:
+            year_01 = int(request.GET['year01'])
+            template_vars['year_01'] = year_01
+            if request.GET.__contains__('year02'):
+                compare_years_flag = True
+                template_vars['compare_years'] = True
+                year_02 = int(request.GET['year02'])
+                template_vars['year_02'] = year_02
+
+            for i in range(12):
+                mes = i+1
+                if tipo_tarifa.pk == 1:
+
+                    template_vars['tarifa'] = 1
+
+                    datos_kdf = dict()
+                    datos_kwhp = dict()
+                    datos_kwhi = dict()
+                    datos_kwhb = dict()
+                    year_01_data = ElectricRatesDetail.objects.filter(
+                        region = building.region,
+                        date_init__month = mes, date_init__year = year_01
+                    )
+
+                    datos_kdf['mes'] = getMonthName(i+1)
+                    datos_kwhp['mes'] = getMonthName(i+1)
+                    datos_kwhi['mes'] = getMonthName(i+1)
+                    datos_kwhb['mes'] = getMonthName(i+1)
+
+                    if year_01_data:
+                        datos_kdf['kdf_01'] = year_01_data[0].KDF
+                        datos_kwhp['kwhp_01'] = year_01_data[0].KWHP
+                        datos_kwhi['kwhi_01'] = year_01_data[0].KWHI
+                        datos_kwhb['kwhb_01'] = year_01_data[0].KWHB
+                    else:
+                        datos_kdf['kdf_01'] = 0
+                        datos_kwhp['kwhp_01'] = 0
+                        datos_kwhi['kwhi_01'] = 0
+                        datos_kwhb['kwhb_01'] = 0
+
+                    if compare_years_flag:
+                        year_02_data = ElectricRatesDetail.objects.filter(
+                            region = building.region,
+                            date_init__month = mes, date_init__year = year_02
+                        )
+                        if year_02_data:
+                            datos_kdf['kdf_02'] = year_02_data[0].KDF
+                            datos_kwhp['kwhp_02'] = year_02_data[0].KWHP
+                            datos_kwhi['kwhi_02'] = year_02_data[0].KWHI
+                            datos_kwhb['kwhb_02'] = year_02_data[0].KWHB
+                        else:
+                            datos_kdf['kdf_02'] = 0
+                            datos_kwhp['kwhp_02'] = 0
+                            datos_kwhi['kwhi_02'] = 0
+                            datos_kwhb['kwhb_02'] = 0
+
+                    graph_kdf_arr.append(datos_kdf)
+                    graph_kwhp_arr.append(datos_kwhp)
+                    graph_kwhi_arr.append(datos_kwhi)
+                    graph_kwhb_arr.append(datos_kwhb)
+
+                elif tipo_tarifa.pk == 2:
+
+                    template_vars['tarifa'] = 2
+
+                    datos_monthrate = dict()
+                    datos_kwh = dict()
+
+                    #Si la region es Baja California o Baja California Sur
+                    #Se obtienen los datos para Verano e Invierno
+                    if building.region == 1 or building.region == 2:
+                        pass
+                    else:
+                        year_01_data = DACElectricRateDetail.objects.filter(
+                            region = building.region,
+                            date_init__month = mes, date_init__year = year_01
+                        )
+
+                    datos_monthrate['mes'] = getMonthName(i+1)
+                    datos_kwh['mes'] = getMonthName(i+1)
+
+                    if year_01_data:
+                        datos_monthrate['m_rate_01'] = year_01_data[0].month_rate
+                        datos_kwh['kwh_01'] = year_01_data[0].kwh_rate
+                    else:
+                        datos_monthrate['m_rate_01'] = 0
+                        datos_kwh['kwh_01'] = 0
+
+
+                    if compare_years_flag:
+                        if building.region == 1 or building.region == 2:
+                            pass
+                        else:
+                            year_02_data = DACElectricRateDetail.objects.filter(
+                                region = building.region,
+                                date_init__month = mes, date_init__year = year_02
+                            )
+
+                        if year_02_data:
+                            datos_monthrate['m_rate_02'] = year_02_data[0].month_rate
+                            datos_kwh['kwh_02'] = year_02_data[0].kwh_rate
+                        else:
+                            datos_monthrate['m_rate_02'] = 0
+                            datos_kwh['kwh_02'] = 0
+
+                    graph_m_rate_arr.append(datos_monthrate)
+                    graph_kwh_arr.append(datos_kwh)
+
+                elif tipo_tarifa.pk == 3:
+
+                    template_vars['tarifa'] = 3
+
+                    datos_kw = dict()
+                    datos_kwh = dict()
+
+                    year_01_data = ThreeElectricRateDetail.objects.filter(
+                        date_init__month = mes, date_init__year = year_01
+                    )
+
+                    datos_kw['mes'] = getMonthName(i+1)
+                    datos_kwh['mes'] = getMonthName(i+1)
+
+                    if year_01_data:
+                        datos_kw['kw_01'] = year_01_data[0].kw_rate
+                        datos_kwh['kwh_01'] = year_01_data[0].kwh_rate
+                    else:
+                        datos_kw['kw_01'] = 0
+                        datos_kwh['kwh_01'] = 0
+
+                    if compare_years_flag:
+                        year_02_data = ThreeElectricRateDetail.objects.filter(
+                            date_init__month = mes, date_init__year = year_02
+                        )
+
+                        if year_02_data:
+                            datos_kw['kw_02'] = year_02_data[0].kw_rate
+                            datos_kwh['kwh_02'] = year_02_data[0].kwh_rate
+                        else:
+                            datos_kw['kw_02'] = 0
+                            datos_kwh['kwh_02'] = 0
+
+                    graph_kw_arr.append(datos_kw)
+                    graph_kwh_arr.append(datos_kwh)
+
+            if tipo_tarifa.pk == 1:
+                template_vars['kdf_data'] = graph_kdf_arr
+                template_vars['kwhp_data'] = graph_kwhp_arr
+                template_vars['kwhi_data'] = graph_kwhi_arr
+                template_vars['kwhb_data'] = graph_kwhb_arr
+            elif tipo_tarifa.pk == 2:
+                template_vars['mrate_data'] = graph_m_rate_arr
+                template_vars['kwh_data'] = graph_kwh_arr
+            elif tipo_tarifa.pk == 3:
+                template_vars['kw_data'] = graph_kw_arr
+                template_vars['kwh_data'] = graph_kwh_arr
+
+            template_vars_template = RequestContext(request, template_vars)
+            return render_to_response(
+                "consumption_centers/graphs/analisis_costo_f_frame.html",
                 template_vars_template)
 
     else:
