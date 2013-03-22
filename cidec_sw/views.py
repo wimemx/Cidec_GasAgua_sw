@@ -30,6 +30,7 @@ from rbac.models import DataContextPermission, Object, PermissionAsigment, \
     UserRole, GroupObject, MenuCategs, MenuHierarchy
 from rbac.rbac_functions import get_buildings_context
 from variety import unique_from_array, timed
+from tareas.tasks import datawarehouse_run
 
 from django.shortcuts import redirect, render
 
@@ -61,19 +62,20 @@ def set_timezone(request):
 
 
 def parse_csv(request):
-    dir_path = '/home/audiwime/datosperdidos222324y25defebrero_/'
+    dir_path = '/home/satest/cidec_sw/templates/static/media/datos_perdidos'
     files = os.listdir(dir_path)
     dir_fd = os.open(dir_path, os.O_RDONLY)
     os.fchdir(dir_fd)
     html = ''
-    for file in files:
+    for _file in files:
         if file == '.DS_Store':
             continue
-        data = csv.reader(open(file, "U"))
+        data = csv.reader(open(_file, "U"))
         # Read the column names from the first line of the file
         fields = data.next()
         for row in data:
         # Zip together the field names and values
+            #if row:
             items = zip(fields, row)
             item = {}
             # Add the value to our dictionary
@@ -119,7 +121,7 @@ def parse_csv(request):
                     PF=item['Factor de Potencia Total'],
                     FREQ=item['Frecuencia Fase'],
                     TotalkWhIMPORT=item['KiloWattHora Totales'],
-                    powermeter_serial=item['powermeter_serial'],
+                    powermeter_serial=powerp.powermeter.powermeter_serial,
                     TotalkvarhIMPORT=item['KiloVoltAmpereReactivoHora Totales'],
                     kWhL1=item['KiloWattHora Fase 1'],
                     kWhL2=item['KiloWattHora Fase 2'],
@@ -141,7 +143,13 @@ def parse_csv(request):
                 html += str(elec_data) + "<br/>"
             html += "<hr/><br/>"
     os.close(dir_fd)
-
+    datawarehouse_run.delay(
+        fill_instants=None,
+        fill_intervals=None,
+        _update_consumer_units=None,
+        populate_instant_facts=True,
+        populate_interval_facts=True
+    )
     return HttpResponse(html)
 
 

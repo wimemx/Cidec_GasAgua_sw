@@ -219,7 +219,7 @@ body{
     margin-right: 70px;
     width: 250px;
     height: 35px;
-    background: url(images/imgs_icns/myrios_auditem_logo_header.png) no-repeat;
+
 }
 h2{
     line-height: 22px;
@@ -485,7 +485,7 @@ ul#main_menu ul ul li:hover{
 #salir a{ background: url(images/imgs_icns/exit_icon_topbar.png) no-repeat;}
 #header-container{
     padding: 10px;
-    min-width: 1024px;
+    width: 1162px;
     margin: 0 auto;
     height: 69%;
 }

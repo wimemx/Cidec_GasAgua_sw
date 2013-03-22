@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.db import models
+from django.contrib.auth.models import User
 import datetime
 import hashlib
 import variety
@@ -758,6 +759,7 @@ class IndustrialEquipment(models.Model):
     realtime = models.BooleanField(default=False)
     status = models.BooleanField(default=True)
     building = models.OneToOneField(Building, on_delete=models.PROTECT)
+    modified_by = models.ForeignKey(User, on_delete=models.PROTECT, default=1)
 
     def __unicode__(self):
         return self.alias

@@ -21,11 +21,13 @@
     <script type="text/javascript" src="/static/js/external/history/jquery.history.js"></script>
     <script type="text/javascript" src="/static/js/external/labels.js"></script>
     <script type="text/javascript" src="/static/js/external/jqueryUniform/jquery.uniform.min.js"></script>
+    <script type="text/javascript" src="/static/js/socket.io.js"></script>
     {% block externaljs %}{% endblock %}
     <script type="text/javascript">
+        var server = io.connect("http://node.wimelabs.com:9999");
 
         var data_context = {{ datacontext|safe }};
-        var buildings = new Array();
+        var buildings = [];
         function building_list_gen(){
             var ul_list ='';
             var list;
@@ -42,20 +44,6 @@
                         ")</span>";
 
                 buildings.push(data_context[i].buildings);
-                /*for(var j=0; j<data_context[i].buildings.length; j++){
-
-                     list += "<li class='building_list'>";
-                     list += "<span class='building_name' rel='"+data_context[i].buildings[j].building_id+"'>" +
-                     data_context[i].buildings[j].building_name +
-                     "</span>";
-                     list += "<span class='building_city'>" +
-                     data_context[i].buildings[j].building_city +
-                     "</span>";
-                     list += "</li>";
-
-
-                }*/
-
                 list += "</li>";
                 ul_list += list;
             }
@@ -116,7 +104,7 @@
                 $("#building_container").hide();
                 $(this).toggleClass("expanded");
             });
-            $("#building_list li").live('click', function(){
+            $("#building_list").find("li").live('click', function(){
                 var texto=$(this).find("span.building_name").text().replace(/^\s*|\s*$/g,'');
                 var texto1 = texto.substring(0,17) + "...";
                 $("#empresa").text(texto1);
@@ -134,7 +122,7 @@
                 });
             });
             {% block document_ready %}{% endblock %}
-            $("#user_menu li a[title]").tooltip({effect: 'slide'}).dynamic({ bottom: { direction: 'down', bounce: true } });
+            $("#user_menu").find("li a[title]").tooltip({effect: 'slide'}).dynamic({ bottom: { direction: 'down', bounce: true } });
         });
 
     </script>
@@ -143,7 +131,9 @@
 
     <div id="header">
         <div id="header-container">
-            <div id="main_logo" class="fr"></div>
+            <div id="main_logo" class="fl">
+                <a href="/"><img src="/static/css/images/imgs_icns/myrios_auditem_logo_header.png" alt="Myrios AUDITEM"/></a>
+            </div>
         </div>
     </div>
     <table id="table_container">

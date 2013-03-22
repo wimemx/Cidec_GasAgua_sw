@@ -65,7 +65,7 @@ def promedioKWH(building, fecha_inicio, fecha_fin):
             data_day__gte=fecha_inicio,
             data_day__lte=fecha_fin).aggregate(Sum('KWH_total'))
         total_lecturas = len(t_lecturas)
-        promedio = suma_lecturas['KWH_total__sum'] / total_lecturas
+        promedio = float(suma_lecturas['KWH_total__sum']) / float(total_lecturas)
     return promedio
 
 
