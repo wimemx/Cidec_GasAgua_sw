@@ -255,6 +255,7 @@ def main_page(request):
                 graphs_type = GRAPHS[request.GET['g_type']]
             except KeyError:
                 graphs_type = GRAPHS['energia']
+        # TODO revisar rbac para nuevas graficas
         graphs = graphs_permission(request.user,
                                    request.session['consumer_unit'],
                                    graphs_type)
@@ -264,7 +265,8 @@ def main_page(request):
                                         ElectricDataTemp.objects.all().
                                         dates('medition_date', 'year')]
 
-            template_vars = {"graphs": graphs, "datacontext": datacontext,
+            template_vars = {"graphs": graphs,
+                             "datacontext": datacontext,
                              'empresa': request.session['main_building'],
                              'company': request.session['company'],
                              'consumer_unit': request.session['consumer_unit'],

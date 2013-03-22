@@ -429,7 +429,8 @@ def obtenerTipoPeriodoObj(fecha, region):
         date_init__lte=datetime.date(fecha.year, fecha.month,
             fecha.day)).filter(
         date_end__gte=datetime.date(fecha.year, fecha.month,
-            fecha.day))]#.filter(region = region)
+            fecha.day))]
+            #.filter(region = region)
 
     electric_type = ElectricRatesPeriods.objects.filter(region=region).filter(
         date_interval__in=horario_ver_inv).filter(groupdays=grupo_id).filter(

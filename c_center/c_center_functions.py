@@ -374,8 +374,8 @@ def get_intervals_1(get):
     by default we get the data from the last month
     returns f1_init, f1_end as datetime objects
     """
-    f1_init = datetime.today() - relativedelta(months=1)
-    f1_end = datetime.today()
+    f1_init = datetime.datetime.today() - relativedelta(months=1)
+    f1_end = datetime.datetime.today()
 
     if "f1_init" in get:
         if get["f1_init"] != '':
@@ -1027,16 +1027,15 @@ def all_dailyreportAll():
 def dailyReportAll():
     buildings = Building.objects.all()
     for buil in buildings:
-        try:
-            main_cu = ConsumerUnit.objects.get(
-                building=buil,
-                electric_device_type__electric_device_type_name="Total Edificio"
-            )
-        except ObjectDoesNotExist:
-            continue
-        else:
+        cus = ConsumerUnit.objects.filter(building=buil)
+        for cu in cus:
             dia = datetime.timedelta(days=1)
-            dailyReport(buil, main_cu, datetime.datetime.today()-dia)
+            eq_cu = get_consumer_units(cu)
+            if len(eq_cu) > 1:
+                #suma(eq_cu)
+                pass
+            else:
+                dailyReport(buil, cu, datetime.datetime.today()-dia)
     print "Done dailyReportAll"
 
 
@@ -1250,9 +1249,9 @@ def dailyReport(building, consumer_unit, today):
         max_demand_time = dem_max_time,
         min_demand = int(ceil(demanda_min)),
         min_demand_time = dem_min_time,
-        KWH_cost = costo_energia_total,
-        power_factor = factor_potencia_total,
-        KVARH = kvarh_totales
+        KWH_cost = str(costo_energia_total),
+        power_factor = str(factor_potencia_total),
+        KVARH = str(kvarh_totales)
     )
     new_daily.save()
 

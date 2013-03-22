@@ -5,8 +5,10 @@
     <link rel="stylesheet" href="/static/css/consumption_centers/main.css" type="text/css" />
     <link rel="stylesheet" href="/static/date_picker/css/datepicker2.css" type="text/css" />
     <link rel="stylesheet" href="/static/css/consumption_centers/montly_report.css" type="text/css" />
+    <link rel="stylesheet" href="/static/js/external/fancybox/jquery.fancybox.css" type="text/css" />
 {% endblock %}
 {% block externaljs %}
+    <script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
     <script type="text/javascript" src="/static/date_picker/js/datepicker.js"></script>
     <script type="text/javascript">
         var fecha_act = new Date();
@@ -295,6 +297,17 @@
         }
     });
     get_full_month();
+    $(".various").fancybox({
+        maxWidth	: 800,
+        maxHeight	: 800,
+        fitToView	: false,
+        width		: '70%',
+        height		: '70%',
+        autoSize	: false,
+        closeClick	: false,
+        openEffect	: 'none',
+        closeEffect	: 'none'
+    });
 {% endblock %}
 {% block contenido %}
     
@@ -307,7 +320,7 @@
     <div id="page_content">
     <div id="contenido_interno">
         <h2 class="titulo_reporte"><span class="building">{{ building.building_name }}</span> - <span class="device">{{ request.session.consumer_unit.electric_device_type.electric_device_type_name }}</span></h2>
-
+        <a class="various" data-fancybox-type="iframe"  href="/reportes/set_consumer_unit/">Cambiar</a>
         <div class="divider" id="divider_top">&nbsp;</div>
         <h3 id="titulo_reporte" class="titulo_reporte report_icon">An&aacute;lisis de Consumo El&eacute;ctrico Mensual</h3>
 
