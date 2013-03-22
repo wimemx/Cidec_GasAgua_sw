@@ -846,7 +846,8 @@ def get_instant_delta (
 
 def get_instant_delta_all():
 
-    instant_deltas = data_warehouse_extended.models.InstantDelta.objects.all()
+    return data_warehouse_extended.models.InstantDelta.objects.all()
+
 
 def get_instants_list (
         datetime_from,
