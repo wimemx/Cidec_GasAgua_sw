@@ -100,6 +100,10 @@
                 {{ industrial_eq.alias }}
             </p>
             <p>
+                <span class="strong label">Instalado en:</span>
+                {{ industrial_eq.building.building_name }}
+            </p>
+            <p>
                 <span class="strong label">Descripci&oacute;n del equipo industrial:</span>
                 {{ industrial_eq.description }}
             </p>
@@ -117,69 +121,71 @@
             </p>
             <div class="g12">
                 {% if ver_medidores %}
-                <span class="strong label">Medidores instalados:</span>
-                <div id="grid_container">
-                    <table>
-                        <thead>
-                        <tr>
-                            <th style="width: 20%;">
-                                <a href="#" id="sort_alias" rel="{{ order_alias }}">
-                                    Alias
-                                    <span class="sort"></span>
-                                </a>
-                            </th>
-                            <th style="width: 20%;">
-                                <a href="#" id="sort_model" rel="{{ order_model }}">
-                                    Modelo
-                                    <span class="sort"></span>
-                                </a>
-                            </th>
-                            <th style="width: 20%;">
-                                <a href="#" id="sort_serial" rel="{{ order_serial }}">
-                                    Número de Serie
-                                    <span class="sort"></span>
-                                </a>
-                            </th>
-                            <th style="width: 20%;">
-                                <a href="#" id="sort_status" rel="{{ order_status }}">
-                                    Estatus
-                                    <span class="sort"></span>
-                                </a>
-                            </th>
-                            <th style="width: 20%;">Acciones</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% for powermeter in powermeters %}
-
-                            <tr class="{% cycle 'row1' 'row2' %}">
-                                <td>
-
-                                    <label for="powermeter_{{ powermeter.powermeter.pk }}">
-                                        <a href="/buildings/ver_medidor/{{ powermeter.powermeter.pk }}/">
-                                            {{ powermeter.powermeter.powermeter_anotation }}
-                                        </a>
-                                    </label>
-                                </td>
-                                <td class="c">
-                                    {{ powermeter.powermeter.powermeter_model.powermeter_brand }}-{{ powermeter.powermeter.powermeter_model.powermeter_model }}
-                                </td>
-                                <td class="c">
-                                    {{ powermeter.powermeter.powermeter_serial }}
-                                </td>
-                                <td class="c">
-                                    <a href="#" rel="{{ powermeter.powermeter.pk }}" {% if powermeter.powermeter.status == 1 %}class="switch active_switch" title="desactivar"{% else %}class="switch inactive_switch" title="activar"{% endif %}>
+                    {% if powermeters %}
+                        <span class="strong label">Medidores instalados:</span>
+                        <div id="grid_container">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th style="width: 20%;">
+                                    <a href="#" id="sort_alias" rel="{{ order_alias }}">
+                                        Alias
+                                        <span class="sort"></span>
                                     </a>
-                                </td>
-                                <td class="c">
-                                    <a class="edit" title="Editar medidor"
-                                       href="/buildings/editar_medidor/{{ powermeter.powermeter.pk }}/"></a>
-                                </td>
+                                </th>
+                                <th style="width: 20%;">
+                                    <a href="#" id="sort_model" rel="{{ order_model }}">
+                                        Modelo
+                                        <span class="sort"></span>
+                                    </a>
+                                </th>
+                                <th style="width: 20%;">
+                                    <a href="#" id="sort_serial" rel="{{ order_serial }}">
+                                        Número de Serie
+                                        <span class="sort"></span>
+                                    </a>
+                                </th>
+                                <th style="width: 20%;">
+                                    <a href="#" id="sort_status" rel="{{ order_status }}">
+                                        Estatus
+                                        <span class="sort"></span>
+                                    </a>
+                                </th>
+                                <th style="width: 20%;">Acciones</th>
                             </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                    </div>
+                            </thead>
+                            <tbody>
+                            {% for powermeter in powermeters %}
+
+                                <tr class="{% cycle 'row1' 'row2' %}">
+                                    <td>
+
+                                        <label for="powermeter_{{ powermeter.powermeter.pk }}">
+                                            <a href="/buildings/ver_medidor/{{ powermeter.powermeter.pk }}/">
+                                                {{ powermeter.powermeter.powermeter_anotation }}
+                                            </a>
+                                        </label>
+                                    </td>
+                                    <td class="c">
+                                        {{ powermeter.powermeter.powermeter_model.powermeter_brand }}-{{ powermeter.powermeter.powermeter_model.powermeter_model }}
+                                    </td>
+                                    <td class="c">
+                                        {{ powermeter.powermeter.powermeter_serial }}
+                                    </td>
+                                    <td class="c">
+                                        <a href="#" rel="{{ powermeter.powermeter.pk }}" {% if powermeter.powermeter.status == 1 %}class="switch active_switch" title="desactivar"{% else %}class="switch inactive_switch" title="activar"{% endif %}>
+                                        </a>
+                                    </td>
+                                    <td class="c">
+                                        <a class="edit" title="Editar medidor"
+                                           href="/buildings/editar_medidor/{{ powermeter.powermeter.pk }}/"></a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        </div>
+                    {% endif %}
                     {% if show_asign %}
                         <a class="aqua_btn g6" href="/buildings/editar_ie/{{ industrial_eq.pk }}/">Editar / Agregar medidores</a>
                     {% endif %}

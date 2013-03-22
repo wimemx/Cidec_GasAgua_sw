@@ -37,7 +37,7 @@
                 new google.visualization.ColumnChart(document.getElementById('kwh_graph')).
                         draw(data,
                         {
-                            width:900, height:400, vAxis: {title: "Facturación CFE($)"}, colors:['#5093c7','#f78a3d'],legend:'none'
+                            width:900, height:400, vAxis: {title: "Energía (KWh)"}, colors:['#5093c7','#f78a3d'],legend:'none'
 
                         }
                 );
@@ -64,7 +64,7 @@
                 new google.visualization.ColumnChart(document.getElementById('money_graph')).
                         draw(data2,
                         {
-                            width:900, height:400, vAxis: {title: "Energía (KWh)"}, colors:['#5093c7','#f78a3d'], legend:'none'
+                            width:900, height:400, vAxis: {title: "Facturación CFE($)"}, colors:['#5093c7','#f78a3d'], legend:'none'
 
                         }
                 );
@@ -164,7 +164,8 @@
 
     {% if tipo_reporte == 1 %}
         <div class="graph_title">
-            Analisis de Facturación ($ MXN): {{ year_01 }}
+
+            Analisis de Consumo de Energía (kWh): {{ year_01 }}
             {% if compare_years %}
                 vs {{ year_02 }}
             {% endif %}
@@ -187,7 +188,7 @@
                                 {{ diff_kwh_pc|floatformat:2 }}%
                             </div>
                             <div class="info_compare">
-                                {{ diff_kwh_qty }} kHw
+                                {{ diff_kwh_qty }} kWh
                             </div>
                             <div class="label_data">
                                 {{ year_01 }}: {{ kwh_total_01 }} kWh
@@ -216,7 +217,7 @@
             </div>
         </div>
         <div class="graph_title">
-            Analisis de Consumo de Energía (kWh): {{ year_01 }}
+            Analisis de Facturación ($ MXN): {{ year_01 }}
             {% if compare_years %}
                 vs {{ year_02 }}
             {% endif %}

@@ -112,12 +112,13 @@ def is_allowed_operation_for_object(operation, permission, user, _object,
                                     obj_type):
     """returns true or false if the user has permission over the object or
     not
-    operation = Operation class instance (ver, crear, modificar, etc)
-    permission = Object class instance ("crear usuarios", "modificar roles",
-                                        "etc")
-    user = auth.User instance
-    _object = Cluster, Company, Building or PartOfBuilding instance
-    obj_type = string, the type of the object
+
+    :param operation: Operation class instance (ver, crear, modificar, etc)
+    :param permission: Object class instance ("crear usuarios",
+        "modificar roles", "etc")
+    :param user: auth.User instance
+    :param _object: Cluster, Company, Building or PartOfBuilding instance
+    :param obj_type: string, the type of the object
     """
     #Get the data context(s) in wich the user has a role
     result = {

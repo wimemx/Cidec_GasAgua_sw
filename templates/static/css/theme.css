@@ -235,6 +235,9 @@ h2{
     margin-left: 5px;
 }
 /*--Main menu--*/
+#tr_menu{
+    height: 61px !important;
+}
 #top_menu{
     height: 62px;
     display: block;

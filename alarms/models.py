@@ -8,6 +8,8 @@ import variety
 class ElectricParameters(models.Model):
     name = models.CharField(max_length=64)
     position = models.IntegerField()
+    param_units = models.CharField(max_length=20, default="", null=True,
+                                   blank=True)
 
     def __unicode__(self):
         return self.name
