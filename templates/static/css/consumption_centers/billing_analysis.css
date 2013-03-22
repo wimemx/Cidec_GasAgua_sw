@@ -24,7 +24,7 @@ iframe{
     -moz-border-radius: 5px;
     background: whiteSmoke;
     display: none;
-    height: 200px;
+    height: auto;
 }
 
 .ba_h4{
@@ -34,6 +34,7 @@ iframe{
 #btn_apply{
     margin-top: 15px;
     float: right;
+    height: 30px;
 }
 
 .cl_temporalidad{
@@ -169,6 +170,13 @@ iframe{
     margin: 10px;
 }
 
+.half_column_title{
+    width: 50%;
+    height: auto;
+    float: left;
+    text-align: center;
+}
+
 #periodo_container{
     height: 140px;
     width: 500px;
@@ -188,4 +196,9 @@ iframe{
 
 .periodo_label{
     font-weight: bold;
+}
+
+.label_year_cost{
+    color: #1b6b84;
+    font-size: 18px;
 }

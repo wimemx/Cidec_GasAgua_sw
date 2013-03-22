@@ -281,7 +281,10 @@ urlpatterns = patterns('',
                            'c_center.views.billing_analisis_header'),
                        url(r'^analisis_fac_ajax/',
                            'c_center.views.billing_analisis'),
-
+                       url(r'^analisis_costo_facturacion/',
+                           'c_center.views.billing_c_analisis_header'),
+                       url(r'^analisis_costo_fac_frame/',
+                           'c_center.views.billing_cost_analisis'),
 
                        url(r'^node/',
                            'django.views.generic.simple.direct_to_template',
