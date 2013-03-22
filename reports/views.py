@@ -3,6 +3,7 @@
 # Python imports
 import datetime
 import logging
+import time
 
 # Django imports
 import django.http
@@ -28,29 +29,6 @@ logger = logging.getLogger("reports")
 #
 ################################################################################
 
-def get_data_cluster_normalized(
-        data_cluster
-):
-    """
-        Description:
-
-
-        Arguments:
-            data_cluster -
-
-        Return:
-
-    """
-
-    invalid_index_first = None
-    invalid_index_last = None
-    for data_dictionary in data_cluster:
-        data_dictionary_value =\
-            data_dictionary.pop(
-                reports.globals.Constant.DATA_DICTIONARY_KEY_VALUE,
-                None)
-
-
 def get_data_clusters_json(
         data_clusters_list_normalized
 ):
@@ -65,8 +43,30 @@ def get_data_clusters_json(
 
     """
 
-    # To-Do implement this function
-    pass
+    data_clusters_length = len(data_clusters_list_normalized)
+    if data_clusters_length < 1:
+        return None
+
+    data_cluster_instants_number = len(data_clusters_list_normalized[0])
+    if data_cluster_instants_number < 1:
+        return None
+
+    data_clusters_json = []
+    for instant_index in range(0, data_cluster_instants_number):
+        instant_json = []
+        for data_cluster_index in range(0, data_clusters_length):
+            data_cluster_dictionary =\
+                data_clusters_list_normalized[data_cluster_index][instant_index]
+
+            data_cluster_dictionary_copy = data_cluster_dictionary.copy()
+            data_cluster_dictionary_copy['value'] =\
+                float(data_cluster_dictionary['value'])
+
+            instant_json.append(data_cluster_dictionary_copy)
+
+        data_clusters_json.append(instant_json)
+
+    return data_clusters_json
 
 
 def get_data_clusters_list(
@@ -113,24 +113,6 @@ def get_data_clusters_list(
         data_clusters_list.append(data_cluster)
 
     return data_clusters_list
-
-
-def get_data_clusters_list_normalized(
-        data_clusters_list
-):
-    """
-        Description:
-
-
-        Arguments:
-            data_clusters_list -
-
-        Return:
-
-    """
-
-    # To-Do implement this function
-    pass
 
 
 def get_instant_delta_from_timedelta(
@@ -274,7 +256,8 @@ def get_request_data_list_normalized(
              datetime_from + minimum_time_delta,
              electrical_parameter_name)
 
-        request_data_list_normalized.append(request_data_list_item_normalized)
+        request_data_list_normalized.append(
+            request_data_list_item_normalized)
 
     return request_data_list_normalized
 
@@ -304,6 +287,145 @@ def get_timedelta_from_normalized_request_data_list(
 
     return datetime_to - datetime_from
 
+
+def normalize_data_cluster(
+        data_cluster
+):
+    """
+        Description:
+
+
+        Arguments:
+            data_cluster -
+
+        Return:
+
+    """
+
+    #
+    # Get the first and last valid indexes
+    #
+    valid_index_first = None
+    valid_index_last = None
+    index_counter = 0
+    for data_dictionary in data_cluster:
+        data_dictionary_value =\
+            data_dictionary['value']
+
+        if data_dictionary_value is not None:
+            if valid_index_first is None:
+                valid_index_first = index_counter
+
+            valid_index_last = index_counter
+
+        index_counter += 1
+
+    #
+    # If any value is valid, set all the values to 0 and set a false certainty
+    # for all of them.
+    #
+    if valid_index_first is None or valid_index_last is None:
+        for data_dictionary in data_cluster:
+            data_dictionary['value'] = 0
+            data_dictionary['certainty'] = False
+
+        return
+
+    #
+    # Fill the cluster with uncertain data until the first valid index is
+    # reached.
+    #
+    if valid_index_first is not None:
+        data_dictionary_valid_first = data_cluster[valid_index_first]
+        data_dictionary_valid_first_value = data_dictionary_valid_first['value']
+
+        for index in range(0, valid_index_first):
+            data_dictionary_current = data_cluster[index]
+            data_dictionary_current['value'] = data_dictionary_valid_first_value
+            data_dictionary_current['certainty'] = False
+
+    #
+    # Fill the cluster with uncertain data from the last valid index until the
+    # end is reached.
+    #
+    if valid_index_last is not None:
+        data_dictionary_valid_last = data_cluster[valid_index_last]
+        data_dictionary_valid_last_value = data_dictionary_valid_last['value']
+
+        for index in range(valid_index_last, len(data_cluster)):
+            data_dictionary_current = data_cluster[index]
+            data_dictionary_current['value'] = data_dictionary_valid_last_value
+            data_dictionary_current['certainty'] = False
+
+    #
+    # Patch all the invalid data using a linear interpolation and set certainty
+    # as false for the patched data.
+    #
+    dictionary_index = valid_index_first + 1
+    while dictionary_index < valid_index_last:
+        data_dictionary_current = data_cluster[dictionary_index]
+        data_dictionary_current_value = data_dictionary_current['value']
+
+        if data_dictionary_current_value is None:
+            #
+            # Find the range that has invalid values
+            #
+            invalid_index = dictionary_index
+            invalid_dictionary = data_cluster[invalid_index]
+            invalid_dictionary_value = invalid_dictionary['value']
+            while invalid_dictionary_value is None and invalid_index < valid_index_last:
+                invalid_index += 1
+                invalid_dictionary = data_cluster[invalid_index]
+                invalid_dictionary_value = invalid_dictionary['value']
+
+            #
+            # Get the delta that will be used to patch the data.
+            #
+            valid_index_lower = dictionary_index - 1
+            valid_dictionary_lower = data_cluster[valid_index_lower]
+            valid_dictionary_lower_value = valid_dictionary_lower['value']
+
+            valid_index_upper = invalid_index
+            valid_dictionary_upper = data_cluster[valid_index_upper]
+            valid_dictionary_upper_value = valid_dictionary_upper['value']
+
+            value_difference =\
+                valid_dictionary_upper_value - valid_dictionary_lower_value
+
+            indexes_difference = valid_index_upper - valid_index_lower
+            patch_delta = value_difference / indexes_difference
+
+            #
+            # Patch the data
+            #
+            for patch_index in range(1, indexes_difference):
+                patch_dictionary = data_cluster[valid_index_lower + patch_index]
+                patch_dictionary['value'] =\
+                    valid_dictionary_lower_value + (patch_index * patch_delta)
+
+        dictionary_index += 1
+
+    return
+
+
+def normalize_data_clusters_list(
+        data_clusters_list
+):
+    """
+        Description:
+
+
+        Arguments:
+            data_clusters_list -
+
+        Return:
+
+    """
+
+    for data_cluster in data_clusters_list:
+        normalize_data_cluster(data_cluster)
+
+    return
 
 ################################################################################
 #
@@ -373,8 +495,11 @@ def get_consumer_unit_electrical_parameter_data_clustered(
     # Get the Instants between the from and to datetime according to the Instant
     # Delta and create a dictionary with them.
     #
+    #instant_delta =\
+    #    get_instant_delta_from_timedelta(datetime_to - datetime_from)
+
     instant_delta =\
-        get_instant_delta_from_timedelta(datetime_to - datetime_from)
+        data_warehouse_extended.views.get_instant_delta(delta_seconds=3600)
 
     if instant_delta is None:
         logger.error(
@@ -391,8 +516,8 @@ def get_consumer_unit_electrical_parameter_data_clustered(
 
     instants_dictionary = dict()
     instant_dictionary_generic_value = {
-        reports.globals.Constant.DATA_DICTIONARY_KEY_CERTAINTY : True,
-        reports.globals.Constant.INSTANT_DICTIONARY_KEY_VALUE :None
+        'certainty' : True,
+        'value' :None
     }
 
     for instant in instants:
@@ -439,41 +564,31 @@ def get_consumer_unit_electrical_parameter_data_clustered(
                 consumer_unit_data.instant.instant_datetime.strftime(
                     reports.globals.Constant.DATETIME_STRING_KEY_FORMAT)
 
-            instant_dictionary_current =\
-                instants_dictionary.pop(
-                    instant_key_current,
-                    instant_dictionary_generic_value)
+            try:
+                instant_dictionary_current =\
+                    instants_dictionary[instant_key_current]
 
-            certainty_current =\
-                instant_dictionary_current.pop(
-                    reports.globals.Constant.INSTANT_DICTIONARY_KEY_CERTAINTY,
-                    False)
+            except KeyError:
+                instant_dictionary_current = instant_dictionary_generic_value
 
+            certainty_current = instant_dictionary_current['certainty']
             certainty_current =\
                 certainty_current and consumer_unit_data.value is not None
 
-            instant_dictionary_current\
-                [reports.globals.Constant.INSTANT_DICTIONARY_KEY_CERTAINTY] =\
-                    certainty_current
+            instant_dictionary_current['certainty'] = certainty_current
 
             if certainty_current:
-                value_current =\
-                    instant_dictionary_current.pop(
-                        reports.globals.Constant.INSTANT_DICTIONARY_KEY_VALUE,
-                        None)
-
+                value_current = instant_dictionary_current['value']
                 if value_current is None:
                     value_current = consumer_unit_data.value
 
                 else:
                     value_current += consumer_unit_data.value
 
-                instant_dictionary_current\
-                    [reports.globals.Constant.INSTANT_DICTIONARY_KEY_VALUE] =\
-                        value_current
+                instant_dictionary_current['value'] = value_current
 
             instants_dictionary[instant_key_current] =\
-                instant_dictionary_current
+                instant_dictionary_current.copy()
 
     #
     # Build the list of dictionaries that is to be retrieved.
@@ -483,10 +598,11 @@ def get_consumer_unit_electrical_parameter_data_clustered(
         key_current = instant.instant_datetime.strftime(
             reports.globals.Constant.DATETIME_STRING_KEY_FORMAT)
 
-        instant_dictionary_current =\
-            instants_dictionary.pop(
-                key_current,
-                instant_dictionary_generic_value)
+        try:
+            instant_dictionary_current = instants_dictionary[key_current]
+
+        except KeyError:
+            instant_dictionary_current = instant_dictionary_generic_value
 
         data_dictionary_current = instant_dictionary_current
 
@@ -495,12 +611,11 @@ def get_consumer_unit_electrical_parameter_data_clustered(
                 instant.instant_datetime
             ).timetuple()
 
-        data_dictionary_current\
-            [reports.globals.Constant.DATA_DICTIONARY_KEY_DATETIME] =\
-                int(datetime.time.mktime(datetime_localtime_timetuple))
+        data_dictionary_current['datetime'] =\
+                int(time.mktime(datetime_localtime_timetuple))
 
         consumer_units_data_dictionaries_list.append(
-            data_dictionary_current)
+            data_dictionary_current.copy())
 
     return consumer_units_data_dictionaries_list
 
@@ -515,10 +630,14 @@ def render_instant_measurements(
         request
 ):
 
+    template_variables = {
+        'columns' : None,
+        'limits' : None,
+        'rows' : None,
+    }
+
     if not request.method == "GET":
         raise django.http.Http404
-
-    template_variables = dict()
 
     #
     # Build a request data list in order to normalize it.
@@ -568,6 +687,16 @@ def render_instant_measurements(
     # Build and normalize the data clusters list.
     #
     data_clusters_list = get_data_clusters_list(request_data_list_normalized)
+    normalize_data_clusters_list(data_clusters_list)
+
+    #
+    # Create the json using the data clusters list normalized
+    #
+    data_clusters_json = get_data_clusters_json(data_clusters_list)
+    if data_clusters_json is None:
+        raise django.http.Http404
+
+    template_variables['rows'] = data_clusters_json
 
     template_context =\
         django.template.context.RequestContext(request, template_variables)

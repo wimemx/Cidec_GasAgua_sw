@@ -26,7 +26,7 @@ urlpatterns = patterns('',
                        url(r'^set_default_building/(?P<id_building>\d+)/',
                            'c_center.views.set_default_building'),
                        url(r'^set_consumer_unit/',
-                           'c_center.views.set_consumer_unit'),
+                         'c_center.views.set_consumer_unit'),
 
                        url(r'^set_c_u/(?P<id_c_u>\d+)/',
                            'c_center.views.set_default_consumer_unit'),
