@@ -839,7 +839,8 @@ class HMHistoricData(models.Model):
     total = models.DecimalField(max_digits=20, decimal_places=2, default=0)
 
     def __unicode__(self):
-        return "Mes:" + str(self.monthly_cut_dates.billing_month)
+        return "Building: " + self.monthly_cut_dates.building.building_name + \
+               " - Mes:" + str(self.monthly_cut_dates.billing_month)
 
     class Meta:
         verbose_name_plural = "Información Historica de Tarifa HM"

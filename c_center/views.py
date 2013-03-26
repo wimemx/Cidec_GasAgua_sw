@@ -2,6 +2,7 @@
 #standard library imports
 import datetime
 from dateutil.relativedelta import relativedelta
+from math import *
 import Image
 import cStringIO
 import os
@@ -7900,6 +7901,22 @@ def billing_analisis_header(request):
                          'company': request.session['company'],
                          'sidebar': request.session['sidebar']}
 
+        building = request.session['main_building']
+        #Se obtiene el tipo de tarifa del edificio
+        tipo_tarifa = building.electric_rate
+
+        if tipo_tarifa.pk == 1:
+            years = [__date.year for __date in HMHistoricData.objects.all().
+                    dates('monthly_cut_dates__billing_month','year')]
+        elif tipo_tarifa.pk == 2:
+            years = [__date.year for __date in DacHistoricData.objects.all().
+                    dates('monthly_cut_dates__billing_month','year')]
+        elif tipo_tarifa.pk == 3:
+            years = [__date.year for __date in T3HistoricData.objects.all().
+                    dates('monthly_cut_dates__billing_month','year')]
+
+        template_vars['years'] = years[::-1]
+
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
             "consumption_centers/graphs/analisis_facturacion.html",
@@ -7921,6 +7938,21 @@ def billing_c_analisis_header(request):
                          'empresa': request.session['main_building'],
                          'company': request.session['company'],
                          'sidebar': request.session['sidebar']}
+
+        building = request.session['main_building']
+        #Se obtiene el tipo de tarifa del edificio
+        tipo_tarifa = building.electric_rate
+
+        if tipo_tarifa.pk == 1:
+            years = [__date.year for __date in HMHistoricData.objects.all().
+            dates('monthly_cut_dates__billing_month','year')]
+        elif tipo_tarifa.pk == 2:
+            years = [__date.year for __date in DacHistoricData.objects.all().
+            dates('monthly_cut_dates__billing_month','year')]
+        elif tipo_tarifa.pk == 3:
+            years = [__date.year for __date in T3HistoricData.objects.all().
+            dates('monthly_cut_dates__billing_month','year')]
+        template_vars['years'] = years[::-1]
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -7984,10 +8016,6 @@ def billing_analisis(request):
         y02_kwh = 0
         y01_money = 0
         y02_money = 0
-        difference_qty = 0
-        difference_money = 0
-        kwh_average = 0
-        money_average = 0
 
         if request.GET:
             report_type = int(request.GET['report_type'])
@@ -8003,7 +8031,12 @@ def billing_analisis(request):
                     year_02 = int(request.GET['year02'])
                     template_vars['year_02'] = year_02
 
+                num_mesesdatos = 0
+                #Se hace un ciclo para recorrer los 12 meses del año
                 for i in range(12):
+                    #Esta bandera sirve para sumar unicamente los meses del año
+                    suma_mes_y02 = False;
+
                     datos_kwh = dict()
                     datos_money = dict()
                     mes = i+1
@@ -8031,6 +8064,9 @@ def billing_analisis(request):
                         #Se va haciendo la suma
                         y01_kwh += year_01_data[0].KWH_total
                         y01_money += year_01_data[0].total
+                        #Se aumenta la cuenta de meses con datos
+                        num_mesesdatos += 1
+                        suma_mes_y02 = True
                     else:
                         datos_kwh['kwh_01'] = 0
                         datos_money['total_01'] = 0
@@ -8055,9 +8091,11 @@ def billing_analisis(request):
                         if year_02_data:
                             datos_kwh['kwh_02'] = year_02_data[0].KWH_total
                             datos_money['total_02'] = year_02_data[0].total
-                            #Se va haciendo la suma
-                            y02_kwh += year_02_data[0].KWH_total
-                            y02_money += year_02_data[0].total
+
+                            #Unicamente si hay match con el mes de año 1, sumo
+                            if suma_mes_y02:
+                                y02_kwh += year_02_data[0].KWH_total
+                                y02_money += year_02_data[0].total
                         else:
                             datos_kwh['kwh_02'] = 0
                             datos_money['total_02'] = 0
@@ -8076,29 +8114,49 @@ def billing_analisis(request):
                         difference_pc_kwh = (float(y01_kwh) * 100.0 / float(
                             y02_kwh)) - 100.0
                     else:
-                        difference_pc_kwh = '-'
+                        difference_pc_kwh = 0
 
                     difference_money = y02_money - y01_money
                     if y02_money:
                         difference_pc_money = (float(y01_money) * 100.0 / float(
                             y02_money)) - 100.0
                     else:
-                        difference_pc_money = '-'
+                        difference_pc_money = 0
 
                     template_vars['compare_years'] = True
                     template_vars['kwh_total_01'] = y01_kwh
                     template_vars['kwh_total_02'] = y02_kwh
-                    template_vars['diff_kwh_pc'] = difference_pc_kwh
-                    template_vars['diff_kwh_qty'] = difference_qty
+
+
+                    if difference_pc_kwh > 0:
+                        template_vars['positive_kwh'] = 1
+                    elif difference_pc_kwh < 0:
+                        template_vars['positive_kwh'] = -1
+                    else:
+                        template_vars['positive_kwh'] = 0
+                    template_vars['diff_kwh_pc'] = fabs(difference_pc_kwh)
+                    template_vars['diff_kwh_qty'] = fabs(difference_qty)
 
                     template_vars['money_total_01'] = y01_money
                     template_vars['money_total_02'] = y02_money
-                    template_vars['diff_money_pc'] = difference_pc_money
-                    template_vars['diff_money_qty'] = difference_money
+
+                    if difference_pc_money > 0:
+                        template_vars['positive_money'] = 1
+                    elif difference_pc_money < 0:
+                        template_vars['positive_money'] = -1
+                    else:
+                        template_vars['positive_money'] = 0
+                    template_vars['diff_money_pc'] = fabs(difference_pc_money)
+                    template_vars['diff_money_qty'] = fabs(difference_money)
 
                 else:
-                    kwh_average = float(y01_kwh)/12.0
-                    money_average = float(y01_money)/12.0
+                    #Se calcula el promedio únicamente con los meses con datos
+                    if num_mesesdatos > 0:
+                        kwh_average = float(y01_kwh)/float(num_mesesdatos)
+                        money_average = float(y01_money)/float(num_mesesdatos)
+                    else:
+                        kwh_average = 0
+                        money_average = 0
 
                     template_vars['compare_years'] = False
                     template_vars['kwh_average'] = kwh_average
@@ -8201,52 +8259,95 @@ def billing_analisis(request):
                     #Si estan los datos, obtiene los porcentajes de diferencia
                     #Porcentaje de Kilowatts hora
                     if template_vars['m02_kwh']:
-                        template_vars['diff_kwh'] = (float(
+                        diff_kwh = (float(
                             template_vars['m01_kwh']) *
                              100.0 / float(template_vars['m02_kwh'])) - 100.0
+                        if diff_kwh > 0:
+                            template_vars['positive_kwh'] = 1
+                        elif diff_kwh < 0:
+                            template_vars['positive_kwh'] = -1
+                        else:
+                            template_vars['positive_kwh'] = 0
+                        template_vars['diff_kwh'] = fabs(diff_kwh)
+
                     else:
-                        template_vars['diff_kwh'] = '-'
+                        template_vars['diff_kwh'] = 0
 
                     #Porcentaje de Dinero
                     if template_vars['m02_money']:
-                        template_vars['diff_money'] = (float(
+                        diff_money = (float(
                             template_vars['m01_money']) *
                             100.0 / float(template_vars['m02_money'])) - 100.0
+                        if diff_money > 0:
+                            template_vars['positive_money'] = 1
+                        elif diff_money < 0:
+                            template_vars['positive_money'] = -1
+                        else:
+                            template_vars['positive_money'] = 0
+                        template_vars['diff_money'] = fabs(diff_money)
                     else:
-                        template_vars['diff_money'] = '-'
+                        template_vars['diff_money'] = 0
 
                     #Porcentaje de Kilowatts
                     if template_vars['m02_kw']:
-                        template_vars['diff_kw'] = (float(
+                        diff_kw = (float(
                             template_vars['m01_kw']) *
                             100.0 / float(template_vars['m02_kw'])) - 100.0
+                        if diff_kw > 0:
+                            template_vars['positive_kw'] = 1
+                        elif diff_kw < 0:
+                            template_vars['positive_kw'] = -1
+                        else:
+                            template_vars['positive_kw'] = 0
+                        template_vars['diff_kw'] = fabs(diff_kw)
                     else:
-                        template_vars['diff_kw'] = '-'
+                        template_vars['diff_kw'] = 0
 
                     #Porcentaje de Tarifa Base
                     if template_vars['m02_t_base']:
-                        template_vars['diff_tbase'] = (float(
+                        diff_base = (float(
                             template_vars['m01_t_base']) *
                             100.0 / float(template_vars['m02_t_base'])) - 100.0
+                        if diff_base > 0:
+                            template_vars['positive_b'] = 1
+                        elif diff_base < 0:
+                            template_vars['positive_b'] = -1
+                        else:
+                            template_vars['positive_b'] = 0
+                        template_vars['diff_tbase'] = fabs(diff_base)
                     else:
-                        template_vars['diff_tbase'] = '-'
+                        template_vars['diff_tbase'] = 0
 
                     #Porcentaje de Tarifa Intermedio
                     if template_vars['m02_t_intermedio']:
-                        template_vars['diff_tint'] = (float(
+                        diff_int = (float(
                             template_vars['m01_t_intermedio']) *
                             100.0 / float(template_vars['m02_t_intermedio'])) \
                                                      - 100.0
+                        if diff_int > 0:
+                            template_vars['positive_i'] = 1
+                        elif diff_int < 0:
+                            template_vars['positive_i'] = -1
+                        else:
+                            template_vars['positive_i'] = 0
+                        template_vars['diff_tint'] = fabs(diff_int)
                     else:
-                        template_vars['diff_tint'] = '-'
+                        template_vars['diff_tint'] = 0
 
                     #Porcentaje de Tarifa Punta
                     if template_vars['m02_t_punta']:
-                        template_vars['diff_tpunta'] = (float(
+                        diff_pt = (float(
                             template_vars['m01_t_punta']) * 100.0 /
                             float(template_vars['m02_t_punta'])) - 100.0
+                        if diff_pt > 0:
+                            template_vars['positive_p'] = 1
+                        elif diff_pt < 0:
+                            template_vars['positive_p'] = -1
+                        else:
+                            template_vars['positive_p'] = 0
+                        template_vars['diff_tpunta'] = fabs(diff_pt)
                     else:
-                        template_vars['diff_tpunta'] = '-'
+                        template_vars['diff_tpunta'] = 0
 
 
                 elif tipo_tarifa.pk == 2:
@@ -8286,19 +8387,35 @@ def billing_analisis(request):
                     #Si estan los datos, obtiene los porcentajes de diferencia
                     #Porcentaje de Kilowatts hora
                     if template_vars['m02_kwh']:
-                        template_vars['diff_kwh'] = (float(
+                        diff_kwh = (float(
                             template_vars['m01_kwh']) * 100.0 /
                             float(template_vars['m02_kwh'])) - 100.0
+                        if diff_kwh > 0:
+                            template_vars['positive_kwh'] = 1
+                        elif diff_kwh < 0:
+                            template_vars['positive_kwh'] = -1
+                        else:
+                            template_vars['positive_kwh'] = 0
+
+                        template_vars['diff_kwh'] = fabs(diff_kwh)
+
                     else:
-                        template_vars['diff_kwh'] = '-'
+                        template_vars['diff_kwh'] = 0
 
                     #Porcentaje de Dinero
                     if template_vars['m02_money']:
-                        template_vars['diff_money'] = (float(
+                        diff_money = (float(
                             template_vars['m01_money']) * 100.0 /
                             float(template_vars['m02_money'])) - 100.0
+                        if diff_money > 0:
+                            template_vars['positive_money'] = 1
+                        elif diff_money < 0:
+                            template_vars['positive_money'] = -1
+                        else:
+                            template_vars['positive_money'] = 0
+                        template_vars['diff_money'] = fabs(diff_money)
                     else:
-                        template_vars['diff_money'] = '-'
+                        template_vars['diff_money'] = 0
 
                     #Porcentaje de Tarifa por Kilowatt Hora
                     if template_vars['m02_t_kwh']:
@@ -8306,7 +8423,7 @@ def billing_analisis(request):
                             template_vars['m01_t_kwh']) * 100.0 /
                             float(template_vars['m02_t_kwh'])) - 100.0
                     else:
-                        template_vars['diff_t_kwh'] = '-'
+                        template_vars['diff_t_kwh'] = 0
 
                     #Porcentaje de Tarifa Mensual
                     if template_vars['m02_t_month']:
@@ -8314,7 +8431,7 @@ def billing_analisis(request):
                             template_vars['m01_t_month']) * 100.0 /
                             float(template_vars['m02_t_month'])) - 100.0
                     else:
-                        template_vars['diff_t_month'] = '-'
+                        template_vars['diff_t_month'] = 0
 
 
                 elif tipo_tarifa.pk == 3:
@@ -8357,27 +8474,51 @@ def billing_analisis(request):
                     #Si estan los datos, obtiene los porcentajes de diferencia
                     #Porcentaje de Kilowatts hora
                     if template_vars['m02_kwh']:
-                        template_vars['diff_kwh'] = (float(
+                        diff_kwh = (float(
                             template_vars['m01_kwh']) * 100.0 / float(
                             template_vars['m02_kwh'])) - 100.0
+
+                        if diff_kwh > 0:
+                            template_vars['positive_kwh'] = 1
+                        elif diff_kwh < 0:
+                            template_vars['positive_kwh'] = -1
+                        else:
+                            template_vars['positive_kwh'] = 0
+
+                        template_vars['diff_kwh'] = fabs(diff_kwh)
+
                     else:
-                        template_vars['diff_kwh'] = '-'
+                        template_vars['diff_kwh'] = 0
 
                     #Porcentaje de Dinero
                     if template_vars['m02_money']:
-                        template_vars['diff_money'] = (float(
+                        diff_money = (float(
                             template_vars['m01_money']) * 100.0 / float(
                             template_vars['m02_money'])) - 100.0
+                        if diff_money > 0:
+                            template_vars['positive_money'] = 1
+                        elif diff_money < 0:
+                            template_vars['positive_money'] = -1
+                        else:
+                            template_vars['positive_money'] = 0
+                        template_vars['diff_money'] = fabs(diff_money)
                     else:
-                        template_vars['diff_money'] = '-'
+                        template_vars['diff_money'] = 0
 
                     #Porcentaje de Kilowatts
                     if template_vars['m02_kw']:
-                        template_vars['diff_kw'] = (float(
+                        diff_kw = (float(
                             template_vars['m01_kw']) * 100.0 / float(
                             template_vars['m02_kw'])) - 100.0
+                        if diff_kw > 0:
+                            template_vars['positive_kw'] = 1
+                        elif diff_kw < 0:
+                            template_vars['positive_kw'] = -1
+                        else:
+                            template_vars['positive_kw'] = 0
+                        template_vars['diff_kw'] = fabs(diff_kw)
                     else:
-                        template_vars['diff_kw'] = '-'
+                        template_vars['diff_kw'] = 0
 
                     #Porcentaje de Tarifa por Kilowatt Hora
                     if template_vars['m02_t_kwh']:
@@ -8385,7 +8526,7 @@ def billing_analisis(request):
                             template_vars['m01_t_kwh']) * 100.0 / float(
                             template_vars['m02_t_kwh'])) - 100.0
                     else:
-                        template_vars['diff_t_kwh'] = '-'
+                        template_vars['diff_t_kwh'] = 0
 
                     #Porcentaje de Tarifa por Kilowatt
                     if template_vars['m02_t_kw']:
@@ -8393,7 +8534,7 @@ def billing_analisis(request):
                             template_vars['m01_t_kw']) * 100.0 / float(
                             template_vars['m02_t_kw'])) - 100.0
                     else:
-                        template_vars['diff_t_kw'] = '-'
+                        template_vars['diff_t_kw'] = 0
 
             template_vars_template = RequestContext(request, template_vars)
             return render_to_response(
@@ -8439,6 +8580,12 @@ def billing_cost_analisis(request):
         graph_kwh_arr = []
         graph_kw_arr = []
 
+        #Dac - Region Baja California y BCS, tienen tarifas para Verano e Inv.
+        graph_p01_kwh_arr = []
+        graph_p02_kwh_arr = []
+        periodo_1_dac = ''
+        periodo_2_dac = ''
+
         if request.GET:
             year_01 = int(request.GET['year01'])
             template_vars['year_01'] = year_01
@@ -8448,11 +8595,12 @@ def billing_cost_analisis(request):
                 year_02 = int(request.GET['year02'])
                 template_vars['year_02'] = year_02
 
-            for i in range(12):
-                mes = i+1
-                if tipo_tarifa.pk == 1:
+            if tipo_tarifa.pk == 1:
 
-                    template_vars['tarifa'] = 1
+                template_vars['tarifa'] = 1
+
+                for i in range(12):
+                    mes = i+1
 
                     datos_kdf = dict()
                     datos_kwhp = dict()
@@ -8500,56 +8648,113 @@ def billing_cost_analisis(request):
                     graph_kwhi_arr.append(datos_kwhi)
                     graph_kwhb_arr.append(datos_kwhb)
 
-                elif tipo_tarifa.pk == 2:
+            elif tipo_tarifa.pk == 2:
 
-                    template_vars['tarifa'] = 2
+                template_vars['tarifa'] = 2
+                template_vars['dac_region1_2'] = False
+                if building.region_id == 1 or building.region_id == 2:
+                    template_vars['dac_region1_2'] = True
+
+
+                for i in range(12):
+                    mes = i+1
 
                     datos_monthrate = dict()
                     datos_kwh = dict()
+                    datos_p01_kwh = dict()
+                    datos_p02_kwh = dict()
 
                     #Si la region es Baja California o Baja California Sur
                     #Se obtienen los datos para Verano e Invierno
-                    if building.region == 1 or building.region == 2:
-                        pass
+                    if template_vars['dac_region1_2']:
+                        year_01_data = DACElectricRateDetail.objects.filter(
+                            region = building.region,
+                            date_init__month = mes, date_init__year = year_01
+                        ).order_by('date_interval')
+
+                        datos_monthrate['mes'] = getMonthName(i+1)
+                        datos_p01_kwh['mes'] = getMonthName(i+1)
+                        datos_p02_kwh['mes'] = getMonthName(i+1)
+
+                        if year_01_data:
+
+                            datos_monthrate['m_rate_01'] = year_01_data[0].month_rate
+                            datos_p01_kwh['kwh_01'] = year_01_data[0].kwh_rate
+                            datos_p02_kwh['kwh_01'] = year_01_data[1].kwh_rate
+
+                            if periodo_1_dac == '':
+                                periodo_1_dac = year_01_data[0].date_interval.interval_identifier
+
+                            if periodo_2_dac == '':
+                                periodo_2_dac = year_01_data[1].date_interval.interval_identifier
+
+                        else:
+                            datos_monthrate['m_rate_01'] = 0
+                            datos_p01_kwh['kwh_01'] = 0
+                            datos_p02_kwh['kwh_01'] = 0
+
                     else:
                         year_01_data = DACElectricRateDetail.objects.filter(
                             region = building.region,
                             date_init__month = mes, date_init__year = year_01
-                        )
+                        ).order_by('date_interval')
 
-                    datos_monthrate['mes'] = getMonthName(i+1)
-                    datos_kwh['mes'] = getMonthName(i+1)
+                        datos_monthrate['mes'] = getMonthName(i+1)
+                        datos_kwh['mes'] = getMonthName(i+1)
 
-                    if year_01_data:
-                        datos_monthrate['m_rate_01'] = year_01_data[0].month_rate
-                        datos_kwh['kwh_01'] = year_01_data[0].kwh_rate
-                    else:
-                        datos_monthrate['m_rate_01'] = 0
-                        datos_kwh['kwh_01'] = 0
+                        if year_01_data:
+                            datos_monthrate['m_rate_01'] = year_01_data[0].month_rate
+                            datos_kwh['kwh_01'] = year_01_data[0].kwh_rate
+                        else:
+                            datos_monthrate['m_rate_01'] = 0
+                            datos_kwh['kwh_01'] = 0
 
 
                     if compare_years_flag:
-                        if building.region == 1 or building.region == 2:
-                            pass
+                        if building.region_id == 1 or building.region_id == 2:
+                            year_02_data = DACElectricRateDetail.objects.filter(
+                                region = building.region,
+                                date_init__month = mes, date_init__year = year_02
+                            ).order_by('date_interval')
+
+                            print "y2", year_02_data
+
+                            if year_02_data:
+                                datos_monthrate['m_rate_02'] = year_02_data[0].month_rate
+                                datos_p01_kwh['kwh_02'] = year_02_data[0].kwh_rate
+                                datos_p02_kwh['kwh_02'] = year_02_data[1].kwh_rate
+
+                            else:
+                                datos_monthrate['m_rate_02'] = 0
+                                datos_p01_kwh['kwh_02'] = 0
+                                datos_p02_kwh['kwh_02'] = 0
+
                         else:
                             year_02_data = DACElectricRateDetail.objects.filter(
                                 region = building.region,
                                 date_init__month = mes, date_init__year = year_02
                             )
 
-                        if year_02_data:
-                            datos_monthrate['m_rate_02'] = year_02_data[0].month_rate
-                            datos_kwh['kwh_02'] = year_02_data[0].kwh_rate
-                        else:
-                            datos_monthrate['m_rate_02'] = 0
-                            datos_kwh['kwh_02'] = 0
+                            if year_02_data:
+                                datos_monthrate['m_rate_02'] = year_02_data[0].month_rate
+                                datos_kwh['kwh_02'] = year_02_data[0].kwh_rate
+                            else:
+                                datos_monthrate['m_rate_02'] = 0
+                                datos_kwh['kwh_02'] = 0
 
                     graph_m_rate_arr.append(datos_monthrate)
-                    graph_kwh_arr.append(datos_kwh)
+                    if template_vars['dac_region1_2']:
+                        graph_p01_kwh_arr.append(datos_p01_kwh)
+                        graph_p02_kwh_arr.append(datos_p02_kwh)
+                    else:
+                        graph_kwh_arr.append(datos_kwh)
 
-                elif tipo_tarifa.pk == 3:
+            elif tipo_tarifa.pk == 3:
 
-                    template_vars['tarifa'] = 3
+                template_vars['tarifa'] = 3
+
+                for i in range(12):
+                    mes = i+1
 
                     datos_kw = dict()
                     datos_kwh = dict()
@@ -8591,6 +8796,11 @@ def billing_cost_analisis(request):
             elif tipo_tarifa.pk == 2:
                 template_vars['mrate_data'] = graph_m_rate_arr
                 template_vars['kwh_data'] = graph_kwh_arr
+                template_vars['p1_kwh'] = graph_p01_kwh_arr
+                template_vars['p2_kwh'] = graph_p02_kwh_arr
+                template_vars['periodo_1'] = periodo_1_dac
+                template_vars['periodo_2'] = periodo_2_dac
+
             elif tipo_tarifa.pk == 3:
                 template_vars['kw_data'] = graph_kw_arr
                 template_vars['kwh_data'] = graph_kwh_arr

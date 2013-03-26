@@ -18,20 +18,29 @@
 
             var etiqueta_periodo = '';
             var url = '/reportes/analisis_costo_fac_frame/?';
+            var b_continue = true
 
-            url += 'year01='+$("#a_year_01").val();
-            etiqueta_periodo = $("#a_year_01").val();
-            if($("#compare_year").is(':checked')){
-                url += '&year02='+$("#a_year_02").val();
-                etiqueta_periodo += ' vs '+ $("#a_year_02").val();
+            var y01 = $("#a_year_01").val();
+            var y02 = $("#a_year_02").val();
+
+            if(y01 == null){
+                b_continue = false;
+            }else{
+                url += 'year01='+y01;
+                etiqueta_periodo = y01;
+                if($("#compare_year").is(':checked')){
+                    url += '&year02='+y02;
+                    etiqueta_periodo += ' vs '+ y02;
+                }
             }
 
-            //Cambia el texto del select
-            $('#widgetField span').get(0).innerHTML = etiqueta_periodo;
+            if(b_continue){
+                //Cambia el texto del select
+                $('#widgetField span').get(0).innerHTML = etiqueta_periodo;
 
-            $('#analisis_container').addClass('iframe_spinner');
-            makeIframe(url);
-
+                $('#analisis_container').addClass('iframe_spinner');
+                makeIframe(url);
+            }
         }
 
         function refresh_iframe_height(){
@@ -128,9 +137,11 @@
                         </div>
                         <div class="selects_container selects_long">
                             <select name="a_year_01" id="a_year_01">
-                                <option value="2013" selected="selected">2013</option>
-                                <option value="2012">2012</option>
-                                <option value="2011">2011</option>
+                                {% if years %}
+                                    {% for year in years %}
+                                        <option value="{{ year }}">{{ year }}</option>
+                                    {% endfor %}
+                                {% endif %}
                             </select>
                         </div>
                         <div>
@@ -138,9 +149,11 @@
                         </div>
                         <div class="selects_container selects_long">
                             <select name="a_year_02" id="a_year_02" disabled="true">
-                                <option value="2013">2013</option>
-                                <option value="2012" selected="selected">2012</option>
-                                <option value="2011">2011</option>
+                                {% if years %}
+                                    {% for year in years %}
+                                        <option value="{{ year }}">{{ year }}</option>
+                                    {% endfor %}
+                                {% endif %}
                             </select>
                         </div>
                     </div>
