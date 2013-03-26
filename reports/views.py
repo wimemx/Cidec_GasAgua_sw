@@ -4,6 +4,7 @@
 import datetime
 import logging
 import time
+import sys
 
 # Django imports
 import django.http
@@ -29,6 +30,29 @@ logger = logging.getLogger("reports")
 #
 ################################################################################
 
+def get_column_strings_electrical_parameter(
+        request_data_list_normalized,
+):
+    """
+        Description:
+
+
+        Arguments:
+
+
+        Return:
+
+    """
+
+    column_strings_list = []
+    for _, _, _, electrical_parameter_name\
+        in request_data_list_normalized:
+
+        column_strings_list.append(electrical_parameter_name)
+
+    return column_strings_list
+
+
 def get_data_clusters_json(
         data_clusters_list_normalized
 ):
@@ -52,8 +76,6 @@ def get_data_clusters_json(
         return None
 
     data_clusters_json = []
-    minimum = 10000000
-    maximum = -1000000
     for instant_index in range(0, data_cluster_instants_number):
         instant_json = []
         for data_cluster_index in range(0, data_clusters_length):
@@ -63,16 +85,11 @@ def get_data_clusters_json(
             data_cluster_dictionary_copy = data_cluster_dictionary.copy()
             float_data_value = float(data_cluster_dictionary['value'])
             data_cluster_dictionary_copy['value'] = float_data_value
-            if float_data_value < minimum:
-                minimum = float_data_value
-            if float_data_value > maximum:
-                maximum = float_data_value
-
             instant_json.append(data_cluster_dictionary_copy)
 
         data_clusters_json.append(instant_json)
 
-    return data_clusters_json, minimum, maximum
+    return data_clusters_json
 
 
 def get_data_clusters_list(
@@ -216,6 +233,30 @@ def get_instant_delta_from_timedelta(
             return max_closest_instant_delta
 
         return min_closest_instant_delta
+
+
+def get_limits(
+        data_clusters_list_normalized
+):
+    """
+        Description:
+
+
+        Arguments:
+            data_clusters_list_normalized -
+
+        Return:
+
+    """
+    maximum = sys.float_info.min
+    minimum = sys.float_info.max
+    for data_cluster in data_clusters_list_normalized:
+        for data_dictionary in data_cluster:
+            data_dictionary_value = float(data_dictionary['value'])
+            maximum = max(data_dictionary_value, maximum)
+            minimum = min(data_dictionary_value, minimum)
+
+    return maximum, minimum
 
 
 def get_request_data_list_normalized(
@@ -691,6 +732,14 @@ def render_instant_measurements(
         get_request_data_list_normalized(request_data_list)
 
     #
+    # Build the columns list.
+    #
+    column_strings =\
+        get_column_strings_electrical_parameter(request_data_list_normalized)
+
+    template_variables['columns'] = column_strings
+
+    #
     # Build and normalize the data clusters list.
     #
     data_clusters_list = get_data_clusters_list(request_data_list_normalized)
@@ -699,8 +748,10 @@ def render_instant_measurements(
     #
     # Create the json using the data clusters list normalized
     #
-    data_clusters_json, minimum, maximum = \
-        get_data_clusters_json(data_clusters_list)
+    data_clusters_json = get_data_clusters_json(data_clusters_list)
+
+    maximum, minimum = get_limits(data_clusters_list)
+
     if data_clusters_json is None:
         raise django.http.Http404
 

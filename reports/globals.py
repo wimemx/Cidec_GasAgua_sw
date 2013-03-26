@@ -25,3 +25,12 @@ class SystemError:
         "GET_TIMEDELTA_FROM_NORMALIZED_REQUEST_DATA_LIST_ERROR"
 
     RENDER_INSTANT_MEASUREMENTS_ERROR = "RENDER_INSTANT_MEASUREMENTS_ERROR"
+
+
+class Word:
+
+    CONSUMER_UNIT = u"Unidad de Consumo"
+    DATETIME_FROM = u"Desde"
+    DATETIME_TO = u"Hasta"
+    ELECTRICAL_PARAMETER = u"Parámetro Eléctrico"
+

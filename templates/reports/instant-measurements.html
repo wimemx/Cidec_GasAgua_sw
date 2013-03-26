@@ -74,11 +74,11 @@
                 var data = new google.visualization.DataTable();
                 //var columns_display = new Array();
                 //var default_colors = new Array();
-
-                    data.addColumn({type:'datetime', role:'domain'}, "From To");
-                    data.addColumn('number', "Value");
+                {% for column in columns %}
+                    data.addColumn({type:'datetime', role:'domain'});
+                    data.addColumn('number', "{{ column }}");
                     data.addColumn({type:'boolean', role:'certainty'});
-
+                {% endfor %}
                 var True = true;
                 var False = false;
                 var rows_data = {% autoescape off %}{{ rows }}{% endautoescape %};
@@ -110,7 +110,20 @@
                 dashboard.bind(control, chart);
                 dashboard.draw(view);
 
-
+                $(".column-checkbox").click(function(){
+                    var columns_set_array = new Array();
+                    var checkboxes = document.forms['column-controls']['column-control'];
+                    for (var index = 0; index < checkboxes.length; index++) {
+                        if(checkboxes[index].checked){
+                            columns_set_array.push((index * 3) + 0);
+                            columns_set_array.push((index * 3) + 1);
+                            columns_set_array.push((index * 3) + 2);
+                        }
+                    }
+                    view.setColumns(columns_set_array);
+                    dashboard.bind(control, chart);
+                    dashboard.draw(view);
+                });
 
 
                 var $upper = $('#upper_limit');
@@ -219,6 +232,12 @@
                         $(this).addClass("active");
                     });
                 });
+
+                var checkboxes = document.forms['column-controls']['column-control'];
+                for (var index = 0; index < checkboxes.length; index++) {
+                    checkboxes[index].checked = true;
+                }
+
             });
         </script>
     </head>
@@ -230,12 +249,13 @@
             <li id="week" {% if granularity == "week" %} class="active" {% endif %}>1 Sem</li>
         </ul>
 
-        <div id="show-controls">
-            <ul>
+        <div>
+            <form id="column-controls">
                 {% for column in columns %}
-                    <li id="column{{ forloop.counter0 }}" class="chart-column chart-column-active" >{{ column.consumer_unit_string }} ({{ column.parameter }})</li>
+                    <input type="checkbox" class="column-checkbox" name="column-control" value="{{ column }}" />
+                    <label>{{ column }}</label>
                 {% endfor %}
-            </ul>
+            </form>
         </div>
 
         <!-- dashboard start -->
