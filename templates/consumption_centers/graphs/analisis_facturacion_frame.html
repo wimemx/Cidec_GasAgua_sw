@@ -37,7 +37,7 @@
                 new google.visualization.ColumnChart(document.getElementById('kwh_graph')).
                         draw(data,
                         {
-                            width:900, height:400, vAxis: {title: "Facturación CFE($)"}, colors:['#5093c7','#f78a3d'],legend:'none'
+                            width:900, height:400, vAxis: {title: "Facturación CFE($)", 'viewWindow': {'min': 0}}, colors:['#5093c7','#f78a3d'],legend:'none'
 
                         }
                 );
@@ -64,7 +64,7 @@
                 new google.visualization.ColumnChart(document.getElementById('money_graph')).
                         draw(data2,
                         {
-                            width:900, height:400, vAxis: {title: "Energía (KWh)"}, colors:['#5093c7','#f78a3d'], legend:'none'
+                            width:900, height:400, vAxis: {title: "Energía (KWh)", 'viewWindow': {'min': 0}}, colors:['#5093c7','#f78a3d'], legend:'none'
 
                         }
                 );
@@ -81,7 +81,7 @@
                 new google.visualization.ColumnChart(document.getElementById('m_kwh_graph')).
                         draw(data,
                         {
-                            width:370, height:400, vAxis: {title: "Consumo (kWh)"}, colors:['#5093c7'], legend:'none'
+                            width:370, height:400, vAxis: {title: "Consumo (kWh)", 'viewWindow': {'min': 0}}, colors:['#5093c7'], legend:'none'
 
                         }
                 );
@@ -98,7 +98,7 @@
                 new google.visualization.ColumnChart(document.getElementById('m_money_graph')).
                         draw(data2,
                         {
-                            width:370, height:400, vAxis: {title: "Facturación CFE ($)"}, colors:['#5093c7'],legend:'none'
+                            width:370, height:400, vAxis: {title: "Facturación CFE ($)", 'viewWindow': {'min': 0}}, colors:['#5093c7'],legend:'none'
 
                         }
                 );
@@ -116,7 +116,7 @@
                     new google.visualization.ColumnChart(document.getElementById('m_kw_graph')).
                             draw(data3,
                             {
-                                width:370, height:400, vAxis: {title: "Demanda"}, colors:['#5093c7'],legend:'none'
+                                width:370, height:400, vAxis: {title: "Demanda", 'viewWindow': {'min': 0}}, colors:['#5093c7'],legend:'none'
 
                             }
                     );
@@ -161,6 +161,9 @@
 
 
 <div class="iframe_container">
+    <div id="reporte_title">
+        <h1>Reporte de Análisis de Facturación</h1>
+    </div>
 
     {% if tipo_reporte == 1 %}
         <div class="graph_title">
@@ -184,10 +187,27 @@
                                 Variación
                             </div>
                             <div class="info_compare">
-                                {{ diff_kwh_pc|floatformat:2 }}%
+                                {% if positive_kwh == -1 %}
+                                    <img src="/static/css/images/imgs_icns/ba_up_arrow.png"/>
+                                    <span class="positive">{{ diff_kwh_pc|floatformat:2 }} %</span>
+                                {% elif positive_kwh == 1 %}
+                                    <img src="/static/css/images/imgs_icns/ba_down_arrow.png"/>
+                                    <span class="negative">{{ diff_kwh_pc|floatformat:2 }} %</span>
+                                {% else %}
+                                    <span class="negative">{{ diff_kwh_pc|floatformat:2 }} %</span>
+                                {% endif %}
+
                             </div>
                             <div class="info_compare">
-                                {{ diff_kwh_qty }} kHw
+                                {% if positive_kwh == -1  %}
+                                    <img src="/static/css/images/imgs_icns/ba_up_arrow.png"/>
+                                    <span class="positive">{{ diff_kwh_qty }} kHw</span>
+                                {% elif  positive_kwh == 1 %}
+                                    <img src="/static/css/images/imgs_icns/ba_down_arrow.png"/>
+                                    <span class="negative">{{ diff_kwh_qty }} kHw</span>
+                                {% else %}
+                                    <span class="negative">{{ diff_kwh_qty }} kHw</span>
+                                {% endif %}
                             </div>
                             <div class="label_data">
                                 {{ year_01 }}: {{ kwh_total_01 }} kWh
@@ -235,10 +255,28 @@
                                 Variación
                             </div>
                             <div class="info_compare">
-                            {{ diff_money_pc|floatformat:2 }}%
+                                {% if positive_money == -1  %}
+                                    <img src="/static/css/images/imgs_icns/ba_up_arrow.png"/>
+                                    <span class="positive">{{ diff_money_pc|floatformat:2 }}%</span>
+                                {% elif positive_money == 1 %}
+                                    <img src="/static/css/images/imgs_icns/ba_down_arrow.png"/>
+                                    <span class="negative">{{ diff_money_pc|floatformat:2 }}%</span>
+                                {% else %}
+                                    <span class="negative">{{ diff_money_pc|floatformat:2 }}%</span>
+                                {% endif %}
+
                             </div>
                             <div class="info_compare">
-                            $ {{ diff_money_qty|floatformat:2 }}
+                                {% if positive_money == -1 %}
+                                    <img src="/static/css/images/imgs_icns/ba_up_arrow.png"/>
+                                    <span class="positive">${{ diff_money_qty|floatformat:2 }}</span>
+                                {% elif positive_money == 1 %}
+                                    <img src="/static/css/images/imgs_icns/ba_down_arrow.png"/>
+                                    <span class="negative">${{ diff_money_qty|floatformat:2 }}</span>
+                                {% else %}
+                                    <span class="negative">${{ diff_money_qty|floatformat:2 }}</span>
+                                {% endif %}
+
                             </div>
                             <div class="label_data">
                                 {{ year_01 }}: ${{ money_total_01|floatformat:2 }}
@@ -280,7 +318,17 @@
                         Consumo en kWh
                     </div>
                     <div class="label_data_graph">
-                        {{ diff_kwh|floatformat:2}} %
+
+                        {% if positive_kwh == -1 %}
+                            <img src="/static/css/images/imgs_icns/ba_up_arrow.png"/>
+                            <span class="positive">{{ diff_kwh|floatformat:2}} %</span>
+                        {% elif positive_kwh == 1 %}
+                            <img src="/static/css/images/imgs_icns/ba_down_arrow.png"/>
+                            <span class="negative">{{ diff_kwh|floatformat:2}} %</span>
+                        {% else %}
+                            <span class="negative">{{ diff_kwh|floatformat:2}} %</span>
+                        {% endif %}
+
                     </div>
                     <div class="label_data">
                         {{ mes_01 }}: {{ m01_kwh }} kWh
@@ -305,7 +353,17 @@
                         Facturación CFE
                     </div>
                     <div class="label_data_graph">
-                        {{ diff_money|floatformat:2 }} %
+
+                        {% if positive_money == -1  %}
+                            <img src="/static/css/images/imgs_icns/ba_up_arrow.png"/>
+                            <span class="positive">{{ diff_money|floatformat:2 }} %</span>
+                        {% elif positive_money == 1 %}
+                            <img src="/static/css/images/imgs_icns/ba_down_arrow.png"/>
+                            <span class="negative">{{ diff_money|floatformat:2 }} %</span>
+                        {% else %}
+                            <span class="negative">{{ diff_money|floatformat:2 }} %</span>
+                        {% endif %}
+
                     </div>
                     <div class="label_data">
                         {{ mes_01 }}: ${{ m01_money|floatformat:2 }}
@@ -333,7 +391,15 @@
                             Demanda (kW)
                         </div>
                         <div class="label_data_graph">
-                            {{ diff_kw|floatformat:2 }} %
+                            {% if positive_kw == -1  %}
+                                <img src="/static/css/images/imgs_icns/ba_up_arrow.png"/>
+                                <span class="positive">{{ diff_kw|floatformat:2 }} %</span>
+                            {% elif positive_kw == 1 %}
+                                <img src="/static/css/images/imgs_icns/ba_down_arrow.png"/>
+                                <span class="negative">{{ diff_kw|floatformat:2 }} %</span>
+                            {% else %}
+                                <span class="negative">{{ diff_kw|floatformat:2 }} %</span>
+                            {% endif %}
                         </div>
                         <div class="label_data">
                             {{ mes_01 }}: {{ m01_kw }} kW
@@ -356,7 +422,16 @@
                 <div id="periodo_container">
                     <div class="periodo_info">
                         <div class="label_data">
-                        <span class="periodo_label">Base:</span> <span class="periodo_porcentajes">{{ diff_tbase|floatformat:2 }}%</span>
+                        <span class="periodo_label">Base:</span>
+                        {% if positive_b == -1  %}
+                            <img src="/static/css/images/imgs_icns/ba_up_arrow_small.png"/>
+                            <span class="periodo_porcentajes positive">{{ diff_tbase|floatformat:2 }}%</span>
+                        {% elif positive_b == 1 %}
+                            <img src="/static/css/images/imgs_icns/ba_down_arrow_small.png"/>
+                            <span class="periodo_porcentajes negative">{{ diff_tbase|floatformat:2 }}%</span>
+                        {% else %}
+                            <span class="periodo_porcentajes negative">{{ diff_tbase|floatformat:2 }}%</span>
+                        {% endif %}
                         </div>
                         <div class="label_data">
                         {{ mes_01 }}: ${{ m01_t_base|floatformat:4 }}
@@ -367,7 +442,17 @@
                     </div>
                     <div class="periodo_info">
                         <div class="label_data">
-                        <span class="periodo_label">Intermedio:</span> <span class="periodo_porcentajes">{{ diff_tint|floatformat:2 }}%</span>
+                        <span class="periodo_label">Intermedio:</span>
+                        {% if positive_i == -1  %}
+                            <img src="/static/css/images/imgs_icns/ba_up_arrow_small.png"/>
+                            <span class="periodo_porcentajes positive">{{ diff_tint|floatformat:2 }}%</span>
+                        {% elif positive_i == 1 %}
+                            <img src="/static/css/images/imgs_icns/ba_down_arrow_small.png"/>
+                            <span class="periodo_porcentajes negative">{{ diff_tint|floatformat:2 }}%</span>
+                        {% else %}
+                            <span class="periodo_porcentajes negative">{{ diff_tint|floatformat:2 }}%</span>
+                        {% endif %}
+
                         </div>
                         <div class="label_data">
                         {{ mes_01 }}: ${{ m01_t_intermedio|floatformat:4 }}
@@ -378,7 +463,16 @@
                     </div>
                     <div class="periodo_info">
                         <div class="label_data">
-                        <span class="periodo_label">Punta:</span> <span class="periodo_porcentajes">{{ diff_tpunta|floatformat:2 }}%</span>
+                        <span class="periodo_label">Punta:</span>
+                        {% if positive_p == -1  %}
+                            <img src="/static/css/images/imgs_icns/ba_up_arrow_small.png"/>
+                            <span class="periodo_porcentajes positive">{{ diff_tpunta|floatformat:2 }}%</span>
+                        {% elif positive_p == 1 %}
+                            <img src="/static/css/images/imgs_icns/ba_down_arrow_small.png"/>
+                            <span class="periodo_porcentajes negative">{{ diff_tpunta|floatformat:2 }}%</span>
+                        {% else %}
+                            <span class="periodo_porcentajes negative">{{ diff_tpunta|floatformat:2 }}%</span>
+                        {% endif %}
                         </div>
                         <div class="label_data">
                         {{ mes_01 }}: ${{ m01_t_punta|floatformat:4 }}

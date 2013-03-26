@@ -38,7 +38,7 @@
                 new google.visualization.ColumnChart(document.getElementById('kw_graph')).
                         draw(data,
                         {
-                            width:550, height:380, vAxis: {title: "Tarifa Demanda (kW)"}, colors:['#5093c7','#f78a3d'],legend:'none'
+                            width:550, height:380, vAxis: {title: "Tarifa Demanda (kW)", 'viewWindow': {'min': 0}}, colors:['#5093c7','#f78a3d'],legend:'none'
                         }
                 );
 
@@ -64,7 +64,7 @@
                 new google.visualization.ColumnChart(document.getElementById('kwhb_graph')).
                         draw(data2,
                         {
-                            width:550, height:380, vAxis: {title: "Tarifa Horario Base (kWh)"}, colors:['#5093c7','#f78a3d'], legend:'none'
+                            width:550, height:380, vAxis: {title: "Tarifa Horario Base (kWh)", 'viewWindow': {'min': 0}}, colors:['#5093c7','#f78a3d'], legend:'none'
                         }
                 );
 
@@ -90,7 +90,7 @@
                 new google.visualization.ColumnChart(document.getElementById('kwhi_graph')).
                         draw(data3,
                         {
-                            width:550, height:380, vAxis: {title: "Tarifa Horario Intermedio (kWh)"}, colors:['#5093c7','#f78a3d'], legend:'none'
+                            width:550, height:380, vAxis: {title: "Tarifa Horario Intermedio (kWh)", 'viewWindow': {'min': 0}}, colors:['#5093c7','#f78a3d'], legend:'none'
                         }
                 );
 
@@ -116,7 +116,7 @@
                 new google.visualization.ColumnChart(document.getElementById('kwhp_graph')).
                         draw(data4,
                         {
-                            width:550, height:380, vAxis: {title: "Tarifa Horario Punta (kWh)"}, colors:['#5093c7','#f78a3d'], legend:'none'
+                            width:550, height:380, vAxis: {title: "Tarifa Horario Punta (kWh)", 'viewWindow': {'min': 0}}, colors:['#5093c7','#f78a3d'], legend:'none'
                         }
                 );
 
@@ -145,54 +145,114 @@
                 new google.visualization.ColumnChart(document.getElementById('dac_mrate_graph')).
                         draw(data4,
                         {
-                            width:550, height:380, vAxis: {title: "Tarifa Mensual"}, colors:['#5093c7','#f78a3d'],legend:'none'
+                            width:550, height:380, vAxis: {title: "Tarifa Mensual", 'viewWindow': {'min': 0}}, colors:['#5093c7','#f78a3d'],legend:'none'
                         }
                 );
 
-                // Create and populate the data table.
-                var data5 = google.visualization.arrayToDataTable([
-                    {% if not compare_years %}
-                        {% if kwh_data %}
-                            ['Mes', 'Tarifa Mensual'],
-                            {% for kwh_d in kwh_data %}
-                                ['{{ kwh_d.mes }}',{{ kwh_d.kwh_01 }}],
-                            {% endfor %}
+                {% if dac_region1_2 %}
+
+                    // Create and populate the data table.
+                    var data5 = google.visualization.arrayToDataTable([
+                        {% if not compare_years %}
+                            {% if p1_kwh %}
+                                ['Mes', 'kWh'],
+                                {% for pk1_d in p1_kwh %}
+                                    ['{{ pk1_d.mes }}',{{ pk1_d.kwh_01 }}],
+                                {% endfor %}
+                            {% endif %}
+                        {% else %}
+                            {% if p1_kwh %}
+                                ['Mes', 'kWh {{ year_01 }}', 'kWh {{ year_02 }}'],
+                                {% for pk1_d in p1_kwh %}
+                                    ['{{ pk1_d.mes }}',{{ pk1_d.kwh_01 }},{{ pk1_d.kwh_02 }}],
+                                {% endfor %}
+                            {% endif %}
                         {% endif %}
-                    {% else %}
-                        {% if kwh_data %}
-                            ['Mes', 'kWh {{ year_01 }}', 'kWh {{ year_02 }}'],
-                            {% for kwh_d in kwh_data %}
-                                ['{{ kwh_d.mes }}',{{ kwh_d.kwh_01 }},{{ kwh_d.kwh_02 }}],
-                            {% endfor %}
+                    ]);
+
+                    // Create and draw the visualization.
+                    new google.visualization.ColumnChart(document.getElementById('dac_p1kwh_graph')).
+                            draw(data5,
+                            {
+                                width:550, height:380, vAxis: {title: "Energía (KWh)", 'viewWindow': {'min': 0}}, colors:['#5093c7','#f78a3d'],legend:'none'
+                            }
+                    );
+
+
+                    // Create and populate the data table.
+                    var data6 = google.visualization.arrayToDataTable([
+                        {% if not compare_years %}
+                            {% if p2_kwh %}
+                                ['Mes', 'Tarifa Mensual'],
+                                {% for pk2_d in p2_kwh %}
+                                    ['{{ pk2_d.mes }}',{{ pk2_d.kwh_01 }}],
+                                {% endfor %}
+                            {% endif %}
+                        {% else %}
+                            {% if p2_kwh %}
+                                ['Mes', 'kWh {{ year_01 }}', 'kWh {{ year_02 }}'],
+                                {% for pk2_d in p2_kwh %}
+                                    ['{{ pk2_d.mes }}',{{ pk2_d.kwh_01 }},{{ pk2_d.kwh_02 }}],
+                                {% endfor %}
+                            {% endif %}
                         {% endif %}
-                    {% endif %}
-                ]);
+                    ]);
 
-                // Create and draw the visualization.
-                new google.visualization.ColumnChart(document.getElementById('dac_kwh_graph')).
-                        draw(data5,
-                        {
-                            width:550, height:380, vAxis: {title: "Tarifa Mensual"}, colors:['#5093c7','#f78a3d'],legend:'none'
-                        }
-                );
+                    // Create and draw the visualization.
+                    new google.visualization.ColumnChart(document.getElementById('dac_p2kwh_graph')).
+                            draw(data6,
+                            {
+                                width:550, height:380, vAxis: {title: "Energía (KWh)", 'viewWindow': {'min': 0}}, colors:['#5093c7','#f78a3d'],legend:'none'
+                            }
+                    );
 
 
+                {% else %}
+
+                    // Create and populate the data table.
+                    var data7 = google.visualization.arrayToDataTable([
+                        {% if not compare_years %}
+                            {% if kwh_data %}
+                                ['Mes', 'Tarifa Mensual'],
+                                {% for kwh_d in kwh_data %}
+                                    ['{{ kwh_d.mes }}',{{ kwh_d.kwh_01 }}],
+                                {% endfor %}
+                            {% endif %}
+                        {% else %}
+                            {% if kwh_data %}
+                                ['Mes', 'kWh {{ year_01 }}', 'kWh {{ year_02 }}'],
+                                {% for kwh_d in kwh_data %}
+                                    ['{{ kwh_d.mes }}',{{ kwh_d.kwh_01 }},{{ kwh_d.kwh_02 }}],
+                                {% endfor %}
+                            {% endif %}
+                        {% endif %}
+                    ]);
+
+                    // Create and draw the visualization.
+                    new google.visualization.ColumnChart(document.getElementById('dac_kwh_graph')).
+                            draw(data7,
+                            {
+                                width:550, height:380, vAxis: {title: "Energía (KWh)", 'viewWindow': {'min': 0}}, colors:['#5093c7','#f78a3d'],legend:'none'
+                            }
+                    );
+
+                {% endif %}
 
             {% elif tarifa == 3 %}
 
                 var data8 = google.visualization.arrayToDataTable([
                     {% if not compare_years %}
-                        {% if mrate_data %}
+                        {% if kw_data %}
                             ['Mes', 'Cargo Mensual'],
-                            {% for mr_d in mrate_data %}
-                                ['{{ mr_d.mes }}',{{ mr_d.kw_01 }}],
+                            {% for kw_d in kw_data %}
+                                ['{{ kw_d.mes }}',{{ kw_d.kw_01 }}],
                             {% endfor %}
                         {% endif %}
                     {% else %}
-                        {% if mrate_data %}
+                        {% if kw_data %}
                             ['Mes', 'Cargo Mensual {{ year_01 }}', 'Cargo Mensual {{ year_02 }}'],
-                            {% for mr_d in mrate_data %}
-                                ['{{ mr_d.mes }}',{{ mr_d.kw_01 }},{{ mr_d.kw_02 }}],
+                            {% for kw_d in kw_data %}
+                                ['{{ kw_d.mes }}',{{ kw_d.kw_01 }},{{ kw_d.kw_02 }}],
                             {% endfor %}
                         {% endif %}
                     {% endif %}
@@ -202,7 +262,7 @@
                 new google.visualization.ColumnChart(document.getElementById('t3_mrate_graph')).
                         draw(data8,
                         {
-                            width:550, height:380, vAxis: {title: "Energía (KWh)"}, colors:['#5093c7','#f78a3d'], legend:'none'
+                            width:550, height:380, vAxis: {title: "Tarifa Demanda (kW)", 'viewWindow': {'min': 0}}, colors:['#5093c7','#f78a3d'], legend:'none'
                         }
                 );
 
@@ -228,7 +288,7 @@
                 new google.visualization.ColumnChart(document.getElementById('t3_kwh_graph')).
                         draw(data9,
                         {
-                            width:550, height:380, vAxis: {title: "Energía (KWh)"}, colors:['#5093c7','#f78a3d'], legend:'none'
+                            width:550, height:380, vAxis: {title: "Energía (KWh)", 'viewWindow': {'min': 0}}, colors:['#5093c7','#f78a3d'], legend:'none'
                         }
                 );
 
@@ -250,119 +310,206 @@
 
 <div class="iframe_container">
 
+    <div id="reporte_title">
+        <h1>Reporte de Análisis Costo de Facturación</h1>
+    </div>
+
     {% if tarifa == 1 %}
-        <div class="half_column_title">
-            <div class="graph_title">
-                Análisis de Costo de la Demanda (kW)
+        <div class="half_column_container">
+            <div class="cost_graph_headers">
+                <div class="graph_title">
+                    Análisis de Costo de la Demanda (kW)
+                </div>
+                <div class="label_year_cost">
+                    {{ year_01 }}
+                    {% if compare_years %}
+                        vs {{ year_02 }}
+                    {% endif %}
+                </div>
             </div>
-            <div class="label_year_cost">
-                {{ year_01 }}
-                {% if compare_years %}
-                     vs {{ year_02 }}
-                {% endif %}
-            </div>
+            <div class="cost_graph_container">
+                <div class="graph_container" id="kw_graph">
 
-        </div>
-        <div class="half_column_title">
-            <div class="graph_title">
-                Análisis de Costo de la Energía en Horario Base
-            </div>
-            <div class="label_year_cost">
-                {{ year_01 }}
-                {% if compare_years %}
-                    vs {{ year_02 }}
-                {% endif %}
+                </div>
             </div>
         </div>
-        <div class="half_column">
-            <div class="graph_container" id="kw_graph">
+        <div class="half_column_container">
+            <div class="cost_graph_headers">
+                <div class="graph_title">
+                    Análisis de Costo de la Energía en Horario Base
+                </div>
+                <div class="label_year_cost">
+                    {{ year_01 }}
+                    {% if compare_years %}
+                        vs {{ year_02 }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="cost_graph_container">
+                <div class="graph_container" id="kwhb_graph">
 
+                </div>
             </div>
         </div>
-        <div class="half_column">
-            <div class="graph_container" id="kwhb_graph">
 
+        <div class="half_column_container">
+            <div class="cost_graph_headers">
+                <div class="graph_title">
+                    Análisis de Costo de la Energía en Horario Intermedio
+                </div>
+                <div class="label_year_cost">
+                    {{ year_01 }}
+                    {% if compare_years %}
+                        vs {{ year_02 }}
+                    {% endif %}
+                </div>
             </div>
-        </div>
-        <div class="half_column_title">
-            <div class="graph_title">
-                Análisis de Costo de la Energía en Horario Intermedio
-            </div>
-            <div class="label_year_cost">
-                {{ year_01 }}
-                {% if compare_years %}
-                    vs {{ year_02 }}
-                {% endif %}
-            </div>
-        </div>
-        <div class="half_column_title">
-            <div class="graph_title">
-                Análisis de Costo de la Energía en Horario Punta
-            </div>
-            <div class="label_year_cost">
-                {{ year_01 }}
-                {% if compare_years %}
-                    vs {{ year_02 }}
-                {% endif %}
-            </div>
-        </div>
-        <div class="half_column">
-            <div class="graph_container" id="kwhi_graph">
+            <div class="cost_graph_container">
+                <div class="graph_container" id="kwhi_graph">
 
+                </div>
             </div>
         </div>
-        <div class="half_column">
-            <div class="graph_container" id="kwhp_graph">
 
+        <div class="half_column_container">
+            <div class="cost_graph_headers">
+                <div class="graph_title">
+                    Análisis de Costo de la Energía en Horario Punta
+                </div>
+                <div class="label_year_cost">
+                    {{ year_01 }}
+                    {% if compare_years %}
+                        vs {{ year_02 }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="cost_graph_container">
+                <div class="graph_container" id="kwhp_graph">
+
+                </div>
             </div>
         </div>
+
     {% elif tarifa == 2 %}
-        <div class="half_column_title">
-            <div class="graph_title">
-                Análisis de Tarifa Mensual
+        <div class="half_column_container">
+            <div class="cost_graph_headers">
+                <div class="graph_title">
+                    Análisis de Tarifa Mensual
+                </div>
+                <div class="label_year_cost">
+                    {{ year_01 }}
+                    {% if compare_years %}
+                        vs {{ year_02 }}
+                    {% endif %}
+                </div>
             </div>
-            <div class="label_year_cost">
-                {{ year_01 }}
-                {% if compare_years %}
-                    vs {{ year_02 }}
-                {% endif %}
-            </div>
+            <div class="cost_graph_container">
+                <div class="graph_container" id="dac_mrate_graph">
 
-        </div>
-        <div class="half_column_title">
-            <div class="graph_title">
-                Análisis de Costo de kilowatts/hora (kWh)
+                </div>
             </div>
-            <div class="label_year_cost">
-                {{ year_01 }}
-                {% if compare_years %}
-                    vs {{ year_02 }}
-                {% endif %}
-            </div>
-
         </div>
 
-        <div class="half_column">
-            <div class="graph_container" id="dac_mrate_graph">
+        {% if dac_region1_2 %}
 
-            </div>
-        </div>
-        <div class="half_column">
-            <div class="graph_container" id="dac_kwh_graph">
+            <div class="half_column_container">
+                <div class="cost_graph_headers">
+                    <div class="graph_title">
+                        Análisis de Costo de kWh - {{ periodo_1 }}
+                    </div>
+                    <div class="label_year_cost">
+                        {{ year_01 }}
+                        {% if compare_years %}
+                            vs {{ year_02 }}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="cost_graph_container">
+                    <div class="graph_container" id="dac_p1kwh_graph">
 
+                    </div>
+                </div>
             </div>
-        </div>
+            <div class="half_column_container">
+                <div class="cost_graph_headers">
+                    <div class="graph_title">
+                        Análisis de Costo de kWh - {{ periodo_2 }}
+                    </div>
+                    <div class="label_year_cost">
+                        {{ year_01 }}
+                        {% if compare_years %}
+                            vs {{ year_02 }}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="cost_graph_container">
+                    <div class="graph_container" id="dac_p2kwh_graph">
+
+                    </div>
+                </div>
+            </div>
+
+        {% else %}
+
+            <div class="half_column_container">
+                <div class="cost_graph_headers">
+                    <div class="graph_title">
+                        Análisis de Costo de kilowatts/hora (kWh)
+                    </div>
+                    <div class="label_year_cost">
+                        {{ year_01 }}
+                        {% if compare_years %}
+                            vs {{ year_02 }}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="cost_graph_container">
+                    <div class="graph_container" id="dac_kwh_graph">
+
+                    </div>
+                </div>
+            </div>
+
+        {% endif %}
+
     {% elif tarifa == 3 %}
-        <div class="half_column">
-            <div class="graph_container" id="t3_mrate_graph">
+        <div class="half_column_container">
+            <div class="cost_graph_headers">
+                <div class="graph_title">
+                    Análisis de Costo de la Demanda (kW)
+                </div>
+                <div class="label_year_cost">
+                    {{ year_01 }}
+                    {% if compare_years %}
+                        vs {{ year_02 }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="cost_graph_container">
+                <div class="graph_container" id="t3_mrate_graph">
 
+                </div>
             </div>
         </div>
-        <div class="half_column">
-            <div class="graph_container" id="t3_kwh_graph">
+        <div class="half_column_container">
+            <div class="cost_graph_headers">
+                <div class="graph_title">
+                    Análisis de Costo de kilowatts/hora (kWh)
+                </div>
+                <div class="label_year_cost">
+                    {{ year_01 }}
+                    {% if compare_years %}
+                        vs {{ year_02 }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="cost_graph_container">
+                <div class="graph_container" id="t3_kwh_graph">
 
+                </div>
             </div>
         </div>
+
     {% endif %}
 </div>
 </body>

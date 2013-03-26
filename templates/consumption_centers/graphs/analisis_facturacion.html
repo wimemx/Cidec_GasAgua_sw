@@ -18,30 +18,48 @@
 
             var etiqueta_periodo = '';
             var periodType = $("input:radio[name=period_type_rd]]:checked").val();
+            var b_continue = true
 
             var url = '/reportes/analisis_fac_ajax/?report_type='+periodType
             if(periodType == 0){
-                etiqueta_periodo = $("#a_year_01").val();
-                url += '&year01='+$("#a_year_01").val();
-                if($("#compare_year").is(':checked')){
-                    url += '&year02='+$("#a_year_02").val();
-                    etiqueta_periodo += ' vs '+ $("#a_year_02").val();
+                var y01 = $("#a_year_01").val();
+                var y02 = $("#a_year_02").val();
+
+                if(y01 == null){
+                    b_continue = false;
+                }else{
+                    etiqueta_periodo = y01;
+                    url += '&year01='+y01;
+                    if($("#compare_year").is(':checked')){
+                        url += '&year02='+y02;
+                        etiqueta_periodo += ' vs '+ y02;
+                    }
                 }
 
             }else{
-                url += '&month_01='+$("#m_month_01").val()+'&year_01='+$("#m_year_01").val()+'&month_02='+$("#m_month_02").val()+'&year_02='+$("#m_year_02").val();
+                var m_m01 =$("#m_month_01").val();
+                var m_m02 =$("#m_month_02").val();
+                var m_y01 =$("#m_year_01").val();
+                var m_y02 =$("#m_year_02").val();
 
-                var mes1 = $("#m_month_01 option:selected").text();
-                var mes2 = $("#m_month_02 option:selected").text();
-                etiqueta_periodo += mes1+' '+$("#m_year_01").val()+' vs '+ mes2+' '+$("#m_year_02").val();
+                if(m_y01 == null){
+                    b_continue = false;
+                }else{
+                    url += '&month_01='+m_m01+'&year_01='+m_y01+'&month_02='+m_m02+'&year_02='+m_y02;
+
+                    var mes1 = $("#m_month_01 option:selected").text();
+                    var mes2 = $("#m_month_02 option:selected").text();
+                    etiqueta_periodo += mes1+' '+m_y01+' vs '+ mes2+' '+m_y02;
+                }
             }
 
-            //Cambia el texto del select
-            $('#widgetField span').get(0).innerHTML = etiqueta_periodo;
+            if(b_continue){
+                //Cambia el texto del select
+                $('#widgetField span').get(0).innerHTML = etiqueta_periodo;
 
-            $('#analisis_container').addClass('iframe_spinner');
-            makeIframe(url);
-
+                $('#analisis_container').addClass('iframe_spinner');
+                makeIframe(url);
+            }
         }
 
         function refresh_iframe_height(){
@@ -160,9 +178,11 @@
                         </div>
                         <div class="selects_container selects_long">
                             <select name="a_year_01" id="a_year_01">
-                                <option value="2013" selected="selected">2013</option>
-                                <option value="2012">2012</option>
-                                <option value="2011">2011</option>
+                            {% if years %}
+                                {% for year in years %}
+                                    <option value="{{ year }}">{{ year }}</option>
+                                {% endfor %}
+                            {% endif %}
                             </select>
                         </div>
                         <div>
@@ -170,9 +190,11 @@
                         </div>
                         <div class="selects_container selects_long">
                             <select name="a_year_02" id="a_year_02" disabled="true">
-                                <option value="2013">2013</option>
-                                <option value="2012" selected="selected">2012</option>
-                                <option value="2011">2011</option>
+                                {% if years %}
+                                    {% for year in years %}
+                                        <option value="{{ year }}">{{ year }}</option>
+                                    {% endfor %}
+                                {% endif %}
                             </select>
                         </div>
                     </div>
@@ -196,9 +218,11 @@
                                 <option value="12">Diciembre</option>
                             </select>
                             <select name="m_year_01" id="m_year_01">
-                                <option value="2013" selected="selected">2013</option>
-                                <option value="2012">2012</option>
-                                <option value="2011">2011</option>
+                                {% if years %}
+                                    {% for year in years %}
+                                        <option value="{{ year }}">{{ year }}</option>
+                                    {% endfor %}
+                                {% endif %}
                             </select>
                         </div>
                         <div>
@@ -220,9 +244,11 @@
                                 <option value="12">Diciembre</option>
                             </select>
                             <select name="m_year_02" id="m_year_02">
-                                <option value="2013">2013</option>
-                                <option value="2012" selected="selected">2012</option>
-                                <option value="2011">2011</option>
+                                {% if years %}
+                                    {% for year in years %}
+                                        <option value="{{ year }}">{{ year }}</option>
+                                    {% endfor %}
+                                {% endif %}
                             </select>
                         </div>
                     </div>
