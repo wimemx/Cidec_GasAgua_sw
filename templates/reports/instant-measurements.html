@@ -16,6 +16,7 @@
         <script type="text/javascript" src="/static/js/functions.js"></script>
         <script src="/static/js/external/messi/messi.min.js"></script>
         <script src="/static/js/external/ui.spinner.min.js"></script>
+        <script type="text/javascript" src="/static/js/external/jqueryUniform/jquery.uniform.min.js"></script>
 
         <!-- Google Chart -->
         <script type="text/javascript">
@@ -112,8 +113,10 @@
 
                 $(".column-checkbox").click(function(){
 
-                    if($("#column-controls input[type='checkbox']").find(":checked").size() == 0 && $(this).not(":checked")){
+                    if($(":checkbox").filter(':checked').length == 0 && !$(this).is(":checked")){
+
                         $(this).attr("checked", "checked");
+                        $(this).parent().addClass("checked");
                         return false;
                     }else{''
                         var columns_set_array = [];
@@ -224,6 +227,7 @@
             }
 
             $(document).on("ready", function(){
+                $("select, input, input:checkbox, input:radio, input:file, textarea").uniform();
                 var rango =  $("#compare_interval").find("li");
                 rango.each(function(){
                     //cambia el intervalo visible de las graficas y cambia el estilo segun la opcion seleccionada
@@ -250,7 +254,7 @@
             <li id="week">1 Sem</li>
         </ul>
 
-        <div>
+        <div id="parameter_controls">
             <form id="column-controls">
                 {% for column in columns %}
                     <input type="checkbox" class="column-checkbox" name="column-control" value="{{ column }}" checked="checked"/>
