@@ -23,6 +23,7 @@
         </script>
 
         <script type="text/javascript">
+            var fech_ini = '', fech_fin = '';
 
             var control = new google.visualization.ControlWrapper({
                 'controlType': 'ChartRangeFilter',
@@ -62,7 +63,7 @@
                         // Use the same chart area width as the control for axis alignment.
                         'chartArea': {'height': '80%', 'width': '90%'},
                         'hAxis': {'slantedText': false},
-                        'vAxis': {'viewWindow': {'min': 0, 'max': 580}},
+                        'vAxis': {'viewWindow': {'min': {{ min }}, 'max': {{max}} }},
                         'legend': {'position': 'top', 'alignment': 'center'}
                     }
                 });
@@ -84,11 +85,16 @@
                 //console.log(rows_data);
                 for(var row_index = 0; row_index < rows_data.length; row_index++){
                     var row_data = rows_data[row_index];
-                    var row_array = new Array();
+                    var row_array = [];
                     for(var data_index = 0; data_index < row_data.length; data_index++){
                         var data_object = row_data[data_index];
                         var object_datetime = new Date();
                         object_datetime.setTime((data_object['datetime']*1000));
+                        if(fech_ini == ''){
+                            fech_ini = object_datetime;
+                        }
+                        fech_fin = object_datetime;
+
                         //console.log(object_datetime);
                         row_array.push(object_datetime);
                         var object_electric_data = Math.abs(data_object['value']);
@@ -96,16 +102,118 @@
                         var object_certainty = data_object['certainty'];
                         row_array.push(object_certainty);
                     }
-                    console.log(row_array);
+                    //console.log(row_array);
                     data.addRow(row_array);
                 }
                 var view = new google.visualization.DataView(data);
 
                 dashboard.bind(control, chart);
                 dashboard.draw(view);
+
+
+
+
+                var $upper = $('#upper_limit');
+                var $lower = $('#lower_limit');
+                var low_ = parseFloat({{ min }}).toFixed(2);
+                var high_ = parseFloat({{ max }}).toFixed(2);
+                $upper.val(high_).attr("min", Math.ceil(low_)).attr("max", Math.ceil(high_));
+                $lower.val(low_).attr("min", Math.floor(low_)).attr("max", Math.floor(high_));
+                var offset = parseFloat($upper.val())-parseFloat($lower.val());
+                offset = offset / 20;
+                offset = offset.toFixed(2);
+                console.log(offset);
+                $upper.spinner({
+                    min: $upper.attr('min'),
+                    max: $upper.attr('max'),
+                    step: offset//$upper.attr('step')
+                }).change(function(){
+                            var upper_val = parseFloat($upper.val());
+                            var lower_val = parseFloat($lower.val());
+                            if(upper_val <= lower_val){
+                                upper_val = lower_val + offset;
+                                $upper.val(upper_val);
+                            }
+                            chart.setOption('vAxis', {'viewWindow':{'max':upper_val, 'min':lower_val}});
+                            chart.draw();
+                        });
+                $lower.spinner({
+                    min: $lower.attr('min'),
+                    max: $lower.attr('max'),
+                    step: offset//$lower.attr('step')
+                }).change(function(){
+                            var upper_val = parseFloat($upper.val());
+                            var lower_val = parseFloat($lower.val());
+                            console.log("upper_val", upper_val);
+                            console.log("lower_val", lower_val);
+                            if(lower_val >= upper_val){
+                                lower_val = lower_val + offset;//upper_val - offset;
+                                $lower.val(lower_val);
+                            }
+                            chart.setOption('vAxis', {'viewWindow':{'max':upper_val, 'min':lower_val}});
+                            chart.draw();
+                        });
+
+
             }
 
             google.setOnLoadCallback(drawVisualization);
+
+
+
+            function changeRange(interval) {
+                var start_date, end_date;
+
+                //Date("October 13, 1975 11:13:00")
+                //start_date = fech_ini;
+                console.log(fech_ini);
+                end_date = new Date();
+                end_date.setTime(fech_ini);
+
+                //start_date.addDays(1);
+                //end_date.addDays(1);
+                switch (interval){
+                    case 'hour' :
+                        //start_date.addHours(5);
+                        end_date.addHours(2);
+                        break;
+                    case 'day' :
+                        end_date.addDays(1);
+                        break;
+                    case 'week' :
+                        end_date.addDays(7);
+                        break;
+                    case 'month' :
+                        end_date.addDays(30);
+                        break;
+                }
+                console.log(fech_ini);
+                // 'slider' is the ControlWrapper instance describing the range slider.
+
+                control.setState({
+                    'range': {
+                        'start': fech_ini,
+                        'end': end_date
+                    }
+                });
+                console.log(interval, fech_ini, end_date);
+                control.draw();
+            }
+
+            $(document).on("ready", function(){
+                var rango =  $("#compare_interval1").find("li");
+                rango.each(function(){
+                    //cambia el intervalo visible de las graficas y cambia el estilo segun la opcion seleccionada
+                    $(this).click(function(){
+                        changeRange($(this).attr('id'));
+                        rango.each(function(){
+                            $(this).removeClass("active");
+                        });
+
+                        $(this).addClass("active");
+                    });
+                });
+            });
         </script>
     </head>
 
@@ -140,11 +248,11 @@
             <!-- slider-range start -->
             <div id="slider-range">
                 <div id="up">
-                    <input type="text" class="integer" id="upper_limit" min="{{ limits.min }}" max="{{ limits.max }}" step="0.5"/>
+                    <input type="text" class="integer" id="upper_limit" min="{{ min }}" max="{{ max }}" step="0.5"/>
                 </div>
 
                 <div id="down">
-                    <input type="text" class="integer" id="lower_limit" min="{{ limits.min }}" max="{{ limits.max }}" step="0.5"/>
+                    <input type="text" class="integer" id="lower_limit" min="{{ min }}" max="{{ max }}" step="0.5"/>
                 </div>
             </div>
             <!-- slider-range end -->

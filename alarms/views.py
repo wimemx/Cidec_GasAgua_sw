@@ -393,3 +393,6 @@ def suscribe_alarm(request, id_alarm):
 @login_required(login_url='/')
 def unsuscribe_alarm(request, id_alarm):
     pass
+
+def search_alarm(request):
+    pass

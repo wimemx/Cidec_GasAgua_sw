@@ -52,6 +52,8 @@ def get_data_clusters_json(
         return None
 
     data_clusters_json = []
+    minimum = 10000000
+    maximum = -1000000
     for instant_index in range(0, data_cluster_instants_number):
         instant_json = []
         for data_cluster_index in range(0, data_clusters_length):
@@ -59,14 +61,18 @@ def get_data_clusters_json(
                 data_clusters_list_normalized[data_cluster_index][instant_index]
 
             data_cluster_dictionary_copy = data_cluster_dictionary.copy()
-            data_cluster_dictionary_copy['value'] =\
-                float(data_cluster_dictionary['value'])
+            float_data_value = float(data_cluster_dictionary['value'])
+            data_cluster_dictionary_copy['value'] = float_data_value
+            if float_data_value < minimum:
+                minimum = float_data_value
+            if float_data_value > maximum:
+                maximum = float_data_value
 
             instant_json.append(data_cluster_dictionary_copy)
 
         data_clusters_json.append(instant_json)
 
-    return data_clusters_json
+    return data_clusters_json, minimum, maximum
 
 
 def get_data_clusters_list(
@@ -638,6 +644,8 @@ def render_instant_measurements(
 
     if not request.method == "GET":
         raise django.http.Http404
+    if not "electrical-parameter-name01" in request.GET:
+        return django.http.HttpResponse(content="", status=200)
 
     #
     # Build a request data list in order to normalize it.
@@ -661,7 +669,6 @@ def render_instant_measurements(
         except KeyError:
             logger.error(
                 reports.globals.SystemError.RENDER_INSTANT_MEASUREMENTS_ERROR)
-
             raise django.http.Http404
 
         datetime_from = datetime.datetime.strptime(date_from_string, "%Y-%m-%d")
@@ -692,11 +699,14 @@ def render_instant_measurements(
     #
     # Create the json using the data clusters list normalized
     #
-    data_clusters_json = get_data_clusters_json(data_clusters_list)
+    data_clusters_json, minimum, maximum = \
+        get_data_clusters_json(data_clusters_list)
     if data_clusters_json is None:
         raise django.http.Http404
 
     template_variables['rows'] = data_clusters_json
+    template_variables['min'] = minimum
+    template_variables['max'] = maximum
 
     template_context =\
         django.template.context.RequestContext(request, template_variables)
