@@ -265,7 +265,7 @@ def main_page(request):
                                         ElectricDataTemp.objects.all().
                                         dates('medition_date', 'year')]
 
-            template_vars = {"graphs": graphs,
+            template_vars = {"graph_type": graphs[0],
                              "datacontext": datacontext,
                              'empresa': request.session['main_building'],
                              'company': request.session['company'],

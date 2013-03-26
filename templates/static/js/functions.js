@@ -63,6 +63,29 @@ function getUrlVars()
 
     return vars;
 }
+function buildUrl(url, parameters){
+    /*
+     * Obtiene un arreglo asociativo representando variables get, y regresa
+     * una url formateada
+     * url= "http://localhost/";
+     * params = [];
+     * params["var1"]=val1;
+     * params["var2"]=val2;
+     * uri=buildUrl(url, params);
+     *
+     * return "http://localhost/?var1=val1&var2=val2"
+     * */
+    var qs = "";
+    for(var key in parameters) {
+        var value = parameters[key];
+        qs += encodeURIComponent(key) + "=" + encodeURIComponent(value) + "&";
+    }
+    if (qs.length > 0){
+        qs = qs.substring(0, qs.length-1); //chop off last "&"
+        url = url + "?" + qs;
+    }
+    return url;
+}
 /*
  * Date Format 1.2.3
  * (c) 2007-2009 Steven Levithan <stevenlevithan.com>

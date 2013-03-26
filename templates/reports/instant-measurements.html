@@ -111,18 +111,24 @@
                 dashboard.draw(view);
 
                 $(".column-checkbox").click(function(){
-                    var columns_set_array = new Array();
-                    var checkboxes = document.forms['column-controls']['column-control'];
-                    for (var index = 0; index < checkboxes.length; index++) {
-                        if(checkboxes[index].checked){
-                            columns_set_array.push((index * 3) + 0);
-                            columns_set_array.push((index * 3) + 1);
-                            columns_set_array.push((index * 3) + 2);
+
+                    if($("#column-controls input[type='checkbox']").find(":checked").size() == 0 && $(this).not(":checked")){
+                        $(this).attr("checked", "checked");
+                        return false;
+                    }else{''
+                        var columns_set_array = [];
+                        var checkboxes = document.forms['column-controls']['column-control'];
+                        for (var index = 0; index < checkboxes.length; index++) {
+                            if(checkboxes[index].checked){
+                                columns_set_array.push((index * 3) + 0);
+                                columns_set_array.push((index * 3) + 1);
+                                columns_set_array.push((index * 3) + 2);
+                            }
                         }
+                        view.setColumns(columns_set_array);
+                        dashboard.bind(control, chart);
+                        dashboard.draw(view);
                     }
-                    view.setColumns(columns_set_array);
-                    dashboard.bind(control, chart);
-                    dashboard.draw(view);
                 });
 
 
@@ -135,7 +141,7 @@
                 var offset = parseFloat($upper.val())-parseFloat($lower.val());
                 offset = offset / 20;
                 offset = offset.toFixed(2);
-                console.log(offset);
+
                 $upper.spinner({
                     min: $upper.attr('min'),
                     max: $upper.attr('max'),
@@ -160,8 +166,6 @@
                 }).change(function(){
                             var upper_val = parseFloat($upper.val());
                             var lower_val = parseFloat($lower.val());
-                            console.log("upper_val", upper_val);
-                            console.log("lower_val", lower_val);
                             if(lower_val >= upper_val){
                                 lower_val = upper_val - offset;//upper_val - offset;
                                 $lower.val(lower_val);
@@ -185,7 +189,7 @@
 
                 //Date("October 13, 1975 11:13:00")
                 //start_date = fech_ini;
-                console.log(fech_ini);
+
                 end_date = new Date();
                 end_date.setTime(fech_ini);
 
@@ -206,7 +210,7 @@
                         end_date.addDays(30);
                         break;
                 }
-                console.log(fech_ini);
+
                 // 'slider' is the ControlWrapper instance describing the range slider.
 
                 control.setState({
@@ -215,12 +219,12 @@
                         'end': end_date
                     }
                 });
-                console.log(interval, fech_ini, end_date);
+
                 control.draw();
             }
 
             $(document).on("ready", function(){
-                var rango =  $("#compare_interval1").find("li");
+                var rango =  $("#compare_interval").find("li");
                 rango.each(function(){
                     //cambia el intervalo visible de las graficas y cambia el estilo segun la opcion seleccionada
                     $(this).click(function(){
@@ -233,26 +237,23 @@
                     });
                 });
 
-                var checkboxes = document.forms['column-controls']['column-control'];
-                for (var index = 0; index < checkboxes.length; index++) {
-                    checkboxes[index].checked = true;
-                }
+
 
             });
         </script>
     </head>
 
     <body>
-        <ul id="compare_interval1" class="fr">
-            <li id="hour" {% if granularity == "hour" %} class="active" {% endif %}>1 H</li>
-            <li id="day" {% if granularity == "day" %} class="active" {% endif %}>1 D</li>
-            <li id="week" {% if granularity == "week" %} class="active" {% endif %}>1 Sem</li>
+        <ul id="compare_interval" class="fr">
+            <li id="hour">1 H</li>
+            <li id="day" >1 D</li>
+            <li id="week">1 Sem</li>
         </ul>
 
         <div>
             <form id="column-controls">
                 {% for column in columns %}
-                    <input type="checkbox" class="column-checkbox" name="column-control" value="{{ column }}" />
+                    <input type="checkbox" class="column-checkbox" name="column-control" value="{{ column }}" checked="checked"/>
                     <label>{{ column }}</label>
                 {% endfor %}
             </form>

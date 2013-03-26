@@ -10,7 +10,8 @@
     <script type="text/javascript" src="/static/date_picker/js/date_picker.js"></script>
 
     <script type="text/javascript">
-    //<![CDATA[
+    var number_cus = 0;
+
     function clean_dates(url){
         var f1_init = encodeURIComponent($("#range1_init").val());
         var f1_end = encodeURIComponent($("#range1_end").val());
@@ -187,7 +188,27 @@
         $("#graph_container").html(graphFrame);
         refresh_iframe_height();
     }
-    //]]>
+
+    function initial_parameters(cu_count){
+        var params = [];
+        for(var i=1; i<=cu_count; i++){
+            var index;
+            var fecha_ini = new Date();
+            fecha_ini.setDate(fecha_ini.getDate()-30);
+            var f_i = fecha_ini.format("yyyy-mm-dd");
+            var f_e = new Date().format("yyyy-mm-dd");
+
+            if(i<10){
+                index = "0"+String(i);
+            }else{
+                index = String(i);
+            }
+            params['consumer-unit'+index]={{ consumer_unit.pk }};
+            params['date-from'+index] = f_i;
+            params['date-to'+index] = f_e;
+        }
+        return params;
+    }
     </script>
 {% endblock %}
 {% block document_ready %}
@@ -329,47 +350,18 @@
         }
         $("#widgetCalendar4").slideToggle();
     });
+    //--INITIAL IFRAME URL
+    var src = "{{ graph_type.object_access_point|safe }}";
 
-    $("#types_graphs ul li").each(function(){
-        // Carga el iframe de la grafica correspondiente,
-        $(this).click(function(){
-            $("#types_graphs ul li").each(function(){$(this).removeClass("active");});
-            var src;
-            switch($(this).attr("id")){
-                {% for type in graphs %}
-                case "{{ type.pk }}":
-                    src = "{{ type.object_access_point }}";
-                    break;
-                {% endfor %}
-            }
+    var get_string = src.split("?")[1];
+    number_cus = get_string.split("&").length;
+    params = initial_parameters(number_cus);
+    url = buildUrl(src.split("?")[0], params);
+    url += "&"+get_string
+    console.log(url);
+    makeIframe(url);
 
 
-            //var get_vars = $("#graphFrame").attr("src").split('?')[1]
-
-                src=append_parameters2(src);
-
-                src+="&consumer-unit01="+String({{ consumer_unit.pk }});
-                if ($("#range2_init").val()!=''){
-                    src+="&consumer-unit02="+String({{ consumer_unit.pk }});
-                }
-                if ($("#range3_init").val()!=''){
-                    src+="&consumer-unit03="+String({{ consumer_unit.pk }});
-                }
-                if ($("#range4_init").val()!=''){
-                    src+="&consumer-unit04="+String({{ consumer_unit.pk }});
-                }
-
-
-                src=clean_dates(src)
-
-                makeIframe(src);
-                //cambia la clase de la pestania
-                $(this).addClass("active");
-
-
-
-        });
-    });
     /*$("#compare_to").change(function(){
         //agrega y refresca los datos para ser comparados contra otra entidad
         var compared_companies=$("#evaluated_companies").val().split(",");
@@ -508,14 +500,10 @@
     </div>
 
     <div class="divider" id="divider_top">&nbsp;</div>
+    <h3>
+        {{ graph_type.object_description }}
+    </h3>
 
-    <div id="types_graphs">
-        <ul>
-            {% for type in graphs %}
-                <li id="{{ type.pk }}">{{ type.object_name }}</li>
-            {% endfor %}
-        </ul>
-    </div>
     <div id="graphs_container">
         <div id="compare" class="fl">
             <input id="evaluated_companies" type="hidden" value="{{ empresa.pk }},"/>
