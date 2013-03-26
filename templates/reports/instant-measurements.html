@@ -133,6 +133,9 @@
                             if(upper_val <= lower_val){
                                 upper_val = lower_val + offset;
                                 $upper.val(upper_val);
+                            }else if(upper_val>high_){
+                                upper_val = high_;
+                                $upper.val(high_);
                             }
                             chart.setOption('vAxis', {'viewWindow':{'max':upper_val, 'min':lower_val}});
                             chart.draw();
@@ -147,8 +150,11 @@
                             console.log("upper_val", upper_val);
                             console.log("lower_val", lower_val);
                             if(lower_val >= upper_val){
-                                lower_val = lower_val + offset;//upper_val - offset;
+                                lower_val = upper_val - offset;//upper_val - offset;
                                 $lower.val(lower_val);
+                            }else if(lower_val<low_){
+                                lower_val = low_;
+                                $lower.val(low_);
                             }
                             chart.setOption('vAxis', {'viewWindow':{'max':upper_val, 'min':lower_val}});
                             chart.draw();
