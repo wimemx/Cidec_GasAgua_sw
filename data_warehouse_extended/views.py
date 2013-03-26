@@ -535,6 +535,9 @@ def process_consumer_unit_electrical_parameter_instant_group(
                 electrical_parameter.name_transactional
             )
 
+        logger.info("electric_data_raw_dictionaries_list")
+        logger.info(electric_data_raw_dictionaries_list)
+
     except django.core.exceptions.FieldError:
         logger.error(data_warehouse_extended.globals.SystemError.FIELD_ERROR)
         return
@@ -901,27 +904,27 @@ def get_instants_list (
 def test_process_consumer_unit_electrical_parameter():
 
     consumer_unit = c_center.models.ConsumerUnit.objects.get(pk=7)
-    datetime_from = datetime.datetime(year=2012, month=10, day=10)
-    datetime_to = datetime.datetime(year=2012, month=10, day=15)
+    datetime_from = datetime.datetime(year=2013, month=02, day=01)
+    datetime_to = datetime.datetime(year=2013, month=03, day=20)
     electrical_parameter =\
-        data_warehouse_extended.models.ElectricalParameter.objects.get(name="kW")
+        data_warehouse_extended.models.ElectricalParameter.objects.get(name="V1")
     instant_delta =\
         data_warehouse_extended.models.InstantDelta.objects.get(
             delta_seconds=3600)
 
-    #process_consumer_unit_electrical_parameter(
-    #    consumer_unit,
-    #    datetime_from,
-    #    datetime_to,
-    #    electrical_parameter,
-    #    instant_delta
-    #)
-
-    get_consumer_unit_electrical_parameter_data_list(
+    process_consumer_unit_electrical_parameter(
         consumer_unit,
         datetime_from,
         datetime_to,
         electrical_parameter,
         instant_delta
     )
+
+    #get_consumer_unit_electrical_parameter_data_list(
+    #    consumer_unit,
+    #    datetime_from,
+    #    datetime_to,
+    #    electrical_parameter,
+    #    instant_delta
+    #)
 
