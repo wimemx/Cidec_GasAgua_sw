@@ -25,14 +25,14 @@
         if (url.length > 1){
             //if url has get_vars
             var hash = url[1];
-            hash = hash.replace(/&{0,1}date-start01=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
-            hash = hash.replace(/&{0,1}date-end01=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
-            hash = hash.replace(/&{0,1}date-start02=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
-            hash = hash.replace(/&{0,1}date-end02=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
-            hash = hash.replace(/&{0,1}date-start03=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
-            hash = hash.replace(/&{0,1}date-end03=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
-            hash = hash.replace(/&{0,1}date-start04=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
-            hash = hash.replace(/&{0,1}date-end04=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
+            hash = hash.replace(/&{0,1}date-from01=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
+            hash = hash.replace(/&{0,1}date-to01=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
+            hash = hash.replace(/&{0,1}date-from02=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
+            hash = hash.replace(/&{0,1}date-to02=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
+            hash = hash.replace(/&{0,1}date-from03=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
+            hash = hash.replace(/&{0,1}date-to03=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
+            hash = hash.replace(/&{0,1}date-from04=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
+            hash = hash.replace(/&{0,1}date-to04=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
             //hash is equal to all the get vars but the dates
             url = url[0] + "?" + hash + "&";
         }else{
@@ -40,41 +40,41 @@
         }
 
         if(f1_init != ''){
-            url += "date-start01=" + f1_init;
+            url += "date-from01=" + f1_init;
 
         }else{
             var fecha_ini = new Date();
             fecha_ini.setDate(fecha_ini.getDate()-30);
-            url += "date-start01=" + encodeURIComponent(fecha_ini.format("yyyy-mm-dd"));
+            url += "date-from01=" + encodeURIComponent(fecha_ini.format("yyyy-mm-dd"));
         }
         if(f1_end != ''){
-            url += "&date-end01=" + f1_end;
+            url += "&date-to01=" + f1_end;
         }else{
-            url += "&date-end01=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
+            url += "&date-to01=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
         }
 
         if(f2_init != ''){
-            url += "&date-start02=" + f2_init;
+            url += "&date-from02=" + f2_init;
             if(f2_end != ''){
-                url += "&date-end02=" + f2_end;
+                url += "&date-to02=" + f2_end;
             }else{
-                url += "&date-end02=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
+                url += "&date-to02=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
             }
         }
         if(f3_init != ''){
-            url += "&date-start03=" + f3_init;
+            url += "&date-from03=" + f3_init;
             if(f3_end != ''){
-                url += "&date-end03=" + f3_end;
+                url += "&date-to03=" + f3_end;
             }else{
-                url += "&date-end03=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
+                url += "&date-to03=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
             }
         }
         if(f4_init != ''){
-            url += "&date-start04=" + f4_init;
+            url += "&date-from04=" + f4_init;
             if(f4_end != ''){
-                url += "&date-end04=" + f4_end;
+                url += "&date-to04=" + f4_end;
             }else{
-                url += "&date-end04=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
+                url += "&date-to04=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
             }
         }
         return url;
@@ -85,7 +85,7 @@
             if (get[0]!=window.location.protocol+"//"+window.location
                     .host+window.location.pathname){
                 for(var i=0; i<get.length; i++){
-                    if (get[i]!="date-start01" || get[i]!="date-start02" || get[i]!="date-start03" || get[i]!="date-start04" || get[i]!="consumer-unit01" || get[i]!="consumer-unit02" || get[i]!="consumer-unit03" || get[i]!="consumer-unit04" ){
+                    if (get[i]!="date-from01" || get[i]!="date-from02" || get[i]!="date-from03" || get[i]!="date-from04" || get[i]!="consumer-unit01" || get[i]!="consumer-unit02" || get[i]!="consumer-unit03" || get[i]!="consumer-unit04" ){
                         base_url+="&"+get[i]+"="+get[get[i]];
                     }
                 }
@@ -100,7 +100,7 @@
             if (get[0]!=window.location.protocol+"//"+window.location
                     .host+window.location.pathname){
                 for(var i=0; i<get.length; i++){
-                    if (get[i]!="graph" || get[i]!="granularity" || get[i]!="g_type" || get[i]!="_suid" ){
+                    if (get[i]!="graph" || get[i]!="g_type" || get[i]!="_suid" ){
                         base_url+="&"+get[i]+"="+get[get[i]];
                     }
                 }
@@ -128,43 +128,43 @@
             base_url+='&consumer-unit01={{ consumer_unit.pk }}';
             if (url.length > 1){
 
-                base_url += "&date-start01=" + f1_init;
+                base_url += "&date-from01=" + f1_init;
                 if(f1_end != ''){
-                    base_url += "&date-end01=" + f1_end;
+                    base_url += "&date-to01=" + f1_end;
                 }else{
-                    base_url += "&date-end01=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
+                    base_url += "&date-to01=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
                 }
                 if(f2_init != ''){
-                    base_url += "&date-start02=" + f2_init;
+                    base_url += "&date-from02=" + f2_init;
                     if(f2_end != ''){
-                        base_url += "&date-end02=" + f2_end;
+                        base_url += "&date-to02=" + f2_end;
                     }else{
-                        base_url += "&date-end02=" + encodeURIComponent(new Date());
+                        base_url += "&date-to02=" + encodeURIComponent(new Date());
 
                     }
                     base_url += "&consumer-unit02={{ consumer_unit.pk }}"
                 }
                 if(f3_init != ''){
-                    base_url += "&date-start03=" + f3_init;
+                    base_url += "&date-from03=" + f3_init;
                     if(f3_end != ''){
-                        base_url += "&date-end03=" + f3_end;
+                        base_url += "&date-to03=" + f3_end;
                     }else{
-                        base_url += "&date-end03=" + encodeURIComponent(new Date());
+                        base_url += "&date-to03=" + encodeURIComponent(new Date());
 
                     }
                     base_url += "&consumer-unit03={{ consumer_unit.pk }}"
                 }
                 if(f4_init != ''){
-                    base_url += "&date-start04=" + f4_init;
+                    base_url += "&date-from04=" + f4_init;
                     if(f4_end != ''){
-                        base_url += "&date-end04=" + f4_end;
+                        base_url += "&date-to04=" + f4_end;
                     }else{
-                        base_url += "&date-end04=" + encodeURIComponent(new Date());
+                        base_url += "&date-to04=" + encodeURIComponent(new Date());
 
                     }
                     base_url += "&consumer-unit04={{ consumer_unit.pk }}"
                 }
-                base_url=append_parameters(base_url)+"&granularity=raw_data";
+                base_url=append_parameters(base_url);
                 makeIframe(base_url);
             }else{
                 $("#graph_container").html("<h2>Por favor, " +
@@ -346,13 +346,6 @@
 
             //var get_vars = $("#graphFrame").attr("src").split('?')[1]
 
-
-                if(src == "/reportes/graficas?graph=TotalkWhIMPORT" || src == "/reportes/graficas?graph=kWh_consumido"){
-                    src+='&granularity=day';
-                }else{
-                    src+='&granularity=raw_data';
-                }
-
                 src=append_parameters2(src);
 
                 src+="&consumer-unit01="+String({{ consumer_unit.pk }});
@@ -366,7 +359,7 @@
                     src+="&consumer-unit04="+String({{ consumer_unit.pk }});
                 }
 
-                //makeIframe(src);
+
                 src=clean_dates(src)
 
                 makeIframe(src);
@@ -418,7 +411,7 @@
         openEffect	: 'none',
         closeEffect	: 'none'
     });
-    if($("#graphFrame").attr("src")=="/reportes/graficas/"){
+    if($("#graphFrame").attr("src")=="/reportes/set_consumer_unit/"){
         $("#types_graphs ul li:eq(0)").click();
     }
     {% endblock %}
@@ -540,7 +533,7 @@
         </div>
 
         <div id="graph_container">
-            <iframe src="/reportes/graficas/" id="graphFrame" seamless="seamless"></iframe>
+            <iframe src="/reportes_extendidos/" id="graphFrame" seamless="seamless"></iframe>
         </div>
 
     </div>

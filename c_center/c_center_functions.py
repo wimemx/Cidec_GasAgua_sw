@@ -89,10 +89,10 @@ def get_companies_for_operation(permission, operation, user, cluster):
     returns a tuple containing the queryset, and a boolean,
     indicating if returns all the objects
 
-    permission.- string, the name of the permission object
-    operation.- operation object, (VIEW, CREATE, etc)
-    user.- django.contrib.auth.models.User instance
-    cluster.- Cluster instance
+    :param permission:string, the name of the permission object
+    :param operation:operation object, (VIEW, CREATE, etc)
+    :param user:django.contrib.auth.models.User instance
+    :param cluster: Cluster instance
     """
     if user.is_superuser:
         return get_all_active_companies_for_cluster(cluster), True
@@ -186,6 +186,11 @@ def get_buildings_for_operation(permission, operation, user, company):
 
 
 def get_all_buildings_for_operation(permission, operation, user):
+    """ Gets an array of all the buildings in wich a user can do 'x' operation
+    :param permission: String, the name of the object
+    :param operation: Object, VIEW, CREATE, or UPDATE object
+    :param user: User object
+    """
     companies = get_all_companies_for_operation(permission, operation, user)
     buildings_arr = []
     for company in companies:
@@ -205,9 +210,8 @@ def get_all_active_parts_for_building(building):
 
 def get_partsofbuilding_for_operation(permission, operation, user, building):
     """Obtains a queryset for all the partsofbuilding that exists in a
-    datacontext for a user for a
-    given building, if the user is super_user returns all active
-    partsofbuilding for the building,
+    datacontext for a user for a given building, if the user is super_user
+    returns all active partsofbuilding for the building,
     if the user has permission over the entire building,
     returns all active partsofbuilding for the building
     returns a tuple containing the queryset, and a boolean,
@@ -332,8 +336,12 @@ def get_pw_profiles(request):
     return HttpResponse(content=data, content_type="application/json")
 
 
-def get_all_profiles_for_user(user):
+def get_all_profiles_for_user(user, permission, operation):
     """ returns an array of consumer_units in wich the user has access
+    :param user: user object instance
+    :param permission: String the name of the object
+    :param operation: object operation instance (VIEW, CREATE, etc)
+    :rtype : bytearray
     """
     contexts = DataContextPermission.objects.filter(user_role__user=user)
     c_us = []
@@ -341,7 +349,11 @@ def get_all_profiles_for_user(user):
         consumer_units = ConsumerUnit.objects.filter(building=context.building)
         #cu, user, building
         for consumerUnit in consumer_units:
-            if consumerUnit.profile_powermeter.powermeter.powermeter_anotation != "Medidor Virtual":
+            if consumerUnit.profile_powermeter\
+                .powermeter.powermeter_anotation != "Medidor Virtual" and \
+                            consumerUnit.profile_powermeter\
+                                .powermeter\
+                                .powermeter_anotation != "No Registrado":
                 if context.part_of_building:
                     #if the user has permission over a part of building,
                     # and the consumer unit is
@@ -353,7 +365,7 @@ def get_all_profiles_for_user(user):
                         c_us.append(consumerUnit)
                 elif context.building == consumerUnit.building:
                     c_us.append(consumerUnit)
-
+    c_us = variety.unique_from_array(c_us)
     return c_us
 
 
@@ -362,8 +374,8 @@ def get_intervals_1(get):
     by default we get the data from the last month
     returns f1_init, f1_end as datetime objects
     """
-    f1_init = datetime.today() - relativedelta(months=1)
-    f1_end = datetime.today()
+    f1_init = datetime.datetime.today() - relativedelta(months=1)
+    f1_end = datetime.datetime.today()
 
     if "f1_init" in get:
         if get["f1_init"] != '':
@@ -1015,16 +1027,15 @@ def all_dailyreportAll():
 def dailyReportAll():
     buildings = Building.objects.all()
     for buil in buildings:
-        try:
-            main_cu = ConsumerUnit.objects.get(
-                building=buil,
-                electric_device_type__electric_device_type_name="Total Edificio"
-            )
-        except ObjectDoesNotExist:
-            continue
-        else:
+        cus = ConsumerUnit.objects.filter(building=buil)
+        for cu in cus:
             dia = datetime.timedelta(days=1)
-            dailyReport(buil, main_cu, datetime.datetime.today()-dia)
+            eq_cu = get_consumer_units(cu)
+            if len(eq_cu) > 1:
+                #suma(eq_cu)
+                pass
+            else:
+                dailyReport(buil, cu, datetime.datetime.today()-dia)
     print "Done dailyReportAll"
 
 
@@ -1238,9 +1249,9 @@ def dailyReport(building, consumer_unit, today):
         max_demand_time = dem_max_time,
         min_demand = int(ceil(demanda_min)),
         min_demand_time = dem_min_time,
-        KWH_cost = costo_energia_total,
-        power_factor = factor_potencia_total,
-        KVARH = kvarh_totales
+        KWH_cost = str(costo_energia_total),
+        power_factor = str(factor_potencia_total),
+        KVARH = str(kvarh_totales)
     )
     new_daily.save()
 

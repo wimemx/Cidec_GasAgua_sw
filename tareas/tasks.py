@@ -8,6 +8,8 @@ from c_center.c_center_functions import save_historic, dailyReportAll, \
     asign_electric_data_to_pw
 from c_center.calculations import reTagHolidays
 
+from data_warehouse_extended.views import populate_data_warehouse_extended
+
 from datetime import date
 
 @task(ignore_result=True)
@@ -24,12 +26,10 @@ def datawarehouse_run(
         populate_interval_facts=None
 
 ):
-    populate_data_warehouse(
-        fill_instants,
-        fill_intervals,
-        _update_consumer_units,
-        populate_instant_facts,
-        populate_interval_facts
+    populate_data_warehouse_extended(
+        populate_instants=fill_instants,
+        populate_consumer_unit_profiles=_update_consumer_units,
+        populate_data=populate_instant_facts
     )
 
 @task(ignore_result=True)

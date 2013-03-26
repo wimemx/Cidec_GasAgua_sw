@@ -37,7 +37,7 @@
                 new google.visualization.ColumnChart(document.getElementById('kwh_graph')).
                         draw(data,
                         {
-                            width:900, height:400, vAxis: {title: "Facturación CFE($)", 'viewWindow': {'min': 0}}, colors:['#5093c7','#f78a3d'],legend:'none'
+                            width:900, height:400, vAxis: {title: "Energía (KWh)"}, colors:['#5093c7','#f78a3d'],legend:'none'
 
                         }
                 );
@@ -64,7 +64,7 @@
                 new google.visualization.ColumnChart(document.getElementById('money_graph')).
                         draw(data2,
                         {
-                            width:900, height:400, vAxis: {title: "Energía (KWh)", 'viewWindow': {'min': 0}}, colors:['#5093c7','#f78a3d'], legend:'none'
+                            width:900, height:400, vAxis: {title: "Facturación CFE($)"}, colors:['#5093c7','#f78a3d'], legend:'none'
 
                         }
                 );
@@ -167,7 +167,8 @@
 
     {% if tipo_reporte == 1 %}
         <div class="graph_title">
-            Analisis de Facturación ($ MXN): {{ year_01 }}
+
+            Analisis de Consumo de Energía (kWh): {{ year_01 }}
             {% if compare_years %}
                 vs {{ year_02 }}
             {% endif %}
@@ -201,12 +202,12 @@
                             <div class="info_compare">
                                 {% if positive_kwh == -1  %}
                                     <img src="/static/css/images/imgs_icns/ba_up_arrow.png"/>
-                                    <span class="positive">{{ diff_kwh_qty }} kHw</span>
+                                    <span class="positive">{{ diff_kwh_qty }} kWh</span>
                                 {% elif  positive_kwh == 1 %}
                                     <img src="/static/css/images/imgs_icns/ba_down_arrow.png"/>
-                                    <span class="negative">{{ diff_kwh_qty }} kHw</span>
+                                    <span class="negative">{{ diff_kwh_qty }} kWh</span>
                                 {% else %}
-                                    <span class="negative">{{ diff_kwh_qty }} kHw</span>
+                                    <span class="negative">{{ diff_kwh_qty }} kWh</span>
                                 {% endif %}
                             </div>
                             <div class="label_data">
@@ -236,7 +237,7 @@
             </div>
         </div>
         <div class="graph_title">
-            Analisis de Consumo de Energía (kWh): {{ year_01 }}
+            Analisis de Facturación ($ MXN): {{ year_01 }}
             {% if compare_years %}
                 vs {{ year_02 }}
             {% endif %}

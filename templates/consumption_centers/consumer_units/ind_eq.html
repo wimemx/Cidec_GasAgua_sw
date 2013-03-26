@@ -262,6 +262,15 @@
                         <input type="text" name="ie_server" id="ie_server" class="g9 validate notnull url"
                                value="{{ post.ie_server }}"/>
                     </div>
+                    <div class="fields_row g9">
+                        <label for="ie_building" class="g2">Edificio</label>
+                        <select name="ie_building" id="ie_building" class="g9 validate notnull">
+                            <option value="0">Elije el edificio para el equipo industrial</option>
+                            {% for buil in buildings %}
+                                <option value="{{ buil.pk }}"{% if post.ie_building == buil.pk %} selected="selected" {% endif %}>{{ buil.building_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
 
                 <div class="buttons g12">

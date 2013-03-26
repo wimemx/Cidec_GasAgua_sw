@@ -238,7 +238,7 @@ form#operations_batch{
 }
 #contenido_interno.card{
     min-height: 192px !important;
-
+    overflow: auto;
 }
 #user_img{
     margin-right: 30px;

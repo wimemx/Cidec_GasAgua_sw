@@ -256,6 +256,7 @@ def main_page(request):
                 graphs_type = GRAPHS[request.GET['g_type']]
             except KeyError:
                 graphs_type = GRAPHS['energia']
+        # TODO revisar rbac para nuevas graficas
         graphs = graphs_permission(request.user,
                                    request.session['consumer_unit'],
                                    graphs_type)
@@ -265,7 +266,8 @@ def main_page(request):
                                         ElectricDataTemp.objects.all().
                                         dates('medition_date', 'year')]
 
-            template_vars = {"graphs": graphs, "datacontext": datacontext,
+            template_vars = {"graphs": graphs,
+                             "datacontext": datacontext,
                              'empresa': request.session['main_building'],
                              'company': request.session['company'],
                              'consumer_unit': request.session['consumer_unit'],
@@ -5978,6 +5980,7 @@ def status_building(request, id_bld):
 #          CONSUMER UNITS
 ####################################################
 
+
 @login_required(login_url='/')
 def add_ie(request):
     datacontext = get_buildings_context(request.user)[0]
@@ -5989,16 +5992,24 @@ def add_ie(request):
     template_vars["sidebar"] = request.session['sidebar']
     template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
-
+    permission = "Alta de equipos industriales"
     if has_permission(request.user, CREATE,
-                      "Alta de equipos industriales") or \
+                      permission) or \
             request.user.is_superuser:
+        buildings = get_all_buildings_for_operation(
+            permission, CREATE, request.user)
+        template_vars['buildings'] = buildings
         if request.method == 'POST':
-            template_vars["post"] = request.POST
+            template_vars["post"] = request.POST.copy()
+            template_vars["post"]['ie_building'] = int(
+                template_vars["post"]['ie_building'])
+            building = Building.objects.get(pk=int(request.POST['ie_building']))
             ie = IndustrialEquipment(
                 alias=request.POST['ie_alias'].strip(),
                 description=request.POST['ie_desc'].strip(),
-                server=request.POST['ie_server'].strip()
+                server=request.POST['ie_server'].strip(),
+                building=building,
+                modified_by=request.user
             )
             ie.save()
             message = "El equipo industrial se ha creado exitosamente"
@@ -6036,9 +6047,13 @@ def edit_ie(request, id_ie):
     template_vars["operation"] = "edit"
     industrial_eq = get_object_or_404(IndustrialEquipment, pk=int(id_ie))
     template_vars["id_ie"] = id_ie
+    permission = "Modificar equipos industriales"
     if has_permission(request.user, UPDATE,
-                      "Modificar equipos industriales") or \
+                      permission) or \
             request.user.is_superuser:
+        buildings = get_all_buildings_for_operation(
+            permission, CREATE, request.user)
+        template_vars['buildings'] = buildings
         #Asociated powermeters
         if has_permission(
                 request.user,
@@ -6099,10 +6114,12 @@ def edit_ie(request, id_ie):
             template_vars['ver_medidores'] = False
 
         if request.method == 'POST':
-
+            building = Building.objects.get(pk=int(request.POST['ie_building']))
             industrial_eq.alias = request.POST['ie_alias'].strip()
             industrial_eq.description = request.POST['ie_desc'].strip()
             industrial_eq.server = request.POST['ie_server'].strip()
+            industrial_eq.building = building
+            industrial_eq.modified_by = request.user
             industrial_eq.save()
             message = "El equipo industrial se ha actualizado exitosamente"
             _type = "n_success"
@@ -6117,7 +6134,8 @@ def edit_ie(request, id_ie):
             template_vars["type"] = type
         template_vars["post"] = dict(ie_alias=industrial_eq.alias,
                                      ie_desc=industrial_eq.description,
-                                     ie_server=industrial_eq.server)
+                                     ie_server=industrial_eq.server,
+                                     ie_building = industrial_eq.building.pk)
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -6208,8 +6226,6 @@ def see_ie(request, id_ie):
                 template_vars['show_asign'] = True
             else:
                 template_vars['show_asign'] = False
-
-
         else:
             template_vars['ver_medidores'] = False
         template_vars_template = RequestContext(request, template_vars)

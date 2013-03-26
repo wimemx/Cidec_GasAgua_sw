@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block titulo %}
+    {% if operation == "edit" %}Editar{% else %}Alta de{% endif %} Equipo Industrial
+{% endblock %}
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/forms/c_centers.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="/static/js/external/jquery-validator/css/validator.css">
+    <link rel="stylesheet" href="/static/css/forms/rbac_user_list.css" type="text/css" />
+    <link href="/static/js/external/messi/messi.css" rel="stylesheet" type="text/css" media="screen" />
+    <link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
+{% endblock %}
+{% block externaljs %}
+    <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+    <script src="/static/js/external/messi/messi.min.js"></script>
+    <script type="text/javascript" src="/static/js/external/jquery-validator/js/validator.js"></script>
+    <script type="text/javascript">
+        $(document).on("ready", function(){
+            $("#alarm").validate();
+            $("#save").hide();
+        });
+        function form_row(pm, alias, brand, model, serial, status){
+            var row = '<td>';
+            row += '<input type="checkbox" id="powermeter_'+pm+'" name="powermeter_'+pm+'"/>';
+            row += '<label for="powermeter_'+pm+'">';
+            row += '<a href="/buildings/ver_medidor/'+pm+'/">';
+            row += alias;
+            row += '</a></label></td>';
+            row += '<td class="c">'+brand+'- '+model+'</td>';
+            row += '<td class="c">'+serial+'</td>';
+            row += '<td class="c"><a href="#" rel="'+pm+'"';
+            if (status == 1){
+                row += 'class="switch active_switch" title="desactivar"';
+            }else{
+                row += 'class="switch inactive_switch" title="activar"';
+            }
+            row += '></a></td>';
+            row += '<td class="c"><a class="edit" title="Editar medidor" href="/buildings/editar_medidor/'+pm+'/"></a><a class="remove" title="Desvincular medidor" rel="'+pm+'">Desvincular Medidor</a></td>';
+
+            var tabla = $("#powermeters_table");
+            if($("#powermeters_table tr").size()>1)
+                if(tabla.find("tr:last-child").hasClass("row1")){
+                    tabla.append('<tr class="row2">' + row + '</tr>');
+                }
+                else{
+                    tabla.append('<tr class="row1">' + row + '</tr>');
+                }
+            else{
+                tabla.append('<tr class="row1">' + row + '</tr>');
+            }
+            tabla.find("tr:last-child input").uniform();
+        }
+    </script>
+{% endblock %}
+{% block document_ready %}
+{% endblock %}
+
+{% block contenido %}
+
+    <div id="bread_crumbs">
+        <ul>
+            <li><a href="/main/">Inicio</a></li>
+            <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
+            <li><a href="/configuracion/alarmas/">Alarmas</a></li>
+            {% if operation == "edit" %}
+                <li>
+                    Editar alarma
+                </li>
+            {% else %}
+                <li>Alta de alarmas</li>
+            {% endif %}
+        </ul>
+
+    </div>
+    <div id="page_content">
+        <div id="contenido_interno">
+            <h2 id="titulo_form" class="powermeter">
+                {% if operation == "edit" %}Editar{% else %}Alta de{% endif %} alarma
+            </h2>
+            <div class="divider" id="divider_top">&nbsp;</div>
+            <div id="form_container" class="g12">
+                {% if message %}
+                    <span class="notif {{ msg_type }}">
+                    {% autoescape off %}{{ message }}{% endautoescape %}
+                    <a href="#" onclick="$(this).parent().remove(); History.replaceState({}, '', ' ');">X</a>
+                </span>
+                {% endif %}
+                <p class="description">
+                    Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
+                    <br/>
+                    Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
+                </p>
+                <form method="post" action="." id="alarm">
+                    {% csrf_token %}
+                    <h3 class="g12">Informaci&oacute;n de Alarma</h3>
+                    <div id="alarm_fields">
+                        <div class="fields_row g9">
+                            <label for="alarm_param" class="g2">Par&aacute;metro El&eacute;ctrico<span class="required">*</span></label>
+                            <select name="alarm_param" id="alarm_param" class="g9 validate notnull">
+                                <option>Elije un par&aacute;metro</option>
+                                {% for param in parameters %}
+                                    <option></option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="fields_row g9">
+                            <label for="alarm_max_value" class="g2">Valor m&aacute;ximo</label>
+                            <input type="text" name="alarm_max_value" id="alarm_max_value" class="g9"/>
+                        </div>
+                        <div class="fields_row g9">
+                            <label for="alarm_min_value" class="g2">Valor m&iacute;nimo</label>
+                            <input type="text" name="alarm_min_value" id="alarm_min_value" class="g9"/>
+                        </div>
+                        <div class="fields_row g9">
+                            <label for="alarm_cluster" class="g2">Cluster</label>
+                            <select name="alarm_cluster" id="alarm_cluster" class="g9 validate notnull">
+                                <option value="0">Elije el edificio para el equipo industrial</option>
+                                {% for clus in clusters %}
+                                    <option value="{{ clus.pk }}"{% if post.alarm_building == clus.pk %} selected="selected" {% endif %}>{{ clus.building_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="buttons g12">
+                        <button class="aqua_btn" id="save">
+                            Guardar
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+{% endblock %}

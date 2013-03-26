@@ -172,7 +172,8 @@ def _login(request):
                     url += "?next=" + ur_get[1]
                 return HttpResponseRedirect(url)
             else:
-                error = "Tu cuenta ha sido desactivada, por favor ponte en contacto con tu administrador"
+                error = "Tu cuenta ha sido desactivada, por favor ponte en " \
+                        "contacto con tu administrador"
         else:
             error = "Tu nombre de usuario o contrase&ntilde;a son incorrectos."
     variables = dict(username=username, password=password, error=error)
@@ -194,7 +195,10 @@ def index(request):
 
     d = defaultdict(list)
     for permission in pa:
-        if permission.object.object_name not in GRAPHS and permission.object.object_name != "Consultar recibo CFE" and permission.object.object_name != "Perfil de carga":
+        if permission.object.object_name not in GRAPHS and \
+                        permission.object.object_name != \
+                        "Consultar recibo CFE" and \
+                        permission.object.object_name != "Perfil de carga":
             gObject = GroupObject.objects.get(
                 object__object_name=permission.object.object_name)
             d[gObject.group.group_name].append(gObject.object)
@@ -244,7 +248,8 @@ def get_sub_categs_items(parent):
                 clase = ''
             sub_menu += "<li class='sub_level " + clase + "'>"
             if sub_c.child_cat.categ_access_point:
-                sub_menu += "<a href='" + sub_c.child_cat.categ_access_point + "'>"
+                sub_menu += "<a href='" + \
+                            sub_c.child_cat.categ_access_point + "'>"
                 sub_menu += sub_c.child_cat.categ_name
                 sub_menu += "</a>"
             elif sub_c.child_cat:

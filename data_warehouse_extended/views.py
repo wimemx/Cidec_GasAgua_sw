@@ -600,24 +600,12 @@ def process_consumer_unit_electrical_parameter_instant_group(
         if curve_fit_function is not None:
             curve_fit_function_evaluation =\
                 curve_fit_function(instant_timedelta_current_seconds)
-
-        try:
-            consumer_unit_instant_electric_data =\
-                data_warehouse_extended.models.\
-                    ConsumerUnitInstantElectricalData.objects.get(
-                        consumer_unit_profile=consumer_unit_profile,
-                        instant=instant,
-                        electrical_parameter=electrical_parameter)
-
-        except data_warehouse_extended.models.\
-                ConsumerUnitInstantElectricalData.DoesNotExist:
-
-            consumer_unit_instant_electric_data =\
-                data_warehouse_extended.models.ConsumerUnitInstantElectricalData(
-                    consumer_unit_profile=consumer_unit_profile,
-                    instant=instant,
-                    electrical_parameter=electrical_parameter)
-
+        consumer_unit_instant_electric_data, created = \
+            data_warehouse_extended.models.\
+            ConsumerUnitInstantElectricalData.objects.get_or_create(
+                consumer_unit_profile=consumer_unit_profile,
+                instant=instant,
+                electrical_parameter=electrical_parameter)
         consumer_unit_instant_electric_data.value =\
             curve_fit_function_evaluation
 
@@ -846,7 +834,8 @@ def get_instant_delta (
 
 def get_instant_delta_all():
 
-    instant_deltas = data_warehouse_extended.models.InstantDelta.objects.all()
+    return data_warehouse_extended.models.InstantDelta.objects.all()
+
 
 def get_instants_list (
         datetime_from,
