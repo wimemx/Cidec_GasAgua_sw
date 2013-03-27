@@ -63,6 +63,29 @@ function getUrlVars()
 
     return vars;
 }
+function buildUrl(url, parameters){
+    /*
+     * Obtiene un arreglo asociativo representando variables get, y regresa
+     * una url formateada
+     * url= "http://localhost/";
+     * params = [];
+     * params["var1"]=val1;
+     * params["var2"]=val2;
+     * uri=buildUrl(url, params);
+     *
+     * return "http://localhost/?var1=val1&var2=val2"
+     * */
+    var qs = "";
+    for(var key in parameters) {
+        var value = parameters[key];
+        qs += encodeURIComponent(key) + "=" + encodeURIComponent(value) + "&";
+    }
+    if (qs.length > 0){
+        qs = qs.substring(0, qs.length-1); //chop off last "&"
+        url = url + "?" + qs;
+    }
+    return url;
+}
 /*
  * Date Format 1.2.3
  * (c) 2007-2009 Steven Levithan <stevenlevithan.com>
@@ -211,3 +234,24 @@ String.prototype.format = function() {
 jQuery.expr[':'].Contains = function(a, i, m) {
     return jQuery(a).text().toUpperCase().indexOf(m[3].toUpperCase()) >= 0;
 };
+
+Object.size = function(obj) {
+    var size = 0, key;
+    for (key in obj) {
+        if (obj.hasOwnProperty(key)) size++;
+    }
+    return size;
+};
+
+/**
+ * Overwrites obj1's values with obj2's and adds obj2's if non existent in obj1
+ * @param obj1
+ * @param obj2
+ * @returns obj3 a new object based on obj1 and obj2
+ */
+function merge_object(obj1,obj2){
+    var obj3 = {};
+    for (var attrname in obj1) { obj3[attrname] = obj1[attrname]; }
+    for (var attrname in obj2) { obj3[attrname] = obj2[attrname]; }
+    return obj3;
+}

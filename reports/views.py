@@ -571,7 +571,8 @@ def get_consumer_unit_electrical_parameter_data_clustered(
         key_current = instant.instant_datetime.strftime(
             reports.globals.Constant.DATETIME_STRING_KEY_FORMAT)
 
-        instants_dictionary[key_current] = instant_dictionary_generic_value
+        instants_dictionary[key_current] =\
+            instant_dictionary_generic_value.copy()
 
     #
     # Get the dependent Consumer Units List and retrieve their data.
