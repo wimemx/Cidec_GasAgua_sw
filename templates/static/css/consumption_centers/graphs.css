@@ -270,3 +270,8 @@ div.container{
 #parameter_controls .checker{
     z-index: 3;
 }
+
+#statistics-table table{
+    margin: 0 auto;
+
+}
