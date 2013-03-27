@@ -175,8 +175,6 @@
 
                 params_new = merge_object(params_new, c_param);
             }
-
-            console.log(params_new);
             var url = buildUrl(src.split("?")[0], params_new);
 
             makeIframe(url);
@@ -380,37 +378,8 @@
     params = initial_parameters(number_params);
     url = buildUrl(src.split("?")[0], params);
     url += "&"+get_string;
-    console.log(url);
+
     makeIframe(url);
-
-
-    /*$("#compare_to").change(function(){
-        //agrega y refresca los datos para ser comparados contra otra entidad
-        var compared_companies=$("#evaluated_companies").val().split(",");
-        if($(this).val()!=0 && compared_companies.length < 4){
-
-            var bandera = true;
-            for(var comp = 0; comp < compared_companies.length; comp++){
-                //check if the entitie is compared with self, or some entity already added
-                if(compared_companies[comp] == $(this).val()) bandera = false;
-            }
-            if(bandera){
-                var src=$("#graphFrame").attr("src").split('?');
-                var iframesrc = src[0] + '?';
-
-                if (src[1] != undefined){
-                    iframesrc += src[1] + '&';
-                }
-                iframesrc += "compare_to" + $(this).val() + "=" + $(this).val();
-                $(this).parent().before('<span class="compared">' + $("#compare_to option:selected").text()
-                                    + '</span><span class="vs_tag">VS</span>');
-                src = iframesrc;
-
-                makeIframe(src);
-                $("#evaluated_companies").val($("#evaluated_companies").val() + "," + $(this).val());
-            }
-        }
-    });*/
 
     refresh_iframe_height();
 
@@ -425,16 +394,14 @@
         openEffect	: 'none',
         closeEffect	: 'none'
     });
-    if($("#graphFrame").attr("src")=="/reportes/set_consumer_unit/"){
-        $("#types_graphs ul li:eq(0)").click();
-    }
+
     {% endblock %}
 {% block contenido %}
 
 <div id="bread_crumbs">
     <ul>
         <li><a href="/main/">Inicio</a></li>
-        <li><a href="/main/">Reportes</a></li>
+        <li>Reportes</li>
     </ul>
 
 </div>
