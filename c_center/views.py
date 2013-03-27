@@ -7964,6 +7964,43 @@ def billing_c_analisis_header(request):
                                                  {"datacontext": datacontext}))
 
 
+# noinspection PyArgumentList
+@login_required(login_url='/')
+def power_performance_header(request):
+    datacontext = get_buildings_context(request.user)[0]
+    if request.user.is_superuser:
+        set_default_session_vars(request, datacontext)
+
+        template_vars = {"type": "cfe", "datacontext": datacontext,
+                         'empresa': request.session['main_building'],
+                         'company': request.session['company'],
+                         'sidebar': request.session['sidebar']}
+
+        building = request.session['main_building']
+        #Se obtiene el tipo de tarifa del edificio
+        tipo_tarifa = building.electric_rate
+
+        if tipo_tarifa.pk == 1:
+            years = [__date.year for __date in HMHistoricData.objects.all().
+            dates('monthly_cut_dates__billing_month','year')]
+        elif tipo_tarifa.pk == 2:
+            years = [__date.year for __date in DacHistoricData.objects.all().
+            dates('monthly_cut_dates__billing_month','year')]
+        elif tipo_tarifa.pk == 3:
+            years = [__date.year for __date in T3HistoricData.objects.all().
+            dates('monthly_cut_dates__billing_month','year')]
+        template_vars['years'] = years[::-1]
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response(
+            "consumption_centers/graphs/desempenio_energetico.html",
+            template_vars_template)
+    else:
+        return render_to_response("generic_error.html",
+                                  RequestContext(request,
+                                                 {"datacontext": datacontext}))
+
+
 def getMonthName(index):
     if index == 1:
         return 'Ene'
@@ -8808,6 +8845,209 @@ def billing_cost_analisis(request):
             template_vars_template = RequestContext(request, template_vars)
             return render_to_response(
                 "consumption_centers/graphs/analisis_costo_f_frame.html",
+                template_vars_template)
+
+    else:
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
+
+
+def power_performance(request):
+    """Renders the cfe bill and the historic data chart"""
+    datacontext = get_buildings_context(request.user)[0]
+    if request.user.is_superuser:
+        if not request.session['consumer_unit']:
+            return HttpResponse(
+                content=MSG_PERMIT_ERROR)
+
+        set_default_session_vars(request, datacontext)
+
+        template_vars = dict(datacontext=datacontext,
+                             empresa=request.session['main_building'])
+
+        building = request.session['main_building']
+
+        #Se obtiene el tipo de tarifa del edificio
+        tipo_tarifa = building.electric_rate
+
+        compare_years_flag = False
+
+        atributos_completos = []
+
+        if request.GET:
+            year_01 = int(request.GET['year01'])
+            template_vars['year_01'] = year_01
+            if request.GET.__contains__('year02'):
+                compare_years_flag = True
+                template_vars['compare_years'] = True
+                year_02 = int(request.GET['year02'])
+                template_vars['year_02'] = year_02
+
+
+            #Para el edificio, obtiene sus atributos con sus valores
+            b_attributes = BuildingAttributesForBuilding.objects.filter(building=building)
+            #datos_kwh['mes'] = getMonthName(i+1)
+            #datos_money['mes'] = getMonthName(i+1)
+            if b_attributes:
+                for attr in b_attributes:
+
+                    atributo_dic = dict()
+
+                    nombre_attr = attr.building_attributes.building_attributes_name
+                    unidad_attr = attr.building_attributes.building_attributes_units_of_measurement
+                    valor_attr = float(attr.building_attributes_value)
+
+                    atributo_dic['nombre'] = nombre_attr
+                    atributo_dic['nombre_seguro'] = nombre_attr.lower().replace(' ','_')
+                    atributo_dic['unidad'] = unidad_attr
+
+                    #Arreglo que almacena el dictionario mensual (valores para graficar)
+                    datos_mensuales = []
+
+                    num_meses = 0
+                    num_meses2 = 0
+                    suma_kwh = 0
+                    suma_kwh2 = 0
+
+                    if tipo_tarifa.pk == 1:
+
+                        template_vars['tarifa'] = 1
+
+                        for i in range(12):
+                            mes = i+1
+
+                            dict_mensual = dict()
+                            dict_mensual['mes'] = getMonthName(mes)
+
+
+                            year_01_data = HMHistoricData.objects.filter(
+                                monthly_cut_dates__building = building,
+                                monthly_cut_dates__billing_month__year = year_01,
+                                monthly_cut_dates__billing_month__month = mes)
+
+                            if year_01_data:
+                                dict_mensual['kwh_01'] = float(year_01_data[0].KWH_total) / valor_attr
+                                suma_kwh += dict_mensual['kwh_01']
+                                num_meses += 1
+                            else:
+                                dict_mensual['kwh_01'] = 0
+
+                            if compare_years_flag:
+                                year_02_data = HMHistoricData.objects.filter(
+                                    monthly_cut_dates__building = building,
+                                    monthly_cut_dates__billing_month__year = year_02,
+                                    monthly_cut_dates__billing_month__month = mes)
+
+                                if year_02_data:
+                                    dict_mensual['kwh_02'] = float(year_02_data[0].KWH_total) / valor_attr
+                                    suma_kwh2 += dict_mensual['kwh_02']
+                                    num_meses2 += 1
+                                else:
+                                    dict_mensual['kwh_02'] = 0
+
+                            datos_mensuales.append(dict_mensual)
+
+                    elif tipo_tarifa.pk == 2:
+
+                        template_vars['tarifa'] = 2
+
+                        for i in range(12):
+                            mes = i+1
+
+                            dict_mensual = dict()
+                            dict_mensual['mes'] = getMonthName(mes)
+
+                            year_01_data = DacHistoricData.objects.filter(
+                                monthly_cut_dates__building = building,
+                                monthly_cut_dates__billing_month__year = year_01,
+                                monthly_cut_dates__billing_month__month = mes)
+
+                            if year_01_data:
+                                dict_mensual['kwh_01'] = float(year_01_data[0].KWH_total) / valor_attr
+                                suma_kwh += dict_mensual['kwh_01']
+                                num_meses += 1
+                            else:
+                                dict_mensual['kwh_01'] = 0
+
+                            if compare_years_flag:
+                                year_02_data = DacHistoricData.objects.filter(
+                                    monthly_cut_dates__building = building,
+                                    monthly_cut_dates__billing_month__year = year_02,
+                                    monthly_cut_dates__billing_month__month = mes)
+
+                                if year_02_data:
+                                    dict_mensual['kwh_02'] = float(year_02_data[0].KWH_total) / valor_attr
+                                    suma_kwh2 += dict_mensual['kwh_02']
+                                    num_meses2 += 1
+                                else:
+                                    dict_mensual['kwh_02'] = 0
+
+                            datos_mensuales.append(dict_mensual)
+
+                    elif tipo_tarifa.pk == 3:
+
+                        template_vars['tarifa'] = 3
+
+                        for i in range(12):
+
+                            mes = i+1
+
+                            dict_mensual = dict()
+                            dict_mensual['mes'] = getMonthName(mes)
+
+                            year_01_data = T3HistoricData.objects.filter(
+                                monthly_cut_dates__building = building,
+                                monthly_cut_dates__billing_month__year = year_01,
+                                monthly_cut_dates__billing_month__month = mes)
+
+                            if year_01_data:
+                                dict_mensual['kwh_01'] = float(year_01_data[0].KWH_total) / valor_attr
+                                suma_kwh += dict_mensual['kwh_01']
+                                num_meses += 1
+                            else:
+                                dict_mensual['kwh_01'] = 0
+
+                            if compare_years_flag:
+                                year_02_data = T3HistoricData.objects.filter(
+                                    monthly_cut_dates__building = building,
+                                    monthly_cut_dates__billing_month__year = year_02,
+                                    monthly_cut_dates__billing_month__month = mes)
+
+                                if year_02_data:
+                                    dict_mensual['kwh_02'] = float(year_02_data[0].KWH_total) / valor_attr
+                                    suma_kwh2 += dict_mensual['kwh_02']
+                                    num_meses2 += 1
+                                else:
+                                    dict_mensual['kwh_02'] = 0
+
+                            datos_mensuales.append(dict_mensual)
+
+                    atributo_dic['valores'] = datos_mensuales
+                    atributo_dic['y01_promedio'] = float(suma_kwh)/float(num_meses)
+                    if compare_years_flag:
+                        atributo_dic['y02_promedio'] = float(suma_kwh2)/float(num_meses2)
+                        diff_promedios = (float(atributo_dic['y01_promedio']) *
+                            100.0 / float(atributo_dic['y02_promedio'])) - 100.0
+
+                        if diff_promedios > 0:
+                            atributo_dic['positive_b'] = 1
+                        elif diff_promedios < 0:
+                            atributo_dic['positive_b'] = -1
+                        else:
+                            template_vars['positive_b'] = 0
+                        atributo_dic['variacion'] = fabs(diff_promedios)
+
+                    atributos_completos.append(atributo_dic)
+
+            template_vars['contenedor_global'] = atributos_completos
+
+            template_vars_template = RequestContext(request, template_vars)
+            return render_to_response(
+                "consumption_centers/graphs/desempenio_energetico_frame.html",
                 template_vars_template)
 
     else:
