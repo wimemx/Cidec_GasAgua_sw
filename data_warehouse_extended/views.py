@@ -6,6 +6,7 @@ import decimal
 import logging
 import pylab
 import scipy.interpolate
+import sys
 
 # Django imports
 import django.core.exceptions
@@ -535,9 +536,6 @@ def process_consumer_unit_electrical_parameter_instant_group(
                 electrical_parameter.name_transactional
             )
 
-        logger.info("electric_data_raw_dictionaries_list")
-        logger.info(electric_data_raw_dictionaries_list)
-
     except django.core.exceptions.FieldError:
         logger.error(data_warehouse_extended.globals.SystemError.FIELD_ERROR)
         return
@@ -590,6 +588,18 @@ def process_consumer_unit_electrical_parameter_instant_group(
         return
 
     #
+    # Get the independent data limits in order to know if the curve fit function
+    # can be evaluated.
+    #
+    if len(independent_data_list) > 0:
+        independent_data_lower_limit = independent_data_list[0]
+        independent_data_upper_limit = independent_data_list[-1]
+
+    else:
+        independent_data_lower_limit = sys.maxint
+        independent_data_upper_limit = -sys.maxint
+
+    #
     # Evaluate the generated function on each Instant datetime and save the
     # result in the Data Warehouse Extended.
     #
@@ -599,16 +609,22 @@ def process_consumer_unit_electrical_parameter_instant_group(
             instant_timedelta_current.seconds + \
             (instant_timedelta_current.days * 24 * 3600)
 
+        is_instant_between_limits =\
+            instant_timedelta_current_seconds >= independent_data_lower_limit and\
+            instant_timedelta_current_seconds <= independent_data_upper_limit
+
         curve_fit_function_evaluation = None
-        if curve_fit_function is not None:
+        if curve_fit_function is not None and is_instant_between_limits:
             curve_fit_function_evaluation =\
                 curve_fit_function(instant_timedelta_current_seconds)
+
         consumer_unit_instant_electric_data, created = \
             data_warehouse_extended.models.\
-            ConsumerUnitInstantElectricalData.objects.get_or_create(
-                consumer_unit_profile=consumer_unit_profile,
-                instant=instant,
-                electrical_parameter=electrical_parameter)
+                ConsumerUnitInstantElectricalData.objects.get_or_create(
+                    consumer_unit_profile=consumer_unit_profile,
+                    instant=instant,
+                    electrical_parameter=electrical_parameter)
+
         consumer_unit_instant_electric_data.value =\
             curve_fit_function_evaluation
 
@@ -626,6 +642,16 @@ def process_consumer_unit_electrical_parameter_instant_group(
                 str(consumer_unit_instant_electric_data))
 
             continue
+
+        try:
+            consumer_unit_instant_electric_data.save()
+
+        except decimal.InvalidOperation:
+            consumer_unit_instant_electric_data.value = None
+            logger.error(
+                data_warehouse_extended.globals.SystemError.
+                CONSUMER_UNIT_INSTANT_ELECTRIC_DATA_DECIMAL_ERROR + " - " +
+                str(consumer_unit_instant_electric_data))
 
         consumer_unit_instant_electric_data.save()
         logger.info(data_warehouse_extended.globals.SystemInfo.
@@ -904,10 +930,11 @@ def get_instants_list (
 def test_process_consumer_unit_electrical_parameter():
 
     consumer_unit = c_center.models.ConsumerUnit.objects.get(pk=7)
-    datetime_from = datetime.datetime(year=2013, month=02, day=01)
-    datetime_to = datetime.datetime(year=2013, month=03, day=20)
+    datetime_from = datetime.datetime(year=2012, month=9, day=01)
+    datetime_to = datetime.datetime(year=2013, month=3, day=20)
     electrical_parameter =\
-        data_warehouse_extended.models.ElectricalParameter.objects.get(name="V1")
+        data_warehouse_extended.models.ElectricalParameter.objects.get(name="TotalkWhIMPORT")
+
     instant_delta =\
         data_warehouse_extended.models.InstantDelta.objects.get(
             delta_seconds=3600)

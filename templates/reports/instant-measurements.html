@@ -290,5 +290,61 @@
 
         </div>
         <!-- dashboard end -->
+
+        <!-- statistics-table start -->
+        <div id="statistics-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Resumen del Periodo</th>
+                    </tr>
+
+                    <tr>
+                        <th></th>
+                        {% for column in columns %}
+                            <th>{{ column }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr>
+                        <td>Promedio</td>
+                        {% for column_statistics in columns_statistics %}
+                            <td>{{ column_statistics.mean }}</td>
+                        {% endfor %}
+                    </tr>
+
+                    <tr>
+                        <td>Máximo</td>
+                        {% for column_statistics in columns_statistics %}
+                            <td>{{ column_statistics.maximum }}</td>
+                        {% endfor %}
+                    </tr>
+
+                    <tr>
+                        <td>Mínimo</td>
+                        {% for column_statistics in columns_statistics %}
+                            <td>{{ column_statistics.minimum }}</td>
+                        {% endfor %}
+                    </tr>
+
+                    <tr>
+                        <td>Mediana</td>
+                        {% for column_statistics in columns_statistics %}
+                            <td>{{ column_statistics.median }}</td>
+                        {% endfor %}
+                    </tr>
+
+                    <tr>
+                        <td>Desviación Estándar</td>
+                        {% for column_statistics in columns_statistics %}
+                            <td>{{ column_statistics.standard_deviation }}</td>
+                        {% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <!-- statistics-table end -->
     </body>
 </html>
