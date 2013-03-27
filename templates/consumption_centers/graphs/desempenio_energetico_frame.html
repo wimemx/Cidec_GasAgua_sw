@@ -1,0 +1,133 @@
+
+<html>
+<head>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <link rel="stylesheet" href="/static/css/consumption_centers/billing_analysis.css" type="text/css" />
+    <script type="text/javascript" src="/static/js/external/jquery.tools.min.js"></script>
+    <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+
+    <script type="text/javascript">
+        google.load('visualization', '1', {packages: ['corechart']});
+    </script>
+    <script type="text/javascript">
+
+        function drawVisualization() {
+
+        {% if contenedor_global %}
+            {% for atributo in contenedor_global %}
+                {% for key, value in atributo.items %}
+                        {% if key == 'valores' %}
+                            var {{ atributo.nombre_seguro }}_data = google.visualization.arrayToDataTable([
+                                {% if not compare_years %}
+                                    ['Mes', 'KWH'],
+                                    {% for v in value %}
+                                        ['{{ v.mes }}',{{ v.kwh_01 }}],
+                                    {% endfor %}
+                                {% else %}
+                                    ['Mes', 'KWH {{ year_01 }}', 'KWH {{ year_02 }}'],
+                                    {% for v in value %}
+                                        ['{{ v.mes }}',{{ v.kwh_01 }},{{ v.kwh_02 }}],
+                                    {% endfor %}
+                                {% endif %}
+                            ]);
+
+                            // Create and draw the visualization.
+                            new google.visualization.ColumnChart(document.getElementById('{{ atributo.nombre_seguro }}')).
+                                    draw({{ atributo.nombre_seguro }}_data,
+                                    {
+                                        width:900, height:400, vAxis: {title: "Energía (KWh)"}, colors:['#5093c7','#f78a3d'],legend:'none'
+
+                                    }
+                            );
+
+                        {% endif %}
+                {% endfor %}
+            {% endfor %}
+        {% endif %}
+
+        }
+
+
+        $(document).ready(function(){
+
+            //$(this).contents().find("#cal").DatePicker();
+        });
+
+
+        google.setOnLoadCallback(drawVisualization);
+    </script>
+
+</head>
+
+<body style="background: none !important;">
+
+
+<div class="iframe_container">
+<div id="reporte_title">
+    <h1>Reporte de Desempeño Energético</h1>
+</div>
+
+{% if contenedor_global %}
+    {% for atributo in contenedor_global %}
+        <div class="graph_title">
+
+            Analisis de kWh x {{ atributo.nombre }}: {{ year_01 }}
+            {% if compare_years %}
+                vs {{ year_02 }}
+            {% endif %}
+        </div>
+
+        <div class="g_border">
+            <div class="left_bgraph">
+                <div class="graph_container" id="{{ atributo.nombre_seguro }}">
+
+                </div>
+            </div>
+            <div class="right_bgraph">
+                <div class="right_info">
+                    {% if compare_years %}
+                        <div>
+                            <div class="label_title_graph">
+                                Variación
+                            </div>
+                            <div class="info_compare">
+                                {% if atributo.positive_b == -1 %}
+                                    <img src="/static/css/images/imgs_icns/ba_up_arrow.png"/>
+                                    <span class="positive">{{ atributo.variacion|floatformat:2 }} %</span>
+                                {% elif atributo.positive_b == 1 %}
+                                    <img src="/static/css/images/imgs_icns/ba_down_arrow.png"/>
+                                    <span class="negative">{{ atributo.variacion|floatformat:2 }} %</span>
+                                {% else %}
+                                    <span class="negative">{{ atributo.variacion|floatformat:2 }} %</span>
+                                {% endif %}
+
+                            </div>
+                            <div class="label_data">
+                                Promedio {{ year_01 }}: {{ atributo.y01_promedio|floatformat:2 }} kWh
+                            </div>
+                            <div class="label_data">
+                                Promedio {{ year_02 }}: {{ atributo.y02_promedio|floatformat:2 }} kWh
+                            </div>
+                        </div>
+                    {% else %}
+                        <div>
+                            <div class="label_title_graph">
+                                Promedio Mensual:
+                            </div>
+                            <div class="label_data_graph">
+                                {{ atributo.y01_promedio|floatformat:2 }} kWh
+                            </div>
+                            <div class="label_data_graph_performance">
+                                x {{ atributo.unidad }}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+{% endif %}
+
+</div>
+</body>
+</html>
