@@ -535,9 +535,6 @@ def process_consumer_unit_electrical_parameter_instant_group(
                 electrical_parameter.name_transactional
             )
 
-        logger.info("electric_data_raw_dictionaries_list")
-        logger.info(electric_data_raw_dictionaries_list)
-
     except django.core.exceptions.FieldError:
         logger.error(data_warehouse_extended.globals.SystemError.FIELD_ERROR)
         return

@@ -3,6 +3,7 @@
 # Python imports
 import datetime
 import logging
+import numpy
 import time
 import sys
 
@@ -307,6 +308,45 @@ def get_request_data_list_normalized(
             request_data_list_item_normalized)
 
     return request_data_list_normalized
+
+
+def get_data_clusters_statistics(
+        data_clusters_list_normalized
+):
+    """
+        Description:
+
+
+        Arguments:
+            data_clusters_list_normalized -
+
+        Return:
+
+    """
+    data_clusters_statistics = []
+    for data_cluster in data_clusters_list_normalized:
+
+        data_cluster_values_list = []
+        for data_dictionary in data_cluster:
+            data_cluster_values_list.append(float(data_dictionary['value']))
+
+        data_cluster_values_array = numpy.array(data_cluster_values_list)
+        data_cluster_values_array.sort()
+        data_cluster_mean = data_cluster_values_array.mean()
+        data_cluster_maximum = data_cluster_values_array.max()
+        data_cluster_minimum = data_cluster_values_array.min()
+        data_cluster_median = numpy.median(data_cluster_values_array)
+        data_cluster_standard_deviation = data_cluster_values_array.std()
+
+        data_clusters_statistics.append({
+            "mean" : data_cluster_mean,
+            "maximum" : data_cluster_maximum,
+            "minimum" : data_cluster_minimum,
+            "median": data_cluster_median,
+            "standard_deviation" : data_cluster_standard_deviation
+        })
+
+    return  data_clusters_statistics
 
 
 def get_timedelta_from_normalized_request_data_list(
@@ -680,7 +720,8 @@ def render_instant_measurements(
 
     template_variables = {
         'columns' : None,
-        'limits' : None,
+        'max' : None,
+        'min' : None,
         'rows' : None,
     }
 
@@ -751,14 +792,20 @@ def render_instant_measurements(
     #
     data_clusters_json = get_data_clusters_json(data_clusters_list)
 
-    maximum, minimum = get_limits(data_clusters_list)
-
     if data_clusters_json is None:
         raise django.http.Http404
 
     template_variables['rows'] = data_clusters_json
-    template_variables['min'] = minimum
+
+    #
+    # Get statistical values
+    #
+    maximum, minimum = get_limits(data_clusters_list)
+    data_clusters_statistics = get_data_clusters_statistics(data_clusters_list)
+
     template_variables['max'] = maximum
+    template_variables['min'] = minimum
+    template_variables['columns_statistics'] = data_clusters_statistics
 
     template_context =\
         django.template.context.RequestContext(request, template_variables)
