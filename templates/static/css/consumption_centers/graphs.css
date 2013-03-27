@@ -259,3 +259,14 @@ div.container{
 .chart-column-not-active{
     font-weight: normal;
 }
+#parameter_controls{
+    position: relative;
+    background: #eaeaea;
+    top: 53px;
+    width: 93%;
+    left: 66px;
+    padding-left: 15px;
+}
+#parameter_controls .checker{
+    z-index: 3;
+}

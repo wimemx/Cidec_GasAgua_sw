@@ -106,6 +106,12 @@ iframe{
     padding-bottom: 10px;
 }
 
+.label_data_graph_performance{
+    color: #4d5b65;
+    font-size: 18px;
+    padding-bottom: 10px;
+}
+
 .info_compare{
     color: #f78a3d;
     font-size: 28px;

@@ -10,7 +10,8 @@
     <script type="text/javascript" src="/static/date_picker/js/date_picker.js"></script>
 
     <script type="text/javascript">
-    //<![CDATA[
+    var number_params = 0;
+    var src = "{{ graph_type.object_access_point|safe }}";
     function clean_dates(url){
         var f1_init = encodeURIComponent($("#range1_init").val());
         var f1_end = encodeURIComponent($("#range1_end").val());
@@ -112,6 +113,13 @@
     }
     function graphsReload(){
         /* Takes the date in the range inputs and reloads the graph data */
+        var get_string = src.split("?")[1];//electrical-parameters-names
+        var get_parameters = get_string.split("&");
+        var params = [];
+        for(var i_get=0; i_get<get_parameters.length;i_get++){
+            var get_str = get_parameters[i_get];
+            params.push(get_str.split("=")[1]);
+        }
 
         var f1_init = encodeURIComponent($("#range1_init").val());
         var f1_end = encodeURIComponent($("#range1_end").val());
@@ -121,58 +129,57 @@
         var f3_end = encodeURIComponent($("#range3_end").val());
         var f4_init = encodeURIComponent($("#range4_init").val());
         var f4_end = encodeURIComponent($("#range4_end").val());
-        if(f1_init!=''){
-            var url = $("#graphFrame").attr("src").replace('#','').split("&");
-            var base_url=url[0];
 
-            base_url+='&consumer-unit01={{ consumer_unit.pk }}';
-            if (url.length > 1){
-
-                base_url += "&date-from01=" + f1_init;
-                if(f1_end != ''){
-                    base_url += "&date-to01=" + f1_end;
-                }else{
-                    base_url += "&date-to01=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
-                }
-                if(f2_init != ''){
-                    base_url += "&date-from02=" + f2_init;
-                    if(f2_end != ''){
-                        base_url += "&date-to02=" + f2_end;
-                    }else{
-                        base_url += "&date-to02=" + encodeURIComponent(new Date());
-
-                    }
-                    base_url += "&consumer-unit02={{ consumer_unit.pk }}"
-                }
-                if(f3_init != ''){
-                    base_url += "&date-from03=" + f3_init;
-                    if(f3_end != ''){
-                        base_url += "&date-to03=" + f3_end;
-                    }else{
-                        base_url += "&date-to03=" + encodeURIComponent(new Date());
-
-                    }
-                    base_url += "&consumer-unit03={{ consumer_unit.pk }}"
-                }
-                if(f4_init != ''){
-                    base_url += "&date-from04=" + f4_init;
-                    if(f4_end != ''){
-                        base_url += "&date-to04=" + f4_end;
-                    }else{
-                        base_url += "&date-to04=" + encodeURIComponent(new Date());
-
-                    }
-                    base_url += "&consumer-unit04={{ consumer_unit.pk }}"
-                }
-                base_url=append_parameters(base_url);
-                makeIframe(base_url);
-            }else{
-                $("#graph_container").html("<h2>Por favor, " +
-                        "primero seleccione el tipo de gr&aacute;fica a mostrar</h2>" +
-                        "<iframe id='graphFrame' src=''>" +
-                        "</iframe>");
+        var params_new = [];
+        var c_param;
+        var cont=0;
+        if(f1_init != ''){
+            var base_url = src.split("?")[0];
+            if(f1_end == ''){
+                f1_end = new Date().format("yyyy-mm-dd");
             }
 
+            c_param = construct_params(params, f1_init, f1_end, 1);
+            params_new = c_param;
+
+            if(f2_init != ''){
+
+                if(f2_end == ''){
+                    f2_end = new Date().format("yyyy-mm-dd");
+                }
+                c_param = construct_params(params, f2_init, f2_end, Object.size(params_new)/params.length);
+
+                params_new = merge_object(params_new, c_param);
+
+            }
+
+            if(f3_init != ''){
+                cont++;
+
+                if(f3_end == ''){
+                    f3_end = new Date().format("yyyy-mm-dd");
+                }
+                c_param = construct_params(params, f3_init, f3_end, (Object.size(params_new)/params.length)-cont);
+
+                params_new = merge_object(params_new, c_param);
+            }
+
+
+            if(f4_init != ''){
+                cont++;
+
+                if(f4_end == ''){
+                    f4_end = new Date().format("yyyy-mm-dd");
+                }
+                c_param = construct_params(params, f4_init, f4_end, (Object.size(params_new)/params.length-cont));
+
+                params_new = merge_object(params_new, c_param);
+            }
+
+            console.log(params_new);
+            var url = buildUrl(src.split("?")[0], params_new);
+
+            makeIframe(url);
         }
 
     }
@@ -180,14 +187,52 @@
         // regresca el height del iframe para ajustarse a su conte
         setTimeout("parent.document.getElementById('graphFrame').height = document['body'].offsetHeight;", 1000);
     }
-    function makeIframe(src){
+    function makeIframe(source){
         var graphFrame = document.createElement("IFRAME");
         graphFrame.id = "graphFrame";
-        graphFrame.src = src;
+        graphFrame.src = source;
         $("#graph_container").html(graphFrame);
         refresh_iframe_height();
     }
-    //]]>
+
+    function initial_parameters(cu_count){
+        var params = [];
+        for(var i=1; i<=cu_count; i++){
+            var index;
+            var fecha_ini = new Date();
+            fecha_ini.setDate(fecha_ini.getDate()-30);
+            var f_i = fecha_ini.format("yyyy-mm-dd");
+            var f_e = new Date().format("yyyy-mm-dd");
+
+            if(i<10){
+                index = "0"+String(i);
+            }else{
+                index = String(i);
+            }
+            params['consumer-unit'+index]={{ consumer_unit.pk }};
+            params['date-from'+index] = f_i;
+            params['date-to'+index] = f_e;
+        }
+        return params;
+    }
+    function construct_params(params, finit, fend, seq){
+        var params_ = [];
+        var index = seq;
+        for(var ncu=1; ncu<=number_params; ncu++){
+
+            if(index<10){
+                index = "0"+String(index);
+            }else{
+                index = String(index);
+            }
+            params_['consumer-unit'+index]={{ consumer_unit.pk }};
+            params_['date-from'+index] = finit;
+            params_['date-to'+index] = fend;
+            params_['electrical-parameter-name'+index] = params[ncu-1];
+            index++;
+        }
+        return params_;
+    }
     </script>
 {% endblock %}
 {% block document_ready %}
@@ -329,47 +374,16 @@
         }
         $("#widgetCalendar4").slideToggle();
     });
-
-    $("#types_graphs ul li").each(function(){
-        // Carga el iframe de la grafica correspondiente,
-        $(this).click(function(){
-            $("#types_graphs ul li").each(function(){$(this).removeClass("active");});
-            var src;
-            switch($(this).attr("id")){
-                {% for type in graphs %}
-                case "{{ type.pk }}":
-                    src = "{{ type.object_access_point }}";
-                    break;
-                {% endfor %}
-            }
+    //--INITIAL IFRAME URL
+    var get_string = src.split("?")[1];//electrical-parameters-names
+    number_params = get_string.split("&").length;
+    params = initial_parameters(number_params);
+    url = buildUrl(src.split("?")[0], params);
+    url += "&"+get_string;
+    console.log(url);
+    makeIframe(url);
 
 
-            //var get_vars = $("#graphFrame").attr("src").split('?')[1]
-
-                src=append_parameters2(src);
-
-                src+="&consumer-unit01="+String({{ consumer_unit.pk }});
-                if ($("#range2_init").val()!=''){
-                    src+="&consumer-unit02="+String({{ consumer_unit.pk }});
-                }
-                if ($("#range3_init").val()!=''){
-                    src+="&consumer-unit03="+String({{ consumer_unit.pk }});
-                }
-                if ($("#range4_init").val()!=''){
-                    src+="&consumer-unit04="+String({{ consumer_unit.pk }});
-                }
-
-
-                src=clean_dates(src)
-
-                makeIframe(src);
-                //cambia la clase de la pestania
-                $(this).addClass("active");
-
-
-
-        });
-    });
     /*$("#compare_to").change(function(){
         //agrega y refresca los datos para ser comparados contra otra entidad
         var compared_companies=$("#evaluated_companies").val().split(",");
@@ -508,14 +522,10 @@
     </div>
 
     <div class="divider" id="divider_top">&nbsp;</div>
+    <h3>
+        {{ graph_type.object_description }}
+    </h3>
 
-    <div id="types_graphs">
-        <ul>
-            {% for type in graphs %}
-                <li id="{{ type.pk }}">{{ type.object_name }}</li>
-            {% endfor %}
-        </ul>
-    </div>
     <div id="graphs_container">
         <div id="compare" class="fl">
             <input id="evaluated_companies" type="hidden" value="{{ empresa.pk }},"/>
