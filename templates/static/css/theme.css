@@ -223,14 +223,18 @@ body{
 }
 h2{
     line-height: 22px;
-    color: #878787;
+    color: #4d5b65;
     font-weight: 700;
-    font-size: 14px;
+    font-size: 20px;
     float: left;
+}
+h2 span{
+    font-size: 20px;
+    font-weight: 300 !important;
 }
 .various{
     line-height: 23px;
-    color: #86A2AC;
+    color: #0278cf;
     float: left;
     margin-left: 5px;
 }
@@ -392,6 +396,10 @@ h2{
 }
 #main_menu li.first_level.settings{
     background: url(images/imgs_icns/menu_settings.png) no-repeat left center;
+}
+#main_menu li.first_level.settings a{
+    display: block;
+    height: 100%;
 }
 /*all nested uls*/
 #main_menu li.first_level ul{
