@@ -720,6 +720,7 @@ def render_instant_measurements(
 
     template_variables = {
         'columns' : None,
+        'columns_statistics' : None,
         'max' : None,
         'min' : None,
         'rows' : None,
@@ -813,3 +814,31 @@ def render_instant_measurements(
     return django.shortcuts.render_to_response(
                "reports/instant-measurements.html",
                template_context)
+
+
+def render_instant_measurements(
+        request
+):
+
+    template_variables = {
+        'columns' : None,
+        'columns_statistics' : None,
+        'max' : None,
+        'min' : None,
+        'rows' : None,
+    }
+
+    if not request.method == "GET":
+        raise django.http.Http404
+
+    try:
+        consumer_unit_id = request.GET['consumer-unit-id']
+        month = request.GET['month']
+        year = request.GET['year']
+
+    except KeyError:
+        raise django.http.Http404
+
+    
+
+
