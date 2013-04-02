@@ -174,8 +174,15 @@ background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
     margin-top: 5px;
     margin-bottom: 5px;
     width: 100%;
+    height: 12px;
     display: block;
     float: left;
+}
+
+.extra_attributes_building{
+    margin-top: 5px;
+    margin-bottom: 5px;
+    width: 100%;
 }
 
 .tip_attribute_part{
@@ -229,9 +236,18 @@ background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
     width: 100%;
 }
 
+.building_info_top{
+    width: 100%;
+    height: 320px;
+}
+
+.building_info_bottom{
+    width: 100%;
+    height: 460px;
+}
+
 .building_column{
     width: 50%;
-    height: 100%;
     float: left;
 }
 

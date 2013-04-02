@@ -545,7 +545,7 @@ def cfe_calculations(request):
                         'automáticamente el día ' + \
                         cut_date_lb.strftime("%d/%m/%Y")
                     template_vars['type'] = "n_notif"
-                elif 30 < num_dias <= 35:
+                elif 30 <= num_dias <= 35:
                     template_vars['message'] = 'La facturación para este ' \
                                                'mes ya rebasa los 30 días. ' \
                                                'Selecciona la fecha de corte ' \
@@ -4789,7 +4789,7 @@ def edit_partbuilding(request, id_bpart):
                 b_at_pk = str(bp_att.building_attributes.pk)
                 b_attr_pk = str(
                     bp_att.building_attributes.building_attributes_type.pk)
-                string_attributes += '<div  class="extra_attributes_div">' \
+                string_attributes += '<div  class="extra_attributes_building">' \
                                      '<span class="delete_attr_icon">' \
                                      '<a href="#eliminar" ' \
                                      'class="delete hidden_icon" ' + \
@@ -5524,7 +5524,7 @@ def edit_building(request, id_bld):
 
                 bp_att_building_attributes_value = str(
                     bp_att.building_attributes_value)
-                string_attributes += '<div  class="extra_attributes_div">' \
+                string_attributes += '<div  class="extra_attributes_building">' \
                                      '<span class="delete_attr_icon">' \
                                      '<a href="#eliminar" class="delete ' \
                                      'hidden_icon" ' + \
