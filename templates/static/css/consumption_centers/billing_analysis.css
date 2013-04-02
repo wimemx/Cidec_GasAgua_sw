@@ -6,6 +6,10 @@ iframe{
 #widgetField{
     width: 255px !important;
 }
+#datepicker_component{
+    position: relative;
+    top: 26px;
+}
 
 #analisis_container{
     height: 990px;

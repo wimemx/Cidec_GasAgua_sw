@@ -77,7 +77,7 @@ def populate_data_warehouse_extended(
 
     if populate_data:
         consumer_unit_profiles =\
-            data_warehouse_extended.models.ConsumerUnitProfile.objects.all()
+            data_warehouse_extended.models.ConsumerUnitProfile.objects.filter(transactional_id__in=[29, 30, 39, 44, 47])
 
         electrical_parameters =\
             data_warehouse_extended.models.ElectricalParameter.objects.all()

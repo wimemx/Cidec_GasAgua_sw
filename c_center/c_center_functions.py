@@ -257,14 +257,82 @@ def get_partsofbuilding_for_operation(permission, operation, user, building):
             return PartOfBuilding.objects.filter(
                 pk__in=parts_pks, part_of_building_status=True), False
 
+
+def get_all_consumer_units_for_building(building):
+    """ Returns all the non virtual consumer units
+     :param building: Object Building instance
+    """
+    return ConsumerUnit.objects.filter(building=building).exclude(
+        profile_powermeter__powermeter__powermeter_anotation="Medidor Virtual"
+    ).exclude(profile_powermeter__powermeter__status=0)
+
+
+def get_c_unitsforbuilding_for_operation(permission, operation, user, building):
+    """Obtains a queryset for all the ConsumerUnits that exists in a
+    datacontext for a user for a given building, if the user is super_user
+    returns all active ConsumerUnits for the building,
+    if the user has permission over the entire building,
+    returns all active ConsumerUnits for the building
+    returns a tuple containing the queryset, and a boolean,
+    indicating if returns all the objects
+
+    :param permission: string, the name of the permission object
+    :param operation: operation object, (VIEW, CREATE, etc)
+    :param user: django.contrib.auth.models.User instance
+    :param building: Building instance
+    """
+    if user.is_superuser:
+        return get_all_consumer_units_for_building(building), True
+    else:
+        permission = Object.objects.get(object_name=permission)
+
+        company = CompanyBuilding.objects.get(building=building).company
+        cluster = ClusterCompany.objects.get(company=company).cluster
+
+        if is_allowed_operation_for_object(operation, permission, user,
+                                           building, "building") or \
+                is_allowed_operation_for_object(operation, permission, user, company,
+                                                "company") or \
+                is_allowed_operation_for_object(operation, permission, user, cluster,
+                                                "cluster"):
+            return get_all_consumer_units_for_building(building), True
+        else:
+            #lista de roles que tienen permiso de "operation" "permission"
+            roles_pks = [pa.role.pk for pa in
+                         PermissionAsigment.objects.filter(object=permission,
+                                                           operation=operation)]
+            #lista de data_context's del usuario donde tiene permiso de crear
+            # asignaciones de roles
+            data_context = DataContextPermission.objects.filter(
+                user_role__role__pk__in=roles_pks, user_role__user=user,
+                building=building)
+            parts_pks = []
+            for data_c in data_context:
+                #reviso si tengo un datacontext para el cluster completo
+                if not data_c.part_of_building:
+                    return get_all_consumer_units_for_building(building), True
+                else:
+                    parts_pks.append(data_c.part_of_building.pk)
+            return ConsumerUnit.objects.filter(
+                part_of_building__pk__in=parts_pks,
+                part_of_building__part_of_building_status=True
+            ).exclude(
+                profile_powermeter__powermeter__powermeter_anotation="Medidor Virtual"
+            ).exclude(profile_powermeter__powermeter__status=0), False
+
 def get_cluster_companies(request, id_cluster):
     """
     returns a json with all the comanies in the cluster with id = id_cluster,
 
     """
+    if "op" in request.GET:
+        operation = Object.objects.get(id=request.GET['op'])
+        operation = operation.object_name
+    else:
+        operation="Asignar roles a usuarios"
     cluster = get_object_or_404(Cluster, pk=id_cluster)
     companies_for_user, all_cluster = get_companies_for_operation(
-        "Asignar roles a usuarios", CREATE, request.user, cluster)
+        operation, CREATE, request.user, cluster)
     companies = []
     if companies_for_user:
         for company in companies_for_user:
@@ -280,8 +348,13 @@ def get_cluster_companies(request, id_cluster):
 
 def get_company_buildings(request, id_company):
     company = get_object_or_404(Company, pk=id_company)
+    if "op" in request.GET:
+        operation = Object.objects.get(id=request.GET['op'])
+        operation = operation.object_name
+    else:
+        operation="Asignar roles a usuarios"
     buildings_for_user, all_company = get_buildings_for_operation(
-        "Asignar roles a usuarios", CREATE, request.user, company)
+        operation, CREATE, request.user, company)
     buildings = []
     if buildings_for_user:
         for building in buildings_for_user:
@@ -302,8 +375,13 @@ def get_parts_of_building(request, id_building):
 
     """
     building = get_object_or_404(Building, pk=id_building)
+    if "op" in request.GET:
+        operation = Object.objects.get(id=request.GET['op'])
+        operation = operation.object_name
+    else:
+        operation="Asignar roles a usuarios"
     parts_for_user, all_building = get_partsofbuilding_for_operation(
-        "Asignar roles a usuarios", CREATE, request.user, building)
+        operation, CREATE, request.user, building)
     #p_buildings= PartOfBuilding.objects.filter(building=building)
     parts = []
     if parts_for_user:
@@ -311,6 +389,36 @@ def get_parts_of_building(request, id_building):
             parts.append(dict(pk=part.pk, part=part.part_of_building_name,
                               all=all_building))
         data = simplejson.dumps(parts)
+    elif all_building:
+        data = simplejson.dumps([dict(all="all")])
+    else:
+        data = simplejson.dumps([dict(all="none")])
+    return HttpResponse(content=data, content_type="application/json")
+
+
+def get_cus_of_building(request, id_building):
+    """ Get all the consumer units of a building in wich the user has
+    permission to do something
+
+    """
+    building = get_object_or_404(Building, pk=id_building)
+    if "op" in request.GET:
+        operation = Object.objects.get(id=request.GET['op'])
+        operation = operation.object_name
+    else:
+        operation="Asignar roles a usuarios"
+    cus_for_user, all_building = get_c_unitsforbuilding_for_operation(
+        operation, CREATE, request.user, building)
+    #p_buildings= PartOfBuilding.objects.filter(building=building)
+    consumer_units = []
+    if cus_for_user:
+        for cu in cus_for_user:
+            consumer_units.append(
+                dict(
+                    pk=cu.pk,
+                    annotation=cu.profile_powermeter.powermeter.powermeter_anotation,
+                    all=all_building))
+        data = simplejson.dumps(consumer_units)
     elif all_building:
         data = simplejson.dumps([dict(all="all")])
     else:
@@ -1007,8 +1115,9 @@ def get_profile(request):
 
 def all_dailyreportAll():
     buildings = Building.objects.all()
-
-    initial_d = datetime.datetime(2012,8,1)
+    initial_d = datetime.datetime(2013,3,9)
+    datos = DailyData.objects.filter(data_day__gte=initial_d)
+    datos.delete()
     dia = datetime.timedelta(days=1)
     while initial_d < datetime.datetime.today():
         for buil in buildings:
@@ -1027,15 +1136,26 @@ def all_dailyreportAll():
 def dailyReportAll():
     buildings = Building.objects.all()
     for buil in buildings:
-        cus = ConsumerUnit.objects.filter(building=buil)
-        for cu in cus:
+        try:
+            main_cu = ConsumerUnit.objects.get(
+                building=buil,
+                electric_device_type__electric_device_type_name="Total Edificio"
+            )
+        except ObjectDoesNotExist:
+            continue
+        else:
             dia = datetime.timedelta(days=1)
-            eq_cu = get_consumer_units(cu)
-            if len(eq_cu) > 1:
-                #suma(eq_cu)
-                pass
-            else:
-                dailyReport(buil, cu, datetime.datetime.today()-dia)
+            dailyReport(buil, main_cu, datetime.datetime.today()-dia)
+        # ----- iterative daily report for all consumer units
+        #cus = ConsumerUnit.objects.filter(building=buil)
+        #for cu in cus:
+        #    dia = datetime.timedelta(days=1)
+        #    eq_cu = get_consumer_units(cu)
+        #    if len(eq_cu) > 1:
+        #        #suma(eq_cu)
+        #        pass
+        #    else:
+        #        dailyReport(buil, cu, datetime.datetime.today()-dia)
     print "Done dailyReportAll"
 
 
