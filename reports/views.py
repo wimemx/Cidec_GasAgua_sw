@@ -757,7 +757,9 @@ def render_instant_measurements(
 
         datetime_from = datetime.datetime.strptime(date_from_string, "%Y-%m-%d")
         datetime_to = datetime.datetime.strptime(date_to_string, "%Y-%m-%d")
-
+        datetime_from = datetime_from.replace(hour=00, minute=00, second=00)
+        datetime_to = datetime_to.replace(hour=23, minute=59, second=59)
+        print datetime_from, datetime_to
         request_data_list_item =\
             (consumer_unit_id,
              datetime_from,

@@ -78,6 +78,13 @@ var state = false;
 <div id="page_content">
 <div id="contenido_interno">
     <h3 class="fl">{{ empresa.building_name }}</h3>
+
+    <div id="logo_container"{% if company.company_logo %}class="c fr" style="background: url(/static/media/{{ company.company_logo }}) no-repeat 50% 50%; background-size: 100% auto; margin-top: -19px;">
+    {% else %}class="c fr" style="background: url(/static/css/images/imgs_icns/company_placeholder.png) no-repeat 50% 50%; background-size: 100% auto; margin-top: -19px;">
+    {% endif %}
+    </div>
+
+    <div class="divider" id="divider_top">&nbsp;</div>
     <div id="datepicker_component">
         <span class="period_tag">Periodo</span>
         {% if month_list %}
@@ -98,7 +105,6 @@ var state = false;
         <button class="aqua_btn" onclick="cfeReload();">Reporte</button>
 
     </div>
-    <div class="divider" id="divider_top">&nbsp;</div>
     <div id="data_container">
         <h2 id="titulo_reporte" class="report_icon">Reporte de CFE</h2>
 

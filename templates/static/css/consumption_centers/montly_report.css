@@ -298,11 +298,13 @@ h3.titulo_reporte{
     margin: 13px auto 5px auto;
 }
 #lateral h3{
+    background: none;
     color: #1f728b;
     font-size: 22px;
     font-weight: 300;
     text-align: center;
     margin-top: 25px;
+    padding: 0;
 }
 #lateral .lat_sep, #lateral h2, #lateral h3, #lateral #lat_consumo,
 #lateral #lat_costo,#lateral #lat_demanda, #lateral .aditional,

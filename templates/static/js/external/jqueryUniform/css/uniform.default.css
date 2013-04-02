@@ -48,6 +48,8 @@ input.text,
 input.email, 
 input.password,
 textarea.uniform {
+  margin-left: 0.2%;
+
   font-size: 12px;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-weight: normal;
