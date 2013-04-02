@@ -14,7 +14,7 @@ from math import ceil
 #local application/library specific imports
 from django.shortcuts import HttpResponse, get_object_or_404
 from django.http import Http404
-from django.utils import simplejson
+from django.utils import simplejson, timezone
 from django.db.models import Q
 from django.db.models.aggregates import *
 from django.core.exceptions import ObjectDoesNotExist
@@ -23,9 +23,7 @@ from django.views.decorators.csrf import csrf_exempt
 from calendar import monthrange
 
 from cidec_sw import settings
-from c_center.calculations import consumoAcumuladoKWH, demandaMaxima, \
-    demandaMinima, promedioKWH, desviacionStandardKWH, medianaKWH, \
-    factorpotencia, costoenergia, obtenerKVARH_total, obtenerKVARH_dia
+from c_center.calculations import *
 from c_center.models import Cluster, ClusterCompany, Company, CompanyBuilding, \
     Building, PartOfBuilding, HierarchyOfPart, ConsumerUnit, \
     ProfilePowermeter, ElectricDataTemp, DailyData, DacHistoricData, \

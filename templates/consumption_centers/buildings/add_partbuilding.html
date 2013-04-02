@@ -132,7 +132,7 @@
 
     function append_attribute(tipo_atributo_etiq,atributo_etiq,tipo_atributo,atributo,valor){
 
-        var append = '<div class="extra_attributes_div"><span class="delete_attr_icon">' +
+        var append = '<div class="extra_attributes_building"><span class="delete_attr_icon">' +
                 '<a href="#eliminar" class="delete hidden_icon" ' +
                 'title="eliminar atributo"></a></span>' +
                 '<span class="tip_attribute_part">' +
@@ -156,7 +156,7 @@
 
 {% block document_ready %}
 
-$(".extra_attributes_div").mouseenter(function(){
+$(".extra_attributes_building").mouseenter(function(){
 $(this).find(".hidden_icon").css("visibility","visible");
 }).mouseleave(function(){
 $(this).find(".hidden_icon").css("visibility","hidden");
@@ -210,7 +210,7 @@ $("#add_attributes").click(function(event){
         append_attribute(attribute_type_label,attribute_label,attribute_type_id,attribute_id,attribute_value);
     }
 
-    $(".extra_attributes_div").mouseenter(function(){
+    $(".extra_attributes_building").mouseenter(function(){
         $(this).find(".hidden_icon").css("visibility","visible");
     }).mouseleave(function(){
         $(this).find(".hidden_icon").css("visibility","hidden");

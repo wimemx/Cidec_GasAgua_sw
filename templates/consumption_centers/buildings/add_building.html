@@ -405,7 +405,7 @@
 
 
     function append_attribute(tipo_atributo_etiq,atributo_etiq,tipo_atributo,atributo,valor){
-        var append = '<div  class="extra_attributes_div"><span class="delete_attr_icon">' +
+        var append = '<div  class="extra_attributes_building"><span class="delete_attr_icon">' +
                 '<a href="#eliminar" class="delete hidden_icon" ' +
                 'title="eliminar atributo"></a></span>' +
                 '<span class="tip_attribute_part">' +
@@ -461,7 +461,7 @@
 
 {% block document_ready %}
 
-$(".extra_attributes_div").mouseenter(function(){
+$(".extra_attributes_building").mouseenter(function(){
 $(this).find(".hidden_icon").css("visibility","visible");
 }).mouseleave(function(){
 $(this).find(".hidden_icon").css("visibility","hidden");
@@ -472,8 +472,18 @@ e.preventDefault();
 $(this).parent().parent().remove();
 });
 
-$("#attributes_type").click(function(){
+$("#attributes_type").click(function(e){
+e.preventDefault();
 $(this).find("ul.ddl").slideToggle();
+});
+
+$("#attributes").click(function(e){
+e.preventDefault();
+if(!$("ul.ddl").is(":visible")){
+    $(this).find("ul.ddl").slideToggle();
+}else{
+    $(this).find("ul.ddl").slideUp();
+}
 });
 
 $("#attributes_type_list li").click(function(){
@@ -515,7 +525,7 @@ if (attribute_type_id != '' && attribute_id != '' && attribute_value != ''){
 append_attribute(attribute_type_label,attribute_label,attribute_type_id,attribute_id,attribute_value);
 }
 
-$(".extra_attributes_div").mouseenter(function(){
+$(".extra_attributes_building").mouseenter(function(){
 $(this).find(".hidden_icon").css("visibility","visible");
 }).mouseleave(function(){
 $(this).find(".hidden_icon").css("visibility","hidden");
@@ -596,8 +606,9 @@ $("a.back").click(function(e){e.preventDefault(); History.back();});
         </p>
         <form method="post" action=".">
             {% csrf_token %}
-            <h3 class="g12">Informaci&oacute;n de Edificio</h3>
-            <div class="building_info">
+            <div>
+            <div class="building_info_top">
+                <h3 class="g12">Informaci&oacute;n de Edificio</h3>
                 <div class="building_column">
                     <div class="fields_row g12">
                         <label for="b_name" class="g3">Nombre<span class="required">*</span></label>
@@ -659,8 +670,8 @@ $("a.back").click(function(e){e.preventDefault(); History.back();});
                     </div>
                 </div>
             </div>
-            <h3 class="g12">Ubicaci&oacute;n</h3>
-            <div class="building_info">
+            <div class="building_info_bottom">
+                <h3 class="g12">Ubicaci&oacute;n</h3>
                 <div class="building_column">
                     <div class="fields_row g12">
                         <label for="b_country" class="g3">Pa&iacute;s<span class="required">*</span></label>
@@ -745,9 +756,10 @@ $("a.back").click(function(e){e.preventDefault(); History.back();});
                     </div>
                 </div>
             </div>
+            <div style="height: auto">
             <h3 class="g12">Atributos extra</h3>
             {{post.b_attributes|safe}}
-
+            </div>
             <div id="atributes_fields">
                 <div id="fields_row g9">
                     <div class="widgetField" id="attributes_type">
@@ -785,10 +797,11 @@ $("a.back").click(function(e){e.preventDefault(); History.back();});
                 </div>
             </div>
 
-            <div class="buttons g12">
+            <div class="buttons g12" style="float:none">
                 <button class="aqua_btn" id="save">
                     Guardar
                 </button>
+            </div>
             </div>
         </form>
 
