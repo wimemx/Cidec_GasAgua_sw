@@ -116,11 +116,7 @@
             send++;
          }
 
-         if(send === 1){
-            return true;
-         }else{
-            return false;
-         }
+         return send === 1;
       });
    });
  };

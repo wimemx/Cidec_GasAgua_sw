@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+import time
+import datetime
+import json
+
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.template.context import RequestContext
@@ -9,9 +13,11 @@ from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.contrib.auth.decorators import login_required
 
 from rbac.rbac_functions import get_buildings_context, has_permission
-from c_center.c_center_functions import get_clusters_for_operation
+from c_center.c_center_functions import get_clusters_for_operation, \
+    get_c_unitsforbuilding_for_operation
 
 from alarms.models import *
+from c_center.models import Building, IndustrialEquipment
 from rbac.models import Operation
 
 
@@ -52,26 +58,72 @@ def add_alarm(request):
         parameters = ElectricParameters.objects.all()
         template_vars['parameters'] = parameters
         if request.method == 'POST':
-            # TODO
-            template_vars["post"] = request.POST.copy()
-            template_vars["post"]['ie_building'] = int(
-                template_vars["post"]['ie_building'])
-            building = Building.objects.get(pk=int(request.POST['ie_building']))
-            ie = IndustrialEquipment(
-                alias=request.POST['ie_alias'].strip(),
-                description=request.POST['ie_desc'].strip(),
-                server=request.POST['ie_server'].strip(),
-                building=building,
-                modified_by=request.user
-            )
-            ie.save()
-            message = "El equipo industrial se ha creado exitosamente"
+            el = ElectricParameters.objects.get(
+                pk=int(request.POST['alarm_param']))
+            timeunix = time.mktime(datetime.datetime.now().timetuple())
+            timeunix = str(int(timeunix))
+            user_pk = str(request.user.pk)
+            building = Building.objects.get(pk=int(request.POST['building']))
+            if request.POST['c_unit'] == "todas":
+                cus = get_c_unitsforbuilding_for_operation(
+                    permission, CREATE, request.user, building
+                )[0]
+                for cu in cus:
+                    id_al = cu.profile_powermeter.powermeter.powermeter_serial
+                    id_al += "_"
+                    id_al += timeunix
+                    id_al += "_"
+                    id_al += user_pk
+                    alarma = Alarms(
+                        alarm_identifier=id_al,
+                        electric_parameter=el,
+                        max_value=request.POST['alarm_max_value'].strip(),
+                        min_value=request.POST['alarm_min_value'].strip(),
+                        consumer_unit=cu)
+                    alarma.save()
+            else:
+                cu = ConsumerUnit.objects.get(pk=int(request.POST['c_unit']))
+                id_al = cu.profile_powermeter.powermeter.powermeter_serial
+                id_al += "_"
+                id_al += timeunix
+                id_al += "_"
+                id_al += user_pk
+
+                alarma = Alarms(
+                    alarm_identifier=id_al,
+                    electric_parameter=el,
+                    max_value=request.POST['alarm_max_value'].strip(),
+                    min_value=request.POST['alarm_min_value'].strip(),
+                    consumer_unit=cu)
+                alarma.save()
+
+            message = "La alarma se ha creado exitosamente"
             _type = "n_success"
+            # make json for new config
+            b_alarms = Alarms.objects.filter(consumer_unit__building=building)
+            alarm_arr = []
+            for ba in b_alarms:
+                status = "true" if ba.status else "false"
+                min_value = 0 if not ba.min_value else float(str(ba.min_value))
+                max_value = 0 if not ba.max_value else float(str(ba.max_value))
+                alarm_arr.append(
+                    dict(alarm_identifier=ba.alarm_identifier,
+                         electric_parameter_id=ba.electric_parameter.pk,
+                         min_value=min_value,
+                         max_value=max_value,
+                         status=status
+                         ))
+            i_eq = IndustrialEquipment.objects.get(building=building)
+            i_eq.has_new_alarm_config = True
+            i_eq.new_alarm_config = json.dumps(alarm_arr)
+            i_eq.modified_by = request.user
+            i_eq.save()
+
             if has_permission(request.user, VIEW,
-                              "Ver equipos industriales") or \
+                              "Ver alarmas") or \
                     request.user.is_superuser:
                 return HttpResponseRedirect(
-                    "/buildings/industrial_equipments?msj=" +
+                    "/configuracion/alarmas?msj=" +
                     message +
                     "&ntype=" + _type)
             template_vars["message"] = message
@@ -139,7 +191,7 @@ def edit_alarm(request, id_alarm):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
-
+@login_required(login_url='/')
 def alarm_list(request):
     datacontext = get_buildings_context(request.user)[0]
     template_vars = {}
@@ -152,50 +204,81 @@ def alarm_list(request):
     template_vars["company"] = request.session['company']
 
     if has_permission(request.user, VIEW,
-                      "Ver equipos industriales") or request.user.is_superuser:
+                      "Ver alarmas") or request.user.is_superuser:
         if "search" in request.GET:
             search = request.GET["search"]
         else:
             search = ''
 
-        order_name = 'asc'
-        order_server = 'asc'
+        order_consumer = 'asc'
+        order_parameter = 'asc'
+        order_min_value = 'asc'
+        order_max_value = 'asc'
+        order_changed = 'asc'
         order_status = 'asc'
-        order = "alias" #default order
-        if "order_name" in request.GET:
-            if request.GET["order_name"] == "desc":
-                order = "-alias"
-                order_name = "asc"
+        #default order
+        order = "alias"
+        if "order_consumer" in request.GET:
+            if request.GET["order_consumer"] == "desc":
+                order = "-consumer_unit__profile_powermeter__powermeter" \
+                        "__powermeter_anotation"
+                order_consumer = "asc"
             else:
-                order_name = "desc"
-        else:
-            if "order_server" in request.GET:
-                if request.GET["order_state"] == "asc":
-                    order = "server"
-                    order_server = "desc"
-                else:
-                    order = "-server"
+                order_consumer = "desc"
 
-            if "order_status" in request.GET:
-                if request.GET["order_status"] == "asc":
-                    order = "building__building_status"
-                    order_status = "desc"
-                else:
-                    order = "-building__building_status"
-                    order_status = "asc"
+        elif "order_parameter" in request.GET:
+            if request.GET["order_parameter"] == "asc":
+                order = "electric_parameter__name"
+                order_parameter = "desc"
+            else:
+                order = "-electric_parameter__name"
+
+        elif "order_min_value" in request.GET:
+            if request.GET["order_min_value"] == "asc":
+                order = "min_value"
+                order_min_value = "desc"
+            else:
+                order = "-min_value"
+
+        elif "order_max_value" in request.GET:
+            if request.GET["order_max_value"] == "asc":
+                order = "max_value"
+                order_max_value = "desc"
+            else:
+                order = "-max_value"
+
+        elif "order_changed" in request.GET:
+            if request.GET["order_changed"] == "asc":
+                order = "last_changed"
+                order_changed = "desc"
+            else:
+                order = "-last_changed"
+
+        elif "order_status" in request.GET:
+            if request.GET["order_status"] == "asc":
+                order = "building__building_status"
+                order_status = "desc"
+            else:
+                order = "-building__building_status"
+                order_status = "asc"
 
         if search:
-            lista = IndustrialEquipment.objects.filter(
-                Q(alias__icontains=request.GET['search']) | Q(
-                    server__icontains=request.GET['search']) | Q(
-                    description=request.GET['search'])).order_by(order)
+            lista = Alarms.objects.filter(
+                Q(electric_parameter__name__icontains=request.GET['search']) |
+                Q(
+                    consumer_unit__profile_powermeter__powermeter__icontains=
+                    request.GET['search'])).order_by(order)
 
         else:
-            lista = IndustrialEquipment.objects.all().order_by(order)
+            lista = Alarms.objects.all().order_by(order)
 
-        paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
-        template_vars['order_name'] = order_name
-        template_vars['order_server'] = order_server
+        # muestra 10 resultados por pagina
+        paginator = Paginator(lista, 10)
+        template_vars['order_consumer'] = order_consumer
+        template_vars['order_parameter'] = order_parameter
+        template_vars['order_min_value'] = order_min_value
+        template_vars['order_max_value'] = order_max_value
+        template_vars['order_changed'] = order_changed
         template_vars['order_status'] = order_status
         # Make sure page request is an int. If not, deliver first page.
         try:
@@ -217,7 +300,7 @@ def alarm_list(request):
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
-            "consumption_centers/consumer_units/ie_list.html",
+            "alarms/alarm_list.html",
             template_vars_template)
     else:
         template_vars_template = RequestContext(request, template_vars)

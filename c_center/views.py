@@ -6532,6 +6532,7 @@ def configure_ie(request, id_ie):
             ie.monitor_time_rate = request.POST['monitor_time_rate']
             ie.check_config_time_rate = request.POST['check_config_time_rate']
             ie.has_new_config = True
+            ie.modified_by = request.user
             ie.save()
             settings_ie = [dict(
                 monitor_time_rate=ie.monitor_time_rate,

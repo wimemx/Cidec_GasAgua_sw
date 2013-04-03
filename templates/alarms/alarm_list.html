@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+{% block titulo %}Ver Alarmas{% endblock %}
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/forms/rbac_user_list.css" type="text/css" />
+    <link href="/static/js/external/messi/messi.css" rel="stylesheet" type="text/css" media="screen" />
+{% endblock %}
+{% block externaljs %}
+    <script src="/static/js/external/messi/messi.min.js"></script>
+    <script type="text/javascript">
+        function search_submit(pagina){
+            if (typeof pagina == "object") {
+                pagina = "1";
+            }
+
+            var base_url = window.location.pathname;
+            base_url+="?page="+pagina;
+            base_url=append_page(base_url);
+            window.location = base_url;
+        }
+        function append_page(base_url){
+            var get = getUrlVars();
+            if(get.length>0){
+                if (get[0]!=window.location.protocol+"//"+window.location
+                        .host+window.location.pathname){
+                    for(var i=0; i<get.length; i++){
+                        if (get[i]!="msj" && get[i]!="ntype" && get[i]!="page"){
+                            base_url+="&"+get[i]+"="+get[get[i]];
+                        }
+                    }
+                }
+
+            }
+            return base_url
+        }
+        function append_get(base_url){
+            var get = getUrlVars();
+            if(get.length>0){
+                if (get[0]!=window.location.protocol+"//"+window.location
+                        .host+window.location.pathname){
+                    for(var i=0; i<get.length; i++){
+                        if (get[i]!="order_consumer" && get[i]!="order_parameter" && get[i]!="order_min_value" && get[i]!="order_max_value" && get[i]!="order_changed" && get[i]!="order_status"){
+                            base_url+="&"+get[i]+"="+get[get[i]];
+                        }
+                    }
+                }
+
+            }
+            return base_url
+        }
+    </script>
+{% endblock %}
+{% block document_ready %}
+
+    $("a.switch").click(function(event){
+        event.preventDefault();
+        var url="/configuracion/status_ie/"+$(this).attr("rel")+"/";
+        var action = $(this).attr("title");
+        new Messi('&iquest;Est&aacute; seguro de que desea '+ action +' esta alarma?',
+            {title: action+' alarma', modal: true, buttons: [{id: 0,
+                label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
+            }],
+            callback: function(val) {
+                if(val=='Y'){
+                    document.location.href=url;
+                } else return false; }
+        });
+    });
+
+    $("#aplicar").click(function(e){
+        e.preventDefault();
+        if($("#actions").val()!="0"){
+            var check = false;
+            $("tbody input:checkbox").each(function(){
+                if($(this).is(":checked")){
+                    check = true;
+                }
+            });
+            if(check){
+                new Messi('&iquest;Est&aacute; seguro de que desea cambiar el estatus las alarmas' +
+                ' seleccionados?',
+                    {
+                        title: 'Cambiar estatus', modal: true, buttons: [{id: 0,
+                        label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'}],
+                        callback: function(val) {
+                            if(val=='Y'){
+                                document.forms["operations_batch"].submit();
+                            } else return false;
+                    }
+                });
+            }
+        }else{
+            return false;
+        }
+    });
+
+    $("#sort_name").click(function(e){
+    e.preventDefault();
+    var get = getUrlVars();
+
+    var base_url = window.location.pathname;
+    base_url+="?sort_name="+$("#sort_name").attr("rel");
+    if(get.length>0){
+    if (get[0]!=window.location.protocol+"//"+window.location
+    .host+window.location.pathname){
+    for(var i=0; i<get.length; i++){
+    if (get[i]!="order_brand" && get[i]!="order_model" && get[i]!="order_status"){
+    base_url+="&"+get[i]+"="+get[get[i]];
+    }
+    }
+    }
+    }
+    window.location = base_url;
+    });
+
+    $("#sort_server").click(function(e){
+    e.preventDefault();
+    var get = getUrlVars();
+
+    var base_url = window.location.pathname;
+    base_url+="?sort_server="+$("#sort_server").attr("rel");
+    if(get.length>0){
+    if (get[0]!=window.location.protocol+"//"+window.location
+    .host+window.location.pathname){
+    for(var i=0; i<get.length; i++){
+    if (get[i]!="order_brand" && get[i]!="order_model" && get[i]!="order_status"){
+    base_url+="&"+get[i]+"="+get[get[i]];
+    }
+    }
+    }
+
+    }
+
+    window.location = base_url;
+    });
+
+    $("#sort_status").click(function(e){
+    e.preventDefault();
+    var get = getUrlVars();
+
+    var base_url = window.location.pathname;
+    base_url+="?order_status="+$("#sort_status").attr("rel");
+    if(get.length>0){
+    if (get[0]!=window.location.protocol+"//"+window.location
+    .host+window.location.pathname){
+    for(var i=0; i<get.length; i++){
+    if (get[i]!="order_brand" && get[i]!="order_model" && get[i]!="order_status"){
+    base_url+="&"+get[i]+"="+get[get[i]];
+    }
+    }
+    }
+
+    }
+
+    window.location = base_url;
+    });
+
+
+{% endblock %}
+
+
+{% block contenido %}
+
+    <div id="bread_crumbs">
+        <ul>
+            <li><a href="/main/">Inicio</a></li>
+            <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
+            <li>Alarmas</li>
+        </ul>
+
+    </div>
+    <div id="page_content">
+        <div id="contenido_interno">
+            <h2 id="titulo_form" class="powermeter">Ver Alarmas</h2>
+
+
+            <div class="divider" id="divider_top">&nbsp;</div>
+            {% if message %}
+                <span class="notif {{ msg_type }}">
+                    {% autoescape off %}{{ message }}{% endautoescape %}
+                <a href="#" onclick="$(this).parent().remove(); History.replaceState({}, '', '?page=1');">X</a>
+                </span>
+            {% endif %}
+            <div id="form_container">
+
+                <p class="description">
+                    Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
+                    <br/>
+                    Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
+                </p>
+
+                <div id="user_actions">
+
+                    <a href="/configuracion/alta_ie/"><span class="plus"></span>
+                        Nuevo Equipo
+                    </a>
+                    <span class="hz_divider"></span>
+                    <form method="get" action=".">
+                        <label class="input">
+                            <span>Inserte su texto aqu&iacute;</span>
+                            <input type="text" name="search" id="search"/>
+                        </label>
+                        <button class="aqua_btn">
+                            Buscar
+                        </button>
+                    </form>
+                </div>
+                <form id="operations_batch" action="/configuracion/status_batch_ie/" method="post">
+                    {% csrf_token %}
+                    <div id="grid_container">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th style="width: 25%;">
+                                    <a href="#" id="sort_name" rel="{{ order_name }}">
+                                        Alias del Equipo
+                                        <span class="sort"></span>
+                                    </a>
+                                </th>
+                                <th style="width: 45%;">
+                                    <a href="#" id="sort_server" rel="{{ order_server }}">
+                                        Servidor
+                                        <span class="sort"></span>
+                                    </a>
+                                </th>
+                                <th style="width: 15%;">
+                                    <a href="#" id="sort_status" rel="{{ order_status }}">
+                                        Estatus
+                                        <span class="sort"></span>
+                                    </a>
+                                </th>
+                                <th style="width: 15%;">Acciones</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for equipo in paginacion.object_list %}
+
+                                <tr class="{% cycle 'row1' 'row2' %}">
+                                    <td>
+                                        <input type="checkbox" id="equipo_{{ equipo.pk }}"
+                                               name="equipo_{{ equipo.pk }}"/>
+                                        <label for="equipo_{{ equipo.pk }}">
+                                            <a href="/configuracion/ver_ie/{{ equipo.pk }}/">
+                                                {{ equipo.alias }}
+                                            </a>
+                                        </label>
+                                    </td>
+                                    <td class="c">
+                                        <a href="/configuracion/ver_ie/{{ equipo.pk }}/">
+                                            {{ equipo.server }}
+                                        </a>
+                                    </td>
+                                    <td class="c">
+                                        <a href="#" rel="{{ equipo.pk }}" {% if equipo.status %}class="switch active_switch" title="desactivar"{% else %}class="switch inactive_switch" title="activar"{% endif %}>
+                                        </a>
+                                    </td>
+                                    <td class="c">
+                                        <a class="edit" title="Editar alarma"
+                                           href="/configuracion/editar_ie/{{ equipo.pk }}/"></a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        <div id="table_footer">
+                            <select id="actions" name="actions">
+                                <option value="0">Elije una Acci&oacute;n</option>
+                                <option value="status">Habilitar/Deshabilitar</option>
+                            </select>
+                            <button class="fl aqua_btn" id="aplicar">Aplicar a la
+                                selecci&oacute;n</button>
+
+                            <div class="pagination">
+                            <span class="step-links">
+                                {% if paginacion.has_previous %}
+                                    <a href="#" onclick="search_submit({{ paginacion.previous_page_number }})">Anterior</a> &ndash;
+                                {% endif %}
+
+                                <span class="current">
+                                    P&aacute;gina {{ paginacion.number }} de {{ paginacion.paginator.num_pages }}
+                                </span>
+
+                                {% if paginacion.has_next %}
+                                    &ndash; <a href="#" onclick="search_submit({{ paginacion.next_page_number }})">Siguiente</a>
+                                {% endif %}
+                            </span>
+                            </div>
+
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

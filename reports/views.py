@@ -582,11 +582,11 @@ def get_consumer_unit_electrical_parameter_data_clustered(
     # Get the Instants between the from and to datetime according to the Instant
     # Delta and create a dictionary with them.
     #
-    #instant_delta =\
-    #    get_instant_delta_from_timedelta(datetime_to - datetime_from)
-
     instant_delta =\
-        data_warehouse_extended.views.get_instant_delta(delta_seconds=3600)
+        get_instant_delta_from_timedelta(datetime_to - datetime_from)
+
+    #instant_delta =\
+    #    data_warehouse_extended.views.get_instant_delta(delta_seconds=3600)
 
     if instant_delta is None:
         logger.error(
@@ -719,14 +719,16 @@ def render_instant_measurements(
 ):
 
     template_variables = {
-        'columns' : None,
-        'max' : None,
-        'min' : None,
-        'rows' : None,
+        'columns': None,
+        'max': None,
+        'min': None,
+        'rows': None,
     }
 
     if not request.method == "GET":
         raise django.http.Http404
+    if "granularity" in request.GET:
+        pass
     if not "electrical-parameter-name01" in request.GET:
         return django.http.HttpResponse(content="", status=200)
 

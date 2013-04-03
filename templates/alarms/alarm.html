@@ -18,9 +18,9 @@
         $(document).on("ready", function(){
             $("#alarm").validate();
             var save_button = $("#save");
-            save_button.hide().click(function(){
-                return !($("#alarm_min_value").val() == '' && $("#alarm_max_value").val() == '');
-            });
+            var min = $("#alarm_min_value");
+            var max = $("#alarm_max_value");
+            save_button.hide();
             $("#cluster").change(function(){
                 if($(this).val() != "0"){
                     $.ajax({
@@ -112,7 +112,7 @@
                                                                         success: function(datos){
                                                                             var append_text = '';
                                                                             if(datos.length == 0){
-                                                                                append_text = 'El edificio seleccionado tiene unidades de consumo asociadas.';
+                                                                                append_text = 'El edificio seleccionado no tiene unidades de consumo asociadas.';
                                                                                 $("#cons_unit").html(append_text);
                                                                             }else{
                                                                                 var first_option='';
@@ -127,10 +127,10 @@
                                                                                             'elije una parte del edificio</option>';
                                                                                 }
                                                                                 if(datos[0].pk != undefined){
-                                                                                    append_text = '<label for="part" class="g3">' +
+                                                                                    append_text = '<label for="c_unit" class="g3">' +
                                                                                             'Selecciona una unidad de consumo' +
                                                                                             '</label>' +
-                                                                                            '<select name="part" id="part" class="g9">';
+                                                                                            '<select name="c_unit" id="c_unit" class="g9">';
 
                                                                                     append_text += first_option;
 
@@ -142,7 +142,7 @@
                                                                                     append_text += "</select>";
 
                                                                                     $("#cons_unit").html(append_text);
-                                                                                    $("#part").uniform().change(function(){
+                                                                                    $("#c_unit").uniform().change(function(){
                                                                                         if ($(this).val()!="0"){
                                                                                             save_button.show();
                                                                                         }
@@ -285,11 +285,11 @@
 
                         <div class="fields_row g12">
                             <label for="alarm_max_value" class="g3">Valor m&aacute;ximo</label>
-                            <input type="text" name="alarm_max_value" id="alarm_max_value" class="g8 validate numeric"/>
+                            <input type="text" name="alarm_max_value" id="alarm_max_value" class="g8 validate numeric notnull"/>
                         </div>
                         <div class="fields_row g12">
                             <label for="alarm_min_value" class="g3">Valor m&iacute;nimo</label>
-                            <input type="text" name="alarm_min_value" id="alarm_min_value" class="g8 validate numeric"/>
+                            <input type="text" name="alarm_min_value" id="alarm_min_value" class="g8 validate numeric notnull"/>
                         </div>
                         <div class="fields_row g12">
                             <label for="cluster" class="g3">Selecciona un grupo de empresas</label>

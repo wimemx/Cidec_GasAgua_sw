@@ -778,25 +778,32 @@ def get_total_consumer_unit(consumerUnit, total):
             consumerUnit.building))
         ids_hierarchy = [] #arreglo donde guardo los hijos
         ids_hierarchy_cu = [] #arreglo donde guardo los hijos (consumerunits)
-        for hy in hierarchy:
-            if hy.part_of_building_leaf:
-                ids_hierarchy.append(hy.part_of_building_leaf.pk)
-            if hy.consumer_unit_leaf:
-                ids_hierarchy_cu.append(hy.consumer_unit_leaf.pk)
+        if not hierarchy:
+            cus = ConsumerUnit.objects.filter(
+                building=consumerUnit.building).exclude(
+                electric_device_type__electric_device_type_name="Total Edificio"
+            )
+            c_units = [cu for cu in cus]
+        else:
+            for hy in hierarchy:
+                if hy.part_of_building_leaf:
+                    ids_hierarchy.append(hy.part_of_building_leaf.pk)
+                if hy.consumer_unit_leaf:
+                    ids_hierarchy_cu.append(hy.consumer_unit_leaf.pk)
 
-        #sacar los padres(partes de edificios y consumerUnits que no son
-        # hijos de nadie)
-        parents = PartOfBuilding.objects.filter(
-            building=consumerUnit.building).exclude(
-            pk__in=ids_hierarchy)
+            #sacar los padres(partes de edificios y consumerUnits que no son
+            # hijos de nadie)
+            parents = PartOfBuilding.objects.filter(
+                building=consumerUnit.building).exclude(
+                pk__in=ids_hierarchy)
 
-        for parent in parents:
-            par_cu = ConsumerUnit.objects.get(part_of_building=parent)
-            if par_cu.profile_powermeter.powermeter.powermeter_anotation == "Medidor Virtual":
-                c_units_leaf = get_total_consumer_unit(par_cu, False)
-                c_units.extend(c_units_leaf)
-            else:
-                c_units.append(par_cu)
+            for parent in parents:
+                par_cu = ConsumerUnit.objects.get(part_of_building=parent)
+                if par_cu.profile_powermeter.powermeter.powermeter_anotation == "Medidor Virtual":
+                    c_units_leaf = get_total_consumer_unit(par_cu, False)
+                    c_units.extend(c_units_leaf)
+                else:
+                    c_units.append(par_cu)
     return c_units
 
 
@@ -1134,27 +1141,79 @@ def all_dailyreportAll():
 def dailyReportAll():
     buildings = Building.objects.all()
     for buil in buildings:
-        try:
-            main_cu = ConsumerUnit.objects.get(
-                building=buil,
-                electric_device_type__electric_device_type_name="Total Edificio"
-            )
-        except ObjectDoesNotExist:
-            continue
-        else:
-            dia = datetime.timedelta(days=1)
-            dailyReport(buil, main_cu, datetime.datetime.today()-dia)
-        # ----- iterative daily report for all consumer units
-        #cus = ConsumerUnit.objects.filter(building=buil)
-        #for cu in cus:
+        #try:
+        #    main_cu = ConsumerUnit.objects.get(
+        #        building=buil,
+        #        electric_device_type__electric_device_type_name="Total Edificio"
+        #    )
+        #except ObjectDoesNotExist:
+        #    continue
+        #else:
         #    dia = datetime.timedelta(days=1)
-        #    eq_cu = get_consumer_units(cu)
-        #    if len(eq_cu) > 1:
-        #        #suma(eq_cu)
-        #        pass
-        #    else:
-        #        dailyReport(buil, cu, datetime.datetime.today()-dia)
+        #    dailyReport(buil, main_cu, datetime.datetime.today()-dia)
+
+        # ----- iterative daily report for all consumer units
+        cus = ConsumerUnit.objects.filter(building=buil)
+        #19 - kW - Instant
+        #24 - kWhIMPORT
+        #26 - kvarhIMPORT
+        paramters_pks = [19, 24, 26]
+
+        for cu in cus:
+            dia = datetime.timedelta(days=1)
+            eq_cu = get_consumer_units(cu)
+            if len(eq_cu) > 1:
+                #virtual
+                electric_data = dict(kW=[], kWhIMPORT=[], kvarhIMPORT=[])
+                for param in paramters_pks:
+
+                    for cu in eq_cu:
+
+                        datos = ConsumerUnitInstantElectricalData\
+                            .objects\
+                            .filter(
+                            instant__instant_delta__name="Five Minute Delta",
+                            consumer_unit_profile__transactional_id=cu.pk,
+                            instant__instant_delta__instant_datetime__gte=
+                            datetime.datetime.today()-dia,
+                            instant__instant_delta__instant_datetime__lte=
+                            datetime.datetime.today(),
+                            electrical_parameter__pk=param).order_by(
+                            "instant__instant_delta__instant_datetime"
+                        )
+                        if param == 19:
+                            electric_data['kW'].append(datos)
+                        if param == 24:
+                            electric_data['kWhIMPORT'].append(datos)
+                        if param == 26:
+                            electric_data['kvarhIMPORT'].append(datos)
+
+                funcion_suma_datos(electric_data, cu)
+            else:
+                #medidor fisico
+                dailyReport(buil, cu, datetime.datetime.today()-dia)
     print "Done dailyReportAll"
+
+
+def funcion_suma_datos(electric_data, cu):
+    """
+
+    :param electric_data: dict {'kW':[[<data>],[<data>]],
+    'kWhIMPORT':[[<data>],[<data>]], 'kvarhIMPORT':[[<data>],[<data>]]}
+    :param cu: ConsumerUnit (virtual)
+    """
+    data_len = len(electric_data["kW"][0])
+    cu_len = len(electric_data["kW"])
+
+    for i in range(0, data_len):
+        cont = 0
+        suma = 0
+        while cont < cu_len:
+            suma += electric_data["kW"][cont][i]
+            cont += 1
+
+
+    pass
 
 
 def dailyReport(building, consumer_unit, today):
