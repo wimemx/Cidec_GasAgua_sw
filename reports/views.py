@@ -13,15 +13,22 @@ import django.shortcuts
 import django.utils.timezone
 import django.template.context
 
+# Alarms imports
+import alarms.models
+
 # Reports imports
 import reports.globals
 
 # Data Warehouse Extended imports
+import data_warehouse_extended.models
 import data_warehouse_extended.views
 
 # CCenter imports
 import c_center.models
 import c_center.c_center_functions
+
+# Other imports
+import variety
 
 logger = logging.getLogger("reports")
 
@@ -30,6 +37,26 @@ logger = logging.getLogger("reports")
 # Utility Scripts
 #
 ################################################################################
+
+def get_axis_dictionaries_list(
+        request_data_list_normalized
+):
+
+    """
+        Description:
+
+
+        Arguments:
+
+
+        Return:
+
+    """
+    electrical_parameter_units_dictionary = dict()
+    for _, _, _, electrical_parameter_name\
+        in request_data_list_normalized:
+        pass
+
 
 def get_column_strings_electrical_parameter(
         request_data_list_normalized,
@@ -52,6 +79,102 @@ def get_column_strings_electrical_parameter(
         column_strings_list.append(electrical_parameter_name)
 
     return column_strings_list
+
+
+def get_data_cluster_consumed_normalized (
+        consumer_unit_id,
+        datetime_from,
+        datetime_to,
+        electrical_parameter_name,
+        granularity_seconds
+):
+#
+    # Localize datetimes (if neccesary) and convert to UTC
+    #
+    timezone_current = django.utils.timezone.get_current_timezone()
+    datetime_from_local = datetime_from
+    if datetime_from_local.tzinfo is None:
+        datetime_from_local = timezone_current.localize(datetime_from)
+
+    datetime_from_utc =\
+        datetime_from_local.astimezone(django.utils.timezone.utc)
+
+    datetime_to_local = datetime_to
+    if datetime_to_local.tzinfo is None:
+        datetime_to_local = timezone_current.localize(datetime_to)
+
+    datetime_to_utc = datetime_to_local.astimezone(django.utils.timezone.utc)
+
+    #
+    # Get the Electrical Parameter
+    #
+    electrical_parameter =\
+        data_warehouse_extended.views.get_electrical_parameter(
+            electrical_parameter_name=electrical_parameter_name)
+
+    if electrical_parameter is None:
+        logger.error(
+            reports.globals.SystemError.GET_DATA_CLUSTER_CONSUMED_JSON_ERROR)
+
+        return None
+
+    if electrical_parameter.type !=\
+        data_warehouse_extended.models.ElectricalParameter.CUMULATIVE:
+
+        logger.error(
+            reports.globals.SystemError.GET_DATA_CLUSTER_CONSUMED_JSON_ERROR)
+
+        return None
+
+    try:
+        consumer_unit =\
+            c_center.models.ConsumerUnit.objects.get(pk=consumer_unit_id)
+
+    except c_center.models.ConsumerUnit.DoesNotExist:
+        logger.error(
+            reports.globals.SystemError.GET_DATA_CLUSTER_CONSUMED_JSON_ERROR)
+
+        return None
+
+    #
+    # Get the data cluster.
+    #
+    data_cluster =\
+        get_consumer_unit_electrical_parameter_data_clustered(
+            consumer_unit,
+            datetime_from_utc,
+            datetime_to_utc,
+            electrical_parameter_name,
+            granularity_seconds)
+
+    normalize_data_cluster(data_cluster)
+
+    #
+    # Build the json.
+    #
+    data_cluster_json = []
+    for data_index in range(0, len(data_cluster) - 1):
+        data_dictionary_current = data_cluster[data_index]
+        data_dictionary_next = data_cluster[data_index + 1]
+        datetime_current = data_dictionary_current['datetime']
+        value_current =\
+            data_dictionary_next['datetime'] - \
+            data_dictionary_current['datetime']
+
+        certainty_current = \
+            data_dictionary_current['certainty'] and \
+            data_dictionary_next['certainty']
+
+        data_dictionary_json = {
+            'datetime': datetime_current,
+            'value': value_current,
+            'certainty': certainty_current
+        }
+
+        data_cluster_json.append(data_dictionary_json)
+
+    return data_cluster_json
+
 
 
 def get_data_clusters_json(
@@ -524,7 +647,8 @@ def get_consumer_unit_electrical_parameter_data_clustered(
         consumer_unit,
         datetime_from,
         datetime_to,
-        electrical_parameter_name
+        electrical_parameter_name,
+        granularity_seconds=None
 ):
     """
         Description:
@@ -582,11 +706,15 @@ def get_consumer_unit_electrical_parameter_data_clustered(
     # Get the Instants between the from and to datetime according to the Instant
     # Delta and create a dictionary with them.
     #
-    #instant_delta =\
-    #    get_instant_delta_from_timedelta(datetime_to - datetime_from)
+    if granularity_seconds is None:
+        instant_delta =\
+            get_instant_delta_from_timedelta(datetime_to - datetime_from)
 
-    instant_delta =\
-        data_warehouse_extended.views.get_instant_delta(delta_seconds=3600)
+    else:
+        instant_delta =\
+            data_warehouse_extended.views.get_instant_delta(
+                delta_seconds=granularity_seconds)
+
 
     if instant_delta is None:
         logger.error(
@@ -708,6 +836,7 @@ def get_consumer_unit_electrical_parameter_data_clustered(
     return consumer_units_data_dictionaries_list
 
 
+
 ################################################################################
 #
 # Render Scripts
@@ -728,6 +857,7 @@ def render_instant_measurements(
 
     if not request.method == "GET":
         raise django.http.Http404
+
     if not "electrical-parameter-name01" in request.GET:
         return django.http.HttpResponse(content="", status=200)
 
@@ -753,13 +883,13 @@ def render_instant_measurements(
         except KeyError:
             logger.error(
                 reports.globals.SystemError.RENDER_INSTANT_MEASUREMENTS_ERROR)
+
             raise django.http.Http404
 
         datetime_from = datetime.datetime.strptime(date_from_string, "%Y-%m-%d")
         datetime_to = datetime.datetime.strptime(date_to_string, "%Y-%m-%d")
         datetime_from = datetime_from.replace(hour=00, minute=00, second=00)
         datetime_to = datetime_to.replace(hour=23, minute=59, second=59)
-        print datetime_from, datetime_to
         request_data_list_item =\
             (consumer_unit_id,
              datetime_from,
@@ -818,13 +948,11 @@ def render_instant_measurements(
                template_context)
 
 
-def render_instant_measurements(
+def render_consumed_report(
         request
 ):
 
     template_variables = {
-        'columns' : None,
-        'columns_statistics' : None,
         'max' : None,
         'min' : None,
         'rows' : None,
@@ -837,9 +965,39 @@ def render_instant_measurements(
         consumer_unit_id = request.GET['consumer-unit-id']
         month = request.GET['month']
         year = request.GET['year']
+        electrical_parameter_name = request.GET['electrical-parameter-name']
 
     except KeyError:
         raise django.http.Http404
+
+    weeks_number = variety.get_weeks_number_in_month(year, month)
+    first_week_start_datetime, first_week_end_datetime =\
+        variety.get_week_start_datetime_end_datetime_tuple(year, month, 1)
+
+    last_week_start_datetime, last_week_end_datetime =\
+        variety.get_week_start_datetime_end_datetime_tuple(
+            year,
+            month,
+            weeks_number)
+
+    #
+    # For the purposes of this report, the granularity is an hour but this is
+    # intended to be extended, it should be retrieved as GET parameter.
+    #
+    granularity_seconds = 3600
+    data_cluster_consumed =\
+        get_data_cluster_consumed_normalized (
+            consumer_unit_id,
+            first_week_start_datetime,
+            first_week_end_datetime,
+            electrical_parameter_name,
+            granularity_seconds
+        )
+
+    template_variables['rows'] = data_cluster_consumed
+
+
+
 
     
 
