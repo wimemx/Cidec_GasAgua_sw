@@ -211,24 +211,24 @@
                 //Date("October 13, 1975 11:13:00")
                 //start_date = fech_ini;
 
-                end_date = new Date();
-                end_date.setTime(fech_ini);
+                start_date = new Date();
+                start_date.setTime(fech_fin);
 
                 //start_date.addDays(1);
                 //end_date.addDays(1);
                 switch (interval){
                     case 'hour' :
                         //start_date.addHours(5);
-                        end_date.addHours(2);
+                        start_date.setHours(start_date.getHours()-2);
                         break;
                     case 'day' :
-                        end_date.addDays(1);
+                        start_date.setDate(start_date.getDate()-1);
                         break;
                     case 'week' :
-                        end_date.addDays(7);
+                        start_date.setDate(start_date.getDate()-7);
                         break;
                     case 'month' :
-                        end_date.addDays(30);
+                        start_date.setDate(start_date.getDate()-30);
                         break;
                 }
 
@@ -236,8 +236,8 @@
 
                 control.setState({
                     'range': {
-                        'start': fech_ini,
-                        'end': end_date
+                        'start': start_date,
+                        'end': fech_fin
                     }
                 });
 
@@ -259,6 +259,7 @@
                     });
                 });
 
+                /*
                 var base_url = window.location.pathname;
                 $("li#raw_data").click(function(){
 
@@ -279,14 +280,14 @@
                     base_url+="?granularity="+$(this).attr('id');
                     base_url=append_parameters(base_url);
                     window.location = base_url;
-                });
+                });*/
 
             });
         </script>
     </head>
 
     <body>
-    <ul id="compare_interval1" class="fr">
+    <!--<ul id="compare_interval1" class="fr">
         {% if granularity == "raw_data" %}
             <li id="raw_data"  class="active">Mediciones</li>
             <li id="dw">Calculados</li>
@@ -294,7 +295,7 @@
             <li id="raw_data" class="active">Mediciones</li>
             <li id="dw" class="active" >Calculados</li>
         {% endif %}
-    </ul>
+    </ul>-->
         <ul id="compare_interval" class="fr">
             <li id="hour">1 H</li>
             <li id="day" >1 D</li>

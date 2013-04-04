@@ -20,6 +20,22 @@
             var save_button = $("#save");
             var min = $("#alarm_min_value");
             var max = $("#alarm_max_value");
+
+            min.on("blur", function(){
+                if(max.val()!=""){
+                    if(parseFloat(min.val())>parseFloat(max.val())){
+                        min.val("");
+                    }
+                }
+            });
+            max.on("blur", function(){
+                if(min.val()!=""){
+                    if(parseFloat(min.val())>parseFloat(max.val())){
+                        max.val("");
+                    }
+                }
+            });
+
             save_button.hide();
             $("#cluster").change(function(){
                 if($(this).val() != "0"){
