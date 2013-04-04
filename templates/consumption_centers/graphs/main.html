@@ -85,7 +85,7 @@
     }
     function refresh_iframe_height(){
         // regresca el height del iframe para ajustarse a su conte
-        setTimeout("parent.document.getElementById('graphFrame').height = document['body'].offsetHeight;", 1000);
+        setTimeout("parent.document.getElementById('graphFrame').height = 1200;", 1000);
     }
     function makeIframe(source){
         var graphFrame = document.createElement("IFRAME");
@@ -415,17 +415,6 @@
     <div id="graphs_container">
         <div id="compare" class="fl">
             <input id="evaluated_companies" type="hidden" value="{{ empresa.pk }},"/>
-            <!--<span>Comparar:</span>
-            <span class="compared">{{ empresa.building_name }}</span>
-            <span class="vs_tag">VS</span>
-            <select id="compare_to">
-                <option value="0">Selecciona</option>
-                {% for cntx in datacontext %}
-                    <option value="{{ cntx.building.pk }}">
-                        {{cntx.building.building_name}}
-                    </option>
-                {% endfor %}
-            </select>-->
         </div>
 
         <div id="graph_container">

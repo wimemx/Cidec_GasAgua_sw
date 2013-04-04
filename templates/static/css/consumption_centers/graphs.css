@@ -271,7 +271,95 @@ div.container{
     z-index: 3;
 }
 
-#statistics-table table{
-    margin: 0 auto;
 
+
+
+#grid_container{
+    border: solid 1px #9EBFC7;
+    border-radius: 7px;
+    overflow: hidden;
+    width: 800px;
+    display: block;
+    margin: 65px auto 10px auto;
+}
+#grid_container table{
+    width: 100%;
+    color: #6c6c6c;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+#grid_container table th a{
+    color: #6c6c6c;
+}
+#grid_container table td{
+    padding-left: 10px;
+}
+#grid_container table td.table_value{
+    text-align: center;
+}
+#grid_container table td, #grid_container table th{
+    border: solid 1px #9EBFC7;
+    vertical-align: middle;
+}
+#grid_container table tr:first-child th {
+    border-top: 0;
+}
+#grid_container table tr#table_h{
+
+}
+#grid_container table tr:last-child td {
+    border-bottom: 0;
+}
+#grid_container table tr td:first-child,
+#grid_container table tr th:first-child {
+    border-left: 0;
+}
+#grid_container table tr td:last-child,
+#grid_container table tr th:last-child {
+    border-right: 0;
+}
+#grid_container table tr{
+    height: 30px;
+}
+#grid_container table thead tr{
+    background: url(../images/bgs/bread_crumbs_bg.png) repeat-x;
+}
+#grid_container table tr.row1{
+    background-image: linear-gradient(top, rgb(252,253,253) 12%, rgb(240,245,247) 56%) !important;
+    background-image: -o-linear-gradient(top, rgb(252,253,253) 12%, rgb(240,245,247) 56%) !important;
+    background-image: -moz-linear-gradient(top, rgb(252,253,253) 12%, rgb(240,245,247) 56%) !important;
+    background-image: -webkit-linear-gradient(top, rgb(252,253,253) 12%, rgb(240,245,247) 56%) !important;
+    background-image: -ms-linear-gradient(top, rgb(252,253,253) 12%, rgb(240,245,247) 56%) !important;
+
+    background-image: -webkit-gradient(
+        linear,
+        left top,
+        left bottom,
+        color-stop(0.12, rgb(252,253,253)),
+        color-stop(0.56, rgb(240,245,247))
+    ) !important;
+}
+#grid_container table tr.row2{
+    background: #fff;
+}
+#grid_container a, #grid_container a:active{
+    color: #6c6c6c;
+}
+#table_footer{
+    border-top: solid 1px #9EBFC7;
+    height: 39px;
+    padding-top: 9px;
+    background-image: linear-gradient(bottom, rgb(240,240,240) 47%, rgb(255,255,255) 74%);
+    background-image: -o-linear-gradient(bottom, rgb(240,240,240) 47%, rgb(255,255,255) 74%);
+    background-image: -moz-linear-gradient(bottom, rgb(240,240,240) 47%, rgb(255,255,255) 74%);
+    background-image: -webkit-linear-gradient(bottom, rgb(240,240,240) 47%, rgb(255,255,255) 74%);
+    background-image: -ms-linear-gradient(bottom, rgb(240,240,240) 47%, rgb(255,255,255) 74%);
+
+    background-image: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(0.47, rgb(240,240,240)),
+        color-stop(0.74, rgb(255,255,255))
+    );
 }

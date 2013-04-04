@@ -852,7 +852,7 @@ def render_instant_measurements(
         'columns_statistics' : None,
         'max' : None,
         'min' : None,
-        'rows' : None,
+        'rows' : None
     }
 
     if not request.method == "GET":
