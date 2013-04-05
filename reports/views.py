@@ -38,24 +38,56 @@ logger = logging.getLogger("reports")
 #
 ################################################################################
 
-def get_axis_dictionaries_list(
-        request_data_list_normalized
+def get_axis_dictionary (
+        data_clusters_list_normalized,
+        column_units_list
 ):
 
-    """
-        Description:
+    data_clusters_list_length = len(data_clusters_list_normalized)
+    column_units_list_length = len(column_units_list)
+    if data_clusters_list_length != column_units_list_length:
+        return None
+
+    axis_dictionary = dict()
+    for data_cluster_index in range(0, data_clusters_list_length):
+        column_units = column_units_list[data_cluster_index]
+        data_cluster = data_clusters_list_normalized[data_cluster_index]
+        data_cluster_values_list =\
+            [float(data_dictionary['value']) for data_dictionary in data_cluster]
+
+        data_cluster_max_value = max(data_cluster_values_list)
+        data_cluster_min_value = min(data_cluster_values_list)
+        if axis_dictionary.has_key(column_units):
+            axis_dictionary_value = axis_dictionary[column_units]
+            axis_max_value = axis_dictionary_value['max']
+            axis_dictionary_value['max'] = \
+                max(axis_max_value, data_cluster_max_value)
+
+            axis_min_value = axis_dictionary_value['min']
+            axis_dictionary_value['min'] = \
+                min(axis_min_value, data_cluster_min_value)
+
+            axis_dictionary[column_units] = axis_dictionary_value
+
+        else:
+            axis_dictionary[column_units] = {
+                'name': column_units,
+                'max': data_cluster_max_value,
+                'min': data_cluster_min_value
+            }
+
+    return axis_dictionary
 
 
-        Arguments:
+def get_axis_dictionaries_list (
+        axis_dictionary
+):
 
+    axis_dictionaries_list = []
+    for _, value in axis_dictionary.items():
+        axis_dictionaries_list.append(value)
 
-        Return:
-
-    """
-    electrical_parameter_units_dictionary = dict()
-    for _, _, _, electrical_parameter_name\
-        in request_data_list_normalized:
-        pass
+    return axis_dictionaries_list
 
 
 def get_column_strings_electrical_parameter(
@@ -79,6 +111,45 @@ def get_column_strings_electrical_parameter(
         column_strings_list.append(electrical_parameter_name)
 
     return column_strings_list
+
+
+def get_column_units_axis_indexes(
+        column_units_list,
+        axis_dictionaries_list
+):
+
+    column_units_axis_indexes = []
+    for column_unit in column_units_list:
+        for axis_dictionary_index in range(0, len(axis_dictionaries_list)):
+            axis_dictionary = axis_dictionaries_list[axis_dictionary_index]
+            if column_unit == axis_dictionary['name']:
+                column_units_axis_indexes.append(axis_dictionary_index)
+
+    if len(column_units_axis_indexes) != len(column_units_list):
+        return None
+
+    return column_units_axis_indexes
+
+
+def get_column_units_list(
+        request_data_list_normalized
+):
+    column_units_list = []
+    for _, _, _, electrical_parameter_name\
+        in request_data_list_normalized:
+
+        try:
+            electrical_parameter_info =\
+                alarms.models.ElectricParameters.objects.get(
+                    name=electrical_parameter_name)
+
+        except alarms.models.ElectricParameters.DoesNotExist:
+            logger.error()
+            return None
+
+        column_units_list.append(electrical_parameter_info.param_units)
+
+    return column_units_list
 
 
 def get_data_cluster_consumed_normalized (
@@ -848,8 +919,11 @@ def render_instant_measurements(
 ):
 
     template_variables = {
+        'axis_list': None,
         'columns' : None,
         'columns_statistics' : None,
+        'column_units': None,
+        'column_unit_axis_indexes': None,
         'max' : None,
         'min' : None,
         'rows' : None
@@ -914,11 +988,27 @@ def render_instant_measurements(
 
     template_variables['columns'] = column_strings
 
+    columns_units_list = get_column_units_list(request_data_list_normalized)
+    template_variables['column_units'] = columns_units_list
+
     #
     # Build and normalize the data clusters list.
     #
     data_clusters_list = get_data_clusters_list(request_data_list_normalized)
     normalize_data_clusters_list(data_clusters_list)
+
+    axis_dictionary = \
+        get_axis_dictionary(data_clusters_list, columns_units_list)
+
+    axis_dictionaries_list = get_axis_dictionaries_list(axis_dictionary)
+    template_variables['axis_list'] = axis_dictionaries_list
+
+    column_units_axis_indexes =\
+        get_column_units_axis_indexes(
+            columns_units_list,
+            axis_dictionaries_list)
+
+    template_variables['column_unit_axis_indexes'] = column_units_axis_indexes
 
     #
     # Create the json using the data clusters list normalized
@@ -948,7 +1038,7 @@ def render_instant_measurements(
                template_context)
 
 
-def render_consumed_report(
+def render_report_consumed_by_month(
         request
 ):
 
@@ -991,8 +1081,7 @@ def render_consumed_report(
             first_week_start_datetime,
             first_week_end_datetime,
             electrical_parameter_name,
-            granularity_seconds
-        )
+            granularity_seconds)
 
     template_variables['rows'] = data_cluster_consumed
 
