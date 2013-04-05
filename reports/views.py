@@ -13,15 +13,22 @@ import django.shortcuts
 import django.utils.timezone
 import django.template.context
 
+# Alarms imports
+import alarms.models
+
 # Reports imports
 import reports.globals
 
 # Data Warehouse Extended imports
+import data_warehouse_extended.models
 import data_warehouse_extended.views
 
 # CCenter imports
 import c_center.models
 import c_center.c_center_functions
+
+# Other imports
+import variety
 
 logger = logging.getLogger("reports")
 
@@ -30,6 +37,58 @@ logger = logging.getLogger("reports")
 # Utility Scripts
 #
 ################################################################################
+
+def get_axis_dictionary (
+        data_clusters_list_normalized,
+        column_units_list
+):
+
+    data_clusters_list_length = len(data_clusters_list_normalized)
+    column_units_list_length = len(column_units_list)
+    if data_clusters_list_length != column_units_list_length:
+        return None
+
+    axis_dictionary = dict()
+    for data_cluster_index in range(0, data_clusters_list_length):
+        column_units = column_units_list[data_cluster_index]
+        data_cluster = data_clusters_list_normalized[data_cluster_index]
+        data_cluster_values_list =\
+            [float(data_dictionary['value']) for data_dictionary in data_cluster]
+
+        data_cluster_max_value = max(data_cluster_values_list)
+        data_cluster_min_value = min(data_cluster_values_list)
+        if axis_dictionary.has_key(column_units):
+            axis_dictionary_value = axis_dictionary[column_units]
+            axis_max_value = axis_dictionary_value['max']
+            axis_dictionary_value['max'] = \
+                max(axis_max_value, data_cluster_max_value)
+
+            axis_min_value = axis_dictionary_value['min']
+            axis_dictionary_value['min'] = \
+                min(axis_min_value, data_cluster_min_value)
+
+            axis_dictionary[column_units] = axis_dictionary_value
+
+        else:
+            axis_dictionary[column_units] = {
+                'name': column_units,
+                'max': data_cluster_max_value,
+                'min': data_cluster_min_value
+            }
+
+    return axis_dictionary
+
+
+def get_axis_dictionaries_list (
+        axis_dictionary
+):
+
+    axis_dictionaries_list = []
+    for _, value in axis_dictionary.items():
+        axis_dictionaries_list.append(value)
+
+    return axis_dictionaries_list
+
 
 def get_column_strings_electrical_parameter(
         request_data_list_normalized,
@@ -52,6 +111,141 @@ def get_column_strings_electrical_parameter(
         column_strings_list.append(electrical_parameter_name)
 
     return column_strings_list
+
+
+def get_column_units_axis_indexes(
+        column_units_list,
+        axis_dictionaries_list
+):
+
+    column_units_axis_indexes = []
+    for column_unit in column_units_list:
+        for axis_dictionary_index in range(0, len(axis_dictionaries_list)):
+            axis_dictionary = axis_dictionaries_list[axis_dictionary_index]
+            if column_unit == axis_dictionary['name']:
+                column_units_axis_indexes.append(axis_dictionary_index)
+
+    if len(column_units_axis_indexes) != len(column_units_list):
+        return None
+
+    return column_units_axis_indexes
+
+
+def get_column_units_list(
+        request_data_list_normalized
+):
+    column_units_list = []
+    for _, _, _, electrical_parameter_name\
+        in request_data_list_normalized:
+
+        try:
+            electrical_parameter_info =\
+                alarms.models.ElectricParameters.objects.get(
+                    name=electrical_parameter_name)
+
+        except alarms.models.ElectricParameters.DoesNotExist:
+            logger.error()
+            return None
+
+        column_units_list.append(electrical_parameter_info.param_units)
+
+    return column_units_list
+
+
+def get_data_cluster_consumed_normalized (
+        consumer_unit_id,
+        datetime_from,
+        datetime_to,
+        electrical_parameter_name,
+        granularity_seconds
+):
+#
+    # Localize datetimes (if neccesary) and convert to UTC
+    #
+    timezone_current = django.utils.timezone.get_current_timezone()
+    datetime_from_local = datetime_from
+    if datetime_from_local.tzinfo is None:
+        datetime_from_local = timezone_current.localize(datetime_from)
+
+    datetime_from_utc =\
+        datetime_from_local.astimezone(django.utils.timezone.utc)
+
+    datetime_to_local = datetime_to
+    if datetime_to_local.tzinfo is None:
+        datetime_to_local = timezone_current.localize(datetime_to)
+
+    datetime_to_utc = datetime_to_local.astimezone(django.utils.timezone.utc)
+
+    #
+    # Get the Electrical Parameter
+    #
+    electrical_parameter =\
+        data_warehouse_extended.views.get_electrical_parameter(
+            electrical_parameter_name=electrical_parameter_name)
+
+    if electrical_parameter is None:
+        logger.error(
+            reports.globals.SystemError.GET_DATA_CLUSTER_CONSUMED_JSON_ERROR)
+
+        return None
+
+    if electrical_parameter.type !=\
+        data_warehouse_extended.models.ElectricalParameter.CUMULATIVE:
+
+        logger.error(
+            reports.globals.SystemError.GET_DATA_CLUSTER_CONSUMED_JSON_ERROR)
+
+        return None
+
+    try:
+        consumer_unit =\
+            c_center.models.ConsumerUnit.objects.get(pk=consumer_unit_id)
+
+    except c_center.models.ConsumerUnit.DoesNotExist:
+        logger.error(
+            reports.globals.SystemError.GET_DATA_CLUSTER_CONSUMED_JSON_ERROR)
+
+        return None
+
+    #
+    # Get the data cluster.
+    #
+    data_cluster =\
+        get_consumer_unit_electrical_parameter_data_clustered(
+            consumer_unit,
+            datetime_from_utc,
+            datetime_to_utc,
+            electrical_parameter_name,
+            granularity_seconds)
+
+    normalize_data_cluster(data_cluster)
+
+    #
+    # Build the json.
+    #
+    data_cluster_json = []
+    for data_index in range(0, len(data_cluster) - 1):
+        data_dictionary_current = data_cluster[data_index]
+        data_dictionary_next = data_cluster[data_index + 1]
+        datetime_current = data_dictionary_current['datetime']
+        value_current =\
+            data_dictionary_next['datetime'] - \
+            data_dictionary_current['datetime']
+
+        certainty_current = \
+            data_dictionary_current['certainty'] and \
+            data_dictionary_next['certainty']
+
+        data_dictionary_json = {
+            'datetime': datetime_current,
+            'value': value_current,
+            'certainty': certainty_current
+        }
+
+        data_cluster_json.append(data_dictionary_json)
+
+    return data_cluster_json
+
 
 
 def get_data_clusters_json(
@@ -524,7 +718,8 @@ def get_consumer_unit_electrical_parameter_data_clustered(
         consumer_unit,
         datetime_from,
         datetime_to,
-        electrical_parameter_name
+        electrical_parameter_name,
+        granularity_seconds=None
 ):
     """
         Description:
@@ -582,11 +777,15 @@ def get_consumer_unit_electrical_parameter_data_clustered(
     # Get the Instants between the from and to datetime according to the Instant
     # Delta and create a dictionary with them.
     #
-    instant_delta =\
-        get_instant_delta_from_timedelta(datetime_to - datetime_from)
+    if granularity_seconds is None:
+        instant_delta =\
+            get_instant_delta_from_timedelta(datetime_to - datetime_from)
 
-    #instant_delta =\
-    #    data_warehouse_extended.views.get_instant_delta(delta_seconds=3600)
+    else:
+        instant_delta =\
+            data_warehouse_extended.views.get_instant_delta(
+                delta_seconds=granularity_seconds)
+
 
     if instant_delta is None:
         logger.error(
@@ -708,6 +907,7 @@ def get_consumer_unit_electrical_parameter_data_clustered(
     return consumer_units_data_dictionaries_list
 
 
+
 ################################################################################
 #
 # Render Scripts
@@ -719,10 +919,14 @@ def render_instant_measurements(
 ):
 
     template_variables = {
-        'columns': None,
-        'max': None,
-        'min': None,
-        'rows': None,
+        'axis_list': None,
+        'columns' : None,
+        'columns_statistics' : None,
+        'column_units': None,
+        'column_unit_axis_indexes': None,
+        'max' : None,
+        'min' : None,
+        'rows' : None
     }
 
     if not request.method == "GET":
@@ -753,6 +957,7 @@ def render_instant_measurements(
         except KeyError:
             logger.error(
                 reports.globals.SystemError.RENDER_INSTANT_MEASUREMENTS_ERROR)
+
             raise django.http.Http404
 
         datetime_from = datetime.datetime.strptime(date_from_string, "%Y-%m-%d")
@@ -783,11 +988,27 @@ def render_instant_measurements(
 
     template_variables['columns'] = column_strings
 
+    columns_units_list = get_column_units_list(request_data_list_normalized)
+    template_variables['column_units'] = columns_units_list
+
     #
     # Build and normalize the data clusters list.
     #
     data_clusters_list = get_data_clusters_list(request_data_list_normalized)
     normalize_data_clusters_list(data_clusters_list)
+
+    axis_dictionary = \
+        get_axis_dictionary(data_clusters_list, columns_units_list)
+
+    axis_dictionaries_list = get_axis_dictionaries_list(axis_dictionary)
+    template_variables['axis_list'] = axis_dictionaries_list
+
+    column_units_axis_indexes =\
+        get_column_units_axis_indexes(
+            columns_units_list,
+            axis_dictionaries_list)
+
+    template_variables['column_unit_axis_indexes'] = column_units_axis_indexes
 
     #
     # Create the json using the data clusters list normalized
@@ -815,3 +1036,58 @@ def render_instant_measurements(
     return django.shortcuts.render_to_response(
                "reports/instant-measurements.html",
                template_context)
+
+
+def render_report_consumed_by_month(
+        request
+):
+
+    template_variables = {
+        'max' : None,
+        'min' : None,
+        'rows' : None,
+    }
+
+    if not request.method == "GET":
+        raise django.http.Http404
+
+    try:
+        consumer_unit_id = request.GET['consumer-unit-id']
+        month = request.GET['month']
+        year = request.GET['year']
+        electrical_parameter_name = request.GET['electrical-parameter-name']
+
+    except KeyError:
+        raise django.http.Http404
+
+    weeks_number = variety.get_weeks_number_in_month(year, month)
+    first_week_start_datetime, first_week_end_datetime =\
+        variety.get_week_start_datetime_end_datetime_tuple(year, month, 1)
+
+    last_week_start_datetime, last_week_end_datetime =\
+        variety.get_week_start_datetime_end_datetime_tuple(
+            year,
+            month,
+            weeks_number)
+
+    #
+    # For the purposes of this report, the granularity is an hour but this is
+    # intended to be extended, it should be retrieved as GET parameter.
+    #
+    granularity_seconds = 3600
+    data_cluster_consumed =\
+        get_data_cluster_consumed_normalized (
+            consumer_unit_id,
+            first_week_start_datetime,
+            first_week_end_datetime,
+            electrical_parameter_name,
+            granularity_seconds)
+
+    template_variables['rows'] = data_cluster_consumed
+
+
+
+
+    
+
+
