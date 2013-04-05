@@ -7951,14 +7951,14 @@ def billing_c_analisis_header(request):
         tipo_tarifa = building.electric_rate
 
         if tipo_tarifa.pk == 1:
-            years = [__date.year for __date in HMHistoricData.objects.all().
-            dates('monthly_cut_dates__billing_month','year')]
+            years = [__date.year for __date in ElectricRatesDetail.objects.
+            all().dates('date_init','year')]
         elif tipo_tarifa.pk == 2:
-            years = [__date.year for __date in DacHistoricData.objects.all().
-            dates('monthly_cut_dates__billing_month','year')]
+            years = [__date.year for __date in DACElectricRateDetail.objects.
+            all().dates('date_init','year')]
         elif tipo_tarifa.pk == 3:
-            years = [__date.year for __date in T3HistoricData.objects.all().
-            dates('monthly_cut_dates__billing_month','year')]
+            years = [__date.year for __date in ThreeElectricRateDetail.objects.
+            all().dates('date_init','year')]
         template_vars['years'] = years[::-1]
 
         template_vars_template = RequestContext(request, template_vars)

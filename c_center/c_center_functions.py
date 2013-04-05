@@ -266,7 +266,7 @@ def get_all_consumer_units_for_building(building):
 
 
 def get_c_unitsforbuilding_for_operation(permission, operation, user, building):
-    """Obtains a queryset for all the ConsumerUnits that exists in a
+    """Obtains a queryset for all the physical ConsumerUnits that exists in a
     datacontext for a user for a given building, if the user is super_user
     returns all active ConsumerUnits for the building,
     if the user has permission over the entire building,

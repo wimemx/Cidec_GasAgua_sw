@@ -81,11 +81,21 @@
                         // Use the same chart area width as the control for axis alignment.
                         'chartArea': {'height': '80%', 'width': '90%'},
                         'hAxis': {'slantedText': false},
-                        'vAxis': {'viewWindow': {'min': {{ min }}, 'max': {{max}} }},
+                        'vAxes': {
+                        {% for col in axis_list  %}
+                            {{ forloop.counter0 }}: {logScale: false, title: '{{ col.name }}', textPosition: "{% cycle 'out' 'in' %}"},
+                        {% endfor %}
+                        },
+                        'series':{
+                        {% for index in column_unit_axis_indexes %}
+                            {{ forloop.counter0 }}:{targetAxisIndex:{{ index }}},
+                        {% endfor %}
+                        },
                         'legend': {'position': 'top', 'alignment': 'center'}
                     }
-                });
-
+                });//{{ columns }} [v1, I1, kWL1]
+                //{{ column_unit_axis_indexes }} [2,0,1]
+                //{{ axis_list }} [{'max': 26.422811, 'name': u'I', 'min': 9.558961}, {'max': 3.146609, 'name': u'kW', 'min': 1.192338}, {'max': 130.529821, 'name': u'V', 'min': 125.344246}]
                 //
                 // Google Chart
                 //
@@ -287,6 +297,7 @@
     </head>
 
     <body>
+
     <!--<ul id="compare_interval1" class="fr">
         {% if granularity == "raw_data" %}
             <li id="raw_data"  class="active">Mediciones</li>
@@ -325,6 +336,7 @@
             <!-- control end -->
 
             <!-- slider-range start -->
+            {% if axis_list|length == 1 %}
             <div id="slider-range">
                 <div id="up">
                     <input type="text" class="integer" id="upper_limit" step="0.5"/>
@@ -335,7 +347,7 @@
                 </div>
             </div>
             <!-- slider-range end -->
-
+            {% endif %}
         </div>
         <!-- dashboard end -->
 
