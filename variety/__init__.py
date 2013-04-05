@@ -83,6 +83,7 @@ def get_weeks_number_in_month(
           (first_day_of_week + week_delta).month <= month:
 
         week_count += 1
+        first_day_of_week += week_delta
 
     return week_count
 

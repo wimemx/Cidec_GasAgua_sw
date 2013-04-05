@@ -159,7 +159,7 @@ def get_data_cluster_consumed_normalized (
         electrical_parameter_name,
         granularity_seconds
 ):
-#
+    #
     # Localize datetimes (if neccesary) and convert to UTC
     #
     timezone_current = django.utils.timezone.get_current_timezone()
@@ -229,8 +229,8 @@ def get_data_cluster_consumed_normalized (
         data_dictionary_next = data_cluster[data_index + 1]
         datetime_current = data_dictionary_current['datetime']
         value_current =\
-            data_dictionary_next['datetime'] - \
-            data_dictionary_current['datetime']
+            data_dictionary_next['value'] - \
+            data_dictionary_current['value']
 
         certainty_current = \
             data_dictionary_current['certainty'] and \
@@ -238,14 +238,25 @@ def get_data_cluster_consumed_normalized (
 
         data_dictionary_json = {
             'datetime': datetime_current,
-            'value': value_current,
+            'value': float(value_current),
             'certainty': certainty_current
         }
 
         data_cluster_json.append(data_dictionary_json)
 
-    return data_cluster_json
 
+def get_data_cluster_limits (
+        data_cluster_normalized
+):
+
+    maximum = sys.float_info.min
+    minimum = sys.float_info.max
+    for data_dictionary in data_cluster_normalized:
+        data_dictionary_value = float(data_dictionary['value'])
+        maximum = max(data_dictionary_value, maximum)
+        minimum = min(data_dictionary_value, minimum)
+
+    return maximum, minimum
 
 
 def get_data_clusters_json(
@@ -331,6 +342,30 @@ def get_data_clusters_list(
         data_clusters_list.append(data_cluster)
 
     return data_clusters_list
+
+
+def get_data_clusters_list_limits(
+        data_clusters_list_normalized
+):
+    """
+        Description:
+
+
+        Arguments:
+            data_clusters_list_normalized -
+
+        Return:
+
+    """
+    maximum = sys.float_info.min
+    minimum = sys.float_info.max
+    for data_cluster in data_clusters_list_normalized:
+        for data_dictionary in data_cluster:
+            data_dictionary_value = float(data_dictionary['value'])
+            maximum = max(data_dictionary_value, maximum)
+            minimum = min(data_dictionary_value, minimum)
+
+    return maximum, minimum
 
 
 def get_instant_delta_from_timedelta(
@@ -428,30 +463,6 @@ def get_instant_delta_from_timedelta(
             return max_closest_instant_delta
 
         return min_closest_instant_delta
-
-
-def get_limits(
-        data_clusters_list_normalized
-):
-    """
-        Description:
-
-
-        Arguments:
-            data_clusters_list_normalized -
-
-        Return:
-
-    """
-    maximum = sys.float_info.min
-    minimum = sys.float_info.max
-    for data_cluster in data_clusters_list_normalized:
-        for data_dictionary in data_cluster:
-            data_dictionary_value = float(data_dictionary['value'])
-            maximum = max(data_dictionary_value, maximum)
-            minimum = min(data_dictionary_value, minimum)
-
-    return maximum, minimum
 
 
 def get_request_data_list_normalized(
@@ -1023,7 +1034,7 @@ def render_instant_measurements(
     #
     # Get statistical values
     #
-    maximum, minimum = get_limits(data_clusters_list)
+    maximum, minimum = get_data_clusters_list_limits(data_clusters_list)
     data_clusters_statistics = get_data_clusters_statistics(data_clusters_list)
 
     template_variables['max'] = maximum
@@ -1038,10 +1049,9 @@ def render_instant_measurements(
                template_context)
 
 
-def render_report_consumed_by_month(
+def render_report_consumed_by_month (
         request
 ):
-
     template_variables = {
         'max' : None,
         'min' : None,
@@ -1053,8 +1063,8 @@ def render_report_consumed_by_month(
 
     try:
         consumer_unit_id = request.GET['consumer-unit-id']
-        month = request.GET['month']
-        year = request.GET['year']
+        month = int(request.GET['month'])
+        year = int(request.GET['year'])
         electrical_parameter_name = request.GET['electrical-parameter-name']
 
     except KeyError:
@@ -1079,15 +1089,22 @@ def render_report_consumed_by_month(
         get_data_cluster_consumed_normalized (
             consumer_unit_id,
             first_week_start_datetime,
-            first_week_end_datetime,
+            last_week_end_datetime,
             electrical_parameter_name,
             granularity_seconds)
 
     template_variables['rows'] = data_cluster_consumed
+    maximun, minimun = get_data_cluster_limits(data_cluster_consumed)
 
+    if maximun <= minimun:
+        minimun = 0
 
+    template_variables['max'] = maximun
+    template_variables['min'] = minimun
 
+    template_context =\
+        django.template.context.RequestContext(request, template_variables)
 
-    
-
-
+    return django.shortcuts.render_to_response(
+               "reports/consumed-by-month.html",
+               template_context)

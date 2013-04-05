@@ -930,22 +930,20 @@ def get_instants_list (
 def test_process_consumer_unit_electrical_parameter():
 
     consumer_unit = c_center.models.ConsumerUnit.objects.get(pk=7)
-    datetime_from = datetime.datetime(year=2012, month=9, day=01)
-    datetime_to = datetime.datetime(year=2013, month=3, day=20)
+    datetime_from = datetime.datetime(year=2013, month=1, day=31)
+    datetime_to = datetime.datetime(year=2013, month=3, day=1)
     electrical_parameter =\
         data_warehouse_extended.models.ElectricalParameter.objects.get(name="TotalkWhIMPORT")
 
-    instant_delta =\
-        data_warehouse_extended.models.InstantDelta.objects.get(
-            delta_seconds=3600)
-
-    process_consumer_unit_electrical_parameter(
-        consumer_unit,
-        datetime_from,
-        datetime_to,
-        electrical_parameter,
-        instant_delta
-    )
+    instant_deltas = data_warehouse_extended.models.InstantDelta.objects.all()
+    for instant_delta in instant_deltas:
+        process_consumer_unit_electrical_parameter(
+            consumer_unit,
+            datetime_from,
+            datetime_to,
+            electrical_parameter,
+            instant_delta
+        )
 
     #get_consumer_unit_electrical_parameter_data_list(
     #    consumer_unit,
