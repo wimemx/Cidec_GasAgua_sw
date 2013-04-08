@@ -26,6 +26,7 @@ import data_warehouse_extended.views
 # CCenter imports
 import c_center.models
 import c_center.c_center_functions
+import c_center.graphics
 
 # Other imports
 import variety
@@ -299,7 +300,8 @@ def get_data_clusters_json(
 
 
 def get_data_clusters_list(
-        request_data_list_normalized
+        request_data_list_normalized,
+        granularity
 ):
     """
         Description:
@@ -307,7 +309,7 @@ def get_data_clusters_list(
 
         Arguments:
             request_data_list_normalized -
-
+            granularity
         Return:
 
     """
@@ -325,13 +327,20 @@ def get_data_clusters_list(
                 reports.globals.SystemError.GET_DATA_CLUSTERS_LIST_ERROR)
 
             return None
-
-        data_cluster =\
-            get_consumer_unit_electrical_parameter_data_clustered(
-                consumer_unit,
+        if granularity == "raw":
+            data_cluster = c_center.graphics.get_consumer_unit_electric_data_raw(
+                electrical_parameter_name,
+                consumer_unit_id,
                 datetime_from,
-                datetime_to,
-                electrical_parameter_name)
+                datetime_to
+            )
+        else:
+            data_cluster =\
+                get_consumer_unit_electrical_parameter_data_clustered(
+                    consumer_unit,
+                    datetime_from,
+                    datetime_to,
+                    electrical_parameter_name)
 
         if data_cluster is None:
             logger.error(
@@ -1005,7 +1014,14 @@ def render_instant_measurements(
     #
     # Build and normalize the data clusters list.
     #
-    data_clusters_list = get_data_clusters_list(request_data_list_normalized)
+    granularity = None
+    if "granularity" in request.GET:
+        if request.GET['granularity'] == "raw":
+            granularity = "raw"
+            template_variables['granularity'] = "raw_data"
+
+    data_clusters_list = get_data_clusters_list(request_data_list_normalized,
+                                                granularity)
     normalize_data_clusters_list(data_clusters_list)
 
     axis_dictionary = \

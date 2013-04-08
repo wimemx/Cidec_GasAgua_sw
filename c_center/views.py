@@ -703,32 +703,31 @@ def grafica_datoscsv(request):
         #electric_data = ""
         #granularity = "day"
         try:
-            electric_data = request.GET['graph']
+            #electric_data = request.GET['graph']
             granularity = request.GET['granularity']
 
         except KeyError:
-            return Http404
+            raise Http404
 
-        response = HttpResponse(mimetype='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="datos_' + \
-                                          electric_data + '.csv"'
-        writer = csv.writer(response)
-
-        suffix_consumed = "_consumido"
+        #suffix_consumed = "_consumido"
         is_interval = False
-        suffix_index = string.find(electric_data, suffix_consumed)
-        if suffix_index >= 0:
-            electric_data = electric_data[:suffix_index]
-            is_interval = True
+        #suffix_index = string.find(electric_data, suffix_consumed)
+        #if suffix_index >= 0:
+        #    electric_data = electric_data[:suffix_index]
+        #    is_interval = True
 
         data = []
         consumer_unit_counter = 1
         consumer_unit_get_key = "consumer-unit%02d" % consumer_unit_counter
-        date_start_get_key = "date-start%02d" % consumer_unit_counter
-        date_end_get_key = "date-end%02d" % consumer_unit_counter
+        date_start_get_key = "date-from%02d" % consumer_unit_counter
+        date_end_get_key = "date-to%02d" % consumer_unit_counter
+        electric_param_key = "electrical-parameter-name%02d" % consumer_unit_counter
+        report_name = ""
         while request.GET.has_key(consumer_unit_get_key):
             consumer_unit_id = request.GET[consumer_unit_get_key]
-
+            electric_data = request.GET[electric_param_key]
+            report_name += electric_data + "_"
+            print "date_start_get_key", date_start_get_key
             if request.GET.has_key(date_start_get_key) and \
                     request.GET.has_key(date_end_get_key):
                 datetime_start = datetime.datetime.strptime(
@@ -743,7 +742,9 @@ def grafica_datoscsv(request):
                 datetime_start = get_default_datetime_start()
                 datetime_end = get_default_datetime_end() + datetime.timedelta(
                     days=1)
-
+            print "consumer_unit_counter" + str(consumer_unit_counter)
+            print "datetime_start", datetime_start
+            print "datetime_end", datetime_end
             try:
                 consumer_unit = get_data_warehouse_consumer_unit_by_id(
                     consumer_unit_id)
@@ -772,9 +773,14 @@ def grafica_datoscsv(request):
             data.extend(electric_data_csv_rows)
             consumer_unit_counter += 1
             consumer_unit_get_key = "consumer-unit%02d" % consumer_unit_counter
-            date_start_get_key = "date-start%02d" % consumer_unit_counter
-            date_end_get_key = "date-end%02d" % consumer_unit_counter
+            date_start_get_key = "date-from%02d" % consumer_unit_counter
+            date_end_get_key = "date-to%02d" % consumer_unit_counter
+            electric_param_key = "electrical-parameter-name%02d" % consumer_unit_counter
 
+        response = HttpResponse(mimetype='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="datos_' + \
+                                          report_name + '.csv"'
+        writer = csv.writer(response)
         for data_item in data:
             writer.writerow(data_item)
 

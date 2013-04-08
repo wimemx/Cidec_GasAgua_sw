@@ -269,7 +269,9 @@
                     });
                 });
 
-                /*
+                var csv_url = window.location.href.slice(window.location.href.indexOf('?') + 1);
+                csv_url = "/reportes/grafica_datos_csv/?"+csv_url;
+                $("#export_csv").attr("href",csv_url);
                 var base_url = window.location.pathname;
                 $("li#raw_data").click(function(){
 
@@ -290,7 +292,7 @@
                     base_url+="?granularity="+$(this).attr('id');
                     base_url=append_parameters(base_url);
                     window.location = base_url;
-                });*/
+                });
 
             });
         </script>
@@ -298,20 +300,23 @@
 
     <body>
 
-    <!--<ul id="compare_interval1" class="fr">
+    <ul id="compare_interval" class="fr">
+        <li id="hour">1 H</li>
+        <li id="day" >1 D</li>
+        <li id="week">1 Sem</li>
+    </ul>
+    <ul id="compare_interval1" class="fr">
         {% if granularity == "raw_data" %}
             <li id="raw_data"  class="active">Mediciones</li>
             <li id="dw">Calculados</li>
         {% else %}
-            <li id="raw_data" class="active">Mediciones</li>
+            <li id="raw_data">Mediciones</li>
             <li id="dw" class="active" >Calculados</li>
         {% endif %}
-    </ul>-->
-        <ul id="compare_interval" class="fr">
-            <li id="hour">1 H</li>
-            <li id="day" >1 D</li>
-            <li id="week">1 Sem</li>
-        </ul>
+    </ul>
+    {% if granularity == "raw_data" %}
+    <a id="export_csv" class="fr" href="">Exportar datos en CSV</a>
+    {% endif %}
 
         <div id="parameter_controls">
             <form id="column-controls">
