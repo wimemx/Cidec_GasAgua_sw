@@ -244,7 +244,9 @@ def get_data_cluster_consumed_normalized (
         }
 
         data_cluster_json.append(data_dictionary_json)
-    return  data_cluster_json
+
+    return data_cluster_json
+
 
 def get_data_cluster_limits (
         data_cluster_normalized
