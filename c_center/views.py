@@ -54,8 +54,8 @@ from .tables import ElectricDataTempTable, ThemedElectricDataTempTable
 
 import json as simplejson
 import sys
-from tareas.tasks import datawarehouse_run, save_historic_delay, \
-    change_profile_electric_data
+from tareas.tasks import save_historic_delay, \
+    change_profile_electric_data, populate_data_warehouse_extended
 
 VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
@@ -126,12 +126,10 @@ def call_celery_delay(request):
             else:
                 populate_interval_facts = None
             if almenosuno:
-                datawarehouse_run.delay(
+                populate_data_warehouse_extended(
                     fill_instants,
-                    fill_intervals,
                     _update_consumer_units,
-                    populate_instant_facts,
-                    populate_interval_facts
+                    populate_instant_facts
                 )
             else:
                 text = "No se realizar&aacute; ninguna acci&oacute;n"
@@ -8085,7 +8083,7 @@ def billing_analisis(request):
                 #Se hace un ciclo para recorrer los 12 meses del año
                 for i in range(12):
                     #Esta bandera sirve para sumar unicamente los meses del año
-                    suma_mes_y02 = False;
+                    suma_mes_y02 = False
 
                     datos_kwh = dict()
                     datos_money = dict()
