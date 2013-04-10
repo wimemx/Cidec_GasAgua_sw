@@ -267,7 +267,7 @@ def get_all_consumer_units_for_building(building):
 
 
 def get_c_unitsforbuilding_for_operation(permission, operation, user, building):
-    """Obtains a queryset for all the ConsumerUnits that exists in a
+    """Obtains a queryset for all the physical ConsumerUnits that exists in a
     datacontext for a user for a given building, if the user is super_user
     returns all active ConsumerUnits for the building,
     if the user has permission over the entire building,
@@ -423,6 +423,41 @@ def get_cus_of_building(request, id_building):
     else:
         data = simplejson.dumps([dict(all="none")])
     return HttpResponse(content=data, content_type="application/json")
+
+
+def get_cu_siblings(consumerUnit):
+    """ Returns a queryset of all the active physical consumer units in a
+     consumerUnit building
+
+    :param consumerUnit: Object - ConsumerUnit instance.
+    """
+    return ConsumerUnit.objects.filter(
+        building=consumerUnit.building,
+        profile_powermeter__profile_powermeter_status=1).exclude(
+        profile_powermeter__powermeter__powermeter_anotation="Medidor Virtual")
+
+
+def get_building_siblings(building):
+    """ Returns a queryset of the CompanyBuildings in wich the building is part
+
+    :param building: Object - Building instance.
+    """
+    company = CompanyBuilding.objects.get(building=building)
+
+    return CompanyBuilding.objects.filter(
+        company=company.company,
+        building__building_status=1)
+
+def get_company_siblings(company):
+    """ Returns a queryset of the ClusterCompany in wich the company is part
+
+    :param company: Object - Company instance.
+    """
+    cluster = ClusterCompany.objects.get(company=company)
+
+    return ClusterCompany.objects.filter(
+        cluster=cluster.cluster,
+        company__company_status=1)
 
 def get_pw_profiles(request):
     """ Get all the ProfilePowermeters that are available for use in a

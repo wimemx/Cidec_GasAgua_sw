@@ -189,12 +189,15 @@ def get_buildings_context(user):
     for dcontext in datacontext:
         try:
             if dcontext.building:
-                buildings.append(
-                    dict(building_pk=dcontext.building.pk,
-                         building_name=dcontext.building.building_name))
+                if dcontext.building.building_status == 1:
+                    buildings.append(
+                        dict(building_pk=dcontext.building.pk,
+                             building_name=dcontext.building.building_name))
             elif dcontext.company:
                 building_comp = CompanyBuilding.objects.filter(
-                    company=dcontext.company)
+                    company=dcontext.company
+                ).exclude(
+                    building__building_status=0)
                 for bc in building_comp:
                     buildings.append(
                         dict(building_pk=bc.building.pk,
@@ -204,7 +207,10 @@ def get_buildings_context(user):
                     cluster=dcontext.cluster)
                 for cc in clust_comp:
                     building_comp = CompanyBuilding.objects.filter(
-                        company=cc.company)
+                        company=cc.company
+                    ).exclude(
+                        building__building_status=0
+                    )
                     for bc in building_comp:
                         buildings.append(
                             dict(building_pk=bc.building.pk,

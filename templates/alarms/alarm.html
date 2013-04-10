@@ -20,7 +20,24 @@
             var save_button = $("#save");
             var min = $("#alarm_min_value");
             var max = $("#alarm_max_value");
+
+            min.on("blur", function(){
+                if(max.val()!=""){
+                    if(parseFloat(min.val())>parseFloat(max.val())){
+                        min.val("");
+                    }
+                }
+            });
+            max.on("blur", function(){
+                if(min.val()!=""){
+                    if(parseFloat(min.val())>parseFloat(max.val())){
+                        max.val("");
+                    }
+                }
+            });
+            {% if operation == "alta" %}
             save_button.hide();
+            {% endif %}
             $("#cluster").change(function(){
                 if($(this).val() != "0"){
                     $.ajax({
@@ -59,123 +76,8 @@
                                     $("#empresas").html(append_text);
                                     $("#edificios").html("");
                                     $("#cons_unit").html("");
+                                    $("#company").uniform();
 
-
-                                    $("#company").uniform().change(function(){
-                                        if ($(this).val()!="0" && $(this).val()!="todos"){
-                                            $.ajax({
-                                                url: "/buildings/get_company_buildings/"+$(this).val()+"/?op=118",
-                                                type: "GET",
-                                                dataType: 'json',
-                                                async: 'true',
-                                                success: function(datos){
-
-                                                    var append_text = '';
-                                                    if(datos.length == 0){
-                                                        append_text = 'La empresa seleccionada no tiene edificios asociados.';
-                                                        $("#cons_unit").html(append_text);
-                                                    }else{
-
-                                                        var first_option = '';
-
-                                                        save_button.hide();
-                                                        first_option='<option value="0">'+
-                                                                'Selecciona un edificio</option>';
-
-                                                        if(datos[0].building != undefined){
-
-                                                            append_text = '<label for="building" class="g3">' +
-                                                                    'Selecciona un edificio' +
-                                                                    '</label>' +
-                                                                    '<select name="building" id="building" class="g9">';
-
-                                                            append_text += first_option;
-
-
-                                                            for(var i=0; i<datos.length; i++){
-                                                                append_text+='<option value="' + datos[i].pk + '"> ' +
-                                                                        datos[i].building +
-                                                                        '</option>';
-                                                            }
-                                                            append_text += "</select>";
-
-                                                            $("#edificios").html(append_text);
-                                                            $("#cons_unit").html("");
-
-                                                            $("#building").uniform().change(function(){
-                                                                if ($(this).val()!="0" && $(this).val()!="todos"){
-                                                                    $.ajax({
-                                                                        url: "/buildings/get_cus_of_building/"+$(this).val()+"/?op=118",
-                                                                        type: "GET",
-                                                                        dataType: 'json',
-                                                                        async: 'true',
-                                                                        success: function(datos){
-                                                                            var append_text = '';
-                                                                            if(datos.length == 0){
-                                                                                append_text = 'El edificio seleccionado no tiene unidades de consumo asociadas.';
-                                                                                $("#cons_unit").html(append_text);
-                                                                            }else{
-                                                                                var first_option='';
-                                                                                if(datos[0].all){
-                                                                                    save_button.show();
-                                                                                    first_option='<option value="todas">'+
-                                                                                            'Todas las unidades de consumo del edificio('+datos.length+')</option>';
-
-                                                                                }else{
-                                                                                    save_button.hide();
-                                                                                    first_option='<option value="0">'+
-                                                                                            'elije una parte del edificio</option>';
-                                                                                }
-                                                                                if(datos[0].pk != undefined){
-                                                                                    append_text = '<label for="c_unit" class="g3">' +
-                                                                                            'Selecciona una unidad de consumo' +
-                                                                                            '</label>' +
-                                                                                            '<select name="c_unit" id="c_unit" class="g9">';
-
-                                                                                    append_text += first_option;
-
-                                                                                    for(var i=0; i<datos.length; i++){
-                                                                                        append_text+='<option value="' + datos[i].pk + '"> ' +
-                                                                                                datos[i].annotation +
-                                                                                                '</option>';
-                                                                                    }
-                                                                                    append_text += "</select>";
-
-                                                                                    $("#cons_unit").html(append_text);
-                                                                                    $("#c_unit").uniform().change(function(){
-                                                                                        if ($(this).val()!="0"){
-                                                                                            save_button.show();
-                                                                                        }
-                                                                                    });
-                                                                                }else{
-                                                                                    append_text = 'El edificio seleccionado tiene unidades de consumo asociadas.';
-                                                                                    $("#cons_unit").html(append_text);
-                                                                                    save_button.hide();
-                                                                                }
-                                                                            }
-
-                                                                        }
-                                                                    });
-                                                                }else{
-                                                                    $("#cons_unit").html("");
-                                                                    save_button.hide();
-                                                                }
-                                                            });
-                                                        }else{
-                                                            append_text = 'La empresa seleccionada no tiene edificios asociados.';
-                                                            $("#edificios").html(append_text);
-                                                            $("#cons_unit").html("");
-                                                            save_button.hide();
-                                                        }
-                                                    }
-                                                }
-                                            });
-                                        }else{
-                                            $("#edificios").html("");
-                                            $("#cons_unit").html("");
-                                            save_button.hide();
-                                        }
-                                    });
                                 }else{
                                     append_text = 'El grupo de empresas seleccionado no tiene empresas asociadas.';
                                     $("#empresas").html(append_text);
@@ -195,7 +97,125 @@
                     save_button.hide();
                 }
             });
+            $("#company").live("change", function(){
+                if ($(this).val()!="0" && $(this).val()!="todos"){
+                    $.ajax({
+                        url: "/buildings/get_company_buildings/"+$(this).val()+"/?op=118",
+                        type: "GET",
+                        dataType: 'json',
+                        async: 'true',
+                        success: function(datos){
 
+                            var append_text = '';
+                            if(datos.length == 0){
+                                append_text = 'La empresa seleccionada no tiene edificios asociados.';
+                                $("#cons_unit").html(append_text);
+                            }else{
+
+
+                                var first_option = '';
+
+                                save_button.hide();
+                                first_option='<option value="0">'+
+                                        'Selecciona un edificio</option>';
+
+                                if(datos[0].building != undefined){
+
+                                    append_text = '<label for="building" class="g3">' +
+                                            'Selecciona un edificio' +
+                                            '</label>' +
+                                            '<select name="building" id="building" class="g9">';
+
+                                    append_text += first_option;
+
+
+                                    for(var i=0; i<datos.length; i++){
+                                        append_text+='<option value="' + datos[i].pk + '"> ' +
+                                                datos[i].building +
+                                                '</option>';
+                                    }
+                                    append_text += "</select>";
+
+                                    $("#edificios").html(append_text);
+                                    $("#cons_unit").html("");
+                                    $("#building").uniform();
+
+
+                                }else{
+                                    append_text = 'La empresa seleccionada no tiene edificios asociados.';
+                                    $("#edificios").html(append_text);
+                                    $("#cons_unit").html("");
+                                    save_button.hide();
+                                }
+                            }
+                        }
+                    });
+                }else{
+                    $("#edificios").html("");
+                    $("#cons_unit").html("");
+                    save_button.hide();
+                }
+            });
+            $("#building").live("change", function(){
+                if ($(this).val()!="0" && $(this).val()!="todos"){
+                    $.ajax({
+                        url: "/buildings/get_cus_of_building/"+$(this).val()+"/?op=118",
+                        type: "GET",
+                        dataType: 'json',
+                        async: 'true',
+                        success: function(datos){
+                            var append_text = '';
+                            if(datos.length == 0){
+                                append_text = 'El edificio seleccionado no tiene unidades de consumo asociadas.';
+                                $("#cons_unit").html(append_text);
+                            }else{
+
+                                var first_option='';
+                                if(datos[0].all){
+                                    save_button.show();
+                                    first_option='<option value="todas">'+
+                                            'Todas las unidades de consumo del edificio('+datos.length+')</option>';
+
+                                }else{
+                                    save_button.hide();
+                                    first_option='<option value="0">'+
+                                            'elije una parte del edificio</option>';
+                                }
+                                if(datos[0].pk != undefined){
+                                    append_text = '<label for="c_unit" class="g3">' +
+                                            'Selecciona una unidad de consumo' +
+                                            '</label>' +
+                                            '<select name="c_unit" id="c_unit" class="g9">';
+
+                                    append_text += first_option;
+
+                                    for(var i=0; i<datos.length; i++){
+                                        append_text+='<option value="' + datos[i].pk + '"> ' +
+                                                datos[i].annotation +
+                                                '</option>';
+                                    }
+                                    append_text += "</select>";
+
+                                    $("#cons_unit").html(append_text);
+                                    $("#c_unit").uniform().change(function(){
+                                        if ($(this).val()!="0"){
+                                            save_button.show();
+                                        }
+                                    });
+                                }else{
+                                    append_text = 'El edificio seleccionado tiene unidades de consumo asociadas.';
+                                    $("#cons_unit").html(append_text);
+                                    save_button.hide();
+                                }
+                            }
+
+                        }
+                    });
+                }else{
+                    $("#cons_unit").html("");
+                    save_button.hide();
+                }
+            });
 
         });
         function form_row(pm, alias, brand, model, serial, status){
@@ -278,36 +298,60 @@
                             <select name="alarm_param" id="alarm_param" class="g9 validate notnull">
                                 <option value="0">Elije un par&aacute;metro</option>
                                 {% for param in parameters %}
-                                    <option value="{{ param.pk }}">{{ param.name }}</option>
+                                    <option value="{{ param.pk }}"{% if param.pk == alarm.pk %}selected="selected"{% endif %}>{{ param.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
 
                         <div class="fields_row g12">
                             <label for="alarm_max_value" class="g3">Valor m&aacute;ximo</label>
-                            <input type="text" name="alarm_max_value" id="alarm_max_value" class="g8 validate numeric notnull"/>
+                            <input type="text" name="alarm_max_value" id="alarm_max_value" class="g8 validate numeric notnull" value="{{ alarm.max_value|floatformat:2 }}"/>
                         </div>
                         <div class="fields_row g12">
                             <label for="alarm_min_value" class="g3">Valor m&iacute;nimo</label>
-                            <input type="text" name="alarm_min_value" id="alarm_min_value" class="g8 validate numeric notnull"/>
+                            <input type="text" name="alarm_min_value" id="alarm_min_value" class="g8 validate numeric notnull" value="{{ alarm.min_value|floatformat:2 }}"/>
                         </div>
                         <div class="fields_row g12">
                             <label for="cluster" class="g3">Selecciona un grupo de empresas</label>
                             <select name="cluster" id="cluster" class="g8 validate notnull">
                                 <option value="0">Elije el edificio para el equipo industrial</option>
                                 {% for clus in clusters %}
-                                    <option value="{{ clus.pk }}"{% if post.cluster == clus.pk %} selected="selected" {% endif %}>{{ clus.cluster_name }}</option>
+                                    <option value="{{ clus.pk }}"{% if curr_cluster.pk == clus.pk %} selected="selected" {% endif %}>{{ clus.cluster_name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div class="fields_row g12" id="empresas">
-
+                            {% if operation == "edit" %}
+                                <label for="company" class="g3">Selecciona una empresa</label>
+                                <select name="company" id="company" class="g9">
+                                    <option value="0">Selecciona una empresa</option>
+                                    {% for cc in companies %}
+                                        <option value="{{ cc.company.pk }}" {% if cc.company.pk == curr_company.pk %}selected="selected" {% endif %}>{{ cc.company.company_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            {% endif %}
                         </div>
                         <div class="fields_row g12" id="edificios">
-
+                            {% if operation == "edit" %}
+                                <label for="building" class="g3">Selecciona un edificio</label>
+                                <select name="building" id="building" class="g9">
+                                    <option value="0">Selecciona un edificio</option>
+                                    {% for cb in comp_buildings %}
+                                        <option value="{{ cb.building.pk }}" {% if cb.building.pk == alarm.consumer_unit.building.pk %}selected="selected" {% endif %}>{{ cb.building.building_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            {% endif %}
                         </div>
                         <div class="fields_row g12" id="cons_unit">
-
+                            {% if operation == "edit" %}
+                                <label for="c_unit" class="g3">Selecciona una unidad de consumo</label>
+                                <select name="c_unit" id="c_unit" class="g9">
+                                    <option value="todas">Todas las unidades de consumo del edificio</option>
+                                    {% for cu in consumer_units %}
+                                        <option value="{{ cu.pk }}" {% if cu.pk == alarm.consumer_unit.pk %}selected="selected" {% endif %}>{{ cu.profile_powermeter.powermeter.powermeter_anotation }}</option>
+                                    {% endfor %}
+                                </select>
+                            {% endif %}
                         </div>
                     </div>
 

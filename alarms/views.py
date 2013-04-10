@@ -2,6 +2,7 @@
 import time
 import datetime
 import json
+import re
 
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.http import HttpResponse, HttpResponseRedirect, Http404
@@ -14,8 +15,10 @@ from django.contrib.auth.decorators import login_required
 
 from rbac.rbac_functions import get_buildings_context, has_permission
 from c_center.c_center_functions import get_clusters_for_operation, \
-    get_c_unitsforbuilding_for_operation
+    get_c_unitsforbuilding_for_operation, get_cu_siblings, \
+    get_building_siblings, get_company_siblings
 
+from alarms.alarm_functions import *
 from alarms.models import *
 from c_center.models import Building, IndustrialEquipment
 from rbac.models import Operation
@@ -99,25 +102,8 @@ def add_alarm(request):
 
             message = "La alarma se ha creado exitosamente"
             _type = "n_success"
-            # make json for new config
-            b_alarms = Alarms.objects.filter(consumer_unit__building=building)
-            alarm_arr = []
-            for ba in b_alarms:
-                status = "true" if ba.status else "false"
-                min_value = 0 if not ba.min_value else float(str(ba.min_value))
-                max_value = 0 if not ba.max_value else float(str(ba.max_value))
-                alarm_arr.append(
-                    dict(alarm_identifier=ba.alarm_identifier,
-                         electric_parameter_id=ba.electric_parameter.pk,
-                         min_value=min_value,
-                         max_value=max_value,
-                         status=status
-                         ))
-            i_eq = IndustrialEquipment.objects.get(building=building)
-            i_eq.has_new_alarm_config = True
-            i_eq.new_alarm_config = json.dumps(alarm_arr)
-            i_eq.modified_by = request.user
-            i_eq.save()
+
+            set_alarm_json(building, request.user)
 
             if has_permission(request.user, VIEW,
                               "Ver alarmas") or \
@@ -149,43 +135,83 @@ def edit_alarm(request, id_alarm):
     template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
     template_vars["operation"] = "edit"
-    industrial_eq = get_object_or_404(IndustrialEquipment, pk=int(id_ie))
-    template_vars["id_ie"] = id_ie
-    permission = "Modificar equipos industriales"
+    alarm = get_object_or_404(Alarms, pk=int(id_alarm))
+    permission = "Modificar alarmas"
     if has_permission(request.user, UPDATE,
                       permission) or \
             request.user.is_superuser:
-        buildings = get_all_buildings_for_operation(
-            permission, CREATE, request.user)
-        template_vars['buildings'] = buildings
+        
+        clusters = get_clusters_for_operation(permission, UPDATE, request.user)
+        template_vars['clusters'] = clusters
+        parameters = ElectricParameters.objects.all()
+        template_vars['parameters'] = parameters
+        template_vars['consumer_units'] = get_cu_siblings(alarm.consumer_unit)
+        template_vars['comp_buildings'] = get_building_siblings(
+            alarm.consumer_unit.building)
+        template_vars['curr_company'] = \
+            template_vars['comp_buildings'][0].company
+        template_vars['companies'] = get_company_siblings(
+            template_vars['curr_company'])
+        template_vars['curr_cluster'] = template_vars['companies'][0].cluster
 
         if request.method == 'POST':
-            building = Building.objects.get(pk=int(request.POST['ie_building']))
-            industrial_eq.alias = request.POST['ie_alias'].strip()
-            industrial_eq.description = request.POST['ie_desc'].strip()
-            industrial_eq.server = request.POST['ie_server'].strip()
-            industrial_eq.building = building
-            industrial_eq.modified_by = request.user
-            industrial_eq.save()
-            message = "El equipo industrial se ha actualizado exitosamente"
+            el = ElectricParameters.objects.get(
+                pk=int(request.POST['alarm_param']))
+            timeunix = time.mktime(datetime.datetime.now().timetuple())
+            timeunix = str(int(timeunix))
+            user_pk = str(request.user.pk)
+            building = Building.objects.get(pk=int(request.POST['building']))
+            if request.POST['c_unit'] == "todas":
+                cus = get_c_unitsforbuilding_for_operation(
+                    permission, CREATE, request.user, building
+                )[0]
+                for cu in cus:
+                    id_al = cu.profile_powermeter.powermeter.powermeter_serial
+                    id_al += "_"
+                    id_al += timeunix
+                    id_al += "_"
+                    id_al += user_pk
+                    alarm.alarm_identifier = id_al
+                    alarm.electric_parameter = el
+                    alarm.max_value = request.POST['alarm_max_value'].strip()
+                    alarm.min_value = request.POST['alarm_min_value'].strip()
+                    alarm.consumer_unit = cu
+                    alarm.save()
+            else:
+                cu = ConsumerUnit.objects.get(pk=int(request.POST['c_unit']))
+                id_al = cu.profile_powermeter.powermeter.powermeter_serial
+                id_al += "_"
+                id_al += timeunix
+                id_al += "_"
+                id_al += user_pk
+
+                alarm.alarm_identifier = id_al
+                alarm.electric_parameter = el
+                alarm.max_value = request.POST['alarm_max_value'].strip()
+                alarm.min_value = request.POST['alarm_min_value'].strip()
+                alarm.consumer_unit = cu
+                alarm.save()
+
+            message = "La alarma se ha actualizado exitosamente"
             _type = "n_success"
+
+            set_alarm_json(building, request.user)
+
             if has_permission(request.user, VIEW,
-                              "Ver equipos industriales") or \
+                              "Ver alarmas") or \
                     request.user.is_superuser:
                 return HttpResponseRedirect(
-                    "/buildings/industrial_equipments?msj=" +
+                    "/configuracion/alarmas?msj=" +
                     message +
                     "&ntype=" + _type)
             template_vars["message"] = message
             template_vars["type"] = type
-        template_vars["post"] = dict(ie_alias=industrial_eq.alias,
-                                     ie_desc=industrial_eq.description,
-                                     ie_server=industrial_eq.server,
-                                     ie_building = industrial_eq.building.pk)
+
+        template_vars["alarm"] = alarm
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
-            "consumption_centers/consumer_units/ind_eq.html",
+            "alarms/alarm.html",
             template_vars_template)
     else:
         template_vars_template = RequestContext(request, template_vars)
@@ -216,8 +242,10 @@ def alarm_list(request):
         order_max_value = 'asc'
         order_changed = 'asc'
         order_status = 'asc'
+        order_building = 'asc'
         #default order
-        order = "alias"
+        order = "consumer_unit__profile_powermeter__powermeter" \
+                "__powermeter_anotation"
         if "order_consumer" in request.GET:
             if request.GET["order_consumer"] == "desc":
                 order = "-consumer_unit__profile_powermeter__powermeter" \
@@ -225,6 +253,13 @@ def alarm_list(request):
                 order_consumer = "asc"
             else:
                 order_consumer = "desc"
+
+        elif "order_building" in request.GET:
+            if request.GET["order_building"] == "asc":
+                order = "consumer_unit__building__building_name"
+                order_building = "desc"
+            else:
+                order = "-consumer_unit__building__building_name"
 
         elif "order_parameter" in request.GET:
             if request.GET["order_parameter"] == "asc":
@@ -256,14 +291,17 @@ def alarm_list(request):
 
         elif "order_status" in request.GET:
             if request.GET["order_status"] == "asc":
-                order = "building__building_status"
+                order = "status"
                 order_status = "desc"
             else:
-                order = "-building__building_status"
+                order = "-status"
                 order_status = "asc"
 
         if search:
             lista = Alarms.objects.filter(
+                Q(
+                    consumer_unit__building__building_name__icontains=
+                    request.GET['search']) |
                 Q(electric_parameter__name__icontains=request.GET['search']) |
                 Q(
                     consumer_unit__profile_powermeter__powermeter__icontains=
@@ -275,6 +313,7 @@ def alarm_list(request):
         # muestra 10 resultados por pagina
         paginator = Paginator(lista, 10)
         template_vars['order_consumer'] = order_consumer
+        template_vars['order_building'] = order_building
         template_vars['order_parameter'] = order_parameter
         template_vars['order_min_value'] = order_min_value
         template_vars['order_max_value'] = order_max_value
@@ -311,28 +350,32 @@ def alarm_list(request):
 def status_batch_alarm(request):
     if has_permission(request.user,
                       UPDATE,
-                      "Modificar equipos industriales") or \
+                      "Modificar alarmas") or \
             request.user.is_superuser:
         if request.POST['actions'] != '0':
             for key in request.POST:
-                if re.search('^equipo_\w+', key):
-                    r_id = int(key.replace("equipo_", ""))
-                    equipo_ind = get_object_or_404(IndustrialEquipment, pk=r_id)
+                if re.search('^alarma_\w+', key):
+                    r_id = int(key.replace("alarma_", ""))
+                    alarm = get_object_or_404(Alarms, pk=r_id)
 
-                    if equipo_ind.status:
-                        equipo_ind.status = False
+                    building = alarm.consumer_unit.building
+
+                    if alarm.status:
+                        alarm.status = False
                     else:
-                        equipo_ind.status = True
+                        alarm.status = True
 
-                    equipo_ind.save()
+                    alarm.save()
 
-            mensaje = "Los equipos industriales seleccionados han " \
+                    set_alarm_json(building, request.user)
+
+            mensaje = "Las alarmas seleccionadas han " \
                       "cambiado su estatus correctamente"
             _type = "n_success"
         else:
             mensaje = str("No se ha seleccionado una acción").decode("utf-8")
             _type = "n_notif"
-        return HttpResponseRedirect("/buildings/industrial_equipments/?msj=" +
+        return HttpResponseRedirect("/configuracion/alarmas/?msj=" +
                                     mensaje + "&ntype=" + _type)
     else:
         datacontext = get_buildings_context(request.user)[0]
@@ -343,26 +386,32 @@ def status_batch_alarm(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+
 @login_required(login_url='/')
 def status_alarm(request, id_alarm):
     if has_permission(request.user,
                       UPDATE,
-                      "Modificar equipos industriales") or \
+                      "Modificar alarmas") or \
             request.user.is_superuser:
-        ind_eq = get_object_or_404(IndustrialEquipment, pk=id_ie)
-        if ind_eq.status:
-            ind_eq.status = False
-            str_status = "Activo"
+        alarm = get_object_or_404(Alarms, pk=id_alarm)
+        if alarm.status:
+            alarm.status = False
+            str_status = "Inctivo"
         else:
-            ind_eq.status = True
+            alarm.status = True
             str_status = "Activo"
-        ind_eq.save()
-        mensaje = "El estatus del equipo industrial " + ind_eq.alias + \
+        alarm.save()
+        building = alarm.consumer_unit.building
+        set_alarm_json(building, request.user)
+        mensaje = "El estatus de la alarma " + \
+                  alarm.consumer_unit.profile_powermeter.powermeter\
+                      .powermeter_anotation + \
+                  " - " + alarm.electric_parameter.name + \
                   ", ha cambiado a " + str_status
         _type = "n_success"
 
         return HttpResponseRedirect(
-            "/buildings/industrial_equipments/?msj=" + mensaje +
+            "/configuracion/alarmas/?msj=" + mensaje +
             "&ntype=" + _type)
     else:
         datacontext = get_buildings_context(request.user)[0]
@@ -387,8 +436,7 @@ def see_alarm(request, id_alarm):
 
     if has_permission(request.user, VIEW,
                       "Ver equipos industriales") or request.user.is_superuser:
-        template_vars["industrial_eq"] = get_object_or_404(IndustrialEquipment,
-                                                           pk=int(id_ie))
+        template_vars["alarm"] = get_object_or_404(Alarm,pk=int(id_ie))
 
         #Asociated powermeters
         if has_permission(request.user, VIEW,
@@ -431,8 +479,8 @@ def see_alarm(request, id_alarm):
                         order = "-powermeter__status"
                         order_status = "asc"
 
-            lista = PowermeterForIndustrialEquipment.objects.filter(
-                industrial_equipment=template_vars["industrial_eq"]
+            lista = PowermeterForAlarm.objects.filter(
+                alarmuipment=template_vars["alarm"]
             ).order_by(order)
             template_vars['order_alias'] = order_alias
             template_vars['order_model'] = order_model

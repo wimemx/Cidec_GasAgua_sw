@@ -72,8 +72,20 @@ def get_weeks_number_in_month(
         year,
         month
 ):
-    # TODO - Implement this function
-    pass
+    first_day_of_month = datetime(year=year, month=month, day=1)
+    first_day_of_first_week =\
+        first_day_of_month - timedelta(days=first_day_of_month.weekday())
+
+    week_delta = timedelta(weeks=1)
+    week_count = 0
+    first_day_of_week = first_day_of_first_week
+    while (first_day_of_week + week_delta).year <= year and\
+          (first_day_of_week + week_delta).month <= month:
+
+        week_count += 1
+        first_day_of_week += week_delta
+
+    return week_count
 
 
 def get_week_of_month_from_datetime(datetime_variable):

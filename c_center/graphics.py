@@ -96,7 +96,7 @@ def get_consumer_unit_electric_data_raw(
         electric_data_raw.append(
             dict(datetime=int(time.mktime(
                      django.utils.timezone.localtime(medition_date).timetuple())),
-                 electric_data=abs(electric_data),
+                 value=abs(electric_data),
                  certainty=True))
 
     return electric_data_raw
@@ -867,6 +867,7 @@ def render_graphics(request):
 
 
 def render_graphics_extended(request):
+    print "render_graphics_extended"
     if request.method == "GET":
         try:
             granularity = request.GET['granularity']

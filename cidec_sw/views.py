@@ -30,7 +30,6 @@ from rbac.models import DataContextPermission, Object, PermissionAsigment, \
     UserRole, GroupObject, MenuCategs, MenuHierarchy
 from rbac.rbac_functions import get_buildings_context
 from variety import unique_from_array, timed
-from tareas.tasks import datawarehouse_run
 
 from django.shortcuts import redirect, render
 
@@ -61,7 +60,11 @@ def set_timezone(request):
                       {'timezones': pytz.common_timezones})
 
 
+# TODO change data warehouse implementation
+
 def parse_csv(request):
+    return HttpResponse("")
+"""
     dir_path = '/home/satest/cidec_sw/templates/static/media/datos_perdidos'
     files = os.listdir(dir_path)
     dir_fd = os.open(dir_path, os.O_RDONLY)
@@ -151,7 +154,7 @@ def parse_csv(request):
         populate_interval_facts=True
     )
     return HttpResponse(html)
-
+"""
 
 def _login(request):
     error = username = password = ''

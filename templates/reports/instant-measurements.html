@@ -81,11 +81,21 @@
                         // Use the same chart area width as the control for axis alignment.
                         'chartArea': {'height': '80%', 'width': '90%'},
                         'hAxis': {'slantedText': false},
-                        'vAxis': {'viewWindow': {'min': {{ min }}, 'max': {{max}} }},
+                        'vAxes': {
+                        {% for col in axis_list  %}
+                            {{ forloop.counter0 }}: {logScale: false, title: '{{ col.name }}', textPosition: "{% cycle 'out' 'in' %}"},
+                        {% endfor %}
+                        },
+                        'series':{
+                        {% for index in column_unit_axis_indexes %}
+                            {{ forloop.counter0 }}:{targetAxisIndex:{{ index }}},
+                        {% endfor %}
+                        },
                         'legend': {'position': 'top', 'alignment': 'center'}
                     }
-                });
-
+                });//{{ columns }} [v1, I1, kWL1]
+                //{{ column_unit_axis_indexes }} [2,0,1]
+                //{{ axis_list }} [{'max': 26.422811, 'name': u'I', 'min': 9.558961}, {'max': 3.146609, 'name': u'kW', 'min': 1.192338}, {'max': 130.529821, 'name': u'V', 'min': 125.344246}]
                 //
                 // Google Chart
                 //
@@ -211,24 +221,24 @@
                 //Date("October 13, 1975 11:13:00")
                 //start_date = fech_ini;
 
-                end_date = new Date();
-                end_date.setTime(fech_ini);
+                start_date = new Date();
+                start_date.setTime(fech_fin);
 
                 //start_date.addDays(1);
                 //end_date.addDays(1);
                 switch (interval){
                     case 'hour' :
                         //start_date.addHours(5);
-                        end_date.addHours(2);
+                        start_date.setHours(start_date.getHours()-2);
                         break;
                     case 'day' :
-                        end_date.addDays(1);
+                        start_date.setDate(start_date.getDate()-1);
                         break;
                     case 'week' :
-                        end_date.addDays(7);
+                        start_date.setDate(start_date.getDate()-7);
                         break;
                     case 'month' :
-                        end_date.addDays(30);
+                        start_date.setDate(start_date.getDate()-30);
                         break;
                 }
 
@@ -236,8 +246,8 @@
 
                 control.setState({
                     'range': {
-                        'start': fech_ini,
-                        'end': end_date
+                        'start': start_date,
+                        'end': fech_fin
                     }
                 });
 
@@ -259,6 +269,9 @@
                     });
                 });
 
+                var csv_url = window.location.href.slice(window.location.href.indexOf('?') + 1);
+                csv_url = "/reportes/grafica_datos_csv/?"+csv_url;
+                $("#export_csv").attr("href",csv_url);
                 var base_url = window.location.pathname;
                 $("li#raw_data").click(function(){
 
@@ -286,20 +299,24 @@
     </head>
 
     <body>
+
+    <ul id="compare_interval" class="fr">
+        <li id="hour">1 H</li>
+        <li id="day" >1 D</li>
+        <li id="week">1 Sem</li>
+    </ul>
     <ul id="compare_interval1" class="fr">
         {% if granularity == "raw_data" %}
             <li id="raw_data"  class="active">Mediciones</li>
             <li id="dw">Calculados</li>
         {% else %}
-            <li id="raw_data" class="active">Mediciones</li>
+            <li id="raw_data">Mediciones</li>
             <li id="dw" class="active" >Calculados</li>
         {% endif %}
     </ul>
-        <ul id="compare_interval" class="fr">
-            <li id="hour">1 H</li>
-            <li id="day" >1 D</li>
-            <li id="week">1 Sem</li>
-        </ul>
+    {% if granularity == "raw_data" %}
+    <a id="export_csv" class="fr" href="">Exportar datos en CSV</a>
+    {% endif %}
 
         <div id="parameter_controls">
             <form id="column-controls">
@@ -324,6 +341,7 @@
             <!-- control end -->
 
             <!-- slider-range start -->
+            {% if axis_list|length == 1 %}
             <div id="slider-range">
                 <div id="up">
                     <input type="text" class="integer" id="upper_limit" step="0.5"/>
@@ -334,7 +352,7 @@
                 </div>
             </div>
             <!-- slider-range end -->
-
+            {% endif %}
         </div>
         <!-- dashboard end -->
 

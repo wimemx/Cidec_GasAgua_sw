@@ -226,12 +226,12 @@ body{
 }
 .main_logo a{
     display: block;
-
     height: 35px;
-    width: 136px;
+    width: 150px;
 }
 .main_logo#myrios a{
-    background: url("images/imgs_icns/myrios_auditem_logo_header.png");
+
+    background: url("images/imgs_icns/myrios_logo.png") -11.7px;
     margin-top: 6px;
 }
 .main_logo#auditem a{

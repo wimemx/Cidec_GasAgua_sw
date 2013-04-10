@@ -850,12 +850,15 @@ def multiply():
 def recursive_tag(initial=None, last=None):
 
     if not initial:
-        initial = 0
+        initial_pk = ElectricDataTemp.objects.filter(
+            medition_date__gte=datetime.datetime(2013, 4, 7, 9, 0, 0)).values("pk").order_by("medition_date")[0]
+        initial = initial_pk['pk']
     if not last:
-        last_pk = ElectricDataTemp.objects.all().values("pk").order_by("medition_date")[0]
+        last_pk = ElectricDataTemp.objects.all().values("pk").order_by("-medition_date")[0]
         last = last_pk['pk']
+    print initial, last
     tag_reading_ids(initial, last)
-    last_last = ElectricDataTemp.objects.all().values("pk").order_by("medition_date")[0]
+    last_last = ElectricDataTemp.objects.all().values("pk").order_by("-medition_date")[0]
     last_last = last_last['pk']
     if last_last > last:
         recursive_tag(last, last_last)
@@ -873,6 +876,7 @@ def tag_reading_ids(id_initial, id_max):
     for readingObj in readingsObj:
         #Si la lectura proviene de cualquier medidor menos del No Asignado
         if readingObj.profile_powermeter.pk != 4:
+            print readingObj
             #Se revisa que esa medicion no este etiquetada ya.
             tagged_reading = ElectricRateForElectricData.objects.filter(
                 electric_data=readingObj)
@@ -935,6 +939,7 @@ def tag_reading_ids(id_initial, id_max):
                     identifier=tag
                 )
                 newTaggedReading.save()
+                print newTaggedReading
 
     print "Acabe"
 

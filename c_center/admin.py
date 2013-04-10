@@ -398,5 +398,11 @@ class ElectricRateForElectricDataAdmin(admin.ModelAdmin):
 admin.site.register(c_center.models.ElectricRateForElectricData,
                     ElectricRateForElectricDataAdmin)
 admin.site.register(c_center.models.MonthlyCutDates)
-admin.site.register(c_center.models.DailyData)
+
+
+class DailyDataAdmin(admin.ModelAdmin):
+    list_filter = ['building']
+    search_fields = [
+        'building__building_name']
+admin.site.register(c_center.models.DailyData, DailyDataAdmin)
 admin.site.register(c_center.models.HMHistoricData)

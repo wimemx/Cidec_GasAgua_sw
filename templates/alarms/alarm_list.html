@@ -39,7 +39,7 @@
                 if (get[0]!=window.location.protocol+"//"+window.location
                         .host+window.location.pathname){
                     for(var i=0; i<get.length; i++){
-                        if (get[i]!="order_consumer" && get[i]!="order_parameter" && get[i]!="order_min_value" && get[i]!="order_max_value" && get[i]!="order_changed" && get[i]!="order_status"){
+                        if (get[i]!="order_consumer" && get[i]!="order_parameter" && get[i]!="order_min_value" && get[i]!="order_max_value" && get[i]!="order_changed" && get[i]!="order_status" && get[i]!="order_building"){
                             base_url+="&"+get[i]+"="+get[get[i]];
                         }
                     }
@@ -54,7 +54,7 @@
 
     $("a.switch").click(function(event){
         event.preventDefault();
-        var url="/configuracion/status_ie/"+$(this).attr("rel")+"/";
+        var url="/configuracion/status_alarm/"+$(this).attr("rel")+"/";
         var action = $(this).attr("title");
         new Messi('&iquest;Est&aacute; seguro de que desea '+ action +' esta alarma?',
             {title: action+' alarma', modal: true, buttons: [{id: 0,
@@ -94,65 +94,60 @@
         }
     });
 
-    $("#sort_name").click(function(e){
-    e.preventDefault();
-    var get = getUrlVars();
-
-    var base_url = window.location.pathname;
-    base_url+="?sort_name="+$("#sort_name").attr("rel");
-    if(get.length>0){
-    if (get[0]!=window.location.protocol+"//"+window.location
-    .host+window.location.pathname){
-    for(var i=0; i<get.length; i++){
-    if (get[i]!="order_brand" && get[i]!="order_model" && get[i]!="order_status"){
-    base_url+="&"+get[i]+"="+get[get[i]];
-    }
-    }
-    }
-    }
-    window.location = base_url;
+    $("#order_consumer").click(function(e){
+        e.preventDefault();
+        var base_url = window.location.pathname;
+        base_url+="?order_consumer="+$("#order_consumer").attr("rel");
+        base_url=append_get(base_url);
+        window.location = base_url;
     });
 
-    $("#sort_server").click(function(e){
-    e.preventDefault();
-    var get = getUrlVars();
-
-    var base_url = window.location.pathname;
-    base_url+="?sort_server="+$("#sort_server").attr("rel");
-    if(get.length>0){
-    if (get[0]!=window.location.protocol+"//"+window.location
-    .host+window.location.pathname){
-    for(var i=0; i<get.length; i++){
-    if (get[i]!="order_brand" && get[i]!="order_model" && get[i]!="order_status"){
-    base_url+="&"+get[i]+"="+get[get[i]];
-    }
-    }
-    }
-
-    }
-
-    window.location = base_url;
+    $("#order_parameter").click(function(e){
+        e.preventDefault();
+        var base_url = window.location.pathname;
+        base_url+="?order_parameter="+$("#order_parameter").attr("rel");
+        base_url=append_get(base_url);
+        window.location = base_url;
     });
 
-    $("#sort_status").click(function(e){
-    e.preventDefault();
-    var get = getUrlVars();
+    $("#order_min_value").click(function(e){
+        e.preventDefault();
+        var base_url = window.location.pathname;
+        base_url+="?order_min_value="+$("#order_min_value").attr("rel");
+        base_url=append_get(base_url);
+        window.location = base_url;
+    });
 
-    var base_url = window.location.pathname;
-    base_url+="?order_status="+$("#sort_status").attr("rel");
-    if(get.length>0){
-    if (get[0]!=window.location.protocol+"//"+window.location
-    .host+window.location.pathname){
-    for(var i=0; i<get.length; i++){
-    if (get[i]!="order_brand" && get[i]!="order_model" && get[i]!="order_status"){
-    base_url+="&"+get[i]+"="+get[get[i]];
-    }
-    }
-    }
+    $("#order_max_value").click(function(e){
+        e.preventDefault();
+        var base_url = window.location.pathname;
+        base_url+="?order_max_value="+$("#order_max_value").attr("rel");
+        base_url=append_get(base_url);
+        window.location = base_url;
+    });
 
-    }
+    $("#order_changed").click(function(e){
+        e.preventDefault();
+        var base_url = window.location.pathname;
+        base_url+="?order_changed="+$("#order_changed").attr("rel");
+        base_url=append_get(base_url);
+        window.location = base_url;
+    });
 
-    window.location = base_url;
+    $("#order_status").click(function(e){
+        e.preventDefault();
+        var base_url = window.location.pathname;
+        base_url+="?order_status="+$("#order_status").attr("rel");
+        base_url=append_get(base_url);
+        window.location = base_url;
+    });
+
+    $("#order_building").click(function(e){
+        e.preventDefault();
+        var base_url = window.location.pathname;
+        base_url+="?order_building="+$("#order_building").attr("rel");
+        base_url=append_get(base_url);
+        window.location = base_url;
     });
 
 
@@ -191,8 +186,8 @@
 
                 <div id="user_actions">
 
-                    <a href="/configuracion/alta_ie/"><span class="plus"></span>
-                        Nuevo Equipo
+                    <a href="/configuracion/alta_alarma/"><span class="plus"></span>
+                        Nueva Alarma
                     </a>
                     <span class="hz_divider"></span>
                     <form method="get" action=".">
@@ -205,58 +200,92 @@
                         </button>
                     </form>
                 </div>
-                <form id="operations_batch" action="/configuracion/status_batch_ie/" method="post">
+                <form id="operations_batch" action="/configuracion/status_batch_alarm/" method="post">
                     {% csrf_token %}
                     <div id="grid_container">
                         <table>
                             <thead>
                             <tr>
-                                <th style="width: 25%;">
-                                    <a href="#" id="sort_name" rel="{{ order_name }}">
-                                        Alias del Equipo
+                                <th style="width: 14%;">
+                                    <a href="#" id="order_consumer" rel="{{ order_consumer }}">
+                                        Medidor
                                         <span class="sort"></span>
                                     </a>
                                 </th>
-                                <th style="width: 45%;">
-                                    <a href="#" id="sort_server" rel="{{ order_server }}">
-                                        Servidor
+                                <th style="width: 11%;">
+                                    <a href="#" id="order_building" rel="{{ order_building }}">
+                                        Ubicaci&oacute;n
                                         <span class="sort"></span>
                                     </a>
                                 </th>
-                                <th style="width: 15%;">
-                                    <a href="#" id="sort_status" rel="{{ order_status }}">
+                                <th style="width: 12.5%;">
+                                    <a href="#" id="order_parameter" rel="{{ order_parameter }}">
+                                        Par&aacute;metro
+                                        <span class="sort"></span>
+                                    </a>
+                                </th>
+                                <th style="width: 11.5%;">
+                                    <a href="#" id="order_min_value" rel="{{ order_min_value }}">
+                                        Valor M&iacute;n.
+                                        <span class="sort"></span>
+                                    </a>
+                                </th>
+                                <th style="width: 11.5%;">
+                                    <a href="#" id="order_max_value" rel="{{ order_max_value }}">
+                                        Valor M&aacute;x.
+                                        <span class="sort"></span>
+                                    </a>
+                                </th>
+                                <th style="width: 14.5%;">
+                                    <a href="#" id="order_changed" rel="{{ order_changed }}">
+                                        &Uacute;ltima Modif.
+                                        <span class="sort"></span>
+                                    </a>
+                                </th>
+                                <th style="width: 12.5%;">
+                                    <a href="#" id="order_status" rel="{{ order_status }}">
                                         Estatus
                                         <span class="sort"></span>
                                     </a>
                                 </th>
-                                <th style="width: 15%;">Acciones</th>
+                                <th style="width: 12.5%;">Acciones</th>
                             </tr>
                             </thead>
                             <tbody>
-                            {% for equipo in paginacion.object_list %}
+                            {% for alarma in paginacion.object_list %}
 
                                 <tr class="{% cycle 'row1' 'row2' %}">
                                     <td>
-                                        <input type="checkbox" id="equipo_{{ equipo.pk }}"
-                                               name="equipo_{{ equipo.pk }}"/>
-                                        <label for="equipo_{{ equipo.pk }}">
-                                            <a href="/configuracion/ver_ie/{{ equipo.pk }}/">
-                                                {{ equipo.alias }}
+                                        <input type="checkbox" id="alarma_{{ alarma.pk }}"
+                                               name="alarma_{{ alarma.pk }}"/>
+                                        <label for="alarma_{{ alarma.pk }}">
+                                            <a href="/configuracion/alarma/{{ alarma.pk }}/">
+                                                {{ alarma.consumer_unit.profile_powermeter.powermeter.powermeter_anotation }}
                                             </a>
                                         </label>
                                     </td>
                                     <td class="c">
-                                        <a href="/configuracion/ver_ie/{{ equipo.pk }}/">
-                                            {{ equipo.server }}
-                                        </a>
+                                            {{ alarma.consumer_unit.building.building_name }}
                                     </td>
                                     <td class="c">
-                                        <a href="#" rel="{{ equipo.pk }}" {% if equipo.status %}class="switch active_switch" title="desactivar"{% else %}class="switch inactive_switch" title="activar"{% endif %}>
+                                        {{ alarma.electric_parameter.name }}
+                                    </td>
+                                    <td class="c">
+                                        {{ alarma.min_value|floatformat:2 }}
+                                    </td>
+                                    <td class="c">
+                                        {{ alarma.max_value|floatformat:2 }}
+                                    </td>
+                                    <td class="c">
+                                        {{ alarma.last_changed }}
+                                    </td>
+                                    <td class="c">
+                                        <a href="#" rel="{{ alarma.pk }}" {% if alarma.status %}class="switch active_switch" title="desactivar"{% else %}class="switch inactive_switch" title="activar"{% endif %}>
                                         </a>
                                     </td>
                                     <td class="c">
                                         <a class="edit" title="Editar alarma"
-                                           href="/configuracion/editar_ie/{{ equipo.pk }}/"></a>
+                                           href="/configuracion/editar_alarma/{{ alarma.pk }}/"></a>
                                     </td>
                                 </tr>
                             {% endfor %}
