@@ -73,12 +73,14 @@ GRAPHS_PF = [ob.object for ob in GroupObject.objects.filter(
 GRAPHS_F1 = [ob.object for ob in GroupObject.objects.filter(
     group__group_name="Fase 1")]
 GRAPHS_F2 = [ob.object for ob in GroupObject.objects.filter(
-    group__group_name="Fase 1")]
+    group__group_name="Fase 2")]
 GRAPHS_F3 = [ob.object for ob in GroupObject.objects.filter(
-    group__group_name="Fase 1")]
+    group__group_name="Fase 3")]
+GRAPHS_CACUM = [ob.object for ob in GroupObject.objects.filter(
+    group__group_name="Consumo Acomulado")]
 GRAPHS = dict(energia=GRAPHS_ENERGY, corriente=GRAPHS_I, voltaje=GRAPHS_V,
               perfil_carga=GRAPHS_PF, fase1=GRAPHS_F1, fase2=GRAPHS_F2,
-              fase3=GRAPHS_F3)
+              fase3=GRAPHS_F3, consumo_acumulado=GRAPHS_CACUM)
 
 VIRTUAL_PROFILE = ProfilePowermeter.objects.get(
     powermeter__powermeter_anotation="Medidor Virtual")
@@ -269,6 +271,9 @@ def main_page(request):
             request.session['years'] = [__date.year for __date in
                                         ElectricDataTemp.objects.all().
                                         dates('medition_date', 'year')]
+            request.session['months'] = [__date.year for __date in
+                                        ElectricDataTemp.objects.all().
+                                        dates('medition_date', 'month')]
 
             template_vars = {"graph_type": graphs[0],
                              "datacontext": datacontext,

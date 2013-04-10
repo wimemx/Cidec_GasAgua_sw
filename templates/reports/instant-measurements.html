@@ -25,6 +25,21 @@
 
         <script type="text/javascript">
             var fech_ini = '', fech_fin = '';
+            var view;
+            var colors = ["#3466cc", "#fd9827", "#dc3919",
+                          "#f9dbad", "#fd9827", "#dc3919",
+                          "#7c615d", "#9ebfc6", "#d41314",
+                          "#bbcbea", "#efbdb1", "#f9dbad",
+                          "#FF69B4", "#32CD32", "#9370DB",
+                          "#FF6347", "#AFEEEE", "#6A5ACD",
+                          "#FFDAB9", "#BDB76B", "#DEB887",
+                          "#00008B", "#000080", "#191970",
+                          "#696969", "#778899", "#708090",
+                          "#2F4F4F", "#DCDCDC", "#000000",
+                          "#006600", "#333366", "#cc6600",
+                          "#009900", "#6666cc", "#ff6633",
+                          "#0099cc", "#669999", "#cc9999"
+                         ];
 
             var control = new google.visualization.ControlWrapper({
                 'controlType': 'ChartRangeFilter',
@@ -68,6 +83,10 @@
                 }
                 return base_url
             }
+            var arr_pos = [];
+            {% for index in column_unit_axis_indexes %}
+                arr_pos[{{ index }}] = {{ forloop.counter0 }};
+            {% endfor %}
 
 
             function drawVisualization() {
@@ -82,8 +101,8 @@
                         'chartArea': {'height': '80%', 'width': '90%'},
                         'hAxis': {'slantedText': false},
                         'vAxes': {
-                        {% for col in axis_list  %}
-                            {{ forloop.counter0 }}: {logScale: false, title: '{{ col.name }}', textPosition: "{% cycle 'out' 'in' %}"},
+                        {% for col,index in series  %}
+                            {{ forloop.counter0 }}: {logScale: false, title: '{{ col.name }}', titleTextStyle:{color: colors[arr_pos[{{ forloop.counter0 }}]]}, textStyle:{color: colors[arr_pos[{{ forloop.counter0 }}]]}, {% if col.name == "V" or col.name == "I" %}minValue: 0, {% endif %}textPosition: "{% cycle 'out' 'in' %}"},
                         {% endfor %}
                         },
                         'series':{
@@ -91,12 +110,10 @@
                             {{ forloop.counter0 }}:{targetAxisIndex:{{ index }}},
                         {% endfor %}
                         },
+                        colors: colors,
                         'legend': {'position': 'top', 'alignment': 'center'}
                     }
-                });//{{ columns }} [v1, I1, kWL1]
-                //{{ column_unit_axis_indexes }} [2,0,1]
-                //{{ axis_list }} [{'max': 26.422811, 'name': u'I', 'min': 9.558961}, {'max': 3.146609, 'name': u'kW', 'min': 1.192338}, {'max': 130.529821, 'name': u'V', 'min': 125.344246}]
-                //
+                });
                 // Google Chart
                 //
                 var data = new google.visualization.DataTable();
@@ -133,7 +150,7 @@
                     //console.log(row_array);
                     data.addRow(row_array);
                 }
-                var view = new google.visualization.DataView(data);
+                view = new google.visualization.DataView(data);
 
                 dashboard.bind(control, chart);
                 dashboard.draw(view);
@@ -145,17 +162,23 @@
                         $(this).attr("checked", "checked");
                         $(this).parent().addClass("checked");
                         return false;
-                    }else{''
+                    }else{
+                        var cols_cant = {{ columns|length }};
                         var columns_set_array = [];
                         var checkboxes = document.forms['column-controls']['column-control'];
+                        var colores = colors.slice(0);
                         for (var index = 0; index < checkboxes.length; index++) {
                             if(checkboxes[index].checked){
                                 columns_set_array.push((index * 3) + 0);
                                 columns_set_array.push((index * 3) + 1);
                                 columns_set_array.push((index * 3) + 2);
+                            }else{
+                                colores.splice(index,1);
                             }
                         }
                         view.setColumns(columns_set_array);
+                        console.log(colores, colores.length);
+                        chart.setOption('colors', colores);
                         dashboard.bind(control, chart);
                         dashboard.draw(view);
                     }
@@ -339,6 +362,7 @@
             <!-- control start -->
             <div id="control"></div>
             <!-- control end -->
+            <div id="control1"></div>
 
             <!-- slider-range start -->
             {% if axis_list|length == 1 %}

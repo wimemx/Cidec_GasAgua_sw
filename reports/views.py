@@ -140,9 +140,13 @@ def get_column_units_list(
         in request_data_list_normalized:
 
         try:
+            nm = data_warehouse_extended.models.ElectricalParameter.objects.get(
+                name=electrical_parameter_name
+            )
+            nm = nm.name_transactional
             electrical_parameter_info =\
                 alarms.models.ElectricParameters.objects.get(
-                    name=electrical_parameter_name)
+                    name=nm)
 
         except alarms.models.ElectricParameters.DoesNotExist:
             logger.error()
@@ -1058,7 +1062,9 @@ def render_instant_measurements(
     template_variables['max'] = maximum
     template_variables['min'] = minimum
     template_variables['columns_statistics'] = data_clusters_statistics
-
+    template_variables['series'] = zip(
+        template_variables['axis_list'],
+        template_variables['column_unit_axis_indexes'] )
     template_context =\
         django.template.context.RequestContext(request, template_variables)
 
