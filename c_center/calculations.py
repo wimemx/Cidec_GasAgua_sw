@@ -636,11 +636,11 @@ def obtenerKVARH_dia(profile_powermeter, start_date, end_date, kvarh_anterior):
                 profile_powermeter=profile_powermeter, pk__gt=last_id).\
                     order_by('medition_date')
             if siguiente_lectura:
-                print "Id:", siguiente_lectura[0].id
+                #print "Id:", siguiente_lectura[0].id
                 kvarh_final = siguiente_lectura[0].TotalkvarhIMPORT
 
-        print "1er KVARH", kvarh_inicial
-        print "2da KVARH", kvarh_final
+        #print "1er KVARH", kvarh_inicial
+        #print "2da KVARH", kvarh_final
         kvarh_netos = kvarh_final - kvarh_inicial
 
     return int(ceil(kvarh_netos))
