@@ -73,7 +73,7 @@
                 var data = google.visualization.arrayToDataTable([
                     ['Mes', 'KWH'],
                     ['{{ mes_01 }}',{{ m01_kwh }}],
-                    ['{{ mes_02 }}',{{ m02_kwh }}],
+                    ['{{ mes_02 }}',{{ m02_kwh }}]
 
                 ]);
 
@@ -90,7 +90,7 @@
                 var data2 = google.visualization.arrayToDataTable([
                     ['Mes', '$(MXN)'],
                     ['{{ mes_01 }}',{{ m01_money }}],
-                    ['{{ mes_02 }}',{{ m02_money }}],
+                    ['{{ mes_02 }}',{{ m02_money }}]
 
                 ]);
 
@@ -108,7 +108,7 @@
                     var data3 = google.visualization.arrayToDataTable([
                         ['Mes', 'KW'],
                         ['{{ mes_01 }}',{{ m01_kw }}],
-                        ['{{ mes_02 }}',{{ m02_kw }}],
+                        ['{{ mes_02 }}',{{ m02_kw }}]
 
                     ]);
 
@@ -127,7 +127,7 @@
                     var data4 = google.visualization.arrayToDataTable([
                         ['Mes', 'Base', 'Intermedio', 'Punta'],
                         ['{{ mes_01 }}',{{ m01_base }},{{ m01_intermedio }},{{ m01_punta }}],
-                        ['{{ mes_02 }}',{{ m02_base }},{{ m02_intermedio }},{{ m02_punta }}],
+                        ['{{ mes_02 }}',{{ m02_base }},{{ m02_intermedio }},{{ m02_punta }}]
 
                     ]);
 
@@ -423,6 +423,7 @@
                 <div id="periodo_container">
                     <div class="periodo_info">
                         <div class="label_data">
+                        <span id="color_legend_base"></span>
                         <span class="periodo_label">Base:</span>
                         {% if positive_b == -1  %}
                             <img src="/static/css/images/imgs_icns/ba_up_arrow_small.png"/>
@@ -443,6 +444,7 @@
                     </div>
                     <div class="periodo_info">
                         <div class="label_data">
+                        <span id="color_legend_intermedio"></span>
                         <span class="periodo_label">Intermedio:</span>
                         {% if positive_i == -1  %}
                             <img src="/static/css/images/imgs_icns/ba_up_arrow_small.png"/>
@@ -464,6 +466,7 @@
                     </div>
                     <div class="periodo_info">
                         <div class="label_data">
+                        <span id="color_legend_punta"></span>
                         <span class="periodo_label">Punta:</span>
                         {% if positive_p == -1  %}
                             <img src="/static/css/images/imgs_icns/ba_up_arrow_small.png"/>

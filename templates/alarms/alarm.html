@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block titulo %}
-    {% if operation == "edit" %}Editar{% else %}Alta de{% endif %} Equipo Industrial
+    {% if operation == "edit" %}Editar{% else %}Alta de{% endif %} Alarma
 {% endblock %}
 {% block externalcss %}
     <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
@@ -17,7 +17,186 @@
     <script type="text/javascript">
         $(document).on("ready", function(){
             $("#alarm").validate();
-            $("#save").hide();
+            var save_button = $("#save");
+            var min = $("#alarm_min_value");
+            var max = $("#alarm_max_value");
+            save_button.hide();
+            $("#cluster").change(function(){
+                if($(this).val() != "0"){
+                    $.ajax({
+                        url: "/buildings/get_cluster_companies/"+$(this).val()+"/?op=118",
+                        type: "GET",
+                        dataType: 'json',
+                        async: 'true',
+                        success: function(datos){
+                            var append_text = '';
+                            if(datos.length == 0){
+                                append_text = 'El grupo de empresas seleccionado no tiene empresas asociadas.';
+                                $("#cons_unit").html(append_text);
+                            }else{
+
+                                var first_option = '';
+
+                                save_button.hide();
+                                first_option='<option value="0">'+
+                                        'Selecciona una empresa</option>';
+
+                                if(datos[0].company != undefined){
+                                    append_text = '<label for="company" class="g3">' +
+                                            'Selecciona una empresa' +
+                                            '</label>' +
+                                            '<select name="company" id="company" class="g9">';
+
+                                    append_text += first_option;
+
+                                    for(var i=0; i<datos.length; i++){
+                                        append_text+='<option value="' + datos[i].pk + '"> ' +
+                                                datos[i].company +
+                                                '</option>';
+                                    }
+                                    append_text += "</select>";
+
+                                    $("#empresas").html(append_text);
+                                    $("#edificios").html("");
+                                    $("#cons_unit").html("");
+
+
+                                    $("#company").uniform().change(function(){
+                                        if ($(this).val()!="0" && $(this).val()!="todos"){
+                                            $.ajax({
+                                                url: "/buildings/get_company_buildings/"+$(this).val()+"/?op=118",
+                                                type: "GET",
+                                                dataType: 'json',
+                                                async: 'true',
+                                                success: function(datos){
+
+                                                    var append_text = '';
+                                                    if(datos.length == 0){
+                                                        append_text = 'La empresa seleccionada no tiene edificios asociados.';
+                                                        $("#cons_unit").html(append_text);
+                                                    }else{
+
+                                                        var first_option = '';
+
+                                                        save_button.hide();
+                                                        first_option='<option value="0">'+
+                                                                'Selecciona un edificio</option>';
+
+                                                        if(datos[0].building != undefined){
+
+                                                            append_text = '<label for="building" class="g3">' +
+                                                                    'Selecciona un edificio' +
+                                                                    '</label>' +
+                                                                    '<select name="building" id="building" class="g9">';
+
+                                                            append_text += first_option;
+
+
+                                                            for(var i=0; i<datos.length; i++){
+                                                                append_text+='<option value="' + datos[i].pk + '"> ' +
+                                                                        datos[i].building +
+                                                                        '</option>';
+                                                            }
+                                                            append_text += "</select>";
+
+                                                            $("#edificios").html(append_text);
+                                                            $("#cons_unit").html("");
+
+                                                            $("#building").uniform().change(function(){
+                                                                if ($(this).val()!="0" && $(this).val()!="todos"){
+                                                                    $.ajax({
+                                                                        url: "/buildings/get_cus_of_building/"+$(this).val()+"/?op=118",
+                                                                        type: "GET",
+                                                                        dataType: 'json',
+                                                                        async: 'true',
+                                                                        success: function(datos){
+                                                                            var append_text = '';
+                                                                            if(datos.length == 0){
+                                                                                append_text = 'El edificio seleccionado no tiene unidades de consumo asociadas.';
+                                                                                $("#cons_unit").html(append_text);
+                                                                            }else{
+                                                                                var first_option='';
+                                                                                if(datos[0].all){
+                                                                                    save_button.show();
+                                                                                    first_option='<option value="todas">'+
+                                                                                            'Todas las unidades de consumo del edificio('+datos.length+')</option>';
+
+                                                                                }else{
+                                                                                    save_button.hide();
+                                                                                    first_option='<option value="0">'+
+                                                                                            'elije una parte del edificio</option>';
+                                                                                }
+                                                                                if(datos[0].pk != undefined){
+                                                                                    append_text = '<label for="c_unit" class="g3">' +
+                                                                                            'Selecciona una unidad de consumo' +
+                                                                                            '</label>' +
+                                                                                            '<select name="c_unit" id="c_unit" class="g9">';
+
+                                                                                    append_text += first_option;
+
+                                                                                    for(var i=0; i<datos.length; i++){
+                                                                                        append_text+='<option value="' + datos[i].pk + '"> ' +
+                                                                                                datos[i].annotation +
+                                                                                                '</option>';
+                                                                                    }
+                                                                                    append_text += "</select>";
+
+                                                                                    $("#cons_unit").html(append_text);
+                                                                                    $("#c_unit").uniform().change(function(){
+                                                                                        if ($(this).val()!="0"){
+                                                                                            save_button.show();
+                                                                                        }
+                                                                                    });
+                                                                                }else{
+                                                                                    append_text = 'El edificio seleccionado tiene unidades de consumo asociadas.';
+                                                                                    $("#cons_unit").html(append_text);
+                                                                                    save_button.hide();
+                                                                                }
+                                                                            }
+
+                                                                        }
+                                                                    });
+                                                                }else{
+                                                                    $("#cons_unit").html("");
+                                                                    save_button.hide();
+                                                                }
+                                                            });
+                                                        }else{
+                                                            append_text = 'La empresa seleccionada no tiene edificios asociados.';
+                                                            $("#edificios").html(append_text);
+                                                            $("#cons_unit").html("");
+                                                            save_button.hide();
+                                                        }
+                                                    }
+                                                }
+                                            });
+                                        }else{
+                                            $("#edificios").html("");
+                                            $("#cons_unit").html("");
+                                            save_button.hide();
+                                        }
+                                    });
+                                }else{
+                                    append_text = 'El grupo de empresas seleccionado no tiene empresas asociadas.';
+                                    $("#empresas").html(append_text);
+                                    $("#edificios").html("");
+                                    $("#cons_unit").html("");
+                                    save_button.hide();
+                                }
+                            }
+
+                        }
+                    });
+                }else{
+                    //si no selecciono cluster
+                    $("#empresas").html("");
+                    $("#edificios").html("");
+                    $("#cons_unit").html("");
+                    save_button.hide();
+                }
+            });
+
+
         });
         function form_row(pm, alias, brand, model, serial, status){
             var row = '<td>';
@@ -67,7 +246,7 @@
                     Editar alarma
                 </li>
             {% else %}
-                <li>Alta de alarmas</li>
+                <li>Alta de alarma</li>
             {% endif %}
         </ul>
 
@@ -94,37 +273,46 @@
                     {% csrf_token %}
                     <h3 class="g12">Informaci&oacute;n de Alarma</h3>
                     <div id="alarm_fields">
-                        <div class="fields_row g9">
-                            <label for="alarm_param" class="g2">Par&aacute;metro El&eacute;ctrico<span class="required">*</span></label>
+                        <div class="fields_row g12">
+                            <label for="alarm_param" class="g3">Par&aacute;metro El&eacute;ctrico<span class="required">*</span></label>
                             <select name="alarm_param" id="alarm_param" class="g9 validate notnull">
-                                <option>Elije un par&aacute;metro</option>
+                                <option value="0">Elije un par&aacute;metro</option>
                                 {% for param in parameters %}
-                                    <option></option>
+                                    <option value="{{ param.pk }}">{{ param.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
 
-                        <div class="fields_row g9">
-                            <label for="alarm_max_value" class="g2">Valor m&aacute;ximo</label>
-                            <input type="text" name="alarm_max_value" id="alarm_max_value" class="g9"/>
+                        <div class="fields_row g12">
+                            <label for="alarm_max_value" class="g3">Valor m&aacute;ximo</label>
+                            <input type="text" name="alarm_max_value" id="alarm_max_value" class="g8 validate numeric notnull"/>
                         </div>
-                        <div class="fields_row g9">
-                            <label for="alarm_min_value" class="g2">Valor m&iacute;nimo</label>
-                            <input type="text" name="alarm_min_value" id="alarm_min_value" class="g9"/>
+                        <div class="fields_row g12">
+                            <label for="alarm_min_value" class="g3">Valor m&iacute;nimo</label>
+                            <input type="text" name="alarm_min_value" id="alarm_min_value" class="g8 validate numeric notnull"/>
                         </div>
-                        <div class="fields_row g9">
-                            <label for="alarm_cluster" class="g2">Cluster</label>
-                            <select name="alarm_cluster" id="alarm_cluster" class="g9 validate notnull">
+                        <div class="fields_row g12">
+                            <label for="cluster" class="g3">Selecciona un grupo de empresas</label>
+                            <select name="cluster" id="cluster" class="g8 validate notnull">
                                 <option value="0">Elije el edificio para el equipo industrial</option>
                                 {% for clus in clusters %}
-                                    <option value="{{ clus.pk }}"{% if post.alarm_building == clus.pk %} selected="selected" {% endif %}>{{ clus.building_name }}</option>
+                                    <option value="{{ clus.pk }}"{% if post.cluster == clus.pk %} selected="selected" {% endif %}>{{ clus.cluster_name }}</option>
                                 {% endfor %}
                             </select>
+                        </div>
+                        <div class="fields_row g12" id="empresas">
+
+                        </div>
+                        <div class="fields_row g12" id="edificios">
+
+                        </div>
+                        <div class="fields_row g12" id="cons_unit">
+
                         </div>
                     </div>
 
                     <div class="buttons g12">
-                        <button class="aqua_btn" id="save">
+                        <button class="aqua_btn auto" id="save">
                             Guardar
                         </button>
                     </div>

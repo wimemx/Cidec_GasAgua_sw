@@ -112,6 +112,17 @@
                     {% else %}
                         <div>
                             <div class="label_title_graph">
+                                Cantidad Total:
+                            </div>
+                            <div class="label_data_graph">
+                                {{ atributo.atr_total|floatformat:2 }}
+                            </div>
+                            <div class="label_data_graph_performance">
+                                {{ atributo.unidad }}
+                            </div>
+                        </div>
+                        <div>
+                            <div class="label_title_graph">
                                 Promedio Mensual:
                             </div>
                             <div class="label_data_graph">

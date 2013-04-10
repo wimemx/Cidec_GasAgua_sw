@@ -136,25 +136,30 @@ window.location = base_url;
                 <table>
                     <thead>
                     <tr>
-                        <th style="width: 25%;">
+                        <th style="width: 20%;">
                             <a href="#" id="sort_billing" rel="{{ order_billing }}">
                                 Mes de Facturación
                                 <span class="sort"></span>
                             </a>
                         </th>
-                        <th style="width: 25%;">
+                        <th style="width: 20%;">
                             <a href="#" id="sort_sector" rel="{{ order_sector }}">
                                 Fecha Inicial
                                 <span class="sort"></span>
                             </a>
                         </th>
-                        <th style="width: 25%;">
+                        <th style="width: 20%;">
                             <a href="#" id="sort_status" rel="{{ order_status }}">
                                 Fecha Final
                                 <span class="sort"></span>
                             </a>
                         </th>
-                        <th style="width: 25%;">Acciones</th>
+                        <th style="width: 20%;">
+                            <a href="#">
+                                Historico
+                            </a>
+                        </th>
+                        <th style="width: 20%;">Acciones</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -172,6 +177,13 @@ window.location = base_url;
                                 {{ cutdate.date_end|date:"d/m/Y h:i a" }}
                             {% else %}
                                 -
+                            {% endif %}
+                        </td>
+                        <td class="c">
+                            {% if cutdate.historico %}
+                                Sí
+                            {% else %}
+                                No
                             {% endif %}
                         </td>
                         <td class="c">

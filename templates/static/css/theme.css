@@ -190,7 +190,7 @@ body{
     border-top: solid 1px #2b87a3;
     background: url("images/bgs/bg_pattern.png") #fff;
     margin-top: 10px;
-
+    overflow: auto;
 }
 #contenido_interno{
     width: 1162px;
@@ -208,6 +208,12 @@ body{
     min-width: 870px;
     width: 100%;
 }
+#form_container{
+    display: block;
+    margin: 0 auto;
+    float: none;
+    width: 900px;
+}
 #header{
     position: absolute;
     top: 0;
@@ -215,11 +221,25 @@ body{
     height: 59px;
 
 }
-#main_logo{
-    margin-right: 70px;
-    width: 250px;
+.main_logo{
     height: 35px;
+}
+.main_logo a{
+    display: block;
 
+    height: 35px;
+    width: 136px;
+}
+.main_logo#myrios a{
+    background: url("images/imgs_icns/myrios_auditem_logo_header.png");
+    margin-top: 6px;
+}
+.main_logo#auditem a{
+    margin-top: -6px;
+    height: 47px;
+    background-position: right center;
+    width: 168px !important;
+    background: url("images/imgs_icns/auditem_logo.png");
 }
 h2{
     line-height: 22px;
@@ -255,13 +275,13 @@ h2 span{
     margin: 0 auto;
 }
 /*-----Company-Building chooser*/
-#company_options #logo_container{
-    height: 57px;
-    width: 107px;
+#logo_container{
+    height: 50px;
+    width: 180px;
 }
-#company_options #logo_container img{
-    max-height: 57px;
-    max-width: 107px;
+#logo_container img{
+    max-height: 50px;
+    max-width: 180px;
 }
 #company_options .companies_continer{
 
@@ -413,7 +433,7 @@ ul#main_menu ul{
 }
 ul#main_menu ul ul{
     position: absolute !important;
-    z-index: 2;
+    z-index: 3;
     top: -1px;
     right: -202px;
 }
@@ -437,7 +457,7 @@ ul#main_menu ul ul li:hover{
 
 #main_menu li.sub_level{
     display: block;
-    padding: 8px 16px;
+    padding: 8px 0px 8px 16px;
     height: 30px;
     font-weight: 300;
     text-align: left;

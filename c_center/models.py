@@ -908,7 +908,9 @@ class T3HistoricData(models.Model):
 
 
 class DailyData(models.Model):
-    building = models.ForeignKey(Building, on_delete=models.PROTECT)
+    consumer_unit = models.ForeignKey(ConsumerUnit,
+                                      on_delete=models.PROTECT, null=True,
+                                      blank=True)
     data_day = models.DateField("Fecha del dia")
     KWH_total = models.IntegerField(null=True, blank=True)
     KWH_base = models.IntegerField(null=True, blank=True)

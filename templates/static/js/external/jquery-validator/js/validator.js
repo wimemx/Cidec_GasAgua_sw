@@ -59,7 +59,12 @@
        }else{
            back_ = back_correct;
        }
-       element.next().css("background", back_);
+       if(element.parent().hasClass("selector") || element.parent().hasClass("uniform") ){
+           element.parent().next().css("background", back_);
+       }else{
+           element.next().css("background", back_);
+       }
+
        return valid_form;
    };
 
@@ -67,7 +72,12 @@
       var obj = $(this);//form
       obj.find(options.class_).each(function(){
          var obj_=$(this);
-         obj_.after("<span class='status'></span>");
+         if(obj_.parent().hasClass("selector") || obj_.parent().hasClass("uniform") ){
+             obj_.parent().after("<span class='status'></span>");
+         }else{
+             obj_.after("<span class='status'></span>");
+         }
+
          obj_.keyup(function(){
             if(obj_.val().length > options.maxlength){
                obj_.val(obj.val().substring(0, options.maxlength));
@@ -106,11 +116,7 @@
             send++;
          }
 
-         if(send === 1){
-            return true;
-         }else{
-            return false;
-         }
+         return send === 1;
       });
    });
  };

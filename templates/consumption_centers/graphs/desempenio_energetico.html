@@ -114,7 +114,7 @@
     </div>
     <div id="page_content">
         <div id="contenido_interno">
-            <h2 id="titulo_reporte">{{ empresa.building_name }} -
+            <h2 id="titulo_reporte">{{ empresa.building_name }}
         <span>
             {% if consumer_unit.part_of_building %}
                 {{ consumer_unit.part_of_building.part_of_building_name }}
@@ -122,8 +122,14 @@
                 {{ consumer_unit.electric_device_type.electric_device_type_name }}
             {% endif %}
         </span>
-            </h2><a class="various" data-fancybox-type="iframe"  href="/reportes/set_consumer_unit/">Cambiar</a>
+            </h2><!--<a class="various" data-fancybox-type="iframe"  href="/reportes/set_consumer_unit/">Cambiar</a>-->
+            <div id="logo_container"{% if company.company_logo %}class="c fr" style="background: url(/static/media/{{ company.company_logo }}) no-repeat 50% 50%; background-size: 100% auto; margin-top: -19px;">
+            {% else %}class="c fr" style="background: url(/static/css/images/imgs_icns/company_placeholder.png) no-repeat 50% 50%; background-size: 100% auto; margin-top: -19px;">
+            {% endif %}
+            </div>
 
+
+            <div class="divider" id="divider_top">&nbsp;</div>
             <div id="datepicker_component">
                 <div id="widgetField">
                     <span>Fecha Inicio &ndash; Fecha Fin</span>
@@ -163,9 +169,6 @@
 
                 </div>
             </div>
-
-            <div class="divider" id="divider_top">&nbsp;</div>
-
             <div id="graphs_container">
 
                 <div id="analisis_container">

@@ -1,5 +1,9 @@
 .ui-spinner {position: relative; border: 0px solid white; left: -16px;}
-.ui-spinner-buttons {position: absolute; top: 1px !important;}
+.ui-spinner-buttons {
+    position: absolute;
+    top: -18px !important;
+    left: 75px !important;
+}
 .ui-spinner-button {overflow: hidden}
 .ui-spinner-button{
     height: 8.5px !important;

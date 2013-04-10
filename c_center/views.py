@@ -485,6 +485,8 @@ def cfe_calculations(request):
                 resultado_mensual['total'] = cfe_historico[0].total
                 resultado_mensual['status'] = 'OK'
 
+            template_vars['control'] = cfe_historico[0].monthly_cut_dates.pk
+
         else:
         #si no, hace el calculo al momento. NOTA: Se hace el calculo,
         # pero no se guarda
@@ -6532,6 +6534,7 @@ def configure_ie(request, id_ie):
             ie.monitor_time_rate = request.POST['monitor_time_rate']
             ie.check_config_time_rate = request.POST['check_config_time_rate']
             ie.has_new_config = True
+            ie.modified_by = request.user
             ie.save()
             settings_ie = [dict(
                 monitor_time_rate=ie.monitor_time_rate,
@@ -7208,7 +7211,31 @@ def view_cutdates(request):
         lista = MonthlyCutDates.objects.filter(
             building=request.session['main_building']).order_by(order)
 
-        paginator = Paginator(lista, 12) # muestra 10 resultados por pagina
+        tipo_tarifa = empresa.electric_rate
+
+        contenedorMonthly = []
+        for lst in lista:
+
+            mCutDateObj = dict()
+            mCutDateObj['billing_month'] = lst.billing_month
+            mCutDateObj['date_init'] = lst.date_init
+            mCutDateObj['date_end'] = lst.date_end
+            mCutDateObj['pk'] = lst.pk
+
+            if tipo_tarifa.pk == 1:
+                historico = HMHistoricData.objects.filter(monthly_cut_dates = lst )
+            elif tipo_tarifa.pk == 2:
+                historico = DacHistoricData.objects.filter(monthly_cut_dates = lst )
+            elif tipo_tarifa.pk == 3:
+                historico = T3HistoricData.objects.filter(monthly_cut_dates = lst )
+
+            if historico:
+                mCutDateObj['historico'] = True
+            else:
+                mCutDateObj['historico'] = False
+            contenedorMonthly.append(mCutDateObj)
+
+        paginator = Paginator(contenedorMonthly, 12) # muestra 10 resultados por pagina
         template_vars = dict(order_billing=order_billing,
                              datacontext=datacontext, empresa=empresa,
                              company=request.session['company'],
@@ -7950,14 +7977,14 @@ def billing_c_analisis_header(request):
         tipo_tarifa = building.electric_rate
 
         if tipo_tarifa.pk == 1:
-            years = [__date.year for __date in HMHistoricData.objects.all().
-            dates('monthly_cut_dates__billing_month','year')]
+            years = [__date.year for __date in ElectricRatesDetail.objects.
+            all().dates('date_init','year')]
         elif tipo_tarifa.pk == 2:
-            years = [__date.year for __date in DacHistoricData.objects.all().
-            dates('monthly_cut_dates__billing_month','year')]
+            years = [__date.year for __date in DACElectricRateDetail.objects.
+            all().dates('date_init','year')]
         elif tipo_tarifa.pk == 3:
-            years = [__date.year for __date in T3HistoricData.objects.all().
-            dates('monthly_cut_dates__billing_month','year')]
+            years = [__date.year for __date in ThreeElectricRateDetail.objects.
+            all().dates('date_init','year')]
         template_vars['years'] = years[::-1]
 
         template_vars_template = RequestContext(request, template_vars)
@@ -8910,6 +8937,7 @@ def power_performance(request):
                     atributo_dic['nombre'] = nombre_attr
                     atributo_dic['nombre_seguro'] = nombre_attr.lower().replace(' ','_')
                     atributo_dic['unidad'] = unidad_attr
+                    atributo_dic['atr_total'] = valor_attr
 
                     #Arreglo que almacena el dictionario mensual (valores para graficar)
                     datos_mensuales = []

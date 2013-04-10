@@ -53,6 +53,23 @@
                 //'state': {'range': {'start': new Date(2012, 9, 8), 'end': new Date(2012, 9, 9)}}
             });
 
+            function append_parameters(base_url){
+                var get = getUrlVars();
+                if(get.length>0){
+                    if (get[0]!=window.location.protocol+"//"+window.location
+                            .host+window.location.pathname){
+                        for(var i=0; i<get.length; i++){
+                            if (get[i]!="granularity"){
+                                base_url+="&"+get[i]+"="+get[get[i]];
+                            }
+                        }
+                    }
+
+                }
+                return base_url
+            }
+
+
             function drawVisualization() {
                 var dashboard = new google.visualization.Dashboard(
                         document.getElementById('dashboard'));
@@ -137,13 +154,14 @@
 
                 var $upper = $('#upper_limit');
                 var $lower = $('#lower_limit');
-                var low_ = parseFloat({{ min }}).toFixed(2);
-                var high_ = parseFloat({{ max }}).toFixed(2);
-                $upper.val(high_).attr("min", Math.ceil(low_)).attr("max", Math.ceil(high_));
-                $lower.val(low_).attr("min", Math.floor(low_)).attr("max", Math.floor(high_));
-                var offset = parseFloat($upper.val())-parseFloat($lower.val());
+                var low_ = -500000;//parseFloat({{ min }}).toFixed(2);
+                var high_ = 10000000;//parseFloat({{ max }}).toFixed(2);
+                $upper.val({{ max }}).attr("min", low_).attr("max", high_);
+                $lower.val({{ min }}).attr("min", low_).attr("max", high_);
+                var offset = parseFloat({{ max }})-parseFloat({{ min }});
                 offset = offset / 20;
-                offset = offset.toFixed(2);
+                offset = Math.abs(offset.toFixed(2));
+
 
                 $upper.spinner({
                     min: $upper.attr('min'),
@@ -155,10 +173,10 @@
                             if(upper_val <= lower_val){
                                 upper_val = lower_val + offset;
                                 $upper.val(upper_val);
-                            }else if(upper_val>high_){
+                            }/*else if(upper_val>high_){
                                 upper_val = high_;
                                 $upper.val(high_);
-                            }
+                            }*/
                             chart.setOption('vAxis', {'viewWindow':{'max':upper_val, 'min':lower_val}});
                             chart.draw();
                         });
@@ -172,10 +190,10 @@
                             if(lower_val >= upper_val){
                                 lower_val = upper_val - offset;//upper_val - offset;
                                 $lower.val(lower_val);
-                            }else if(lower_val<low_){
+                            }/*else if(lower_val<low_){
                                 lower_val = low_;
                                 $lower.val(low_);
-                            }
+                            }*/
                             chart.setOption('vAxis', {'viewWindow':{'max':upper_val, 'min':lower_val}});
                             chart.draw();
                         });
@@ -241,13 +259,42 @@
                     });
                 });
 
+                var base_url = window.location.pathname;
+                $("li#raw_data").click(function(){
 
+                    new Messi('&iquest;Est&aacute; seguro de que desea ver los datos reales medidos? Esta operaci&oacute;n podr&iacute;a tardar y su navegador podr&iacute;ia parecer no responder, le pedimos paciencia',
+                            {title: 'Ver datos medidos', modal: true, buttons: [{id: 0,
+                                label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
+                            }],
+                                callback: function(val) {
+                                    if(val=='Y'){
+                                        base_url+="?granularity=raw";
+                                        base_url=append_parameters(base_url);
+                                        window.location = base_url;
+                                    } else return false; }
+                            });
+                });
+                $("li#dw").click(function(){
+
+                    base_url+="?granularity="+$(this).attr('id');
+                    base_url=append_parameters(base_url);
+                    window.location = base_url;
+                });
 
             });
         </script>
     </head>
 
     <body>
+    <ul id="compare_interval1" class="fr">
+        {% if granularity == "raw_data" %}
+            <li id="raw_data"  class="active">Mediciones</li>
+            <li id="dw">Calculados</li>
+        {% else %}
+            <li id="raw_data" class="active">Mediciones</li>
+            <li id="dw" class="active" >Calculados</li>
+        {% endif %}
+    </ul>
         <ul id="compare_interval" class="fr">
             <li id="hour">1 H</li>
             <li id="day" >1 D</li>
@@ -279,11 +326,11 @@
             <!-- slider-range start -->
             <div id="slider-range">
                 <div id="up">
-                    <input type="text" class="integer" id="upper_limit" min="{{ min }}" max="{{ max }}" step="0.5"/>
+                    <input type="text" class="integer" id="upper_limit" step="0.5"/>
                 </div>
 
                 <div id="down">
-                    <input type="text" class="integer" id="lower_limit" min="{{ min }}" max="{{ max }}" step="0.5"/>
+                    <input type="text" class="integer" id="lower_limit" step="0.5"/>
                 </div>
             </div>
             <!-- slider-range end -->
@@ -292,59 +339,59 @@
         <!-- dashboard end -->
 
         <!-- statistics-table start -->
-        <!--
-        <div id="statistics-table">
+        <div class="vacio"></div>
+        <div id="grid_container">
             <table>
                 <thead>
                     <tr>
-                        <th>Resumen del Periodo</th>
+                        <th colspan="4">Resumen del Periodo</th>
                     </tr>
 
-                    <tr>
-                        <th></th>
+                    <tr class="row1">
+                        <th width="25%"></th>
                         {% for column in columns %}
-                            <th>{{ column }}</th>
+                            <th width="25%">{{ column }}</th>
                         {% endfor %}
                     </tr>
                 </thead>
 
                 <tbody>
-                    <tr>
+                    <tr class="row2">
                         <td>Promedio</td>
                         {% for column_statistics in columns_statistics %}
-                            <td>{{ column_statistics.mean }}</td>
+                            <td class="table_value">{{ column_statistics.mean|floatformat:2 }}</td>
                         {% endfor %}
                     </tr>
 
-                    <tr>
+                    <tr class="row1">
                         <td>Máximo</td>
                         {% for column_statistics in columns_statistics %}
-                            <td>{{ column_statistics.maximum }}</td>
+                            <td class="table_value">{{ column_statistics.maximum|floatformat:2 }}</td>
                         {% endfor %}
                     </tr>
 
-                    <tr>
+                    <tr class="row2">
                         <td>Mínimo</td>
                         {% for column_statistics in columns_statistics %}
-                            <td>{{ column_statistics.minimum }}</td>
+                            <td class="table_value">{{ column_statistics.minimum|floatformat:2 }}</td>
                         {% endfor %}
                     </tr>
 
-                    <tr>
+                    <tr class="row1">
                         <td>Mediana</td>
                         {% for column_statistics in columns_statistics %}
-                            <td>{{ column_statistics.median }}</td>
+                            <td class="table_value">{{ column_statistics.median|floatformat:2 }}</td>
                         {% endfor %}
                     </tr>
 
-                    <tr>
+                    <tr class="row2">
                         <td>Desviación Estándar</td>
                         {% for column_statistics in columns_statistics %}
-                            <td>{{ column_statistics.standard_deviation }}</td>
+                            <td class="table_value">{{ column_statistics.standard_deviation|floatformat:2 }}</td>
                         {% endfor %}
                     </tr>
                 </tbody>
-            </table>-->
+            </table>
         </div>
         <!-- statistics-table end -->
     </body>

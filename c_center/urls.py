@@ -45,6 +45,8 @@ urlpatterns = patterns('',
                            'c_center.c_center_functions.get_company_buildings'),
                        url(r'^get_parts_of_building/(?P<id_building>\d+)/',
                            'c_center.c_center_functions.get_parts_of_building'),
+                       url(r'^get_cus_of_building/(?P<id_building>\d+)/',
+                           'c_center.c_center_functions.get_cus_of_building'),
 
                        url(r'^agregar_atributo/',
                            'c_center.views.add_building_attr'),

@@ -6,6 +6,10 @@ iframe{
 #widgetField{
     width: 255px !important;
 }
+#datepicker_component{
+    position: relative;
+    top: 26px;
+}
 
 #analisis_container{
     height: 990px;
@@ -154,7 +158,7 @@ iframe{
 
 
 .right_info{
-    height: 300px;
+    height: 270px;
     padding-top: 130px;
     padding-right: 40px;
     text-align: center;
@@ -249,3 +253,29 @@ iframe{
     font-size: 28px;
 }
 
+#color_legend_base{
+    width: 15px;
+    height: 15px;
+    background-color: #5093c7;
+    display: block;
+    float: left;
+    margin-right: 5px;
+}
+
+#color_legend_intermedio{
+    width: 15px;
+    height: 15px;
+    background-color: #f78a3d;
+    display: block;
+    float: left;
+    margin-right: 5px;
+}
+
+#color_legend_punta{
+    width: 15px;
+    height: 15px;
+    background-color: #cb4d56;
+    display: block;
+    float: left;
+    margin-right: 5px;
+}

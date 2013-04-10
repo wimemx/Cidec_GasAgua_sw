@@ -87,14 +87,27 @@ h4{
     display: inline-block;
     line-height: 160%;
 }
+
+#sumary span.l_period{
+    width: 19% !important;
+}
+
+#sumary span.r_period{
+    width: 80% !important;
+}
+
+
 #sumary span.r{
     text-align: right;
     font-size: 15px;
+    width: 50%;
 }
 #sumary span.l{
     text-align: left;
     font-size: 13px;
+    width: 49%;
 }
+
 #sumary span.total{
     font-size: 25px !important;
 }

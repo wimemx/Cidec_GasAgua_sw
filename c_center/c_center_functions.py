@@ -32,6 +32,7 @@ from rbac.models import PermissionAsigment, DataContextPermission, Role,\
     UserRole, Object, Operation
 from location.models import *
 from electric_rates.models import ElectricRatesDetail
+from data_warehouse_extended.models import ConsumerUnitInstantElectricalData
 
 from rbac.rbac_functions import is_allowed_operation_for_object,\
     default_consumerUnit
@@ -255,14 +256,82 @@ def get_partsofbuilding_for_operation(permission, operation, user, building):
             return PartOfBuilding.objects.filter(
                 pk__in=parts_pks, part_of_building_status=True), False
 
+
+def get_all_consumer_units_for_building(building):
+    """ Returns all the non virtual consumer units
+     :param building: Object Building instance
+    """
+    return ConsumerUnit.objects.filter(building=building).exclude(
+        profile_powermeter__powermeter__powermeter_anotation="Medidor Virtual"
+    ).exclude(profile_powermeter__powermeter__status=0)
+
+
+def get_c_unitsforbuilding_for_operation(permission, operation, user, building):
+    """Obtains a queryset for all the ConsumerUnits that exists in a
+    datacontext for a user for a given building, if the user is super_user
+    returns all active ConsumerUnits for the building,
+    if the user has permission over the entire building,
+    returns all active ConsumerUnits for the building
+    returns a tuple containing the queryset, and a boolean,
+    indicating if returns all the objects
+
+    :param permission: string, the name of the permission object
+    :param operation: operation object, (VIEW, CREATE, etc)
+    :param user: django.contrib.auth.models.User instance
+    :param building: Building instance
+    """
+    if user.is_superuser:
+        return get_all_consumer_units_for_building(building), True
+    else:
+        permission = Object.objects.get(object_name=permission)
+
+        company = CompanyBuilding.objects.get(building=building).company
+        cluster = ClusterCompany.objects.get(company=company).cluster
+
+        if is_allowed_operation_for_object(operation, permission, user,
+                                           building, "building") or \
+                is_allowed_operation_for_object(operation, permission, user, company,
+                                                "company") or \
+                is_allowed_operation_for_object(operation, permission, user, cluster,
+                                                "cluster"):
+            return get_all_consumer_units_for_building(building), True
+        else:
+            #lista de roles que tienen permiso de "operation" "permission"
+            roles_pks = [pa.role.pk for pa in
+                         PermissionAsigment.objects.filter(object=permission,
+                                                           operation=operation)]
+            #lista de data_context's del usuario donde tiene permiso de crear
+            # asignaciones de roles
+            data_context = DataContextPermission.objects.filter(
+                user_role__role__pk__in=roles_pks, user_role__user=user,
+                building=building)
+            parts_pks = []
+            for data_c in data_context:
+                #reviso si tengo un datacontext para el cluster completo
+                if not data_c.part_of_building:
+                    return get_all_consumer_units_for_building(building), True
+                else:
+                    parts_pks.append(data_c.part_of_building.pk)
+            return ConsumerUnit.objects.filter(
+                part_of_building__pk__in=parts_pks,
+                part_of_building__part_of_building_status=True
+            ).exclude(
+                profile_powermeter__powermeter__powermeter_anotation="Medidor Virtual"
+            ).exclude(profile_powermeter__powermeter__status=0), False
+
 def get_cluster_companies(request, id_cluster):
     """
     returns a json with all the comanies in the cluster with id = id_cluster,
 
     """
+    if "op" in request.GET:
+        operation = Object.objects.get(id=request.GET['op'])
+        operation = operation.object_name
+    else:
+        operation="Asignar roles a usuarios"
     cluster = get_object_or_404(Cluster, pk=id_cluster)
     companies_for_user, all_cluster = get_companies_for_operation(
-        "Asignar roles a usuarios", CREATE, request.user, cluster)
+        operation, CREATE, request.user, cluster)
     companies = []
     if companies_for_user:
         for company in companies_for_user:
@@ -278,8 +347,13 @@ def get_cluster_companies(request, id_cluster):
 
 def get_company_buildings(request, id_company):
     company = get_object_or_404(Company, pk=id_company)
+    if "op" in request.GET:
+        operation = Object.objects.get(id=request.GET['op'])
+        operation = operation.object_name
+    else:
+        operation="Asignar roles a usuarios"
     buildings_for_user, all_company = get_buildings_for_operation(
-        "Asignar roles a usuarios", CREATE, request.user, company)
+        operation, CREATE, request.user, company)
     buildings = []
     if buildings_for_user:
         for building in buildings_for_user:
@@ -300,8 +374,13 @@ def get_parts_of_building(request, id_building):
 
     """
     building = get_object_or_404(Building, pk=id_building)
+    if "op" in request.GET:
+        operation = Object.objects.get(id=request.GET['op'])
+        operation = operation.object_name
+    else:
+        operation="Asignar roles a usuarios"
     parts_for_user, all_building = get_partsofbuilding_for_operation(
-        "Asignar roles a usuarios", CREATE, request.user, building)
+        operation, CREATE, request.user, building)
     #p_buildings= PartOfBuilding.objects.filter(building=building)
     parts = []
     if parts_for_user:
@@ -309,6 +388,36 @@ def get_parts_of_building(request, id_building):
             parts.append(dict(pk=part.pk, part=part.part_of_building_name,
                               all=all_building))
         data = simplejson.dumps(parts)
+    elif all_building:
+        data = simplejson.dumps([dict(all="all")])
+    else:
+        data = simplejson.dumps([dict(all="none")])
+    return HttpResponse(content=data, content_type="application/json")
+
+
+def get_cus_of_building(request, id_building):
+    """ Get all the consumer units of a building in wich the user has
+    permission to do something
+
+    """
+    building = get_object_or_404(Building, pk=id_building)
+    if "op" in request.GET:
+        operation = Object.objects.get(id=request.GET['op'])
+        operation = operation.object_name
+    else:
+        operation="Asignar roles a usuarios"
+    cus_for_user, all_building = get_c_unitsforbuilding_for_operation(
+        operation, CREATE, request.user, building)
+    #p_buildings= PartOfBuilding.objects.filter(building=building)
+    consumer_units = []
+    if cus_for_user:
+        for cu in cus_for_user:
+            consumer_units.append(
+                dict(
+                    pk=cu.pk,
+                    annotation=cu.profile_powermeter.powermeter.powermeter_anotation,
+                    all=all_building))
+        data = simplejson.dumps(consumer_units)
     elif all_building:
         data = simplejson.dumps([dict(all="all")])
     else:
@@ -670,25 +779,32 @@ def get_total_consumer_unit(consumerUnit, total):
             consumerUnit.building))
         ids_hierarchy = [] #arreglo donde guardo los hijos
         ids_hierarchy_cu = [] #arreglo donde guardo los hijos (consumerunits)
-        for hy in hierarchy:
-            if hy.part_of_building_leaf:
-                ids_hierarchy.append(hy.part_of_building_leaf.pk)
-            if hy.consumer_unit_leaf:
-                ids_hierarchy_cu.append(hy.consumer_unit_leaf.pk)
+        if not hierarchy:
+            cus = ConsumerUnit.objects.filter(
+                building=consumerUnit.building).exclude(
+                electric_device_type__electric_device_type_name="Total Edificio"
+            )
+            c_units = [cu for cu in cus]
+        else:
+            for hy in hierarchy:
+                if hy.part_of_building_leaf:
+                    ids_hierarchy.append(hy.part_of_building_leaf.pk)
+                if hy.consumer_unit_leaf:
+                    ids_hierarchy_cu.append(hy.consumer_unit_leaf.pk)
 
-        #sacar los padres(partes de edificios y consumerUnits que no son
-        # hijos de nadie)
-        parents = PartOfBuilding.objects.filter(
-            building=consumerUnit.building).exclude(
-            pk__in=ids_hierarchy)
+            #sacar los padres(partes de edificios y consumerUnits que no son
+            # hijos de nadie)
+            parents = PartOfBuilding.objects.filter(
+                building=consumerUnit.building).exclude(
+                pk__in=ids_hierarchy)
 
-        for parent in parents:
-            par_cu = ConsumerUnit.objects.get(part_of_building=parent)
-            if par_cu.profile_powermeter.powermeter.powermeter_anotation == "Medidor Virtual":
-                c_units_leaf = get_total_consumer_unit(par_cu, False)
-                c_units.extend(c_units_leaf)
-            else:
-                c_units.append(par_cu)
+            for parent in parents:
+                par_cu = ConsumerUnit.objects.get(part_of_building=parent)
+                if par_cu.profile_powermeter.powermeter.powermeter_anotation == "Medidor Virtual":
+                    c_units_leaf = get_total_consumer_unit(par_cu, False)
+                    c_units.extend(c_units_leaf)
+                else:
+                    c_units.append(par_cu)
     return c_units
 
 
@@ -1005,8 +1121,9 @@ def get_profile(request):
 
 def all_dailyreportAll():
     buildings = Building.objects.all()
-
-    initial_d = datetime.datetime(2012,8,1)
+    initial_d = datetime.datetime(2013,3,9)
+    datos = DailyData.objects.filter(data_day__gte=initial_d)
+    datos.delete()
     dia = datetime.timedelta(days=1)
     while initial_d < datetime.datetime.today():
         for buil in buildings:
@@ -1025,16 +1142,96 @@ def all_dailyreportAll():
 def dailyReportAll():
     buildings = Building.objects.all()
     for buil in buildings:
+        #try:
+        #    main_cu = ConsumerUnit.objects.get(
+        #        building=buil,
+        #        electric_device_type__electric_device_type_name="Total Edificio"
+        #    )
+        #except ObjectDoesNotExist:
+        #    continue
+        #else:
+        #    dia = datetime.timedelta(days=1)
+        #    dailyReport(buil, main_cu, datetime.datetime.today()-dia)
+
+        # ----- iterative daily report for all consumer units
         cus = ConsumerUnit.objects.filter(building=buil)
+        #19 - kW - Instant
+        #24 - kWhIMPORT
+        #26 - kvarhIMPORT
+        paramters_pks = [19, 24, 26]
+
         for cu in cus:
             dia = datetime.timedelta(days=1)
             eq_cu = get_consumer_units(cu)
             if len(eq_cu) > 1:
-                #suma(eq_cu)
-                pass
+                #virtual
+                electric_data = dict(kW=[], kWhIMPORT=[], kvarhIMPORT=[])
+                for param in paramters_pks:
+
+                    for cu in eq_cu:
+
+                        datos = ConsumerUnitInstantElectricalData\
+                            .objects\
+                            .filter(
+                            instant__instant_delta__name="Five Minute Delta",
+                            consumer_unit_profile__transactional_id=cu.pk,
+                            instant__instant_delta__instant_datetime__gte=
+                            datetime.datetime.today()-dia,
+                            instant__instant_delta__instant_datetime__lte=
+                            datetime.datetime.today(),
+                            electrical_parameter__pk=param).order_by(
+                            "instant__instant_delta__instant_datetime"
+                        )
+                        if param == 19:
+                            electric_data['kW'].append(datos)
+                        if param == 24:
+                            electric_data['kWhIMPORT'].append(datos)
+                        if param == 26:
+                            electric_data['kvarhIMPORT'].append(datos)
+
+                funcion_suma_datos(electric_data, cu)
             else:
+                #medidor fisico
                 dailyReport(buil, cu, datetime.datetime.today()-dia)
     print "Done dailyReportAll"
+
+
+def funcion_suma_datos(electric_data, cu):
+    """
+
+    :param electric_data: dict {'kW':[[<data>],[<data>]],
+    'kWhIMPORT':[[<data>],[<data>]], 'kvarhIMPORT':[[<data>],[<data>]]}
+    :param cu: ConsumerUnit (virtual)
+    """
+    data_len = len(electric_data["kW"][0])
+    cu_len = len(electric_data["kW"])
+
+    demanda_max = None
+    dem_max_time = '00:00:00'
+    demanda_min = None
+    dem_min_time = '00:00:00'
+
+    for i in range(0, data_len):
+        cont = 0
+        suma_kw = 0
+        while cont < cu_len:
+            suma_kw += electric_data["kW"][cont][i]
+            if not demanda_max:
+                demanda_max = suma_kw
+
+            if not demanda_min:
+                demanda_min = suma_kw
+
+            if suma_kw > demanda_max:
+                demanda_max = suma_kw
+            if suma_kw < demanda_min:
+                demanda_min = suma_kw
+            cont += 1
+
+
+
+
+    pass
 
 
 def dailyReporte(building, consumer_unit, today):
@@ -1743,7 +1940,6 @@ def save_historic(monthly_cutdate, building):
         )
         newHistoric.save()
 
-
 # noinspection PyArgumentList
 def tarifaHM_2(building, s_date, e_date, month, year):
     status = 'OK'
@@ -1989,6 +2185,101 @@ def tarifaHM_2(building, s_date, e_date, month, year):
 
     return diccionario_final_cfe
 
+def tarifaDAC_01(building, s_date, e_date, month, year):
+    status = 'OK'
+    diccionario_final_cfe = {'status': status}
+
+    kwh_netos = 0
+
+    tarifa_kwh = 0
+    tarifa_mes = 0
+
+    #Se obtiene la region
+    region = building.region
+
+    billing_mrates = datetime.date(year=year, month=month, day=1)
+    periodo = s_date.astimezone(timezone.get_current_timezone()).strftime(
+        '%d/%m/%Y %I:%M %p') +\
+              " - " + e_date.astimezone(
+        timezone.get_current_timezone()).strftime('%d/%m/%Y %I:%M %p')
+
+    #Para las regiones BC y BCS es necesario obtener revisar si se aplica
+    # Tarifa de Verano o de Invierno
+    if region.pk == 1 or region.pk == 2:
+        tf_ver_inv = obtenerHorarioVeranoInvierno(billing_mrates, 2)
+        tarifasObj = DACElectricRateDetail.objects.filter(
+            region=region.pk).filter(date_interval=tf_ver_inv).filter(
+            date_init__lte=billing_mrates).filter(date_end__gte=billing_mrates)
+        if tarifasObj:
+            tarifa_kwh = tarifasObj[0].kwh_rate
+            tarifa_mes = tarifasObj[0].month_rate
+
+    else:
+        tarifasObj = DACElectricRateDetail.objects.filter(
+            region=region.pk).filter(date_interval=None).filter(
+            date_init__lte=billing_mrates).filter(date_end__gte=billing_mrates)
+        if tarifasObj:
+            tarifa_kwh = tarifasObj[0].kwh_rate
+            tarifa_mes = tarifasObj[0].month_rate
+
+    main_cu = ConsumerUnit.objects.get(
+        building=building,
+        electric_device_type__electric_device_type_name="Total Edificio")
+    c_units = get_consumer_units(main_cu)
+
+    #Si es medidor virtual
+    if len(c_units) > 1:
+        for cu in c_units:
+            datos_kwh = ConsumerUnitInstantElectricalData.objects.filter(
+                instant_instant_delta__name = "Five Minute Delta",
+                consumer_unit_profile__transactional_id=cu.pk,
+                instant__instant_delta__instant_datetime__gte = s_date,
+                instant_instant_delta__instant_datetime__lt = e_date,
+                electrical_parameter__pk = 24).\
+                order_by("instant__instant_delta__instant_datetime")
+
+            num_lecturas = len(datos_kwh)
+            primer_lectura = datos_kwh[0]
+            ultima_lectura = datos_kwh[num_lecturas-1]
+            kwh_netos += (ultima_lectura - primer_lectura)
+
+    else: #Si es medidor fisico
+        profile_powermeter = main_cu.profile_powermeter
+
+        #Se obtienen los kwh de ese periodo de tiempo.
+        kwh_lecturas = ElectricDataTemp.objects.filter(
+        profile_powermeter=profile_powermeter,medition_date__gte=s_date,
+        medition_date__lt=e_date).order_by('medition_date')
+        total_lecturas = len(kwh_lecturas)
+
+        if kwh_lecturas:
+            #print "Profile",
+            # kwh_lecturas[0].profile_powermeter_id
+            #print "Primer Lectura",
+            # kwh_lecturas[0].id, "-", kwh_lecturas[0].medition_date
+            #print "Ultima Lectura", kwh_lecturas[total_lecturas - 1].id,
+            # "-", kwh_lecturas[total_lecturas - 1].medition_date
+            kwh_inicial = kwh_lecturas[0].TotalkWhIMPORT
+            kwh_final = kwh_lecturas[total_lecturas - 1].TotalkWhIMPORT
+
+            kwh_netos += int(ceil(kwh_final - kwh_inicial))
+
+    importe = kwh_netos * tarifa_kwh
+    costo_energia = importe + tarifa_mes
+    iva = costo_energia * Decimal(str(.16))
+    total = costo_energia + iva
+
+    diccionario_final_cfe['periodo'] = periodo
+    diccionario_final_cfe['kwh_totales'] = kwh_netos
+    diccionario_final_cfe['tarifa_kwh'] = tarifa_kwh
+    diccionario_final_cfe['tarifa_mes'] = tarifa_mes
+    diccionario_final_cfe['importe'] = importe
+    diccionario_final_cfe['costo_energia'] = float(costo_energia)
+    diccionario_final_cfe['iva'] = float(iva)
+    diccionario_final_cfe['total'] = float(total)
+
+    return diccionario_final_cfe
+
 
 # noinspection PyArgumentList
 def tarifaDAC_2(building, s_date, e_date, month, year):
@@ -2076,6 +2367,132 @@ def tarifaDAC_2(building, s_date, e_date, month, year):
     diccionario_final_cfe['total'] = float(total)
 
     return diccionario_final_cfe
+
+
+def tarifa_3_01(building, s_date, e_date, month, year):
+    status = 'OK'
+    diccionario_final_cfe = dict(status=status)
+
+    tarifa_kwh = 0
+    tarifa_kw = 0
+    demanda_max = 0
+    kwh_netos = 0
+    kvarh_netos = 0
+
+    # Se obtiene la region
+    # region = building.region
+
+    billing_mrates = datetime.date(year=year, month=month, day=1)
+
+    periodo = s_date.astimezone(timezone.get_current_timezone()).strftime(
+        '%d/%m/%Y %I:%M %p') +\
+              " - " + e_date.astimezone(
+        timezone.get_current_timezone()).strftime('%d/%m/%Y %I:%M %p')
+    periodo_dias = (e_date - s_date).days
+    periodo_horas = periodo_dias * 24
+
+    tarifasObj = ThreeElectricRateDetail.objects.filter(
+        date_init__lte=billing_mrates).filter(date_end__gte=billing_mrates)
+    if tarifasObj:
+        tarifa_kwh = tarifasObj[0].kwh_rate
+        tarifa_kw = tarifasObj[0].kw_rate
+
+    main_cu = ConsumerUnit.objects.get(
+        building=building,
+        electric_device_type__electric_device_type_name="Total Edificio")
+    c_units = get_consumer_units(main_cu)
+    #Si es medidor virtual
+    if len(c_units) > 1:
+        for cu in c_units:
+
+            #Se deben obtener los kW para obtener la demanda maxima
+
+
+            datos_kwh = ConsumerUnitInstantElectricalData.objects.filter(
+                instant_instant_delta__name = "Five Minute Delta",
+                consumer_unit_profile__transactional_id=cu.pk,
+                instant__instant_delta__instant_datetime__gte = s_date,
+                instant_instant_delta__instant_datetime__lt = e_date,
+                electrical_parameter__pk = 24).\
+                order_by("instant__instant_delta__instant_datetime")
+
+            num_lecturas = len(datos_kwh)
+            primer_lectura = datos_kwh[0]
+            ultima_lectura = datos_kwh[num_lecturas-1]
+            kwh_netos += (ultima_lectura - primer_lectura)
+
+
+
+    else: #Si es medidor fisico
+        profile_powermeter = main_cu
+
+        #Se obtienen los KW, para obtener la demanda maxima
+        lecturas_totales = ElectricRateForElectricData.objects.filter(
+            electric_data__profile_powermeter=profile_powermeter).\
+        filter(electric_data__medition_date__gte=s_date).filter(
+            electric_data__medition_date__lt=e_date).\
+        order_by('electric_data__medition_date')
+
+        demanda_max = obtenerDemanda_kw(lecturas_totales)
+
+        #Se obtienen los kwh de ese periodo de tiempo.
+        kwh_lecturas = ElectricDataTemp.objects.filter(
+            profile_powermeter=profile_powermeter).\
+        filter(medition_date__gte=s_date).filter(
+            medition_date__lt=e_date).\
+        order_by('medition_date')
+
+        total_lecturas = len(kwh_lecturas)
+
+        if kwh_lecturas:
+            kwh_inicial = kwh_lecturas[0].TotalkWhIMPORT
+            kwh_final = kwh_lecturas[total_lecturas - 1].TotalkWhIMPORT
+
+            kwh_netos = int(ceil(kwh_final - kwh_inicial))
+
+        #Se obtienen los kvarhs por medidor
+        kvarh_netos += obtenerKVARH(profile_powermeter, s_date, e_date)
+
+
+    #Factor de Potencia
+    factor_potencia_total = factorpotencia(kwh_netos, kvarh_netos)
+
+    #Factor de Carga
+    if demanda_max == 0:
+        factor_carga = 0
+    else:
+        factor_carga = (float(kwh_netos) / float(
+            demanda_max * periodo_horas)) * 100
+
+    costo_energia = kwh_netos * tarifa_kwh
+    costo_demanda = demanda_max * tarifa_kw
+    costo_factor_potencia = costofactorpotencia(factor_potencia_total,
+                                                costo_energia, costo_demanda)
+
+    subtotal = obtenerSubtotal(costo_energia, costo_demanda,
+                               costo_factor_potencia)
+    iva = obtenerIva(subtotal, 16)
+    total = obtenerTotal(subtotal, 16)
+
+    diccionario_final_cfe['periodo'] = periodo
+    diccionario_final_cfe['kwh_totales'] = kwh_netos
+    diccionario_final_cfe['kw_totales'] = demanda_max
+    diccionario_final_cfe['kvarh_totales'] = kvarh_netos
+    diccionario_final_cfe['tarifa_kwh'] = tarifa_kwh
+    diccionario_final_cfe['tarifa_kw'] = tarifa_kw
+    diccionario_final_cfe['factor_potencia'] = factor_potencia_total
+    diccionario_final_cfe['factor_carga'] = factor_carga
+    diccionario_final_cfe['costo_energia'] = costo_energia
+    diccionario_final_cfe['costo_demanda'] = costo_demanda
+    diccionario_final_cfe['costo_fpotencia'] = costo_factor_potencia
+    diccionario_final_cfe['subtotal'] = float(subtotal)
+    diccionario_final_cfe['iva'] = float(iva)
+    diccionario_final_cfe['total'] = float(total)
+
+    return diccionario_final_cfe
+
+
+
 
 
 # noinspection PyArgumentList

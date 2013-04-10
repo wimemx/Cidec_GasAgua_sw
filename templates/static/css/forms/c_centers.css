@@ -317,3 +317,7 @@ background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
 #user_actions form{
     width: 670px !important;
 }
+
+#alarm input[type="text"]{
+    width: 182px;
+}

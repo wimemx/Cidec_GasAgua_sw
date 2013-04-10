@@ -12,105 +12,7 @@
     <script type="text/javascript">
     var number_params = 0;
     var src = "{{ graph_type.object_access_point|safe }}";
-    function clean_dates(url){
-        var f1_init = encodeURIComponent($("#range1_init").val());
-        var f1_end = encodeURIComponent($("#range1_end").val());
-        var f2_init = encodeURIComponent($("#range2_init").val());
-        var f2_end = encodeURIComponent($("#range2_end").val());
-        var f3_init = encodeURIComponent($("#range3_init").val());
-        var f3_end = encodeURIComponent($("#range3_end").val());
-        var f4_init = encodeURIComponent($("#range4_init").val());
-        var f4_end = encodeURIComponent($("#range4_end").val());
 
-        url=url.replace('#','').split("?");
-        if (url.length > 1){
-            //if url has get_vars
-            var hash = url[1];
-            hash = hash.replace(/&{0,1}date-from01=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
-            hash = hash.replace(/&{0,1}date-to01=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
-            hash = hash.replace(/&{0,1}date-from02=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
-            hash = hash.replace(/&{0,1}date-to02=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
-            hash = hash.replace(/&{0,1}date-from03=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
-            hash = hash.replace(/&{0,1}date-to03=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
-            hash = hash.replace(/&{0,1}date-from04=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
-            hash = hash.replace(/&{0,1}date-to04=\d{4}(\-|\/|\.|(%2F))\d{1,2}\1\d{1,2}&{0,1}/, '');
-            //hash is equal to all the get vars but the dates
-            url = url[0] + "?" + hash + "&";
-        }else{
-            url+="?";
-        }
-
-        if(f1_init != ''){
-            url += "date-from01=" + f1_init;
-
-        }else{
-            var fecha_ini = new Date();
-            fecha_ini.setDate(fecha_ini.getDate()-30);
-            url += "date-from01=" + encodeURIComponent(fecha_ini.format("yyyy-mm-dd"));
-        }
-        if(f1_end != ''){
-            url += "&date-to01=" + f1_end;
-        }else{
-            url += "&date-to01=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
-        }
-
-        if(f2_init != ''){
-            url += "&date-from02=" + f2_init;
-            if(f2_end != ''){
-                url += "&date-to02=" + f2_end;
-            }else{
-                url += "&date-to02=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
-            }
-        }
-        if(f3_init != ''){
-            url += "&date-from03=" + f3_init;
-            if(f3_end != ''){
-                url += "&date-to03=" + f3_end;
-            }else{
-                url += "&date-to03=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
-            }
-        }
-        if(f4_init != ''){
-            url += "&date-from04=" + f4_init;
-            if(f4_end != ''){
-                url += "&date-to04=" + f4_end;
-            }else{
-                url += "&date-to04=" + encodeURIComponent(new Date().format("yyyy-mm-dd"));
-            }
-        }
-        return url;
-    }
-    function append_parameters(base_url){
-        var get = getUrlVars();
-        if(get.length>0){
-            if (get[0]!=window.location.protocol+"//"+window.location
-                    .host+window.location.pathname){
-                for(var i=0; i<get.length; i++){
-                    if (get[i]!="date-from01" || get[i]!="date-from02" || get[i]!="date-from03" || get[i]!="date-from04" || get[i]!="consumer-unit01" || get[i]!="consumer-unit02" || get[i]!="consumer-unit03" || get[i]!="consumer-unit04" ){
-                        base_url+="&"+get[i]+"="+get[get[i]];
-                    }
-                }
-            }
-
-        }
-        return base_url
-    }
-    function append_parameters2(base_url){
-        var get = getUrlVars();
-        if(get.length>0){
-            if (get[0]!=window.location.protocol+"//"+window.location
-                    .host+window.location.pathname){
-                for(var i=0; i<get.length; i++){
-                    if (get[i]!="graph" || get[i]!="g_type" || get[i]!="_suid" ){
-                        base_url+="&"+get[i]+"="+get[get[i]];
-                    }
-                }
-            }
-
-        }
-        base_url = base_url.split("#")[0];
-        return base_url
-    }
     function graphsReload(){
         /* Takes the date in the range inputs and reloads the graph data */
         var get_string = src.split("?")[1];//electrical-parameters-names
@@ -183,7 +85,7 @@
     }
     function refresh_iframe_height(){
         // regresca el height del iframe para ajustarse a su conte
-        setTimeout("parent.document.getElementById('graphFrame').height = document['body'].offsetHeight;", 1000);
+        setTimeout("parent.document.getElementById('graphFrame').height = 1200;", 1000);
     }
     function makeIframe(source){
         var graphFrame = document.createElement("IFRAME");
@@ -197,10 +99,23 @@
         var params = [];
         for(var i=1; i<=cu_count; i++){
             var index;
-            var fecha_ini = new Date();
-            fecha_ini.setDate(fecha_ini.getDate()-30);
-            var f_i = fecha_ini.format("yyyy-mm-dd");
-            var f_e = new Date().format("yyyy-mm-dd");
+            var get = getUrlVars();
+            var fecha_ini, f_i, f_e;
+            if(get['fi']!=undefined && get['ff']!=undefined){
+                var fecha = get['fi'].split("-");
+                f_i = new Date(parseInt(fecha[0]), parseInt(fecha[1])-1, parseInt(fecha[2]));
+                f_i = f_i.format("yyyy-mm-dd");
+
+                fecha = get['ff'].split("-");
+                f_e = new Date(parseInt(fecha[0]), parseInt(fecha[1])-1, parseInt(fecha[2]));
+                f_e = f_e.format("yyyy-mm-dd");
+            }else{
+                fecha_ini = new Date();
+                fecha_ini.setDate(fecha_ini.getDate()-30);
+                f_i = fecha_ini.format("yyyy-mm-dd");
+                f_e = new Date().format("yyyy-mm-dd");
+            }
+
 
             if(i<10){
                 index = "0"+String(i);
@@ -416,7 +331,13 @@
             {% endif %}
         </span>
     </h2><a class="various" data-fancybox-type="iframe"  href="/reportes/set_consumer_unit/">Cambiar</a>
+    <div id="logo_container"{% if company.company_logo %}class="c fr" style="background: url(/static/media/{{ company.company_logo }}) no-repeat 50% 50%; background-size: 100% auto; margin-top: -19px;">
+    {% else %}class="c fr" style="background: url(/static/css/images/imgs_icns/company_placeholder.png) no-repeat 50% 50%; background-size: 100% auto; margin-top: -19px;">
+    {% endif %}
+    </div>
 
+
+    <div class="divider" id="divider_top">&nbsp;</div>
     <div id="datepicker_component">
         <span class="period_tag">Periodo</span>
         <div id="widgetField">
@@ -487,8 +408,6 @@
             </div>
         </div>
     </div>
-
-    <div class="divider" id="divider_top">&nbsp;</div>
     <h3>
         {{ graph_type.object_description }}
     </h3>
