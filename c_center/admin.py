@@ -401,8 +401,8 @@ admin.site.register(c_center.models.MonthlyCutDates)
 
 
 class DailyDataAdmin(admin.ModelAdmin):
-    list_filter = ['building']
+    list_filter = ['consumer_unit']
     search_fields = [
-        'building__building_name']
+        'consumer_unit__building__building_name']
 admin.site.register(c_center.models.DailyData, DailyDataAdmin)
 admin.site.register(c_center.models.HMHistoricData)
