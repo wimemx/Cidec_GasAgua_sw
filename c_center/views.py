@@ -77,7 +77,7 @@ GRAPHS_F2 = [ob.object for ob in GroupObject.objects.filter(
 GRAPHS_F3 = [ob.object for ob in GroupObject.objects.filter(
     group__group_name="Fase 3")]
 GRAPHS_CACUM = [ob.object for ob in GroupObject.objects.filter(
-    group__group_name="Consumo Acomulado")]
+    group__group_name="Consumo Acumulado")]
 GRAPHS = dict(energia=GRAPHS_ENERGY, corriente=GRAPHS_I, voltaje=GRAPHS_V,
               perfil_carga=GRAPHS_PF, fase1=GRAPHS_F1, fase2=GRAPHS_F2,
               fase3=GRAPHS_F3, consumo_acumulado=GRAPHS_CACUM)
@@ -271,9 +271,6 @@ def main_page(request):
             request.session['years'] = [__date.year for __date in
                                         ElectricDataTemp.objects.all().
                                         dates('medition_date', 'year')]
-            request.session['months'] = [__date.year for __date in
-                                        ElectricDataTemp.objects.all().
-                                        dates('medition_date', 'month')]
 
             template_vars = {"graph_type": graphs[0],
                              "datacontext": datacontext,
@@ -282,7 +279,12 @@ def main_page(request):
                              'consumer_unit': request.session['consumer_unit'],
                              'sidebar': request.session['sidebar']}
             template_vars_template = RequestContext(request, template_vars)
-            return render_to_response("consumption_centers/graphs/main.html",
+            if request.GET['g_type'] == "consumo_acumulado":
+                template_vars['years'] = request.session['years']
+                template = "consumption_centers/graphs/main_consumed.html"
+            else:
+                template = "consumption_centers/graphs/main.html"
+            return render_to_response(template,
                                       template_vars_template)
         else:
             return render_to_response("generic_error.html",

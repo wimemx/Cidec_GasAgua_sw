@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import pytz
 from functools import wraps
 from time import time
@@ -12,6 +12,7 @@ import re
 from urlparse import urlparse
 from django.core.validators import email_re
 from django.utils import timezone
+from dateutil.relativedelta import relativedelta
 
 
 #-----libs for write_pdf
@@ -106,6 +107,38 @@ def get_week_of_month_from_datetime(datetime_variable):
 
     return week_number
 
+def getMonthDays(month, year):
+    """ returns an array with all the Date objects for the month
+
+    :param month: Int the number of the mont [1-12]
+    :param year: Int the number of the year
+    """
+    actual_day = datetime(year=year, month=month, day=1)
+    weekday = actual_day.weekday()
+
+    notSunday = False
+    if not weekday is 6:
+        notSunday = True
+
+    #Si el primer dia del mes es domingo
+    while notSunday:
+
+        actual_day = actual_day + relativedelta(days=-1)
+        #Se obtiene el dia de la semana del dia anterior
+        weekday = actual_day.weekday()
+        if weekday is 6:
+            notSunday = False
+
+    #Se crea el arreglo que almacenara los dias del mes
+    month_days = []
+
+    no_dia =  0
+    while no_dia < 42:
+        month_days.append(actual_day)
+        actual_day = actual_day + relativedelta(days=+1)
+        no_dia += 1
+
+    return month_days
 
 def random_string_generator(size=6, chars=string.ascii_uppercase + string.digits):
     """Random String Generator

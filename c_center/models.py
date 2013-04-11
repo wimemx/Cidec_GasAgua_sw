@@ -928,8 +928,12 @@ class DailyData(models.Model):
     KVARH = models.IntegerField(null=True, blank=True)
 
     def __unicode__(self):
-        return "Consumer Unit: " + self.consumer_unit.building.building_name + " - Dia:" + str(
-            self.data_day)
+        if self.consumer_unit:
+            return "Consumer Unit: " + \
+                   self.consumer_unit.building.building_name + " - Dia:" + \
+                   str(self.data_day)
+        else:
+            return "Dia:" + str(self.data_day)
 
     class Meta:
         verbose_name_plural = "Información Diaria"

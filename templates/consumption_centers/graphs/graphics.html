@@ -55,8 +55,7 @@
             });
             {% if is_cumulative_electric_data %}
                 var load_url = "/reportes/week_comparison/?electric-data={{ electric_data }}";
-                var consumer_unit_id = {{ consumer_unit_id }};
-                load_url += "&consumer-unit01="+consumer_unit_id;
+                load_url += "&consumer-unit01="+{{ consumer_unit_id }};
                 load_url += "&year01="+$('#year_01').val();
                 load_url += "&month01="+$('#month_01').val();
                 load_url += "&week01="+$('#week_01').val();

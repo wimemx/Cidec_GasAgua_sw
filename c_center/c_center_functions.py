@@ -1156,21 +1156,18 @@ def get_profile(request):
 
 def all_dailyreportAll():
     buildings = Building.objects.all()
-    initial_d = datetime.datetime(2013,3,9)
+    initial_d = datetime.datetime(2012,9,8)
     datos = DailyData.objects.filter(data_day__gte=initial_d)
     datos.delete()
     dia = datetime.timedelta(days=1)
     while initial_d < datetime.datetime.today():
         for buil in buildings:
-            try:
-                main_cu = ConsumerUnit.objects.get(
-                    building=buil,
-                    electric_device_type__electric_device_type_name="Total Edificio"
-                )
-            except ObjectDoesNotExist:
-                continue
+            cus = ConsumerUnit.objects.filter(building=buil)
+            if cus:
+                for cu in cus:
+                    dailyReport(buil, cu, initial_d)
             else:
-                dailyReport(buil, main_cu, initial_d)
+                continue
         initial_d += dia
     print "Done AlldailyReportAll"
 
@@ -1446,14 +1443,14 @@ def dailyReport(building, consumer_unit, today):
     )
 
     new_daily.save()
-
+    print new_daily
     return 'OK'
 
 
 def getDailyReports(building, month, year):
 
     #Se obtienen los dias del mes
-    month_days = getMonthDaysForDailyReport(month, year)
+    month_days = variety.getMonthDays(month, year)
 
     #Se crea un arreglo para almacenar los datos
     dailyreport_arr = []
@@ -1479,7 +1476,7 @@ def getWeeklyReport(building, month, year):
 
     semanas = []
     #Se obtienen los dias del mes
-    month_days = getMonthDaysForDailyReport(month, year)
+    month_days = variety.getMonthDays(month, year)
 
     while len(month_days) > 0:
 
@@ -1574,34 +1571,6 @@ def getMonthlyReport(building, month, year):
         mes['consumo_mediana'] = medianaKWH(building, fecha_inicio, fecha_final)
 
     return mes
-
-def getMonthDaysForDailyReport(month, year):
-    actual_day = datetime.date(year=year, month=month, day=1)
-    weekday = actual_day.weekday()
-
-    notSunday = False
-    if not weekday is 6:
-        notSunday = True
-
-    #Si el primer dia del mes es domingo
-    while notSunday:
-
-        actual_day = actual_day + relativedelta(days=-1)
-        #Se obtiene el dia de la semana del dia anterior
-        weekday = actual_day.weekday()
-        if weekday is 6:
-            notSunday = False
-
-    #Se crea el arreglo que almacenara los dias del mes
-    month_days = []
-
-    no_dia =  0
-    while no_dia < 42:
-        month_days.append(actual_day)
-        actual_day = actual_day + relativedelta(days=+1)
-        no_dia += 1
-
-    return month_days
 
 
 def save_historic(monthly_cutdate, building):
