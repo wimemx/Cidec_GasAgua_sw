@@ -2,6 +2,7 @@ from django.conf.urls import patterns, url
 
 urlpatterns = patterns('',
                        url(r'^celery/', 'c_center.views.call_celery_delay'),
+                       url(r'^dw_specific/', 'c_center.views.dw_specific'),
                        url(r'^graficas/', 'c_center.graphics.render_graphics'),
                        url(r'^graficas_extendidas/',
                            'c_center.graphics.render_graphics_extended'),

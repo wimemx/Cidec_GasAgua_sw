@@ -25,7 +25,7 @@
 
 <script type="text/javascript">
 var fech_ini = '', fech_fin = '';
-
+var current_interval_end = new Date("{{ ff|date:"F d, Y" }}");
 var control = new google.visualization.ControlWrapper({
     'controlType': 'ChartRangeFilter',
     'containerId': 'control',
@@ -117,7 +117,7 @@ function drawVisualization() {
         row_array.push(object_electric_data);
         var object_certainty = data_object['certainty'];
         row_array.push(object_certainty);
-
+        console.log(row_array);
         //console.log(row_array);
         data.addRow(row_array);
     }
@@ -203,61 +203,65 @@ function drawVisualization() {
 google.setOnLoadCallback(drawVisualization);
 
 
+var weekly_counter = 0;
+function changeRange_left() {
+    var start_date;
+    if(weekly_counter<5){
+        //resto una semana
+        current_interval_end.setDate(current_interval_end.getDate()-7);
 
-function changeRange(interval) {
-    var start_date, end_date;
-
-    //Date("October 13, 1975 11:13:00")
-    //start_date = fech_ini;
-
-    start_date = new Date();
-    start_date.setTime(fech_fin);
-
-    //start_date.addDays(1);
-    //end_date.addDays(1);
-    switch (interval){
-        case 'hour' :
-            //start_date.addHours(5);
-            start_date.setHours(start_date.getHours()-2);
-            break;
-        case 'day' :
-            start_date.setDate(start_date.getDate()-1);
-            break;
-        case 'week' :
-            start_date.setDate(start_date.getDate()-7);
-            break;
-        case 'month' :
-            start_date.setDate(start_date.getDate()-30);
-            break;
+        start_date = new Date(current_interval_end.getTime());
+        start_date.setDate(current_interval_end.getDate()-7);
+        // 'slider' is the ControlWrapper instance describing the range slider.
+        control.setState({
+            'range': {
+                'start': start_date,
+                'end': current_interval_end
+            }
+        });
+        control.draw();
+        weekly_counter++;
+        mouseevents();
     }
-
-    // 'slider' is the ControlWrapper instance describing the range slider.
-
-    control.setState({
-        'range': {
-            'start': start_date,
-            'end': fech_fin
-        }
-    });
-
-    control.draw();
 }
-
+function changeRange_right() {
+    var start_date;
+    if(weekly_counter>0){
+        //sumo una semana
+        current_interval_end.setDate(current_interval_end.getDate()+7);
+        start_date = new Date(current_interval_end.getTime());
+        start_date.setDate(current_interval_end.getDate()-7);
+        // 'slider' is the ControlWrapper instance describing the range slider.
+        control.setState({
+            'range': {
+                'start': start_date,
+                'end': current_interval_end
+            }
+        });
+        control.draw();
+        weekly_counter--;
+        mouseevents();
+    }
+}
+function mouseevents(){
+    $("#control").find("svg").each(function(){
+        $(this).attr("pointer-events", "none");
+    });
+    var range_legend = $("#showing_week");
+    range_legend.find(".sem_count").text("Semana "+String(6-weekly_counter));
+    var rangeinit = new Date(current_interval_end.getTime());
+    rangeinit.setDate(current_interval_end.getDate()-7);
+    range_legend.find(".date_range").text(" ("+rangeinit.format("dd")+" al "+ current_interval_end.format("dd 'de' mmmm")+")");
+}
 $(document).on("ready", function(){
     $("select, input, input:checkbox, input:radio, input:file, textarea").uniform();
-    var rango =  $("#compare_interval").find("li");
-    rango.each(function(){
-        //cambia el intervalo visible de las graficas y cambia el estilo segun la opcion seleccionada
-        $(this).click(function(){
-            changeRange($(this).attr('id'));
-            rango.each(function(){
-                $(this).removeClass("active");
-            });
-
-            $(this).addClass("active");
-        });
+    $(".left-nav").on("click", function(){
+        changeRange_left();
     });
-
+    $(".right-nav").on("click", function(){
+        changeRange_right();
+    });
+    setTimeout("mouseevents()", 2000);
     /*
      var base_url = window.location.pathname;
      $("li#raw_data").click(function(){
@@ -339,32 +343,23 @@ function update_bars_color(){
             <li id="dw" class="active" >Calculados</li>
         {% endif %}
     </ul>-->
-<ul id="compare_interval" class="fr">
-    <li id="hour">1 H</li>
-    <li id="day" >1 D</li>
-    <li id="week">1 Sem</li>
-</ul>
-
-<div id="parameter_controls">
-    <form id="column-controls">
-        {% for column in columns %}
-            <input type="checkbox" class="column-checkbox" name="column-control" value="{{ column }}" checked="checked"/>
-            <label>{{ column }}</label>
-        {% endfor %}
-    </form>
-</div>
-
 <!-- dashboard start -->
 <div id="dashboard" class="fl">
 
     <!-- chart start -->
+    <p id="showing_week"><span class="left-nav left_legend"></span><span class="sem_count">Semana #</span><span class="date_range">(- al -)</span><span class="right-nav right_legend"></span></p>
     <div id="chart">
         <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
     </div>
     <!-- chart end -->
 
     <!-- control start -->
-    <div id="control"></div>
+    <div id="control_container" class="auto">
+        <div id="control"></div>
+        <span class="left-nav left_grip"></span>
+        <span class="right-nav right_grip"></span>
+    </div>
+
     <!-- control end -->
 
     <!-- slider-range start -->

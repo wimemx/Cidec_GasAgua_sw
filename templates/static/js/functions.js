@@ -207,6 +207,31 @@ dateFormat.i18n = {
     ]
 };
 
+
+function cloneObject(object){
+    return (JSON.parse(JSON.stringify(object)));
+}
+
+//prototype functions
+
+//return the index of an element in an array
+if (!Array.prototype.indexOf) {
+    (function() {
+        Array.prototype.indexOf = Array_indexOf;
+        function Array_indexOf(elm) {
+            var index;
+            for (index = 0; index < this.length; ++index) {
+                if (this[index] === elm) {
+                    return index;
+                }
+            }
+            return -1;
+        }
+    })();
+}
+
+
+
 // For convenience...
 Date.prototype.format = function (mask, utc) {
     return dateFormat(this, mask, utc);

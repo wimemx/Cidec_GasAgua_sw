@@ -71,7 +71,8 @@ class ConsumerUnitProfile(django.db.models.Model):
             verbose_name=data_warehouse_extended.globals.ModelFieldName.CONSUMER_UNIT_PROFILE__ELECTRIC_DEVICE_TYPE_NAME)
 
     def __unicode__(self):
-        return str(self.transactional_id) + u" - " + self.building_name
+        return str(self.transactional_id) + u" - " + self.building_name + " " \
+               + self.electric_device_type_name
 
 
 class ElectricalParameter(django.db.models.Model):

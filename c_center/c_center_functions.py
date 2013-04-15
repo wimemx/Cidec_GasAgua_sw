@@ -1447,7 +1447,7 @@ def dailyReport(building, consumer_unit, today):
     return 'OK'
 
 
-def getDailyReports(building, month, year):
+def getDailyReports(consumer, month, year):
 
     #Se obtienen los dias del mes
     month_days = variety.getMonthDays(month, year)
@@ -1457,7 +1457,7 @@ def getDailyReports(building, month, year):
 
     for day in month_days:
         try:
-            ddata_obj = DailyData.objects.get(building=building,
+            ddata_obj = DailyData.objects.get(consumer_unit=consumer,
                                               data_day=day)
         except DailyData.DoesNotExist:
             dailyreport_arr.append(dict(fecha=str(day),
@@ -1472,7 +1472,7 @@ def getDailyReports(building, month, year):
 
     return dailyreport_arr
 
-def getWeeklyReport(building, month, year):
+def getWeeklyReport(consumer, month, year):
 
     semanas = []
     #Se obtienen los dias del mes
@@ -1491,24 +1491,24 @@ def getWeeklyReport(building, month, year):
         fecha_final = semana_array[6]
 
         no_semana = {
-        'demanda_max': demandaMaxima(building, fecha_inicial, fecha_final),
-        'demanda_min': demandaMinima(building, fecha_inicial, fecha_final),
-        'consumo_acumulado': consumoAcumuladoKWH(building, fecha_inicial,
+        'demanda_max': demandaMaxima(consumer, fecha_inicial, fecha_final),
+        'demanda_min': demandaMinima(consumer, fecha_inicial, fecha_final),
+        'consumo_acumulado': consumoAcumuladoKWH(consumer, fecha_inicial,
                                                  fecha_final),
-        'consumo_promedio': promedioKWH(building, fecha_inicial, fecha_final),
-        'consumo_desviacion': desviacionStandardKWH(building, fecha_inicial,
+        'consumo_promedio': promedioKWH(consumer, fecha_inicial, fecha_final),
+        'consumo_desviacion': desviacionStandardKWH(consumer, fecha_inicial,
                                                     fecha_final),
-        'consumo_mediana': medianaKWH(building, fecha_inicial, fecha_final)}
+        'consumo_mediana': medianaKWH(consumer, fecha_inicial, fecha_final)}
 
         semanas.append(no_semana)
 
     return semanas
 
-def getMonthlyReport(building, month, year):
+def getMonthlyReport(consumer_u, month, year):
     mes = {}
 
     #Se obtiene el tipo de tarifa del edificio.
-    tipo_tarifa = building.electric_rate
+    tipo_tarifa = consumer_u.building.electric_rate
 
     #Se obtienen las fechas de inicio y de fin
     diasmes_arr = monthrange(year, month)
@@ -1519,11 +1519,8 @@ def getMonthlyReport(building, month, year):
 
     #Se obtiene el profile_powermeter
     try:
-        main_cu = ConsumerUnit.objects.get(
-            building=building,
-            electric_device_type__electric_device_type_name="Total Edificio"
-        )
-        profile_powermeter = main_cu.profile_powermeter
+
+        profile_powermeter = consumer_u.profile_powermeter
 
     except ObjectDoesNotExist:
         #Si no hay consumer unit, regresa todos los valores en 0
@@ -1536,7 +1533,7 @@ def getMonthlyReport(building, month, year):
         mes['consumo_desviacion'] = 0
     else:
         #Obtener consumo acumulado
-        mes['consumo_acumulado'] = consumoAcumuladoKWH(building,
+        mes['consumo_acumulado'] = consumoAcumuladoKWH(consumer_u,
                                                        fecha_inicio,
                                                        fecha_final)
 
@@ -1544,10 +1541,10 @@ def getMonthlyReport(building, month, year):
             mes['consumo_acumulado'] = 0
 
         #Obtener demanda maxima
-        mes['demanda_max'] = demandaMaxima(building, fecha_inicio, fecha_final)
+        mes['demanda_max'] = demandaMaxima(consumer_u, fecha_inicio, fecha_final)
 
         #Obtener demanda minima
-        mes['demanda_min'] = demandaMinima(building, fecha_inicio, fecha_final)
+        mes['demanda_min'] = demandaMinima(consumer_u, fecha_inicio, fecha_final)
 
         #Obtener factor de potencia.
         #Para obtener el factor potencia son necesarios los KWH Totales
@@ -1559,16 +1556,16 @@ def getMonthlyReport(building, month, year):
                                                 kvarh)
 
         #Consumo promedio
-        mes['consumo_promedio'] = promedioKWH(building, fecha_inicio,
+        mes['consumo_promedio'] = promedioKWH(consumer_u, fecha_inicio,
                                               fecha_final)
 
         #Consumo mediana
-        mes['consumo_desviacion'] = desviacionStandardKWH(building,
+        mes['consumo_desviacion'] = desviacionStandardKWH(consumer_u,
                                                           fecha_inicio,
                                                           fecha_final)
 
         #Consumo desviación
-        mes['consumo_mediana'] = medianaKWH(building, fecha_inicio, fecha_final)
+        mes['consumo_mediana'] = medianaKWH(consumer_u, fecha_inicio, fecha_final)
 
     return mes
 

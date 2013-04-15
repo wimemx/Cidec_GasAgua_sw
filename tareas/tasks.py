@@ -117,6 +117,59 @@ def populate_data_warehouse_extended(
     return
 
 
+def populate_data_warehouse_specific(
+        consumer_unit,
+        instant_delta,
+        date_from
+):
+    """
+        Description:
+            This function populates basic data for the Data Warehouse Extended
+            to start working.
+
+        Arguments:
+            consumer_unit - the consumer unit to generate.
+
+            instant_delta - the desired granularity.
+
+            date_from - Datetime (the begining for the process)
+
+        Return:
+            None.
+    """
+
+    electrical_parameters = \
+        data_warehouse_extended.models.ElectricalParameter.objects.all()
+
+    #
+    # Generate data for each Consumer Unit Profile
+    #
+    try:
+        consumer_unit = \
+            c_center.models.ConsumerUnit.objects.get(
+                pk=consumer_unit_profile.pk)
+
+    except c_center.models.ConsumerUnit.DoesNotExist:
+        logger.error(
+            data_warehouse_extended.globals.SystemError.
+            CONSUMER_UNIT_DOES_NOT_EXIST)
+
+    #
+    # Generate data for Instant Delta.
+    # Generate data for each Electrical Parameter.
+    #
+    for electrical_parameter in electrical_parameters:
+        process_dw_consumerunit_electrical_parameter.delay(
+            consumer_unit,
+            date_from,
+            data_warehouse_extended.globals.Constant.
+            DATA_DATETIME_LAST,
+            electrical_parameter,
+            instant_delta)
+
+    return
+
+
 @task(ignore_result=True)
 def process_dw_consumerunit_electrical_parameter(
         consumer_unit, first, last, electrical_parameter, instant_delta):
@@ -172,7 +225,7 @@ def data_warehouse_five_minute():
     end = datetime.datetime.now()
     start = datetime.datetime.now() - datetime.timedelta(minutes=50)
     delta_name = "Five Minute Delta"
-    update_data_dw_delta(end, start, delta_name)
+    update_data_dw_delta.delay(end, start, delta_name)
     print "firing periodic task - DW 50 min, :)"
 
 @periodic_task(run_every=crontab(minute='*/100'))
@@ -180,7 +233,7 @@ def data_warehouse_ten_minutes():
     end = datetime.datetime.now()
     start = datetime.datetime.now() - datetime.timedelta(minutes=100)
     delta_name = "Ten Minute Delta"
-    update_data_dw_delta(end, start, delta_name)
+    update_data_dw_delta.delay(end, start, delta_name)
     print "firing periodic task - DW 100 min, :)"
 
 
@@ -189,7 +242,7 @@ def data_warehouse_fifteen_minutes():
     end = datetime.datetime.now()
     start = datetime.datetime.now() - datetime.timedelta(minutes=300)
     delta_name = "Half Hour Delta"
-    update_data_dw_delta(end, start, delta_name)
+    update_data_dw_delta.delay(end, start, delta_name)
     print "firing periodic task - DW 150 min, :)"
 
 @periodic_task(run_every=crontab(hour='*/5'))
@@ -197,7 +250,7 @@ def data_warehouse_half_hour():
     end = datetime.datetime.now()
     start = datetime.datetime.now() - datetime.timedelta(minutes=300)
     delta_name = "Half Hour Delta"
-    update_data_dw_delta(end, start, delta_name)
+    update_data_dw_delta.delay(end, start, delta_name)
     print "firing periodic task - DW 300 min, :)"
 
 @periodic_task(run_every=crontab(hour='*/10'))
@@ -205,7 +258,7 @@ def data_warehouse_hour():
     end = datetime.datetime.now()
     start = datetime.datetime.now() - datetime.timedelta(hours=10)
     delta_name = "Hour Delta"
-    update_data_dw_delta(end, start, delta_name)
+    update_data_dw_delta.delay(end, start, delta_name)
     print "firing periodic task - DW 150 min, :)"
 
 
@@ -214,7 +267,7 @@ def data_warehouse_three_hour():
     end = datetime.datetime.now()
     start = datetime.datetime.now() - datetime.timedelta(hours=30)
     delta_name = "Three Hours Delta"
-    update_data_dw_delta(end, start, delta_name)
+    update_data_dw_delta.delay(end, start, delta_name)
     print "firing periodic task - DW 150 min, :)"
 
 
@@ -223,7 +276,7 @@ def data_warehouse_six_hour():
     end = datetime.datetime.now()
     start = datetime.datetime.now() - datetime.timedelta(hours=60)
     delta_name = "Six Hours Delta"
-    update_data_dw_delta(end, start, delta_name)
+    update_data_dw_delta.delay(end, start, delta_name)
     print "firing periodic task - DW 60 hours, :)"
 
 
@@ -232,7 +285,7 @@ def data_warehouse_twelve_hour():
     end = datetime.datetime.now()
     start = datetime.datetime.now() - datetime.timedelta(days=5)
     delta_name = "Half Day Delta"
-    update_data_dw_delta(end, start, delta_name)
+    update_data_dw_delta.delay(end, start, delta_name)
     print "firing periodic task - DW 5 days :)"
 
 
@@ -241,10 +294,11 @@ def data_warehouse_twelve_hour():
     end = datetime.datetime.now()
     start = datetime.datetime.now() - datetime.timedelta(days=10)
     delta_name = "Day Delta"
-    update_data_dw_delta(end, start, delta_name)
+    update_data_dw_delta.delay(end, start, delta_name)
     print "firing periodic task - DW 10 days :)"
 
 
+@task(ignore_result=True)
 def update_data_dw_delta(end, start, delta_name):
     consumer_unit_profiles = \
         data_warehouse_extended.models.ConsumerUnitProfile.objects.all()
