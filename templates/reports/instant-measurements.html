@@ -100,8 +100,8 @@
 
             var chart;
             var vaxes = {
-            {% for col,index in series  %}
-                {{ forloop.counter0 }}: {logScale: false, title: '{{ col.name }}', titleTextStyle:{color: colors[arr_pos[{{ forloop.counter0 }}]]}, textStyle:{color: colors[arr_pos[{{ forloop.counter0 }}]]}, {% if col.name == "V" or col.name == "I" %}minValue: 0, {% endif %}textPosition: "{% cycle 'out' 'in' %}"},
+            {% for axis in axis_list  %}
+                {{ forloop.counter0 }}: {logScale: false, title: '{{ axis.name }}', titleTextStyle:{color: colors[arr_pos[{{ forloop.counter0 }}]]}, textStyle:{color: colors[arr_pos[{{ forloop.counter0 }}]]}, {% if axis.name == "V" or axis.name == "I" %}minValue: 0, {% endif %}textPosition: "{% cycle 'out' 'in' %}"},
             {% endfor %}
             };
             var vseries = {
@@ -109,6 +109,12 @@
                 {{ forloop.counter0 }}:{targetAxisIndex:{{ index }}},
             {% endfor %}
             };
+            var column_units = [];
+            {% for column_unit, column in column_units %}
+                column_units[{{ forloop.counter0 }}] = {"{{ column }}": "{{ column_unit }}"};
+            {% endfor %}
+
+
             function drawVisualization() {
                 var dashboard = new google.visualization.Dashboard(
                         document.getElementById('dashboard'));
@@ -181,7 +187,8 @@
 
                         var color_position = [];
                         var control_cols = columnas.slice(0);
-
+                        var colum_units_temp = [];
+                        var colum_units_copy = column_units.slice(0);
                         for (var index = 0; index < checkboxes.length; index++) {
                             if(checkboxes[index].checked){
                                 columns_set_array.push((index * 3) + 0);
@@ -190,20 +197,68 @@
                             }else{
                                 color_position.push(colors[index]);
                                 control_cols.pop();
+                                colum_units_temp.push(column_units[index]);
                             }
                             total_columns_set_array.push((index * 3) + 0);
                             total_columns_set_array.push((index * 3) + 1);
                             total_columns_set_array.push((index * 3) + 2);
                         }
+                        console.log("colum_units a desactivar", colum_units_temp);
+                        //subset
+                        for (index = colum_units_copy.length - 1; index >= 0; --index) {
+                            if (colum_units_temp.indexOf(colum_units_copy[index]) >= 0) {
+                                colum_units_copy.splice(index, 1);
+                            }
+                        }
+                        //get unique values for colum_units_copy
+                        var u = [];
+                        for (index=0; index<colum_units_copy.length; index++){
+                            var x = colum_units_copy[index];
+                            var band = true;
+                            for(var j=0; j<u.length; j++){
+                                var y = u[j];
+                                if(JSON.stringify(y) === JSON.stringify(x) ){
+                                    band = false;
+                                }
+                            }
+                            if (band) {
+                                u.push(x);
+                            }
+                        }
+                        console.log("colum_units activas", colum_units_copy);
+
+                        var vaxes_new = {};
+                        for(index=0; index<u.length; index++){
+                            var pos = "out";
+                            if(index%2 == 0){
+                                pos="in"
+                            }
+                            var unit;
+                            var u_index = u[index];
+                            for(var serie in u_index){
+                                unit = u_index[serie];
+                            }
+                            vaxes_new[index] = {logScale: false, title: unit, titleTextStyle:{color: colors[arr_pos[index]]}, textStyle:{color: colors[arr_pos[index]]}, minValue: 0, textPosition: pos}
+                        }
+
+                        console.log("vaxes_new", vaxes_new);
+
+                        //TODO
+                        var vseries_new = {};
+                        for(index=0; index<colum_units_copy.length;index++){
+                            vseries_new[index] = {targetAxisIndex:""}
+                        }
 
                         var totales = total_columns_set_array.slice(0);
+                        //gets subset of arrays
                         for (index = total_columns_set_array.length - 1; index >= 0; --index) {
                             if (columns_set_array.indexOf(total_columns_set_array[index]) >= 0) {
                                 total_columns_set_array.splice(index, 1);
                             }
                         }
-
+                        //copy colors
                         var colores = colors.slice(0);
+                        //gets subset of arrays
                         for (index = colores.length - 1; index >= 0; --index) {
                             if (color_position.indexOf(colores[index]) >= 0) {
                                 colores.splice(index, 1);
@@ -212,7 +267,7 @@
 
                         control.setOption('ui.chartView.columns',control_cols);
                         view.setColumns(totales);
-                        dashboard.draw(view);
+
                         view.hideColumns(total_columns_set_array);
                         chart.setOption('colors', colores);
 

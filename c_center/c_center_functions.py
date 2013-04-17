@@ -9,6 +9,7 @@ import cStringIO
 import Image
 import hashlib
 import pytz
+import threading
 from math import ceil
 
 #local application/library specific imports
@@ -1156,7 +1157,7 @@ def get_profile(request):
 
 def all_dailyreportAll():
     buildings = Building.objects.all()
-    initial_d = datetime.datetime(2012,9,8)
+    initial_d = datetime.datetime(2013,1,1)
     datos = DailyData.objects.filter(data_day__gte=initial_d)
     datos.delete()
     dia = datetime.timedelta(days=1)
@@ -1275,6 +1276,7 @@ def dailyReport(building, consumer_unit, today):
     if consumer_units:
 
         for c_unit in consumer_units:
+            print c_unit
             profile_powermeter =  c_unit.profile_powermeter
             #print "Profile Powermeter:", profile_powermeter.pk
             #Se obtiene la demanda max

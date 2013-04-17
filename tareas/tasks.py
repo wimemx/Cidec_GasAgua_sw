@@ -91,9 +91,7 @@ def populate_data_warehouse_extended(
                         pk=consumer_unit_profile.pk)
 
             except c_center.models.ConsumerUnit.DoesNotExist:
-                logger.error(
-                    data_warehouse_extended.globals.SystemError.
-                    CONSUMER_UNIT_DOES_NOT_EXIST)
+                print "Unidad de consumo no encontrada", consumer_unit_profile
 
                 continue
 
@@ -147,12 +145,10 @@ def populate_data_warehouse_specific(
     try:
         consumer_unit = \
             c_center.models.ConsumerUnit.objects.get(
-                pk=consumer_unit_profile.pk)
+                pk=consumer_unit.transactional_id)
 
     except c_center.models.ConsumerUnit.DoesNotExist:
-        logger.error(
-            data_warehouse_extended.globals.SystemError.
-            CONSUMER_UNIT_DOES_NOT_EXIST)
+        print "Unidad de consumo no encontrada", consumer_unit
 
     #
     # Generate data for Instant Delta.
@@ -240,8 +236,8 @@ def data_warehouse_ten_minutes():
 @periodic_task(run_every=crontab(minute='*/150'))
 def data_warehouse_fifteen_minutes():
     end = datetime.datetime.now()
-    start = datetime.datetime.now() - datetime.timedelta(minutes=300)
-    delta_name = "Half Hour Delta"
+    start = datetime.datetime.now() - datetime.timedelta(minutes=150)
+    delta_name = "15 min Delta"
     update_data_dw_delta.delay(end, start, delta_name)
     print "firing periodic task - DW 150 min, :)"
 
@@ -320,10 +316,7 @@ def update_data_dw_delta(end, start, delta_name):
                     pk=consumer_unit_profile.pk)
 
         except c_center.models.ConsumerUnit.DoesNotExist:
-            logger.error(
-                data_warehouse_extended.globals.SystemError.
-                CONSUMER_UNIT_DOES_NOT_EXIST)
-
+            print "unidad de consumo no encontrada", consumer_unit_profile
             continue
 
         #

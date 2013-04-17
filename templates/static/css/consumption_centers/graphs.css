@@ -411,3 +411,14 @@ div.container{
 .right_legend{
     background: url("../images/bgs/arrow_right.png") no-repeat center;
 }
+#dias{
+    width: 1050px;
+    display: block;
+    margin: 13px auto 0 auto;
+}
+#dias span{
+    font-size: 16px;
+    width: 14.28%;
+    display: block;
+    text-align: center;
+}

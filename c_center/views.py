@@ -171,7 +171,10 @@ def dw_specific(request):
                 pk=int(request.POST['intervalos'])
             )
             populate_data_warehouse_specific(cu, delta, fecha)
-            template_vars['text'] = "Tarea enviada, espera resultados"
+            template_vars['text'] = "Tarea enviada, para " + cu.building_name \
+                                    + " - " + cu.electric_device_type_name + \
+                                    " con granularidad " + delta.name \
+                                    + ". Espera resultados"
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("tasks/data_warehouse_specific.html",

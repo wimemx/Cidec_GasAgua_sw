@@ -1015,7 +1015,7 @@ def render_instant_measurements(
     template_variables['columns'] = column_strings
 
     columns_units_list = get_column_units_list(request_data_list_normalized)
-    template_variables['column_units'] = columns_units_list
+    template_variables['column_units'] = zip(columns_units_list, column_strings)
 
     #
     # Build and normalize the data clusters list.
@@ -1062,9 +1062,6 @@ def render_instant_measurements(
     template_variables['max'] = maximum
     template_variables['min'] = minimum
     template_variables['columns_statistics'] = data_clusters_statistics
-    template_variables['series'] = zip(
-        template_variables['axis_list'],
-        template_variables['column_unit_axis_indexes'] )
     template_context =\
         django.template.context.RequestContext(request, template_variables)
 
