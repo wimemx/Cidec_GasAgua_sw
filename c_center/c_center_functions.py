@@ -1237,9 +1237,12 @@ def dailyReport(building, consumer_unit, today):
     kvarh_totales = 0
     kvarhs_anterior = False
 
+    tarifa_kwh = 0
     tarifa_kwh_base = 0
     tarifa_kwh_intermedio = 0
     tarifa_kwh_punta = 0
+
+    costo_energia_total = 0
 
     #Se agregan las horas
     today_s_str = str(today.year) + "-" + str(today.month) + "-" + \
@@ -1271,6 +1274,9 @@ def dailyReport(building, consumer_unit, today):
 
     #Se obtiene la región
     region = building.region
+
+    #Se obtiene la tarifa del edificio
+    electric_rate = building.electric_rate
 
     consumer_units = get_consumer_units(consumer_unit)
     if consumer_units:
@@ -1408,24 +1414,57 @@ def dailyReport(building, consumer_unit, today):
                                               today_e_utc,
                                               kvarhs_anterior)
 
-    #Obtiene el id de la tarifa correspondiente para el mes en cuestion
-    tarifasObj = ElectricRatesDetail.objects.filter(electric_rate=1).filter(
-        region=region).filter(date_init__lte=today).filter(
-        date_end__gte=today)
 
-    if tarifasObj:
-        tarifa_kwh_base = tarifasObj[0].KWHB
-        tarifa_kwh_intermedio = tarifasObj[0].KWHI
-        tarifa_kwh_punta = tarifasObj[0].KWHP
+    #Si es tarifa HM
+    if electric_rate.pk == 1:
+        #Obtiene el id de la tarifa correspondiente para el mes en cuestion
+        tarifasObj = ElectricRatesDetail.objects.filter(electric_rate=1).filter(
+                region=region).filter(date_init__lte=today).filter(
+                date_end__gte=today)
 
-    #Se obtiene Factor de Potencia
-    factor_potencia_total = factorpotencia(kwh_totales, kvarh_totales)
+        if tarifasObj:
+            tarifa_kwh_base = tarifasObj[0].KWHB
+            tarifa_kwh_intermedio = tarifasObj[0].KWHI
+            tarifa_kwh_punta = tarifasObj[0].KWHP
 
-    #Se obtiene costo de energía
-    costo_energia_total = costoenergia(kwh_base, kwh_intermedio,
+
+        #Se obtiene costo de energía
+        costo_energia_total = costoenergia(kwh_base, kwh_intermedio,
                                        kwh_punta, tarifa_kwh_base,
                                        tarifa_kwh_intermedio,
                                        tarifa_kwh_punta)
+
+    elif electric_rate.pk == 2:#Si es tarifa Dac
+        #Para las regiones BC y BCS es necesario obtener revisar si se aplica
+        # Tarifa de Verano o de Invierno
+
+        if region.pk == 1 or region.pk == 2:
+            tf_ver_inv = obtenerHorarioVeranoInvierno(today, 2)
+            tarifasObj = DACElectricRateDetail.objects.filter(
+                region=region.pk).filter(date_interval=tf_ver_inv).filter(
+                date_init__lte=today).filter(date_end__gte=today)
+            if tarifasObj:
+                tarifa_kwh = tarifasObj[0].kwh_rate
+
+        else:
+            tarifasObj = DACElectricRateDetail.objects.filter(
+                region=region.pk).filter(date_interval=None).filter(
+                date_init__lte=today).filter(date_end__gte=today)
+            if tarifasObj:
+                tarifa_kwh = tarifasObj[0].kwh_rate
+
+        costo_energia_total = kwh_totales * tarifa_kwh
+
+    elif electric_rate.pk == 3:#Si es tarifa 3
+        tarifasObj = ThreeElectricRateDetail.objects.filter(
+            date_init__lte=today).filter(date_end__gte=today)
+        if tarifasObj:
+            tarifa_kwh = tarifasObj[0].kwh_rate
+
+        costo_energia_total = kwh_totales * tarifa_kwh
+
+    #Se obtiene Factor de Potencia
+    factor_potencia_total = factorpotencia(kwh_totales, kvarh_totales)
 
     #Se guarda en la BD
     new_daily = DailyData(
@@ -1553,7 +1592,7 @@ def getMonthlyReport(consumer_u, month, year):
         # (consumo acumulado) y los KVARH
         kvarh = obtenerKVARH_total(profile_powermeter.powermeter, fecha_inicio,
                                    fecha_final)
-        print "kvarh", kvarh
+
         mes['factor_potencia'] = factorpotencia(float(mes['consumo_acumulado']),
                                                 kvarh)
 
