@@ -7762,6 +7762,7 @@ def obtenerHistorico_r(actual_month_arr):
                                                  ]/actual_month_arr['kwh_totales']
 
             arr_historico.append(dict_periodo)
+
         ind -= 1
 
     return arr_historico
