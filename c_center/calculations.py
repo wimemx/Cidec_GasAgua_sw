@@ -205,7 +205,7 @@ def fpbonificacionrecargo(fp):
     if fp != 0:
         if fp < 90:
             fp_valor = Decimal(str(3.0 / 5.0)) * (
-                (Decimal(str(90.0)) / fp) - 1) * 100
+                (Decimal(str(90.0)) / Decimal(str(fp))) - 1) * 100
         else:
             fp_valor = Decimal(str(1.0 / 4.0)) * (
                 1 - (Decimal(str(90.0)) / Decimal(str(fp)))) * 100

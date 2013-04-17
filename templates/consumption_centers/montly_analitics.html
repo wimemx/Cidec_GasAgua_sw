@@ -155,9 +155,13 @@
                     lateral_content +=     '<h3>Consumo</h3>';
                     lateral_content +=     '<div id="lat_consumo">';
                     lateral_content +=     '<span class="m_value">'+ addCommas(data.c_tot)+' kWh</span>';
-                    lateral_content +=     '<span class="s_value">'+ addCommas(data.c_base)+'kWh base</span>';
-                    lateral_content +=     '<span class="s_value">'+ addCommas(data.c_int)+'kWh intermedia</span>';
-                    lateral_content +=     '<span class="s_value">'+ addCommas(data.c_punta)+'kWh punta</span>';
+
+                    if(data.electric_rate == '1'){
+                        lateral_content +=     '<span class="s_value">'+ addCommas(data.c_base)+'kWh base</span>';
+                        lateral_content +=     '<span class="s_value">'+ addCommas(data.c_int)+'kWh intermedia</span>';
+                        lateral_content +=     '<span class="s_value">'+ addCommas(data.c_punta)+'kWh punta</span>';
+                    }
+
                     lateral_content +=     '</div>';
                     lateral_content +=     '<a href="/main/">Ver en una gr&aacute;fica</a>';
                     lateral_content +=     '<h3>Demanda M&aacute;x</h3>';
