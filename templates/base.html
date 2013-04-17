@@ -58,6 +58,12 @@
 
         }
         $(document).ready(function(){
+            $("#content").on("click", function(){
+                if($("#company_list").is(":visible")){
+                    $("#company_list").slideUp();
+                }
+
+            });
             building_list_gen();
             $(".first_level").hover(function(){
                 $(this).find("> .sub_list").show();

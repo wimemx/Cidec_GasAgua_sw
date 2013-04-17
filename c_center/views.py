@@ -50,12 +50,15 @@ from data_warehouse.views import get_consumer_unit_electric_data_csv, \
     get_consumer_unit_by_id as get_data_warehouse_consumer_unit_by_id, \
     get_consumer_unit_electric_data_interval_tuple_list
 
+import data_warehouse_extended.models
+
 from .tables import ElectricDataTempTable, ThemedElectricDataTempTable
 
 import json as simplejson
 import sys
 from tareas.tasks import save_historic_delay, \
-    change_profile_electric_data, populate_data_warehouse_extended
+    change_profile_electric_data, populate_data_warehouse_extended, \
+    populate_data_warehouse_specific
 
 VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
@@ -73,12 +76,14 @@ GRAPHS_PF = [ob.object for ob in GroupObject.objects.filter(
 GRAPHS_F1 = [ob.object for ob in GroupObject.objects.filter(
     group__group_name="Fase 1")]
 GRAPHS_F2 = [ob.object for ob in GroupObject.objects.filter(
-    group__group_name="Fase 1")]
+    group__group_name="Fase 2")]
 GRAPHS_F3 = [ob.object for ob in GroupObject.objects.filter(
-    group__group_name="Fase 1")]
+    group__group_name="Fase 3")]
+GRAPHS_CACUM = [ob.object for ob in GroupObject.objects.filter(
+    group__group_name="Consumo Acumulado")]
 GRAPHS = dict(energia=GRAPHS_ENERGY, corriente=GRAPHS_I, voltaje=GRAPHS_V,
               perfil_carga=GRAPHS_PF, fase1=GRAPHS_F1, fase2=GRAPHS_F2,
-              fase3=GRAPHS_F3)
+              fase3=GRAPHS_F3, consumo_acumulado=GRAPHS_CACUM)
 
 VIRTUAL_PROFILE = ProfilePowermeter.objects.get(
     powermeter__powermeter_anotation="Medidor Virtual")
@@ -89,7 +94,7 @@ MSG_PERMIT_ERROR = "<h2 style='font-family: helvetica; color: #878787; " \
                    "por favor ponte en contacto con el administrador para " \
                    "remediar esta situaci&oacute;n</h2>"
 
-
+@login_required(login_url='/')
 def call_celery_delay(request):
     if request.user.is_superuser:
         if request.method == "POST":
@@ -138,6 +143,38 @@ def call_celery_delay(request):
         template_vars = dict(text=text)
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("tasks/datawarehouse_populate.html",
+                                  template_vars_template)
+    else:
+        raise Http404
+
+@login_required(login_url='/')
+def dw_specific(request):
+    datacontext, b_list = get_buildings_context(request.user)
+    if datacontext:
+        template_vars = {"datacontext": datacontext}
+    else:
+        template_vars = dict()
+    if request.user.is_superuser:
+        granul = data_warehouse_extended.models.InstantDelta.objects.all()
+        consumer_units = data_warehouse_extended.models.ConsumerUnitProfile\
+            .objects.all()
+        template_vars['deltas'] = granul
+        template_vars['consumer_units'] = consumer_units
+
+        if request.method == "POST":
+            fecha = datetime.datetime.strptime(
+                request.POST['date_from'], "%Y-%m-%d")
+            cu = data_warehouse_extended.models.ConsumerUnitProfile.objects.get(
+                transactional_id=int(request.POST['consumer_unit'])
+            )
+            delta = data_warehouse_extended.models.InstantDelta.objects.get(
+                pk=int(request.POST['intervalos'])
+            )
+            populate_data_warehouse_specific(cu, delta, fecha)
+            template_vars['text'] = "Tarea enviada, espera resultados"
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("tasks/data_warehouse_specific.html",
                                   template_vars_template)
     else:
         raise Http404
@@ -277,7 +314,12 @@ def main_page(request):
                              'consumer_unit': request.session['consumer_unit'],
                              'sidebar': request.session['sidebar']}
             template_vars_template = RequestContext(request, template_vars)
-            return render_to_response("consumption_centers/graphs/main.html",
+            if request.GET['g_type'] == "consumo_acumulado":
+                template_vars['years'] = request.session['years']
+                template = "consumption_centers/graphs/main_consumed.html"
+            else:
+                template = "consumption_centers/graphs/main.html"
+            return render_to_response(template,
                                       template_vars_template)
         else:
             return render_to_response("generic_error.html",
@@ -7903,7 +7945,8 @@ def montly_data_for_building(request, id_building, year, month):
     edificio = get_object_or_404(Building, pk=int(id_building))
     if has_permission(request.user, VIEW, "Consultar recibo CFE") or \
             request.user.is_superuser:
-        data = getDailyReports(edificio, int(month), int(year))
+        data = getDailyReports(request.session['consumer_unit'],
+                               int(month), int(year))
 
         response_data = simplejson.dumps(data)
         return HttpResponse(content=response_data,
@@ -7917,7 +7960,8 @@ def montly_data_hfor_building(request, id_building, year, month):
     edificio = get_object_or_404(Building, pk=int(id_building))
     if has_permission(request.user, VIEW, "Consultar recibo CFE") or \
             request.user.is_superuser:
-        data = getMonthlyReport(edificio, int(month), int(year))
+        data = getMonthlyReport(request.session['consumer_unit'],
+                                int(month), int(year))
 
         response_data = simplejson.dumps([data])
         return HttpResponse(content=response_data,
@@ -7931,7 +7975,8 @@ def montly_data_w_for_building(request, id_building, year, month):
     edificio = get_object_or_404(Building, pk=int(id_building))
     if has_permission(request.user, VIEW, "Consultar recibo CFE") or \
             request.user.is_superuser:
-        datos = getWeeklyReport(edificio, int(month), int(year))
+        datos = getWeeklyReport(request.session['consumer_unit'],
+                                int(month), int(year))
 
         response_data = simplejson.dumps(datos)
 
@@ -7951,7 +7996,8 @@ def month_analitics_day(request, id_building):
 
         electric_rate = edificio.electric_rate_id
         try:
-            day_data = DailyData.objects.get(building=edificio, data_day=fecha)
+            day_data = DailyData.objects.get(
+                consumer_unit=request.session['consumer_unit'], data_day=fecha)
         except ObjectDoesNotExist:
             diccionario = dict(empty="true")
         else:

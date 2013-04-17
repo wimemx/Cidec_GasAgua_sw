@@ -140,9 +140,13 @@ def get_column_units_list(
         in request_data_list_normalized:
 
         try:
+            nm = data_warehouse_extended.models.ElectricalParameter.objects.get(
+                name=electrical_parameter_name
+            )
+            nm = nm.name_transactional
             electrical_parameter_info =\
                 alarms.models.ElectricParameters.objects.get(
-                    name=electrical_parameter_name)
+                    name=nm)
 
         except alarms.models.ElectricParameters.DoesNotExist:
             logger.error()
@@ -1058,7 +1062,9 @@ def render_instant_measurements(
     template_variables['max'] = maximum
     template_variables['min'] = minimum
     template_variables['columns_statistics'] = data_clusters_statistics
-
+    template_variables['series'] = zip(
+        template_variables['axis_list'],
+        template_variables['column_unit_axis_indexes'] )
     template_context =\
         django.template.context.RequestContext(request, template_variables)
 
@@ -1078,7 +1084,8 @@ def render_report_consumed_by_month (
 
     if not request.method == "GET":
         raise django.http.Http404
-
+    if not "electrical-parameter-name" in request.GET:
+        return django.http.HttpResponse(content="", status=200)
     try:
         consumer_unit_id = request.GET['consumer-unit-id']
         month = int(request.GET['month'])
@@ -1088,15 +1095,9 @@ def render_report_consumed_by_month (
     except KeyError:
         raise django.http.Http404
 
-    weeks_number = variety.get_weeks_number_in_month(year, month)
-    first_week_start_datetime, first_week_end_datetime =\
-        variety.get_week_start_datetime_end_datetime_tuple(year, month, 1)
-
-    last_week_start_datetime, last_week_end_datetime =\
-        variety.get_week_start_datetime_end_datetime_tuple(
-            year,
-            month,
-            weeks_number)
+    days = variety.getMonthDays(month, year)
+    first_week_start_datetime = days[0]
+    last_week_end_datetime = days[-1]
 
     #
     # For the purposes of this report, the granularity is an hour but this is
@@ -1119,6 +1120,18 @@ def render_report_consumed_by_month (
 
     template_variables['max'] = maximun
     template_variables['min'] = minimun
+
+    template_variables['ff'] = last_week_end_datetime
+    template_variables['fi'] = last_week_end_datetime - \
+                               datetime.timedelta(days=7)
+    template_variables['consumer_unit_id'] = request.GET['consumer-unit-id']
+    template_variables['years'] = request.session['years']
+    template_variables['current_week'] = variety.\
+        get_week_of_month_from_datetime(first_week_start_datetime)
+    template_variables['current_year'] = year
+    template_variables['current_month'] = month
+
+    template_variables['electric_data'] = electrical_parameter_name
 
     template_context =\
         django.template.context.RequestContext(request, template_variables)

@@ -20,9 +20,9 @@ from django.utils import timezone
 from c_center.models import *
 from electric_rates.models import *
 
-def consumoAcumuladoKWH(building, fecha_inicio, fecha_fin):
+def consumoAcumuladoKWH(consumer, fecha_inicio, fecha_fin):
     suma_lecturas = 0
-    lecturas = DailyData.objects.filter(building=building,
+    lecturas = DailyData.objects.filter(consumer_unit=consumer,
         data_day__gte=fecha_inicio,
         data_day__lte=fecha_fin).aggregate(
         Sum('KWH_total'))
@@ -31,9 +31,9 @@ def consumoAcumuladoKWH(building, fecha_inicio, fecha_fin):
     return suma_lecturas
 
 
-def demandaMaxima(building, fecha_inicio, fecha_fin):
+def demandaMaxima(consumer, fecha_inicio, fecha_fin):
     demanda_max = 0
-    lecturas = DailyData.objects.filter(building=building,
+    lecturas = DailyData.objects.filter(consumer_unit=consumer,
         data_day__gte=fecha_inicio,
         data_day__lte=fecha_fin).order_by(
         '-max_demand')
@@ -42,10 +42,10 @@ def demandaMaxima(building, fecha_inicio, fecha_fin):
     return demanda_max
 
 
-def demandaMinima(building, fecha_inicio, fecha_fin):
+def demandaMinima(consumer, fecha_inicio, fecha_fin):
     demanda_min = 0
     lecturas = DailyData.objects.filter(
-        building=building,
+        consumer_unit=consumer,
         data_day__gte=fecha_inicio,
         data_day__lte=fecha_fin).order_by('min_demand')
     if lecturas:
@@ -53,15 +53,15 @@ def demandaMinima(building, fecha_inicio, fecha_fin):
     return demanda_min
 
 
-def promedioKWH(building, fecha_inicio, fecha_fin):
+def promedioKWH(consumer, fecha_inicio, fecha_fin):
     promedio = 0
     t_lecturas = DailyData.objects.filter(
-        building=building,
+        consumer_unit=consumer,
         data_day__gte=fecha_inicio,
         data_day__lte=fecha_fin)
     if t_lecturas:
         suma_lecturas = DailyData.objects.filter(
-            building=building,
+            consumer_unit=consumer,
             data_day__gte=fecha_inicio,
             data_day__lte=fecha_fin).aggregate(Sum('KWH_total'))
         total_lecturas = len(t_lecturas)
@@ -69,14 +69,14 @@ def promedioKWH(building, fecha_inicio, fecha_fin):
     return promedio
 
 
-def desviacionStandardKWH(building, fecha_inicio, fecha_fin):
+def desviacionStandardKWH(consumer, fecha_inicio, fecha_fin):
     suma = 0
     desviacion = 0
-    lecturas = DailyData.objects.filter(building=building,
+    lecturas = DailyData.objects.filter(consumer_unit=consumer,
         data_day__gte=fecha_inicio,
         data_day__lte=fecha_fin)
     if lecturas:
-        promedio = promedioKWH(building, fecha_inicio, fecha_fin)
+        promedio = promedioKWH(consumer, fecha_inicio, fecha_fin)
         nmenosuno = len(lecturas) - 1
         for kwh in lecturas:
             n_m = kwh.KWH_total - promedio
@@ -86,9 +86,9 @@ def desviacionStandardKWH(building, fecha_inicio, fecha_fin):
     return desviacion
 
 
-def medianaKWH(building, fecha_inicio, fecha_fin):
+def medianaKWH(consumer, fecha_inicio, fecha_fin):
     mediana = 0
-    lecturas = DailyData.objects.filter(building=building,
+    lecturas = DailyData.objects.filter(consumer_unit=consumer,
         data_day__gte=fecha_inicio,
         data_day__lte=fecha_fin).order_by(
         'KWH_total')

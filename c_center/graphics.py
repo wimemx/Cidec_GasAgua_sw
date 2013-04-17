@@ -25,6 +25,7 @@ import django.template.context
 import c_center.c_center_functions
 import c_center.models
 import data_warehouse.views
+import data_warehouse_extended.models
 import variety
 
 
@@ -79,6 +80,12 @@ def get_consumer_unit_electric_data_raw(
     start_utc = start_localtime.astimezone(django.utils.timezone.utc)
     end_localtime = current_timezone.localize(end)
     end_utc = end_localtime.astimezone(django.utils.timezone.utc)
+
+    param = data_warehouse_extended.models.ElectricalParameter.objects.get(
+        name=electric_data_name
+    )
+    electric_data_name = param.name_transactional
+
     electric_data_values = c_center.models.ElectricDataTemp.objects.filter(
         profile_powermeter=consumer_unit.profile_powermeter,
         medition_date__gte=start_utc,

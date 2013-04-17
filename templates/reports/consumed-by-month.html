@@ -25,7 +25,7 @@
 
 <script type="text/javascript">
 var fech_ini = '', fech_fin = '';
-
+var current_interval_end = new Date("{{ ff|date:"F d, Y" }}");
 var control = new google.visualization.ControlWrapper({
     'controlType': 'ChartRangeFilter',
     'containerId': 'control',
@@ -48,9 +48,9 @@ var control = new google.visualization.ControlWrapper({
             //'minRangeSize': 86400000
             'minRangeSize':3600000
         }
-    }
+    },
     // Initial range: 2012-02-09 to 2012-03-20.
-    //'state': {'range': {'start': new Date(2012, 9, 8), 'end': new Date(2012, 9, 9)}}
+    'state': {'range': {'start': new Date("{{ fi|date:"F d, Y" }} 00:00:00"), 'end': new Date("{{ ff|date:"F d, Y" }} 00:00:00")}}
 });
 
 function append_parameters(base_url){
@@ -117,7 +117,7 @@ function drawVisualization() {
         row_array.push(object_electric_data);
         var object_certainty = data_object['certainty'];
         row_array.push(object_certainty);
-
+        console.log(row_array);
         //console.log(row_array);
         data.addRow(row_array);
     }
@@ -144,6 +144,7 @@ function drawVisualization() {
                 }
             }
             view.setColumns(columns_set_array);
+
             dashboard.bind(control, chart);
             dashboard.draw(view);
         }
@@ -202,61 +203,65 @@ function drawVisualization() {
 google.setOnLoadCallback(drawVisualization);
 
 
+var weekly_counter = 0;
+function changeRange_left() {
+    var start_date;
+    if(weekly_counter<5){
+        //resto una semana
+        current_interval_end.setDate(current_interval_end.getDate()-7);
 
-function changeRange(interval) {
-    var start_date, end_date;
-
-    //Date("October 13, 1975 11:13:00")
-    //start_date = fech_ini;
-
-    start_date = new Date();
-    start_date.setTime(fech_fin);
-
-    //start_date.addDays(1);
-    //end_date.addDays(1);
-    switch (interval){
-        case 'hour' :
-            //start_date.addHours(5);
-            start_date.setHours(start_date.getHours()-2);
-            break;
-        case 'day' :
-            start_date.setDate(start_date.getDate()-1);
-            break;
-        case 'week' :
-            start_date.setDate(start_date.getDate()-7);
-            break;
-        case 'month' :
-            start_date.setDate(start_date.getDate()-30);
-            break;
+        start_date = new Date(current_interval_end.getTime());
+        start_date.setDate(current_interval_end.getDate()-7);
+        // 'slider' is the ControlWrapper instance describing the range slider.
+        control.setState({
+            'range': {
+                'start': start_date,
+                'end': current_interval_end
+            }
+        });
+        control.draw();
+        weekly_counter++;
+        mouseevents();
     }
-
-    // 'slider' is the ControlWrapper instance describing the range slider.
-
-    control.setState({
-        'range': {
-            'start': start_date,
-            'end': fech_fin
-        }
-    });
-
-    control.draw();
 }
-
+function changeRange_right() {
+    var start_date;
+    if(weekly_counter>0){
+        //sumo una semana
+        current_interval_end.setDate(current_interval_end.getDate()+7);
+        start_date = new Date(current_interval_end.getTime());
+        start_date.setDate(current_interval_end.getDate()-7);
+        // 'slider' is the ControlWrapper instance describing the range slider.
+        control.setState({
+            'range': {
+                'start': start_date,
+                'end': current_interval_end
+            }
+        });
+        control.draw();
+        weekly_counter--;
+        mouseevents();
+    }
+}
+function mouseevents(){
+    $("#control").find("svg").each(function(){
+        $(this).attr("pointer-events", "none");
+    });
+    var range_legend = $("#showing_week");
+    range_legend.find(".sem_count").text("Semana "+String(6-weekly_counter));
+    var rangeinit = new Date(current_interval_end.getTime());
+    rangeinit.setDate(current_interval_end.getDate()-7);
+    range_legend.find(".date_range").text(" ("+rangeinit.format("dd")+" al "+ current_interval_end.format("dd 'de' mmmm")+")");
+}
 $(document).on("ready", function(){
     $("select, input, input:checkbox, input:radio, input:file, textarea").uniform();
-    var rango =  $("#compare_interval").find("li");
-    rango.each(function(){
-        //cambia el intervalo visible de las graficas y cambia el estilo segun la opcion seleccionada
-        $(this).click(function(){
-            changeRange($(this).attr('id'));
-            rango.each(function(){
-                $(this).removeClass("active");
-            });
-
-            $(this).addClass("active");
-        });
+    $(".left-nav").on("click", function(){
+        changeRange_left();
     });
-
+    $(".right-nav").on("click", function(){
+        changeRange_right();
+    });
+    setTimeout("mouseevents()", 2000);
     /*
      var base_url = window.location.pathname;
      $("li#raw_data").click(function(){
@@ -279,8 +284,52 @@ $(document).on("ready", function(){
      base_url=append_parameters(base_url);
      window.location = base_url;
      });*/
+    var text = $("#weekly_summary h1").text();
+    text = text.replace("_", " ");
+    $("#weekly_summary h1").text(text);
+    $('#weekly_report').click(function(e){
+        e.preventDefault();
+        var load_url = "/reportes/week_comparison/?electric-data={{ electric_data }}";
+        load_url += "&consumer-unit01="+{{ consumer_unit_id }};
+        load_url += "&year01="+$('#year_01').val();
+        load_url += "&month01="+$('#month_01').val();
+        load_url += "&week01="+$('#week_01').val();
+        if ($('#compare_week_report').is(':checked')){
+            load_url += "&consumer-unit02="+{{ consumer_unit_id }};
+            load_url += "&year02="+$('#year_02').val();
+            load_url += "&month02="+$('#month_02').val();
+            load_url += "&week02="+$('#week_02').val();
+
+        }
+        $('#report_div').html('<img src="/static/css/images/spinner.gif" id="spinner2" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">');
+        $('#report_div').load(load_url, function(){$("#spinner2").remove();
+            update_bars_color();
+        });
+
+    });
+    $('#compare_week_report').click(function(){
+        $("#compare_week_contrls").toggle();
+    });
+
+    var load_url = "/reportes/week_comparison/?electric-data={{ electric_data }}";
+    var consumer_unit_id = {{ consumer_unit_id }};
+    load_url += "&consumer-unit01="+{{ consumer_unit_id }};
+    load_url += "&year01="+$('#year_01').val();
+    load_url += "&month01="+$('#month_01').val();
+    load_url += "&week01="+$('#week_01').val();
+    $('#report_div').load(load_url);
+    update_bars_color();
 
 });
+function update_bars_color(){
+    var colors_css = ["#7d979e", "a10f0f", "#5aa550", "#b38619"];
+    $('.bar').each(function(){
+        var bar_class = $(this).attr("id").split()[0].replace("bar", "");
+        var bar_class_number = parseInt(bar_class);
+        var color_css = colors_css[(bar_class_number-1) % colors_css.length];
+        $(this).css("background-color", color_css);
+    });
+}
 </script>
 </head>
 
@@ -294,32 +343,23 @@ $(document).on("ready", function(){
             <li id="dw" class="active" >Calculados</li>
         {% endif %}
     </ul>-->
-<ul id="compare_interval" class="fr">
-    <li id="hour">1 H</li>
-    <li id="day" >1 D</li>
-    <li id="week">1 Sem</li>
-</ul>
-
-<div id="parameter_controls">
-    <form id="column-controls">
-        {% for column in columns %}
-            <input type="checkbox" class="column-checkbox" name="column-control" value="{{ column }}" checked="checked"/>
-            <label>{{ column }}</label>
-        {% endfor %}
-    </form>
-</div>
-
 <!-- dashboard start -->
 <div id="dashboard" class="fl">
 
     <!-- chart start -->
+    <p id="showing_week"><span class="left-nav left_legend"></span><span class="sem_count">Semana #</span><span class="date_range">(- al -)</span><span class="right-nav right_legend"></span></p>
     <div id="chart">
         <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
     </div>
     <!-- chart end -->
 
     <!-- control start -->
-    <div id="control"></div>
+    <div id="control_container" class="auto">
+        <div id="control"></div>
+        <span class="left-nav left_grip"></span>
+        <span class="right-nav right_grip"></span>
+    </div>
+
     <!-- control end -->
 
     <!-- slider-range start -->
@@ -339,58 +379,89 @@ $(document).on("ready", function(){
 
 <!-- statistics-table start -->
 <div class="vacio"></div>
-<div id="grid_container">
-    <table>
-        <thead>
-        <tr>
-            <th colspan="4">Resumen del Periodo</th>
-        </tr>
+<div id="weekly_summary">
+    <h1>Resumen Semanal - {{ tipo }}</h1>
 
-        <tr class="row1">
-            <th width="25%"></th>
-            {% for column in columns %}
-                <th width="25%">{{ column }}</th>
-            {% endfor %}
-        </tr>
-        </thead>
+    <div>
+        <div id="main_week">
+            <select id="year_01">
+                {% for year in years %}
+                    <option value="{{ year }}" {% if year == current_year %}selected="selected" {% endif %}>
+                        {{ year }}
+                    </option>
+                {% endfor %}
+            </select>
 
-        <tbody>
-        <tr class="row2">
-            <td>Promedio</td>
-            {% for column_statistics in columns_statistics %}
-                <td class="table_value">{{ column_statistics.mean|floatformat:2 }}</td>
-            {% endfor %}
-        </tr>
+            <select id="month_01">
+                <option value="1" {% if current_month == 1 %}selected="selected" {% endif %}>Enero</option>
+                <option value="2" {% if current_month == 2 %}selected="selected" {% endif %}>Febrero</option>
+                <option value="3" {% if current_month == 3 %}selected="selected" {% endif %}>Marzo</option>
+                <option value="4" {% if current_month == 4 %}selected="selected" {% endif %}>Abril</option>
+                <option value="5" {% if current_month == 5 %}selected="selected" {% endif %}>Mayo</option>
+                <option value="6" {% if current_month == 6 %}selected="selected" {% endif %}>Junio</option>
+                <option value="7" {% if current_month == 7 %}selected="selected" {% endif %}>Julio</option>
+                <option value="8" {% if current_month == 8 %}selected="selected" {% endif %}>Agosto</option>
+                <option value="9" {% if current_month == 9 %}selected="selected" {% endif %}>Septiembre</option>
+                <option value="10" {% if current_month == 10 %}selected="selected" {% endif %}>Octubre</option>
+                <option value="11" {% if current_month == 11 %}selected="selected" {% endif %}>Noviembre</option>
+                <option value="12" {% if current_month == 12 %}selected="selected" {% endif %}>Diciembre</option>
+            </select>
 
-        <tr class="row1">
-            <td>Máximo</td>
-            {% for column_statistics in columns_statistics %}
-                <td class="table_value">{{ column_statistics.maximum|floatformat:2 }}</td>
-            {% endfor %}
-        </tr>
+            <select id="week_01">
+                <option value="1">Semana 01</option>
+                <option value="2">Semana 02</option>
+                <option value="3">Semana 03</option>
+                <option value="4">Semana 04</option>
+                <option value="5">Semana 05</option>
+                <option value="6">Semana 06</option>
+            </select>
+        </div>
 
-        <tr class="row2">
-            <td>Mínimo</td>
-            {% for column_statistics in columns_statistics %}
-                <td class="table_value">{{ column_statistics.minimum|floatformat:2 }}</td>
-            {% endfor %}
-        </tr>
+        <div id="compare_week_contrls">
+            <span class="vs_tag">VS</span>
 
-        <tr class="row1">
-            <td>Mediana</td>
-            {% for column_statistics in columns_statistics %}
-                <td class="table_value">{{ column_statistics.median|floatformat:2 }}</td>
-            {% endfor %}
-        </tr>
+            <select id="year_02">
+                {% for year in years %}
+                    <option value="{{ year }}">
+                        {{ year }}
+                    </option>
+                {% endfor %}
+            </select>
 
-        <tr class="row2">
-            <td>Desviación Estándar</td>
-            {% for column_statistics in columns_statistics %}
-                <td class="table_value">{{ column_statistics.standard_deviation|floatformat:2 }}</td>
-            {% endfor %}
-        </tr>
-        </tbody>
-    </table>
+            <select id="month_02">
+                <option value="1">Enero</option>
+                <option value="2">Febrero</option>
+                <option value="3">Marzo</option>
+                <option value="4">Abril</option>
+                <option value="5">Mayo</option>
+                <option value="6">Junio</option>
+                <option value="7">Julio</option>
+                <option value="8">Agosto</option>
+                <option value="9">Septiembre</option>
+                <option value="10">Octubre</option>
+                <option value="11">Noviembre</option>
+                <option value="12">Diciembre</option>
+            </select>
+
+            <select id="week_02">
+                <option value="1">Semana 01</option>
+                <option value="2">Semana 02</option>
+                <option value="3">Semana 03</option>
+                <option value="4">Semana 04</option>
+                <option value="5">Semana 05</option>
+                <option value="6">Semana 06</option>
+            </select>
+        </div>
+
+        <button name="weekly_report" id="weekly_report" class="aqua_btn">Reporte</button>
+    </div>
+    <div id="check_compare">
+        <label>Comparar con datos anteriores</label><input type="checkbox" id="compare_week_report"/>
+    </div>
+
+    <div id="report_div">
+        <img src="/static/css/images/spinner.gif" id="spinner2" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
+    </div>
 </div>
 <!-- statistics-table end -->
 </body>

@@ -66,8 +66,8 @@
                             }
                         }
                     }
-
-                    $("."+dato.fecha).each(function(){
+                    var str_fecha = dato.fecha.split(" ")[0];
+                    $("."+str_fecha).each(function(){
                         var dia = $(this).find("a span").text();
                         div = "<a href='#'><span>"+dia+"</span></a>"+div;
                         $(this).html(div);
