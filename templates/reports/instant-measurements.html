@@ -203,7 +203,26 @@
                             total_columns_set_array.push((index * 3) + 1);
                             total_columns_set_array.push((index * 3) + 2);
                         }
-                        console.log("colum_units a desactivar", colum_units_temp);
+
+                        var totales = total_columns_set_array.slice(0);
+                        //gets subset of arrays
+                        for (index = total_columns_set_array.length - 1; index >= 0; --index) {
+                            if (columns_set_array.indexOf(total_columns_set_array[index]) >= 0) {
+                                total_columns_set_array.splice(index, 1);
+                            }
+                        }
+                        //copy colors
+                        var colores = colors.slice(0);
+                        //gets subset of arrays
+                        for (index = colores.length - 1; index >= 0; --index) {
+                            if (color_position.indexOf(colores[index]) >= 0) {
+                                colores.splice(index, 1);
+                            }
+                        }
+
+
+
+                        //console.log("colum_units a desactivar", colum_units_temp);
                         //subset
                         for (index = colum_units_copy.length - 1; index >= 0; --index) {
                             if (colum_units_temp.indexOf(colum_units_copy[index]) >= 0) {
@@ -225,9 +244,10 @@
                                 u.push(x);
                             }
                         }
-                        console.log("colum_units activas", colum_units_copy);
+                        //console.log("colum_units activas", colum_units_copy);
 
                         var vaxes_new = {};
+                        var vaxis_index = {};
                         for(index=0; index<u.length; index++){
                             var pos = "out";
                             if(index%2 == 0){
@@ -237,40 +257,42 @@
                             var u_index = u[index];
                             for(var serie in u_index){
                                 unit = u_index[serie];
+                                vaxis_index[index] = unit;
                             }
-                            vaxes_new[index] = {logScale: false, title: unit, titleTextStyle:{color: colors[arr_pos[index]]}, textStyle:{color: colors[arr_pos[index]]}, minValue: 0, textPosition: pos}
+                            vaxes_new[index] = {logScale: false, title: unit, titleTextStyle:{color: colores[index]}, textStyle:{color: colores[index]}, minValue: 0, textPosition: pos}
                         }
 
-                        console.log("vaxes_new", vaxes_new);
+                        //console.log("vaxes_new", vaxes_new);
+                        //console.log("vaxis_index", vaxis_index)
 
-                        //TODO
                         var vseries_new = {};
                         for(index=0; index<colum_units_copy.length;index++){
-                            vseries_new[index] = {targetAxisIndex:""}
-                        }
-
-                        var totales = total_columns_set_array.slice(0);
-                        //gets subset of arrays
-                        for (index = total_columns_set_array.length - 1; index >= 0; --index) {
-                            if (columns_set_array.indexOf(total_columns_set_array[index]) >= 0) {
-                                total_columns_set_array.splice(index, 1);
+                            var eje;
+                            var prop = colum_units_copy[index];
+                            for(var param in prop){
+                                eje = prop[param];
                             }
-                        }
-                        //copy colors
-                        var colores = colors.slice(0);
-                        //gets subset of arrays
-                        for (index = colores.length - 1; index >= 0; --index) {
-                            if (color_position.indexOf(colores[index]) >= 0) {
-                                colores.splice(index, 1);
-                            }
-                        }
+                            //console.log("eje", eje);
+                            for(var indice=0; indice<Object.size(vaxis_index);indice++){
 
+                                //console.log("vaxis_index[indice]", vaxis_index[indice]);
+
+                                if(vaxis_index[indice]==eje){
+                                    vseries_new[index] = {targetAxisIndex:indice};
+                                    break;
+                                }
+                            }
+                            //var axis = vaxis_index.indexOf(eje);
+                            //vseries_new[index] = {targetAxisIndex:axis};
+                        }
+                        //console.log("vseries_new", vseries_new);
                         control.setOption('ui.chartView.columns',control_cols);
                         view.setColumns(totales);
 
                         view.hideColumns(total_columns_set_array);
                         chart.setOption('colors', colores);
-
+                        chart.setOption('vAxes', vaxes_new);
+                        chart.setOption('series', vseries);
                         dashboard.bind(control, chart);
                         dashboard.draw(view);
                         control.draw();

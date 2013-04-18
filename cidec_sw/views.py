@@ -167,7 +167,7 @@ def _login(request):
         if user is not None:
             if user.is_active:
                 login(request, user)
-                request.session.set_expiry(900)
+                request.session.set_expiry(1900)
                 ur_get = request.META['HTTP_REFERER']
                 ur_get = ur_get.split("next=")
                 url = "/main/"

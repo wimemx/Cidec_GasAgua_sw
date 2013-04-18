@@ -1157,11 +1157,11 @@ def get_profile(request):
 
 def all_dailyreportAll():
     buildings = Building.objects.all()
-    initial_d = datetime.datetime(2013,1,1)
-    datos = DailyData.objects.filter(data_day__gte=initial_d)
-    datos.delete()
+    initial_d = datetime.datetime(2013,1,12)
+    #datos = DailyData.objects.filter(data_day__gte=initial_d)
+    #datos.delete()
     dia = datetime.timedelta(days=1)
-    while initial_d < datetime.datetime.today():
+    while initial_d < datetime.datetime(2013,3,1):
         for buil in buildings:
             cus = ConsumerUnit.objects.filter(building=buil)
             if cus:
@@ -1631,6 +1631,7 @@ def save_historic(monthly_cutdate, building):
     year = monthly_cutdate.billing_month.year
 
     #Se obtiene el tipo de tarifa del edificio (HM o DAC)
+    print "tarifa", building.electric_rate.pk
     if building.electric_rate.pk == 1: #Tarifa HM
         resultado_mensual = tarifaHM_2(building,
             monthly_cutdate.date_init,
@@ -1659,20 +1660,20 @@ def save_historic(monthly_cutdate, building):
             KW_punta=resultado_mensual['kw_punta'],
             KW_intermedio=resultado_mensual['kw_intermedio'],
             KVARH=resultado_mensual['kvarh_totales'],
-            power_factor=resultado_mensual['factor_potencia'],
-            charge_factor=resultado_mensual['factor_carga'],
+            power_factor=str(resultado_mensual['factor_potencia']),
+            charge_factor=str(resultado_mensual['factor_carga']),
             billable_demand=resultado_mensual['demanda_facturable'],
-            KWH_base_rate=resultado_mensual['tarifa_kwhb'],
-            KWH_intermedio_rate=resultado_mensual['tarifa_kwhi'],
-            KWH_punta_rate=resultado_mensual['tarifa_kwhp'],
-            billable_demand_rate=resultado_mensual['tarifa_df'],
-            average_rate=aver_rate,
-            energy_cost=resultado_mensual['costo_energia'],
-            billable_demand_cost=resultado_mensual['costo_dfacturable'],
-            power_factor_bonification=resultado_mensual['costo_fpotencia'],
-            subtotal=resultado_mensual['subtotal'],
-            iva=resultado_mensual['iva'],
-            total=resultado_mensual['total']
+            KWH_base_rate=str(resultado_mensual['tarifa_kwhb']),
+            KWH_intermedio_rate=str(resultado_mensual['tarifa_kwhi']),
+            KWH_punta_rate=str(resultado_mensual['tarifa_kwhp']),
+            billable_demand_rate=str(resultado_mensual['tarifa_df']),
+            average_rate=str(aver_rate),
+            energy_cost=str(resultado_mensual['costo_energia']),
+            billable_demand_cost=str(resultado_mensual['costo_dfacturable']),
+            power_factor_bonification=str(resultado_mensual['costo_fpotencia']),
+            subtotal=str(resultado_mensual['subtotal']),
+            iva=str(resultado_mensual['iva']),
+            total=str(resultado_mensual['total'])
         )
         newHistoric.save()
 
@@ -1688,7 +1689,7 @@ def save_historic(monthly_cutdate, building):
                                                              'kwh_totales']
         aver_rate = str(aver_rate)
 
-        resultado_mensual['subtotal'] = str(resultado_mensual['subtotal'])
+        resultado_mensual['costo_energia'] = str(resultado_mensual['costo_energia'])
         resultado_mensual['iva'] = str(resultado_mensual['iva'])
         resultado_mensual['total'] = str(resultado_mensual['total'])
         newHistoric = DacHistoricData(

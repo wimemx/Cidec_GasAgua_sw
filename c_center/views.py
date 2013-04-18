@@ -7834,13 +7834,8 @@ def cfe_desglose_calcs(request):
             s_date_str = request.GET['init_d']
             e_date_str = request.GET['end_d']
 
-            s_arr = s_date_str.split('-')
-            e_arr = e_date_str.split('-')
-
-            s_date = datetime.date(year=int(s_arr[0]), month=int(s_arr[1]),
-                                   day=int(s_arr[2]))
-            e_date = datetime.date(year=int(e_arr[0]), month=int(e_arr[1]),
-                                   day=int(e_arr[2]))
+            s_date = datetime.datetime.strptime(s_date_str, "%Y-%m-%d")
+            e_date = datetime.datetime.strptime(e_date_str, "%Y-%m-%d")
 
             #print "s_date", s_date
             #print "e_date", e_date
@@ -7945,8 +7940,7 @@ def montly_analitics(request):
 
 
 @login_required(login_url='/')
-def montly_data_for_building(request, id_building, year, month):
-    edificio = get_object_or_404(Building, pk=int(id_building))
+def montly_data_for_building(request, year, month):
     if has_permission(request.user, VIEW, "Consultar recibo CFE") or \
             request.user.is_superuser:
         data = getDailyReports(request.session['consumer_unit'],
@@ -7960,8 +7954,7 @@ def montly_data_for_building(request, id_building, year, month):
 
 
 @login_required(login_url='/')
-def montly_data_hfor_building(request, id_building, year, month):
-    edificio = get_object_or_404(Building, pk=int(id_building))
+def montly_data_hfor_building(request, year, month):
     if has_permission(request.user, VIEW, "Consultar recibo CFE") or \
             request.user.is_superuser:
         data = getMonthlyReport(request.session['consumer_unit'],
@@ -7975,8 +7968,7 @@ def montly_data_hfor_building(request, id_building, year, month):
 
 
 @login_required(login_url='/')
-def montly_data_w_for_building(request, id_building, year, month):
-    edificio = get_object_or_404(Building, pk=int(id_building))
+def montly_data_w_for_building(request, year, month):
     if has_permission(request.user, VIEW, "Consultar recibo CFE") or \
             request.user.is_superuser:
         datos = getWeeklyReport(request.session['consumer_unit'],
@@ -7991,14 +7983,12 @@ def montly_data_w_for_building(request, id_building, year, month):
 
 
 @login_required(login_url='/')
-def month_analitics_day(request, id_building):
-    edificio = get_object_or_404(Building, pk=int(id_building))
+def month_analitics_day(request):
     if has_permission(request.user, VIEW, "Consultar recibo CFE") or \
             request.user.is_superuser:
-        fecha = request.GET['date'].split("-")
-        fecha = datetime.date(int(fecha[0]), int(fecha[1]), int(fecha[2]))
-
-        electric_rate = edificio.electric_rate_id
+        fecha = datetime.datetime.strptime(request.GET['date'], "%Y-%m-%d")
+        electric_rate = \
+            request.session['consumer_unit'].building.electric_rate_id
         try:
             day_data = DailyData.objects.get(
                 consumer_unit=request.session['consumer_unit'], data_day=fecha)

@@ -26,6 +26,14 @@
 <script type="text/javascript">
 var fech_ini = '', fech_fin = '';
 var current_interval_end = new Date("{{ ff|date:"F d, Y" }}");
+var year_s, month_s, day_s;
+var year_e, month_e, day_e;
+year_s={{ fi|date:"Y" }};
+year_e={{ ff|date:"Y" }};
+month_s={{ fi|date:"n" }}-1;
+month_e={{ ff|date:"n" }}-1;
+day_s={{ fi|date:"j" }};
+day_e={{ ff|date:"j" }};
 var control = new google.visualization.ControlWrapper({
     'controlType': 'ChartRangeFilter',
     'containerId': 'control',
@@ -50,7 +58,7 @@ var control = new google.visualization.ControlWrapper({
         }
     },
     // Initial range: 2012-02-09 to 2012-03-20.
-    'state': {'range': {'start': new Date("{{ fi|date:"F d, Y" }} 00:00:00"), 'end': new Date("{{ ff|date:"F d, Y" }} 00:00:00")}}
+    'state': {'range': {'start': new Date(year_s, month_s, day_s), 'end': new Date(year_e, month_e, day_e)}}
 });
 
 function append_parameters(base_url){
@@ -348,13 +356,13 @@ function update_bars_color(){
     <!-- chart start -->
     <p id="showing_week"><span class="left-nav left_legend"></span><span class="sem_count">Semana #</span><span class="date_range">(- al -)</span><span class="right-nav right_legend"></span></p>
     <div id="dias">
+        <span class="fl">S&aacute;bado</span>
         <span class="fl">Domingo</span>
         <span class="fl">Lunes</span>
         <span class="fl">Martes</span>
         <span class="fl">Mi&eacute;rcoles</span>
         <span class="fl">Jueves</span>
         <span class="fl">Viernes</span>
-        <span class="fl">S&aacute;bado</span>
     </div>
     <div id="chart">
         <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">

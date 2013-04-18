@@ -297,16 +297,16 @@ urlpatterns = patterns('',
                            'django.views.generic.simple.direct_to_template',
                            {'template': 'test.html'}),
 
-                       url(r'^month_analitics/(?P<id_building>\d+)/'
+                       url(r'^month_analitics/'
                            r'(?P<year>\d+)/(?P<month>\d+)/',
                            'c_center.views.montly_data_for_building'),
-                       url(r'^month_analitics_h/(?P<id_building>\d+)/'
+                       url(r'^month_analitics_h/'
                            r'(?P<year>\d+)/(?P<month>\d+)/',
                            'c_center.views.montly_data_hfor_building'),
-                       url(r'^month_analitics_week/(?P<id_building>\d+)/'
+                       url(r'^month_analitics_week/'
                            r'(?P<year>\d+)/(?P<month>\d+)/',
                            'c_center.views.montly_data_w_for_building'),
-                       url(r'^month_analitics_day/(?P<id_building>\d+)/',
+                       url(r'^month_analitics_day/',
                            'c_center.views.month_analitics_day'),
 
 )
