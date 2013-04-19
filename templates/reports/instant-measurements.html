@@ -408,7 +408,7 @@
                 });
 
                 var csv_url = window.location.href.slice(window.location.href.indexOf('?') + 1);
-                csv_url = "/reportes/grafica_datos_csv/?"+csv_url;
+                csv_url = "/csv/?"+csv_url;
                 $("#export_csv").attr("href",csv_url);
                 var base_url = window.location.pathname;
                 $("li#raw_data").click(function(){
@@ -452,9 +452,9 @@
             <li id="dw" class="active" >Calculados</li>
         {% endif %}
     </ul>
-    {% if granularity == "raw_data" %}
+
     <a id="export_csv" class="fr" href="">Exportar datos en CSV</a>
-    {% endif %}
+
 
         <div id="parameter_controls">
             <form id="column-controls">

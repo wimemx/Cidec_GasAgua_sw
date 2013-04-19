@@ -286,7 +286,7 @@ def data_warehouse_twelve_hour():
 
 
 @periodic_task(run_every=crontab(hour='*/240'))
-def data_warehouse_twelve_hour():
+def data_warehouse_day():
     end = datetime.datetime.now()
     start = datetime.datetime.now() - datetime.timedelta(days=10)
     delta_name = "Day Delta"

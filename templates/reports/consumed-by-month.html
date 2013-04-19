@@ -102,7 +102,7 @@ function drawVisualization() {
     //var default_colors = new Array();
 
     data.addColumn({type:'datetime', role:'domain'});
-    data.addColumn('number', "{{ column }}");
+    data.addColumn('number', "kWh");
     data.addColumn({type:'boolean', role:'certainty'});
 
     var True = true;
@@ -132,6 +132,8 @@ function drawVisualization() {
     var view = new google.visualization.DataView(data);
 
     dashboard.bind(control, chart);
+    console.log("View");
+    console.log(view);
     dashboard.draw(view);
 
     $(".column-checkbox").click(function(){
@@ -397,7 +399,6 @@ function update_bars_color(){
 <div class="vacio"></div>
 <div id="weekly_summary">
     <h1>Resumen Semanal - {{ tipo }}</h1>
-
     <div>
         <div id="main_week">
             <select id="year_01">

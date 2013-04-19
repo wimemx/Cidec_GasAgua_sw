@@ -6,6 +6,7 @@ import logging
 import numpy
 import time
 import sys
+import csv
 
 # Django imports
 import django.http
@@ -259,10 +260,15 @@ def get_data_cluster_limits (
 
     maximum = sys.float_info.min
     minimum = sys.float_info.max
+
     for data_dictionary in data_cluster_normalized:
         data_dictionary_value = float(data_dictionary['value'])
         maximum = max(data_dictionary_value, maximum)
         minimum = min(data_dictionary_value, minimum)
+
+    if maximum == sys.float_info.min or minimum == sys.float_info.max:
+        maximum = 1
+        minimum =0
 
     return maximum, minimum
 
@@ -343,6 +349,17 @@ def get_data_clusters_list(
                     consumer_unit_id,
                     datetime_from,
                     datetime_to)
+        elif granularity == "raw" and \
+                        consumer_unit.profile_powermeter.powermeter\
+                    .powermeter_anotation == "Medidor Virtual":
+                seconds = 300
+                data_cluster = \
+                    get_consumer_unit_electrical_parameter_data_clustered(
+                        consumer_unit,
+                        datetime_from,
+                        datetime_to,
+                        electrical_parameter_name,
+                        seconds)
         else:
             data_cluster =\
                 get_consumer_unit_electrical_parameter_data_clustered(
@@ -1033,6 +1050,8 @@ def render_instant_measurements(
                                                 granularity)
     normalize_data_clusters_list(data_clusters_list)
 
+    #data_clusters_list para csv
+
     axis_dictionary = \
         get_axis_dictionary(data_clusters_list, columns_units_list)
 
@@ -1116,7 +1135,7 @@ def render_report_consumed_by_month(
     maximun, minimun = get_data_cluster_limits(data_cluster_consumed)
 
     if maximun <= minimun:
-        minimun = 0
+        minimun = maximun - 1
 
     template_variables['max'] = maximun
     template_variables['min'] = minimun
@@ -1139,3 +1158,101 @@ def render_report_consumed_by_month(
     return django.shortcuts.render_to_response(
                "reports/consumed-by-month.html",
                template_context)
+
+
+def csv_report(request):
+    template_variables = dict()
+    if not request.method == "GET":
+        raise django.http.Http404
+
+    if not "electrical-parameter-name01" in request.GET:
+        return django.http.HttpResponse(content="", status=200)
+
+    #
+    # Build a request data list in order to normalize it.
+    #
+    request_data_list = []
+    consumer_unit_counter = 1
+    consumer_unit_get_key = "consumer-unit%02d" % consumer_unit_counter
+    while request.GET.has_key(consumer_unit_get_key):
+        date_from_get_key = "date-from%02d" % consumer_unit_counter
+        date_to_get_key = "date-to%02d" % consumer_unit_counter
+        electrical_parameter_name_get_key = \
+            "electrical-parameter-name%02d" % consumer_unit_counter
+
+        try:
+            consumer_unit_id = request.GET[consumer_unit_get_key]
+            date_from_string = request.GET[date_from_get_key]
+            date_to_string = request.GET[date_to_get_key]
+            electrical_parameter_name = \
+                request.GET[electrical_parameter_name_get_key]
+
+        except KeyError:
+            logger.error(
+                reports.globals.SystemError.RENDER_INSTANT_MEASUREMENTS_ERROR)
+
+            raise django.http.Http404
+
+        datetime_from = datetime.datetime.strptime(date_from_string, "%Y-%m-%d")
+        datetime_to = datetime.datetime.strptime(date_to_string, "%Y-%m-%d")
+        datetime_from = datetime_from.replace(hour=00, minute=00, second=00)
+        datetime_to = datetime_to.replace(hour=23, minute=59, second=59)
+        request_data_list_item = \
+            (consumer_unit_id,
+             datetime_from,
+             datetime_to,
+             electrical_parameter_name)
+
+        request_data_list.append(request_data_list_item)
+        consumer_unit_counter += 1
+        consumer_unit_get_key = "consumer-unit%02d" % consumer_unit_counter
+    #
+    # Normalize the data list.
+    #
+    request_data_list_normalized = \
+        get_request_data_list_normalized(request_data_list)
+    #
+    # Build and normalize the data clusters list.
+    #
+    granularity = None
+    if "granularity" in request.GET:
+        if request.GET['granularity'] == "raw":
+            granularity = "raw"
+            template_variables['granularity'] = "raw_data"
+
+    data_clusters_list = get_data_clusters_list(request_data_list_normalized,
+                                                granularity)
+
+    normalize_data_clusters_list(data_clusters_list)
+    # todo encoding
+    data_csv = [["Edificio", "Unidad de Consumo", "Parámetro", "Valor",
+                 "Fecha/Hora"]]
+    report_name = ""
+    for row_data, cluster in zip(request_data_list_normalized, data_clusters_list):
+        #row_data = (id_cu, datetime_init, datetime_end, electric_param)
+        consumer_unit = c_center.models.ConsumerUnit.objects.get(
+            pk=int(row_data[0]))
+        electrical_parameter_name = row_data[3]
+        report_name += electrical_parameter_name + "_" + \
+                       consumer_unit.building.building_name + "."
+
+        for data in cluster:
+            date_time = datetime.datetime.fromtimestamp(data['datetime'])
+            electric_data_row = [unicode(consumer_unit.building.building_name)
+                                 .encode("utf-8", errors="ignore"),
+                                 consumer_unit.electric_device_type
+                                 .electric_device_type_name.encode("utf-8",
+                                                                   errors="ignore"),
+                                 electrical_parameter_name,
+                                 str(data['value']),
+                                 str(date_time)]
+            data_csv.append(electric_data_row)
+    response = django.shortcuts.HttpResponse(mimetype='text/csv; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="datos_' + \
+                                      report_name.encode("utf-8",
+                                                    errors="ignore") + 'csv"'
+    writer = csv.writer(response)
+    for data_item in data_csv:
+        writer.writerow(data_item)
+
+    return response

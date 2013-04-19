@@ -1545,6 +1545,19 @@ def getWeeklyReport(consumer, month, year):
 
     return semanas
 
+def all_getMonthlyReport():
+    consumer_units = ConsumerUnit.objects.all()
+    today = datetime.date.today()
+    for consumer in consumer_units:
+        for year in [2012, 2013]:
+            for month in range(1, 12, 1):
+                print year, month
+                if year == today.year and month >= today.month:
+                    continue
+                else:
+                    print consumer, month, year
+                    getMonthlyReport(consumer, month, year)
+
 def getMonthlyReport(consumer_u, month, year):
     if month < datetime.datetime.today().month and \
             year <= datetime.datetime.today().year:
@@ -1558,9 +1571,12 @@ def getMonthlyReport(consumer_u, month, year):
                                   year=year,
                                   KWH_total=mes_new['consumo_acumulado'],
                                   max_demand=mes_new['demanda_max'],
+                                  max_cons=mes_new['consumo_maximo'],
                                   carbon_emitions=mes_new['emisiones'],
                                   power_factor=str(mes_new['factor_potencia']),
                                   min_demand=mes_new['demanda_min'],
+                                  average_demand=mes_new['demanda_promedio'],
+                                  min_cons=mes_new['consumo_minimo'],
                                   average_cons=str(mes_new['consumo_promedio']),
                                   median_cons=str(mes_new['consumo_mediana']),
                                   deviation_cons=str(
@@ -1636,6 +1652,18 @@ def calculateMonthlyReport(consumer_u, month, year):
 
         mes['factor_potencia'] = factorpotencia(float(mes['consumo_acumulado']),
                                                 kvarh)
+
+        #Consumo minimo
+        mes['consumo_minimo'] = max_minKWH(consumer_u, fecha_inicio,
+                                              fecha_final, "min")
+
+        #Consumo maximo
+        mes['consumo_maximo'] = max_minKWH(consumer_u, fecha_inicio,
+                                           fecha_final, "max")
+
+        #Consumo maximo
+        mes['demanda_promedio'] = promedioKW(consumer_u, fecha_inicio,
+                                           fecha_final)
 
         #Consumo promedio
         mes['consumo_promedio'] = promedioKWH(consumer_u, fecha_inicio,

@@ -20,6 +20,7 @@ from django.utils import timezone
 from c_center.models import *
 from electric_rates.models import *
 
+
 def consumoAcumuladoKWH(consumer, fecha_inicio, fecha_fin):
     suma_lecturas = 0
     lecturas = DailyData.objects.filter(consumer_unit=consumer,
@@ -35,8 +36,7 @@ def demandaMaxima(consumer, fecha_inicio, fecha_fin):
     demanda_max = 0
     lecturas = DailyData.objects.filter(consumer_unit=consumer,
         data_day__gte=fecha_inicio,
-        data_day__lte=fecha_fin).order_by(
-        '-max_demand')
+        data_day__lte=fecha_fin).order_by('-max_demand')
     if lecturas:
         demanda_max = lecturas[0].max_demand
     return demanda_max
@@ -53,20 +53,43 @@ def demandaMinima(consumer, fecha_inicio, fecha_fin):
     return demanda_min
 
 
+def promedioKW(consumer, fecha_inicio, fecha_fin):
+    suma_lecturas = ElectricDataTemp.objects.filter(
+        profile_powermeter=consumer.profile_powermeter,
+        medition_date__gte=fecha_inicio,
+        medition_date__lte=fecha_fin).aggregate(Avg('kW'))
+    return suma_lecturas['kW__avg'] if suma_lecturas['kW__avg'] else 0
+
+
+def max_minKWH(consumer, fecha_inicio, fecha_fin, min_max):
+    """ Gets the min or max values of ElectricDataTemp for consumer
+    :param consumer: ConsumerUnit object
+    :param fecha_inicio: datetime|date initial date
+    :param fecha_fin: datetime|date final date
+    :param min_max: string "min" to return the min TotalkWhIMPORT value
+    :return:
+    """
+    if min_max == "min":
+        order = "TotalkWhIMPORT"
+    else:
+        order = "-TotalkWhIMPORT"
+    val = 0
+    lecturas = ElectricDataTemp.objects.filter(
+        medition_date__gte=fecha_inicio,
+        medition_date__lte=fecha_fin, TotalkWhIMPORT__gt=0,
+        profile_powermeter=consumer.profile_powermeter
+    ).values('TotalkWhIMPORT').order_by(order)
+    if lecturas:
+        val = lecturas[0]['TotalkWhIMPORT']
+    return val
+
+
 def promedioKWH(consumer, fecha_inicio, fecha_fin):
-    promedio = 0
-    t_lecturas = DailyData.objects.filter(
+    suma_lecturas = DailyData.objects.filter(
         consumer_unit=consumer,
         data_day__gte=fecha_inicio,
-        data_day__lte=fecha_fin)
-    if t_lecturas:
-        suma_lecturas = DailyData.objects.filter(
-            consumer_unit=consumer,
-            data_day__gte=fecha_inicio,
-            data_day__lte=fecha_fin).aggregate(Sum('KWH_total'))
-        total_lecturas = len(t_lecturas)
-        promedio = float(suma_lecturas['KWH_total__sum']) / float(total_lecturas)
-    return promedio
+        data_day__lte=fecha_fin).aggregate(Avg('KWH_total'))
+    return suma_lecturas['KWH_total__avg'] if suma_lecturas['KWH_total__avg'] else 0
 
 
 def desviacionStandardKWH(consumer, fecha_inicio, fecha_fin):

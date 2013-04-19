@@ -947,10 +947,14 @@ class MonthlyData(models.Model):
     year = models.IntegerField()
     KWH_total = models.IntegerField(null=True, blank=True)
     max_demand = models.IntegerField(null=True, blank=True)
+    max_cons = models.IntegerField(null=True, blank=True)
     carbon_emitions = models.IntegerField(null=True, blank=True)
     power_factor = models.DecimalField(max_digits=20, decimal_places=2,
                                        null=True, blank=True, default=0)
     min_demand = models.IntegerField(null=True, blank=True, default=0)
+    min_cons = models.IntegerField(null=True, blank=True)
+    average_demand = models.DecimalField(max_digits=20, decimal_places=2,
+                                         null=True, blank=True, default=0)
     average_cons = models.DecimalField(max_digits=20, decimal_places=2,
                                        null=True, blank=True, default=0)
     median_cons = models.DecimalField(max_digits=20, decimal_places=2,

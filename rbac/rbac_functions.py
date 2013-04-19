@@ -347,12 +347,14 @@ def validate_user(post):
     if variety.validate_string(post['username']):
         data['username'] = post['username'].strip()
     else:
+        print "bad username"
         return False
 
     if variety.validate_string(post['name']):
         if not re.search("\d", post['name']):
             data['name'] = post['name'].strip()
         else:
+            print "bad name"
             return False
     else:
         return False
@@ -361,6 +363,7 @@ def validate_user(post):
         if not re.search("\d", post['last_name']):
             data['last_name'] = post['last_name'].strip()
         else:
+            print "bad last name"
             return False
     else:
         return False
@@ -370,15 +373,15 @@ def validate_user(post):
             if not re.search("\d", post['surname']):
                 data['surname'] = post['surname'].strip()
             else:
+                print "bad surname"
                 return False
-        else:
-            return False
     else:
         data['surname'] = ''
 
     if variety.is_valid_email(post['mail']):
         data['mail'] = post['mail']
     else:
+        print "bad mail"
         return False
 
     if post['dob']:
@@ -386,8 +389,10 @@ def validate_user(post):
             fnac = post['dob'].split("-")
             data['fnac'] = date(int(fnac[2]), int(fnac[1]), int(fnac[0]))
         except IndexError:
+            print "bad dob index"
             return False
         except ValueError:
+            print "bad dob value"
             return False
     else:
         return False
@@ -396,6 +401,7 @@ def validate_user(post):
         if post['pass1'] == post['pass2']:
             data['pass'] = post['pass1']
         else:
+            print "bad password"
             return False
     else:
         data['pass'] = False

@@ -1,4 +1,5 @@
 from django.conf.urls import patterns, url
+from django.views.generic.simple import direct_to_template
 
 urlpatterns = patterns('',
                        url(r'^celery/', 'c_center.views.call_celery_delay'),
@@ -308,5 +309,10 @@ urlpatterns = patterns('',
                            'c_center.views.montly_data_w_for_building'),
                        url(r'^month_analitics_day/',
                            'c_center.views.month_analitics_day'),
+                       (r'^test/$',
+                        direct_to_template,
+                        {'template':
+                             'consumption_centers/graphs/'
+                             'graphics_month_consumption_trend.html'}),
 
 )
