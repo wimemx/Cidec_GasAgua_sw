@@ -363,3 +363,69 @@ div.container{
         color-stop(0.74, rgb(255,255,255))
     );
 }
+#showing_week{
+    display: block;
+    width: 50%;
+    text-align: center;
+    margin: 0 auto;
+}
+#showing_week span{
+    font-size: 19px !important;
+}
+#showing_week .sem_count{
+    font-weight: 700;
+}
+
+#control_container{
+    display: block;
+    margin: 0 auto;
+    position: relative;
+    width: 1000px;
+}
+.left_grip, .right_grip{
+    display: block;
+    width: 20px;
+    height: 26px;
+    cursor: pointer;
+    position: absolute;
+}
+.left_grip{
+    background: url("../images/imgs_icns/left_grip.png") no-repeat;
+    left: 0;
+    top: 14px;
+}
+.right_grip{
+    background: url("../images/imgs_icns/right_grip.png") no-repeat;
+    right: 0;
+    top: 14px;
+}
+.left_legend, .right_legend{
+    display: inline-block;
+    width: 35px;
+    height: 11px;
+    cursor: pointer;
+}
+.left_legend{
+    background: url("../images/bgs/arrow_left.png") no-repeat center;
+}
+.right_legend{
+    background: url("../images/bgs/arrow_right.png") no-repeat center;
+}
+#dias{
+    width: 1050px;
+    display: block;
+    margin: 13px auto 0 auto;
+}
+#dias span{
+    font-size: 16px;
+    width: 14.28%;
+    display: block;
+    text-align: center;
+}
+
+.messi{
+    top: 50px !important;
+}
+.messi .btn{
+    padding-top: 0 !important;
+}

@@ -56,26 +56,27 @@ def get_axis_dictionary (
         data_cluster_values_list =\
             [float(data_dictionary['value']) for data_dictionary in data_cluster]
 
-        data_cluster_max_value = max(data_cluster_values_list)
-        data_cluster_min_value = min(data_cluster_values_list)
-        if axis_dictionary.has_key(column_units):
-            axis_dictionary_value = axis_dictionary[column_units]
-            axis_max_value = axis_dictionary_value['max']
-            axis_dictionary_value['max'] = \
-                max(axis_max_value, data_cluster_max_value)
+        if data_cluster_values_list:
+            data_cluster_max_value = max(data_cluster_values_list)
+            data_cluster_min_value = min(data_cluster_values_list)
+            if axis_dictionary.has_key(column_units):
+                axis_dictionary_value = axis_dictionary[column_units]
+                axis_max_value = axis_dictionary_value['max']
+                axis_dictionary_value['max'] = \
+                    max(axis_max_value, data_cluster_max_value)
 
-            axis_min_value = axis_dictionary_value['min']
-            axis_dictionary_value['min'] = \
-                min(axis_min_value, data_cluster_min_value)
+                axis_min_value = axis_dictionary_value['min']
+                axis_dictionary_value['min'] = \
+                    min(axis_min_value, data_cluster_min_value)
 
-            axis_dictionary[column_units] = axis_dictionary_value
+                axis_dictionary[column_units] = axis_dictionary_value
 
-        else:
-            axis_dictionary[column_units] = {
-                'name': column_units,
-                'max': data_cluster_max_value,
-                'min': data_cluster_min_value
-            }
+            else:
+                axis_dictionary[column_units] = {
+                    'name': column_units,
+                    'max': data_cluster_max_value,
+                    'min': data_cluster_min_value
+                }
 
     return axis_dictionary
 
@@ -333,13 +334,15 @@ def get_data_clusters_list(
                 reports.globals.SystemError.GET_DATA_CLUSTERS_LIST_ERROR)
 
             return None
-        if granularity == "raw":
-            data_cluster = c_center.graphics.get_consumer_unit_electric_data_raw(
-                electrical_parameter_name,
-                consumer_unit_id,
-                datetime_from,
-                datetime_to
-            )
+        if granularity == "raw" \
+            and consumer_unit.profile_powermeter\
+                .powermeter.powermeter_anotation != "Medidor Virtual":
+            data_cluster = \
+                c_center.graphics.get_consumer_unit_electric_data_raw(
+                    electrical_parameter_name,
+                    consumer_unit_id,
+                    datetime_from,
+                    datetime_to)
         else:
             data_cluster =\
                 get_consumer_unit_electrical_parameter_data_clustered(
@@ -1015,7 +1018,7 @@ def render_instant_measurements(
     template_variables['columns'] = column_strings
 
     columns_units_list = get_column_units_list(request_data_list_normalized)
-    template_variables['column_units'] = columns_units_list
+    template_variables['column_units'] = zip(columns_units_list, column_strings)
 
     #
     # Build and normalize the data clusters list.
@@ -1062,9 +1065,6 @@ def render_instant_measurements(
     template_variables['max'] = maximum
     template_variables['min'] = minimum
     template_variables['columns_statistics'] = data_clusters_statistics
-    template_variables['series'] = zip(
-        template_variables['axis_list'],
-        template_variables['column_unit_axis_indexes'] )
     template_context =\
         django.template.context.RequestContext(request, template_variables)
 
@@ -1073,7 +1073,7 @@ def render_instant_measurements(
                template_context)
 
 
-def render_report_consumed_by_month (
+def render_report_consumed_by_month(
         request
 ):
     template_variables = {
@@ -1096,7 +1096,7 @@ def render_report_consumed_by_month (
         raise django.http.Http404
 
     days = variety.getMonthDays(month, year)
-    first_week_start_datetime = days[0]
+    first_week_start_datetime = days[0] - datetime.timedelta(days=1)
     last_week_end_datetime = days[-1]
 
     #

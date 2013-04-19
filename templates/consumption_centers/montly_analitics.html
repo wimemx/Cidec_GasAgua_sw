@@ -16,14 +16,18 @@
         var current_year = fecha_act.getFullYear();
         var current_day = fecha_act.format("yyyy-mm-dd");
         var lateral;
+        var jqxhr, jqxhr1;
     function get_full_month(){
         var maxx_d = 0;
         var minn_d = 9000000;
         var maxx_kwh = 0;
         var min_kwh = 9000000;
         var index_maxd, index_mind, index_maxkwh, index_minkwh;
-        $.ajax({
-            url: "/buildings/month_analitics/{{ building.pk }}/"+String(current_year)+"/"+String(current_month)+"/",
+        if(jqxhr && jqxhr.readyState != 4){
+            jqxhr.abort();
+        }
+        jqxhr = $.ajax({
+            url: "/buildings/month_analitics/"+String(current_year)+"/"+String(current_month)+"/",
             type: "GET",
             success: function(data){
                 for(var i=0; i<data.length; i++){
@@ -66,8 +70,8 @@
                             }
                         }
                     }
-
-                    $("."+dato.fecha).each(function(){
+                    var str_fecha = dato.fecha.split(" ")[0];
+                    $("."+str_fecha).each(function(){
                         var dia = $(this).find("a span").text();
                         div = "<a href='#'><span>"+dia+"</span></a>"+div;
                         $(this).html(div);
@@ -84,12 +88,17 @@
         $("#cons_total").text("-");
         $("#dem_total").text("-");
         $("#pp_total").text("-");
+        $("#emit_total").text("-");
+
         month_totals.find("#month_dem_min").text("-");
         month_totals.find("#month_cons_prom").text("-");
         month_totals.find("#month_cons_med").text("-");
         month_totals.find("#month_cons_des").text("-");
-        $.ajax({
-            url: "/buildings/month_analitics_h/{{ building.pk }}/"+String(current_year)+"/"+String(current_month)+"/",
+        if(jqxhr1 && jqxhr1.readyState != 4){
+            jqxhr1.abort();
+        }
+        jqxhr1 = $.ajax({
+            url: "/buildings/month_analitics_h/"+String(current_year)+"/"+String(current_month)+"/",
             type: "GET",
             success: function(data){
                 var texto_kwh = '-';
@@ -109,6 +118,12 @@
                     texto_pf = String(data[0].factor_potencia.toFixed(2)) + "%";
                 }
                 $("#pp_total").text(texto_pf);
+
+                var texto_emit = '-';
+                if(data[0].emisiones != undefined){
+                    texto_emit = String(parseInt(data[0].emisiones)) + "ton";
+                }
+                $("#emit_total").text(texto_emit);
 
 
 
@@ -141,7 +156,7 @@
         fecha = new Date(parseInt(fecha[0]), parseInt(fecha[1])-1, parseInt(fecha[2]));
         fecha = dateFormat(fecha, "dddd d, mmmm");
         $.ajax({
-            url: "/buildings/month_analitics_day/{{ building.pk }}/?date="+day,
+            url: "/buildings/month_analitics_day/?date="+day,
             type: "GET",
             success: function(data){
 
@@ -155,9 +170,13 @@
                     lateral_content +=     '<h3>Consumo</h3>';
                     lateral_content +=     '<div id="lat_consumo">';
                     lateral_content +=     '<span class="m_value">'+ addCommas(data.c_tot)+' kWh</span>';
-                    lateral_content +=     '<span class="s_value">'+ addCommas(data.c_base)+'kWh base</span>';
-                    lateral_content +=     '<span class="s_value">'+ addCommas(data.c_int)+'kWh intermedia</span>';
-                    lateral_content +=     '<span class="s_value">'+ addCommas(data.c_punta)+'kWh punta</span>';
+
+                    if(data.electric_rate == '1'){
+                        lateral_content +=     '<span class="s_value">'+ addCommas(data.c_base)+'kWh base</span>';
+                        lateral_content +=     '<span class="s_value">'+ addCommas(data.c_int)+'kWh intermedia</span>';
+                        lateral_content +=     '<span class="s_value">'+ addCommas(data.c_punta)+'kWh punta</span>';
+                    }
+
                     lateral_content +=     '</div>';
                     lateral_content +=     '<a href="/main/">Ver en una gr&aacute;fica</a>';
                     lateral_content +=     '<h3>Demanda M&aacute;x</h3>';
@@ -202,7 +221,7 @@
     });
     $("#week_s").click(function(){
         $.ajax({
-            url: "/buildings/month_analitics_week/{{ building.pk }}/"+String(current_year)+"/"+String(current_month)+"/",
+            url: "/buildings/month_analitics_week/"+String(current_year)+"/"+String(current_month)+"/",
             type: "GET",
             success: function(data){
 

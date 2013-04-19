@@ -9,6 +9,7 @@ import cStringIO
 import Image
 import hashlib
 import pytz
+import threading
 from math import ceil
 
 #local application/library specific imports
@@ -1034,7 +1035,7 @@ def handle_company_logo(i, company, is_new):
 
     (width, height) = imageImage.size
     width, height = variety.scale_dimensions(width, height, longest_side=200)
-    resizedImage = imageImage.resize((width, height))
+    resizedImage = imageImage.resize((width, height), Image.ANTIALIAS)
 
     imagefile = cStringIO.StringIO()
     resizedImage.save(imagefile, 'JPEG', quality=100)
@@ -1156,11 +1157,11 @@ def get_profile(request):
 
 def all_dailyreportAll():
     buildings = Building.objects.all()
-    initial_d = datetime.datetime(2012,9,8)
-    datos = DailyData.objects.filter(data_day__gte=initial_d)
-    datos.delete()
+    initial_d = datetime.datetime(2013,1,12)
+    #datos = DailyData.objects.filter(data_day__gte=initial_d)
+    #datos.delete()
     dia = datetime.timedelta(days=1)
-    while initial_d < datetime.datetime.today():
+    while initial_d < datetime.datetime(2013,3,1):
         for buil in buildings:
             cus = ConsumerUnit.objects.filter(building=buil)
             if cus:
@@ -1236,9 +1237,12 @@ def dailyReport(building, consumer_unit, today):
     kvarh_totales = 0
     kvarhs_anterior = False
 
+    tarifa_kwh = 0
     tarifa_kwh_base = 0
     tarifa_kwh_intermedio = 0
     tarifa_kwh_punta = 0
+
+    costo_energia_total = 0
 
     #Se agregan las horas
     today_s_str = str(today.year) + "-" + str(today.month) + "-" + \
@@ -1271,10 +1275,14 @@ def dailyReport(building, consumer_unit, today):
     #Se obtiene la región
     region = building.region
 
+    #Se obtiene la tarifa del edificio
+    electric_rate = building.electric_rate
+
     consumer_units = get_consumer_units(consumer_unit)
     if consumer_units:
 
         for c_unit in consumer_units:
+            print c_unit
             profile_powermeter =  c_unit.profile_powermeter
             #print "Profile Powermeter:", profile_powermeter.pk
             #Se obtiene la demanda max
@@ -1406,24 +1414,57 @@ def dailyReport(building, consumer_unit, today):
                                               today_e_utc,
                                               kvarhs_anterior)
 
-    #Obtiene el id de la tarifa correspondiente para el mes en cuestion
-    tarifasObj = ElectricRatesDetail.objects.filter(electric_rate=1).filter(
-        region=region).filter(date_init__lte=today).filter(
-        date_end__gte=today)
 
-    if tarifasObj:
-        tarifa_kwh_base = tarifasObj[0].KWHB
-        tarifa_kwh_intermedio = tarifasObj[0].KWHI
-        tarifa_kwh_punta = tarifasObj[0].KWHP
+    #Si es tarifa HM
+    if electric_rate.pk == 1:
+        #Obtiene el id de la tarifa correspondiente para el mes en cuestion
+        tarifasObj = ElectricRatesDetail.objects.filter(electric_rate=1).filter(
+                region=region).filter(date_init__lte=today).filter(
+                date_end__gte=today)
 
-    #Se obtiene Factor de Potencia
-    factor_potencia_total = factorpotencia(kwh_totales, kvarh_totales)
+        if tarifasObj:
+            tarifa_kwh_base = tarifasObj[0].KWHB
+            tarifa_kwh_intermedio = tarifasObj[0].KWHI
+            tarifa_kwh_punta = tarifasObj[0].KWHP
 
-    #Se obtiene costo de energía
-    costo_energia_total = costoenergia(kwh_base, kwh_intermedio,
+
+        #Se obtiene costo de energía
+        costo_energia_total = costoenergia(kwh_base, kwh_intermedio,
                                        kwh_punta, tarifa_kwh_base,
                                        tarifa_kwh_intermedio,
                                        tarifa_kwh_punta)
+
+    elif electric_rate.pk == 2:#Si es tarifa Dac
+        #Para las regiones BC y BCS es necesario obtener revisar si se aplica
+        # Tarifa de Verano o de Invierno
+
+        if region.pk == 1 or region.pk == 2:
+            tf_ver_inv = obtenerHorarioVeranoInvierno(today, 2)
+            tarifasObj = DACElectricRateDetail.objects.filter(
+                region=region.pk).filter(date_interval=tf_ver_inv).filter(
+                date_init__lte=today).filter(date_end__gte=today)
+            if tarifasObj:
+                tarifa_kwh = tarifasObj[0].kwh_rate
+
+        else:
+            tarifasObj = DACElectricRateDetail.objects.filter(
+                region=region.pk).filter(date_interval=None).filter(
+                date_init__lte=today).filter(date_end__gte=today)
+            if tarifasObj:
+                tarifa_kwh = tarifasObj[0].kwh_rate
+
+        costo_energia_total = kwh_totales * tarifa_kwh
+
+    elif electric_rate.pk == 3:#Si es tarifa 3
+        tarifasObj = ThreeElectricRateDetail.objects.filter(
+            date_init__lte=today).filter(date_end__gte=today)
+        if tarifasObj:
+            tarifa_kwh = tarifasObj[0].kwh_rate
+
+        costo_energia_total = kwh_totales * tarifa_kwh
+
+    #Se obtiene Factor de Potencia
+    factor_potencia_total = factorpotencia(kwh_totales, kvarh_totales)
 
     #Se guarda en la BD
     new_daily = DailyData(
@@ -1447,7 +1488,7 @@ def dailyReport(building, consumer_unit, today):
     return 'OK'
 
 
-def getDailyReports(building, month, year):
+def getDailyReports(consumer, month, year):
 
     #Se obtienen los dias del mes
     month_days = variety.getMonthDays(month, year)
@@ -1457,7 +1498,7 @@ def getDailyReports(building, month, year):
 
     for day in month_days:
         try:
-            ddata_obj = DailyData.objects.get(building=building,
+            ddata_obj = DailyData.objects.get(consumer_unit=consumer,
                                               data_day=day)
         except DailyData.DoesNotExist:
             dailyreport_arr.append(dict(fecha=str(day),
@@ -1472,7 +1513,7 @@ def getDailyReports(building, month, year):
 
     return dailyreport_arr
 
-def getWeeklyReport(building, month, year):
+def getWeeklyReport(consumer, month, year):
 
     semanas = []
     #Se obtienen los dias del mes
@@ -1491,24 +1532,64 @@ def getWeeklyReport(building, month, year):
         fecha_final = semana_array[6]
 
         no_semana = {
-        'demanda_max': demandaMaxima(building, fecha_inicial, fecha_final),
-        'demanda_min': demandaMinima(building, fecha_inicial, fecha_final),
-        'consumo_acumulado': consumoAcumuladoKWH(building, fecha_inicial,
+        'demanda_max': demandaMaxima(consumer, fecha_inicial, fecha_final),
+        'demanda_min': demandaMinima(consumer, fecha_inicial, fecha_final),
+        'consumo_acumulado': consumoAcumuladoKWH(consumer, fecha_inicial,
                                                  fecha_final),
-        'consumo_promedio': promedioKWH(building, fecha_inicial, fecha_final),
-        'consumo_desviacion': desviacionStandardKWH(building, fecha_inicial,
+        'consumo_promedio': promedioKWH(consumer, fecha_inicial, fecha_final),
+        'consumo_desviacion': desviacionStandardKWH(consumer, fecha_inicial,
                                                     fecha_final),
-        'consumo_mediana': medianaKWH(building, fecha_inicial, fecha_final)}
+        'consumo_mediana': medianaKWH(consumer, fecha_inicial, fecha_final)}
 
         semanas.append(no_semana)
 
     return semanas
 
-def getMonthlyReport(building, month, year):
+def getMonthlyReport(consumer_u, month, year):
+    if month < datetime.datetime.today().month and \
+            year <= datetime.datetime.today().year:
+        try:
+            mes = MonthlyData.objects.get(consumer_unit=consumer_u,
+                                          month=month, year=year)
+        except ObjectDoesNotExist:
+            mes_new = calculateMonthlyReport(consumer_u, month, year)
+            mes = MonthlyData(consumer_unit=consumer_u,
+                                  month=month,
+                                  year=year,
+                                  KWH_total=mes_new['consumo_acumulado'],
+                                  max_demand=mes_new['demanda_max'],
+                                  carbon_emitions=mes_new['emisiones'],
+                                  power_factor=str(mes_new['factor_potencia']),
+                                  min_demand=mes_new['demanda_min'],
+                                  average_cons=str(mes_new['consumo_promedio']),
+                                  median_cons=str(mes_new['consumo_mediana']),
+                                  deviation_cons=str(
+                                      mes_new['consumo_desviacion']))
+            mes.save()
+        return dict(consumo_acumulado=mes.KWH_total,
+                    demanda_max=mes.max_demand,
+                    emisiones=mes.carbon_emitions,
+                    factor_potencia=mes.carbon_emitions,
+                    demanda_min=mes.min_demand,
+                    consumo_promedio=float(mes.average_cons),
+                    consumo_mediana=float(mes.median_cons),
+                    consumo_desviacion=float(mes.deviation_cons))
+    else:
+        return calculateMonthlyReport(consumer_u, month, year)
+
+
+def calculateMonthlyReport(consumer_u, month, year):
+    """Calculate the month report for the consumer_unit
+
+    :param consumer_u: ConsumerUnit object
+    :param month: int month number
+    :param year: int year umber
+    :return mes: dictionary
+    """
     mes = {}
 
     #Se obtiene el tipo de tarifa del edificio.
-    tipo_tarifa = building.electric_rate
+    tipo_tarifa = consumer_u.building.electric_rate
 
     #Se obtienen las fechas de inicio y de fin
     diasmes_arr = monthrange(year, month)
@@ -1519,11 +1600,8 @@ def getMonthlyReport(building, month, year):
 
     #Se obtiene el profile_powermeter
     try:
-        main_cu = ConsumerUnit.objects.get(
-            building=building,
-            electric_device_type__electric_device_type_name="Total Edificio"
-        )
-        profile_powermeter = main_cu.profile_powermeter
+
+        profile_powermeter = consumer_u.profile_powermeter
 
     except ObjectDoesNotExist:
         #Si no hay consumer unit, regresa todos los valores en 0
@@ -1534,9 +1612,10 @@ def getMonthlyReport(building, month, year):
         mes['consumo_promedio'] = 0
         mes['consumo_mediana'] = 0
         mes['consumo_desviacion'] = 0
+        mes['emisiones'] = 0
     else:
         #Obtener consumo acumulado
-        mes['consumo_acumulado'] = consumoAcumuladoKWH(building,
+        mes['consumo_acumulado'] = consumoAcumuladoKWH(consumer_u,
                                                        fecha_inicio,
                                                        fecha_final)
 
@@ -1544,31 +1623,34 @@ def getMonthlyReport(building, month, year):
             mes['consumo_acumulado'] = 0
 
         #Obtener demanda maxima
-        mes['demanda_max'] = demandaMaxima(building, fecha_inicio, fecha_final)
+        mes['demanda_max'] = demandaMaxima(consumer_u, fecha_inicio, fecha_final)
 
         #Obtener demanda minima
-        mes['demanda_min'] = demandaMinima(building, fecha_inicio, fecha_final)
+        mes['demanda_min'] = demandaMinima(consumer_u, fecha_inicio, fecha_final)
 
         #Obtener factor de potencia.
         #Para obtener el factor potencia son necesarios los KWH Totales
         # (consumo acumulado) y los KVARH
         kvarh = obtenerKVARH_total(profile_powermeter.powermeter, fecha_inicio,
                                    fecha_final)
-        print "kvarh", kvarh
+
         mes['factor_potencia'] = factorpotencia(float(mes['consumo_acumulado']),
                                                 kvarh)
 
         #Consumo promedio
-        mes['consumo_promedio'] = promedioKWH(building, fecha_inicio,
+        mes['consumo_promedio'] = promedioKWH(consumer_u, fecha_inicio,
                                               fecha_final)
 
         #Consumo mediana
-        mes['consumo_desviacion'] = desviacionStandardKWH(building,
+        mes['consumo_desviacion'] = desviacionStandardKWH(consumer_u,
                                                           fecha_inicio,
                                                           fecha_final)
 
         #Consumo desviación
-        mes['consumo_mediana'] = medianaKWH(building, fecha_inicio, fecha_final)
+        mes['consumo_mediana'] = medianaKWH(consumer_u, fecha_inicio, fecha_final)
+
+        #emisiones de carbon TODO calcular emisiones
+        mes['emisiones'] = 404
 
     return mes
 
@@ -1593,6 +1675,7 @@ def save_historic(monthly_cutdate, building):
     year = monthly_cutdate.billing_month.year
 
     #Se obtiene el tipo de tarifa del edificio (HM o DAC)
+    print "tarifa", building.electric_rate.pk
     if building.electric_rate.pk == 1: #Tarifa HM
         resultado_mensual = tarifaHM_2(building,
             monthly_cutdate.date_init,
@@ -1621,20 +1704,20 @@ def save_historic(monthly_cutdate, building):
             KW_punta=resultado_mensual['kw_punta'],
             KW_intermedio=resultado_mensual['kw_intermedio'],
             KVARH=resultado_mensual['kvarh_totales'],
-            power_factor=resultado_mensual['factor_potencia'],
-            charge_factor=resultado_mensual['factor_carga'],
+            power_factor=str(resultado_mensual['factor_potencia']),
+            charge_factor=str(resultado_mensual['factor_carga']),
             billable_demand=resultado_mensual['demanda_facturable'],
-            KWH_base_rate=resultado_mensual['tarifa_kwhb'],
-            KWH_intermedio_rate=resultado_mensual['tarifa_kwhi'],
-            KWH_punta_rate=resultado_mensual['tarifa_kwhp'],
-            billable_demand_rate=resultado_mensual['tarifa_df'],
-            average_rate=aver_rate,
-            energy_cost=resultado_mensual['costo_energia'],
-            billable_demand_cost=resultado_mensual['costo_dfacturable'],
-            power_factor_bonification=resultado_mensual['costo_fpotencia'],
-            subtotal=resultado_mensual['subtotal'],
-            iva=resultado_mensual['iva'],
-            total=resultado_mensual['total']
+            KWH_base_rate=str(resultado_mensual['tarifa_kwhb']),
+            KWH_intermedio_rate=str(resultado_mensual['tarifa_kwhi']),
+            KWH_punta_rate=str(resultado_mensual['tarifa_kwhp']),
+            billable_demand_rate=str(resultado_mensual['tarifa_df']),
+            average_rate=str(aver_rate),
+            energy_cost=str(resultado_mensual['costo_energia']),
+            billable_demand_cost=str(resultado_mensual['costo_dfacturable']),
+            power_factor_bonification=str(resultado_mensual['costo_fpotencia']),
+            subtotal=str(resultado_mensual['subtotal']),
+            iva=str(resultado_mensual['iva']),
+            total=str(resultado_mensual['total'])
         )
         newHistoric.save()
 
@@ -1650,7 +1733,7 @@ def save_historic(monthly_cutdate, building):
                                                              'kwh_totales']
         aver_rate = str(aver_rate)
 
-        resultado_mensual['subtotal'] = str(resultado_mensual['subtotal'])
+        resultado_mensual['costo_energia'] = str(resultado_mensual['costo_energia'])
         resultado_mensual['iva'] = str(resultado_mensual['iva'])
         resultado_mensual['total'] = str(resultado_mensual['total'])
         newHistoric = DacHistoricData(

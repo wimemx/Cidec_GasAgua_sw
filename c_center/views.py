@@ -50,12 +50,15 @@ from data_warehouse.views import get_consumer_unit_electric_data_csv, \
     get_consumer_unit_by_id as get_data_warehouse_consumer_unit_by_id, \
     get_consumer_unit_electric_data_interval_tuple_list
 
+import data_warehouse_extended.models
+
 from .tables import ElectricDataTempTable, ThemedElectricDataTempTable
 
 import json as simplejson
 import sys
 from tareas.tasks import save_historic_delay, \
-    change_profile_electric_data, populate_data_warehouse_extended
+    change_profile_electric_data, populate_data_warehouse_extended, \
+    populate_data_warehouse_specific
 
 VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
@@ -91,7 +94,7 @@ MSG_PERMIT_ERROR = "<h2 style='font-family: helvetica; color: #878787; " \
                    "por favor ponte en contacto con el administrador para " \
                    "remediar esta situaci&oacute;n</h2>"
 
-
+@login_required(login_url='/')
 def call_celery_delay(request):
     if request.user.is_superuser:
         if request.method == "POST":
@@ -144,7 +147,43 @@ def call_celery_delay(request):
     else:
         raise Http404
 
+@login_required(login_url='/')
+def dw_specific(request):
+    datacontext, b_list = get_buildings_context(request.user)
+    if datacontext:
+        template_vars = {"datacontext": datacontext}
+    else:
+        template_vars = dict()
+    if request.user.is_superuser:
+        granul = data_warehouse_extended.models.InstantDelta.objects.all()
+        consumer_units = data_warehouse_extended.models.ConsumerUnitProfile\
+            .objects.all()
+        template_vars['deltas'] = granul
+        template_vars['consumer_units'] = consumer_units
 
+        if request.method == "POST":
+            fecha = datetime.datetime.strptime(
+                request.POST['date_from'], "%Y-%m-%d")
+            cu = data_warehouse_extended.models.ConsumerUnitProfile.objects.get(
+                transactional_id=int(request.POST['consumer_unit'])
+            )
+            delta = data_warehouse_extended.models.InstantDelta.objects.get(
+                pk=int(request.POST['intervalos'])
+            )
+            populate_data_warehouse_specific(cu, delta, fecha)
+            template_vars['text'] = "Tarea enviada, para " + cu.building_name \
+                                    + " - " + cu.electric_device_type_name + \
+                                    " con granularidad " + delta.name \
+                                    + ". Espera resultados"
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("tasks/data_warehouse_specific.html",
+                                  template_vars_template)
+    else:
+        raise Http404
+
+
+@login_required(login_url='/')
 def set_default_building(request, id_building):
     """Sets the default building for reports"""
     request.session['main_building'] = Building.objects.get(pk=id_building)
@@ -166,6 +205,7 @@ def set_default_building(request, id_building):
     return HttpResponse(content=data, content_type="application/json")
 
 
+@login_required(login_url='/')
 def set_consumer_unit(request):
     building = request.session['main_building']
 
@@ -177,6 +217,7 @@ def set_consumer_unit(request):
                               template_vars_template)
 
 
+@login_required(login_url='/')
 def set_default_consumer_unit(request, id_c_u):
     """Sets the consumer_unit for all the reports"""
     c_unit = ConsumerUnit.objects.get(pk=id_c_u)
@@ -352,6 +393,8 @@ def cfe_calculations(request):
         template_vars = dict(type="cfe", datacontext=datacontext,
                              empresa=request.session['main_building'])
 
+        #print "Edifico", request.session['main_building']
+
         if request.GET:
             month = int(request.GET['month'])
             year = int(request.GET['year'])
@@ -372,17 +415,20 @@ def cfe_calculations(request):
 
         if tipo_tarifa.pk == 1:
         #Tarifa HM
+            #print "Historico HM"
             cfe_historico = HMHistoricData.objects.filter(
                 monthly_cut_dates__building=request.session['main_building']
             ).filter(
                 monthly_cut_dates__billing_month=billing_month)
         elif tipo_tarifa.pk == 2:
         #Tarifa DAC
+            #print "Historico DAC"
             cfe_historico = DacHistoricData.objects.filter(
                 monthly_cut_dates__building=request.session['main_building']
             ).filter(
                 monthly_cut_dates__billing_month=billing_month)
         else:
+            #print "Historico T3"
             #if tipo_tarifa.pk == 3: #Tarifa 3
             cfe_historico = T3HistoricData.objects.filter(
                 monthly_cut_dates__building=request.session['main_building']
@@ -420,6 +466,8 @@ def cfe_calculations(request):
                     cfe_historico[0].billable_demand
                 resultado_mensual['factor_potencia'] = \
                     cfe_historico[0].power_factor
+                resultado_mensual['factor_carga'] = \
+                    cfe_historico[0].charge_factor
                 resultado_mensual['kvarh_totales'] = cfe_historico[0].KVARH
                 resultado_mensual['tarifa_kwhb'] = \
                     cfe_historico[0].KWH_base_rate
@@ -496,8 +544,9 @@ def cfe_calculations(request):
         #si no, hace el calculo al momento. NOTA: Se hace el calculo,
         # pero no se guarda
             #Se obtiene la fecha inicial y la fecha final
+            #print "Se calcula el recibe"
             building = request.session['main_building']
-
+            #print "Edificio", building
             hasDates = inMonthlyCutdates(building, month, year)
             if hasDates:
                 s_date, e_date = getStartEndDateUTC(building, month, year)
@@ -563,24 +612,29 @@ def cfe_calculations(request):
 
                 #Se obtienen nuevamente las fechas
                 s_date, e_date = getStartEndDateUTC(building, month, year)
-                resultado_mensual['corte'] = getMonthlyCutDate(building, month,
-                                                               year)
-                template_vars['control'] = resultado_mensual['corte'].pk
 
             #Se general el recibo.
             if tipo_tarifa.pk == 1: #Tarifa HM
+                #print "Calculo Tarifa HM"
                 resultado_mensual = tarifaHM_2(request.session['main_building'],
                                                s_date, e_date, month, year)
 
             elif tipo_tarifa.pk == 2: #Tarifa DAC
+                #print "Calculo Tarifa DAC"
                 resultado_mensual = tarifaDAC_2(
                     request.session['main_building'], s_date, e_date, month,
                     year)
 
             elif tipo_tarifa.pk == 3: #Tarifa 3
+                #print "Calculo Tarifa 3"
                 resultado_mensual = tarifa_3_v2(
                     request.session['main_building'], s_date, e_date, month,
                     year)
+
+
+            resultado_mensual['corte'] = getMonthlyCutDate(building, month,
+                                                           year)
+            template_vars['control'] = resultado_mensual['corte'].pk
 
         if resultado_mensual['status'] == 'OK':
             template_vars['resultados'] = resultado_mensual
@@ -590,7 +644,7 @@ def cfe_calculations(request):
                 building=request.session['main_building']).order_by(
                 "-billing_month")
 
-            template_vars['historico'] = obtenerHistorico_r(monthly_cutdate[0])
+            template_vars['historico'] = obtenerHistorico_r(resultado_mensual)
             template_vars_template = RequestContext(request, template_vars)
             return render_to_response(
                 "consumption_centers/graphs/cfe_bill.html",
@@ -7595,14 +7649,14 @@ def set_cutdate_bill(request):
         raise Http404
 
 
-def obtenerHistorico_r(f_monthly_cutdate):
+def obtenerHistorico_r(actual_month_arr):
     arr_historico = []
     #Obtener 5 meses antes
     ind = 5
-    building = f_monthly_cutdate.building
+    building = actual_month_arr['corte'].building
 
-    while ind > 0:
-        month_before = f_monthly_cutdate.billing_month + relativedelta(
+    while ind >= 0:
+        month_before = actual_month_arr['corte'].billing_month + relativedelta(
             months=-ind)
 
         mtl = MonthlyCutDates.objects.filter(billing_month=month_before).filter(
@@ -7639,50 +7693,82 @@ def obtenerHistorico_r(f_monthly_cutdate):
                             demanda_maxima=0, total_kwh=0, kvarh=0,
                             factor_potencia=0, factor_carga=0, costo_promedio=0)
 
-        if mtl:
-            monthly_cut_dates = mtl[0]
+        if not ind is 0:
 
+            if mtl:
+                monthly_cut_dates = mtl[0]
+
+                if building.electric_rate_id == 1:
+                    cfe_hist_objs = HMHistoricData.objects.filter(
+                        monthly_cut_dates=monthly_cut_dates)
+
+                    if cfe_hist_objs:
+                        historico = cfe_hist_objs[0]
+
+                        dict_periodo["kw_base"] = historico.KW_base
+                        dict_periodo["kw_intermedio"] = historico.KW_intermedio
+                        dict_periodo["kw_punta"] = historico.KW_punta
+                        dict_periodo["demanda_maxima"] = historico.billable_demand
+                        dict_periodo["total_kwh"] = historico.KWH_total
+                        dict_periodo["kvarh"] = historico.KVARH
+                        dict_periodo["factor_potencia"] = historico.power_factor
+                        dict_periodo["factor_carga"] = historico.charge_factor
+                        dict_periodo["costo_promedio"] = historico.average_rate
+
+                elif building.electric_rate_id == 2:
+                    cfe_hist_objs = DacHistoricData.objects.filter(
+                        monthly_cut_dates=monthly_cut_dates)
+
+                    if cfe_hist_objs:
+                        historico = cfe_hist_objs[0]
+
+                        dict_periodo["total_kwh"] = historico.KWH_total
+                        dict_periodo["costo_promedio"] = historico.average_rate
+
+                elif building.electric_rate_id == 3:
+                    cfe_hist_objs = T3HistoricData.objects.filter(
+                        monthly_cut_dates=monthly_cut_dates)
+
+                    if cfe_hist_objs:
+                        historico = cfe_hist_objs[0]
+
+                        dict_periodo["demanda_maxima"] = historico.max_demand
+                        dict_periodo["total_kwh"] = historico.KWH_total
+                        dict_periodo["factor_potencia"] = historico.power_factor
+                        dict_periodo["factor_carga"] = historico.charge_factor
+                        dict_periodo["costo_promedio"] = historico.average_rate
+
+            arr_historico.append(dict_periodo)
+
+        else:
+            #Se inserta el mes actual
             if building.electric_rate_id == 1:
-                cfe_hist_objs = HMHistoricData.objects.filter(
-                    monthly_cut_dates=monthly_cut_dates)
-
-                if cfe_hist_objs:
-                    historico = cfe_hist_objs[0]
-
-                    dict_periodo["kw_base"] = historico.KW_base
-                    dict_periodo["kw_intermedio"] = historico.KW_intermedio
-                    dict_periodo["kw_punta"] = historico.KW_punta
-                    dict_periodo["demanda_maxima"] = historico.billable_demand
-                    dict_periodo["total_kwh"] = historico.KWH_total
-                    dict_periodo["kvarh"] = historico.KVARH
-                    dict_periodo["factor_potencia"] = historico.power_factor
-                    dict_periodo["factor_carga"] = historico.charge_factor
-                    dict_periodo["costo_promedio"] = historico.average_rate
+                dict_periodo["kw_base"] = actual_month_arr["kw_base"]
+                dict_periodo["kw_intermedio"] = actual_month_arr["kw_intermedio"]
+                dict_periodo["kw_punta"] = actual_month_arr["kw_punta"]
+                dict_periodo["demanda_maxima"] = actual_month_arr['demanda_facturable']
+                dict_periodo["total_kwh"] = actual_month_arr['kwh_totales']
+                dict_periodo["kvarh"] = actual_month_arr['kvarh_totales']
+                dict_periodo["factor_potencia"] = actual_month_arr['factor_potencia']
+                dict_periodo["factor_carga"] = actual_month_arr['factor_carga']
+                dict_periodo["costo_promedio"] = actual_month_arr['subtotal'
+                                                 ] / actual_month_arr['kwh_totales']
 
             elif building.electric_rate_id == 2:
-                cfe_hist_objs = DacHistoricData.objects.filter(
-                    monthly_cut_dates=monthly_cut_dates)
-
-                if cfe_hist_objs:
-                    historico = cfe_hist_objs[0]
-
-                    dict_periodo["total_kwh"] = historico.KWH_total
-                    dict_periodo["costo_promedio"] = historico.average_rate
+                dict_periodo["total_kwh"] = actual_month_arr['kwh_totales']
+                dict_periodo["costo_promedio"] = actual_month_arr['costo_energia'
+                                                 ]/actual_month_arr['kwh_totales']
 
             elif building.electric_rate_id == 3:
-                cfe_hist_objs = T3HistoricData.objects.filter(
-                    monthly_cut_dates=monthly_cut_dates)
+                dict_periodo["demanda_maxima"] = actual_month_arr['kw_totales']
+                dict_periodo["total_kwh"] = actual_month_arr['kwh_totales']
+                dict_periodo["factor_potencia"] = actual_month_arr['factor_potencia']
+                dict_periodo["factor_carga"] = actual_month_arr['factor_carga']
+                dict_periodo["costo_promedio"] = actual_month_arr['subtotal'
+                                                 ]/actual_month_arr['kwh_totales']
 
-                if cfe_hist_objs:
-                    historico = cfe_hist_objs[0]
+            arr_historico.append(dict_periodo)
 
-                    dict_periodo["demanda_maxima"] = historico.max_demand
-                    dict_periodo["total_kwh"] = historico.KWH_total
-                    dict_periodo["factor_potencia"] = historico.power_factor
-                    dict_periodo["factor_carga"] = historico.charge_factor
-                    dict_periodo["costo_promedio"] = historico.average_rate
-
-        arr_historico.append(dict_periodo)
         ind -= 1
 
     return arr_historico
@@ -7751,13 +7837,8 @@ def cfe_desglose_calcs(request):
             s_date_str = request.GET['init_d']
             e_date_str = request.GET['end_d']
 
-            s_arr = s_date_str.split('-')
-            e_arr = e_date_str.split('-')
-
-            s_date = datetime.date(year=int(s_arr[0]), month=int(s_arr[1]),
-                                   day=int(s_arr[2]))
-            e_date = datetime.date(year=int(e_arr[0]), month=int(e_arr[1]),
-                                   day=int(e_arr[2]))
+            s_date = datetime.datetime.strptime(s_date_str, "%Y-%m-%d")
+            e_date = datetime.datetime.strptime(e_date_str, "%Y-%m-%d")
 
             #print "s_date", s_date
             #print "e_date", e_date
@@ -7862,11 +7943,11 @@ def montly_analitics(request):
 
 
 @login_required(login_url='/')
-def montly_data_for_building(request, id_building, year, month):
-    edificio = get_object_or_404(Building, pk=int(id_building))
+def montly_data_for_building(request, year, month):
     if has_permission(request.user, VIEW, "Consultar recibo CFE") or \
             request.user.is_superuser:
-        data = getDailyReports(edificio, int(month), int(year))
+        data = getDailyReports(request.session['consumer_unit'],
+                               int(month), int(year))
 
         response_data = simplejson.dumps(data)
         return HttpResponse(content=response_data,
@@ -7876,11 +7957,11 @@ def montly_data_for_building(request, id_building, year, month):
 
 
 @login_required(login_url='/')
-def montly_data_hfor_building(request, id_building, year, month):
-    edificio = get_object_or_404(Building, pk=int(id_building))
+def montly_data_hfor_building(request, year, month):
     if has_permission(request.user, VIEW, "Consultar recibo CFE") or \
             request.user.is_superuser:
-        data = getMonthlyReport(edificio, int(month), int(year))
+        data = getMonthlyReport(request.session['consumer_unit'],
+                                int(month), int(year))
 
         response_data = simplejson.dumps([data])
         return HttpResponse(content=response_data,
@@ -7890,11 +7971,11 @@ def montly_data_hfor_building(request, id_building, year, month):
 
 
 @login_required(login_url='/')
-def montly_data_w_for_building(request, id_building, year, month):
-    edificio = get_object_or_404(Building, pk=int(id_building))
+def montly_data_w_for_building(request, year, month):
     if has_permission(request.user, VIEW, "Consultar recibo CFE") or \
             request.user.is_superuser:
-        datos = getWeeklyReport(edificio, int(month), int(year))
+        datos = getWeeklyReport(request.session['consumer_unit'],
+                                int(month), int(year))
 
         response_data = simplejson.dumps(datos)
 
@@ -7905,18 +7986,20 @@ def montly_data_w_for_building(request, id_building, year, month):
 
 
 @login_required(login_url='/')
-def month_analitics_day(request, id_building):
-    edificio = get_object_or_404(Building, pk=int(id_building))
+def month_analitics_day(request):
     if has_permission(request.user, VIEW, "Consultar recibo CFE") or \
             request.user.is_superuser:
-        fecha = request.GET['date'].split("-")
-        fecha = datetime.date(int(fecha[0]), int(fecha[1]), int(fecha[2]))
+        fecha = datetime.datetime.strptime(request.GET['date'], "%Y-%m-%d")
+        electric_rate = \
+            request.session['consumer_unit'].building.electric_rate_id
         try:
-            day_data = DailyData.objects.get(building=edificio, data_day=fecha)
+            day_data = DailyData.objects.get(
+                consumer_unit=request.session['consumer_unit'], data_day=fecha)
         except ObjectDoesNotExist:
             diccionario = dict(empty="true")
         else:
             diccionario = dict(empty="false",
+                               electric_rate=str(electric_rate),
                                c_tot=str(day_data.KWH_total),
                                c_base=str(day_data.KWH_base),
                                c_int=str(day_data.KWH_intermedio),
@@ -8631,7 +8714,6 @@ def billing_analisis(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
-
 def billing_cost_analisis(request):
     """Renders the cfe bill and the historic data chart"""
     datacontext = get_buildings_context(request.user)[0]
@@ -8835,7 +8917,7 @@ def billing_cost_analisis(request):
                 template_vars['tarifa'] = 3
 
                 for i in range(12):
-                    mes = i+1
+                    mes = i + 1
 
                     datos_kw = dict()
                     datos_kwh = dict()
@@ -8856,7 +8938,7 @@ def billing_cost_analisis(request):
 
                     if compare_years_flag:
                         year_02_data = ThreeElectricRateDetail.objects.filter(
-                            date_init__month = mes, date_init__year = year_02
+                            date_init__month=mes, date_init__year=year_02
                         )
 
                         if year_02_data:

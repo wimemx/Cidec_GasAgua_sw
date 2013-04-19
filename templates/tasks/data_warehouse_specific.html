@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block titulo %}Reportes{% endblock %}
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/consumption_centers/main.css" type="text/css" />
+    <link rel="stylesheet" href="/static/date_picker/css/datepicker_og.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="/static/js/external/jquery-validator/css/validator.css">
+{% endblock %}
+{% block externaljs %}
+    <script type="text/javascript" src="/static/date_picker/js/date_picker.js"></script>
+    <script type="text/javascript" src="/static/js/external/jquery-validator/js/validator.js"></script>
+{% endblock %}
+{% block document_ready %}
+    $("#dw").validate();
+    $('#date_from').val(new Date().format("yyyy-m-d")).DatePicker({
+        format:'Y-m-d',
+        date: $('#date_from').val(),
+        current: $('#date_from').val(),
+        starts: 1,
+        position: 'r',
+        onBeforeShow: function(){
+            $('#date_from').DatePickerSetDate($('#date_from').val(), true);
+        },
+        onChange: function(formated, dates){
+            $('#date_from').val(formated);
+            $('#date_from').DatePickerHide();
+        }
+    });
+{% endblock %}
+{% block contenido %}
+
+    <div id="bread_crumbs">
+        <ul>
+            <li><a href="/main/">Inicio</a></li>
+            <li><a href="/main/">Reportes</a></li>
+        </ul>
+
+    </div>
+    <div id="page_content">
+        <div id="contenido_interno">
+            <h2 id="titulo_reporte">Data Warehouse</h2>
+            <div class="divider" id="divider_top">&nbsp;</div>
+            {% if text %}
+                <span class="posted">
+                    {% autoescape off %}{{ text }}{% endautoescape %}
+            </span>
+            {% endif %}
+            <div id="graphs_container">
+                <form action="." method="post" id="dw">
+                    {% csrf_token %}
+                    <p class="g12">
+                        <label class="g2" for="consumer_unit">Unidad de consumo
+                        </label>
+                        <select name="consumer_unit" id="consumer_unit" class="validate notnull">
+                            <option value="0">Unidad de Consumo</option>
+                            {% for consumer_unit in consumer_units %}
+                                <option value="{{ consumer_unit.transactional_id }}">{{ consumer_unit.building_name }} - {{ consumer_unit.electric_device_type_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </p>
+                    <p class="g12">
+                        <label class="g2" for="intervalos">Intervalo
+                        </label>
+                        <select name="intervalos" id="intervalos" class="validate notnull">
+                            <option value="0">Intervalo</option>
+                            {% for delta in deltas %}
+                                <option value="{{ delta.pk }}">{{ delta.name }} - {{ delta.delta_seconds }}s</option>
+                            {% endfor %}
+                        </select>
+                    </p>
+                    <p class="g12">
+                        <label class="g2" for="date_from">A partir de:
+                        </label>
+                        <input type="text" name="date_from" id="date_from" class="validate notnull"/>
+                    </p>
+                    <p class="g12">
+                        <button type="submit" class="aqua_btn c">Actualizar DW</button>
+                    </p>
+                </form>
+            </div>
+
+
+        </div>
+    </div>
+{% endblock %}

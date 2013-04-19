@@ -185,7 +185,7 @@
             <td>{{ resultados.kvarh_totales }}</td>
         </tr>
         <tr>
-            <td>Factor de potencia %</td>
+            <td>Factor de potencia</td>
             <td>{{ resultados.factor_potencia|floatformat:2  }}</td>
         </tr>
         </tbody>
@@ -311,8 +311,8 @@
             <th>Mes</th>
             <th>Demanda M&aacute;xima</th>
             <th>Consumo Total (KWh)</th>
-            <th>F.P. %</th>
-            <th>F.C. %</th>
+            <th>F.P.</th>
+            <th>F.C.</th>
             <th>Precio Medio</th>
         </tr>
         </thead>
@@ -323,8 +323,8 @@
                     <td>{{ hist.fecha }}</td>
                     <td>{{ hist.demanda_maxima|floatformat:2 }}</td>
                     <td>{{ hist.total_kwh }}</td>
-                    <td>{{ hist.factor_potencia|floatformat:2 }}%</td>
-                    <td>{{ hist.factor_carga|floatformat:2 }}%</td>
+                    <td>{{ hist.factor_potencia|floatformat:2 }}</td>
+                    <td>{{ hist.factor_carga|floatformat:2 }}</td>
                     <td>{{ hist.costo_promedio|floatformat:4 }}</td>
                 </tr>
             {% endfor %}
@@ -345,8 +345,8 @@
                     <td>{{ hist.fecha }}</td>
                     <td>{{ hist.demanda_maxima|floatformat:2 }}</td>
                     <td>{{ hist.total_kwh }}</td>
-                    <td>{{ hist.factor_potencia|floatformat:2 }}%</td>
-                    <td>{{ hist.factor_carga|floatformat:2 }}%</td>
+                    <td>{{ hist.factor_potencia|floatformat:2 }}</td>
+                    <td>{{ hist.factor_carga|floatformat:2 }}</td>
                     <td>{{ hist.costo_promedio|floatformat:4 }}</td>
                 </tr>
             {% endfor %}

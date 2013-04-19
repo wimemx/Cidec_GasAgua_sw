@@ -937,3 +937,31 @@ class DailyData(models.Model):
 
     class Meta:
         verbose_name_plural = "Información Diaria"
+
+
+class MonthlyData(models.Model):
+    consumer_unit = models.ForeignKey(ConsumerUnit,
+                                      on_delete=models.PROTECT, null=True,
+                                      blank=True)
+    month = models.IntegerField()
+    year = models.IntegerField()
+    KWH_total = models.IntegerField(null=True, blank=True)
+    max_demand = models.IntegerField(null=True, blank=True)
+    carbon_emitions = models.IntegerField(null=True, blank=True)
+    power_factor = models.DecimalField(max_digits=20, decimal_places=2,
+                                       null=True, blank=True, default=0)
+    min_demand = models.IntegerField(null=True, blank=True, default=0)
+    average_cons = models.DecimalField(max_digits=20, decimal_places=2,
+                                       null=True, blank=True, default=0)
+    median_cons = models.DecimalField(max_digits=20, decimal_places=2,
+                                      null=True, blank=True, default=0)
+    deviation_cons = models.DecimalField(max_digits=20, decimal_places=2,
+                                         null=True, blank=True, default=0)
+
+    def __unicode__(self):
+        if self.consumer_unit:
+            return "Consumer Unit: " + \
+                   self.consumer_unit.building.building_name + " - Mes: " + \
+                   str(self.month) + " - " + str(self.year)
+        else:
+            return "Mes: " + str(self.month) + " - " + str(self.year)
