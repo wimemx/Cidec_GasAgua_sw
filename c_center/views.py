@@ -183,6 +183,7 @@ def dw_specific(request):
         raise Http404
 
 
+@login_required(login_url='/')
 def set_default_building(request, id_building):
     """Sets the default building for reports"""
     request.session['main_building'] = Building.objects.get(pk=id_building)
@@ -204,6 +205,7 @@ def set_default_building(request, id_building):
     return HttpResponse(content=data, content_type="application/json")
 
 
+@login_required(login_url='/')
 def set_consumer_unit(request):
     building = request.session['main_building']
 
@@ -215,6 +217,7 @@ def set_consumer_unit(request):
                               template_vars_template)
 
 
+@login_required(login_url='/')
 def set_default_consumer_unit(request, id_c_u):
     """Sets the consumer_unit for all the reports"""
     c_unit = ConsumerUnit.objects.get(pk=id_c_u)
@@ -8711,7 +8714,6 @@ def billing_analisis(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
-
 def billing_cost_analisis(request):
     """Renders the cfe bill and the historic data chart"""
     datacontext = get_buildings_context(request.user)[0]
@@ -8915,7 +8917,7 @@ def billing_cost_analisis(request):
                 template_vars['tarifa'] = 3
 
                 for i in range(12):
-                    mes = i+1
+                    mes = i + 1
 
                     datos_kw = dict()
                     datos_kwh = dict()
@@ -8936,7 +8938,7 @@ def billing_cost_analisis(request):
 
                     if compare_years_flag:
                         year_02_data = ThreeElectricRateDetail.objects.filter(
-                            date_init__month = mes, date_init__year = year_02
+                            date_init__month=mes, date_init__year=year_02
                         )
 
                         if year_02_data:

@@ -88,6 +88,8 @@
         $("#cons_total").text("-");
         $("#dem_total").text("-");
         $("#pp_total").text("-");
+        $("#emit_total").text("-");
+
         month_totals.find("#month_dem_min").text("-");
         month_totals.find("#month_cons_prom").text("-");
         month_totals.find("#month_cons_med").text("-");
@@ -116,6 +118,12 @@
                     texto_pf = String(data[0].factor_potencia.toFixed(2)) + "%";
                 }
                 $("#pp_total").text(texto_pf);
+
+                var texto_emit = '-';
+                if(data[0].emisiones != undefined){
+                    texto_emit = String(parseInt(data[0].emisiones)) + "ton";
+                }
+                $("#emit_total").text(texto_emit);
 
 
 

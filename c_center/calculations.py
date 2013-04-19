@@ -47,7 +47,7 @@ def demandaMinima(consumer, fecha_inicio, fecha_fin):
     lecturas = DailyData.objects.filter(
         consumer_unit=consumer,
         data_day__gte=fecha_inicio,
-        data_day__lte=fecha_fin).order_by('min_demand')
+        data_day__lte=fecha_fin).exclude(min_demand=0).order_by('min_demand')
     if lecturas:
         demanda_min = lecturas[0].min_demand
     return demanda_min

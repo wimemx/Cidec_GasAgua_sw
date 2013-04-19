@@ -1035,7 +1035,7 @@ def handle_company_logo(i, company, is_new):
 
     (width, height) = imageImage.size
     width, height = variety.scale_dimensions(width, height, longest_side=200)
-    resizedImage = imageImage.resize((width, height))
+    resizedImage = imageImage.resize((width, height), Image.ANTIALIAS)
 
     imagefile = cStringIO.StringIO()
     resizedImage.save(imagefile, 'JPEG', quality=100)
@@ -1546,6 +1546,46 @@ def getWeeklyReport(consumer, month, year):
     return semanas
 
 def getMonthlyReport(consumer_u, month, year):
+    if month < datetime.datetime.today().month and \
+            year <= datetime.datetime.today().year:
+        try:
+            mes = MonthlyData.objects.get(consumer_unit=consumer_u,
+                                          month=month, year=year)
+        except ObjectDoesNotExist:
+            mes_new = calculateMonthlyReport(consumer_u, month, year)
+            mes = MonthlyData(consumer_unit=consumer_u,
+                                  month=month,
+                                  year=year,
+                                  KWH_total=mes_new['consumo_acumulado'],
+                                  max_demand=mes_new['demanda_max'],
+                                  carbon_emitions=mes_new['emisiones'],
+                                  power_factor=str(mes_new['factor_potencia']),
+                                  min_demand=mes_new['demanda_min'],
+                                  average_cons=str(mes_new['consumo_promedio']),
+                                  median_cons=str(mes_new['consumo_mediana']),
+                                  deviation_cons=str(
+                                      mes_new['consumo_desviacion']))
+            mes.save()
+        return dict(consumo_acumulado=mes.KWH_total,
+                    demanda_max=mes.max_demand,
+                    emisiones=mes.carbon_emitions,
+                    factor_potencia=mes.carbon_emitions,
+                    demanda_min=mes.min_demand,
+                    consumo_promedio=float(mes.average_cons),
+                    consumo_mediana=float(mes.median_cons),
+                    consumo_desviacion=float(mes.deviation_cons))
+    else:
+        return calculateMonthlyReport(consumer_u, month, year)
+
+
+def calculateMonthlyReport(consumer_u, month, year):
+    """Calculate the month report for the consumer_unit
+
+    :param consumer_u: ConsumerUnit object
+    :param month: int month number
+    :param year: int year umber
+    :return mes: dictionary
+    """
     mes = {}
 
     #Se obtiene el tipo de tarifa del edificio.
@@ -1572,6 +1612,7 @@ def getMonthlyReport(consumer_u, month, year):
         mes['consumo_promedio'] = 0
         mes['consumo_mediana'] = 0
         mes['consumo_desviacion'] = 0
+        mes['emisiones'] = 0
     else:
         #Obtener consumo acumulado
         mes['consumo_acumulado'] = consumoAcumuladoKWH(consumer_u,
@@ -1607,6 +1648,9 @@ def getMonthlyReport(consumer_u, month, year):
 
         #Consumo desviación
         mes['consumo_mediana'] = medianaKWH(consumer_u, fecha_inicio, fecha_final)
+
+        #emisiones de carbon TODO calcular emisiones
+        mes['emisiones'] = 404
 
     return mes
 

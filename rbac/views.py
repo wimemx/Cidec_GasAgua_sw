@@ -34,6 +34,7 @@ DELETE = Operation.objects.get(operation_name="Eliminar")
 UPDATE = Operation.objects.get(operation_name="Modificar")
 
 
+@login_required(login_url='/')
 def control_panel(request):
     objetos = Object.objects.exclude(Q(object_access_point='') |
                                      Q(object_access_point="/"))
