@@ -70,17 +70,17 @@ def max_minKWH(consumer, fecha_inicio, fecha_fin, min_max):
     :return:
     """
     if min_max == "min":
-        order = "TotalkWhIMPORT"
+        order = "KWH_total"
     else:
-        order = "-TotalkWhIMPORT"
+        order = "-KWH_total"
     val = 0
-    lecturas = ElectricDataTemp.objects.filter(
-        medition_date__gte=fecha_inicio,
-        medition_date__lte=fecha_fin, TotalkWhIMPORT__gt=0,
-        profile_powermeter=consumer.profile_powermeter
-    ).values('TotalkWhIMPORT').order_by(order)
+    lecturas = DailyData.objects.filter(
+        data_day__gte=fecha_inicio,
+        data_day__lte=fecha_fin, KWH_total__gt=0,
+        consumer_unit=consumer
+    ).values('KWH_total').order_by(order)
     if lecturas:
-        val = lecturas[0]['TotalkWhIMPORT']
+        val = lecturas[0]['KWH_total']
     return val
 
 

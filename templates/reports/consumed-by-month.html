@@ -91,8 +91,9 @@ function drawVisualization() {
             'hAxis': {'slantedText': false},
             'vAxis': {'viewWindow': {'min': {{ min }}, 'max': {{max}} }},
             'legend': {'position': 'top', 'alignment': 'center'},
-            'colors': ["#668caa", "#67ade4", "#97d8f1"],
+            'colors': ["#668caa", "#67ade4", "#97d8f1"]{% if periods %},
             'bar': {groupWidth: '100%'}
+            {% endif %}
         }
     });
 

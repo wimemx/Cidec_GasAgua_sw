@@ -1582,7 +1582,8 @@ def getMonthlyReport(consumer_u, month, year):
                                   carbon_emitions=mes_new['emisiones'],
                                   power_factor=str(mes_new['factor_potencia']),
                                   min_demand=mes_new['demanda_min'],
-                                  average_demand=mes_new['demanda_promedio'],
+                                  average_demand=str(
+                                      mes_new['demanda_promedio']),
                                   min_cons=mes_new['consumo_minimo'],
                                   average_cons=str(mes_new['consumo_promedio']),
                                   median_cons=str(mes_new['consumo_mediana']),
@@ -1591,9 +1592,12 @@ def getMonthlyReport(consumer_u, month, year):
             mes.save()
         return dict(consumo_acumulado=mes.KWH_total,
                     demanda_max=mes.max_demand,
+                    consumo_maximo=mes.max_cons,
                     emisiones=mes.carbon_emitions,
                     factor_potencia=mes.carbon_emitions,
                     demanda_min=mes.min_demand,
+                    demanda_promedio=mes.average_demand,
+                    consumo_minimo=mes.min_cons,
                     consumo_promedio=float(mes.average_cons),
                     consumo_mediana=float(mes.median_cons),
                     consumo_desviacion=float(mes.deviation_cons))
