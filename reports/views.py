@@ -7,6 +7,7 @@ import numpy
 import time
 import sys
 import csv
+import decimal
 
 # Django imports
 import django.http
@@ -27,6 +28,7 @@ import data_warehouse_extended.views
 # CCenter imports
 import c_center.models
 import c_center.c_center_functions
+import c_center.calculations
 import c_center.graphics
 
 # Other imports
@@ -1150,7 +1152,47 @@ def render_report_consumed_by_month(
     template_variables['current_year'] = year
     template_variables['current_month'] = month
 
+    cu = c_center.models.ConsumerUnit.objects.get(pk=consumer_unit_id)
+    day_data = \
+        c_center.c_center_functions.getDailyReports(cu, month, year, 1)
+    formated_day_data = []
+
+    cont = 1
+    day_array = []
+    for data in day_data:
+        day_array.append(data)
+        if cont % 7 == 0:
+            fecha1 = datetime.datetime.strptime(day_array[0]['fecha'],
+                                                "%Y-%m-%d %H:%M:%S")
+            fecha2 = datetime.datetime.strptime(day_array[-1]['fecha'],
+                                                "%Y-%m-%d %H:%M:%S")
+            week_total = c_center.c_center_functions.consumoAcumuladoKWH(
+                cu, fecha1, fecha2)
+            day_array[0]["week_total"] = week_total
+
+            formated_day_data.append(day_array)
+
+            day_array = []
+
+        cont += 1
+
+    template_variables['day_data'] = formated_day_data
+
+    month_data = \
+        c_center.c_center_functions.getMonthlyReport(cu, month, year)
+
+    for key in month_data:
+        month_data[key] = variety.moneyfmt(
+            decimal.Decimal(str(month_data[key])))
+
+    template_variables['month_data'] = month_data
     template_variables['electric_data'] = electrical_parameter_name
+
+    if cu.building.electric_rate.electric_rate_name == "H-M":
+        #parse data_cluster_consumed
+        template_variables['rows'] = rates_for_data_cluster(
+            data_cluster_consumed, cu.building.region)
+        template_variables['periods'] = True
 
     template_context =\
         django.template.context.RequestContext(request, template_variables)
@@ -1158,6 +1200,44 @@ def render_report_consumed_by_month(
     return django.shortcuts.render_to_response(
                "reports/consumed-by-month.html",
                template_context)
+
+
+def rates_for_data_cluster(data_cluster_consumed, region):
+
+    data_cluster_cons = []
+    for data_cluster in data_cluster_consumed:
+
+        date_time = datetime.datetime.fromtimestamp(data_cluster["datetime"])
+        periodo = c_center.calculations.obtenerTipoPeriodoObj(
+            date_time, region).period_type
+        if periodo == "base":
+            arr_base = data_cluster
+            arr_int = dict(certainty=False,
+                                value=None,
+                                datetime=data_cluster["datetime"])
+            arr_punt = dict(certainty=False,
+                                 value=None,
+                                 datetime=data_cluster["datetime"])
+        elif periodo == "intermedio":
+            arr_base = dict(certainty=False,
+                                value=None,
+                                datetime=data_cluster["datetime"])
+            arr_int = data_cluster
+            arr_punt = dict(certainty=False,
+                                value=None,
+                                datetime=data_cluster["datetime"])
+        else:
+            #periodo == "punta"
+            arr_base = dict(certainty=False,
+                                value=None,
+                                datetime=data_cluster["datetime"])
+            arr_int = dict(certainty=False,
+                                value=None,
+                                datetime=data_cluster["datetime"])
+            arr_punt = data_cluster
+        data_cluster_cons.append([arr_base, arr_int, arr_punt])
+
+    return data_cluster_cons
 
 
 def csv_report(request):
