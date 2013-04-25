@@ -521,6 +521,41 @@ def see_alarm(request, id_alarm):
 def suscribe_alarm(request, id_alarm):
     pass
 
+
+@login_required(login_url='/')
+def alarm_suscription_list(request):
+    datacontext = get_buildings_context(request.user)[0]
+    template_vars = {}
+    if datacontext:
+        template_vars["datacontext"] = datacontext
+
+    template_vars["sidebar"] = request.session['sidebar']
+    template_vars["empresa"] = request.session['main_building']
+    template_vars["company"] = request.session['company']
+    lista = UserNotificationSettings.objects.all()
+    template_vars["lista"]=lista
+    paginator = Paginator(lista, 10)
+    return render_to_response(
+            "alarms/alarm_suscription_list.html",
+            template_vars)
+    pass
+
+@login_required(login_url='/')
+def add_alarm_suscription(request):
+    datacontext = get_buildings_context(request.user)[0]
+    template_vars = {}
+    if datacontext:
+        template_vars["datacontext"] = datacontext
+
+    template_vars["sidebar"] = request.session['sidebar']
+    template_vars["empresa"] = request.session['main_building']
+    template_vars["company"] = request.session['company']
+
+    return render_to_response(
+            "alarms/add_alarm_suscription.html",
+            template_vars)
+    pass
+
 @login_required(login_url='/')
 def unsuscribe_alarm(request, id_alarm):
     pass
