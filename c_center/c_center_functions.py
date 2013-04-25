@@ -1494,7 +1494,7 @@ def getDailyReports(consumer, month, year, days_offset=None):
     :param consumer: ConsumerUnit object
     :param month: number 1-12 number of the month
     :param year: number 4 digits number of the year
-    :param days_offset: number negative days offset (for week starting in sat)
+    :param days_offset: number negative days offset (for week starting in mon)
     """
 
     #Se obtienen los dias del mes
@@ -1505,7 +1505,7 @@ def getDailyReports(consumer, month, year, days_offset=None):
 
     for day in month_days:
         if days_offset:
-            day = day - datetime.timedelta(days=days_offset)
+            day = day + datetime.timedelta(days=days_offset)
         try:
             ddata_obj = DailyData.objects.get(consumer_unit=consumer,
                                               data_day=day)
@@ -1528,7 +1528,7 @@ def getWeeklyReport(consumer, month, year, days_offset=None):
     :param consumer: ConsumerUnit object
     :param month: number 1-12 number of the month
     :param year: number 4 digits number of the year
-    :param days_offset: number negative days offset (for week starting in sat)
+    :param days_offset: number negative days offset (for week starting in mon)
     """
     semanas = []
     #Se obtienen los dias del mes
@@ -1547,7 +1547,7 @@ def getWeeklyReport(consumer, month, year, days_offset=None):
         fecha_final = semana_array[6]
 
         if days_offset:
-            fecha_inicial = fecha_inicial - datetime.timedelta(days=days_offset)
+            fecha_inicial = fecha_inicial + datetime.timedelta(days=days_offset)
             fecha_final = fecha_final - datetime.timedelta(days=days_offset)
 
         no_semana = {

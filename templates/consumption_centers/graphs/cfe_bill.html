@@ -24,12 +24,12 @@
                         ['{{ hist.fecha }}', {{ hist.kw_base }}, {{ hist.kw_intermedio }}, {{ hist.kw_punta }}],
                     {% endfor %}
                 {% elif tipo_tarifa.pk == 2 %}
-                    ['Mes', 'KWH'],
+                    ['Mes', 'kWh'],
                     {% for hist in  historico%}
                     ['{{ hist.fecha }}', {{ hist.total_kwh }}],
                     {% endfor %}
                 {% elif tipo_tarifa.pk == 3 %}
-                    ['Mes', 'KWH'],
+                    ['Mes', 'kWh'],
                     {% for hist in  historico%}
                     ['{{ hist.fecha }}', {{ hist.total_kwh }}],
                     {% endfor %}
@@ -235,11 +235,11 @@
         </thead>
         <tbody>
         <tr>
-            <td>Energía KWH</td>
+            <td>Energía kWh</td>
             <td>{{ resultados.kwh_totales }}</td>
         </tr>
         <tr>
-            <td>Tarifa $/Kwh</td>
+            <td>Tarifa $/kWh</td>
             <td>{{ resultados.tarifa_kwh|floatformat:4 }}</td>
         </tr>
         <tr>
@@ -262,11 +262,11 @@
         </thead>
         <tbody>
         <tr>
-            <td>Energía KWH</td>
+            <td>Energía kWh</td>
             <td>{{ resultados.kwh_totales }}</td>
         </tr>
         <tr>
-            <td>Tarifa $/Kwh</td>
+            <td>Tarifa $/kWh</td>
             <td>{{ resultados.tarifa_kwh|floatformat:4 }}</td>
         </tr>
         <tr>
@@ -310,7 +310,7 @@
         <tr>
             <th>Mes</th>
             <th>Demanda M&aacute;xima</th>
-            <th>Consumo Total (KWh)</th>
+            <th>Consumo Total (kWh)</th>
             <th>F.P.</th>
             <th>F.C.</th>
             <th>Precio Medio</th>

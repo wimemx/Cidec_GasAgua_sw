@@ -1052,6 +1052,11 @@ def render_instant_measurements(
                                                 granularity)
     normalize_data_clusters_list(data_clusters_list)
 
+    #get the raw data for statistics
+    statistics_clusters_list = get_data_clusters_list(
+        request_data_list_normalized, "raw")
+    normalize_data_clusters_list(statistics_clusters_list)
+
     #data_clusters_list para csv
 
     axis_dictionary = \
@@ -1081,7 +1086,8 @@ def render_instant_measurements(
     # Get statistical values
     #
     maximum, minimum = get_data_clusters_list_limits(data_clusters_list)
-    data_clusters_statistics = get_data_clusters_statistics(data_clusters_list)
+    data_clusters_statistics = get_data_clusters_statistics(
+        statistics_clusters_list)
 
     template_variables['max'] = maximum
     template_variables['min'] = minimum
@@ -1117,7 +1123,7 @@ def render_report_consumed_by_month(
         raise django.http.Http404
 
     days = variety.getMonthDays(month, year)
-    first_week_start_datetime = days[0] - datetime.timedelta(days=1)
+    first_week_start_datetime = days[0] + datetime.timedelta(days=1)
     last_week_end_datetime = days[-1]
 
     #
@@ -1141,10 +1147,22 @@ def render_report_consumed_by_month(
 
     template_variables['max'] = maximun
     template_variables['min'] = minimun
+    today = datetime.datetime.now()
+    if today.month == month and today.year == year:
+        current_week = variety.get_week_of_month_from_datetime(today)
+        template_variables['course_week'] = True
+        #number of weeks in month minus current_week = remaining weeks at
+        #                                              the start of month
+        template_variables['week'] = 6 - current_week
+        template_variables['fi'], template_variables['ff'] = \
+            variety.get_week_start_datetime_end_datetime_tuple(year,
+                                                               month,
+                                                               current_week)
 
-    template_variables['ff'] = last_week_end_datetime
-    template_variables['fi'] = last_week_end_datetime - \
-                               datetime.timedelta(days=7)
+    else:
+        template_variables['ff'] = last_week_end_datetime
+        template_variables['fi'] = last_week_end_datetime - \
+                                   datetime.timedelta(days=7)
     template_variables['consumer_unit_id'] = request.GET['consumer-unit-id']
     template_variables['years'] = request.session['years']
     template_variables['current_week'] = variety.\
@@ -1170,6 +1188,11 @@ def render_report_consumed_by_month(
                 cu, fecha1, fecha2)
             day_array[0]["week_total"] = week_total
 
+            for day in day_array:
+                for key in day:
+                    if day[key] and variety.is_number(day[key]):
+                        day[key] = variety.moneyfmt(
+                            decimal.Decimal(str(day[key])), 0, "", ",", "")
             formated_day_data.append(day_array)
 
             day_array = []

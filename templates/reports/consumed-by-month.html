@@ -91,9 +91,8 @@ function drawVisualization() {
             'hAxis': {'slantedText': false},
             'vAxis': {'viewWindow': {'min': {{ min }}, 'max': {{max}} }},
             'legend': {'position': 'top', 'alignment': 'center'},
-            'colors': ["#668caa", "#67ade4", "#97d8f1"]{% if periods %},
-            'bar': {groupWidth: '100%'}
-            {% endif %}
+            'isStacked': true,
+            'colors': ["#3466cc", "#67ade4", "#fd9827"]
         }
     });
 
@@ -249,8 +248,11 @@ function drawVisualization() {
 
 google.setOnLoadCallback(drawVisualization);
 
-
+{% if course_week %}
+    var weekly_counter = {{ week }};
+{% else %}
 var weekly_counter = 0;
+{% endif %}
 function changeRange_left() {
     var start_date;
     if(weekly_counter<5){
@@ -386,13 +388,13 @@ function update_bars_color(){
     <!-- chart start -->
     <p id="showing_week"><span class="left-nav left_legend"></span><span class="sem_count">Semana #</span><span class="date_range">(- al -)</span><span class="right-nav right_legend"></span></p>
     <div id="dias">
-        <span class="fl">S&aacute;bado</span>
-        <span class="fl">Domingo</span>
         <span class="fl">Lunes</span>
         <span class="fl">Martes</span>
         <span class="fl">Mi&eacute;rcoles</span>
         <span class="fl">Jueves</span>
         <span class="fl">Viernes</span>
+        <span class="fl">S&aacute;bado</span>
+        <span class="fl">Domingo</span>
     </div>
     <div id="chart">
         <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
@@ -477,13 +479,13 @@ function update_bars_color(){
             <tr class="row1">
                 <th width="4%">S</th>
                 <th width="12%">Total</th>
-                <th width="12%">S&aacute;bado</th>
-                <th width="12%">Domingo</th>
                 <th width="12%">Lunes</th>
                 <th width="12%">Martes</th>
                 <th width="12%">Mi&eacute;rcoles</th>
                 <th width="12%">Jueves</th>
                 <th width="12%">Viernes</th>
+                <th width="12%">S&aacute;bado</th>
+                <th width="12%">Domingo</th>
             </tr>
             </thead>
 

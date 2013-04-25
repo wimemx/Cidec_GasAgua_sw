@@ -81,9 +81,12 @@ GRAPHS_F3 = [ob.object for ob in GroupObject.objects.filter(
     group__group_name="Fase 3")]
 GRAPHS_CACUM = [ob.object for ob in GroupObject.objects.filter(
     group__group_name="Consumo Acumulado")]
+GRAPHS_CONS = [ob.object for ob in GroupObject.objects.filter(
+    group__group_name="Consumo")]
 GRAPHS = dict(energia=GRAPHS_ENERGY, corriente=GRAPHS_I, voltaje=GRAPHS_V,
               perfil_carga=GRAPHS_PF, fase1=GRAPHS_F1, fase2=GRAPHS_F2,
-              fase3=GRAPHS_F3, consumo_acumulado=GRAPHS_CACUM)
+              fase3=GRAPHS_F3, consumo_acumulado=GRAPHS_CACUM,
+              consumo=GRAPHS_CONS)
 
 VIRTUAL_PROFILE = ProfilePowermeter.objects.get(
     powermeter__powermeter_anotation="Medidor Virtual")
@@ -2127,7 +2130,7 @@ def add_powermeter(request):
                 )
                 newPowerMeter.save()
                 ProfilePowermeter(powermeter=newPowerMeter).save()
-                change_profile_electric_data.delay([pw_serial])
+                change_profile_electric_data([pw_serial])
 
                 template_vars["message"] = "Medidor creado exitosamente"
                 template_vars["type"] = "n_success"
@@ -2223,7 +2226,7 @@ def edit_powermeter(request, id_powermeter):
                 powermeter.powermeter_serial = pw_serial
                 powermeter.powermeter_model = pw_model
                 powermeter.save()
-                change_profile_electric_data.delay([pw_serial])
+                change_profile_electric_data([pw_serial])
 
                 message = "Medidor editado exitosamente"
                 _type = "n_success"
@@ -4775,7 +4778,7 @@ def add_partbuilding(request):
                 )
                 newConsumerUnit.save()
                 #Add the consumer_unit instance for the DW
-                datawarehouse_run.delay(
+                datawarehouse_run(
                     fill_instants=None,
                     fill_intervals=None,
                     _update_consumer_units=True,
@@ -5498,7 +5501,7 @@ def add_building(request):
                 )
                 cu.save()
                 #Add the consumer_unit instance for the DW
-                datawarehouse_run.delay(
+                datawarehouse_run(
                     fill_instants=None,
                     fill_intervals=None,
                     _update_consumer_units=True,
@@ -6760,7 +6763,7 @@ def save_add_part_popup(request):
                 )
                 newConsumerUnit.save()
                 #Add the consumer_unit instance for the DW
-                datawarehouse_run.delay(
+                datawarehouse_run(
                     fill_instants=None,
                     fill_intervals=None,
                     _update_consumer_units=True,
@@ -6857,7 +6860,7 @@ def save_add_powermeter_popup(request):
             newPowerMeter.save()
             profile = ProfilePowermeter(powermeter=newPowerMeter)
             profile.save()
-            change_profile_electric_data.delay([pw_serial])
+            change_profile_electric_data([pw_serial])
 
             return HttpResponse(content=profile.pk,
                                 content_type="text/plain",
@@ -6957,7 +6960,7 @@ def add_cu(request):
             )
             consumer_unit.save()
             #Add the consumer_unit instance for the DW
-            datawarehouse_run.delay(
+            datawarehouse_run(
                 fill_instants=None,
                 fill_intervals=None,
                 _update_consumer_units=True,
@@ -7485,7 +7488,7 @@ def set_cutdate(request, id_cutdate):
                     cd_before.save()
 
                     #Se recalcula el mes anterior ya con las nuevas fechas.
-                    save_historic_delay.delay(cd_before,
+                    save_historic_delay(cd_before,
                                               request.session['main_building'])
 
                 #Si hay cambio de fechas en mes siguiente
@@ -7497,7 +7500,7 @@ def set_cutdate(request, id_cutdate):
                     #Si la fecha final del mes siguiente no es nula,
                     # se crea el historico
                     if cd_after.date_end:
-                        save_historic_delay.delay(
+                        save_historic_delay(
                             cd_after, request.session['main_building'])
                 else:
                     #Se crea el nuevo mes
@@ -7514,7 +7517,7 @@ def set_cutdate(request, id_cutdate):
                 cutdate_obj.save()
 
                 #Se calcula el mes actual
-                save_historic_delay.delay(cutdate_obj,
+                save_historic_delay(cutdate_obj,
                                           request.session['main_building'])
 
                 template_vars["message"] = "Fechas de Corte establecidas " \
@@ -7634,7 +7637,7 @@ def set_cutdate_bill(request):
             )
             new_cut.save()
             #Se guarda el historico
-            save_historic_delay.delay(cutdate_obj,
+            save_historic_delay(cutdate_obj,
                                       request.session['main_building'])
 
             status = 'OK'
