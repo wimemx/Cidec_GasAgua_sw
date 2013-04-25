@@ -2576,7 +2576,7 @@ def edit_electric_device_type(request, id_edt):
         post = {'devicetypename': devicetypename,
                 'devicetypedescription': devicetypedescription}
 
-        datacontext, b_list = get_buildings_context(request.user)[0]
+        datacontext, b_list = get_buildings_context(request.user)
         empresa = request.session['main_building']
         message = ''
         _type = ''
