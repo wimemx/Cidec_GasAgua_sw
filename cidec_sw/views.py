@@ -196,16 +196,6 @@ def index(request):
         pa = PermissionAsigment.objects.filter(role__pk__in=roles).exclude(
             object__object_access_point="/")
 
-    d = defaultdict(list)
-    for permission in pa:
-        if permission.object.object_name not in GRAPHS and \
-                        permission.object.object_name != \
-                        "Consultar recibo CFE" and \
-                        permission.object.object_name != "Perfil de carga":
-            gObject = GroupObject.objects.get(
-                object__object_name=permission.object.object_name)
-            d[gObject.group.group_name].append(gObject.object)
-
     menu_option_str = "<ul id='main_menu' class='fr'>"
     #------------------------------------------------------------
     categories = MenuCategs.objects.filter(main=True).order_by("order")
