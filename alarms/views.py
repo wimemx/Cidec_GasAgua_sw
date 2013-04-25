@@ -422,7 +422,28 @@ def status_alarm(request, id_alarm):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+@login_required(login_url='/')
+def mostrar_alarma(request, id_alarm):
+    datacontext = get_buildings_context(request.user)[0]
+    template_vars = {}
+    if datacontext:
+        template_vars["datacontext"] = datacontext
+    template_vars["sidebar"] = request.session['sidebar']
+    template_vars["empresa"] = request.session['main_building']
+    template_vars["company"] = request.session['company']
+    alarm= get_object_or_404(Alarms, id=id_alarm)
+    template_vars["alarm"]=alarm
+    template_vars['building'] = get_building_siblings(alarm.consumer_unit.building)
+    template_vars['compania']= template_vars['building'][0].company
+    template_vars['company']= get_company_siblings(template_vars['compania'])
+    template_vars['curr_cluster'] = template_vars['company'][0].cluster
+    template_vars_template = RequestContext(request, template_vars)
+    print template_vars
+    return render_to_response("alarms/alarm_detail.html",template_vars_template)
 
+
+
+"""
 def see_alarm(request, id_alarm):
     datacontext = get_buildings_context(request.user)[0]
     template_vars = {}
@@ -434,9 +455,10 @@ def see_alarm(request, id_alarm):
     template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
 
+
     if has_permission(request.user, VIEW,
                       "Ver equipos industriales") or request.user.is_superuser:
-        template_vars["alarm"] = get_object_or_404(Alarm,pk=int(id_ie))
+      template_vars["alarm"] = get_object_or_404(Alarm,pk=int(id_ie))
 
         #Asociated powermeters
         if has_permission(request.user, VIEW,
@@ -505,7 +527,7 @@ def see_alarm(request, id_alarm):
             template_vars['ver_medidores'] = False
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
-            "consumption_centers/consumer_units/see_ie.html",
+            "alarms/alarm_detail.html",
             template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)[0]
@@ -527,3 +549,4 @@ def unsuscribe_alarm(request, id_alarm):
 
 def search_alarm(request):
     pass
+"""

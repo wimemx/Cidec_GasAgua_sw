@@ -18,7 +18,7 @@ urlpatterns = patterns('',
                            'alarms.views.status_alarm'),
                        url(r'^alarmas/', 'alarms.views.alarm_list'),
                        url(r'^alarma/(?P<id_alarm>\d+)/',
-                           'alarms.views.see_alarm'),
+                           'alarms.views.mostrar_alarma'),
                        url(r'^buscar_alarma/',
                            'alarms.views.search_alarm'),
                        )
