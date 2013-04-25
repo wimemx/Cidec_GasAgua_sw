@@ -27,14 +27,14 @@
             var fech_ini = '', fech_fin = '';
             var view;
             var colors = ["#3466cc", "#fd9827", "#dc3919",
-                          "#f9dbad", "#fd9827", "#DEB887",
+                          "#f9dbad", "#778899", "#DEB887",
                           "#7c615d", "#9ebfc6", "#d41314",
                           "#bbcbea", "#efbdb1", "#f9dbad",
                           "#FF69B4", "#32CD32", "#9370DB",
                           "#FF6347", "#AFEEEE", "#6A5ACD",
                           "#FFDAB9", "#BDB76B", "#cc9999",
                           "#00008B", "#000080", "#191970",
-                          "#696969", "#778899", "#708090",
+                          "#696969", "#fd9827", "#708090",
                           "#2F4F4F", "#DCDCDC", "#000000",
                           "#006600", "#333366", "#cc6600",
                           "#009900", "#6666cc", "#ff6633"
@@ -137,15 +137,19 @@
                 var data = new google.visualization.DataTable();
                 //var columns_display = new Array();
                 //var default_colors = new Array();
+                var columns = [{% for column in columns %}"{{ column }}",{% endfor %}null]
+                var pf_index = 2000;
                 {% for column in columns %}
                     data.addColumn({type:'datetime', role:'domain'});
                     data.addColumn('number', "{{ column }}");
                     data.addColumn({type:'boolean', role:'certainty'});
+                    {% if column == "PF" %}
+                        pf_index = {{ forloop.counter0 }};
+                    {% endif %}
                 {% endfor %}
                 var True = true;
                 var False = false;
                 var rows_data = {% autoescape off %}{{ rows }}{% endautoescape %};
-
                 for(var row_index = 0; row_index < rows_data.length; row_index++){
                     var row_data = rows_data[row_index];
                     var row_array = [];
@@ -157,10 +161,13 @@
                             fech_ini = object_datetime;
                         }
                         fech_fin = object_datetime;
-
-
                         row_array.push(object_datetime);
-                        var object_electric_data = Math.abs(data_object['value']);
+                        var object_electric_data;
+                        if(data_index == pf_index && Math.abs(data_object['value']) > 1){
+                            object_electric_data = 1;
+                        }else{
+                            object_electric_data = Math.abs(data_object['value']);
+                        }
                         row_array.push(object_electric_data);
                         var object_certainty = data_object['certainty'];
                         row_array.push(object_certainty);

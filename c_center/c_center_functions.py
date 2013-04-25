@@ -1488,7 +1488,14 @@ def dailyReport(building, consumer_unit, today):
     return 'OK'
 
 
-def getDailyReports(consumer, month, year):
+def getDailyReports(consumer, month, year, days_offset=None):
+    """ Returns an array of dicts with the daily data for the year-month
+
+    :param consumer: ConsumerUnit object
+    :param month: number 1-12 number of the month
+    :param year: number 4 digits number of the year
+    :param days_offset: number negative days offset (for week starting in mon)
+    """
 
     #Se obtienen los dias del mes
     month_days = variety.getMonthDays(month, year)
@@ -1497,6 +1504,8 @@ def getDailyReports(consumer, month, year):
     dailyreport_arr = []
 
     for day in month_days:
+        if days_offset:
+            day = day + datetime.timedelta(days=days_offset)
         try:
             ddata_obj = DailyData.objects.get(consumer_unit=consumer,
                                               data_day=day)
@@ -1513,8 +1522,14 @@ def getDailyReports(consumer, month, year):
 
     return dailyreport_arr
 
-def getWeeklyReport(consumer, month, year):
+def getWeeklyReport(consumer, month, year, days_offset=None):
+    """ Returns an array of dicts with the weekly data for the year-month
 
+    :param consumer: ConsumerUnit object
+    :param month: number 1-12 number of the month
+    :param year: number 4 digits number of the year
+    :param days_offset: number negative days offset (for week starting in mon)
+    """
     semanas = []
     #Se obtienen los dias del mes
     month_days = variety.getMonthDays(month, year)
@@ -1531,6 +1546,10 @@ def getWeeklyReport(consumer, month, year):
         fecha_inicial = semana_array[0]
         fecha_final = semana_array[6]
 
+        if days_offset:
+            fecha_inicial = fecha_inicial + datetime.timedelta(days=days_offset)
+            fecha_final = fecha_final - datetime.timedelta(days=days_offset)
+
         no_semana = {
         'demanda_max': demandaMaxima(consumer, fecha_inicial, fecha_final),
         'demanda_min': demandaMinima(consumer, fecha_inicial, fecha_final),
@@ -1545,18 +1564,6 @@ def getWeeklyReport(consumer, month, year):
 
     return semanas
 
-def all_getMonthlyReport():
-    consumer_units = ConsumerUnit.objects.all()
-    today = datetime.date.today()
-    for consumer in consumer_units:
-        for year in [2012, 2013]:
-            for month in range(1, 12, 1):
-                print year, month
-                if year == today.year and month >= today.month:
-                    continue
-                else:
-                    print consumer, month, year
-                    getMonthlyReport(consumer, month, year)
 
 def getMonthlyReport(consumer_u, month, year):
     if month < datetime.datetime.today().month and \
@@ -1575,7 +1582,8 @@ def getMonthlyReport(consumer_u, month, year):
                                   carbon_emitions=mes_new['emisiones'],
                                   power_factor=str(mes_new['factor_potencia']),
                                   min_demand=mes_new['demanda_min'],
-                                  average_demand=mes_new['demanda_promedio'],
+                                  average_demand=str(
+                                      mes_new['demanda_promedio']),
                                   min_cons=mes_new['consumo_minimo'],
                                   average_cons=str(mes_new['consumo_promedio']),
                                   median_cons=str(mes_new['consumo_mediana']),
@@ -1584,14 +1592,45 @@ def getMonthlyReport(consumer_u, month, year):
             mes.save()
         return dict(consumo_acumulado=mes.KWH_total,
                     demanda_max=mes.max_demand,
+                    consumo_maximo=mes.max_cons,
                     emisiones=mes.carbon_emitions,
                     factor_potencia=mes.carbon_emitions,
                     demanda_min=mes.min_demand,
+                    demanda_promedio=mes.average_demand,
+                    consumo_minimo=mes.min_cons,
                     consumo_promedio=float(mes.average_cons),
                     consumo_mediana=float(mes.median_cons),
                     consumo_desviacion=float(mes.deviation_cons))
     else:
         return calculateMonthlyReport(consumer_u, month, year)
+
+
+def calculateMonthlyReport_all(month, year):
+    consumer_units = ConsumerUnit.objects.all()
+    today = datetime.date.today()
+    for consumer_u in consumer_units:
+        if year == today.year and month >= today.month:
+            #si el mes aún no concluye
+            continue
+        else:
+            mes_new = calculateMonthlyReport(consumer_u, month, year)
+            mes = MonthlyData(consumer_unit=consumer_u,
+                                  month=month,
+                                  year=year,
+                                  KWH_total=mes_new['consumo_acumulado'],
+                                  max_demand=mes_new['demanda_max'],
+                                  max_cons=mes_new['consumo_maximo'],
+                                  carbon_emitions=mes_new['emisiones'],
+                                  power_factor=str(mes_new['factor_potencia']),
+                                  min_demand=mes_new['demanda_min'],
+                                  average_demand=mes_new['demanda_promedio'],
+                                  min_cons=mes_new['consumo_minimo'],
+                                  average_cons=str(mes_new['consumo_promedio']),
+                                  median_cons=str(mes_new['consumo_mediana']),
+                                  deviation_cons=str(
+                                      mes_new['consumo_desviacion']))
+            mes.save()
+    return "done calculateMonthlyReport_all"
 
 
 def calculateMonthlyReport(consumer_u, month, year):
@@ -1654,14 +1693,14 @@ def calculateMonthlyReport(consumer_u, month, year):
                                                 kvarh)
 
         #Consumo minimo
-        mes['consumo_minimo'] = max_minKWH(consumer_u, fecha_inicio,
-                                              fecha_final, "min")
+        mes['consumo_minimo'] = float(max_minKWH(consumer_u, fecha_inicio,
+                                              fecha_final, "min"))
 
         #Consumo maximo
-        mes['consumo_maximo'] = max_minKWH(consumer_u, fecha_inicio,
-                                           fecha_final, "max")
+        mes['consumo_maximo'] = float(max_minKWH(consumer_u, fecha_inicio,
+                                           fecha_final, "max"))
 
-        #Consumo maximo
+        #demanda promedio
         mes['demanda_promedio'] = promedioKW(consumer_u, fecha_inicio,
                                            fecha_final)
 
@@ -1669,12 +1708,12 @@ def calculateMonthlyReport(consumer_u, month, year):
         mes['consumo_promedio'] = promedioKWH(consumer_u, fecha_inicio,
                                               fecha_final)
 
-        #Consumo mediana
+        #Consumo desviación
         mes['consumo_desviacion'] = desviacionStandardKWH(consumer_u,
                                                           fecha_inicio,
                                                           fecha_final)
 
-        #Consumo desviación
+        #Consumo mediana
         mes['consumo_mediana'] = medianaKWH(consumer_u, fecha_inicio, fecha_final)
 
         #emisiones de carbon TODO calcular emisiones

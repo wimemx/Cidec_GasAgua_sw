@@ -66,6 +66,23 @@ ol, ul {
 .fl{ float:left !important; }
 .fr{ float:right !important; }
 
+.g1, .g2, .g3, .g4, .g5, .g6, .g7, .g8, .g9, .g10, .g11, .g12{
+     float:left !important;
+}
+.g1{width:6.333%;}
+.g2{width:14.667%;}
+.g3{width:23.0%;}
+.g4{width:31.333%;}
+.g5{width:39.667%;}
+.g6{width:48.0%;}
+.g7{width:56.333%;}
+.g8{width:64.667% !important;}
+.g9{width:73.0%;}
+.g10{width:81.333%;}
+.g11{width:89.667%;}
+.g12{width:98.0%;}
+
+
 #compare_interval2{
     margin-top: 20px;
 }
@@ -428,4 +445,33 @@ div.container{
 }
 .messi .btn{
     padding-top: 0 !important;
+}
+.month_param{
+    color: #636363;
+}
+.title_tile{
+    font-size: 17px;
+}
+.units_tile{
+    font-size: 50px;
+}
+.month_param{
+    margin-top: 20px;
+}
+.month_param p{
+    font-size: 14px;
+}
+#parameter_details{
+    margin-top: 77px !important;
+}
+.param_value{
+    color: #9b205c;
+    font-size: 14px;
+}
+#demanda .g8{
+    margin-top: 12px;
+}
+.green{
+    color: #3e8e17;
+    font-weight: 700;
 }

@@ -90,7 +90,9 @@ function drawVisualization() {
             'chartArea': {'height': '80%', 'width': '90%'},
             'hAxis': {'slantedText': false},
             'vAxis': {'viewWindow': {'min': {{ min }}, 'max': {{max}} }},
-            'legend': {'position': 'top', 'alignment': 'center'}
+            'legend': {'position': 'top', 'alignment': 'center'},
+            'isStacked': true,
+            'colors': ["#3466cc", "#67ade4", "#fd9827"]
         }
     });
 
@@ -100,15 +102,51 @@ function drawVisualization() {
     var data = new google.visualization.DataTable();
     //var columns_display = new Array();
     //var default_colors = new Array();
+    {% if periods %}
+        data.addColumn({type:'datetime', role:'domain'});
+        data.addColumn('number', "Base");
+        data.addColumn({type:'boolean', role:'certainty'});
 
+        data.addColumn({type:'datetime', role:'domain'});
+        data.addColumn('number', "Intermedia");
+        data.addColumn({type:'boolean', role:'certainty'});
+
+        data.addColumn({type:'datetime', role:'domain'});
+        data.addColumn('number', "Punta");
+        data.addColumn({type:'boolean', role:'certainty'});
+    {% else %}
     data.addColumn({type:'datetime', role:'domain'});
     data.addColumn('number', "kWh");
     data.addColumn({type:'boolean', role:'certainty'});
+    {% endif %}
 
     var True = true;
     var False = false;
+    var None = null;
     var rows_data = {% autoescape off %}{{ rows }}{% endautoescape %};
     //console.log(rows_data);
+    {% if periods %}
+        for(var row_index = 0; row_index < rows_data.length; row_index++){
+            var row_data = rows_data[row_index];
+            var row_array = [];
+            for(var data_index = 0; data_index < row_data.length; data_index++){
+                var data_object = row_data[data_index];
+
+                var object_datetime = new Date();
+                object_datetime.setTime((data_object['datetime']*1000));
+                if(fech_ini == ''){
+                    fech_ini = object_datetime;
+                }
+                fech_fin = object_datetime;
+                row_array.push(object_datetime);
+                var object_electric_data = Math.abs(data_object['value']);
+                row_array.push(object_electric_data);
+                var object_certainty = data_object['certainty'];
+                row_array.push(object_certainty);
+            }
+            data.addRow(row_array);
+        }
+    {% else %}
     for(var row_index = 0; row_index < rows_data.length; row_index++){
         var row_array = [];
         var data_object = rows_data[row_index];
@@ -125,15 +163,13 @@ function drawVisualization() {
         row_array.push(object_electric_data);
         var object_certainty = data_object['certainty'];
         row_array.push(object_certainty);
-        console.log(row_array);
         //console.log(row_array);
         data.addRow(row_array);
     }
+    {% endif %}
     var view = new google.visualization.DataView(data);
 
     dashboard.bind(control, chart);
-    console.log("View");
-    console.log(view);
     dashboard.draw(view);
 
     $(".column-checkbox").click(function(){
@@ -212,8 +248,11 @@ function drawVisualization() {
 
 google.setOnLoadCallback(drawVisualization);
 
-
+{% if course_week %}
+    var weekly_counter = {{ week }};
+{% else %}
 var weekly_counter = 0;
+{% endif %}
 function changeRange_left() {
     var start_date;
     if(weekly_counter<5){
@@ -344,27 +383,18 @@ function update_bars_color(){
 </head>
 
 <body>
-<!--<ul id="compare_interval1" class="fr">
-        {% if granularity == "raw_data" %}
-            <li id="raw_data"  class="active">Mediciones</li>
-            <li id="dw">Calculados</li>
-        {% else %}
-            <li id="raw_data" class="active">Mediciones</li>
-            <li id="dw" class="active" >Calculados</li>
-        {% endif %}
-    </ul>-->
-<!-- dashboard start -->
+
 <div id="dashboard" class="fl">
     <!-- chart start -->
     <p id="showing_week"><span class="left-nav left_legend"></span><span class="sem_count">Semana #</span><span class="date_range">(- al -)</span><span class="right-nav right_legend"></span></p>
     <div id="dias">
-        <span class="fl">S&aacute;bado</span>
-        <span class="fl">Domingo</span>
         <span class="fl">Lunes</span>
         <span class="fl">Martes</span>
         <span class="fl">Mi&eacute;rcoles</span>
         <span class="fl">Jueves</span>
         <span class="fl">Viernes</span>
+        <span class="fl">S&aacute;bado</span>
+        <span class="fl">Domingo</span>
     </div>
     <div id="chart">
         <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
@@ -397,87 +427,79 @@ function update_bars_color(){
 
 <!-- statistics-table start -->
 <div class="vacio"></div>
-<div id="weekly_summary">
-    <h1>Resumen Semanal - {{ tipo }}</h1>
-    <div>
-        <div id="main_week">
-            <select id="year_01">
-                {% for year in years %}
-                    <option value="{{ year }}" {% if year == current_year %}selected="selected" {% endif %}>
-                        {{ year }}
-                    </option>
-                {% endfor %}
-            </select>
 
-            <select id="month_01">
-                <option value="1" {% if current_month == 1 %}selected="selected" {% endif %}>Enero</option>
-                <option value="2" {% if current_month == 2 %}selected="selected" {% endif %}>Febrero</option>
-                <option value="3" {% if current_month == 3 %}selected="selected" {% endif %}>Marzo</option>
-                <option value="4" {% if current_month == 4 %}selected="selected" {% endif %}>Abril</option>
-                <option value="5" {% if current_month == 5 %}selected="selected" {% endif %}>Mayo</option>
-                <option value="6" {% if current_month == 6 %}selected="selected" {% endif %}>Junio</option>
-                <option value="7" {% if current_month == 7 %}selected="selected" {% endif %}>Julio</option>
-                <option value="8" {% if current_month == 8 %}selected="selected" {% endif %}>Agosto</option>
-                <option value="9" {% if current_month == 9 %}selected="selected" {% endif %}>Septiembre</option>
-                <option value="10" {% if current_month == 10 %}selected="selected" {% endif %}>Octubre</option>
-                <option value="11" {% if current_month == 11 %}selected="selected" {% endif %}>Noviembre</option>
-                <option value="12" {% if current_month == 12 %}selected="selected" {% endif %}>Diciembre</option>
-            </select>
-
-            <select id="week_01">
-                <option value="1">Semana 01</option>
-                <option value="2">Semana 02</option>
-                <option value="3">Semana 03</option>
-                <option value="4">Semana 04</option>
-                <option value="5">Semana 05</option>
-                <option value="6">Semana 06</option>
-            </select>
+<div id="moth_data" class="g12">
+    <div class="fl g4" id="parameter_details">
+        <div class="month_param g12" id="consumo">
+            <div class="g4">
+                <span class="title_tile">Consumo</span>
+                <span class="units_tile">kWh</span>
+            </div>
+            <div class="g8">
+                <p class="g12">
+                    Mensual:<span class="param_value"> {{ month_data.consumo_acumulado }}kWh</span>
+                </p>
+                <p class="g12">
+                    Promedio diario:<span class="param_value"> {{ month_data.consumo_promedio }}kWh</span>
+                </p>
+                <p class="g12">
+                    M&aacute;ximo:<span class="param_value"> {{ month_data.consumo_maximo }}kWh</span>
+                </p>
+                <p class="g12">
+                    M&iacute;nimo:<span class="param_value"> {{ month_data.consumo_minimo }}kWh</span>
+                </p>
+            </div>
         </div>
-
-        <div id="compare_week_contrls">
-            <span class="vs_tag">VS</span>
-
-            <select id="year_02">
-                {% for year in years %}
-                    <option value="{{ year }}">
-                        {{ year }}
-                    </option>
-                {% endfor %}
-            </select>
-
-            <select id="month_02">
-                <option value="1">Enero</option>
-                <option value="2">Febrero</option>
-                <option value="3">Marzo</option>
-                <option value="4">Abril</option>
-                <option value="5">Mayo</option>
-                <option value="6">Junio</option>
-                <option value="7">Julio</option>
-                <option value="8">Agosto</option>
-                <option value="9">Septiembre</option>
-                <option value="10">Octubre</option>
-                <option value="11">Noviembre</option>
-                <option value="12">Diciembre</option>
-            </select>
-
-            <select id="week_02">
-                <option value="1">Semana 01</option>
-                <option value="2">Semana 02</option>
-                <option value="3">Semana 03</option>
-                <option value="4">Semana 04</option>
-                <option value="5">Semana 05</option>
-                <option value="6">Semana 06</option>
-            </select>
+        <div class="vacio"></div>
+        <div class="month_param g12" id="demanda">
+            <div class="g4">
+                <span class="title_tile">Demanda</span>
+                <span class="units_tile">kW</span>
+            </div>
+            <div class="g8">
+                <p class="g12">
+                    Promedio diario:<span class="param_value"> {{ month_data.demanda_promedio }}kW</span>
+                </p>
+                <p class="g12">
+                    M&aacute;ximo:<span class="param_value"> {{ month_data.demanda_max }} kW</span>
+                </p>
+                <p class="g12">
+                    M&iacute;nimo:<span class="param_value"> {{ month_data.demanda_min }} kW</span>
+                </p>
+            </div>
         </div>
-
-        <button name="weekly_report" id="weekly_report" class="aqua_btn">Reporte</button>
     </div>
-    <div id="check_compare">
-        <label>Comparar con datos anteriores</label><input type="checkbox" id="compare_week_report"/>
-    </div>
+    <div class="g8" id="grid_container">
+        <table>
+            <thead>
+            <tr>
+                <th colspan="9">Resumen Semanal</th>
+            </tr>
 
-    <div id="report_div">
-        <img src="/static/css/images/spinner.gif" id="spinner2" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
+            <tr class="row1">
+                <th width="4%">S</th>
+                <th width="12%">Total</th>
+                <th width="12%">Lunes</th>
+                <th width="12%">Martes</th>
+                <th width="12%">Mi&eacute;rcoles</th>
+                <th width="12%">Jueves</th>
+                <th width="12%">Viernes</th>
+                <th width="12%">S&aacute;bado</th>
+                <th width="12%">Domingo</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            {% for day in day_data %}
+            <tr class="{% cycle row1 row2 %}">
+                <td>{{ forloop.counter }}</td>
+                <td class="table_value green">{% if day.0.week_total %}{{ day.0.week_total }}kWh{% else %}-{% endif %}</td>
+                {% for d_d in day %}
+                    <td class="table_value">{% if d_d.KWH_total %}{{ d_d.KWH_total }}kWh{% else %}-{% endif %}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
     </div>
 </div>
 <!-- statistics-table end -->

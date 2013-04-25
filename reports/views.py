@@ -7,6 +7,7 @@ import numpy
 import time
 import sys
 import csv
+import decimal
 
 # Django imports
 import django.http
@@ -27,6 +28,7 @@ import data_warehouse_extended.views
 # CCenter imports
 import c_center.models
 import c_center.c_center_functions
+import c_center.calculations
 import c_center.graphics
 
 # Other imports
@@ -1050,6 +1052,11 @@ def render_instant_measurements(
                                                 granularity)
     normalize_data_clusters_list(data_clusters_list)
 
+    #get the raw data for statistics
+    statistics_clusters_list = get_data_clusters_list(
+        request_data_list_normalized, "raw")
+    normalize_data_clusters_list(statistics_clusters_list)
+
     #data_clusters_list para csv
 
     axis_dictionary = \
@@ -1079,7 +1086,8 @@ def render_instant_measurements(
     # Get statistical values
     #
     maximum, minimum = get_data_clusters_list_limits(data_clusters_list)
-    data_clusters_statistics = get_data_clusters_statistics(data_clusters_list)
+    data_clusters_statistics = get_data_clusters_statistics(
+        statistics_clusters_list)
 
     template_variables['max'] = maximum
     template_variables['min'] = minimum
@@ -1115,7 +1123,7 @@ def render_report_consumed_by_month(
         raise django.http.Http404
 
     days = variety.getMonthDays(month, year)
-    first_week_start_datetime = days[0] - datetime.timedelta(days=1)
+    first_week_start_datetime = days[0] + datetime.timedelta(days=1)
     last_week_end_datetime = days[-1]
 
     #
@@ -1139,10 +1147,22 @@ def render_report_consumed_by_month(
 
     template_variables['max'] = maximun
     template_variables['min'] = minimun
+    today = datetime.datetime.now()
+    if today.month == month and today.year == year:
+        current_week = variety.get_week_of_month_from_datetime(today)
+        template_variables['course_week'] = True
+        #number of weeks in month minus current_week = remaining weeks at
+        #                                              the start of month
+        template_variables['week'] = 6 - current_week
+        template_variables['fi'], template_variables['ff'] = \
+            variety.get_week_start_datetime_end_datetime_tuple(year,
+                                                               month,
+                                                               current_week)
 
-    template_variables['ff'] = last_week_end_datetime
-    template_variables['fi'] = last_week_end_datetime - \
-                               datetime.timedelta(days=7)
+    else:
+        template_variables['ff'] = last_week_end_datetime
+        template_variables['fi'] = last_week_end_datetime - \
+                                   datetime.timedelta(days=7)
     template_variables['consumer_unit_id'] = request.GET['consumer-unit-id']
     template_variables['years'] = request.session['years']
     template_variables['current_week'] = variety.\
@@ -1150,7 +1170,52 @@ def render_report_consumed_by_month(
     template_variables['current_year'] = year
     template_variables['current_month'] = month
 
+    cu = c_center.models.ConsumerUnit.objects.get(pk=consumer_unit_id)
+    day_data = \
+        c_center.c_center_functions.getDailyReports(cu, month, year, 1)
+    formated_day_data = []
+
+    cont = 1
+    day_array = []
+    for data in day_data:
+        day_array.append(data)
+        if cont % 7 == 0:
+            fecha1 = datetime.datetime.strptime(day_array[0]['fecha'],
+                                                "%Y-%m-%d %H:%M:%S")
+            fecha2 = datetime.datetime.strptime(day_array[-1]['fecha'],
+                                                "%Y-%m-%d %H:%M:%S")
+            week_total = c_center.c_center_functions.consumoAcumuladoKWH(
+                cu, fecha1, fecha2)
+            day_array[0]["week_total"] = week_total
+
+            for day in day_array:
+                for key in day:
+                    if day[key] and variety.is_number(day[key]):
+                        day[key] = variety.moneyfmt(
+                            decimal.Decimal(str(day[key])), 0, "", ",", "")
+            formated_day_data.append(day_array)
+
+            day_array = []
+
+        cont += 1
+
+    template_variables['day_data'] = formated_day_data
+
+    month_data = \
+        c_center.c_center_functions.getMonthlyReport(cu, month, year)
+
+    for key in month_data:
+        month_data[key] = variety.moneyfmt(
+            decimal.Decimal(str(month_data[key])))
+
+    template_variables['month_data'] = month_data
     template_variables['electric_data'] = electrical_parameter_name
+
+    if cu.building.electric_rate.electric_rate_name == "H-M":
+        #parse data_cluster_consumed
+        template_variables['rows'] = rates_for_data_cluster(
+            data_cluster_consumed, cu.building.region)
+        template_variables['periods'] = True
 
     template_context =\
         django.template.context.RequestContext(request, template_variables)
@@ -1158,6 +1223,44 @@ def render_report_consumed_by_month(
     return django.shortcuts.render_to_response(
                "reports/consumed-by-month.html",
                template_context)
+
+
+def rates_for_data_cluster(data_cluster_consumed, region):
+
+    data_cluster_cons = []
+    for data_cluster in data_cluster_consumed:
+
+        date_time = datetime.datetime.fromtimestamp(data_cluster["datetime"])
+        periodo = c_center.calculations.obtenerTipoPeriodoObj(
+            date_time, region).period_type
+        if periodo == "base":
+            arr_base = data_cluster
+            arr_int = dict(certainty=False,
+                                value=None,
+                                datetime=data_cluster["datetime"])
+            arr_punt = dict(certainty=False,
+                                 value=None,
+                                 datetime=data_cluster["datetime"])
+        elif periodo == "intermedio":
+            arr_base = dict(certainty=False,
+                                value=None,
+                                datetime=data_cluster["datetime"])
+            arr_int = data_cluster
+            arr_punt = dict(certainty=False,
+                                value=None,
+                                datetime=data_cluster["datetime"])
+        else:
+            #periodo == "punta"
+            arr_base = dict(certainty=False,
+                                value=None,
+                                datetime=data_cluster["datetime"])
+            arr_int = dict(certainty=False,
+                                value=None,
+                                datetime=data_cluster["datetime"])
+            arr_punt = data_cluster
+        data_cluster_cons.append([arr_base, arr_int, arr_punt])
+
+    return data_cluster_cons
 
 
 def csv_report(request):
