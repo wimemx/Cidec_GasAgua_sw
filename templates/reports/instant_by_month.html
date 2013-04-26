@@ -34,6 +34,34 @@ month_s={{ fi|date:"n" }}-1;
 month_e={{ ff|date:"n" }}-1;
 day_s={{ fi|date:"j" }};
 day_e={{ ff|date:"j" }};
+
+
+var view;
+var colors = ["#3466cc", "#fd9827", "#dc3919",
+              "#f9dbad", "#778899", "#DEB887",
+              "#7c615d", "#9ebfc6", "#d41314",
+              "#bbcbea", "#efbdb1", "#f9dbad",
+              "#FF69B4", "#32CD32", "#9370DB",
+              "#FF6347", "#AFEEEE", "#6A5ACD",
+              "#FFDAB9", "#BDB76B", "#cc9999",
+              "#00008B", "#000080", "#191970",
+              "#696969", "#fd9827", "#708090",
+              "#2F4F4F", "#DCDCDC", "#000000",
+              "#006600", "#333366", "#cc6600",
+              "#009900", "#6666cc", "#ff6633"
+             ];
+var total = {{columns|length}}*3;
+var columnas = [];
+for(var i=0; i<total; i++){
+    if(i==0 || i==1){
+        columnas.push(i);
+    }else if(i%3 == 1){
+        columnas.push(i);
+    }
+}
+
+
+
 var control = new google.visualization.ControlWrapper({
     'controlType': 'ChartRangeFilter',
     'containerId': 'control',
@@ -42,16 +70,15 @@ var control = new google.visualization.ControlWrapper({
         'filterColumnIndex': 0,
         'ui': {
             'enableInteractivity': false,
-            'chartType': 'AreaChart',
+            'chartType': 'LineChart',
             'chartOptions': {
                 'chartArea': {'width': '90%'},
-                'hAxis': {'baselineColor': 'none'},
-                'colors': ["#b0feb1", "#fedfbc", "#fdb1b1"]
+                'hAxis': {'baselineColor': 'none'}
             },
             // Display a single series that shows the closing value of the stock.
             // Thus, this view has two columns: the date (axis) and the stock value (line series).
             'chartView': {
-                'columns': [0, 1{% if periods %}, 4, 7{% endif %}]
+                'columns': columnas
             },
             // 1 day in milliseconds = 24 * 60 * 60 * 1000 = 86,400,000
             //'minRangeSize': 86400000
@@ -62,113 +89,87 @@ var control = new google.visualization.ControlWrapper({
     'state': {'range': {'start': new Date(year_s, month_s, day_s), 'end': new Date(year_e, month_e, day_e)}}
 });
 
-function append_parameters(base_url){
-    var get = getUrlVars();
-    if(get.length>0){
-        if (get[0]!=window.location.protocol+"//"+window.location
-                .host+window.location.pathname){
-            for(var i=0; i<get.length; i++){
-                if (get[i]!="granularity"){
-                    base_url+="&"+get[i]+"="+get[get[i]];
-                }
-            }
-        }
+var arr_pos = [];
+{% for index in column_unit_axis_indexes %}
+    arr_pos[{{ index }}] = {{ forloop.counter0 }};
+{% endfor %}
 
-    }
-    return base_url
-}
-
+var chart;
+var vaxes = {
+{% for axis in axis_list  %}
+    {{ forloop.counter0 }}: {logScale: false, title: '{{ axis.name }}', titleTextStyle:{color: colors[arr_pos[{{ forloop.counter0 }}]]}, textStyle:{color: colors[arr_pos[{{ forloop.counter0 }}]]}, {% if axis.name == "V" or axis.name == "I" %}minValue: 0, {% endif %}textPosition: "{% cycle 'out' 'in' %}"},
+{% endfor %}
+};
+var vseries = {
+{% for index in column_unit_axis_indexes %}
+    {{ forloop.counter0 }}:{targetAxisIndex:{{ index }}},
+{% endfor %}
+};
+var column_units = [];
+{% for column_unit, column in column_units %}
+    column_units[{{ forloop.counter0 }}] = {"{{ column }}": "{{ column_unit }}"};
+{% endfor %}
 
 function drawVisualization() {
     var dashboard = new google.visualization.Dashboard(
             document.getElementById('dashboard'));
 
-    var chart = new google.visualization.ChartWrapper({
-        'chartType': 'ColumnChart',
+    chart = new google.visualization.ChartWrapper({
+        'chartType': 'LineChart',
         'containerId': 'chart',
         'options': {
             // Use the same chart area width as the control for axis alignment.
             'chartArea': {'height': '80%', 'width': '90%'},
             'hAxis': {'slantedText': false},
-            'vAxis': {'viewWindow': {'min': {{ min }}, 'max': {{max}} }},
-            'legend': {'position': 'top', 'alignment': 'center'},
-            'isStacked': true,
-            'colors': ["#00FF00", "#fd9827", "#FF0000"]
+            'vAxes': vaxes,
+            'series': vseries,
+            colors: colors,
+            'legend': {'position': 'top', 'alignment': 'center'}
         }
     });
-
-    //
     // Google Chart
     //
     var data = new google.visualization.DataTable();
     //var columns_display = new Array();
     //var default_colors = new Array();
-    {% if periods %}
+    var columns = [{% for column in columns %}"{{ column }}",{% endfor %}null]
+    var pf_index = 2000;
+    {% for column in columns %}
         data.addColumn({type:'datetime', role:'domain'});
-        data.addColumn('number', "Base");
+        data.addColumn('number', "{{ column }}");
         data.addColumn({type:'boolean', role:'certainty'});
-
-        data.addColumn({type:'datetime', role:'domain'});
-        data.addColumn('number', "Intermedia");
-        data.addColumn({type:'boolean', role:'certainty'});
-
-        data.addColumn({type:'datetime', role:'domain'});
-        data.addColumn('number', "Punta");
-        data.addColumn({type:'boolean', role:'certainty'});
-    {% else %}
-    data.addColumn({type:'datetime', role:'domain'});
-    data.addColumn('number', "kWh");
-    data.addColumn({type:'boolean', role:'certainty'});
-    {% endif %}
-
+        {% if column == "PF" %}
+            pf_index = {{ forloop.counter0 }};
+        {% endif %}
+    {% endfor %}
     var True = true;
     var False = false;
-    var None = null;
     var rows_data = {% autoescape off %}{{ rows }}{% endautoescape %};
-    //console.log(rows_data);
-    {% if periods %}
-        for(var row_index = 0; row_index < rows_data.length; row_index++){
-            var row_data = rows_data[row_index];
-            var row_array = [];
-            for(var data_index = 0; data_index < row_data.length; data_index++){
-                var data_object = row_data[data_index];
-
-                var object_datetime = new Date();
-                object_datetime.setTime((data_object['datetime']*1000));
-                if(fech_ini == ''){
-                    fech_ini = object_datetime;
-                }
-                fech_fin = object_datetime;
-                row_array.push(object_datetime);
-                var object_electric_data = Math.abs(data_object['value']);
-                row_array.push(object_electric_data);
-                var object_certainty = data_object['certainty'];
-                row_array.push(object_certainty);
-            }
-            data.addRow(row_array);
-        }
-    {% else %}
     for(var row_index = 0; row_index < rows_data.length; row_index++){
+        var row_data = rows_data[row_index];
         var row_array = [];
-        var data_object = rows_data[row_index];
-        var object_datetime = new Date();
-        object_datetime.setTime((data_object['datetime']*1000));
-        if(fech_ini == ''){
-            fech_ini = object_datetime;
+        for(var data_index = 0; data_index < row_data.length; data_index++){
+            var data_object = row_data[data_index];
+            var object_datetime = new Date();
+            object_datetime.setTime((data_object['datetime']*1000));
+            if(fech_ini == ''){
+                fech_ini = object_datetime;
+            }
+            fech_fin = object_datetime;
+            row_array.push(object_datetime);
+            var object_electric_data;
+            if(data_index == pf_index && Math.abs(data_object['value']) > 1){
+                object_electric_data = 1;
+            }else{
+                object_electric_data = Math.abs(data_object['value']);
+            }
+            row_array.push(object_electric_data);
+            var object_certainty = data_object['certainty'];
+            row_array.push(object_certainty);
         }
-        fech_fin = object_datetime;
-
-        //console.log(object_datetime);
-        row_array.push(object_datetime);
-        var object_electric_data = Math.abs(data_object['value']);
-        row_array.push(object_electric_data);
-        var object_certainty = data_object['certainty'];
-        row_array.push(object_certainty);
-        //console.log(row_array);
         data.addRow(row_array);
     }
-    {% endif %}
-    var view = new google.visualization.DataView(data);
+    view = new google.visualization.DataView(data);
 
     dashboard.bind(control, chart);
     dashboard.draw(view);
@@ -180,20 +181,123 @@ function drawVisualization() {
             $(this).attr("checked", "checked");
             $(this).parent().addClass("checked");
             return false;
-        }else{''
+        }else{
+            var cols_cant = {{ columns|length }};
             var columns_set_array = [];
+            var total_columns_set_array = [];
             var checkboxes = document.forms['column-controls']['column-control'];
+
+            var color_position = [];
+            var control_cols = columnas.slice(0);
+            var colum_units_temp = [];
+            var colum_units_copy = column_units.slice(0);
             for (var index = 0; index < checkboxes.length; index++) {
                 if(checkboxes[index].checked){
                     columns_set_array.push((index * 3) + 0);
                     columns_set_array.push((index * 3) + 1);
                     columns_set_array.push((index * 3) + 2);
+                }else{
+                    color_position.push(colors[index]);
+                    control_cols.pop();
+                    colum_units_temp.push(column_units[index]);
+                }
+                total_columns_set_array.push((index * 3) + 0);
+                total_columns_set_array.push((index * 3) + 1);
+                total_columns_set_array.push((index * 3) + 2);
+            }
+
+            var totales = total_columns_set_array.slice(0);
+            //gets subset of arrays
+            for (index = total_columns_set_array.length - 1; index >= 0; --index) {
+                if (columns_set_array.indexOf(total_columns_set_array[index]) >= 0) {
+                    total_columns_set_array.splice(index, 1);
                 }
             }
-            view.setColumns(columns_set_array);
+            //copy colors
+            var colores = colors.slice(0);
+            //gets subset of arrays
+            for (index = colores.length - 1; index >= 0; --index) {
+                if (color_position.indexOf(colores[index]) >= 0) {
+                    colores.splice(index, 1);
+                }
+            }
 
+
+
+            //console.log("colum_units a desactivar", colum_units_temp);
+            //subset
+            for (index = colum_units_copy.length - 1; index >= 0; --index) {
+                if (colum_units_temp.indexOf(colum_units_copy[index]) >= 0) {
+                    colum_units_copy.splice(index, 1);
+                }
+            }
+            //get unique values for colum_units_copy
+            var u = [];
+            for (index=0; index<colum_units_copy.length; index++){
+                var x = colum_units_copy[index];
+                var band = true;
+                for(var j=0; j<u.length; j++){
+                    var y = u[j];
+                    if(JSON.stringify(y) === JSON.stringify(x) ){
+                        band = false;
+                    }
+                }
+                if (band) {
+                    u.push(x);
+                }
+            }
+            //console.log("colum_units activas", colum_units_copy);
+
+            var vaxes_new = {};
+            var vaxis_index = {};
+            for(index=0; index<u.length; index++){
+                var pos = "out";
+                if(index%2 == 0){
+                    pos="in"
+                }
+                var unit;
+                var u_index = u[index];
+                for(var serie in u_index){
+                    unit = u_index[serie];
+                    vaxis_index[index] = unit;
+                }
+                vaxes_new[index] = {logScale: false, title: unit, titleTextStyle:{color: colores[index]}, textStyle:{color: colores[index]}, minValue: 0, textPosition: pos}
+            }
+
+            //console.log("vaxes_new", vaxes_new);
+            //console.log("vaxis_index", vaxis_index)
+
+            var vseries_new = {};
+            for(index=0; index<colum_units_copy.length;index++){
+                var eje;
+                var prop = colum_units_copy[index];
+                for(var param in prop){
+                    eje = prop[param];
+                }
+                //console.log("eje", eje);
+                for(var indice=0; indice<Object.size(vaxis_index);indice++){
+
+                    //console.log("vaxis_index[indice]", vaxis_index[indice]);
+
+                    if(vaxis_index[indice]==eje){
+                        vseries_new[index] = {targetAxisIndex:indice};
+                        break;
+                    }
+                }
+                //var axis = vaxis_index.indexOf(eje);
+                //vseries_new[index] = {targetAxisIndex:axis};
+            }
+            //console.log("vseries_new", vseries_new);
+            control.setOption('ui.chartView.columns',control_cols);
+            view.setColumns(totales);
+
+            view.hideColumns(total_columns_set_array);
+            chart.setOption('colors', colores);
+            chart.setOption('vAxes', vaxes_new);
+            chart.setOption('series', vseries);
             dashboard.bind(control, chart);
             dashboard.draw(view);
+            control.draw();
         }
     });
 
@@ -220,9 +324,9 @@ function drawVisualization() {
                     upper_val = lower_val + offset;
                     $upper.val(upper_val);
                 }/*else if(upper_val>high_){
-                 upper_val = high_;
-                 $upper.val(high_);
-                 }*/
+                    upper_val = high_;
+                    $upper.val(high_);
+                }*/
                 chart.setOption('vAxis', {'viewWindow':{'max':upper_val, 'min':lower_val}});
                 chart.draw();
             });
@@ -237,9 +341,9 @@ function drawVisualization() {
                     lower_val = upper_val - offset;//upper_val - offset;
                     $lower.val(lower_val);
                 }/*else if(lower_val<low_){
-                 lower_val = low_;
-                 $lower.val(low_);
-                 }*/
+                    lower_val = low_;
+                    $lower.val(low_);
+                }*/
                 chart.setOption('vAxis', {'viewWindow':{'max':upper_val, 'min':lower_val}});
                 chart.draw();
             });
@@ -312,83 +416,23 @@ $(document).on("ready", function(){
         changeRange_right();
     });
     setTimeout("mouseevents()", 2000);
-    /*
-     var base_url = window.location.pathname;
-     $("li#raw_data").click(function(){
-
-     new Messi('&iquest;Est&aacute; seguro de que desea ver los datos reales medidos? Esta operaci&oacute;n podr&iacute;a tardar y su navegador podr&iacute;ia parecer no responder, le pedimos paciencia',
-     {title: 'Ver datos medidos', modal: true, buttons: [{id: 0,
-     label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
-     }],
-     callback: function(val) {
-     if(val=='Y'){
-     base_url+="?granularity=raw";
-     base_url=append_parameters(base_url);
-     window.location = base_url;
-     } else return false; }
-     });
-     });
-     $("li#dw").click(function(){
-
-     base_url+="?granularity="+$(this).attr('id');
-     base_url=append_parameters(base_url);
-     window.location = base_url;
-     });*/
-    var text = $("#weekly_summary h1").text();
-    text = text.replace("_", " ");
-    $("#weekly_summary h1").text(text);
-    $('#weekly_report').click(function(e){
-        e.preventDefault();
-        var load_url = "/reportes/week_comparison/?electric-data={{ electric_data }}";
-        load_url += "&consumer-unit01="+{{ consumer_unit_id }};
-        load_url += "&year01="+$('#year_01').val();
-        load_url += "&month01="+$('#month_01').val();
-        load_url += "&week01="+$('#week_01').val();
-        if ($('#compare_week_report').is(':checked')){
-            load_url += "&consumer-unit02="+{{ consumer_unit_id }};
-            load_url += "&year02="+$('#year_02').val();
-            load_url += "&month02="+$('#month_02').val();
-            load_url += "&week02="+$('#week_02').val();
-
-        }
-        $('#report_div').html('<img src="/static/css/images/spinner.gif" id="spinner2" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">');
-        $('#report_div').load(load_url, function(){$("#spinner2").remove();
-            update_bars_color();
-        });
-
-    });
-    $('#compare_week_report').click(function(){
-        $("#compare_week_contrls").toggle();
-    });
-
-    var load_url = "/reportes/week_comparison/?electric-data={{ electric_data }}";
-    var consumer_unit_id = {{ consumer_unit_id }};
-    load_url += "&consumer-unit01="+{{ consumer_unit_id }};
-    load_url += "&year01="+$('#year_01').val();
-    load_url += "&month01="+$('#month_01').val();
-    load_url += "&week01="+$('#week_01').val();
-    $('#report_div').load(load_url);
-    update_bars_color();
-
 });
-function update_bars_color(){
-    var colors_css = ["#7d979e", "a10f0f", "#5aa550", "#b38619"];
-    $('.bar').each(function(){
-        var bar_class = $(this).attr("id").split()[0].replace("bar", "");
-        var bar_class_number = parseInt(bar_class);
-        var color_css = colors_css[(bar_class_number-1) % colors_css.length];
-        $(this).css("background-color", color_css);
-    });
-}
 </script>
 </head>
 
 <body>
-
+<div id="parameter_controls">
+    <form id="column-controls">
+        {% for column in columns %}
+            <input type="checkbox" class="column-checkbox" name="column-control" value="{{ column }}" checked="checked"/>
+            <label>{{ column }}</label>
+        {% endfor %}
+    </form>
+</div>
 <div id="dashboard" class="fl">
     <!-- chart start -->
     <p id="showing_week"><span class="left-nav left_legend"></span><span class="sem_count">Semana #</span><span class="date_range">(- al -)</span><span class="right-nav right_legend"></span></p>
-    <div id="dias">
+    <div id="dias_profile">
         <span class="fl">Lunes</span>
         <span class="fl">Martes</span>
         <span class="fl">Mi&eacute;rcoles</span>
@@ -397,7 +441,7 @@ function update_bars_color(){
         <span class="fl">S&aacute;bado</span>
         <span class="fl">Domingo</span>
     </div>
-    <div id="chart">
+    <div id="chart" class="pp">
         <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
     </div>
     <!-- chart end -->
@@ -412,15 +456,18 @@ function update_bars_color(){
     <!-- control end -->
 
     <!-- slider-range start -->
-    <div id="slider-range">
-        <div id="up">
-            <input type="text" class="integer" id="upper_limit" step="0.5"/>
-        </div>
+    {% if axis_list|length == 1 %}
+        <div id="slider-range">
+            <div id="up">
+                <input type="text" class="integer" id="upper_limit" step="0.5"/>
+            </div>
 
-        <div id="down">
-            <input type="text" class="integer" id="lower_limit" step="0.5"/>
+            <div id="down">
+                <input type="text" class="integer" id="lower_limit" step="0.5"/>
+            </div>
         </div>
-    </div>
+        <!-- slider-range end -->
+    {% endif %}
     <!-- slider-range end -->
 
 </div>
@@ -428,81 +475,40 @@ function update_bars_color(){
 
 <!-- statistics-table start -->
 <div class="vacio"></div>
+<div class="g12" id="statistic_tables">
+    {% for param_data in columns_statistics %}
+        <div class="g4 statistics_power_profile">
+        <div class="grid_container">
+            <table>
+                <thead>
+                <tr>
+                    <th colspan="4">Resumen Semanal ({{ param_data.param }})</th>
+                </tr>
 
-<div id="moth_data" class="g12">
-    <div class="fl g4" id="parameter_details">
-        <div class="month_param g12" id="consumo">
-            <div class="g4">
-                <span class="title_tile">Consumo</span>
-                <span class="units_tile">kWh</span>
-            </div>
-            <div class="g8">
-                <p class="g12">
-                    Mensual:<span class="param_value"> {{ month_data.consumo_acumulado }}kWh</span>
-                </p>
-                <p class="g12">
-                    Promedio diario:<span class="param_value"> {{ month_data.consumo_promedio }}kWh</span>
-                </p>
-                <p class="g12">
-                    M&aacute;ximo:<span class="param_value"> {{ month_data.consumo_maximo }}kWh</span>
-                </p>
-                <p class="g12">
-                    M&iacute;nimo:<span class="param_value"> {{ month_data.consumo_minimo }}kWh</span>
-                </p>
-            </div>
-        </div>
-        <div class="vacio"></div>
-        <div class="month_param g12" id="demanda">
-            <div class="g4">
-                <span class="title_tile">Demanda</span>
-                <span class="units_tile">kW</span>
-            </div>
-            <div class="g8">
-                <p class="g12">
-                    Promedio diario:<span class="param_value"> {{ month_data.demanda_promedio }}kW</span>
-                </p>
-                <p class="g12">
-                    M&aacute;ximo:<span class="param_value"> {{ month_data.demanda_max }} kW</span>
-                </p>
-                <p class="g12">
-                    M&iacute;nimo:<span class="param_value"> {{ month_data.demanda_min }} kW</span>
-                </p>
-            </div>
-        </div>
-    </div>
-    <div class="g8 grid_container">
-        <table>
-            <thead>
-            <tr>
-                <th colspan="9">Resumen Semanal</th>
-            </tr>
+                <tr class="row1">
+                    <th width="7%">S</th>
+                    <th width="31%">Promedio</th>
+                    <th width="31%">M&aacute;ximo</th>
+                    <th width="31%">M&iacute;nimo</th>
+                </tr>
+                </thead>
 
-            <tr class="row1">
-                <th width="4%">S</th>
-                <th width="12%">Total</th>
-                <th width="12%">Lunes</th>
-                <th width="12%">Martes</th>
-                <th width="12%">Mi&eacute;rcoles</th>
-                <th width="12%">Jueves</th>
-                <th width="12%">Viernes</th>
-                <th width="12%">S&aacute;bado</th>
-                <th width="12%">Domingo</th>
-            </tr>
-            </thead>
-
-            <tbody>
-            {% for day in day_data %}
-            <tr class="{% cycle row1 row2 %}">
-                <td>{{ forloop.counter }}</td>
-                <td class="table_value green">{% if day.0.week_total %}{{ day.0.week_total }}kWh{% else %}-{% endif %}</td>
-                {% for d_d in day %}
-                    <td class="table_value">{% if d_d.KWH_total %}{{ d_d.KWH_total }}kWh{% else %}-{% endif %}</td>
+                <tbody>
+                {% for data in param_data.month_data %}
+                <tr class="{% cycle 'row1' 'row1' %}">
+                    <td>{{ forloop.counter }}</td>
+                    <td class="table_value">{{ data.mean|floatformat:2 }}</td>
+                    <td class="table_value">{{ data.maximum|floatformat:2 }}</td>
+                    <td class="table_value">{{ data.minimum|floatformat:2 }}</td>
+                </tr>
                 {% endfor %}
-            </tr>
-            {% endfor %}
-        </table>
+                </tbody>
+            </table>
+        </div>
     </div>
+    {% endfor %}
 </div>
+
 <!-- statistics-table end -->
 </body>
 </html>
