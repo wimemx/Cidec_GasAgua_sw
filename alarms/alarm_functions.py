@@ -4,7 +4,7 @@ import json
 from c_center.c_center_functions import get_c_unitsforbuilding_for_operation
 
 from alarms.models import Alarms
-from c_center.models import IndustrialEquipment, Building
+from c_center.models import IndustrialEquipment, Building, ConsumerUnit
 from rbac.models import Operation
 
 
@@ -48,3 +48,21 @@ def set_alarm_json(building, user):
         dict(eAlarmsPerEDevices=eAlarmsPerEDevices))
     i_eq.modified_by = user
     i_eq.save()
+
+
+def get_alarm_from_building(building):
+    """ Return the alarm for the request building
+    :param building: Object.- Building instance
+    """
+
+    alarma = Alarms.objects.filter(consumer_unit__building=building)
+
+
+
+
+
+
+
+
+
+
