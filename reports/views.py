@@ -1187,7 +1187,7 @@ def render_report_consumed_by_month(
         template_variables['course_week'] = True
         #number of weeks in month minus current_week = remaining weeks at
         #                                              the start of month
-        template_variables['week'] = 6 - (6 - current_week)
+        template_variables['week'] = 6 - current_week
         template_variables['fi'], template_variables['ff'] = \
             variety.get_week_start_datetime_end_datetime_tuple(year,
                                                                month,
@@ -1299,7 +1299,7 @@ def render_report_powerprofile_by_month(
         template_variables['course_week'] = True
         #number of weeks in month minus current_week = remaining weeks at
         #                                              the start of month
-        template_variables['week'] = 6 - (6 - current_week)
+        template_variables['week'] = 6 - current_week
         template_variables['fi'], template_variables['ff'] = \
             variety.get_week_start_datetime_end_datetime_tuple(year,
                                                                month,
