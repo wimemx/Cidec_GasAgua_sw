@@ -606,6 +606,8 @@ def cfe_calculations(request):
 
                 #Se obtienen nuevamente las fechas
                 s_date, e_date = getStartEndDateUTC(building, month, year)
+                print "Fecha Inicial:", s_date
+                print "Fecha Final:", e_date
 
             #Se general el recibo.
             if tipo_tarifa.pk == 1: #Tarifa HM
@@ -7479,7 +7481,7 @@ def set_cutdate(request, id_cutdate):
                     cd_before.save()
 
                     #Se recalcula el mes anterior ya con las nuevas fechas.
-                    save_historic_delay.delay(cd_before,
+                    save_historic_delay(cd_before,
                                               request.session['main_building'])
 
                 #Si hay cambio de fechas en mes siguiente
@@ -7491,7 +7493,7 @@ def set_cutdate(request, id_cutdate):
                     #Si la fecha final del mes siguiente no es nula,
                     # se crea el historico
                     if cd_after.date_end:
-                        save_historic_delay.delay(
+                        save_historic_delay(
                             cd_after, request.session['main_building'])
                 else:
                     #Se crea el nuevo mes
@@ -7508,7 +7510,8 @@ def set_cutdate(request, id_cutdate):
                 cutdate_obj.save()
 
                 #Se calcula el mes actual
-                save_historic_delay.delay(cutdate_obj,
+                #save_historic(cutdate_obj, request.session['main_building'])
+                save_historic_delay(cutdate_obj,
                                           request.session['main_building'])
 
                 template_vars["message"] = "Fechas de Corte establecidas " \
@@ -7762,7 +7765,6 @@ def obtenerHistorico_r(actual_month_arr):
                                                  ]/actual_month_arr['kwh_totales']
 
             arr_historico.append(dict_periodo)
-
         ind -= 1
 
     return arr_historico

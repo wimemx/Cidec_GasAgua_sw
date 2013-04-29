@@ -1686,7 +1686,8 @@ def save_historic(monthly_cutdate, building):
                                                              'kwh_totales']
         aver_rate = str(aver_rate)
 
-        resultado_mensual['subtotal'] = str(resultado_mensual['subtotal'])
+        resultado_mensual['costo_energia'] = str(resultado_mensual[
+                                                 'costo_energia'])
         resultado_mensual['iva'] = str(resultado_mensual['iva'])
         resultado_mensual['total'] = str(resultado_mensual['total'])
         newHistoric = DacHistoricData(
@@ -1798,6 +1799,38 @@ def tarifaHM_2(building, s_date, e_date, month, year):
             #order_by('electric_data__medition_date')
             #kw_t = obtenerDemanda_kw(lecturas_totales)
 
+            if len(consumer_units) == 1: #Si es únicamente 1 medidor
+                lecturas_base = ElectricRateForElectricData.objects.filter(
+                    electric_data__profile_powermeter=profile_powermeter).\
+                filter(electric_data__medition_date__gte=s_date).filter(
+                    electric_data__medition_date__lt=e_date).\
+                filter(electric_rates_periods__period_type='base').order_by(
+                    'electric_data__medition_date')
+                kw_base_t = obtenerDemanda_kw(lecturas_base)
+                diccionario_final_cfe["kw_base"] = kw_base_t
+
+                lecturas_intermedio = ElectricRateForElectricData.objects.filter(
+                    electric_data__profile_powermeter=profile_powermeter).\
+                filter(electric_data__medition_date__gte=s_date).filter(
+                    electric_data__medition_date__lt=e_date).\
+                filter(
+                    electric_rates_periods__period_type='intermedio').order_by(
+                    'electric_data__medition_date')
+                kw_intermedio_t = obtenerDemanda_kw(lecturas_intermedio)
+                diccionario_final_cfe["kw_intermedio"] = kw_intermedio_t
+
+                lecturas_punta = ElectricRateForElectricData.objects.filter(
+                    electric_data__profile_powermeter=profile_powermeter).\
+                filter(electric_data__medition_date__gte=s_date).filter(
+                    electric_data__medition_date__lt=e_date).\
+                filter(electric_rates_periods__period_type='punta').order_by(
+                    'electric_data__medition_date')
+                kw_punta_t = obtenerDemanda_kw(lecturas_punta)
+                diccionario_final_cfe["kw_punta"] = kw_punta_t
+
+            else: #Si es medidor virtual
+                pass
+
 
             lecturas_base = ElectricRateForElectricData.objects.filter(
                 electric_data__profile_powermeter=profile_powermeter).\
@@ -1839,6 +1872,7 @@ def tarifaHM_2(building, s_date, e_date, month, year):
 
             #KWH
             #Se obtienen todos los identificadores para los KWH
+
             lecturas_identificadores = ElectricRateForElectricData.objects\
             .filter(
                 electric_data__profile_powermeter
@@ -1848,10 +1882,12 @@ def tarifaHM_2(building, s_date, e_date, month, year):
             order_by("electric_data__medition_date").values(
                 "identifier").annotate(Count("identifier"))
 
+
             ultima_lectura = 0
             kwh_por_periodo = []
 
             for lectura in lecturas_identificadores:
+                #print "Lectura", lectura["identifier"]
                 electric_info = ElectricRateForElectricData.objects.filter(
                     identifier=lectura["identifier"]).\
                 filter(
@@ -1879,7 +1915,7 @@ def tarifaHM_2(building, s_date, e_date, month, year):
             kwh_punta_t = 0
 
             for idx, kwh_p in enumerate(kwh_por_periodo):
-                print "Lectura:", kwh_p[0], "-:", kwh_p[1]
+                #print "Lectura:", kwh_p[0], "-:", kwh_p[1]
                 inicial = kwh_p[0]
                 periodo_t = kwh_p[1]
                 if idx + 1 <= kwh_periodo_long - 1:
@@ -1889,7 +1925,7 @@ def tarifaHM_2(building, s_date, e_date, month, year):
                     final = ultima_lectura
 
                 kwh_netos = final - inicial
-                #print "Inicial:",inicial,"Final:",final, "Netos:",kwh_netos
+                print "Inicial:",inicial,"Final:",final, "Netos:",kwh_netos
 
                 if periodo_t == 'base':
                     kwh_base_t += kwh_netos
@@ -1913,6 +1949,8 @@ def tarifaHM_2(building, s_date, e_date, month, year):
             #Se obtienen los kvarhs por medidor
             diccionario_final_cfe['kvarh_totales'] += obtenerKVARH(
                 profile_powermeter, s_date, e_date)
+
+            print "Termina Medidor"
 
     #Obtiene el id de la tarifa correspondiente para el mes en cuestion
     tarifasObj = ElectricRatesDetail.objects.filter(electric_rate=hm_id).filter(
