@@ -552,6 +552,38 @@ def get_request_data_list_normalized(
     return request_data_list_normalized
 
 
+def get_data_statistics(
+        data_list
+):
+    """
+        Description:
+
+
+        Arguments:
+            data_list - array of values
+
+        Return:
+
+    """
+    data_cluster_values_array = numpy.array(data_list)
+    data_cluster_values_array.sort()
+    data_cluster_mean = data_cluster_values_array.mean()
+    data_cluster_maximum = data_cluster_values_array.max()
+    data_cluster_minimum = data_cluster_values_array.min()
+    data_cluster_median = numpy.median(data_cluster_values_array)
+    data_cluster_standard_deviation = data_cluster_values_array.std()
+
+    statistics = {
+        "mean": data_cluster_mean,
+        "maximum": data_cluster_maximum,
+        "minimum": data_cluster_minimum,
+        "median": data_cluster_median,
+        "standard_deviation": data_cluster_standard_deviation
+    }
+
+    return statistics
+
+
 def get_data_clusters_statistics(
         data_clusters_list_normalized
 ):
@@ -581,14 +613,14 @@ def get_data_clusters_statistics(
         data_cluster_standard_deviation = data_cluster_values_array.std()
 
         data_clusters_statistics.append({
-            "mean" : data_cluster_mean,
-            "maximum" : data_cluster_maximum,
-            "minimum" : data_cluster_minimum,
+            "mean": data_cluster_mean,
+            "maximum": data_cluster_maximum,
+            "minimum": data_cluster_minimum,
             "median": data_cluster_median,
-            "standard_deviation" : data_cluster_standard_deviation
+            "standard_deviation": data_cluster_standard_deviation
         })
 
-    return  data_clusters_statistics
+    return data_clusters_statistics
 
 
 def get_timedelta_from_normalized_request_data_list(
@@ -983,6 +1015,8 @@ def render_instant_measurements(
     if not "electrical-parameter-name01" in request.GET:
         return django.http.HttpResponse(content="", status=200)
 
+    if "month" in request.GET and "year" in request.GET:
+        return render_report_powerprofile_by_month(request)
     #
     # Build a request data list in order to normalize it.
     #
@@ -1124,7 +1158,7 @@ def render_report_consumed_by_month(
 
     days = variety.getMonthDays(month, year)
     first_week_start_datetime = days[0] + datetime.timedelta(days=1)
-    last_week_end_datetime = days[-1]
+    last_week_end_datetime = days[-1] + datetime.timedelta(days=2)
 
     #
     # For the purposes of this report, the granularity is an hour but this is
@@ -1173,8 +1207,8 @@ def render_report_consumed_by_month(
     cu = c_center.models.ConsumerUnit.objects.get(pk=consumer_unit_id)
     day_data = \
         c_center.c_center_functions.getDailyReports(cu, month, year, 1)
-    formated_day_data = []
 
+    formated_day_data = []
     cont = 1
     day_array = []
     for data in day_data:
@@ -1220,8 +1254,192 @@ def render_report_consumed_by_month(
     template_context =\
         django.template.context.RequestContext(request, template_variables)
 
+    return django.shortcuts.render_to_response("reports/consumed-by-month.html",
+                                               template_context)
+
+
+def render_report_powerprofile_by_month(
+        request
+):
+    template_variables = {
+        'axis_list': None,
+        'columns': None,
+        'columns_statistics': None,
+        'column_units': None,
+        'column_unit_axis_indexes': None,
+        'max': None,
+        'min': None,
+        'rows': None
+    }
+
+    if not request.method == "GET":
+        raise django.http.Http404
+
+    if not "electrical-parameter-name01" in request.GET:
+        return django.http.HttpResponse(content="", status=200)
+
+    #
+    # Build a request data list in order to normalize it.
+    #
+    request_data_list = []
+    parameter_counter = 1
+    parameter_get_key = "electrical-parameter-name%02d" % parameter_counter
+    consumer_unit_id = request.GET['consumer-unit-id']
+
+    month = int(request.GET['month'])
+    year = int(request.GET['year'])
+    days = variety.getMonthDays(month, year)
+
+    datetime_from = days[0] + datetime.timedelta(days=1)
+    datetime_to = days[-1] + datetime.timedelta(days=2)
+
+    today = datetime.datetime.now()
+    if today.month == month and today.year == year:
+        current_week = variety.get_week_of_month_from_datetime(today)
+        template_variables['course_week'] = True
+        #number of weeks in month minus current_week = remaining weeks at
+        #                                              the start of month
+        template_variables['week'] = 6 - current_week
+        template_variables['fi'], template_variables['ff'] = \
+            variety.get_week_start_datetime_end_datetime_tuple(year,
+                                                               month,
+                                                               current_week)
+
+    else:
+        template_variables['ff'] = datetime_to
+        template_variables['fi'] = datetime_to - \
+                                   datetime.timedelta(days=7)
+    template_variables['consumer_unit_id'] = request.GET['consumer-unit-id']
+    template_variables['years'] = request.session['years']
+    template_variables['current_year'] = year
+    template_variables['current_month'] = month
+
+
+    while request.GET.has_key(parameter_get_key):
+        electrical_parameter_name_get_key =\
+            "electrical-parameter-name%02d" % parameter_counter
+
+        try:
+            electrical_parameter_name =\
+                request.GET[electrical_parameter_name_get_key]
+
+        except KeyError:
+            logger.error(
+                reports.globals.SystemError.RENDER_INSTANT_MEASUREMENTS_ERROR)
+
+            raise django.http.Http404
+
+        request_data_list_item =\
+            (consumer_unit_id,
+             datetime_from,
+             datetime_to,
+             electrical_parameter_name)
+
+        request_data_list.append(request_data_list_item)
+        parameter_counter += 1
+        parameter_get_key = "electrical-parameter-name%02d" % parameter_counter
+
+    #
+    # Normalize the data list.
+    #
+    request_data_list_normalized =\
+        get_request_data_list_normalized(request_data_list)
+
+    #
+    # Build the columns list.
+    #
+    column_strings =\
+        get_column_strings_electrical_parameter(request_data_list_normalized)
+
+    template_variables['columns'] = column_strings
+
+    columns_units_list = get_column_units_list(request_data_list_normalized)
+    template_variables['column_units'] = zip(columns_units_list, column_strings)
+
+    #
+    # Build and normalize the data clusters list.
+    #
+    granularity = "raw"
+
+    data_clusters_list = get_data_clusters_list(request_data_list_normalized,
+                                                granularity)
+    normalize_data_clusters_list(data_clusters_list)
+
+
+
+    #data_clusters_list para csv
+
+    axis_dictionary = \
+        get_axis_dictionary(data_clusters_list, columns_units_list)
+
+    axis_dictionaries_list = get_axis_dictionaries_list(axis_dictionary)
+    template_variables['axis_list'] = axis_dictionaries_list
+
+    column_units_axis_indexes =\
+        get_column_units_axis_indexes(
+            columns_units_list,
+            axis_dictionaries_list)
+
+    template_variables['column_unit_axis_indexes'] = column_units_axis_indexes
+
+    #
+    # Create the json using the data clusters list normalized
+    #
+    data_clusters_json = get_data_clusters_json(data_clusters_list)
+
+    if data_clusters_json is None:
+        raise django.http.Http404
+
+    template_variables['rows'] = data_clusters_json
+
+    #
+    # Get statistical values
+    #
+    maximum, minimum = get_data_clusters_list_limits(data_clusters_list)
+
+    weeks = []
+    for cont in range(0, 6):
+        if cont == 0:
+            weeks.append(
+                (datetime_from, datetime_from + datetime.timedelta(days=7)))
+
+        else:
+            weeks.append(
+                (weeks[cont-1][1],
+                 weeks[cont-1][1] + datetime.timedelta(days=7)))
+
+    cont = 0
+    statistics = []
+    for day_data in data_clusters_list:
+        #day_data = todos los datos de un parámetro para el mes
+        param = column_strings[cont]
+
+        cont += 1
+        week_counter = 0
+        month_array = []
+        week_array = []
+        for day in day_data:
+            medition_date = datetime.datetime.fromtimestamp(day["datetime"])
+            if weeks[week_counter][0] <= medition_date < weeks[week_counter][1] \
+                    and week_counter < len(weeks):
+                if param == "PF" and abs(day['value']) > 1:
+                    day['value'] = 1
+                week_array.append(abs(float(day['value'])))
+            else:
+                if week_array:
+                    month_array.append(get_data_statistics(week_array))
+                week_counter += 1
+                week_array = []
+        statistics.append(dict(param=param, month_data=month_array))
+
+    template_variables['max'] = maximum
+    template_variables['min'] = minimum
+    template_variables['columns_statistics'] = statistics
+    template_context =\
+        django.template.context.RequestContext(request, template_variables)
+
     return django.shortcuts.render_to_response(
-               "reports/consumed-by-month.html",
+               "reports/instant_by_month.html",
                template_context)
 
 

@@ -84,7 +84,8 @@ GRAPHS_CACUM = [ob.object for ob in GroupObject.objects.filter(
 GRAPHS_CONS = [ob.object for ob in GroupObject.objects.filter(
     group__group_name="Consumo")]
 GRAPHS = dict(energia=GRAPHS_ENERGY, corriente=GRAPHS_I, voltaje=GRAPHS_V,
-              perfil_carga=GRAPHS_PF, fase1=GRAPHS_F1, fase2=GRAPHS_F2,
+              perfil_carga=GRAPHS_PF, perfil_carga_mes=GRAPHS_PF,
+              fase1=GRAPHS_F1, fase2=GRAPHS_F2,
               fase3=GRAPHS_F3, consumo_acumulado=GRAPHS_CACUM,
               consumo=GRAPHS_CONS)
 
@@ -326,6 +327,9 @@ def main_page(request):
             if request.GET['g_type'] == "consumo_acumulado":
                 template_vars['years'] = request.session['years']
                 template = "consumption_centers/graphs/main_consumed.html"
+            elif request.GET['g_type'] == "perfil_carga_mes":
+                template_vars['years'] = request.session['years']
+                template = "consumption_centers/graphs/main_pprofile_month.html"
             else:
                 template = "consumption_centers/graphs/main.html"
             return render_to_response(template,
