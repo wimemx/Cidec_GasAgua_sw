@@ -1575,3 +1575,58 @@ def csv_report(request):
         writer.writerow(data_item)
 
     return response
+
+
+def function_name(request):
+    template_variables = {
+        'max' : None,
+        'min' : None,
+        'rows' : None,
+    }
+
+    if not request.method == "GET":
+        raise django.http.Http404
+    if not "electrical-parameter-name" in request.GET:
+        return django.http.HttpResponse(content="", status=200)
+    try:
+        consumer_unit_id = request.GET['consumer-unit-id']
+        month = int(request.GET['month'])
+        year = int(request.GET['year'])
+        electrical_parameter_name = request.GET['electrical-parameter-name']
+
+    except KeyError:
+        raise django.http.Http404
+
+    days = variety.getMonthDays(month, year)
+    #cambiar fecha de inicio y fin
+    first_week_start_datetime = days[0] + datetime.timedelta(days=1)
+    last_week_end_datetime = days[-1] + datetime.timedelta(days=2)
+
+    #
+    # For the purposes of this report, the granularity is an hour but this is
+    # intended to be extended, it should be retrieved as GET parameter.
+    #
+    request_data_list_item =\
+            (consumer_unit_id,
+             first_week_start_datetime,
+             last_week_end_datetime,
+             electrical_parameter_name)
+    request_data_list_normalized =\
+        get_request_data_list_normalized(request_data_list_item)
+
+    data_clusters_list = get_data_clusters_list(request_data_list_normalized,
+                                                "raw")
+
+    cu = c_center.models.ConsumerUnit.objects.get(pk=consumer_unit_id)
+    if cu.building.electric_rate.electric_rate_name == "H-M":
+        #parse data_cluster_consumed
+        template_variables['rows'] = rates_for_data_cluster(
+            data_clusters_list, cu.building.region)
+
+        template_variables['periods'] = True
+
+    template_context =\
+        django.template.context.RequestContext(request, template_variables)
+
+    return django.shortcuts.render_to_response("reports/consumed-by-month.html",
+                                               template_context)
