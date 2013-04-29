@@ -1560,18 +1560,16 @@ def csv_report(request):
         for data in cluster:
             date_time = datetime.datetime.fromtimestamp(data['datetime'])
             electric_data_row = [unicode(consumer_unit.building.building_name)
-                                 .encode("utf-8", errors="ignore"),
+                                 .encode("utf-8"),
                                  consumer_unit.electric_device_type
-                                 .electric_device_type_name.encode("utf-8",
-                                                                   errors="ignore"),
+                                 .electric_device_type_name.encode("utf-8"),
                                  electrical_parameter_name,
                                  str(data['value']),
                                  str(date_time)]
             data_csv.append(electric_data_row)
     response = django.shortcuts.HttpResponse(mimetype='text/csv; charset=utf-8')
     response['Content-Disposition'] = 'attachment; filename="datos_' + \
-                                      report_name.encode("utf-8",
-                                                    errors="ignore") + 'csv"'
+                                      report_name.encode("utf-8") + 'csv"'
     writer = csv.writer(response)
     for data_item in data_csv:
         writer.writerow(data_item)
