@@ -55,9 +55,9 @@
 
     $("a.switch").click(function(event){
         event.preventDefault();
-        var url="/configuracion/status_alarm/"+$(this).attr("rel")+"/";
+        var url="/configuracion/status_suscription_alarm/"+$(this).attr("rel")+"/";
         var action = $(this).attr("title");
-        new Messi('&iquest;Est&aacute; seguro de que desea '+ action +' esta alarma?',
+        new Messi('&iquest;Est&aacute; seguro de que desea '+ action +' esta suscripción a  alarma?',
             {title: action+' alarma', modal: true, buttons: [{id: 0,
                 label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
             }],
@@ -78,8 +78,8 @@
                 }
             });
             if(check){
-                new Messi('&iquest;Est&aacute; seguro de que desea cambiar el estatus las alarmas' +
-                ' seleccionados?',
+                new Messi('&iquest;Est&aacute; seguro de que desea cambiar el estatus de susciprición de las alarmas' +
+                ' seleccionadas?',
                     {
                         title: 'Cambiar estatus', modal: true, buttons: [{id: 0,
                         label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'}],
@@ -168,14 +168,12 @@
     <div id="page_content">
         <div id="contenido_interno">
             <h2 id="titulo_form" class="powermeter">Ver Suscripciones a Alarmas</h2>
-            <hr>
-            {{ lista }}
-            <hr>
 
 
 
 
             <div class="divider" id="divider_top">&nbsp;</div>
+
             {% if message %}
                 <span class="notif {{ msg_type }}">
                     {% autoescape off %}{{ message }}{% endautoescape %}
@@ -206,10 +204,11 @@
                         </button>
                     </form>
                 </div>
-                <form id="operations_batch" action="/configuracion/status_batch_alarm/" method="post">
+                <form id="operations_batch" action="/configuracion/status_suscription_batch_alarm/" method="post">
                     {% csrf_token %}
                     <div id="grid_container">
                         <table>
+
                             <thead>
                             <tr>
                                 <th style="width: 14%;">
@@ -226,7 +225,7 @@
                                 </th>
                                 <th style="width: 12.5%;">
                                     <a href="#" id="order_parameter" rel="{{ order_parameter }}">
-                                        Apeido
+                                        Apellido
                                         <span class="sort"></span>
                                     </a>
                                 </th>
@@ -252,37 +251,37 @@
                             </tr>
                             </thead>
                             <tbody>
-                            {% for alarma in paginacion.object_list %}
+                            {% for item in lista %}
 
                                 <tr class="{% cycle 'row1' 'row2' %}">
                                     <td>
-                                        <input type="checkbox" id="alarma_{{ alarma.pk }}"
-                                               name="alarma_{{ alarma.pk }}"/>
-                                        <label for="alarma_{{ alarma.pk }}">
-                                            <a href="/configuracion/alarma/{{ alarma.pk }}/">
-                                                {{ alarma.consumer_unit.profile_powermeter.powermeter.powermeter_anotation }}
+                                        <input type="checkbox" id="alarma_{{ item.pk }}"
+                                               name="alarma_{{ item.pk }}"/>
+                                        <label for="alarma_{{ item.pk }}">
+                                            <a href="/configuracion/alarma/{{ item.pk }}/">
+                                                {{ item.user }}
                                             </a>
                                         </label>
                                     </td>
                                     <td class="c">
-                                            {{ alarma.consumer_unit.building.building_name }}
+                                        {{ item.user.first_name }}
                                     </td>
                                     <td class="c">
-                                        {{ alarma.electric_parameter.name }}
+                                        {{ item.user.last_name }}
                                     </td>
                                     <td class="c">
-                                        {{ alarma.min_value|floatformat:2 }}
+                                        {{ item.alarm.electric_parameter.name }} &ndash; {{ item.alarm.consumer_unit.building.building_name }}
                                     </td>
                                     <td class="c">
-                                        {{ alarma.max_value|floatformat:2 }}
+                                        {{ item.alarm.last_changed }}
                                     </td>
                                     <td class="c">
-                                        {{ alarma.last_changed }}
-                                    </td>
-                                    <td class="c">
-                                        <a href="#" rel="{{ alarma.pk }}" {% if alarma.status %}class="switch active_switch" title="desactivar"{% else %}class="switch inactive_switch" title="activar"{% endif %}>
+                                        <a href="#" rel="{{ item.pk }}" {% if item.status %}class="switch active_switch" title="desactivar"{% else %}class="switch inactive_switch" title="activar"{% endif %}>
                                         </a>
+
+
                                     </td>
+
                                     <td class="c">
                                         <a class="edit" title="Editar alarma"
                                            href="/configuracion/editar_alarma/{{ alarma.pk }}/"></a>
