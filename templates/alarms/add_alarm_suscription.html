@@ -15,6 +15,7 @@
     var form_valid = true;
     var send_form = 0;
     $(document).ready(function(){
+
         $("#clustername").focus();
         $(".required").each(function(){
             var _span;
@@ -58,11 +59,41 @@
                 });
             }
         });
-        $("#save").click(function(){
-            validate_form();
-            return send_form == 1;
-        });
+
     });
+    function prueba()
+    {
+        valor=  document.getElementById("buildingselect").value;
+
+        if(valor != '0')
+            {
+
+                $.ajax({
+                    url: "/configuracion/alta_suscripcion_alarma/?id=" + valor,
+                    type: "GET",
+                    dataType: 'json',
+                    async: 'true',
+
+                     success: function(data){
+                        alert('hey');
+                     }
+                 });
+            }
+    }
+
+
+    $("#save").click(function(){
+          alert('hey');
+           /* validate_form();
+            return send_form == 1;*/
+    });
+
+        $("#buildingselect").change(function(){
+            alert("hey");
+
+
+         });
+
     function validate_form(){
         if (form_valid){
             var _span;
@@ -92,6 +123,8 @@
             }
             return form_valid
         }
+
+
 </script>
 {% endblock %}
 
@@ -141,11 +174,11 @@
                  <div class="fields_row g9">
                     <label for="clustername" class="g2">Edificio<span class="required">*</span></label>
 
-                      <select name="clustersector" id="clustersector" class="g9">
-                        <option value="">Selecciona una edificio: </option>
+                      <select name="buildingselect" id="buildingselect" class="g9" onchange="prueba()">
+                        <option value="0">Selecciona una edificio: </option>
                         {% if edificios %}
                             {% for item in edificios %}
-                                <option value="{{item.id}}" {% if post.clustersector == item.id %} selected {% endif %}> {{ item.building_name }}</option>
+                                <option value="{{item.id}}"> {{ item.building_name }} </option>
                             {% endfor %}
                         {% endif %}
 
@@ -187,6 +220,7 @@
                 <button class="aqua_btn" id="save">
                     Guardar
                 </button>
+            </div>
             </div>
         </form>
 

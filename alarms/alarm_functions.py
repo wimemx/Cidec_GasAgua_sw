@@ -50,12 +50,13 @@ def set_alarm_json(building, user):
     i_eq.save()
 
 
-def get_alarm_from_building(building):
+def get_alarm_from_building(id):
     """ Return the alarm for the request building
     :param building: Object.- Building instance
     """
 
-    alarma = Alarms.objects.filter(consumer_unit__building=building)
+    alarma = Alarms.objects.filter(consumer_unit__building__pk=id)
+    return json.dumps(alarma)
 
 
 

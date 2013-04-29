@@ -123,6 +123,7 @@ def add_alarm(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+
 @login_required(login_url='/')
 def edit_alarm(request, id_alarm):
     datacontext = get_buildings_context(request.user)[0]
@@ -140,7 +141,7 @@ def edit_alarm(request, id_alarm):
     if has_permission(request.user, UPDATE,
                       permission) or \
             request.user.is_superuser:
-        
+
         clusters = get_clusters_for_operation(permission, UPDATE, request.user)
         template_vars['clusters'] = clusters
         parameters = ElectricParameters.objects.all()
@@ -216,6 +217,7 @@ def edit_alarm(request, id_alarm):
     else:
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
+
 
 @login_required(login_url='/')
 def alarm_list(request):
@@ -404,7 +406,7 @@ def status_alarm(request, id_alarm):
         building = alarm.consumer_unit.building
         set_alarm_json(building, request.user)
         mensaje = "El estatus de la alarma " + \
-                  alarm.consumer_unit.profile_powermeter.powermeter\
+                  alarm.consumer_unit.profile_powermeter.powermeter \
                       .powermeter_anotation + \
                   " - " + alarm.electric_parameter.name + \
                   ", ha cambiado a " + str_status
@@ -422,6 +424,7 @@ def status_alarm(request, id_alarm):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+
 @login_required(login_url='/')
 def mostrar_alarma(request, id_alarm):
     datacontext = get_buildings_context(request.user)[0]
@@ -431,18 +434,20 @@ def mostrar_alarma(request, id_alarm):
     template_vars["sidebar"] = request.session['sidebar']
     template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
-    alarm= get_object_or_404(Alarms, id=id_alarm)
-    template_vars["alarm"]=alarm
+    alarm = get_object_or_404(Alarms, id=id_alarm)
+    template_vars["alarm"] = alarm
     template_vars['building'] = get_building_siblings(alarm.consumer_unit.building)
-    template_vars['compania']= template_vars['building'][0].company
-    template_vars['company']= get_company_siblings(template_vars['compania'])
+    template_vars['compania'] = template_vars['building'][0].company
+    template_vars['company'] = get_company_siblings(template_vars['compania'])
     template_vars['curr_cluster'] = template_vars['company'][0].cluster
     template_vars_template = RequestContext(request, template_vars)
-    return render_to_response("alarms/alarm_detail.html",template_vars_template)
+    return render_to_response("alarms/alarm_detail.html", template_vars_template)
+
 
 @login_required(login_url='/')
 def suscribe_alarm(request, id_alarm):
     pass
+
 
 @login_required(login_url='/')
 def alarm_suscription_list(request):
@@ -459,7 +464,7 @@ def alarm_suscription_list(request):
         template_vars["empresa"] = request.session['main_building']
         template_vars["company"] = request.session['company']
         lista = UserNotificationSettings.objects.all()
-        template_vars["lista"]=lista
+        template_vars["lista"] = lista
         paginator = Paginator(lista, 10)
         try:
             page = int(request.GET.get('page', '1'))
@@ -480,9 +485,10 @@ def alarm_suscription_list(request):
         template_vars_template = RequestContext(request, template_vars)
 
         return render_to_response(
-                "alarms/alarm_suscription_list.html",
-                template_vars_template)
+            "alarms/alarm_suscription_list.html",
+            template_vars_template)
     pass
+
 
 @login_required(login_url='/')
 def add_alarm_suscription(request):
@@ -503,23 +509,34 @@ def add_alarm_suscription(request):
         edificios = get_all_buildings_for_operation(permission, VIEW, request.user)
         template_vars["edificios"] = edificios
         lista = UserNotificationSettings.objects.all()
-        template_vars["lista"]=lista
+        template_vars["lista"] = lista
 
-    if request.method == "POST":
-        pass
+
+
+
+        if request.GET.get('id'):
+
+            b_id = request.GET.get('id')
+            data = get_alarm_from_building(b_id)
+            return HttpResponse(content=data, content_type="application/json")
+
+
+
+
 
 
 
 
     template_vars_template = RequestContext(request, template_vars)
     return render_to_response(
-            "alarms/add_alarm_suscription.html",
-            template_vars_template)
+        "alarms/add_alarm_suscription.html",
+        template_vars_template)
 
 
 @login_required(login_url='/')
 def unsuscribe_alarm(request, id_alarm):
     pass
+
 
 def search_alarm(request):
     pass
@@ -542,12 +559,11 @@ def status_suscription_alarm(request, id_alarm):
         alarm.save()
 
         mensaje = str("El estatus de la suscripción a la alarma ").decode("utf-8") + \
-                  alarm.alarm.consumer_unit.profile_powermeter.powermeter\
+                  alarm.alarm.consumer_unit.profile_powermeter.powermeter \
                       .powermeter_anotation + \
                   " - " + alarm.alarm.electric_parameter.name + \
                   ", ha cambiado a " + str_status
         _type = "n_success"
-
 
         return HttpResponseRedirect(
             "/configuracion/suscripcion_alarma/?msj=" + mensaje +
