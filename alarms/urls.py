@@ -25,10 +25,21 @@ urlpatterns = patterns('',
                            'alarms.views.alarm_suscription_list'),
                        url(r'^alta_suscripcion_alarma/',
                            'alarms.views.add_alarm_suscription'),
+                       url(r'^editar_suscripcion_alarma/(?P<id_alarm>\d+)',
+                           'alarms.views.edit_alarm_suscription'),
                        url(r'^alarma/(?P<id_alarm>\d+)/',
                            'alarms.views.mostrar_alarma'),
+                       url(r'^alarma_suscripcion/(?P<id_alarm>\d+)/',
+                           'alarms.views.mostrar_suscripcion_alarma'),
                        url(r'^buscar_alarma/',
                            'alarms.views.search_alarm'),
+
+                       url(r'^get_unread_notifs_count/',
+                           'alarms.views.get_unread_notifs_count'),
+                       url(r'^user_notifications/',
+                           'alarms.views.user_notifications'),
+                       url(r'^get_latest_notifs/',
+                           'alarms.views.get_latest_notifs'),
                        )
 
 

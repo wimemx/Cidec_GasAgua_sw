@@ -101,7 +101,7 @@
             var chart;
             var vaxes = {
             {% for axis in axis_list  %}
-                {{ forloop.counter0 }}: {logScale: false, title: '{{ axis.name }}', titleTextStyle:{color: colors[arr_pos[{{ forloop.counter0 }}]]}, textStyle:{color: colors[arr_pos[{{ forloop.counter0 }}]]}, {% if axis.name == "V" or axis.name == "I" %}minValue: 0, {% endif %}textPosition: "{% cycle 'out' 'in' %}"},
+                {{ forloop.counter0 }}: {logScale: false, title: '{{ axis.name }}', titleTextStyle:{color: colors[arr_pos[{{ forloop.counter0 }}]], fontSize: 11, italic: false}, textStyle:{color: colors[arr_pos[{{ forloop.counter0 }}]], fontSize: 11, italic: false}, {% if axis.name == "V" or axis.name == "I" %}minValue: 0, {% endif %}textPosition: "{% cycle 'out' 'in' %}"},
             {% endfor %}
             };
             var vseries = {
@@ -266,7 +266,7 @@
                                 unit = u_index[serie];
                                 vaxis_index[index] = unit;
                             }
-                            vaxes_new[index] = {logScale: false, title: unit, titleTextStyle:{color: colores[index]}, textStyle:{color: colores[index]}, minValue: 0, textPosition: pos}
+                            vaxes_new[index] = {logScale: false, title: unit, titleTextStyle:{color: colores[index], fontSize: 11, italic: false}, textStyle:{color: colores[index], fontSize: 11, italic: false}, minValue: 0, textPosition: pos}
                         }
 
                         //console.log("vaxes_new", vaxes_new);

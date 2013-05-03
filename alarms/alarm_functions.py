@@ -29,7 +29,7 @@ def set_alarm_json(building, user):
         cu_alarms = Alarms.objects.filter(consumer_unit=cu)
 
         for cua in cu_alarms:
-            status = "true" if cua.status else "false"
+            status = 1 if cua.status else 0
             min_value = 0 if not cua.min_value else float(str(cua.min_value))
             max_value = 0 if not cua.max_value else float(str(cua.max_value))
             eDeviceAlarms.append(
@@ -55,8 +55,18 @@ def get_alarm_from_building(id):
     :param building: Object.- Building instance
     """
 
-    alarma = Alarms.objects.filter(consumer_unit__building__pk=id)
-    return json.dumps(alarma)
+    alarma = Alarms.objects.filter(
+        consumer_unit__building__pk=id,
+        status=True).values("pk",
+                            "consumer_unit__building__building_name",
+                            "electric_parameter__name")
+    serie = []
+    for res in alarma:
+        serie.append(dict(
+            param=res['electric_parameter__name'],
+            id=res['pk'],
+            edificio=res['consumer_unit__building__building_name']))
+    return serie
 
 
 

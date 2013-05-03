@@ -1587,30 +1587,28 @@ def getMonthlyReport(consumer_u, month, year):
         except ObjectDoesNotExist:
             mes_new = calculateMonthlyReport(consumer_u, month, year)
             mes = MonthlyData(consumer_unit=consumer_u,
-                                  month=month,
-                                  year=year,
-                                  KWH_total=mes_new['consumo_acumulado'],
-                                  max_demand=mes_new['demanda_max'],
-                                  max_cons=mes_new['consumo_maximo'],
-                                  carbon_emitions=mes_new['emisiones'],
-                                  power_factor=str(mes_new['factor_potencia']),
-                                  min_demand=mes_new['demanda_min'],
-                                  average_demand=str(
-                                      mes_new['demanda_promedio']),
-                                  min_cons=mes_new['consumo_minimo'],
-                                  average_cons=str(mes_new['consumo_promedio']),
-                                  median_cons=str(mes_new['consumo_mediana']),
-                                  deviation_cons=str(
-                                      mes_new['consumo_desviacion']))
+                              month=month,
+                              year=year,
+                              KWH_total=mes_new['consumo_acumulado'],
+                              max_demand=mes_new['demanda_max'],
+                              max_cons=mes_new['consumo_maximo'],
+                              carbon_emitions=mes_new['emisiones'],
+                              power_factor=str(mes_new['factor_potencia']),
+                              min_demand=mes_new['demanda_min'],
+                              average_demand=str(mes_new['demanda_promedio']),
+                              min_cons=mes_new['consumo_minimo'],
+                              average_cons=str(mes_new['consumo_promedio']),
+                              median_cons=str(mes_new['consumo_mediana']),
+                              deviation_cons=str(mes_new['consumo_desviacion']))
             mes.save()
         return dict(consumo_acumulado=mes.KWH_total,
                     demanda_max=mes.max_demand,
                     consumo_maximo=mes.max_cons,
                     emisiones=mes.carbon_emitions,
-                    factor_potencia=mes.carbon_emitions,
-                    demanda_min=mes.min_demand,
-                    demanda_promedio=mes.average_demand,
-                    consumo_minimo=mes.min_cons,
+                    factor_potencia=float(mes.carbon_emitions),
+                    demanda_min=float(mes.min_demand),
+                    demanda_promedio=float(mes.average_demand),
+                    consumo_minimo=float(mes.min_cons),
                     consumo_promedio=float(mes.average_cons),
                     consumo_mediana=float(mes.median_cons),
                     consumo_desviacion=float(mes.deviation_cons))
@@ -1628,20 +1626,19 @@ def calculateMonthlyReport_all(month, year):
         else:
             mes_new = calculateMonthlyReport(consumer_u, month, year)
             mes = MonthlyData(consumer_unit=consumer_u,
-                                  month=month,
-                                  year=year,
-                                  KWH_total=mes_new['consumo_acumulado'],
-                                  max_demand=mes_new['demanda_max'],
-                                  max_cons=mes_new['consumo_maximo'],
-                                  carbon_emitions=mes_new['emisiones'],
-                                  power_factor=str(mes_new['factor_potencia']),
-                                  min_demand=mes_new['demanda_min'],
-                                  average_demand=mes_new['demanda_promedio'],
-                                  min_cons=mes_new['consumo_minimo'],
-                                  average_cons=str(mes_new['consumo_promedio']),
-                                  median_cons=str(mes_new['consumo_mediana']),
-                                  deviation_cons=str(
-                                      mes_new['consumo_desviacion']))
+                              month=month,
+                              year=year,
+                              KWH_total=mes_new['consumo_acumulado'],
+                              max_demand=mes_new['demanda_max'],
+                              max_cons=mes_new['consumo_maximo'],
+                              carbon_emitions=mes_new['emisiones'],
+                              power_factor=str(mes_new['factor_potencia']),
+                              min_demand=mes_new['demanda_min'],
+                              average_demand=mes_new['demanda_promedio'],
+                              min_cons=mes_new['consumo_minimo'],
+                              average_cons=str(mes_new['consumo_promedio']),
+                              median_cons=str(mes_new['consumo_mediana']),
+                              deviation_cons=str(mes_new['consumo_desviacion']))
             mes.save()
     return "done calculateMonthlyReport_all"
 
@@ -1691,19 +1688,23 @@ def calculateMonthlyReport(consumer_u, month, year):
             mes['consumo_acumulado'] = 0
 
         #Obtener demanda maxima
-        mes['demanda_max'] = demandaMaxima(consumer_u, fecha_inicio, fecha_final)
+        mes['demanda_max'] = float(
+            demandaMaxima(consumer_u, fecha_inicio, fecha_final))
 
         #Obtener demanda minima
-        mes['demanda_min'] = demandaMinima(consumer_u, fecha_inicio, fecha_final)
+        mes['demanda_min'] = float(demandaMinima(consumer_u,
+                                                 fecha_inicio,
+                                                 fecha_final))
 
         #Obtener factor de potencia.
         #Para obtener el factor potencia son necesarios los KWH Totales
         # (consumo acumulado) y los KVARH
-        kvarh = obtenerKVARH_total(profile_powermeter.powermeter, fecha_inicio,
-                                   fecha_final)
+        kvarh = float(obtenerKVARH_total(profile_powermeter.powermeter,
+                                         fecha_inicio,
+                                         fecha_final))
 
-        mes['factor_potencia'] = factorpotencia(float(mes['consumo_acumulado']),
-                                                kvarh)
+        mes['factor_potencia'] = float(
+            factorpotencia(float(mes['consumo_acumulado']),kvarh))
 
         #Consumo minimo
         mes['consumo_minimo'] = float(max_minKWH(consumer_u, fecha_inicio,
@@ -1714,20 +1715,22 @@ def calculateMonthlyReport(consumer_u, month, year):
                                            fecha_final, "max"))
 
         #demanda promedio
-        mes['demanda_promedio'] = promedioKW(consumer_u, fecha_inicio,
-                                           fecha_final)
+        mes['demanda_promedio'] = float(promedioKW(consumer_u, fecha_inicio,
+                                                   fecha_final))
 
         #Consumo promedio
-        mes['consumo_promedio'] = promedioKWH(consumer_u, fecha_inicio,
-                                              fecha_final)
+        mes['consumo_promedio'] = float(promedioKWH(consumer_u, fecha_inicio,
+                                                    fecha_final))
 
         #Consumo desviación
-        mes['consumo_desviacion'] = desviacionStandardKWH(consumer_u,
-                                                          fecha_inicio,
-                                                          fecha_final)
+        mes['consumo_desviacion'] = float(desviacionStandardKWH(consumer_u,
+                                                                fecha_inicio,
+                                                                fecha_final))
 
         #Consumo mediana
-        mes['consumo_mediana'] = medianaKWH(consumer_u, fecha_inicio, fecha_final)
+        mes['consumo_mediana'] = float(medianaKWH(consumer_u,
+                                                  fecha_inicio,
+                                                  fecha_final))
 
         #emisiones de carbon
         mes['emisiones'] = mes['consumo_acumulado'] * .55842

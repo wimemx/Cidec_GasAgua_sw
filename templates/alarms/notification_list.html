@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block titulo %}Ver Alarmas{% endblock %}
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/forms/rbac_general.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/forms/rbac_user_list.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/alarms/notification_lisT_full.css" type="text/css" />
+    <link rel="stylesheet" href="/static/js/external/fancybox/jquery.fancybox.css" type="text/css" />
+{% endblock %}
+{% block externaljs %}
+    <script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
+    <script type="text/javascript">
+
+    </script>
+{% endblock %}
+{% block document_ready %}
+    $(".variousf").fancybox({
+        maxWidth	: 800,
+        maxHeight	: 800,
+        fitToView	: false,
+        width		: '70%',
+        height		: '70%',
+        autoSize	: false,
+        closeClick	: false,
+        openEffect	: 'none',
+        closeEffect	: 'none'
+    });
+{% endblock %}
+
+{% block contenido %}
+    {% load custom_filters %}
+
+    <div id="bread_crumbs">
+        <ul>
+            <li><a href="/main/">Inicio</a></li>
+            <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
+            <li>Notificaciones</li>
+        </ul>
+
+    </div>
+    <div id="page_content">
+        <div id="contenido_interno">
+            <h2 id="titulo"><span>Alarmas Recientes</span> <!-- - {{ building.building_name }}</span> - {{ request.session.consumer_unit.electric_device_type.electric_device_type_name }}</h2><a class="various" data-fancybox-type="iframe" href="/reportes/set_consumer_unit/">Cambiar</a>-->
+            </h2>
+                {% for key, value in notifications.items|sortKeys:"reverse" %}
+                    <div class="vacio"></div>
+                    <div class="notif_days">
+                        <h3 class="raised_alarm">
+                        {% if today_str == key %}
+                            El día de hoy
+                        {% else %}
+                            {{ value.0.notif.alarm_event.triggered_time|date:"j \d\e F" }}
+                        {% endif %}
+                        </h3>
+                        <div class="vacio"></div>
+                        {% for notif in value %}
+                            <p class="notif_detail item{{ forloop.counter0 }}">
+                                <span class="t_hour">{{ notif.triggered|time:"f A" }}</span>
+                                La lectura del par&aacute;metro <span class="parameter">{{ notif.notif.alarm_event.alarm.electric_parameter.name }}</span>
+                                ha sido de <span class="value {{ notif.type }}">{{ notif.notif.alarm_event.value|floatformat:2 }}{{ notif.notif.alarm_event.alarm.electric_parameter.param_units }}</span>
+                                sali&eacute;ndose del rango establecido entre <span class="range">{{ notif.notif.alarm_event.alarm.min_value|floatformat:2 }}{{ notif.notif.alarm_event.alarm.electric_parameter.param_units }}</span> y <span class="range">{{ notif.notif.alarm_event.alarm.max_value|floatformat:2 }}{{ notif.notif.alarm_event.alarm.electric_parameter.param_units }}</span>
+                                para la configuraci&oacute;n de <span class="consumer_unit_alarm">{{ notif.notif.alarm_event.alarm.consumer_unit.building.building_name }} en {{ notif.notif.alarm_event.alarm.consumer_unit.electric_device_type.electric_device_type_name }}</span>
+                            </p>
+                        {% endfor %}
+                    </div>
+
+                {% endfor %}
+            {% if all %}
+                <a class="various" href="/configuracion/user_notifications/">&Uacute;ltima Semana</a>
+            {% else %}
+                <a class="various" href="?todas=1">Ver Todas</a>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

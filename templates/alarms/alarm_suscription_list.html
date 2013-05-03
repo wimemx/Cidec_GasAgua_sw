@@ -40,7 +40,7 @@
                 if (get[0]!=window.location.protocol+"//"+window.location
                         .host+window.location.pathname){
                     for(var i=0; i<get.length; i++){
-                        if (get[i]!="order_consumer" && get[i]!="order_parameter" && get[i]!="order_min_value" && get[i]!="order_max_value" && get[i]!="order_changed" && get[i]!="order_status" && get[i]!="order_building"){
+                        if (get[i]!="order_user" && get[i]!="order_name" && get[i]!="order_lastname" && get[i]!="order_alarm" && get[i]!="order_date" && get[i]!="order_status" && get[i]!="order_building"){
                             base_url+="&"+get[i]+"="+get[get[i]];
                         }
                     }
@@ -95,42 +95,45 @@
         }
     });
 
-    $("#order_consumer").click(function(e){
+    $("#order_user").click(function(e){
         e.preventDefault();
         var base_url = window.location.pathname;
-        base_url+="?order_consumer="+$("#order_consumer").attr("rel");
+        base_url+="?order_user="+$("#order_user").attr("rel");
         base_url=append_get(base_url);
         window.location = base_url;
     });
 
-    $("#order_parameter").click(function(e){
+
+
+
+    $("#order_name").click(function(e){
         e.preventDefault();
         var base_url = window.location.pathname;
-        base_url+="?order_parameter="+$("#order_parameter").attr("rel");
+        base_url+="?order_name="+$("#order_name").attr("rel");
         base_url=append_get(base_url);
         window.location = base_url;
     });
 
-    $("#order_min_value").click(function(e){
+    $("#order_lastname").click(function(e){
         e.preventDefault();
         var base_url = window.location.pathname;
-        base_url+="?order_min_value="+$("#order_min_value").attr("rel");
+        base_url+="?order_lastname="+$("#order_lastname").attr("rel");
         base_url=append_get(base_url);
         window.location = base_url;
     });
 
-    $("#order_max_value").click(function(e){
+    $("#order_alarm").click(function(e){
         e.preventDefault();
         var base_url = window.location.pathname;
-        base_url+="?order_max_value="+$("#order_max_value").attr("rel");
+        base_url+="?order_alarm="+$("#order_alarm").attr("rel");
         base_url=append_get(base_url);
         window.location = base_url;
     });
 
-    $("#order_changed").click(function(e){
+    $("#order_date").click(function(e){
         e.preventDefault();
         var base_url = window.location.pathname;
-        base_url+="?order_changed="+$("#order_changed").attr("rel");
+        base_url+="?order_date="+$("#order_date").attr("rel");
         base_url=append_get(base_url);
         window.location = base_url;
     });
@@ -143,13 +146,6 @@
         window.location = base_url;
     });
 
-    $("#order_building").click(function(e){
-        e.preventDefault();
-        var base_url = window.location.pathname;
-        base_url+="?order_building="+$("#order_building").attr("rel");
-        base_url=append_get(base_url);
-        window.location = base_url;
-    });
 
 
 {% endblock %}
@@ -161,7 +157,7 @@
         <ul>
             <li><a href="/main/">Inicio</a></li>
             <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
-            <li>Alarmas</li>
+            <li>Suscripción a alarmas</li>
         </ul>
 
     </div>
@@ -212,31 +208,31 @@
                             <thead>
                             <tr>
                                 <th style="width: 14%;">
-                                    <a href="#" id="order_consumer" rel="{{ order_consumer }}">
+                                    <a href="#" id="order_user" rel="{{ order_user }}">
                                         Usuario
                                         <span class="sort"></span>
                                     </a>
                                 </th>
                                 <th style="width: 11%;">
-                                    <a href="#" id="order_building" rel="{{ order_building }}">
+                                    <a href="#" id="order_name" rel="{{ order_name }}">
                                         Nombre
                                         <span class="sort"></span>
                                     </a>
                                 </th>
                                 <th style="width: 12.5%;">
-                                    <a href="#" id="order_parameter" rel="{{ order_parameter }}">
+                                    <a href="#" id="order_lastname" rel="{{ order_lastname }}">
                                         Apellido
                                         <span class="sort"></span>
                                     </a>
                                 </th>
                                 <th style="width: 11.5%;">
-                                    <a href="#" id="order_min_value" rel="{{ order_min_value }}">
+                                    <a href="#" id="order_alarm" rel="{{ order_alarm }}">
                                         Alarma
                                         <span class="sort"></span>
                                     </a>
                                 </th>
                                 <th style="width: 14.5%;">
-                                    <a href="#" id="order_changed" rel="{{ order_changed }}">
+                                    <a href="#" id="order_date" rel="{{ order_date }}">
                                         &Uacute;ltima Modif.
                                         <span class="sort"></span>
                                     </a>
@@ -258,7 +254,7 @@
                                         <input type="checkbox" id="alarma_{{ item.pk }}"
                                                name="alarma_{{ item.pk }}"/>
                                         <label for="alarma_{{ item.pk }}">
-                                            <a href="/configuracion/alarma/{{ item.pk }}/">
+                                            <a href="/configuracion/alarma_suscripcion/{{ item.pk }}/">
                                                 {{ item.user }}
                                             </a>
                                         </label>
@@ -284,7 +280,7 @@
 
                                     <td class="c">
                                         <a class="edit" title="Editar alarma"
-                                           href="/configuracion/editar_alarma/{{ alarma.pk }}/"></a>
+                                           href="/configuracion/editar_suscripcion_alarma/{{ item.pk }}"></a>
                                     </td>
                                 </tr>
                             {% endfor %}

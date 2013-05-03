@@ -26,9 +26,6 @@ class Alarms(models.Model):
     min_value = models.DecimalField(blank=True, null=True, max_digits=20,
                                     decimal_places=6)
     consumer_unit = models.ForeignKey(ConsumerUnit, on_delete=models.PROTECT)
-
-
-
     last_changed = models.DateTimeField(auto_now=True)
     status = models.BooleanField(default=True)
 
