@@ -29,7 +29,7 @@ def set_alarm_json(building, user):
         cu_alarms = Alarms.objects.filter(consumer_unit=cu)
 
         for cua in cu_alarms:
-            status = "true" if cua.status else "false"
+            status = 1 if cua.status else 0
             min_value = 0 if not cua.min_value else float(str(cua.min_value))
             max_value = 0 if not cua.max_value else float(str(cua.max_value))
             eDeviceAlarms.append(

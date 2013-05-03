@@ -3,6 +3,9 @@ import time
 import datetime
 import json
 import re
+import locale
+
+import variety
 
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.http import HttpResponse, HttpResponseRedirect, Http404
@@ -12,6 +15,7 @@ from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
 
 from rbac.rbac_functions import get_buildings_context, has_permission
 from c_center.c_center_functions import get_clusters_for_operation, \
@@ -67,6 +71,13 @@ def add_alarm(request):
             timeunix = str(int(timeunix))
             user_pk = str(request.user.pk)
             building = Building.objects.get(pk=int(request.POST['building']))
+
+            max_value = request.POST['alarm_max_value'].strip()
+            min_value = request.POST['alarm_min_value'].strip()
+            if not max_value:
+                max_value = 0
+            if not min_value:
+                min_value = 0
             if request.POST['c_unit'] == "todas":
                 cus = get_c_unitsforbuilding_for_operation(
                     permission, CREATE, request.user, building
@@ -80,8 +91,8 @@ def add_alarm(request):
                     alarma = Alarms(
                         alarm_identifier=id_al,
                         electric_parameter=el,
-                        max_value=request.POST['alarm_max_value'].strip(),
-                        min_value=request.POST['alarm_min_value'].strip(),
+                        max_value=max_value,
+                        min_value=min_value,
                         consumer_unit=cu)
                     alarma.save()
             else:
@@ -95,8 +106,8 @@ def add_alarm(request):
                 alarma = Alarms(
                     alarm_identifier=id_al,
                     electric_parameter=el,
-                    max_value=request.POST['alarm_max_value'].strip(),
-                    min_value=request.POST['alarm_min_value'].strip(),
+                    max_value=max_value,
+                    min_value=min_value,
                     consumer_unit=cu)
                 alarma.save()
 
@@ -162,6 +173,14 @@ def edit_alarm(request, id_alarm):
             timeunix = str(int(timeunix))
             user_pk = str(request.user.pk)
             building = Building.objects.get(pk=int(request.POST['building']))
+
+            max_value = request.POST['alarm_max_value'].strip()
+            min_value = request.POST['alarm_min_value'].strip()
+            if not max_value:
+                max_value = 0
+            if not min_value:
+                min_value = 0
+
             if request.POST['c_unit'] == "todas":
                 cus = get_c_unitsforbuilding_for_operation(
                     permission, CREATE, request.user, building
@@ -174,8 +193,8 @@ def edit_alarm(request, id_alarm):
                     id_al += user_pk
                     alarm.alarm_identifier = id_al
                     alarm.electric_parameter = el
-                    alarm.max_value = request.POST['alarm_max_value'].strip()
-                    alarm.min_value = request.POST['alarm_min_value'].strip()
+                    alarm.max_value = max_value
+                    alarm.min_value = min_value
                     alarm.consumer_unit = cu
                     alarm.save()
             else:
@@ -188,8 +207,8 @@ def edit_alarm(request, id_alarm):
 
                 alarm.alarm_identifier = id_al
                 alarm.electric_parameter = el
-                alarm.max_value = request.POST['alarm_max_value'].strip()
-                alarm.min_value = request.POST['alarm_min_value'].strip()
+                alarm.max_value = max_value
+                alarm.min_value = min_value
                 alarm.consumer_unit = cu
                 alarm.save()
 
@@ -613,6 +632,152 @@ def status_suscription_batch_alarm(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+
+@login_required(login_url='/')
+def user_notifications(request):
+    datacontext = get_buildings_context(request.user)[0]
+    template_vars = {}
+    if datacontext:
+        template_vars = {"datacontext": datacontext}
+    template_vars["sidebar"] = request.session['sidebar']
+    template_vars["empresa"] = request.session['main_building']
+    template_vars["company"] = request.session['company']
+    template_vars['building'] = request.session['main_building']
+    if has_permission(request.user,
+                      VIEW,
+                      "Ver suscripciones a alarmas") or \
+            request.user.is_superuser:
+        date_notif = datetime.date.today() - datetime.timedelta(days=7)
+        #get the last week notifications
+
+        if "todas" in request.GET:
+            notifs = UserNotifications.objects.all().exclude(
+                alarm_event__alarm__status=False
+            ).order_by("-alarm_event__triggered_time")
+            template_vars['all'] = True
+        else:
+            notifs = UserNotifications.objects.filter(
+                user=request.user,
+                alarm_event__triggered_time__gte=date_notif
+            ).exclude(
+                alarm_event__alarm__status=False
+            ).order_by("-alarm_event__triggered_time")
+            template_vars['all'] = False
+        arr_day_notif = {}
+
+        today_str = str(datetime.date.today())
+        #separate notifs by day
+        tz = timezone.get_current_timezone()
+        for notif in notifs:
+            notif.read = True
+            notif.save()
+            #get localized time
+            local_triggered_time = variety.convert_from_utc(
+                notif.alarm_event.triggered_time.time(), tz)
+            #get localized datetime
+            notif.alarm_event.triggered_time = \
+                notif.alarm_event.triggered_time.astimezone(tz)
+            date_n = notif.alarm_event.triggered_time.date()
+
+            #type of alarm (off limits, or under limits)
+            if notif.alarm_event.value > notif.alarm_event.alarm.max_value:
+                _type = "max"
+            elif notif.alarm_event.value < notif.alarm_event.alarm.min_value:
+                _type = "min"
+            else:
+                _type = "other"
+
+            n_dic = {"notif": notif,
+                     "triggered": local_triggered_time,
+                     "type": _type
+                     }
+            if str(date_n) in arr_day_notif:
+                #arr_day_notif['2013-04-25']={}
+                arr_day_notif[str(date_n)].append(n_dic)
+            else:
+                arr_day_notif[str(date_n)] = [n_dic]
+
+        template_vars['notifications'] = arr_day_notif
+        template_vars['today_str'] = today_str
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("alarms/notification_list.html",
+                                  template_vars_template)
+    template_vars_template = RequestContext(request, template_vars)
+    return render_to_response("generic_error.html", template_vars_template)
+
+
+@login_required(login_url='/')
+def get_unread_notifs_count(request):
+    if has_permission(request.user,
+                      VIEW,
+                      "Ver suscripciones a alarmas") or \
+            request.user.is_superuser:
+        n_count = UserNotifications.objects.filter(user=request.user,
+                                                   read=False).count()
+        data = str(n_count)
+    else:
+        data = "false"
+
+    return HttpResponse(content=data, status=200)
+
+
+@login_required(login_url='/')
+def get_latest_notifs(request):
+    if has_permission(request.user,
+                      VIEW,
+                      "Ver suscripciones a alarmas") or \
+            request.user.is_superuser:
+        notifs = UserNotifications.objects.all().exclude(
+                alarm_event__alarm__status=False
+            ).order_by("-alarm_event__triggered_time")[0:5]
+        arr_notif = []
+        tz = timezone.get_current_timezone()
+        ahora = datetime.datetime.now(tz)
+
+        for notif in notifs:
+            t_time = notif.alarm_event.triggered_time.astimezone(tz)
+            diff = ahora - t_time
+            difference = str(diff)
+            #1 day, 18:01:54.334553
+            differen = difference.split(",")
+            time_ = ''
+            if len(differen) > 1:
+                differen[0] = differen[0].replace("day", "día")
+
+                #['1 day', '18:01:54.334553']
+                time_ = "Hace " + differen[0]
+            else:
+                #['18:01:54.334553']
+                hours = differen[0].split(":")
+                if int(hours[0]):
+                    time_ = "hace " + hours[0] + " horas"
+                elif int(hours[1]):
+                    time_ = "hace " + hours[1] + " minutos"
+                else:
+                    time_ = "hace " + hours[2] + " segundos"
+            comp = CompanyBuilding.objects.get(
+                building=notif.alarm_event.alarm.consumer_unit.building)
+            image = comp.company.company_logo.name
+            cons_unit = \
+                notif.alarm_event.alarm.consumer_unit.building.building_name
+            cons_unit += " en "
+            cons_unit += notif.alarm_event.alarm.consumer_unit\
+                .electric_device_type.electric_device_type_name
+            arr_notif.append(dict(
+                ttime=str(t_time),
+                readed=notif.read,
+                param=notif.alarm_event.alarm.electric_parameter.name,
+                units=notif.alarm_event.alarm.electric_parameter.param_units,
+                n_value=float(notif.alarm_event.value),
+                min_r=float(notif.alarm_event.alarm.min_value),
+                max_r=float(notif.alarm_event.alarm.max_value),
+                time=time_,
+                image=image,
+                consumer_unit=cons_unit
+            ))
+        return HttpResponse(content=json.dumps(arr_notif),
+                            mimetype="application/json")
 
 """
 def see_alarm(request, id_alarm):

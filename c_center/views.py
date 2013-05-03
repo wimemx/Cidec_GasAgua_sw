@@ -4782,13 +4782,10 @@ def add_partbuilding(request):
                 )
                 newConsumerUnit.save()
                 #Add the consumer_unit instance for the DW
-                datawarehouse_run(
-                    fill_instants=None,
-                    fill_intervals=None,
-                    _update_consumer_units=True,
-                    populate_instant_facts=None,
-                    populate_interval_facts=None
-                )
+                populate_data_warehouse_extended(
+                    populate_instants=None,
+                    populate_consumer_unit_profiles=True,
+                    populate_data=None)
 
                 for key in request.POST:
                     if re.search('^atributo_\w+', key):
@@ -5505,13 +5502,10 @@ def add_building(request):
                 )
                 cu.save()
                 #Add the consumer_unit instance for the DW
-                datawarehouse_run(
-                    fill_instants=None,
-                    fill_intervals=None,
-                    _update_consumer_units=True,
-                    populate_instant_facts=None,
-                    populate_interval_facts=None
-                )
+                populate_data_warehouse_extended(
+                    populate_instants=None,
+                    populate_consumer_unit_profiles=True,
+                    populate_data=None)
 
                 template_vars["message"] = "Edificio creado exitosamente"
                 template_vars["type"] = "n_success"
@@ -6597,11 +6591,14 @@ def configure_ie(request, id_ie):
                          send_time_duration=pm.send_time_duration
                     ))
 
-                settings_pm.append(dict(identifier=pm.identifier,
-                                        read_time_rate=read_time_rate,
-                                        send_time_rate=send_time_rate,
-                                        initial_send_time=str(hora[0]),
-                                        send_time_duration=send_time_duration
+                settings_pm.append(dict(
+                    identifier=pm.powermeter.powermeter_serial,
+                    read_time_rate=read_time_rate,
+                    send_time_rate=send_time_rate,
+                    initial_send_time=str(hora[0]),
+                    send_time_duration=send_time_duration,
+                    model=pm.powermeter.powermeter_model.powermeter_model,
+                    status=pm.powermeter.status
                 ))
             ie.monitor_time_rate = request.POST['monitor_time_rate']
             ie.check_config_time_rate = request.POST['check_config_time_rate']
@@ -6767,13 +6764,10 @@ def save_add_part_popup(request):
                 )
                 newConsumerUnit.save()
                 #Add the consumer_unit instance for the DW
-                datawarehouse_run(
-                    fill_instants=None,
-                    fill_intervals=None,
-                    _update_consumer_units=True,
-                    populate_instant_facts=None,
-                    populate_interval_facts=None
-                )
+                populate_data_warehouse_extended(
+                    populate_instants=None,
+                    populate_consumer_unit_profiles=True,
+                    populate_data=None)
 
                 for key in request.POST:
                     if re.search('^atributo_\w+', key):
@@ -6964,13 +6958,10 @@ def add_cu(request):
             )
             consumer_unit.save()
             #Add the consumer_unit instance for the DW
-            datawarehouse_run(
-                fill_instants=None,
-                fill_intervals=None,
-                _update_consumer_units=True,
-                populate_instant_facts=None,
-                populate_interval_facts=None
-            )
+            populate_data_warehouse_extended(
+                    populate_instants=None,
+                    populate_consumer_unit_profiles=True,
+                    populate_data=None)
             c_type = "*consumer_unit"
         content = str(consumer_unit.pk) + c_type
         return HttpResponse(content=content,

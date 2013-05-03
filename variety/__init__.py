@@ -414,6 +414,7 @@ def convert_from_utc(time, tz):
     dest_dt = dt.astimezone(dest)
     return dest_dt.time()
 
+
 def timed(f):
     """Measures the time(seconds) a f function takes to return a result
 

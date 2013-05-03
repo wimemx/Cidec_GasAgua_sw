@@ -29,6 +29,13 @@ urlpatterns = patterns('',
                            'alarms.views.mostrar_alarma'),
                        url(r'^buscar_alarma/',
                            'alarms.views.search_alarm'),
+
+                       url(r'^get_unread_notifs_count/',
+                           'alarms.views.get_unread_notifs_count'),
+                       url(r'^user_notifications/',
+                           'alarms.views.user_notifications'),
+                       url(r'^get_latest_notifs/',
+                           'alarms.views.get_latest_notifs'),
                        )
 
 
