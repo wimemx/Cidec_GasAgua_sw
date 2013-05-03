@@ -55,13 +55,17 @@ def get_alarm_from_building(id):
     :param building: Object.- Building instance
     """
 
-    alarma = Alarms.objects.filter(consumer_unit__building__pk=id, status=True).values(
-        "pk", "consumer_unit__building__building_name", "electric_parameter__name")
+    alarma = Alarms.objects.filter(
+        consumer_unit__building__pk=id,
+        status=True).values("pk",
+                            "consumer_unit__building__building_name",
+                            "electric_parameter__name")
     serie = []
     for res in alarma:
-        serie.append(dict(param=res['electric_parameter__name'],
-                          id=res['pk'],
-                          edificio=res['consumer_unit__building__building_name']))
+        serie.append(dict(
+            param=res['electric_parameter__name'],
+            id=res['pk'],
+            edificio=res['consumer_unit__building__building_name']))
     return serie
 
 

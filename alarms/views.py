@@ -456,12 +456,14 @@ def mostrar_alarma(request, id_alarm):
     template_vars["company"] = request.session['company']
     alarm = get_object_or_404(Alarms, id=id_alarm)
     template_vars["alarm"] = alarm
-    template_vars['building'] = get_building_siblings(alarm.consumer_unit.building)
+    template_vars['building'] = get_building_siblings(
+        alarm.consumer_unit.building)
     template_vars['compania'] = template_vars['building'][0].company
     template_vars['company'] = get_company_siblings(template_vars['compania'])
     template_vars['curr_cluster'] = template_vars['company'][0].cluster
     template_vars_template = RequestContext(request, template_vars)
-    return render_to_response("alarms/alarm_detail.html", template_vars_template)
+    return render_to_response("alarms/alarm_detail.html",
+                              template_vars_template)
 
 
 @login_required(login_url='/')
@@ -491,9 +493,8 @@ def mostrar_suscripcion_alarma(request, id_alarm):
     template_vars['notification'] = notificacion
 
     template_vars_template = RequestContext(request, template_vars)
-    return render_to_response("alarms/alarm_suscription_detail.html", template_vars_template)
-
-
+    return render_to_response("alarms/alarm_suscription_detail.html",
+                              template_vars_template)
 
 
 @login_required(login_url='/')
@@ -578,16 +579,13 @@ def alarm_suscription_list(request):
             search = request.GET["search"]
 
             lista = UserNotificationSettings.objects.filter(
-                Q(
-                    user__username__icontains=
+                Q(user__username__icontains=request.GET['search']) |
+                Q(user__first_name__icontains=request.GET['search']) |
+                Q(user__last_name__icontains=request.GET['search']) |
+                Q(alarm__consumer_unit__building__building_name__icontains=
                     request.GET['search']) |
-                Q(user__first_name__icontains=request.GET['search'])|
-
-                Q(user__last_name__icontains=request.GET['search'])|
-
-                Q(alarm__consumer_unit__building__building_name__icontains=request.GET['search'])|
-
-                Q(alarm__electric_parameter__name__icontains=request.GET['search'])).order_by(order)
+                Q(alarm__electric_parameter__name__icontains=
+                    request.GET['search'])).order_by(order)
 
 
             template_vars["lista"] = lista
@@ -641,7 +639,9 @@ def add_alarm_suscription(request):
                       permission) or \
             request.user.is_superuser:
         permission = "Ver edificios"
-        edificios = get_all_buildings_for_operation(permission, VIEW, request.user)
+        edificios = get_all_buildings_for_operation(permission,
+                                                    VIEW,
+                                                    request.user)
         template_vars["edificios"] = edificios
         lista = UserNotificationSettings.objects.all()
         template_vars["lista"] = lista
@@ -671,8 +671,9 @@ def add_alarm_suscription(request):
             usernoti.save()
             mensaje = "Suscripción a alarma exitosa."
             _type = "n_success"
-            return HttpResponseRedirect("/configuracion/suscripcion_alarma/?msj=" +
-                                    mensaje + "&ntype=" + _type)
+            return HttpResponseRedirect(
+                "/configuracion/suscripcion_alarma/?msj=" +
+                mensaje + "&ntype=" + _type)
     template_vars_template = RequestContext(request, template_vars)
     return render_to_response(
         "alarms/add_alarm_suscription.html",
@@ -699,11 +700,12 @@ def edit_alarm_suscription(request, id_alarm):
                       permission) or \
             request.user.is_superuser:
         permission = "Ver edificios"
-        edificios = get_all_buildings_for_operation(permission, VIEW, request.user)
+        edificios = get_all_buildings_for_operation(permission,
+                                                    VIEW,
+                                                    request.user)
         template_vars["edificios"] = edificios
         lista = UserNotificationSettings.objects.all()
         template_vars["lista"] = lista
-
 
     if request.POST:
             alarma = Alarms.objects.get(pk=request.POST['alarmselector'])
@@ -717,8 +719,9 @@ def edit_alarm_suscription(request, id_alarm):
             usernoti.save()
             mensaje = "Edición de suscripción a alarma exitosa."
             _type = "n_success"
-            return HttpResponseRedirect("/configuracion/suscripcion_alarma/?msj=" +
-                                    mensaje + "&ntype=" + _type)
+            return HttpResponseRedirect(
+                "/configuracion/suscripcion_alarma/?msj=" +
+                mensaje + "&ntype=" + _type)
 
     template_vars_template = RequestContext(request, template_vars)
     return render_to_response(
@@ -747,7 +750,8 @@ def status_suscription_alarm(request, id_alarm):
             str_status = "Activo"
         alarm.save()
 
-        mensaje = str("El estatus de la suscripción a la alarma ").decode("utf-8") + \
+        mensaje = \
+            str("El estatus de la suscripción a la alarma ").decode("utf-8") + \
                   alarm.alarm.consumer_unit.profile_powermeter.powermeter \
                       .powermeter_anotation + \
                   " - " + alarm.alarm.electric_parameter.name + \
@@ -948,102 +952,3 @@ def get_latest_notifs(request):
             ))
         return HttpResponse(content=json.dumps(arr_notif),
                             mimetype="application/json")
-
-"""
-def see_alarm(request, id_alarm):
-    datacontext = get_buildings_context(request.user)[0]
-    template_vars = {}
-
-    if datacontext:
-        template_vars["datacontext"] = datacontext
-
-    template_vars["sidebar"] = request.session['sidebar']
-    template_vars["empresa"] = request.session['main_building']
-    template_vars["company"] = request.session['company']
-
-
-    if has_permission(request.user, VIEW,
-                      "Ver equipos industriales") or request.user.is_superuser:
-      template_vars["alarm"] = get_object_or_404(Alarm,pk=int(id_ie))
-
-        #Asociated powermeters
-        if has_permission(request.user, VIEW,
-                          "Ver medidores eléctricos") or \
-                request.user.is_superuser:
-            order_alias = 'asc'
-            order_serial = 'asc'
-            order_model = 'asc'
-            order_status = 'asc'
-            order = "powermeter__powermeter_anotation" #default order
-            if "order_alias" in request.GET:
-                if request.GET["order_alias"] == "desc":
-                    order = "-powermeter__powermeter_anotation"
-                    order_alias = "asc"
-                else:
-                    order_alias = "desc"
-            else:
-                if "order_model" in request.GET:
-                    if request.GET["order_model"] == "asc":
-                        order = "powermeter__powermeter_model__powermeter_brand"
-                        order_model = "desc"
-                    else:
-                        order = \
-                            "-powermeter__powermeter_model__powermeter_brand"
-                        order_model = "asc"
-
-                if "order_serial" in request.GET:
-                    if request.GET["order_serial"] == "asc":
-                        order = "powermeter__powermeter_serial"
-                        order_serial = "desc"
-                    else:
-                        order = "-powermeter__powermeter_serial"
-                        order_serial = "asc"
-
-                if "order_status" in request.GET:
-                    if request.GET["order_status"] == "asc":
-                        order = "powermeter__status"
-                        order_status = "desc"
-                    else:
-                        order = "-powermeter__status"
-                        order_status = "asc"
-
-            lista = PowermeterForAlarm.objects.filter(
-                alarmuipment=template_vars["alarm"]
-            ).order_by(order)
-            template_vars['order_alias'] = order_alias
-            template_vars['order_model'] = order_model
-            template_vars['order_serial'] = order_serial
-            template_vars['order_status'] = order_status
-            template_vars['powermeters'] = lista
-
-            if 'msj' in request.GET:
-                template_vars['message'] = request.GET['msj']
-                template_vars['msg_type'] = request.GET['ntype']
-
-            template_vars['ver_medidores'] = True
-            if has_permission(
-                    request.user,
-                    CREATE,
-                    "Asignación de medidores eléctricos a equipos industriales"
-            ) or request.user.is_superuser:
-                template_vars['show_asign'] = True
-            else:
-                template_vars['show_asign'] = False
-        else:
-            template_vars['ver_medidores'] = False
-        template_vars_template = RequestContext(request, template_vars)
-        return render_to_response(
-            "alarms/alarm_detail.html",
-            template_vars_template)
-    else:
-        datacontext = get_buildings_context(request.user)[0]
-        template_vars = {}
-        if datacontext:
-            template_vars = {"datacontext": datacontext}
-        template_vars["sidebar"] = request.session['sidebar']
-        template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("generic_error.html", template_vars_template)
-
-"""
-
-
