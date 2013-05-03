@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block titulo %}Reportes{% endblock %}
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/consumption_centers/main.css" type="text/css" />
+    <link rel="stylesheet" href="/static/date_picker/css/datepicker.css" type="text/css" />
+    <link rel="stylesheet" href="/static/js/external/fancybox/jquery.fancybox.css" type="text/css" />
+{% endblock %}
+{% block externaljs %}
+    <script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
+    <script type="text/javascript" src="/static/date_picker/js/date_picker.js"></script>
+
+    <script type="text/javascript">
+        var number_params = 0;
+        var src = "{{ graph_type.object_access_point|safe }}";
+
+        function graphsReload(anio, mes){
+            /* Takes the year and month in the range inputs and reloads the graph data */
+            var get_string = src.split("?")[1];//electrical-parameters-names
+            var get_parameters = get_string.split("&");
+            var params = [];
+            for(var i_get=0; i_get<get_parameters.length;i_get++){
+                var get_str = get_parameters[i_get];
+                params.push(get_str.split("=")[1]);
+            }
+            var params_new = [];
+            var c_param;
+            var cont=0;
+
+            var base_url = src.split("?")[0];
+            c_param = construct_params(params, mes, anio);
+
+            var url = buildUrl(src.split("?")[0], c_param);
+
+            makeIframe(url);
+
+
+        }
+        function refresh_iframe_height(){
+            // regresca el height del iframe para ajustarse a su conte
+            setTimeout("parent.document.getElementById('graphFrame').height = 1200;", 1000);
+        }
+        function makeIframe(source){
+            var graphFrame = document.createElement("IFRAME");
+            graphFrame.id = "graphFrame";
+            graphFrame.src = source;
+            $("#graph_container").html(graphFrame);
+            refresh_iframe_height();
+        }
+
+        function initial_parameters(cu_count){
+            var params = [];
+            for(var i=1; i<=cu_count; i++){
+                var index;
+                var get = getUrlVars();
+                var month, year;
+                if(get['month']!=undefined && get['year']!=undefined){
+                    month = get['month'];
+                    year =  get['year'];
+                }else{
+                    var fecha_ini = new Date();
+                    month = fecha_ini.getMonth()+1;
+                    year = fecha_ini.getFullYear();
+                }
+                params['consumer-unit-id']={{ consumer_unit.pk }};
+                params['month'] = month;
+                params['year'] = year;
+            }
+            return params;
+        }
+        function construct_params(params, mes, anio){
+            var params_ = [];
+            for(var ncu=1; ncu<=number_params; ncu++){
+                params_['consumer-unit-id']={{ consumer_unit.pk }};
+                params_['month'] = mes;
+                params_['year'] = anio;
+                params_['electrical-parameter-name'] = params[ncu-1];
+            }
+            return params_;
+        }
+    </script>
+{% endblock %}
+{% block document_ready %}
+
+    var url = window.location.href;
+    url = url.replace("#", '');
+    History.replaceState(url,"Reporte electrico", url);
+
+    //--INITIAL IFRAME URL
+    var get_string = src.split("?")[1];//electrical-parameters-names
+    number_params = get_string.split("&").length;
+    params = initial_parameters(number_params);
+    url = buildUrl(src.split("?")[0], params);
+    url += "&"+get_string;
+
+    makeIframe(url);
+
+    refresh_iframe_height();
+
+    $(".various").fancybox({
+    maxWidth	: 800,
+    maxHeight	: 800,
+    fitToView	: false,
+    width		: '70%',
+    height		: '70%',
+    autoSize	: false,
+    closeClick	: false,
+    openEffect	: 'none',
+    closeEffect	: 'none'
+    });
+    var mes = $("#month");
+    var mes_val = 0;
+
+    var anio = $("#year");
+    var anio_val = 0;
+    mes.on("change", function(){
+        mes_val = this.value;
+    });
+    $("#year").on("change", function(){
+        anio_val = this.value;
+    });
+    $("#monthpicker").find("button").on("click", function(){
+        if(anio_val && mes_val){
+            graphsReload(anio_val, mes_val);
+        }else{
+            return false;
+        }
+    });
+
+{% endblock %}
+{% block contenido %}
+
+    <div id="bread_crumbs">
+        <ul>
+            <li><a href="/main/">Inicio</a></li>
+            <li>Reportes</li>
+        </ul>
+
+    </div>
+    <div id="page_content">
+        <div id="contenido_interno">
+            <h2 id="titulo_reporte">{{ empresa.building_name }} -
+        <span>
+            {% if consumer_unit.part_of_building %}
+                {{ consumer_unit.part_of_building.part_of_building_name }}
+            {% else %}
+                {{ consumer_unit.electric_device_type.electric_device_type_name }}
+            {% endif %}
+        </span>
+            </h2><a class="various" data-fancybox-type="iframe"  href="/reportes/set_consumer_unit/">Cambiar</a>
+            <div id="logo_container"{% if company.company_logo %}class="c fr" style="background: url(/static/media/{{ company.company_logo }}) no-repeat 50% 50%; background-size: 100% auto; margin-top: -19px;">
+            {% else %}class="c fr" style="background: url(/static/css/images/imgs_icns/company_placeholder.png) no-repeat 50% 50%; background-size: 100% auto; margin-top: -19px;">
+            {% endif %}
+            </div>
+
+
+            <div class="divider" id="divider_top">&nbsp;</div>
+
+            <div id="monthpicker" class="fr">
+                <select id="month" name="month">
+                    <option value="0">Elija un mes</option>
+                    <option value="1">Enero</option>
+                    <option value="2">Febrero</option>
+                    <option value="3">Marzo</option>
+                    <option value="4">Abril</option>
+                    <option value="5">Mayo</option>
+                    <option value="6">Junio</option>
+                    <option value="7">Julio</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Septiembre</option>
+                    <option value="10">Octubre</option>
+                    <option value="11">Noviembre</option>
+                    <option value="12">Diciembre</option>
+                </select>
+                <select id="year" name="year">
+                    <option value="0">Elija un a&ntilde;o</option>
+                    {% for anio in years %}
+                        <option value="{{ anio }}">{{ anio }}</option>
+                    {% endfor %}
+                </select>
+                <button class="aqua_btn">Aceptar</button>
+            </div>
+
+            <h3>
+                {{ graph_type.object_description }}
+            </h3>
+
+            <div id="graphs_container">
+                <div id="compare" class="fl">
+                    <input id="evaluated_companies" type="hidden" value="{{ empresa.pk }},"/>
+                </div>
+
+                <div id="graph_container">
+                    <iframe src="/reportes_extendidos/" id="graphFrame" seamless="seamless"></iframe>
+                </div>
+
+            </div>
+
+
+        </div>
+    </div>
+{% endblock %}

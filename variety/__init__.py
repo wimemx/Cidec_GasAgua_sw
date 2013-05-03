@@ -96,9 +96,10 @@ def get_week_of_month_from_datetime(datetime_variable):
     :returns: the week number (int)
     """
     first_day_of_month = datetime(year=datetime_variable.year,
-        month=datetime_variable.month, day=1)
-    first_day_first_week = first_day_of_month - timedelta(days=first_day_of_month.weekday())
-    week_delta = timedelta(weeks = 1)
+                                  month=datetime_variable.month, day=1)
+    first_day_first_week = first_day_of_month - timedelta(
+        days=first_day_of_month.weekday())
+    week_delta = timedelta(weeks=1)
     datetime_next = first_day_first_week + week_delta
     week_number = 1
     while datetime_next <= datetime_variable:

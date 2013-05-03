@@ -1,6 +1,7 @@
 import c_center.models
 from django.contrib import admin
 
+
 class SectoralTypeAdmin(admin.ModelAdmin):
     list_display = ['sectorial_type_name', 'sectoral_type_status',
                     'sectoral_type_sequence']
@@ -41,6 +42,7 @@ class SectoralTypeAdmin(admin.ModelAdmin):
 
 admin.site.register(c_center.models.SectoralType, SectoralTypeAdmin)
 
+
 class ClusterAdmin(admin.ModelAdmin):
     list_display = ['cluster_name', 'sectoral_type', 'cluster_status']
     list_filter = ['sectoral_type', 'cluster_status']
@@ -79,6 +81,7 @@ class ClusterAdmin(admin.ModelAdmin):
     mark_deleted.short_description = "Marcar clusters como eliminados(ocultos)"
 
 admin.site.register(c_center.models.Cluster, ClusterAdmin)
+
 
 class CompanyAdmin(admin.ModelAdmin):
     list_display = ['company_name', 'sectoral_type', 'company_status']
@@ -119,6 +122,7 @@ class CompanyAdmin(admin.ModelAdmin):
 
 admin.site.register(c_center.models.Company, CompanyAdmin)
 
+
 class ClusterCompanyAdmin(admin.ModelAdmin):
     list_display = ['cluster', 'company']
     list_filter = ['cluster']
@@ -130,6 +134,7 @@ admin.site.register(c_center.models.ConfigurationTemplateCompany)
 admin.site.register(c_center.models.BuildingAttributesType)
 
 admin.site.register(c_center.models.BuildingAttributes)
+
 
 class BuildingAdmin(admin.ModelAdmin):
     list_display = ['building_name', 'building_formatted_address',
@@ -177,6 +182,7 @@ class BuildingAdmin(admin.ModelAdmin):
     mark_deleted.short_description = "Marcar edificios como eliminados(ocultos)"
 
 admin.site.register(c_center.models.Building, BuildingAdmin)
+
 
 class BuildingAttributesForBuildingAdmin(admin.ModelAdmin):
     list_filter = ['building_attributes', 'building']
@@ -228,6 +234,7 @@ class ProfilePowermeterAdmin(admin.ModelAdmin):
 
 admin.site.register(c_center.models.ProfilePowermeter, ProfilePowermeterAdmin)
 
+
 class ElectricDeviceTypeAdmin(admin.ModelAdmin):
     list_filter = ['electric_device_type_status']
     actions = ["make_active", "make_inactive", "mark_deleted"]
@@ -271,6 +278,7 @@ class ElectricDeviceTypeAdmin(admin.ModelAdmin):
 
 admin.site.register(c_center.models.ElectricDeviceType, ElectricDeviceTypeAdmin)
 
+
 class PartOfBuildingTypeAdmin(admin.ModelAdmin):
     list_filter = ['part_of_building_type_status']
     actions = ["make_active", "make_inactive", "mark_deleted"]
@@ -308,6 +316,7 @@ class PartOfBuildingTypeAdmin(admin.ModelAdmin):
     mark_deleted.short_description = "Marcar partes como eliminadas(ocultas)"
 
 admin.site.register(c_center.models.PartOfBuildingType, PartOfBuildingTypeAdmin)
+
 
 class BuildingTypeAdmin(admin.ModelAdmin):
     list_filter = ['building_type_status']
@@ -347,32 +356,38 @@ class BuildingTypeAdmin(admin.ModelAdmin):
 
 admin.site.register(c_center.models.BuildingType, BuildingTypeAdmin)
 
+
 class BuildingTypeForBuildingAdmin(admin.ModelAdmin):
     list_filter = ['building_type', 'building']
 
 admin.site.register(c_center.models.BuildingTypeForBuilding,
                     BuildingTypeForBuildingAdmin)
 
+
 class PartOfBuildingAdmin(admin.ModelAdmin):
     list_filter = ['part_of_building_type', 'building']
 
 admin.site.register(c_center.models.PartOfBuilding, PartOfBuildingAdmin)
+
 
 class HierarchyOfPartAdmin(admin.ModelAdmin):
     list_filter = ['part_of_building_composite', 'part_of_building_leaf']
 
 admin.site.register(c_center.models.HierarchyOfPart, HierarchyOfPartAdmin)
 
+
 class CompanyBuildingAdmin(admin.ModelAdmin):
     list_filter = ['company']
 
 admin.site.register(c_center.models.CompanyBuilding, CompanyBuildingAdmin)
+
 
 class BuilAttrsForPartOfBuilAdmin(admin.ModelAdmin):
     list_filter = ['part_of_building', 'part_of_building']
 
 admin.site.register(c_center.models.BuilAttrsForPartOfBuil,
                     BuilAttrsForPartOfBuilAdmin)
+
 
 class ConsumerUnitAdmin(admin.ModelAdmin):
     list_filter = ['building', 'part_of_building']
@@ -381,6 +396,7 @@ class ConsumerUnitAdmin(admin.ModelAdmin):
                      'building__building_name']
 
 admin.site.register(c_center.models.ConsumerUnit, ConsumerUnitAdmin)
+
 
 class ElectricDataAdmin(admin.ModelAdmin):
     list_filter = ['profile_powermeter']
@@ -405,4 +421,12 @@ class DailyDataAdmin(admin.ModelAdmin):
     search_fields = [
         'consumer_unit__building__building_name']
 admin.site.register(c_center.models.DailyData, DailyDataAdmin)
+
+
+class MonthlyDataAdmin(admin.ModelAdmin):
+    list_filter = ['consumer_unit']
+    search_fields = [
+        'consumer_unit__building__building_name']
+admin.site.register(c_center.models.MonthlyData, MonthlyDataAdmin)
+
 admin.site.register(c_center.models.HMHistoricData)

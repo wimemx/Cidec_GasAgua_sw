@@ -16,11 +16,11 @@ from django.contrib.auth.decorators import login_required
 from rbac.rbac_functions import get_buildings_context, has_permission
 from c_center.c_center_functions import get_clusters_for_operation, \
     get_c_unitsforbuilding_for_operation, get_cu_siblings, \
-    get_building_siblings, get_company_siblings
+    get_building_siblings, get_company_siblings, get_all_buildings_for_operation
 
 from alarms.alarm_functions import *
 from alarms.models import *
-from c_center.models import Building, IndustrialEquipment
+from c_center.models import Building, IndustrialEquipment, CompanyBuilding
 from rbac.models import Operation
 
 
@@ -123,6 +123,7 @@ def add_alarm(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+
 @login_required(login_url='/')
 def edit_alarm(request, id_alarm):
     datacontext = get_buildings_context(request.user)[0]
@@ -140,7 +141,7 @@ def edit_alarm(request, id_alarm):
     if has_permission(request.user, UPDATE,
                       permission) or \
             request.user.is_superuser:
-        
+
         clusters = get_clusters_for_operation(permission, UPDATE, request.user)
         template_vars['clusters'] = clusters
         parameters = ElectricParameters.objects.all()
@@ -216,6 +217,7 @@ def edit_alarm(request, id_alarm):
     else:
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
+
 
 @login_required(login_url='/')
 def alarm_list(request):
@@ -404,7 +406,7 @@ def status_alarm(request, id_alarm):
         building = alarm.consumer_unit.building
         set_alarm_json(building, request.user)
         mensaje = "El estatus de la alarma " + \
-                  alarm.consumer_unit.profile_powermeter.powermeter\
+                  alarm.consumer_unit.profile_powermeter.powermeter \
                       .powermeter_anotation + \
                   " - " + alarm.electric_parameter.name + \
                   ", ha cambiado a " + str_status
@@ -423,6 +425,196 @@ def status_alarm(request, id_alarm):
         return render_to_response("generic_error.html", template_vars_template)
 
 
+@login_required(login_url='/')
+def mostrar_alarma(request, id_alarm):
+    datacontext = get_buildings_context(request.user)[0]
+    template_vars = {}
+    if datacontext:
+        template_vars["datacontext"] = datacontext
+    template_vars["sidebar"] = request.session['sidebar']
+    template_vars["empresa"] = request.session['main_building']
+    template_vars["company"] = request.session['company']
+    alarm = get_object_or_404(Alarms, id=id_alarm)
+    template_vars["alarm"] = alarm
+    template_vars['building'] = get_building_siblings(alarm.consumer_unit.building)
+    template_vars['compania'] = template_vars['building'][0].company
+    template_vars['company'] = get_company_siblings(template_vars['compania'])
+    template_vars['curr_cluster'] = template_vars['company'][0].cluster
+    template_vars_template = RequestContext(request, template_vars)
+    return render_to_response("alarms/alarm_detail.html", template_vars_template)
+
+
+@login_required(login_url='/')
+def suscribe_alarm(request, id_alarm):
+    pass
+
+
+@login_required(login_url='/')
+def alarm_suscription_list(request):
+    permission = "Ver suscripciones a alarmas"
+    if has_permission(request.user, VIEW,
+                      permission) or \
+            request.user.is_superuser:
+        datacontext = get_buildings_context(request.user)[0]
+        template_vars = {}
+        if datacontext:
+            template_vars["datacontext"] = datacontext
+
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars["empresa"] = request.session['main_building']
+        template_vars["company"] = request.session['company']
+        lista = UserNotificationSettings.objects.all()
+        template_vars["lista"] = lista
+        paginator = Paginator(lista, 10)
+        try:
+            page = int(request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+
+        # If page request (9999) is out of range, deliver last page of results.
+        try:
+            pag_user = paginator.page(page)
+        except (EmptyPage, InvalidPage):
+            pag_user = paginator.page(paginator.num_pages)
+
+        template_vars['paginacion'] = pag_user
+        if 'msj' in request.GET:
+            template_vars['message'] = request.GET['msj']
+            template_vars['msg_type'] = request.GET['ntype']
+        paginator = Paginator(lista, 10)
+        template_vars_template = RequestContext(request, template_vars)
+
+        return render_to_response(
+            "alarms/alarm_suscription_list.html",
+            template_vars_template)
+    pass
+
+
+@login_required(login_url='/')
+def add_alarm_suscription(request):
+    datacontext = get_buildings_context(request.user)[0]
+    template_vars = {}
+    if datacontext:
+        template_vars["datacontext"] = datacontext
+
+    template_vars["sidebar"] = request.session['sidebar']
+    template_vars["empresa"] = request.session['main_building']
+    template_vars["company"] = request.session['company']
+
+    permission = "Ver alta suscripción alarma"
+    if has_permission(request.user, VIEW,
+                      permission) or \
+            request.user.is_superuser:
+        permission = "Ver edificios"
+        edificios = get_all_buildings_for_operation(permission, VIEW, request.user)
+        template_vars["edificios"] = edificios
+        lista = UserNotificationSettings.objects.all()
+        template_vars["lista"] = lista
+
+
+
+
+        if request.GET.get('id'):
+
+            b_id = request.GET.get('id')
+            data = get_alarm_from_building(b_id)
+            return HttpResponse(content=data, content_type="application/json")
+
+
+
+
+
+
+
+
+    template_vars_template = RequestContext(request, template_vars)
+    return render_to_response(
+        "alarms/add_alarm_suscription.html",
+        template_vars_template)
+
+
+@login_required(login_url='/')
+def unsuscribe_alarm(request, id_alarm):
+    pass
+
+
+def search_alarm(request):
+    pass
+
+
+@login_required(login_url='/')
+def status_suscription_alarm(request, id_alarm):
+    if has_permission(request.user,
+                      UPDATE,
+                      "Modificar suscripción a alarmas") or \
+            request.user.is_superuser:
+        alarm = get_object_or_404(UserNotificationSettings, pk=id_alarm)
+
+        if alarm.status:
+            alarm.status = False
+            str_status = "Inctivo"
+        else:
+            alarm.status = True
+            str_status = "Activo"
+        alarm.save()
+
+        mensaje = str("El estatus de la suscripción a la alarma ").decode("utf-8") + \
+                  alarm.alarm.consumer_unit.profile_powermeter.powermeter \
+                      .powermeter_anotation + \
+                  " - " + alarm.alarm.electric_parameter.name + \
+                  ", ha cambiado a " + str_status
+        _type = "n_success"
+
+        return HttpResponseRedirect(
+            "/configuracion/suscripcion_alarma/?msj=" + mensaje +
+            "&ntype=" + _type)
+    else:
+        datacontext = get_buildings_context(request.user)[0]
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
+
+
+@login_required(login_url='/')
+def status_suscription_batch_alarm(request):
+    if has_permission(request.user,
+                      UPDATE,
+                      "Modificar suscripción a alarmas") or \
+            request.user.is_superuser:
+        if request.POST['actions'] != '0':
+            for key in request.POST:
+                if re.search('^alarma_\w+', key):
+                    r_id = int(key.replace("alarma_", ""))
+                    alarm = get_object_or_404(UserNotificationSettings, pk=r_id)
+                    if alarm.status:
+                        alarm.status = False
+                    else:
+                        alarm.status = True
+
+                    alarm.save()
+
+            mensaje = "Las alarmas seleccionadas han " \
+                      "cambiado su estatus correctamente"
+            _type = "n_success"
+        else:
+            mensaje = str("No se ha seleccionado una acción").decode("utf-8")
+            _type = "n_notif"
+        return HttpResponseRedirect("/configuracion/suscripcion_alarma/?msj=" +
+                                    mensaje + "&ntype=" + _type)
+    else:
+        datacontext = get_buildings_context(request.user)[0]
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
+
+
+"""
 def see_alarm(request, id_alarm):
     datacontext = get_buildings_context(request.user)[0]
     template_vars = {}
@@ -434,9 +626,10 @@ def see_alarm(request, id_alarm):
     template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
 
+
     if has_permission(request.user, VIEW,
                       "Ver equipos industriales") or request.user.is_superuser:
-        template_vars["alarm"] = get_object_or_404(Alarm,pk=int(id_ie))
+      template_vars["alarm"] = get_object_or_404(Alarm,pk=int(id_ie))
 
         #Asociated powermeters
         if has_permission(request.user, VIEW,
@@ -505,7 +698,7 @@ def see_alarm(request, id_alarm):
             template_vars['ver_medidores'] = False
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
-            "consumption_centers/consumer_units/see_ie.html",
+            "alarms/alarm_detail.html",
             template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)[0]
@@ -516,14 +709,6 @@ def see_alarm(request, id_alarm):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+"""
 
-@login_required(login_url='/')
-def suscribe_alarm(request, id_alarm):
-    pass
 
-@login_required(login_url='/')
-def unsuscribe_alarm(request, id_alarm):
-    pass
-
-def search_alarm(request):
-    pass

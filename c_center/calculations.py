@@ -20,6 +20,7 @@ from django.utils import timezone
 from c_center.models import *
 from electric_rates.models import *
 
+
 def consumoAcumuladoKWH(consumer, fecha_inicio, fecha_fin):
     suma_lecturas = 0
     lecturas = DailyData.objects.filter(consumer_unit=consumer,
@@ -35,8 +36,7 @@ def demandaMaxima(consumer, fecha_inicio, fecha_fin):
     demanda_max = 0
     lecturas = DailyData.objects.filter(consumer_unit=consumer,
         data_day__gte=fecha_inicio,
-        data_day__lte=fecha_fin).order_by(
-        '-max_demand')
+        data_day__lte=fecha_fin).order_by('-max_demand')
     if lecturas:
         demanda_max = lecturas[0].max_demand
     return demanda_max
@@ -47,26 +47,49 @@ def demandaMinima(consumer, fecha_inicio, fecha_fin):
     lecturas = DailyData.objects.filter(
         consumer_unit=consumer,
         data_day__gte=fecha_inicio,
-        data_day__lte=fecha_fin).order_by('min_demand')
+        data_day__lte=fecha_fin).exclude(min_demand=0).order_by('min_demand')
     if lecturas:
         demanda_min = lecturas[0].min_demand
     return demanda_min
 
 
+def promedioKW(consumer, fecha_inicio, fecha_fin):
+    suma_lecturas = ElectricDataTemp.objects.filter(
+        profile_powermeter=consumer.profile_powermeter,
+        medition_date__gte=fecha_inicio,
+        medition_date__lte=fecha_fin).aggregate(Avg('kW'))
+    return suma_lecturas['kW__avg'] if suma_lecturas['kW__avg'] else 0
+
+
+def max_minKWH(consumer, fecha_inicio, fecha_fin, min_max):
+    """ Gets the min or max values of ElectricDataTemp for consumer
+    :param consumer: ConsumerUnit object
+    :param fecha_inicio: datetime|date initial date
+    :param fecha_fin: datetime|date final date
+    :param min_max: string "min" to return the min TotalkWhIMPORT value
+    :return:
+    """
+    if min_max == "min":
+        order = "KWH_total"
+    else:
+        order = "-KWH_total"
+    val = 0
+    lecturas = DailyData.objects.filter(
+        data_day__gte=fecha_inicio,
+        data_day__lte=fecha_fin, KWH_total__gt=0,
+        consumer_unit=consumer
+    ).values('KWH_total').order_by(order)
+    if lecturas:
+        val = lecturas[0]['KWH_total']
+    return val
+
+
 def promedioKWH(consumer, fecha_inicio, fecha_fin):
-    promedio = 0
-    t_lecturas = DailyData.objects.filter(
+    suma_lecturas = DailyData.objects.filter(
         consumer_unit=consumer,
         data_day__gte=fecha_inicio,
-        data_day__lte=fecha_fin)
-    if t_lecturas:
-        suma_lecturas = DailyData.objects.filter(
-            consumer_unit=consumer,
-            data_day__gte=fecha_inicio,
-            data_day__lte=fecha_fin).aggregate(Sum('KWH_total'))
-        total_lecturas = len(t_lecturas)
-        promedio = float(suma_lecturas['KWH_total__sum']) / float(total_lecturas)
-    return promedio
+        data_day__lte=fecha_fin).aggregate(Avg('KWH_total'))
+    return suma_lecturas['KWH_total__avg'] if suma_lecturas['KWH_total__avg'] else 0
 
 
 def desviacionStandardKWH(consumer, fecha_inicio, fecha_fin):
@@ -681,6 +704,34 @@ def obtenerCostoPromedioKWH(tarifa_id):
     costo = (tarifaObj.KWHB + tarifaObj.KWHI + tarifaObj.KWHP) / Decimal(
         str(3.0))
     return costo
+
+
+def obtenerDemanda_kw_valores(valores_kw):
+    demanda_maxima = 0
+    if valores_kw:
+        try:
+            longitud = len(valores_kw)
+            if longitud >= 3:
+                low = valores_kw[0]
+                middle = valores_kw[0]
+                high = valores_kw[0]
+                demanda_maxima = (low + middle + high) / 3
+                for indice in range(3, longitud):
+                    low, middle = middle, high
+                    high = valores_kw[indice]
+                    prom = (low + middle + high) / 3
+                    if prom > demanda_maxima:
+                        demanda_maxima = prom
+            else:
+                demanda_maxima = 0
+
+        except IndexError:
+            print "IndexError"
+            demanda_maxima = 0
+        except TypeError:
+            print "TypeError"
+            demanda_maxima = 0
+    return int(ceil(demanda_maxima))
 
 
 def obtenerDemanda_kw(lecturas_kw):

@@ -17,11 +17,11 @@
     $(document).ready(function(){
 
         $('#demand_rate').autoNumeric({asep:',', vMin: "000.00", vMax: "999.99"});
-        $('#kwh_punta').autoNumeric({asep:',', vMin: "0.0000", vMax: "9.9999"});
-        $('#kwh_int').autoNumeric({asep:',', vMin: "0.0000", vMax: "9.9999"});
-        $('#kwh_base').autoNumeric({asep:',', vMin: "0.0000", vMax: "9.9999"});
-        $('#fri').autoNumeric({asep:',', vMin: "0.000", vMax: "9.999"});
-        $('#frb').autoNumeric({asep:',', vMin: "0.000", vMax: "9.999"});
+        $('#kwh_punta').autoNumeric({asep:',', vMin: "00.0000", vMax: "99.9999"});
+        $('#kwh_int').autoNumeric({asep:',', vMin: "00.0000", vMax: "99.9999"});
+        $('#kwh_base').autoNumeric({asep:',', vMin: "00.0000", vMax: "99.9999"});
+        $('#fri').autoNumeric({asep:',', vMin: "00.000", vMax: "99.999"});
+        $('#frb').autoNumeric({asep:',', vMin: "00.000", vMax: "99.999"});
 
         $(".required").each(function(){
             var _span;

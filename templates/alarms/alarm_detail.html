@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block titulo %}Ver Empresa{% endblock %}
+{% block titulo %}Ver Alarma{% endblock %}
 
 {% block externalcss %}
 <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
@@ -16,21 +16,29 @@
     <ul>
         <li><a href="/main/">Inicio</a></li>
         <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
-        <li><a href="/buildings/empresas/">Empresa</a></li>
-        <li>Ver empresa</li>
+        <li><a href="/configuracion/alarmas">Alarma</a></li>
+        <li>Ver alarma</li>
     </ul>
 
 </div>
 <div id="page_content">
 <div id="contenido_interno" class="card cluster_content">
-    <h2 id="titulo_form" class="company">
-        Empresa
+    <h2 id="titulo_form" class="powermeter">
+        Alarma
     </h2>
+
+
+
+
+
+
+
+
 
 
     <div class="divider" id="divider_top">&nbsp;</div>
     <div id="card_container">
-        <div id="user_img" class="fl">
+       <div id="user_img" class="fl">
             {% if companies.company.company_logo %}
             <img src="/static/media/{{companies.company.company_logo}}" alt="{{companies.company.company_name}}_logo" width="200px">
             {% else %}
@@ -39,26 +47,49 @@
         </div>
         <div id="user_data" class="fl">
             <p>
-                <span class="strong label">Nombre:</span>
-                {{ companies.company.company_name }}
-            </p>
-            <p>
-                <span class="strong label">Descripción:</span>
-                {{ companies.company.company_description }}
-            </p>
+                <span class="strong label">Parametro Electico:</span>
+                {{ alarm.electric_parameter.name }}
 
+            </p>
             <p>
-                <span class="strong label">Grupo de Empresas:</span>
-                {{ companies.cluster.cluster_name }}
+                <span class="strong label">Valor Maximo:</span>
+                {{ alarm.max_value|floatformat:2 }}
             </p>
 
             <p>
-                <span class="strong label">Sector:</span>
-                {{ companies.company.sectoral_type.sectorial_type_name }}
+                <span class="strong label">Valor Minimo:</span>
+                {{ alarm.min_value|floatformat:2 }}
+            </p>
+
+            <p>
+                <span class="strong label">Grupo Empresa:</span>
+                {{ curr_cluster.cluster_name }}
+
+            </p>
+
+             <p>
+                <span class="strong label">Empresa:</span>
+                {{ compania.company_name}}
+
+            </p>
+
+            <p>
+                <span class="strong label">Edificio:</span>
+                {{ alarm.consumer_unit.building.building_name }}
+            </p>
+
+             <p>
+                <span class="strong label">Unidad de consumo:</span>
+
+
+                    {{ alarm.consumer_unit.profile_powermeter }}
+
+
+
             </p>
 
 
-            <a href="/buildings/empresas/" id="go_back">Volver al listado</a>
+            <a href="/configuracion/alarmas" id="go_back">Volver al listado</a>
         </div>
 
     </div>

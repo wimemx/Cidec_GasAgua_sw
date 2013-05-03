@@ -7,7 +7,7 @@ from celery.decorators import periodic_task
 from data_warehouse.views import populate_data_warehouse, \
     data_warehouse_update
 from c_center.c_center_functions import save_historic, dailyReportAll, \
-    asign_electric_data_to_pw
+    asign_electric_data_to_pw, calculateMonthlyReport_all
 from c_center.calculations import reTagHolidays
 
 import data_warehouse_extended.globals
@@ -91,9 +91,7 @@ def populate_data_warehouse_extended(
                         pk=consumer_unit_profile.pk)
 
             except c_center.models.ConsumerUnit.DoesNotExist:
-                logger.error(
-                    data_warehouse_extended.globals.SystemError.
-                    CONSUMER_UNIT_DOES_NOT_EXIST)
+                print "Unidad de consumo no encontrada", consumer_unit_profile
 
                 continue
 
@@ -147,12 +145,10 @@ def populate_data_warehouse_specific(
     try:
         consumer_unit = \
             c_center.models.ConsumerUnit.objects.get(
-                pk=consumer_unit_profile.pk)
+                pk=consumer_unit.transactional_id)
 
     except c_center.models.ConsumerUnit.DoesNotExist:
-        logger.error(
-            data_warehouse_extended.globals.SystemError.
-            CONSUMER_UNIT_DOES_NOT_EXIST)
+        print "Unidad de consumo no encontrada", consumer_unit
 
     #
     # Generate data for Instant Delta.
@@ -210,6 +206,13 @@ def reporte_diario_para_reporte_mensual():
     daily_report.delay()
     print "firing periodic task - Raily Report"
 
+
+@periodic_task(run_every=crontab(day_of_month='1'))
+def calculateMonthlyReport():
+    past_month_dt = datetime.date.today() - datetime.timedelta(days=2)
+    calculateMonthlyReport_all(past_month_dt.month, past_month_dt.year)
+    print "Task done: calculateMonthlyReport_all"
+
 @periodic_task(run_every=crontab(minute=0, hour=0, day_of_week='sun'))
 def data_warehouse_one_week():
     calculate_dw.delay("week")
@@ -228,45 +231,12 @@ def data_warehouse_five_minute():
     update_data_dw_delta.delay(end, start, delta_name)
     print "firing periodic task - DW 50 min, :)"
 
-@periodic_task(run_every=crontab(minute='*/100'))
-def data_warehouse_ten_minutes():
-    end = datetime.datetime.now()
-    start = datetime.datetime.now() - datetime.timedelta(minutes=100)
-    delta_name = "Ten Minute Delta"
-    update_data_dw_delta.delay(end, start, delta_name)
-    print "firing periodic task - DW 100 min, :)"
-
-
-@periodic_task(run_every=crontab(minute='*/150'))
-def data_warehouse_fifteen_minutes():
-    end = datetime.datetime.now()
-    start = datetime.datetime.now() - datetime.timedelta(minutes=300)
-    delta_name = "Half Hour Delta"
-    update_data_dw_delta.delay(end, start, delta_name)
-    print "firing periodic task - DW 150 min, :)"
-
-@periodic_task(run_every=crontab(hour='*/5'))
-def data_warehouse_half_hour():
-    end = datetime.datetime.now()
-    start = datetime.datetime.now() - datetime.timedelta(minutes=300)
-    delta_name = "Half Hour Delta"
-    update_data_dw_delta.delay(end, start, delta_name)
-    print "firing periodic task - DW 300 min, :)"
 
 @periodic_task(run_every=crontab(hour='*/10'))
 def data_warehouse_hour():
     end = datetime.datetime.now()
     start = datetime.datetime.now() - datetime.timedelta(hours=10)
     delta_name = "Hour Delta"
-    update_data_dw_delta.delay(end, start, delta_name)
-    print "firing periodic task - DW 150 min, :)"
-
-
-@periodic_task(run_every=crontab(hour='*/30'))
-def data_warehouse_three_hour():
-    end = datetime.datetime.now()
-    start = datetime.datetime.now() - datetime.timedelta(hours=30)
-    delta_name = "Three Hours Delta"
     update_data_dw_delta.delay(end, start, delta_name)
     print "firing periodic task - DW 150 min, :)"
 
@@ -280,17 +250,8 @@ def data_warehouse_six_hour():
     print "firing periodic task - DW 60 hours, :)"
 
 
-@periodic_task(run_every=crontab(hour='*/120'))
-def data_warehouse_twelve_hour():
-    end = datetime.datetime.now()
-    start = datetime.datetime.now() - datetime.timedelta(days=5)
-    delta_name = "Half Day Delta"
-    update_data_dw_delta.delay(end, start, delta_name)
-    print "firing periodic task - DW 5 days :)"
-
-
 @periodic_task(run_every=crontab(hour='*/240'))
-def data_warehouse_twelve_hour():
+def data_warehouse_day():
     end = datetime.datetime.now()
     start = datetime.datetime.now() - datetime.timedelta(days=10)
     delta_name = "Day Delta"
@@ -320,10 +281,7 @@ def update_data_dw_delta(end, start, delta_name):
                     pk=consumer_unit_profile.pk)
 
         except c_center.models.ConsumerUnit.DoesNotExist:
-            logger.error(
-                data_warehouse_extended.globals.SystemError.
-                CONSUMER_UNIT_DOES_NOT_EXIST)
-
+            print "unidad de consumo no encontrada", consumer_unit_profile
             continue
 
         #

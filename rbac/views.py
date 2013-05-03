@@ -34,6 +34,7 @@ DELETE = Operation.objects.get(operation_name="Eliminar")
 UPDATE = Operation.objects.get(operation_name="Modificar")
 
 
+@login_required(login_url='/')
 def control_panel(request):
     objetos = Object.objects.exclude(Q(object_access_point='') |
                                      Q(object_access_point="/"))
@@ -42,7 +43,8 @@ def control_panel(request):
         if has_permission(request.user, VIEW, obj.object_name) or \
                 has_permission(request.user, CREATE, obj.object_name) or \
                 has_permission(request.user, DELETE, obj.object_name) or \
-                has_permission(request.user, UPDATE, obj.object_name):
+                has_permission(request.user, UPDATE, obj.object_name) or \
+                request.user.is_superuser:
             object_permission.append(obj)
 
     template_vars = dict(
