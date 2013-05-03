@@ -11,10 +11,20 @@
 {% endblock %}
 {% block externaljs %}
 <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+<script type="text/javascript" src="/static/js/external/jquery-validator/js/validator.js"></script>
 <script type="text/javascript">
-    var form_valid = true;
-    var send_form = 0;
+
     $(document).ready(function(){
+        $('#save').hide();
+        var url=window.location.href;
+        url= (url.substr(url.lastIndexOf('/') + 1));
+        if(url != "")
+        {
+
+            prueba('editar');
+        }
+
+
 
         $("#clustername").focus();
         $(".required").each(function(){
@@ -61,8 +71,14 @@
         });
 
     });
-    function prueba()
+    function prueba(operacion)
     {
+
+       if(operacion =='alta')
+       {
+        $('#alarmselector').children().remove();
+       }
+
         valor=  document.getElementById("buildingselect").value;
 
         if(valor != '0')
@@ -75,54 +91,99 @@
                     async: 'true',
 
                      success: function(data){
-                        alert('hey');
+                        if(data.length == 0)
+                        {
+
+                            $('#alarmselector').children().remove();
+                            $('#alarmselector').parent().find('span').html('No existen alarmas para este edificio');
+                            $('#alarmselector').append("<option value='0' selected=selected>No existen alarmas para este edificio</option>")
+                        }
+                        else
+                        {
+
+                            for(var i=0; i<data.length; i++)
+                            {
+
+                              if(operacion=='alta')
+                              {
+
+                                $('#alarmselector').parent().find('span').html('Selecciona una alarma:');
+
+
+                                $('#alarmselector').append("<option value='"+data[i].id+"' > "+data[i].edificio+ "-- "+data[i].param +"</option>")
+                              }
+                              if(operacion=='editar')
+                              {
+
+                                 if(document.getElementById("alarmselector").value != data[i].param )
+                                 {
+                                  $('#alarmselector').append("<option value='"+data[i].id+"' > "+data[i].edificio+ "-- "+data[i].param +"</option>")
+                                 }
+                              }
+
+                            }
+                        }
+
                      }
                  });
-            }
+        }
+        else
+        {
+            $('#save').hide();
+            $("#buildingselect").parent().next().attr("class", "incorrect");
+        }
     }
 
 
     $("#save").click(function(){
-          alert('hey');
-           /* validate_form();
-            return send_form == 1;*/
+
+
     });
 
-        $("#buildingselect").change(function(){
-            alert("hey");
+    function AlarmChange()
+    {
+        valor=  document.getElementById("alarmselector").value;
 
-
-         });
-
-    function validate_form(){
-        if (form_valid){
-            var _span;
-            var clustername = $("#clustername");
-            if(clustername.val()==''){
-                _span = "incorrect";
-                form_valid = false;
-            }else{
-                _span = "correct";
-            }
-            clustername.next().removeClass("incorrect");
-            clustername.next().removeClass("correct");
-            clustername.next().addClass(_span);
-
-            }
-
-            var sector = $("#clustersector");
-            if(sector.val()==''){
-                _span = "incorrect";
-                form_valid = false;
-            }else{
-                _span = "correct";
-            }
-            $("#sel_sector").removeClass("incorrect").removeClass("correct").addClass(_span);
-            if(form_valid){
-                send_form++;
-            }
-            return form_valid
+        if(valor==0)
+        {
+            $('#save').hide();
         }
+        else
+        {
+            edificio=  document.getElementById("buildingselect").value;
+            notificacion= document.getElementById("notiselect").value;
+
+            if(edificio!=0 && notificacion!=0)
+            {
+                $('#save').show();
+            }
+        }
+    }
+
+    function notiChange()
+    {
+
+        valor=  document.getElementById("notiselect").value;
+
+        if(valor==0)
+        {
+            $('#save').hide();
+        }
+        else
+        {
+            edificio=  document.getElementById("buildingselect").value;
+            alarma= document.getElementById("alarmselector").value;
+
+            if(edificio!=0 && alarma!=0)
+            {
+                $('#save').show();
+            }
+        }
+
+    }
+
+
+
 
 
 </script>
@@ -135,7 +196,8 @@
     <ul>
         <li><a href="/main/">Inicio</a></li>
         <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
-        <li><a href="/buildings/clusters/">Grupos de empresas</a></li>
+        <li><a href="/configuracion/suscripcion_alarma/">Suscripcion a alarmas</a></li>
+
         {% if operation == "edit" %}
         <li>
             Editar suscripción a alarmas
@@ -147,86 +209,108 @@
     </ul>
 </div>
 <div id="page_content">
-<div id="contenido_interno">
-    <h2 id="titulo_form" class="powermeter">
-        {% if operation == "edit" %}Editar{% else %}Alta de{% endif %} suscripción a alarmas
-    </h2>
+    <div id="contenido_interno">
+        <h2 id="titulo_form" class="powermeter">
+            {% if operation == "edit" %}Editar{% else %}Alta de{% endif %} suscripción a alarmas
+        </h2>
 
 
-    <div class="divider" id="divider_top">&nbsp;</div>
-    <div id="form_container">
-        {% if message %}
-                <span class="notif {{ type }}">
+        <div class="divider" id="divider_top">&nbsp;</div>
+            {% if message %}
+                <span class="notif {{ msg_type }}">
                     {% autoescape off %}{{ message }}{% endautoescape %}
-                    <a href="#" onclick="$(this).parent().remove();">X</a>
+                <a href="#" onclick="$(this).parent().remove(); History.replaceState({}, '', '?page=1');">X</a>
                 </span>
-        {% endif %}
-        <p class="description">
-            Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
-            <br/>
-            Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
-        </p>
-        <form method="post" action=".">
-            {% csrf_token %}
-            <h3 class="g12">Informaci&oacute;n de suscripción a alarmas</h3>
-            <div id="cluster_fields">
+            {% endif %}
 
-                 <div class="fields_row g9">
-                    <label for="clustername" class="g2">Edificio<span class="required">*</span></label>
+            <div id="form_container">
+                {% if message %}
+                    <span class="notif {{ type }}">
+                        {% autoescape off %}{{ message }}{% endautoescape %}
+                        <a href="#" onclick="$(this).parent().remove();">X</a>
+                    </span>
+                {% endif %}
+                <p class="description">
+                    Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
+                    <br/>
+                    Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
+                </p>
+                <form method="post" action=".">
+                {% csrf_token %}
+                <h3 class="g12">Informaci&oacute;n de suscripción a alarmas</h3>
+                <div id="cluster_fields">
+                    <div class="fields_row g9">
+                        <label for="buildingselect" class="g2">Edificio<span class="required">*</span></label>
+                            <select name="buildingselect" id="buildingselect" class="g9 validate notnull" onchange="prueba('alta')">
+                                <option value="0">Selecciona una edificio: </option>
+                                {% if operation == 'edit' %}
+                                    {% if edificios %}
+                                        {% for item in edificios %}
+                                            {% if edit_suscription.alarm.consumer_unit.building.building_name == item.building_name  %}
+                                                <option value="{{item.id}}" selected="selected"> {{ item.building_name }} </option>
+                                            {% else %}
+                                                <option value="{{item.id}}"> {{ item.building_name }} </option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                {% else %}
 
-                      <select name="buildingselect" id="buildingselect" class="g9" onchange="prueba()">
-                        <option value="0">Selecciona una edificio: </option>
-                        {% if edificios %}
-                            {% for item in edificios %}
-                                <option value="{{item.id}}"> {{ item.building_name }} </option>
-                            {% endfor %}
-                        {% endif %}
+                                        {% if edificios %}
+                                            {% for item in edificios %}
+                                                <option value="{{item.id}}"> {{ item.building_name }} </option>
+                                            {% endfor %}
+                                        {% endif %}
 
-                    </select>
-                    <span></span>
+                                {% endif %}
+
+
+                            </select>
+                            <span></span>
+                    </div>
+                    <div class="fields_row g9">
+                        <label for="alarmselector" class="g2">Alarma<span class="required">*</span></label>
+                        <select name="alarmselector" id="alarmselector" class="g9 validate notnull" onchange='AlarmChange()'>
+                            {% if operation == 'edit' %} <option selected="selected" value='{{ edit_suscription.alarm.electric_parameter.name }}'> {{ edit_suscription.alarm.consumer_unit.building.building_name }}--{{ edit_suscription.alarm.electric_parameter.name }} </option>
+                            {% else %}<option value='0'>Selecciona una alarma:</option>
+                            {% endif %}
+                        </select>
+                        <span></span>
+                    </div>
+                    <div class="fields_row g9">
+                        <label for="notiselector" class="g2">Notificación<span class="required">*</span></label>
+                        <select name="notiselect" id="notiselect" class="g9 validate notnull" onchange="notiChange()">
+                            {% if operation == 'edit' %}
+                                {% if edit_suscription.notification_type == 1  %}
+                                    <option value="1" selected="selected">Push</option>
+                                    <option value="3">Email</option>
+                                    <option value="4">Ninguno</option>
+                                {% elif edit_suscription.notification_type == 3  %}
+                                    <option value="3" selected="selected">Email</option>
+                                    <option value="1">Push</option>
+                                    <option value="4">Ninguno</option>
+                                {% elif edit_suscription.notification_type == 4  %}
+                                    <option value="4" selected="">ninguno</option>
+                                    <option value="1">Push</option>
+                                    <option value="3">Email</option>
+                                {% endif %}
+                                <script> $('#save').show();</script>
+                            {% else %}
+                                <option value="0">Selecciona una notificación: </option>
+                                <option value="1">Push</option>
+                                <option value="3">Email</option>
+                                <option value="4">Ninguno</option>
+                            {% endif %}
+                        </select>
+                        <span></span>
+                    </div>
+                    <div class="buttons g12">
+                        <button class="aqua_btn" id="save">
+                            Guardar
+                        </button>
+                    </div>
                 </div>
-
-
-               <div class="fields_row g9">
-                    <label for="clustername" class="g2">Alarma<span class="required">*</span></label>
-
-                      <select name="clustersector" id="clustersector" class="g9">
-                        <option value="">Selecciona una alarma: </option>
-                        {% if lista %}
-                            {% for item in lista %}
-                                <option value="{{sector.id}}" {% if post.clustersector == sector.id %} selected {% endif %}> </option>
-                            {% endfor %}
-                        {% endif %}
-
-                    </select>
-                    <span></span>
-                </div>
-            <div class="fields_row g9">
-                    <label for="clustername" class="g2">Notificación<span class="required">*</span></label>
-
-                      <select name="clustersector" id="clustersector" class="g9">
-                        <option value="">Notificación </option>
-                        {% if lista %}
-                            {% for item in lista %}
-                                <option value="{{sector.id}}" {% if post.clustersector == sector.id %} selected {% endif %}>{{ item.notification_types }}</option>
-                            {% endfor %}
-                        {% endif %}
-
-                    </select>
-                    <span></span>
-                </div>
-
-            <div class="buttons g12">
-                <button class="aqua_btn" id="save">
-                    Guardar
-                </button>
+                </form>
             </div>
-            </div>
-        </form>
-
+        </div>
     </div>
-
-
-</div>
-</div>
 {% endblock %}

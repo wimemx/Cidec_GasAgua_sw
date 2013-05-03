@@ -2,6 +2,7 @@
 import time
 import datetime
 import json
+from django.utils import simplejson
 import re
 import locale
 
@@ -62,7 +63,7 @@ def add_alarm(request):
         template_vars["operation"] = "alta"
         clusters = get_clusters_for_operation(permission, CREATE, request.user)
         template_vars['clusters'] = clusters
-        parameters = ElectricParameters.objects.all()
+        parameters = ElectricParamaeters.objects.all()
         template_vars['parameters'] = parameters
         if request.method == 'POST':
             el = ElectricParameters.objects.get(
@@ -464,8 +465,35 @@ def mostrar_alarma(request, id_alarm):
 
 
 @login_required(login_url='/')
-def suscribe_alarm(request, id_alarm):
-    pass
+def mostrar_suscripcion_alarma(request, id_alarm):
+    datacontext = get_buildings_context(request.user)[0]
+    template_vars = {}
+    if datacontext:
+        template_vars["datacontext"] = datacontext
+    template_vars["sidebar"] = request.session['sidebar']
+    template_vars["empresa"] = request.session['main_building']
+    template_vars["company"] = request.session['company']
+    alarm = get_object_or_404(UserNotificationSettings, id=id_alarm)
+
+    template_vars["usuario"] = alarm.user
+    template_vars['building'] = alarm.alarm.consumer_unit.building.building_name
+    template_vars['parameter'] = alarm.alarm.electric_parameter.name
+    if alarm.notification_type == 1 :
+        notificacion= 'Push'
+    if alarm.notification_type == 3 :
+        notificacion= 'E-mail'
+    if alarm.notification_type == 4 :
+        notificacion= 'Ninguno'
+
+
+
+
+    template_vars['notification'] = notificacion
+
+    template_vars_template = RequestContext(request, template_vars)
+    return render_to_response("alarms/alarm_suscription_detail.html", template_vars_template)
+
+
 
 
 @login_required(login_url='/')
@@ -484,19 +512,107 @@ def alarm_suscription_list(request):
         template_vars["company"] = request.session['company']
         lista = UserNotificationSettings.objects.all()
         template_vars["lista"] = lista
+
         paginator = Paginator(lista, 10)
         try:
             page = int(request.GET.get('page', '1'))
         except ValueError:
             page = 1
 
+
+        order_user = 'asc'
+        order_name = 'asc'
+        order_lastname = 'asc'
+        order_alarm = 'asc'
+        order_date = 'asc'
+        order_status = 'asc'
+
+        order = "alarm__consumer_unit__building__building_name"
+        if "order_user" in request.GET:
+            if request.GET["order_user"] == "desc":
+                order = "-user__username"
+                order_user = "asc"
+            else:
+                order = "user__username"
+                order_user = "desc"
+
+        elif "order_name" in request.GET:
+            if request.GET["order_name"] == "asc":
+                order = "user__first_name"
+                order_name = "desc"
+            else:
+                order = "-user__first_name"
+
+        elif "order_lastname" in request.GET:
+            if request.GET["order_lastname"] == "asc":
+                order = "user__last_name"
+                order_lastname = "desc"
+            else:
+                order = "-user__last_name"
+
+        elif "order_alarm" in request.GET:
+            if request.GET["order_alarm"] == "asc":
+                order = "alarm__consumer_unit__building__building_name"
+                order_alarm = "desc"
+            else:
+                order = "-alarm__consumer_unit__building__building_name"
+
+        elif "order_date" in request.GET:
+            if request.GET["order_date"] == "asc":
+                order = "alarm__last_changed"
+                order_date = "desc"
+            else:
+                order = "-alarm__last_changed"
+
+        elif "order_status" in request.GET:
+            if request.GET["order_status"] == "asc":
+                order = "status"
+                order_status = "desc"
+            else:
+                order = "-status"
+                order_status = "asc"
+
+
+
+        if "search" in request.GET:
+            search = request.GET["search"]
+
+            lista = UserNotificationSettings.objects.filter(
+                Q(
+                    user__username__icontains=
+                    request.GET['search']) |
+                Q(user__first_name__icontains=request.GET['search'])|
+
+                Q(user__last_name__icontains=request.GET['search'])|
+
+                Q(alarm__consumer_unit__building__building_name__icontains=request.GET['search'])|
+
+                Q(alarm__electric_parameter__name__icontains=request.GET['search'])).order_by(order)
+
+
+            template_vars["lista"] = lista
+        else:
+
+            lista=UserNotificationSettings.objects.all().order_by(order)
+
         # If page request (9999) is out of range, deliver last page of results.
+        order_consumer = 'asc'
+
+
+
         try:
             pag_user = paginator.page(page)
         except (EmptyPage, InvalidPage):
             pag_user = paginator.page(paginator.num_pages)
 
         template_vars['paginacion'] = pag_user
+        template_vars['order_user']=order_user
+        template_vars['order_name']=order_name
+        template_vars['order_lastname']=order_lastname
+        template_vars['order_alarm']=order_alarm
+        template_vars['order_date']=order_date
+        template_vars['order_status']=order_status
+        template_vars["lista"] = lista
         if 'msj' in request.GET:
             template_vars['message'] = request.GET['msj']
             template_vars['msg_type'] = request.GET['ntype']
@@ -506,7 +622,7 @@ def alarm_suscription_list(request):
         return render_to_response(
             "alarms/alarm_suscription_list.html",
             template_vars_template)
-    pass
+
 
 
 @login_required(login_url='/')
@@ -537,15 +653,26 @@ def add_alarm_suscription(request):
 
             b_id = request.GET.get('id')
             data = get_alarm_from_building(b_id)
+            data= simplejson.dumps(data)
+
             return HttpResponse(content=data, content_type="application/json")
 
 
+        if request.POST:
+            alarma = Alarms.objects.get(pk=request.POST['alarmselector'])
+            notificacion= request.POST['notiselect']
+            usuario=  request.user
 
-
-
-
-
-
+            usernoti = UserNotificationSettings(
+                        alarm=alarma,
+                        user=usuario,
+                        notification_type=notificacion,
+                        status=True)
+            usernoti.save()
+            mensaje = "Suscripción a alarma exitosa."
+            _type = "n_success"
+            return HttpResponseRedirect("/configuracion/suscripcion_alarma/?msj=" +
+                                    mensaje + "&ntype=" + _type)
     template_vars_template = RequestContext(request, template_vars)
     return render_to_response(
         "alarms/add_alarm_suscription.html",
@@ -553,8 +680,51 @@ def add_alarm_suscription(request):
 
 
 @login_required(login_url='/')
-def unsuscribe_alarm(request, id_alarm):
-    pass
+def edit_alarm_suscription(request, id_alarm):
+    datacontext = get_buildings_context(request.user)[0]
+    template_vars = {}
+    if datacontext:
+        template_vars["datacontext"] = datacontext
+
+    template_vars["sidebar"] = request.session['sidebar']
+    template_vars["empresa"] = request.session['main_building']
+    template_vars["company"] = request.session['company']
+
+    suscripcion= UserNotificationSettings.objects.get(pk=id_alarm)
+    print suscripcion.alarm.consumer_unit.building.building_name
+    template_vars['edit_suscription']= suscripcion
+    template_vars['operation']='edit'
+    permission = "Ver alta suscripción alarma"
+    if has_permission(request.user, VIEW,
+                      permission) or \
+            request.user.is_superuser:
+        permission = "Ver edificios"
+        edificios = get_all_buildings_for_operation(permission, VIEW, request.user)
+        template_vars["edificios"] = edificios
+        lista = UserNotificationSettings.objects.all()
+        template_vars["lista"] = lista
+
+
+    if request.POST:
+            alarma = Alarms.objects.get(pk=request.POST['alarmselector'])
+            notificacion= request.POST['notiselect']
+            usuario=  request.user
+
+            usernoti = UserNotificationSettings.objects.get(pk=id_alarm)
+            usernoti.alarm= alarma
+            usernoti.user= usuario
+            usernoti.notification_type=notificacion
+            usernoti.save()
+            mensaje = "Edición de suscripción a alarma exitosa."
+            _type = "n_success"
+            return HttpResponseRedirect("/configuracion/suscripcion_alarma/?msj=" +
+                                    mensaje + "&ntype=" + _type)
+
+    template_vars_template = RequestContext(request, template_vars)
+    return render_to_response(
+        "alarms/add_alarm_suscription.html",
+        template_vars_template)
+
 
 
 def search_alarm(request):
