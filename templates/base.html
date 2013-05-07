@@ -118,7 +118,7 @@
                 type: "GET",
                 success: function(data){
                     var main_menu = $("#main_menu");
-                    if(data != "false"){
+                    if(data != "false" && data != 0){
                         var notif_span = '<span id="notification_number"><span>'+data+'</span></span>';
                         var span_ = main_menu.find(".alarmas").find("#notification_number");
                         main_menu.find("li.alarmas").append(notif_span);

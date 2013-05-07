@@ -449,6 +449,7 @@ def status_alarm(request, id_alarm):
 def mostrar_alarma(request, id_alarm):
     datacontext = get_buildings_context(request.user)[0]
     template_vars = {}
+    # TODO revisar permiso de ver alarmas
     if datacontext:
         template_vars["datacontext"] = datacontext
     template_vars["sidebar"] = request.session['sidebar']
@@ -472,6 +473,7 @@ def mostrar_suscripcion_alarma(request, id_alarm):
     template_vars = {}
     if datacontext:
         template_vars["datacontext"] = datacontext
+    #TODO revisar permiso
     template_vars["sidebar"] = request.session['sidebar']
     template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
@@ -480,11 +482,12 @@ def mostrar_suscripcion_alarma(request, id_alarm):
     template_vars["usuario"] = alarm.user
     template_vars['building'] = alarm.alarm.consumer_unit.building.building_name
     template_vars['parameter'] = alarm.alarm.electric_parameter.name
+    #TODO Formato
     if alarm.notification_type == 1 :
         notificacion= 'Push'
     if alarm.notification_type == 3 :
         notificacion= 'E-mail'
-    if alarm.notification_type == 4 :
+    else:#if alarm.notification_type == 4 :
         notificacion= 'Ninguno'
 
 
@@ -511,14 +514,10 @@ def alarm_suscription_list(request):
         template_vars["sidebar"] = request.session['sidebar']
         template_vars["empresa"] = request.session['main_building']
         template_vars["company"] = request.session['company']
-        lista = UserNotificationSettings.objects.all()
-        template_vars["lista"] = lista
+        # TODO Formato
+        # TODO Si es is_superuser, muestra todas las suscripciones de todos
+        # si no nada mas las del usuario logeado
 
-        paginator = Paginator(lista, 10)
-        try:
-            page = int(request.GET.get('page', '1'))
-        except ValueError:
-            page = 1
 
 
         order_user = 'asc'
@@ -586,23 +585,25 @@ def alarm_suscription_list(request):
                     request.GET['search']) |
                 Q(alarm__electric_parameter__name__icontains=
                     request.GET['search'])).order_by(order)
-
-
-            template_vars["lista"] = lista
         else:
 
             lista=UserNotificationSettings.objects.all().order_by(order)
 
         # If page request (9999) is out of range, deliver last page of results.
         order_consumer = 'asc'
+        #La lista es el queryset de la busqueda
 
-
+        paginator = Paginator(lista, 10)
+        try:
+            page = int(request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
 
         try:
             pag_user = paginator.page(page)
         except (EmptyPage, InvalidPage):
             pag_user = paginator.page(paginator.num_pages)
-
+        # Formato
         template_vars['paginacion'] = pag_user
         template_vars['order_user']=order_user
         template_vars['order_name']=order_name
@@ -614,7 +615,6 @@ def alarm_suscription_list(request):
         if 'msj' in request.GET:
             template_vars['message'] = request.GET['msj']
             template_vars['msg_type'] = request.GET['ntype']
-        paginator = Paginator(lista, 10)
         template_vars_template = RequestContext(request, template_vars)
 
         return render_to_response(
@@ -635,6 +635,7 @@ def add_alarm_suscription(request):
     template_vars["company"] = request.session['company']
 
     permission = "Ver alta suscripción alarma"
+    #Operación es CREATE
     if has_permission(request.user, VIEW,
                       permission) or \
             request.user.is_superuser:
@@ -643,11 +644,9 @@ def add_alarm_suscription(request):
                                                     VIEW,
                                                     request.user)
         template_vars["edificios"] = edificios
+        #Useless
         lista = UserNotificationSettings.objects.all()
         template_vars["lista"] = lista
-
-
-
 
         if request.GET.get('id'):
 
@@ -656,7 +655,6 @@ def add_alarm_suscription(request):
             data= simplejson.dumps(data)
 
             return HttpResponse(content=data, content_type="application/json")
-
 
         if request.POST:
             alarma = Alarms.objects.get(pk=request.POST['alarmselector'])
@@ -690,12 +688,13 @@ def edit_alarm_suscription(request, id_alarm):
     template_vars["sidebar"] = request.session['sidebar']
     template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
-
+    #get_or_404
     suscripcion= UserNotificationSettings.objects.get(pk=id_alarm)
     print suscripcion.alarm.consumer_unit.building.building_name
     template_vars['edit_suscription']= suscripcion
     template_vars['operation']='edit'
     permission = "Ver alta suscripción alarma"
+    # UPDATE
     if has_permission(request.user, VIEW,
                       permission) or \
             request.user.is_superuser:
@@ -727,11 +726,6 @@ def edit_alarm_suscription(request, id_alarm):
     return render_to_response(
         "alarms/add_alarm_suscription.html",
         template_vars_template)
-
-
-
-def search_alarm(request):
-    pass
 
 
 @login_required(login_url='/')
