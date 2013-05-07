@@ -449,46 +449,53 @@ def status_alarm(request, id_alarm):
 def mostrar_alarma(request, id_alarm):
     datacontext = get_buildings_context(request.user)[0]
     template_vars = {}
-    # TODO revisar permiso de ver alarmas
-    if datacontext:
-        template_vars["datacontext"] = datacontext
-    template_vars["sidebar"] = request.session['sidebar']
-    template_vars["empresa"] = request.session['main_building']
-    template_vars["company"] = request.session['company']
-    alarm = get_object_or_404(Alarms, id=id_alarm)
-    template_vars["alarm"] = alarm
-    template_vars['building'] = get_building_siblings(
-        alarm.consumer_unit.building)
-    template_vars['compania'] = template_vars['building'][0].company
-    template_vars['company'] = get_company_siblings(template_vars['compania'])
-    template_vars['curr_cluster'] = template_vars['company'][0].cluster
-    template_vars_template = RequestContext(request, template_vars)
-    return render_to_response("alarms/alarm_detail.html",
-                              template_vars_template)
+    permission = "Ver suscripciones a alarmas"
+    if has_permission(request.user, VIEW,
+                      permission) or \
+            request.user.is_superuser:
+        if datacontext:
+            template_vars["datacontext"] = datacontext
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars["empresa"] = request.session['main_building']
+        template_vars["company"] = request.session['company']
+        alarm = get_object_or_404(Alarms, id=id_alarm)
+        template_vars["alarm"] = alarm
+        template_vars['building'] = get_building_siblings(
+            alarm.consumer_unit.building)
+        template_vars['compania'] = template_vars['building'][0].company
+        template_vars['company'] = get_company_siblings(template_vars['compania'])
+        template_vars['curr_cluster'] = template_vars['company'][0].cluster
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("alarms/alarm_detail.html",
+                                  template_vars_template)
 
 
 @login_required(login_url='/')
 def mostrar_suscripcion_alarma(request, id_alarm):
     datacontext = get_buildings_context(request.user)[0]
     template_vars = {}
-    if datacontext:
-        template_vars["datacontext"] = datacontext
-    #TODO revisar permiso
-    template_vars["sidebar"] = request.session['sidebar']
-    template_vars["empresa"] = request.session['main_building']
-    template_vars["company"] = request.session['company']
-    alarm = get_object_or_404(UserNotificationSettings, id=id_alarm)
+    permission = "Ver suscripciones a alarmas"
+    if has_permission(request.user, VIEW,
+                      permission) or \
+            request.user.is_superuser:
+        if datacontext:
+            template_vars["datacontext"] = datacontext
 
-    template_vars["usuario"] = alarm.user
-    template_vars['building'] = alarm.alarm.consumer_unit.building.building_name
-    template_vars['parameter'] = alarm.alarm.electric_parameter.name
-    #TODO Formato
-    if alarm.notification_type == 1 :
-        notificacion= 'Push'
-    if alarm.notification_type == 3 :
-        notificacion= 'E-mail'
-    else:#if alarm.notification_type == 4 :
-        notificacion= 'Ninguno'
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars["empresa"] = request.session['main_building']
+        template_vars["company"] = request.session['company']
+        alarm = get_object_or_404(UserNotificationSettings, id=id_alarm)
+
+        template_vars["usuario"] = alarm.user
+        template_vars['building'] = alarm.alarm.consumer_unit.building.building_name
+        template_vars['parameter'] = alarm.alarm.electric_parameter.name
+
+        if alarm.notification_type == 1:
+            notificacion = 'Push'
+        elif alarm.notification_type == 3:
+            notificacion = 'E-mail'
+        else:
+            notificacion = 'Ninguno'
 
 
 
@@ -514,11 +521,6 @@ def alarm_suscription_list(request):
         template_vars["sidebar"] = request.session['sidebar']
         template_vars["empresa"] = request.session['main_building']
         template_vars["company"] = request.session['company']
-        # TODO Formato
-        # TODO Si es is_superuser, muestra todas las suscripciones de todos
-        # si no nada mas las del usuario logeado
-
-
 
         order_user = 'asc'
         order_name = 'asc'
@@ -576,18 +578,31 @@ def alarm_suscription_list(request):
 
         if "search" in request.GET:
             search = request.GET["search"]
+            if request.user.is_superuser:
+                lista = UserNotificationSettings.objects.filter(
+                    Q(user__username__icontains=request.GET['search']) |
+                    Q(user__first_name__icontains=request.GET['search']) |
+                    Q(user__last_name__icontains=request.GET['search']) |
+                    Q(alarm__consumer_unit__building__building_name__icontains=
+                        request.GET['search']) |
+                    Q(alarm__electric_parameter__name__icontains=
+                        request.GET['search'])).order_by(order)
+            else:
+                lista = UserNotificationSettings.objects.filter(
+                    Q(user__username__icontains=request.GET['search']) |
+                    Q(user__first_name__icontains=request.GET['search']) |
+                    Q(user__last_name__icontains=request.GET['search']) |
+                    Q(alarm__consumer_unit__building__building_name__icontains=
+                        request.GET['search']) |
+                    Q(alarm__electric_parameter__name__icontains=
+                        request.GET['search']) and
+                    Q(user=request.user)).order_by(order)
 
-            lista = UserNotificationSettings.objects.filter(
-                Q(user__username__icontains=request.GET['search']) |
-                Q(user__first_name__icontains=request.GET['search']) |
-                Q(user__last_name__icontains=request.GET['search']) |
-                Q(alarm__consumer_unit__building__building_name__icontains=
-                    request.GET['search']) |
-                Q(alarm__electric_parameter__name__icontains=
-                    request.GET['search'])).order_by(order)
         else:
-
-            lista=UserNotificationSettings.objects.all().order_by(order)
+            if request.user.is_superuser:
+                lista = UserNotificationSettings.objects.all().order_by(order)
+            else:
+                lista = UserNotificationSettings.objects.filter(user=request.user)
 
         # If page request (9999) is out of range, deliver last page of results.
         order_consumer = 'asc'
@@ -605,12 +620,12 @@ def alarm_suscription_list(request):
             pag_user = paginator.page(paginator.num_pages)
         # Formato
         template_vars['paginacion'] = pag_user
-        template_vars['order_user']=order_user
-        template_vars['order_name']=order_name
-        template_vars['order_lastname']=order_lastname
-        template_vars['order_alarm']=order_alarm
-        template_vars['order_date']=order_date
-        template_vars['order_status']=order_status
+        template_vars['order_user'] = order_user
+        template_vars['order_name'] = order_name
+        template_vars['order_lastname'] = order_lastname
+        template_vars['order_alarm'] = order_alarm
+        template_vars['order_date'] = order_date
+        template_vars['order_status'] = order_status
         template_vars["lista"] = lista
         if 'msj' in request.GET:
             template_vars['message'] = request.GET['msj']
@@ -636,7 +651,7 @@ def add_alarm_suscription(request):
 
     permission = "Ver alta suscripción alarma"
     #Operación es CREATE
-    if has_permission(request.user, VIEW,
+    if has_permission(request.user, CREATE,
                       permission) or \
             request.user.is_superuser:
         permission = "Ver edificios"
@@ -644,9 +659,6 @@ def add_alarm_suscription(request):
                                                     VIEW,
                                                     request.user)
         template_vars["edificios"] = edificios
-        #Useless
-        lista = UserNotificationSettings.objects.all()
-        template_vars["lista"] = lista
 
         if request.GET.get('id'):
 
@@ -688,14 +700,11 @@ def edit_alarm_suscription(request, id_alarm):
     template_vars["sidebar"] = request.session['sidebar']
     template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
-    #get_or_404
-    suscripcion= UserNotificationSettings.objects.get(pk=id_alarm)
-    print suscripcion.alarm.consumer_unit.building.building_name
-    template_vars['edit_suscription']= suscripcion
-    template_vars['operation']='edit'
-    permission = "Ver alta suscripción alarma"
-    # UPDATE
-    if has_permission(request.user, VIEW,
+    suscripcion=get_object_or_404(UserNotificationSettings, pk=id_alarm)
+    template_vars['edit_suscription'] = suscripcion
+    template_vars['operation'] = 'edit'
+    permission = "Modificar suscripción a alarmas"
+    if has_permission(request.user, UPDATE,
                       permission) or \
             request.user.is_superuser:
         permission = "Ver edificios"
@@ -708,13 +717,13 @@ def edit_alarm_suscription(request, id_alarm):
 
     if request.POST:
             alarma = Alarms.objects.get(pk=request.POST['alarmselector'])
-            notificacion= request.POST['notiselect']
-            usuario=  request.user
+            notificacion = request.POST['notiselect']
+            usuario = request.user
 
             usernoti = UserNotificationSettings.objects.get(pk=id_alarm)
-            usernoti.alarm= alarma
-            usernoti.user= usuario
-            usernoti.notification_type=notificacion
+            usernoti.alarm = alarma
+            usernoti.user = usuario
+            usernoti.notification_type = notificacion
             usernoti.save()
             mensaje = "Edición de suscripción a alarma exitosa."
             _type = "n_success"
