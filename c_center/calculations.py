@@ -706,6 +706,34 @@ def obtenerCostoPromedioKWH(tarifa_id):
     return costo
 
 
+def obtenerDemanda_kw_valores(valores_kw):
+    demanda_maxima = 0
+    if valores_kw:
+        try:
+            longitud = len(valores_kw)
+            if longitud >= 3:
+                low = valores_kw[0]
+                middle = valores_kw[0]
+                high = valores_kw[0]
+                demanda_maxima = (low + middle + high) / 3
+                for indice in range(3, longitud):
+                    low, middle = middle, high
+                    high = valores_kw[indice]
+                    prom = (low + middle + high) / 3
+                    if prom > demanda_maxima:
+                        demanda_maxima = prom
+            else:
+                demanda_maxima = 0
+
+        except IndexError:
+            print "IndexError"
+            demanda_maxima = 0
+        except TypeError:
+            print "TypeError"
+            demanda_maxima = 0
+    return int(ceil(demanda_maxima))
+
+
 def obtenerDemanda_kw(lecturas_kw):
     demanda_maxima = 0
     if lecturas_kw:

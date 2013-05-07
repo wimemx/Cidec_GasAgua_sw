@@ -33,7 +33,11 @@ from rbac.models import PermissionAsigment, DataContextPermission, Role,\
     UserRole, Object, Operation
 from location.models import *
 from electric_rates.models import ElectricRatesDetail
-from data_warehouse_extended.models import ConsumerUnitInstantElectricalData
+from data_warehouse_extended.views import get_electrical_parameter, \
+    get_instant_delta, get_instants_list, get_consumer_unit_profile, \
+    get_consumer_unit_electrical_parameter_data_list
+from data_warehouse_extended.models import ConsumerUnitInstantElectricalData,\
+    data_warehouse_extended
 
 from rbac.rbac_functions import is_allowed_operation_for_object,\
     default_consumerUnit
@@ -1190,39 +1194,6 @@ def dailyReportAll():
 
     print "Done dailyReportAll"
 
-
-def funcion_suma_datos(electric_data, cu):
-    """
-
-    :param electric_data: dict {'kW':[[<data>],[<data>]],
-    'kWhIMPORT':[[<data>],[<data>]], 'kvarhIMPORT':[[<data>],[<data>]]}
-    :param cu: ConsumerUnit (virtual)
-    """
-    data_len = len(electric_data["kW"][0])
-    cu_len = len(electric_data["kW"])
-
-    demanda_max = None
-    dem_max_time = '00:00:00'
-    demanda_min = None
-    dem_min_time = '00:00:00'
-
-    for i in range(0, data_len):
-        cont = 0
-        suma_kw = 0
-        while cont < cu_len:
-            suma_kw += electric_data["kW"][cont][i]
-            if not demanda_max:
-                demanda_max = suma_kw
-
-            if not demanda_min:
-                demanda_min = suma_kw
-
-            if suma_kw > demanda_max:
-                demanda_max = suma_kw
-            if suma_kw < demanda_min:
-                demanda_min = suma_kw
-            cont += 1
-
 def dailyReport(building, consumer_unit, today):
 
     #Inicializacion de variables
@@ -1281,34 +1252,76 @@ def dailyReport(building, consumer_unit, today):
     consumer_units = get_consumer_units(consumer_unit)
     if consumer_units:
 
-        for c_unit in consumer_units:
-            print c_unit
-            profile_powermeter =  c_unit.profile_powermeter
-            #print "Profile Powermeter:", profile_powermeter.pk
+        if len(consumer_units) > 1:
+
+            virtual_cu =\
+            c_functions_get_consumer_unit_electrical_parameter_data_clustered(
+                consumer_unit,
+                today_s_utc.astimezone(timezone.get_current_timezone()),
+                today_e_utc.astimezone(timezone.get_current_timezone()),
+                'kW',
+                300
+            )
+
+            for vcu in virtual_cu:
+                if vcu['value'] > demanda_max:
+                    demanda_max = vcu['value']
+                    dem_max_time = datetime.datetime.\
+                    utcfromtimestamp(vcu['datetime']).\
+                    replace(tzinfo=pytz.utc).\
+                    astimezone(timezone.get_current_timezone()).time()
+
+
+                if not demanda_min:
+                    demanda_min = vcu['value']
+                    dem_min_time = datetime.datetime.\
+                    utcfromtimestamp(vcu['datetime']).\
+                    replace(tzinfo=pytz.utc).\
+                    astimezone(timezone.get_current_timezone()).time()
+                else:
+                    if vcu['value'] < demanda_min:
+                        demanda_min = vcu['value']
+                        dem_min_time = datetime.datetime.\
+                        utcfromtimestamp(vcu['datetime']).\
+                        replace(tzinfo=pytz.utc).\
+                        astimezone(timezone.get_current_timezone()).time()
+
+        else:
             #Se obtiene la demanda max
-            demanda_max_obj = ElectricDataTemp.objects. \
-                filter(profile_powermeter = profile_powermeter). \
-                filter(medition_date__gte=today_s_utc).filter(medition_date__lte=today_e_utc). \
-                order_by('-kW_import_sliding_window_demand')
+            demanda_max_obj = ElectricDataTemp.objects.\
+            filter(profile_powermeter = consumer_units[0].profile_powermeter).\
+            filter(medition_date__gte=today_s_utc).\
+            filter(medition_date__lte=today_e_utc).\
+            order_by('-kW_import_sliding_window_demand')
             if demanda_max_obj:
-                demanda_max_temp = demanda_max_obj[0].kW_import_sliding_window_demand
+                demanda_max_temp = demanda_max_obj[0].\
+                kW_import_sliding_window_demand
                 if demanda_max_temp > demanda_max:
                     demanda_max = demanda_max_temp
-                    dem_max_time = demanda_max_obj[0].medition_date.time()
+                    dem_max_time = demanda_max_obj[0].medition_date.\
+                    astimezone(timezone.get_current_timezone()).time()
 
             #Se obtiene la demanda min
             demanda_min_obj = ElectricDataTemp.objects.\
-                filter(profile_powermeter = profile_powermeter).\
-                filter(medition_date__gte=today_s_utc).filter(medition_date__lte=today_e_utc).\
-                order_by('kW')
+            filter(profile_powermeter = consumer_units[0].profile_powermeter).\
+            filter(medition_date__gte=today_s_utc).\
+            filter(medition_date__lte=today_e_utc).\
+            order_by('kW')
             if demanda_min_obj:
                 demanda_min_temp = demanda_min_obj[0].kW
                 if not demanda_min:
                     demanda_min = demanda_min_temp
-                    dem_min_time = demanda_min_obj[0].medition_date.time()
+                    dem_min_time = demanda_min_obj[0].medition_date.\
+                    astimezone(timezone.get_current_timezone()).time()
                 if demanda_min_temp < demanda_min:
                     demanda_min = demanda_min_temp
-                    dem_min_time = demanda_min_obj[0].medition_date.time()
+                    dem_min_time = demanda_min_obj[0].medition_date.\
+                    astimezone(timezone.get_current_timezone()).time()
+
+        for c_unit in consumer_units:
+            #print c_unit
+            profile_powermeter =  c_unit.profile_powermeter
+            #print "Profile Powermeter:", profile_powermeter.pk
 
             #KWH
             #Se obtienen todos los identificadores para los KWH
@@ -1484,7 +1497,7 @@ def dailyReport(building, consumer_unit, today):
     )
 
     new_daily.save()
-    print new_daily
+    #print new_daily
     return 'OK'
 
 
@@ -1719,8 +1732,8 @@ def calculateMonthlyReport(consumer_u, month, year):
                                                   fecha_inicio,
                                                   fecha_final))
 
-        #emisiones de carbon TODO calcular emisiones
-        mes['emisiones'] = 404
+        #emisiones de carbon
+        mes['emisiones'] = mes['consumo_acumulado'] * .55842
 
     return mes
 
@@ -1804,6 +1817,8 @@ def save_historic(monthly_cutdate, building):
         aver_rate = str(aver_rate)
 
         resultado_mensual['costo_energia'] = str(resultado_mensual['costo_energia'])
+        resultado_mensual['costo_energia'] = str(resultado_mensual[
+                                                 'costo_energia'])
         resultado_mensual['iva'] = str(resultado_mensual['iva'])
         resultado_mensual['total'] = str(resultado_mensual['total'])
         newHistoric = DacHistoricData(
@@ -1903,6 +1918,83 @@ def tarifaHM_2(building, s_date, e_date, month, year):
     consumer_units = get_consumer_units(main_cu)
 
     if consumer_units:
+
+        if len(consumer_units) > 1:
+
+            virtual_cu = \
+            c_functions_get_consumer_unit_electrical_parameter_data_clustered(
+                main_cu,
+                s_date.astimezone(timezone.get_current_timezone()),
+                e_date.astimezone(timezone.get_current_timezone()),
+                'kW',
+                300
+            )
+
+            arr_kw_base = []
+            arr_kw_int = []
+            arr_kw_punta = []
+
+            for vcu in virtual_cu:
+                kw_date =  datetime.datetime.utcfromtimestamp(vcu['datetime']).\
+                replace(tzinfo=pytz.utc).\
+                astimezone(timezone.get_current_timezone())
+
+                periodo_mv = obtenerTipoPeriodoObj(kw_date, region)
+                if periodo_mv.period_type == 'base':
+                    arr_kw_base.append(vcu['value'])
+                elif periodo_mv.period_type == 'intermedio':
+                    arr_kw_int.append(vcu['value'])
+                elif periodo_mv.period_type == 'punta':
+                    arr_kw_punta.append(vcu['value'])
+
+            diccionario_final_cfe["kw_base"] = \
+            obtenerDemanda_kw_valores(arr_kw_base)
+
+            diccionario_final_cfe["kw_intermedio"] = \
+            obtenerDemanda_kw_valores(arr_kw_int)
+
+            diccionario_final_cfe["kw_punta"] = \
+            obtenerDemanda_kw_valores(arr_kw_punta)
+
+
+        else:
+            lecturas_base = ElectricRateForElectricData.objects.filter(
+                electric_data__profile_powermeter=consumer_units[0].
+                profile_powermeter).\
+            filter(electric_data__medition_date__gte=s_date).filter(
+                electric_data__medition_date__lt=e_date).\
+            filter(electric_rates_periods__period_type='base').order_by(
+                'electric_data__medition_date')
+            diccionario_final_cfe["kw_base"] = obtenerDemanda_kw(lecturas_base)
+
+            lecturas_intermedio = ElectricRateForElectricData.objects.filter(
+                electric_data__profile_powermeter=consumer_units[0].
+                profile_powermeter).\
+            filter(electric_data__medition_date__gte=s_date).filter(
+                electric_data__medition_date__lt=e_date).\
+            filter(
+                electric_rates_periods__period_type='intermedio').order_by(
+                'electric_data__medition_date')
+            diccionario_final_cfe["kw_intermedio"] = \
+            obtenerDemanda_kw(lecturas_intermedio)
+
+            lecturas_punta = ElectricRateForElectricData.objects.filter(
+                electric_data__profile_powermeter=consumer_units[0].
+                profile_powermeter).\
+            filter(electric_data__medition_date__gte=s_date).filter(
+                electric_data__medition_date__lt=e_date).\
+            filter(electric_rates_periods__period_type='punta').order_by(
+                'electric_data__medition_date')
+            diccionario_final_cfe["kw_punta"] = obtenerDemanda_kw(lecturas_punta)
+
+
+        if diccionario_final_cfe["kw_base"] > demanda_max:
+            demanda_max = diccionario_final_cfe["kw_base"]
+        elif diccionario_final_cfe["kw_intermedio"] > demanda_max:
+            demanda_max = diccionario_final_cfe["kw_intermedio"]
+        elif diccionario_final_cfe["kw_punta"] > demanda_max:
+            demanda_max = diccionario_final_cfe["kw_punta"]
+
         for c_unit in consumer_units:
             #Se obtienen directamente los kw Base, Intermedio y Punta.
 
@@ -1915,47 +2007,9 @@ def tarifaHM_2(building, s_date, e_date, month, year):
             #order_by('electric_data__medition_date')
             #kw_t = obtenerDemanda_kw(lecturas_totales)
 
-
-            lecturas_base = ElectricRateForElectricData.objects.filter(
-                electric_data__profile_powermeter=profile_powermeter).\
-            filter(electric_data__medition_date__gte=s_date).filter(
-                electric_data__medition_date__lt=e_date).\
-            filter(electric_rates_periods__period_type='base').order_by(
-                'electric_data__medition_date')
-            kw_base_t = obtenerDemanda_kw(lecturas_base)
-            if kw_base_t > diccionario_final_cfe["kw_base"]:
-                diccionario_final_cfe["kw_base"] = kw_base_t
-
-            lecturas_intermedio = ElectricRateForElectricData.objects.filter(
-                electric_data__profile_powermeter=profile_powermeter).\
-            filter(electric_data__medition_date__gte=s_date).filter(
-                electric_data__medition_date__lt=e_date).\
-            filter(
-                electric_rates_periods__period_type='intermedio').order_by(
-                'electric_data__medition_date')
-            kw_intermedio_t = obtenerDemanda_kw(lecturas_intermedio)
-            if kw_intermedio_t > diccionario_final_cfe["kw_intermedio"]:
-                diccionario_final_cfe["kw_intermedio"] = kw_intermedio_t
-
-            lecturas_punta = ElectricRateForElectricData.objects.filter(
-                electric_data__profile_powermeter=profile_powermeter).\
-            filter(electric_data__medition_date__gte=s_date).filter(
-                electric_data__medition_date__lt=e_date).\
-            filter(electric_rates_periods__period_type='punta').order_by(
-                'electric_data__medition_date')
-            kw_punta_t = obtenerDemanda_kw(lecturas_punta)
-            if kw_punta_t > diccionario_final_cfe["kw_punta"]:
-                diccionario_final_cfe["kw_punta"] = kw_punta_t
-
-            if kw_base_t > demanda_max:
-                demanda_max = kw_base_t
-            elif kw_intermedio_t > demanda_max:
-                demanda_max = kw_intermedio_t
-            elif kw_punta_t > demanda_max:
-                demanda_max = kw_punta_t
-
             #KWH
             #Se obtienen todos los identificadores para los KWH
+
             lecturas_identificadores = ElectricRateForElectricData.objects\
             .filter(
                 electric_data__profile_powermeter
@@ -1965,10 +2019,12 @@ def tarifaHM_2(building, s_date, e_date, month, year):
             order_by("electric_data__medition_date").values(
                 "identifier").annotate(Count("identifier"))
 
+
             ultima_lectura = 0
             kwh_por_periodo = []
 
             for lectura in lecturas_identificadores:
+                #print "Lectura", lectura["identifier"]
                 electric_info = ElectricRateForElectricData.objects.filter(
                     identifier=lectura["identifier"]).\
                 filter(
@@ -1996,7 +2052,7 @@ def tarifaHM_2(building, s_date, e_date, month, year):
             kwh_punta_t = 0
 
             for idx, kwh_p in enumerate(kwh_por_periodo):
-                print "Lectura:", kwh_p[0], "-:", kwh_p[1]
+                #print "Lectura:", kwh_p[0], "-:", kwh_p[1]
                 inicial = kwh_p[0]
                 periodo_t = kwh_p[1]
                 if idx + 1 <= kwh_periodo_long - 1:
@@ -2101,102 +2157,6 @@ def tarifaHM_2(building, s_date, e_date, month, year):
     diccionario_final_cfe['total'] = total_final
 
     return diccionario_final_cfe
-
-def tarifaDAC_01(building, s_date, e_date, month, year):
-    status = 'OK'
-    diccionario_final_cfe = {'status': status}
-
-    kwh_netos = 0
-
-    tarifa_kwh = 0
-    tarifa_mes = 0
-
-    #Se obtiene la region
-    region = building.region
-
-    billing_mrates = datetime.date(year=year, month=month, day=1)
-    periodo = s_date.astimezone(timezone.get_current_timezone()).strftime(
-        '%d/%m/%Y %I:%M %p') +\
-              " - " + e_date.astimezone(
-        timezone.get_current_timezone()).strftime('%d/%m/%Y %I:%M %p')
-
-    #Para las regiones BC y BCS es necesario obtener revisar si se aplica
-    # Tarifa de Verano o de Invierno
-    if region.pk == 1 or region.pk == 2:
-        tf_ver_inv = obtenerHorarioVeranoInvierno(billing_mrates, 2)
-        tarifasObj = DACElectricRateDetail.objects.filter(
-            region=region.pk).filter(date_interval=tf_ver_inv).filter(
-            date_init__lte=billing_mrates).filter(date_end__gte=billing_mrates)
-        if tarifasObj:
-            tarifa_kwh = tarifasObj[0].kwh_rate
-            tarifa_mes = tarifasObj[0].month_rate
-
-    else:
-        tarifasObj = DACElectricRateDetail.objects.filter(
-            region=region.pk).filter(date_interval=None).filter(
-            date_init__lte=billing_mrates).filter(date_end__gte=billing_mrates)
-        if tarifasObj:
-            tarifa_kwh = tarifasObj[0].kwh_rate
-            tarifa_mes = tarifasObj[0].month_rate
-
-    main_cu = ConsumerUnit.objects.get(
-        building=building,
-        electric_device_type__electric_device_type_name="Total Edificio")
-    c_units = get_consumer_units(main_cu)
-
-    #Si es medidor virtual
-    if len(c_units) > 1:
-        for cu in c_units:
-            datos_kwh = ConsumerUnitInstantElectricalData.objects.filter(
-                instant_instant_delta__name = "Five Minute Delta",
-                consumer_unit_profile__transactional_id=cu.pk,
-                instant__instant_delta__instant_datetime__gte = s_date,
-                instant_instant_delta__instant_datetime__lt = e_date,
-                electrical_parameter__pk = 24).\
-                order_by("instant__instant_delta__instant_datetime")
-
-            num_lecturas = len(datos_kwh)
-            primer_lectura = datos_kwh[0]
-            ultima_lectura = datos_kwh[num_lecturas-1]
-            kwh_netos += (ultima_lectura - primer_lectura)
-
-    else: #Si es medidor fisico
-        profile_powermeter = main_cu.profile_powermeter
-
-        #Se obtienen los kwh de ese periodo de tiempo.
-        kwh_lecturas = ElectricDataTemp.objects.filter(
-        profile_powermeter=profile_powermeter,medition_date__gte=s_date,
-        medition_date__lt=e_date).order_by('medition_date')
-        total_lecturas = len(kwh_lecturas)
-
-        if kwh_lecturas:
-            #print "Profile",
-            # kwh_lecturas[0].profile_powermeter_id
-            #print "Primer Lectura",
-            # kwh_lecturas[0].id, "-", kwh_lecturas[0].medition_date
-            #print "Ultima Lectura", kwh_lecturas[total_lecturas - 1].id,
-            # "-", kwh_lecturas[total_lecturas - 1].medition_date
-            kwh_inicial = kwh_lecturas[0].TotalkWhIMPORT
-            kwh_final = kwh_lecturas[total_lecturas - 1].TotalkWhIMPORT
-
-            kwh_netos += int(ceil(kwh_final - kwh_inicial))
-
-    importe = kwh_netos * tarifa_kwh
-    costo_energia = importe + tarifa_mes
-    iva = costo_energia * Decimal(str(.16))
-    total = costo_energia + iva
-
-    diccionario_final_cfe['periodo'] = periodo
-    diccionario_final_cfe['kwh_totales'] = kwh_netos
-    diccionario_final_cfe['tarifa_kwh'] = tarifa_kwh
-    diccionario_final_cfe['tarifa_mes'] = tarifa_mes
-    diccionario_final_cfe['importe'] = importe
-    diccionario_final_cfe['costo_energia'] = float(costo_energia)
-    diccionario_final_cfe['iva'] = float(iva)
-    diccionario_final_cfe['total'] = float(total)
-
-    return diccionario_final_cfe
-
 
 # noinspection PyArgumentList
 def tarifaDAC_2(building, s_date, e_date, month, year):
@@ -2532,3 +2492,174 @@ def asign_electric_data_to_pw(serials):
             e.save()
 
     return "done"
+
+
+def c_functions_get_consumer_unit_electrical_parameter_data_clustered(
+        consumer_unit,
+        datetime_from,
+        datetime_to,
+        electrical_parameter_name,
+        granularity_seconds=None
+):
+    """
+        Description:
+            To-Do
+
+        Arguments:
+            consumer_unit - A Consumer Unit object.
+
+            datetime_from - A Datetime object.
+
+            datetime_to - A Datetime object.
+
+            electrical_parameter - A String that represents the name of the
+                electrical parameter.
+
+            granularity_seconds - An Integer that represents the number of
+                seconds between the points to be retrieved.
+
+        Return:
+            A list of dictionaries.
+    """
+    #
+    # Localize datetimes (if neccesary) and convert to UTC
+    #
+    timezone_current = timezone.get_current_timezone()
+    datetime_from_local = datetime_from
+    if datetime_from_local.tzinfo is None:
+        datetime_from_local = timezone_current.localize(datetime_from)
+
+    datetime_from_utc =\
+    datetime_from_local.astimezone(timezone.utc)
+
+    datetime_to_local = datetime_to
+    if datetime_to_local.tzinfo is None:
+        datetime_to_local = timezone_current.localize(datetime_to)
+
+    datetime_to_utc = datetime_to_local.astimezone(timezone.utc)
+
+    # Get the Electrical Parameter
+    #
+    electrical_parameter =\
+    get_electrical_parameter(
+        electrical_parameter_name=electrical_parameter_name)
+
+    if electrical_parameter is None:
+        return None
+
+    #
+    # Get the Instants between the from and to datetime according to the Instant
+    # Delta and create a dictionary with them.
+    #
+    instant_delta =\
+    get_instant_delta(
+        delta_seconds=granularity_seconds)
+
+
+    if instant_delta is None:
+        return None
+
+    instants =\
+    get_instants_list(
+        datetime_from_utc,
+        datetime_to_utc,
+        instant_delta)
+
+    instants_dictionary = dict()
+    instant_dictionary_generic_value = {
+        'certainty' : True,
+        'value' :None
+    }
+
+    for instant in instants:
+        key_current = instant.instant_datetime.strftime(
+            "%Y/%m/%d-%H:%M:%S")
+        instants_dictionary[key_current] =\
+        instant_dictionary_generic_value.copy()
+
+    #
+    # Get the dependent Consumer Units List and retrieve their data.
+    #
+    consumer_units_list = get_consumer_units(consumer_unit)
+
+    for consumer_unit_item in consumer_units_list:
+        #
+        # Get a Consumer Unit Profile (from the app Data Warehouse Extended)
+        #
+        consumer_unit_profile =\
+        get_consumer_unit_profile(
+            consumer_unit_item.pk)
+
+        if consumer_unit_profile is None:
+            return None
+
+        consumer_unit_data_list =\
+        get_consumer_unit_electrical_parameter_data_list(
+            consumer_unit_profile,
+            datetime_from_utc,
+            datetime_to_utc,
+            electrical_parameter,
+            instant_delta)
+
+        #
+        # Update the information in the Instants dictionary
+        #
+        for consumer_unit_data in consumer_unit_data_list:
+            instant_key_current =\
+            consumer_unit_data.instant.instant_datetime.strftime(
+                "%Y/%m/%d-%H:%M:%S")
+
+            try:
+                instant_dictionary_current =\
+                instants_dictionary[instant_key_current]
+
+            except KeyError:
+                instant_dictionary_current = instant_dictionary_generic_value
+
+            certainty_current = instant_dictionary_current['certainty']
+            certainty_current =\
+            certainty_current and consumer_unit_data.value is not None
+
+            instant_dictionary_current['certainty'] = certainty_current
+
+            if certainty_current:
+                value_current = instant_dictionary_current['value']
+                if value_current is None:
+                    value_current = consumer_unit_data.value
+
+                else:
+                    value_current += consumer_unit_data.value
+
+                instant_dictionary_current['value'] = value_current
+
+            instants_dictionary[instant_key_current] =\
+            instant_dictionary_current.copy()
+
+    #
+    # Build the list of dictionaries that is to be retrieved.
+    #
+    consumer_units_data_dictionaries_list = []
+    for instant in instants:
+        key_current = instant.instant_datetime.strftime(
+            "%Y/%m/%d-%H:%M:%S")
+
+        try:
+            instant_dictionary_current = instants_dictionary[key_current]
+
+        except KeyError:
+            instant_dictionary_current = instant_dictionary_generic_value
+
+        data_dictionary_current = instant_dictionary_current
+
+        datetime_localtime_timetuple =\
+        timezone.localtime(
+            instant.instant_datetime
+        ).timetuple()
+
+        data_dictionary_current['datetime'] =\
+        int(time.mktime(datetime_localtime_timetuple))
+
+        consumer_units_data_dictionaries_list.append(
+            data_dictionary_current.copy())
+
+    return consumer_units_data_dictionaries_list

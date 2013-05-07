@@ -1,7 +1,7 @@
 .iframe_container{
     background: #fff !important;
     display: block;
-    height: 110%;
+    height: 100%;
 }
 #titulo_reporte{
     height: 22px;
@@ -253,6 +253,7 @@ h4{
 #cfe_container{
     width: 100%;
     overflow: auto;
+    height: 750px;
 }
 
 iframe{

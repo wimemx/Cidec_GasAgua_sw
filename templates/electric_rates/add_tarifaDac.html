@@ -10,10 +10,14 @@
 {% block externaljs %}
 <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
 <script type="text/javascript" src="/static/js/external/monthpicker.js"></script>
+<script type="text/javascript" src="/static/js/external/autoNumeric-1.7.4.js"></script>
 <script type="text/javascript">
     var form_valid = true;
     var send_form = 0;
     $(document).ready(function(){
+
+        $('#monthly_rate').autoNumeric({asep:',', vMin: "000.00", vMax: "999.99"});
+        $('#kwh_rate').autoNumeric({asep:',', vMin: "00.0000", vMax: "99.999"});
 
         $(".required").each(function(){
             var _span;

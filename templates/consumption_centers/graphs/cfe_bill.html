@@ -110,12 +110,16 @@
         <span class="l">IVA 16%</span>
         <span class="r">${{ resultados.iva|floatformat:2 }}</span>
         <span class="l">Total</span>
-        <span class="r total">${{ resultados.total|floatformat:2 }}</span>
+        <span class="r total">$ {{ resultados.total|floatformat:2 }}</span>
     </div>
     {% elif tipo_tarifa.pk == 2 %}
     <div id="sumary">
         <span class="l l_period">Periodo</span>
-        <span class="r r_period">{{ resultados.periodo }}</span>
+        <span class="r r_period">{{ resultados.periodo }}
+            {% if control %}
+                <a target="_parent" class="username" href="/buildings/establecer_fecha/{{ control }}">Cambiar</a>
+            {% endif %}
+        </span>
         <span class="l">Energ&iacute;a</span>
         <span class="r">${{ resultados.costo_energia|floatformat:2 }}</span>
         <span class="l">IVA 16%</span>
@@ -126,7 +130,11 @@
     {% elif tipo_tarifa.pk == 3 %}
     <div id="sumary">
         <span class="l l_period">Periodo</span>
-        <span class="r r_period">{{ resultados.periodo }}</span>
+        <span class="r r_period">{{ resultados.periodo }}
+            {% if control %}
+                <a target="_parent" class="username" href="/buildings/establecer_fecha/{{ control }}">Cambiar</a>
+            {% endif %}
+        </span>
         <span class="l">Energ&iacute;a</span>
         <span class="r">${{ resultados.costo_energia|floatformat:2 }}</span>
         <span class="l">Demanda M&aacute;xima</span>
@@ -138,7 +146,7 @@
         <span class="l">IVA 16%</span>
         <span class="r">${{ resultados.iva|floatformat:2 }}</span>
         <span class="l">Total</span>
-        <span class="r total">${{ resultados.total|floatformat:2 }}</span>
+        <span class="r total">$addCommas({{ resultados.total|floatformat:2 }})</span>
     </div>
     {% endif %}
 

@@ -7749,21 +7749,30 @@ def obtenerHistorico_r(actual_month_arr):
                 dict_periodo["kvarh"] = actual_month_arr['kvarh_totales']
                 dict_periodo["factor_potencia"] = actual_month_arr['factor_potencia']
                 dict_periodo["factor_carga"] = actual_month_arr['factor_carga']
-                dict_periodo["costo_promedio"] = actual_month_arr['subtotal'
+                if actual_month_arr['kwh_totales']:
+                    dict_periodo["costo_promedio"] = actual_month_arr['subtotal'
                                                  ] / actual_month_arr['kwh_totales']
+                else:
+                    dict_periodo["costo_promedio"] = 0
 
             elif building.electric_rate_id == 2:
                 dict_periodo["total_kwh"] = actual_month_arr['kwh_totales']
-                dict_periodo["costo_promedio"] = actual_month_arr['costo_energia'
+                if actual_month_arr['kwh_totales']:
+                    dict_periodo["costo_promedio"] = actual_month_arr['costo_energia'
                                                  ]/actual_month_arr['kwh_totales']
+                else:
+                    dict_periodo["costo_promedio"] = 0
 
             elif building.electric_rate_id == 3:
                 dict_periodo["demanda_maxima"] = actual_month_arr['kw_totales']
                 dict_periodo["total_kwh"] = actual_month_arr['kwh_totales']
                 dict_periodo["factor_potencia"] = actual_month_arr['factor_potencia']
                 dict_periodo["factor_carga"] = actual_month_arr['factor_carga']
-                dict_periodo["costo_promedio"] = actual_month_arr['subtotal'
+                if actual_month_arr['kwh_totales']:
+                    dict_periodo["costo_promedio"] = actual_month_arr['subtotal'
                                                  ]/actual_month_arr['kwh_totales']
+                else:
+                    dict_periodo["costo_promedio"] = 0
 
             arr_historico.append(dict_periodo)
 
