@@ -509,18 +509,20 @@ def mostrar_suscripcion_alarma(request, id_alarm):
 
 @login_required(login_url='/')
 def alarm_suscription_list(request):
+    datacontext = get_buildings_context(request.user)[0]
+    template_vars = {}
+
+    if datacontext:
+        template_vars["datacontext"] = datacontext
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars["empresa"] = request.session['main_building']
+        template_vars["company"] = request.session['company']
+
     permission = "Ver suscripciones a alarmas"
     if has_permission(request.user, VIEW,
                       permission) or \
             request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)[0]
-        template_vars = {}
-        if datacontext:
-            template_vars["datacontext"] = datacontext
 
-        template_vars["sidebar"] = request.session['sidebar']
-        template_vars["empresa"] = request.session['main_building']
-        template_vars["company"] = request.session['company']
 
         order_user = 'asc'
         order_name = 'asc'
@@ -630,11 +632,12 @@ def alarm_suscription_list(request):
         if 'msj' in request.GET:
             template_vars['message'] = request.GET['msj']
             template_vars['msg_type'] = request.GET['ntype']
-        template_vars_template = RequestContext(request, template_vars)
+            template_vars_template = RequestContext(request, template_vars)
 
-        return render_to_response(
-            "alarms/alarm_suscription_list.html",
-            template_vars_template)
+    template_vars_template = RequestContext(request, template_vars)
+    return render_to_response(
+      "alarms/alarm_suscription_list.html",
+      template_vars_template)
 
 
 
