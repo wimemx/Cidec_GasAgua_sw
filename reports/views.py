@@ -1415,21 +1415,22 @@ def render_report_powerprofile_by_month(
         param = column_strings[cont]
 
         cont += 1
-        week_counter = 0
-        month_array = []
-        week_array = []
+        month_array = [[], [], [], [], [], []]
         for day in day_data:
             medition_date = datetime.datetime.fromtimestamp(day["datetime"])
-            if weeks[week_counter][0] <= medition_date < weeks[week_counter][1] \
-                    and week_counter < len(weeks):
-                if param == "PF" and abs(day['value']) > 1:
-                    day['value'] = 1
-                week_array.append(abs(float(day['value'])))
-            else:
-                if week_array:
-                    month_array.append(get_data_statistics(week_array))
-                week_counter += 1
-                week_array = []
+            for i in range(0, len(weeks)):
+                if weeks[i][0] <= medition_date < weeks[i][1]:
+                    if param == "PF" and abs(day['value']) > 1:
+                        day['value'] = 1
+                    month_array[i].append(abs(float(day['value'])))
+                    break
+                else:
+                    continue
+        for i in range(0, len(month_array)):
+
+            if month_array[i]:
+                month_array[i] = get_data_statistics(month_array[i])
+
         statistics.append(dict(param=param, month_data=month_array))
 
     template_variables['max'] = maximum

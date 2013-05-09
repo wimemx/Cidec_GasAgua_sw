@@ -29,7 +29,7 @@
             var base_url = src.split("?")[0];
             c_param = construct_params(params, mes, anio);
 
-            var url = buildUrl(src.split("?")[0], c_param);
+            var url = buildUrl(base_url, c_param);
 
             makeIframe(url);
 
@@ -69,11 +69,17 @@
         }
         function construct_params(params, mes, anio){
             var params_ = [];
-            for(var ncu=1; ncu<=number_params; ncu++){
-                params_['consumer-unit-id']={{ consumer_unit.pk }};
-                params_['month'] = mes;
-                params_['year'] = anio;
-                params_['electrical-parameter-name'] = params[ncu-1];
+            params_['consumer-unit-id']={{ consumer_unit.pk }};
+            params_['month'] = mes;
+            params_['year'] = anio;
+            for(var ncu=1; ncu<=params.length; ncu++){
+                var num;
+                if(ncu < 10){
+                    num = "0" + String(ncu);
+                }else{
+                    num = String(ncu);
+                }
+                params_['electrical-parameter-name'+num] = params[ncu-1];
             }
             return params_;
         }

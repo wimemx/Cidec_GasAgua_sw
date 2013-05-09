@@ -17,7 +17,6 @@ import data_warehouse_extended.globals
 import data_warehouse_extended.models
 
 # CCenter imports
-import c_center.c_center_functions
 import c_center.models
 
 logger = logging.getLogger("data_warehouse")
