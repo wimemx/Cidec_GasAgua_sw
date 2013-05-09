@@ -944,17 +944,21 @@ def get_latest_notifs(request):
             cons_unit += " en "
             cons_unit += notif.alarm_event.alarm.consumer_unit\
                 .electric_device_type.electric_device_type_name
+            val_min = notif.alarm_event.alarm.min_value
+            min_r = float(val_min) if val_min else ""
+            val_max = notif.alarm_event.alarm.max_value
+            max_r = float(val_max) if val_max else ""
             arr_notif.append(dict(
-                ttime=str(t_time),
-                readed=notif.read,
-                param=notif.alarm_event.alarm.electric_parameter.name,
-                units=notif.alarm_event.alarm.electric_parameter.param_units,
-                n_value=float(notif.alarm_event.value),
-                min_r=float(notif.alarm_event.alarm.min_value),
-                max_r=float(notif.alarm_event.alarm.max_value),
-                time=time_,
-                image=image,
-                consumer_unit=cons_unit
+               ttime=str(t_time),
+               readed=notif.read,
+               param=notif.alarm_event.alarm.electric_parameter.name,
+               units=notif.alarm_event.alarm.electric_parameter.param_units,
+               n_value=float(notif.alarm_event.value),
+               min_r=min_r,
+               max_r=max_r,
+               time=time_,
+               image=image,
+               consumer_unit=cons_unit
             ))
         return HttpResponse(content=json.dumps(arr_notif),
                             mimetype="application/json")
