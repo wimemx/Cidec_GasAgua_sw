@@ -33,6 +33,7 @@ from django_tables2 import RequestConfig
 
 from cidec_sw import settings
 from c_center.calculations import *
+from alarms.models import Alarms, AlarmEvents, ElectricParameters
 from c_center.models import *
 from location.models import *
 from electric_rates.models import ElectricRatesDetail, DACElectricRateDetail, \
@@ -810,9 +811,9 @@ def grafica_datoscsv(request):
                 datetime_start = get_default_datetime_start()
                 datetime_end = get_default_datetime_end() + datetime.timedelta(
                     days=1)
-            print "consumer_unit_counter" + str(consumer_unit_counter)
-            print "datetime_start", datetime_start
-            print "datetime_end", datetime_end
+            #print "consumer_unit_counter" + str(consumer_unit_counter)
+            #print "datetime_start", datetime_start
+            #print "datetime_end", datetime_end
             try:
                 consumer_unit = get_data_warehouse_consumer_unit_by_id(
                     consumer_unit_id)
@@ -7161,7 +7162,7 @@ def add_hierarchy_node(request):
         parent_cu = get_object_or_404(ConsumerUnit, pk=int(request.POST['pp']))
         parent_part = parent_cu.part_of_building
 
-        pp = True if request.POST['pp'] == "1" else False
+        pp = True if request.POST['pw'] == "1" else False
 
         if request.POST['pl'] != '':
             cu_leaf = get_object_or_404(ConsumerUnit,
@@ -7202,6 +7203,13 @@ def reset_hierarchy(request):
                 parts.append(cu.part_of_building.pk)
             else:
                 consumer_u.append(cu.pk)
+
+            param = ElectricParameters.objects.all()[0]
+            alarm_cu = Alarms.objects.get_or_create(
+                alarm_identifier="Interrupción de Datos",
+                electric_parameter=param,
+                consumer_unit=cu)
+
         h = HierarchyOfPart.objects.filter(
             Q(part_of_building_composite__pk__in=parts) |
             Q(part_of_building_leaf__pk__in=parts) |

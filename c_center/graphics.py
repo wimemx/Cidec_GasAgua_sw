@@ -133,33 +133,6 @@ def get_consumer_unit_electric_data_raw(
             else:
                 #print "data"
                 cont += 1
-
-            """
-            if adj_time > delta_m:
-                electric_data_raw.append(
-                    dict(datetime=int(time.mktime(
-                             django.utils.timezone.localtime(medition_date).timetuple())),
-                         value=abs(electric_data),
-                         certainty=True))
-            else:
-                electric_data = electric_data_value[electric_data_name]
-                medition_date = electric_data_value['medition_date']
-                electric_data_raw.append(
-                    dict(datetime=int(time.mktime(
-                             django.utils.timezone.localtime(medition_date).timetuple())),
-                         value=abs(electric_data),
-                         certainty=True))
-            """
-        """
-        for electric_data_value in electric_data_values:
-            electric_data = electric_data_value[electric_data_name]
-            medition_date = electric_data_value['medition_date']
-            electric_data_raw.append(
-                dict(datetime=int(time.mktime(
-                         django.utils.timezone.localtime(medition_date).timetuple())),
-                     value=abs(electric_data),
-                     certainty=True))
-        """
     return electric_data_raw
 
 

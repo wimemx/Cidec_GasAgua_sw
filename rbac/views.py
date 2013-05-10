@@ -917,14 +917,16 @@ def view_users(request):
             else:
                 order = "-is_active"
                 order_status = "asc"
+        user_profs = UserProfile.objects.all()
+        prof_pks = [u.user.pk for u in user_profs]
         if search:
-            lista = User.objects.filter(
+            lista = User.objects.filter(pk__in=prof_pks).filter(
                 Q(username__icontains=request.GET['search']) |
                 Q(first_name__icontains=request.GET['search']) |
                 Q(last_name__icontains=request.GET['search']) |
                 Q(email__icontains=request.GET['search'])).order_by(order)
         else:
-            lista = User.objects.all().order_by(order)
+            lista = User.objects.filter(pk__in=prof_pks).order_by(order)
         # muestra 10 resultados por pagina
         paginator = Paginator(lista, 10)
         template_vars = dict(sidebar=request.session['sidebar'],
