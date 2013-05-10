@@ -103,14 +103,21 @@
                         not_.remove();
                     }
 
-                    var dialog = "<div id='notif_container' class='hidden'><div class='globe_tip'></div><div id='recent_notifs'><span id='al_list_title'>Alarmas</span><ul id='notificaciones'>" + lis + "</ul></div>"+read_all+"</div>";
+                    var dialog = "<div id='notif_container' class='hidden'><div class='globe_tip'></div><span id='al_list_title'>Alarmas</span><div id='recent_notifs'><ul id='notificaciones'>" + lis + "</ul></div>"+read_all+"</div>";
                     alarms_list.append(dialog);
                 }
             });
         }
         $(document).ready(function(){
             $("#main_menu").find(".alarmas").live("click", function(){
-               $("#main_menu").find(".alarmas").find("#notif_container").slideToggle();
+               if ($("#notif_container").is(":visible"))
+               {
+                   $("#main_menu").find(".alarmas").find("#notif_container").animate({height:0},200,function(){$("#notif_container").hide()});
+               }else
+               {
+                   $("#main_menu").find(".alarmas").find("#notif_container").show().animate({height:340},200);
+               }
+
             });
             $.ajax({
                 url: "/configuracion/get_unread_notifs_count/",
