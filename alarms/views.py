@@ -13,7 +13,6 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.template.context import RequestContext
 from django.shortcuts import render_to_response, get_object_or_404
 from django.db.models import Q
-from django.db.models.aggregates import Count
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.contrib.auth.decorators import login_required
@@ -510,19 +509,18 @@ def mostrar_suscripcion_alarma(request, id_alarm):
 
 @login_required(login_url='/')
 def alarm_suscription_list(request):
-    datacontext = get_buildings_context(request.user)[0]
-    template_vars = {}
-
-    if datacontext:
-        template_vars["datacontext"] = datacontext
-        template_vars["sidebar"] = request.session['sidebar']
-        template_vars["empresa"] = request.session['main_building']
-        template_vars["company"] = request.session['company']
-
     permission = "Ver suscripciones a alarmas"
     if has_permission(request.user, VIEW,
                       permission) or \
             request.user.is_superuser:
+        datacontext = get_buildings_context(request.user)[0]
+        template_vars = {}
+        if datacontext:
+            template_vars["datacontext"] = datacontext
+
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars["empresa"] = request.session['main_building']
+        template_vars["company"] = request.session['company']
 
         order_user = 'asc'
         order_name = 'asc'
@@ -632,11 +630,11 @@ def alarm_suscription_list(request):
         if 'msj' in request.GET:
             template_vars['message'] = request.GET['msj']
             template_vars['msg_type'] = request.GET['ntype']
-            
-    template_vars_template = RequestContext(request, template_vars)
+        template_vars_template = RequestContext(request, template_vars)
+
     return render_to_response(
-      "alarms/alarm_suscription_list.html",
-      template_vars_template)
+            "alarms/alarm_suscription_list.html",
+            template_vars_template)
 
 
 
@@ -892,11 +890,9 @@ def get_unread_notifs_count(request):
                       VIEW,
                       "Ver suscripciones a alarmas") or \
             request.user.is_superuser:
-        n_count = UserNotifications.objects.filter(
-            user=request.user, read=False
-        ).values("alarm_event").annotate(
-            Count("alarm_event"))
-        data = str(len(n_count))
+        n_count = UserNotifications.objects.filter(user=request.user,
+                                                   read=False).count()
+        data = str(n_count)
     else:
         data = "false"
 
@@ -909,21 +905,9 @@ def get_latest_notifs(request):
                       VIEW,
                       "Ver suscripciones a alarmas") or \
             request.user.is_superuser:
-        #a que alarmas está suscrito el usuario (alarmas distintas)
-        usersettings = UserNotificationSettings.objects.filter(
-            user=request.user, alarm__status=True
-        ).values(
-            "alarm__pk").annotate(Count("alarm"))
-        arr_alarms = [al['alarm__pk'] for al in usersettings]
-
-        #Las notificaciones sin leer
-        notifs = UserNotifications.objects.filter(
-            user=request.user, alarm_event__alarm__pk__in=arr_alarms,
-            read=False
-        ).exclude(
-            alarm_event__alarm__status=False).order_by(
-                "-alarm_event__triggered_time")
-
+        notifs = UserNotifications.objects.all().exclude(
+                alarm_event__alarm__status=False
+            ).order_by("-alarm_event__triggered_time")[0:5]
         arr_notif = []
         tz = timezone.get_current_timezone()
         ahora = datetime.datetime.now(tz)
@@ -957,18 +941,14 @@ def get_latest_notifs(request):
             cons_unit += " en "
             cons_unit += notif.alarm_event.alarm.consumer_unit\
                 .electric_device_type.electric_device_type_name
-            val_min = notif.alarm_event.alarm.min_value
-            min_r = float(val_min) if val_min else ""
-            val_max = notif.alarm_event.alarm.max_value
-            max_r = float(val_max) if val_max else ""
             arr_notif.append(dict(
                 ttime=str(t_time),
                 readed=notif.read,
                 param=notif.alarm_event.alarm.electric_parameter.name,
                 units=notif.alarm_event.alarm.electric_parameter.param_units,
                 n_value=float(notif.alarm_event.value),
-                min_r=min_r,
-                max_r=max_r,
+                min_r=float(notif.alarm_event.alarm.min_value),
+                max_r=float(notif.alarm_event.alarm.max_value),
                 time=time_,
                 image=image,
                 consumer_unit=cons_unit
