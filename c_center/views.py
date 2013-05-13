@@ -6071,6 +6071,7 @@ def add_ie(request):
     if has_permission(request.user, CREATE,
                       permission) or \
             request.user.is_superuser:
+
         buildings = get_all_buildings_for_operation(
             permission, CREATE, request.user)
         template_vars['buildings'] = buildings
@@ -6212,13 +6213,16 @@ def edit_ie(request, id_ie):
                                      ie_server=industrial_eq.server,
                                      ie_building = industrial_eq.building.pk)
 
-        template_vars_template = RequestContext(request, template_vars)
-        return render_to_response(
-            "consumption_centers/consumer_units/ind_eq.html",
-            template_vars_template)
+
     else:
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
+
+    template_vars_template = RequestContext(request, template_vars)
+
+    return render_to_response(
+            "consumption_centers/consumer_units/ind_eq.html",
+            template_vars_template)
 
 
 @login_required(login_url='/')
@@ -6505,18 +6509,33 @@ def asign_pm(request, id_ie):
             "Asignación de medidores eléctricos a equipos industriales") and not
     request.user.is_superuser)) and "pm" in request.GET:
         ie = get_object_or_404(IndustrialEquipment, pk=int(id_ie))
-        pm = get_object_or_404(Powermeter, pk=int(request.GET['pm']))
-        pm_ie = PowermeterForIndustrialEquipment(powermeter=pm,
+
+        permission="Asignación de medidores eléctricos a equipos industriales"
+        buildings = get_all_buildings_for_operation(permission, CREATE, request.user)
+
+        for buil in buildings:
+            if buil == ie.building:
+                valid = True
+                pm = get_object_or_404(Powermeter, pk=int(request.GET['pm']))
+                pm_ie = PowermeterForIndustrialEquipment(powermeter=pm,
                                                  industrial_equipment=ie)
-        pm_ie.save()
-        pm_data = dict(pm=pm.pk,
+                pm_ie.save()
+                pm_data = dict(pm=pm.pk,
                        alias=pm.powermeter_anotation,
                        modelo=pm.powermeter_model.powermeter_model,
                        marca=pm.powermeter_model.powermeter_brand,
                        serie=pm.powermeter_serial,
                        status=pm.status)
-        data = simplejson.dumps([pm_data])
-        return HttpResponse(content=data, content_type="application/json")
+                data = simplejson.dumps([pm_data])
+                return HttpResponse(content=data, content_type="application/json")
+                break
+            else:
+               valid = False
+
+        if valid == False:
+            mensaje = "No tiene permisos sobre este edificio"
+            data = simplejson.dumps(mensaje)
+            return HttpResponse(content=data, content_type="application/json")
     else:
         raise Http404
 

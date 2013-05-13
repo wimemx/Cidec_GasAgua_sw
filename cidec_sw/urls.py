@@ -12,6 +12,7 @@ urlpatterns = patterns('',
     # Examples:
     url(r'^$', 'cidec_sw.views._login', name='home'),
     url(r'^logout/$', 'cidec_sw.views.logout_page'),
+    url(r'^forgot_password/','rbac.views.forgot_password'),
     url(r'^main/', 'cidec_sw.views.index'),
     url(r'^parse/', 'cidec_sw.views.parse_csv'),
     url(r'^reportes/', include(c_center_urls)),
