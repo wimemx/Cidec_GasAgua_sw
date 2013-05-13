@@ -894,8 +894,9 @@ def get_unread_notifs_count(request):
             request.user.is_superuser:
         n_count = UserNotifications.objects.filter(
             user=request.user, read=False
-        ).values("alarm_event").annotate(
-            Count("alarm_event"))
+        ).values("notification_group").annotate(
+            Count("notification_group"))
+
         data = str(len(n_count))
     else:
         data = "false"
@@ -909,16 +910,9 @@ def get_latest_notifs(request):
                       VIEW,
                       "Ver suscripciones a alarmas") or \
             request.user.is_superuser:
-        #a que alarmas está suscrito el usuario (alarmas distintas)
-        usersettings = UserNotificationSettings.objects.filter(
-            user=request.user, alarm__status=True
-        ).values(
-            "alarm__pk").annotate(Count("alarm"))
-        arr_alarms = [al['alarm__pk'] for al in usersettings]
-
         #Las notificaciones sin leer
         notifs = UserNotifications.objects.filter(
-            user=request.user, alarm_event__alarm__pk__in=arr_alarms,
+            user=request.user,
             read=False
         ).exclude(
             alarm_event__alarm__status=False).order_by(
