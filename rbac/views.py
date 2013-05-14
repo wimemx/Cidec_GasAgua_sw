@@ -1488,7 +1488,6 @@ def forgot_password(request):
             if correo_existente:
                 usuario= django.contrib.auth.models.User.objects.get(email=mail)
                 password = random_string_generator(8)
-                print password
                 id= usuario.id
                 usuario.set_password(password)
                 usuario.save()

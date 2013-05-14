@@ -838,8 +838,26 @@ def user_notifications(request):
 
         if "todas" in request.GET and "notificacionesPorGrupo" in request.GET:
             notifs = UserNotifications.objects.filter(Q(read=False)).order_by("notification_group")
-            print "----------------=================================!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-            print notifs
+
+            if has_permission(request.user,
+                      VIEW,
+                      "Ver suscripciones a alarmas") or \
+            request.user.is_superuser:
+                n_count = UserNotifications.objects.filter(Q(
+                user=request.user, read=False
+                )).values("notification_group").annotate(
+                Count("notification_group"))
+                template_vars['ncount']= n_count
+
+                for item in n_count:
+                    print item['notification_group']
+
+
+
+
+
+
+
         elif "todas" in request.GET:
             notifs = UserNotifications.objects.all().exclude(
                 alarm_event__alarm__status=False
@@ -859,7 +877,7 @@ def user_notifications(request):
                     Q(alarm_event__value__range=(rangeNotification[0], rangeNotification[1])),
                     Q(alarm_event__alarm__consumer_unit__building__pk=buildings)).order_by("-alarm_event__triggered_time")
 
-                print notifs
+
 
         else:
             notifs = UserNotifications.objects.filter(
@@ -905,6 +923,7 @@ def user_notifications(request):
         template_vars['notifications'] = arr_day_notif
         template_vars['today_str'] = today_str
         template_vars['super_user']= request.user.is_superuser
+
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("alarms/notification_list.html",
