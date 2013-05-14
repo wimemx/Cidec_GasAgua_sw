@@ -1,14 +1,16 @@
 {% extends "base.html" %}
-{% block titulo %}Ver Alarmas{% endblock %}
+{% block titulo %}Ver Notificaciones de Alarmas{% endblock %}
 {% block externalcss %}
     <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
     <link rel="stylesheet" href="/static/css/forms/rbac_general.css" type="text/css" />
     <link rel="stylesheet" href="/static/css/forms/rbac_user_list.css" type="text/css" />
     <link rel="stylesheet" href="/static/css/alarms/notification_list_full.css" type="text/css" />
     <link rel="stylesheet" href="/static/js/external/fancybox/jquery.fancybox.css" type="text/css" />
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
 {% endblock %}
 {% block externaljs %}
     <script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
+    <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
     <script type="text/javascript">
 
     </script>
@@ -25,6 +27,26 @@
         openEffect	: 'none',
         closeEffect	: 'none'
     });
+
+    $( "#slider-range" ).slider({
+      range: true,
+      min: 0,
+      max: 400,
+      values: [ 0, 100 ],
+      slide: function( event, ui ) {
+        $( "#amount" ).val(ui.values[ 0 ] + "-" + ui.values[ 1 ] );
+      }
+    });
+
+    $( "#amount" ).val($( "#slider-range" ).slider( "values", 0 ) +
+      "-" + $( "#slider-range" ).slider( "values", 1 ) );
+
+
+    $("#moreResultsNotificacions").click(function(e){
+        e.preventDefault();
+        $("#notificationFilter").slideToggle();
+    })
+
 {% endblock %}
 
 {% block contenido %}
@@ -40,8 +62,47 @@
     </div>
     <div id="page_content">
         <div id="contenido_interno">
-            <h2 id="titulo"><span>Alarmas Recientes</span> <!-- - {{ building.building_name }}</span> - {{ request.session.consumer_unit.electric_device_type.electric_device_type_name }}</h2><a class="various" data-fancybox-type="iframe" href="/reportes/set_consumer_unit/">Cambiar</a>-->
+            <h2 id="titulo"><span>Alarmas Recientes</span> <br>
+                {% if super_user %}
+                    <label for="mostrar">Mostrar todas las notificaciones </label>
+                    {% if all %}
+                        <a href="./" class="switch active_switch" id="showAllNotifications"></a>
+                    {% else %}
+                        <a href="./?todas=1" class="switch inactive_switch" id="showAllNotifications"></a>
+                    {% endif %}
+
+                {% endif %}
             </h2>
+            <a href="#" id="moreResultsNotificacions">Busqueda avanzada</a>
+            <form action="#" method="get" id="notificationFilter">
+                <p>
+                    <label for="parameterType">Parametro Electrico</label>
+                    <select name="parameterType" id="parameterType">
+                        <option value="0">Selecciona un parametro</option>
+                        {% for item in electricParameters %}
+                            <option value="{{ item.id }}">{{ item.name }}</option>
+                        {% endfor %}
+                    </select>
+                </p>
+                <div class="divSplit">
+                    <label for="rangeNotification" id="rengeNotification">Rango:</label><div id="slider-range"></div>
+                    <input name="rangeNotification" type="text" id="amount" style="margin-left:40px;" />
+                </div>
+                <p>
+                   <label for="buildingNotification">Edificio:</label>
+                    <select name="buildings" id="buildings">
+                        <option value="0">Selecciona un edificio</option>
+                        {% for item in buildings %}
+                            <option value="{{ item.id }}">{{ item.building_name }}</option>
+                        {% endfor %}
+                    </select>
+                </p>
+                 <div class="buttons g12">
+                    <button class="aqua_btn" id="save">
+                        Filtrar
+                    </button>
+                </div>
+            </form>
                 {% for key, value in notifications.items|sortKeys:"reverse" %}
                     <div class="vacio"></div>
                     <div class="notif_days">
@@ -70,11 +131,7 @@
                     </div>
 
                 {% endfor %}
-            {% if all %}
-                <a class="various" href="/configuracion/user_notifications/">&Uacute;ltima Semana</a>
-            {% else %}
-                <a class="various" href="?todas=1">Ver Todas</a>
-            {% endif %}
+
         </div>
     </div>
 {% endblock %}

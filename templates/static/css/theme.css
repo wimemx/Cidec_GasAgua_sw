@@ -757,7 +757,7 @@ a.aqua_btn:hover, a.grey_btn:hover{
     background: transparent !important;
 }
 #notificaciones li:first-child{
-    padding-top: 40px !important;
+    margin-top: 47px !important;
 }
 #notificaciones li:hover{
     background: url("images/bgs/blue_notif_bg.png") !important;
