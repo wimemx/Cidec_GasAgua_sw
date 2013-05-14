@@ -915,57 +915,44 @@ def get_latest_notifs(request):
             user=request.user,
             read=False
         ).exclude(
-            alarm_event__alarm__status=False).order_by(
-                "-alarm_event__triggered_time")
+            alarm_event__alarm__status=False
+        ).values(
+            "notification_group",
+            "alarm_event__alarm__electric_parameter__name",
+            "alarm_event__alarm__max_value",
+            "alarm_event__alarm__min_value",
+            "alarm_event__alarm__alarm_identifier",
+            "alarm_event__alarm__consumer_unit__building__building_name",
+            "alarm_event__alarm__consumer_unit__"
+            "electric_device_type__electric_device_type_name",
+            "alarm_event__alarm__electric_parameter__param_units"
+        ).annotate(Count("notification_group")).order_by(
+            "-alarm_event__triggered_time")
 
         arr_notif = []
-        tz = timezone.get_current_timezone()
-        ahora = datetime.datetime.now(tz)
 
         for notif in notifs:
-            t_time = notif.alarm_event.triggered_time.astimezone(tz)
-            diff = ahora - t_time
-            difference = str(diff)
-            #1 day, 18:01:54.334553
-            differen = difference.split(",")
-            time_ = ''
-            if len(differen) > 1:
-                differen[0] = differen[0].replace("day", "día")
-
-                #['1 day', '18:01:54.334553']
-                time_ = "Hace " + differen[0]
-            else:
-                #['18:01:54.334553']
-                hours = differen[0].split(":")
-                if int(hours[0]):
-                    time_ = "hace " + hours[0] + " horas"
-                elif int(hours[1]):
-                    time_ = "hace " + hours[1] + " minutos"
-                else:
-                    time_ = "hace " + hours[2] + " segundos"
-            comp = CompanyBuilding.objects.get(
-                building=notif.alarm_event.alarm.consumer_unit.building)
-            image = comp.company.company_logo.name
-            cons_unit = \
-                notif.alarm_event.alarm.consumer_unit.building.building_name
-            cons_unit += " en "
-            cons_unit += notif.alarm_event.alarm.consumer_unit\
-                .electric_device_type.electric_device_type_name
-            val_min = notif.alarm_event.alarm.min_value
-            min_r = float(val_min) if val_min else ""
-            val_max = notif.alarm_event.alarm.max_value
-            max_r = float(val_max) if val_max else ""
-            arr_notif.append(dict(
-                ttime=str(t_time),
-                readed=notif.read,
-                param=notif.alarm_event.alarm.electric_parameter.name,
-                units=notif.alarm_event.alarm.electric_parameter.param_units,
-                n_value=float(notif.alarm_event.value),
-                min_r=min_r,
-                max_r=max_r,
-                time=time_,
-                image=image,
-                consumer_unit=cons_unit
-            ))
+            comp_b = CompanyBuilding.objects.get(
+                building__building_name=notif['alarm_event__alarm__'
+                                              'consumer_unit__building__'
+                                              'building_name'])
+            image = comp_b.company.company_logo.name
+            arr_notif.append(
+                dict(count=notif['notification_group__count'],
+                     parameter=notif['alarm_event__alarm__electric_parameter__'
+                                     'name'],
+                     identifier=notif['alarm_event__alarm__alarm_identifier'],
+                     max_val=str(notif['alarm_event__alarm__max_value']),
+                     min_val=str(notif['alarm_event__alarm__min_value']),
+                     building_name=notif['alarm_event__alarm__consumer_unit__'
+                                         'building__building_name'],
+                     electric_device=notif['alarm_event__alarm__consumer_unit__'
+                                           'electric_device_type__'
+                                           'electric_device_type_name'],
+                     image=image,
+                     units=notif['alarm_event__alarm__electric_parameter__'
+                                 'param_units'],
+                     group=notif['notification_group']
+                     ))
         return HttpResponse(content=json.dumps(arr_notif),
                             mimetype="application/json")
