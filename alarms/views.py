@@ -853,34 +853,24 @@ def user_notifications(request):
                 diccionario = {}
                 fechas = {}
 
-
                 for item in n_count:
                     notifs_groups = UserNotifications.objects.filter(Q(user=request.user, read=False, notification_group=item['notification_group'])).order_by("notification_group")
                     data = defaultdict(list)
+
                     for item2 in notifs_groups:
-                        data[str(item2.alarm_event.triggered_time.date())].append(item2)
+                        locale.setlocale(locale.LC_ALL, 'es_ES')
+                        data[str(item2.alarm_event.triggered_time.date().strftime(
+                                '%d de %B'))].append(item2)
 
+                    diccionario[str(item['notification_group'])] = dict(data)
 
-
-                    #arr_day_notif[str(date_n)].append(n_dic)
-
-
-                    diccionario[str(item['notification_group'])] = data
                 template_vars['diccionario'] = diccionario
-
-                pp = pprint.PrettyPrinter(indent=4)
-                pp.pprint(diccionario)
-
-
-
-
-
 
         elif "todas" in request.GET:
             notifs = UserNotifications.objects.filter(Q(read=True)).order_by("-alarm_event__triggered_time")
             template_vars['all'] = True
             template_vars['ncount']= ''
-            print notifs
+
         elif "group" in request.GET:
             group = request.GET.get('group')
             notifs = UserNotifications.objects.filter(Q(notification_group=group))
@@ -896,8 +886,6 @@ def user_notifications(request):
                     Q(alarm_event__value__range=(rangeNotification[0], rangeNotification[1])),
                     Q(alarm_event__alarm__consumer_unit__building__pk=buildings)).order_by("-alarm_event__triggered_time")
                 template_vars['ncount']= ''
-
-
 
         else:
             notifs = UserNotifications.objects.filter(
