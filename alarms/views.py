@@ -902,7 +902,7 @@ def user_notifications(request):
         tz = timezone.get_current_timezone()
         for notif in notifs:
             notif.read = True
-           # notif.save()
+            notif.save()
             #get localized time
             local_triggered_time = variety.convert_from_utc(
                 notif.alarm_event.triggered_time.time(), tz)
