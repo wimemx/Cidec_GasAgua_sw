@@ -5,6 +5,7 @@ import json
 from django.utils import simplejson
 import re
 import locale
+import pprint
 
 import variety
 
@@ -18,6 +19,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
+from collections import defaultdict
 
 from rbac.rbac_functions import get_buildings_context, has_permission
 from c_center.c_center_functions import get_clusters_for_operation, \
@@ -848,10 +850,26 @@ def user_notifications(request):
                 )).values("notification_group").annotate(
                 Count("notification_group"))
                 template_vars['ncount']= n_count
+                diccionario = {}
+                fechas = {}
+
 
                 for item in n_count:
-                    print item['notification_group']
+                    notifs_groups = UserNotifications.objects.filter(Q(user=request.user, read=False, notification_group=item['notification_group'])).order_by("notification_group")
+                    data = defaultdict(list)
+                    for item2 in notifs_groups:
+                        data[str(item2.alarm_event.triggered_time.date())].append(item2)
 
+
+
+                    #arr_day_notif[str(date_n)].append(n_dic)
+
+
+                    diccionario[str(item['notification_group'])] = data
+                template_vars['diccionario'] = diccionario
+
+                pp = pprint.PrettyPrinter(indent=4)
+                pp.pprint(diccionario)
 
 
 
@@ -859,13 +877,14 @@ def user_notifications(request):
 
 
         elif "todas" in request.GET:
-            notifs = UserNotifications.objects.all().exclude(
-                alarm_event__alarm__status=False
-            ).order_by("-alarm_event__triggered_time")
+            notifs = UserNotifications.objects.filter(Q(read=True)).order_by("-alarm_event__triggered_time")
             template_vars['all'] = True
+            template_vars['ncount']= ''
+            print notifs
         elif "group" in request.GET:
             group = request.GET.get('group')
             notifs = UserNotifications.objects.filter(Q(notification_group=group))
+            template_vars['ncount']= ''
         elif "parameterType" in request.GET \
             or "rangeNotification" in request.GET or "buildings" in request.GET:
                 parameterType = request.GET.get('parameterType')
@@ -876,6 +895,7 @@ def user_notifications(request):
                     Q(alarm_event__alarm__electric_parameter__pk=parameterType),
                     Q(alarm_event__value__range=(rangeNotification[0], rangeNotification[1])),
                     Q(alarm_event__alarm__consumer_unit__building__pk=buildings)).order_by("-alarm_event__triggered_time")
+                template_vars['ncount']= ''
 
 
 
@@ -886,6 +906,7 @@ def user_notifications(request):
                 alarm_event__alarm__status=False
             ).order_by("-alarm_event__triggered_time")
             template_vars['all'] = False
+            template_vars['ncount']= ''
         arr_day_notif = {}
 
         today_str = str(datetime.date.today())
@@ -893,7 +914,7 @@ def user_notifications(request):
         tz = timezone.get_current_timezone()
         for notif in notifs:
             notif.read = True
-            notif.save()
+           # notif.save()
             #get localized time
             local_triggered_time = variety.convert_from_utc(
                 notif.alarm_event.triggered_time.time(), tz)
