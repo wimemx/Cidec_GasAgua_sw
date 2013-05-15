@@ -141,10 +141,16 @@
 
                     {% for key2, value2 in value.items %}
 
+
+                            {% if value2.0.alarm_event.alarm.alarm_identifier == "Interrupción de Datos" %}
+                               <h4> El envío de datos ha cesado para la configuración de <span class="consumer_unit_alarm">{{ value2.0.alarm_event.alarm.consumer_unit.building.building_name }} en {{ value2.0.alarm_event.alarm.consumer_unit.electric_device_type.electric_device_type_name }}.</span> Por favor revise que el sistema de adquisici&oacute;n se encuentre funcionando.</h4>
+                            {% else %}
+                            <h4>Se han disparado {{ value2|length }} veces la alarma establecida para el parametro {{ value2.0.alarm_event.alarm.electric_parameter }} saliendose del rango establecido entre {{ value2.0.alarm_event.alarm.min_value|floatformat:2 }} y {{ value2.0.alarm_event.alarm.max_value|floatformat:2 }} para la configuracion de {{ value2.0.alarm_event.alarm.consumer_unit.building.building_name }} en {{ value2.0.alarm_event.alarm.consumer_unit.electric_device_type.electric_device_type_name }}</h4>
+                           {% endif %}
+
+
                         <h3 class="raised_alarm">
-
                             {{ key2 }}
-
                         </h3>
 
                         {% for notif in value2 %}
@@ -162,7 +168,9 @@
                             {% endif %}
                             </p>
                         {% endfor %}
+                        <br>
                     {% endfor %}
+
                 {% endfor %}
            {% endif %}
         </div>
