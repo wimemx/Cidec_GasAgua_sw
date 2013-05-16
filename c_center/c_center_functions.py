@@ -1268,29 +1268,33 @@ def dailyReport(building, consumer_unit, today):
             )
 
             for vcu in virtual_cu:
-                if vcu['value'] > demanda_max:
-                    demanda_max = vcu['value']
-                    dem_max_time = datetime.datetime.\
-                    utcfromtimestamp(vcu['datetime']).\
-                    replace(tzinfo=pytz.utc).\
-                    astimezone(timezone.get_current_timezone()).time()
+                if vcu['value']:
+                    if vcu['value'] > demanda_max:
+                        demanda_max = vcu['value']
+                        dem_max_time = datetime.datetime.\
+                        utcfromtimestamp(vcu['datetime']).\
+                        replace(tzinfo=pytz.utc).\
+                        astimezone(timezone.get_current_timezone()).time()
 
 
                 if not demanda_min:
-                    demanda_min = vcu['value']
-                    dem_min_time = datetime.datetime.\
-                    utcfromtimestamp(vcu['datetime']).\
-                    replace(tzinfo=pytz.utc).\
-                    astimezone(timezone.get_current_timezone()).time()
-                else:
-                    if vcu['value'] < demanda_min:
+                    if vcu['value']:
                         demanda_min = vcu['value']
                         dem_min_time = datetime.datetime.\
                         utcfromtimestamp(vcu['datetime']).\
                         replace(tzinfo=pytz.utc).\
                         astimezone(timezone.get_current_timezone()).time()
+                else:
+                    if vcu['value']:
+                        if vcu['value'] < demanda_min:
+                            demanda_min = vcu['value']
+                            dem_min_time = datetime.datetime.\
+                            utcfromtimestamp(vcu['datetime']).\
+                            replace(tzinfo=pytz.utc).\
+                            astimezone(timezone.get_current_timezone()).time()
 
         else:
+
             #Se obtiene la demanda max
             demanda_max_obj = ElectricDataTemp.objects.\
             filter(profile_powermeter = consumer_units[0].profile_powermeter).\
@@ -1482,6 +1486,11 @@ def dailyReport(building, consumer_unit, today):
 
     #Se obtiene Factor de Potencia
     factor_potencia_total = factorpotencia(kwh_totales, kvarh_totales)
+
+    print "Demanda Max:",demanda_max
+    print "Demanda Max Time:", dem_max_time
+    print "Demanda Min:",demanda_min
+    print "Demanda Min Time:", dem_min_time
 
     #Se guarda en la BD
     new_daily = DailyData(
