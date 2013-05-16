@@ -34,3 +34,40 @@
 .consumer_unit_alarm{
     color: #2b778f;
 }
+
+#showAllNotifications{
+    position: relative;
+    top: 5px;
+    margin-left: 5px;
+}
+
+#moreResultsNotificacions{
+    display: block;
+    clear:both;
+    margin-bottom: 10px;
+
+}
+
+#notificationFilter{
+    overflow: hidden;
+    display: none;
+    width: 50%;
+}
+
+#notificationFilter p,#notificationFilter .divSplit{
+    margin: 10px 0 !important;
+    overflow: hidden;
+}
+
+#slider-range{
+    width: 85%;
+    float: left;
+    margin-left: 9px;
+    margin-bottom: 10px;
+}
+
+#rengeNotification{
+    display: block;
+    float: left;
+}
+

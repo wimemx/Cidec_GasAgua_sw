@@ -5,6 +5,7 @@ import json
 from django.utils import simplejson
 import re
 import locale
+import pprint
 
 import variety
 
@@ -18,6 +19,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
+from collections import defaultdict
 
 from rbac.rbac_functions import get_buildings_context, has_permission
 from c_center.c_center_functions import get_clusters_for_operation, \
@@ -64,7 +66,7 @@ def add_alarm(request):
         template_vars["operation"] = "alta"
         clusters = get_clusters_for_operation(permission, CREATE, request.user)
         template_vars['clusters'] = clusters
-        parameters = ElectricParamaeters.objects.all()
+        parameters = ElectricParameters.objects.all()
         template_vars['parameters'] = parameters
         if request.method == 'POST':
             el = ElectricParameters.objects.get(
@@ -826,22 +828,73 @@ def user_notifications(request):
                       VIEW,
                       "Ver suscripciones a alarmas") or \
             request.user.is_superuser:
-        date_notif = datetime.date.today() - datetime.timedelta(days=7)
         #get the last week notifications
+        date_notif = datetime.date.today() - datetime.timedelta(days=7)
+        # get all electric parameters
+        electricParameters = ElectricParameters.objects.all()
+        template_vars['electricParameters'] = electricParameters
+        #get all buildings
+        buildings = Building.objects.all();
+        template_vars['buildings'] = buildings
 
-        if "todas" in request.GET:
-            notifs = UserNotifications.objects.all().exclude(
-                alarm_event__alarm__status=False
-            ).order_by("-alarm_event__triggered_time")
+
+        if "todas" in request.GET and "notificacionesPorGrupo" in request.GET:
+            notifs = UserNotifications.objects.filter(Q(read=False)).order_by("notification_group")
+
+            if has_permission(request.user,
+                      VIEW,
+                      "Ver suscripciones a alarmas") or \
+            request.user.is_superuser:
+                n_count = UserNotifications.objects.filter(Q(
+                user=request.user, read=False
+                )).values("notification_group").annotate(
+                Count("notification_group"))
+                template_vars['ncount']= n_count
+                diccionario = {}
+                fechas = {}
+
+                for item in n_count:
+                    notifs_groups = UserNotifications.objects.filter(Q(user=request.user, read=False, notification_group=item['notification_group'])).order_by("notification_group")
+                    data = defaultdict(list)
+
+                    for item2 in notifs_groups:
+                        locale.setlocale(locale.LC_ALL, 'es_ES')
+                        data[str(item2.alarm_event.triggered_time.date().strftime(
+                                '%d de %B'))].append(item2)
+
+                    diccionario[str(item['notification_group'])] = dict(data)
+
+                template_vars['diccionario'] = diccionario
+
+        elif "todas" in request.GET:
+            notifs = UserNotifications.objects.filter(Q(read=True)).order_by("-alarm_event__triggered_time")
             template_vars['all'] = True
+            template_vars['ncount']= ''
+
+        elif "group" in request.GET:
+            group = request.GET.get('group')
+            notifs = UserNotifications.objects.filter(Q(notification_group=group))
+            template_vars['ncount']= ''
+        elif "parameterType" in request.GET \
+            or "rangeNotification" in request.GET or "buildings" in request.GET:
+                parameterType = request.GET.get('parameterType')
+                rangeNotification = request.GET.get('rangeNotification').split('-')
+                buildings = request.GET.get('buildings')
+
+                notifs = UserNotifications.objects.filter(
+                    Q(alarm_event__alarm__electric_parameter__pk=parameterType),
+                    Q(alarm_event__value__range=(rangeNotification[0], rangeNotification[1])),
+                    Q(alarm_event__alarm__consumer_unit__building__pk=buildings)).order_by("-alarm_event__triggered_time")
+                template_vars['ncount']= ''
+
         else:
             notifs = UserNotifications.objects.filter(
-                user=request.user,
-                alarm_event__triggered_time__gte=date_notif
+                user=request.user
             ).exclude(
                 alarm_event__alarm__status=False
             ).order_by("-alarm_event__triggered_time")
             template_vars['all'] = False
+            template_vars['ncount']= ''
         arr_day_notif = {}
 
         today_str = str(datetime.date.today())
@@ -878,6 +931,8 @@ def user_notifications(request):
 
         template_vars['notifications'] = arr_day_notif
         template_vars['today_str'] = today_str
+        template_vars['super_user']= request.user.is_superuser
+
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("alarms/notification_list.html",

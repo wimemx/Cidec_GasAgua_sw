@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block titulo %}Reportes{% endblock %}
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/consumption_centers/graphs.css">
+    <link rel="stylesheet" href="/static/css/consumption_centers/cfe_bill.css">
+    <link rel="stylesheet" href="/static/js/external/fancybox/jquery.fancybox.css" type="text/css" />
+
+
+{% endblock %}
+{% block externaljs %}
+    <script type="text/javascript" src="/static/js/external/jsapi.js"></script>
+    <script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
+    <script type="text/javascript">
+        google.load('visualization', '1', {packages: ['corechart']});
+    </script>
+    <script type="text/javascript">
+
+        function viewHM(){
+            var year = $("#year_01").val();
+
+            var url = '/electric_rates/tabla_tarifaHM/?tarifa={{ tipo_tarifa }}&year='+year;
+
+            //$("#cfe_container").append('<img src="/static/css/images/spinner.gif" id="spinner" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">');
+            //$('#cfe_container').load(url, function(){$("#spinner").remove();});
+
+            $('#hm_container').addClass('iframe_spinner');
+            makeIframe(url);
+
+        }
+
+        function refresh_iframe_height(){
+            // regresca el height del iframe para ajustarse a su conte
+            setTimeout("parent.document.getElementById('graphFrame').height = 750;", 1000);
+        }
+        function makeIframe(src){
+            var graphFrame = document.createElement("IFRAME");
+            graphFrame.id = "graphFrame";
+            graphFrame.src = src;
+
+            $("#hm_container").html(graphFrame);
+            if (navigator.userAgent.indexOf("MSIE") > -1 && !window.opera) {
+                graphFrame.onreadystatechange = function(){
+                    if (graphFrame.readyState == "complete"){
+                        $('#hm_container').removeClass('iframe_spinner');
+                    }
+                };
+            } else {
+                graphFrame.onload = function(){
+                    $('#hm_container').removeClass('iframe_spinner');
+                };
+            }
+            refresh_iframe_height()
+        }
+    </script>
+{% endblock %}
+{% block document_ready %}
+
+    var now3 = new Date();
+    now3.addDays(-60);
+    var now4 = new Date();
+
+    refresh_iframe_height();
+
+    var state = false;
+
+{% endblock %}
+{% block contenido %}
+
+    <div id="bread_crumbs">
+        <ul>
+            <li><a href="/main/">Inicio</a></li>
+            <li><a href="/reportes/cfe/">Recibo CFE</a></li>
+        </ul>
+    </div>
+    <div id="page_content">
+        <div id="contenido_interno">
+            <h3 class="fl">{{ empresa.building_name }}</h3>
+
+            <div id="logo_container"{% if company.company_logo %}class="c fr" style="background: url(/static/media/{{ company.company_logo }}) no-repeat 50% 50%; background-size: 100% auto; margin-top: -19px;">
+            {% else %}class="c fr" style="background: url(/static/css/images/imgs_icns/company_placeholder.png) no-repeat 50% 50%; background-size: 100% auto; margin-top: -19px;">
+            {% endif %}
+            </div>
+
+            <div class="divider" id="divider_top">&nbsp;</div>
+            <div id="datepicker_component">
+                <span class="period_tag">Año</span>
+                {% if year_list %}
+                    <select name="year_01" id="year_01">
+                        {% for yr in year_list %}
+                            <option value="{{yr}}" {% if year == yr %} selected{% endif %}>{{yr}}</option>
+                        {% endfor %}
+                    </select>
+                {% endif %}
+
+                <button class="aqua_btn" onclick="viewHM();">Ver</button>
+
+            </div>
+            <div id="data_container">
+                <h2 id="titulo_reporte" class="report_icon">Tarifas HM</h2>
+
+                <input type="hidden" name="empresa_act" id="empresa_act" value="{{ empresa.pk }}"/>
+
+                <div class="vacio"></div>
+                <div id="hm_container">
+                    <iframe src="/electric_rates/tabla_tarifaHM/?tarifa={{ tipo_tarifa }}&year={{ year }}" id="graphFrame"></iframe>
+                </div>
+
+
+            </div>
+
+
+        </div>
+    </div>
+{% endblock %}

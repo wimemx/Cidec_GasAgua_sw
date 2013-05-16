@@ -21,7 +21,13 @@ class DateIntervals(models.Model):
     Es un catalogo de fechas de inicio y finalizacion de periodos de cobro segun la CFE
 
     """
+
+    PERIODS = (
+        (1, 'Verano'),
+        (2, 'Invierno')
+        )
     interval_identifier = models.CharField("Identificador", max_length=128)
+    interval_period = models.IntegerField("Periodo", choices=PERIODS, default=1)
     date_init = models.DateField()
     date_end = models.DateField()
     electric_rate = models.ForeignKey(ElectricRates, on_delete=models.PROTECT,
