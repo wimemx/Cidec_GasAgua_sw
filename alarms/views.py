@@ -722,9 +722,12 @@ def edit_alarm_suscription(request, id_alarm):
         template_vars["lista"] = lista
 
     if request.POST:
+
+
             alarma = Alarms.objects.get(pk=request.POST['alarmselector'])
             notificacion = request.POST['notiselect']
             usuario = request.user
+
 
             usernoti = UserNotificationSettings.objects.get(pk=id_alarm)
             usernoti.alarm = alarma
@@ -840,9 +843,8 @@ def user_notifications(request):
         template_vars['buildings'] = buildings
 
 
-        if "todas" in request.GET and "notificacionesPorGrupo" in request.GET:
+        if "notificacionesPorGrupo" in request.GET:
             notifs = UserNotifications.objects.filter(Q(read=False)).order_by("notification_group")
-
             if has_permission(request.user,
                       VIEW,
                       "Ver suscripciones a alarmas") or \
@@ -868,28 +870,46 @@ def user_notifications(request):
 
                 template_vars['diccionario'] = diccionario
 
-        elif "todas" in request.GET:
+        if "todas" in request.GET:
             notifs = UserNotifications.objects.filter(Q(read=True)).order_by("-alarm_event__triggered_time")
             template_vars['all'] = True
-            template_vars['ncount']= ''
 
-        elif "group" in request.GET:
+
+        if "group" in request.GET:
             group = request.GET.get('group')
-            notifs = UserNotifications.objects.filter(Q(notification_group=group))
-            template_vars['ncount']= ''
-        elif "parameterType" in request.GET \
-            or "rangeNotification" in request.GET or "buildings" in request.GET:
+            notifs = UserNotifications.objects.filter(Q(notification_group=group),Q(read=False))
+
+
+        if "parameterType" in request.GET or "buildings" in request.GET:
+
                 parameterType = request.GET.get('parameterType')
-                rangeNotification = request.GET.get('rangeNotification').split('-')
                 buildings = request.GET.get('buildings')
 
-                notifs = UserNotifications.objects.filter(
-                    Q(alarm_event__alarm__electric_parameter__pk=parameterType),
-                    Q(alarm_event__value__range=(rangeNotification[0], rangeNotification[1])),
-                    Q(alarm_event__alarm__consumer_unit__building__pk=buildings)).order_by("-alarm_event__triggered_time")
-                template_vars['ncount']= ''
+                if parameterType == '-1':
+                    if buildings == '0':
+                        notifs = UserNotifications.objects.filter(
+                        Q(user= request.user),
+                        Q(alarm_event__alarm__alarm_identifier='Interrupción de Datos')).order_by("-alarm_event__triggered_time")
+                    else:
+                        notifs = UserNotifications.objects.filter(
+                        Q(user= request.user),
+                        Q(alarm_event__alarm__alarm_identifier='Interrupción de Datos'), Q(alarm_event__alarm__consumer_unit__building__pk=buildings)).order_by("-alarm_event__triggered_time")
+                else:
+                    if parameterType == '0':
+                        notifs = UserNotifications.objects.filter(
+                        Q(user= request.user),
+                        Q(alarm_event__alarm__consumer_unit__building__pk=buildings)).order_by("-alarm_event__triggered_time")
+                    if buildings == '0':
+                        notifs = UserNotifications.objects.filter(
+                        Q(alarm_event__alarm__electric_parameter__pk=parameterType),
+                        Q(user= request.user)).order_by("-alarm_event__triggered_time")
+                    if buildings != '0' and parameterType != '0':
+                        notifs = UserNotifications.objects.filter(
+                            Q(alarm_event__alarm__electric_parameter__pk=parameterType),
+                            Q(user= request.user),
+                            Q(alarm_event__alarm__consumer_unit__building__pk=buildings)).order_by("-alarm_event__triggered_time")
 
-        else:
+        if not request.GET:
             notifs = UserNotifications.objects.filter(
                 user=request.user
             ).exclude(
