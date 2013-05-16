@@ -1,14 +1,16 @@
 {% extends "base.html" %}
-{% block titulo %}Ver Alarmas{% endblock %}
+{% block titulo %}Ver Notificaciones de Alarmas{% endblock %}
 {% block externalcss %}
     <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
     <link rel="stylesheet" href="/static/css/forms/rbac_general.css" type="text/css" />
     <link rel="stylesheet" href="/static/css/forms/rbac_user_list.css" type="text/css" />
-    <link rel="stylesheet" href="/static/css/alarms/notification_lisT_full.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/alarms/notification_list_full.css" type="text/css" />
     <link rel="stylesheet" href="/static/js/external/fancybox/jquery.fancybox.css" type="text/css" />
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
 {% endblock %}
 {% block externaljs %}
     <script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
+    <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
     <script type="text/javascript">
 
     </script>
@@ -25,6 +27,26 @@
         openEffect	: 'none',
         closeEffect	: 'none'
     });
+
+    $( "#slider-range" ).slider({
+      range: true,
+      min: 0,
+      max: 400,
+      values: [ 0, 100 ],
+      slide: function( event, ui ) {
+        $( "#amount" ).val(ui.values[ 0 ] + "-" + ui.values[ 1 ] );
+      }
+    });
+
+    $( "#amount" ).val($( "#slider-range" ).slider( "values", 0 ) +
+      "-" + $( "#slider-range" ).slider( "values", 1 ) );
+
+
+    $("#moreResultsNotificacions").click(function(e){
+        e.preventDefault();
+        $("#notificationFilter").slideToggle();
+    })
+
 {% endblock %}
 
 {% block contenido %}
@@ -40,8 +62,50 @@
     </div>
     <div id="page_content">
         <div id="contenido_interno">
-            <h2 id="titulo"><span>Alarmas Recientes</span> <!-- - {{ building.building_name }}</span> - {{ request.session.consumer_unit.electric_device_type.electric_device_type_name }}</h2><a class="various" data-fancybox-type="iframe" href="/reportes/set_consumer_unit/">Cambiar</a>-->
+            <h2 id="titulo"><span>Alarmas Recientes</span> <br>
+                {% if super_user %}
+                    <label for="mostrar">Mostrar todas las notificaciones </label>
+                    {% if all %}
+                        <a href="./" class="switch active_switch" id="showAllNotifications"></a>
+                    {% else %}
+                        <a href="./?todas=1" class="switch inactive_switch" id="showAllNotifications"></a>
+                    {% endif %}
+
+                {% endif %}
             </h2>
+            {% if ncount != '' %}
+                <a href="#" id="moreResultsNotificacions">Busqueda avanzada</a>
+                <form action="#" method="get" id="notificationFilter">
+                    <p>
+                        <label for="parameterType">Parametro Electrico</label>
+                        <select name="parameterType" id="parameterType">
+                            <option value="0">Selecciona un parametro</option>
+                            {% for item in electricParameters %}
+                                <option value="{{ item.id }}">{{ item.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </p>
+                    <div class="divSplit">
+                        <label for="rangeNotification" id="rengeNotification">Rango:</label><div id="slider-range"></div>
+                        <input name="rangeNotification" type="text" id="amount" style="margin-left:40px;" />
+                    </div>
+                    <p>
+                       <label for="buildingNotification">Edificio:</label>
+                        <select name="buildings" id="buildings">
+                            <option value="0">Selecciona un edificio</option>
+                            {% for item in buildings %}
+                                <option value="{{ item.id }}">{{ item.building_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </p>
+                     <div class="buttons g12">
+                        <button class="aqua_btn" id="save">
+                            Filtrar
+                        </button>
+                    </div>
+                </form>
+            {% endif %}
+            {% if ncount == "" %}
                 {% for key, value in notifications.items|sortKeys:"reverse" %}
                     <div class="vacio"></div>
                     <div class="notif_days">
@@ -54,22 +118,61 @@
                         </h3>
                         <div class="vacio"></div>
                         {% for notif in value %}
+
                             <p class="notif_detail item{{ forloop.counter0 }}">
+                            <span class="t_hour">{{ notif.triggered|time:"f A" }}</span>
+                            {% if notif.notif.alarm_event.alarm.alarm_identifier == "Interrupción de Datos" %}
+                                El envío de datos ha cesado para la configuración de <span class="consumer_unit_alarm">{{ notif.notif.alarm_event.alarm.consumer_unit.building.building_name }} en {{ notif.notif.alarm_event.alarm.consumer_unit.electric_device_type.electric_device_type_name }}.</span> Por favor revise que el sistema de adquisici&oacute;n se encuentre funcionando.
+                            {% else %}
                                 <span class="t_hour">{{ notif.triggered|time:"f A" }}</span>
                                 La lectura del par&aacute;metro <span class="parameter">{{ notif.notif.alarm_event.alarm.electric_parameter.name }}</span>
                                 ha sido de <span class="value {{ notif.type }}">{{ notif.notif.alarm_event.value|floatformat:2 }}{{ notif.notif.alarm_event.alarm.electric_parameter.param_units }}</span>
                                 sali&eacute;ndose del rango establecido entre <span class="range">{{ notif.notif.alarm_event.alarm.min_value|floatformat:2 }}{{ notif.notif.alarm_event.alarm.electric_parameter.param_units }}</span> y <span class="range">{{ notif.notif.alarm_event.alarm.max_value|floatformat:2 }}{{ notif.notif.alarm_event.alarm.electric_parameter.param_units }}</span>
                                 para la configuraci&oacute;n de <span class="consumer_unit_alarm">{{ notif.notif.alarm_event.alarm.consumer_unit.building.building_name }} en {{ notif.notif.alarm_event.alarm.consumer_unit.electric_device_type.electric_device_type_name }}</span>
+                            {% endif %}
                             </p>
                         {% endfor %}
                     </div>
 
                 {% endfor %}
-            {% if all %}
-                <a class="various" href="/configuracion/user_notifications/">&Uacute;ltima Semana</a>
-            {% else %}
-                <a class="various" href="?todas=1">Ver Todas</a>
             {% endif %}
+            {% if ncount %}
+                {% for key, value in diccionario.items %}
+
+                    {% for key2, value2 in value.items %}
+
+
+                            {% if value2.0.alarm_event.alarm.alarm_identifier == "Interrupción de Datos" %}
+                               <h4> El envío de datos ha cesado para la configuración de <span class="consumer_unit_alarm">{{ value2.0.alarm_event.alarm.consumer_unit.building.building_name }} en {{ value2.0.alarm_event.alarm.consumer_unit.electric_device_type.electric_device_type_name }}.</span> Por favor revise que el sistema de adquisici&oacute;n se encuentre funcionando.</h4>
+                            {% else %}
+                            <h4>Se han disparado {{ value2|length }} veces la alarma establecida para el parametro {{ value2.0.alarm_event.alarm.electric_parameter }} saliendose del rango establecido entre {{ value2.0.alarm_event.alarm.min_value|floatformat:2 }} y {{ value2.0.alarm_event.alarm.max_value|floatformat:2 }} para la configuracion de {{ value2.0.alarm_event.alarm.consumer_unit.building.building_name }} en {{ value2.0.alarm_event.alarm.consumer_unit.electric_device_type.electric_device_type_name }}</h4>
+                           {% endif %}
+
+
+                        <h3 class="raised_alarm">
+                            {{ key2 }}
+                        </h3>
+
+                        {% for notif in value2 %}
+
+                            <p class="notif_detail item{{ forloop.counter0 }}">
+                            <span class="t_hour">{{ notif.alarm_event.triggered_time|time:"f A" }}</span>
+                            {% if notif.alarm_event.alarm.alarm_identifier == "Interrupción de Datos" %}
+                                El envío de datos ha cesado para la configuración de <span class="consumer_unit_alarm">{{ notif.alarm_event.alarm.consumer_unit.building.building_name }} en {{ notif.alarm_event.alarm.consumer_unit.electric_device_type.electric_device_type_name }}.</span> Por favor revise que el sistema de adquisici&oacute;n se encuentre funcionando.
+                            {% else %}
+                                <span class="t_hour">{{ notif.alarm_event.triggered_time|time:"f A" }}</span>
+                                La lectura del par&aacute;metro <span class="parameter">{{ notif.alarm_event.alarm.electric_parameter.name }}</span>
+                                ha sido de <span class="value {{ notif.type }}">{{ notif.alarm_event.value|floatformat:2 }}{{ notif.notif.alarm_event.alarm.electric_parameter.param_units }}</span>
+                                sali&eacute;ndose del rango establecido entre <span class="range">{{ notif.alarm_event.alarm.min_value|floatformat:2 }}{{ notif.alarm_event.alarm.electric_parameter.param_units }}</span> y <span class="range">{{ notif.alarm_event.alarm.max_value|floatformat:2 }}{{ notif.alarm_event.alarm.electric_parameter.param_units }}</span>
+                                para la configuraci&oacute;n de <span class="consumer_unit_alarm">{{ notif.alarm_event.alarm.consumer_unit.building.building_name }} en {{ notif.alarm_event.alarm.consumer_unit.electric_device_type.electric_device_type_name }}</span>
+                            {% endif %}
+                            </p>
+                        {% endfor %}
+                        <br>
+                    {% endfor %}
+
+                {% endfor %}
+           {% endif %}
         </div>
     </div>
 {% endblock %}

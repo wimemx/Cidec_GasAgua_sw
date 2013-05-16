@@ -1,5 +1,4 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<!--suppress ALL -->
 <html xmlns="http://www.w3.org/1999/xhtml">
 
 <head>
@@ -31,12 +30,12 @@
             server.emit("join", {{ request.user.pk }});
         });
         server.on("alarm_raised", function(data){
-            add_notif();
+            latest_notifs();
         });
 
         {% endif %}
 
-        function add_notif(){
+        /*function add_notif(){
             var notif_span = '<span id="notification_number"><span>1</span></span>';
             var main_menu = $("#main_menu");
             var span_ = main_menu.find(".alarmas").find("#notification_number");
@@ -48,7 +47,7 @@
             }
             latest_notifs();
 
-        }
+        }*/
 
 
         var data_context = {{ datacontext|safe }};
@@ -76,59 +75,77 @@
 
         }
         function latest_notifs(){
-            var main_menu = $("#main_menu");
-            var alarms_list = main_menu.find(".alarmas");
-            $.ajax({
-                url: "/configuracion/get_latest_notifs/",
-                type: "GET",
-                success: function(data2){
-                    var lis = '';
-                    var read_all = '';
-                    if(data2.length>0){
-                        data2.forEach(function(notif){
-
-                            lis += '<li class="readed_'+notif.readed+'"><div class="comp_img" style="background: url(/static/media/'+notif.image+') no-repeat 50% 50%; background-size: 100% auto;"></div>';
-                            lis += '<p>La lectura del parámetro <span class="parameter">'+notif.param+'</span> ha sido de <span class="value">'+notif.n_value+notif.units+'</span> saliéndose del rango establecido entre <span class="range">'+notif.min_r+notif.units+'</span> y <span class="range">'+notif.max_r+notif.units+'</span> para la configuración de <span class="consumer_unit_alarm">'+notif.consumer_unit+'</span></p><span class="time_notif">'+notif.time+'</span></p>';
-                            lis += '</li>';
-                        });
-                        read_all ="<span class='see_all_n'><a href='/configuracion/user_notifications/?todas=1'>Ver Todas</a></span>";
-                    }else{
-                        lis += '<li class="readed_true">';
-                        lis += '<p>No hay notificaciones sin leer</p>';
-                        lis += '</li>';
-                    }
-
-
-                    var not_ = alarms_list.find("#notif_container");
-                    if (not_.length > 0){
-                        not_.remove();
-                    }
-
-                    var dialog = "<div id='notif_container' class='hidden'><div class='globe_tip'></div><div id='recent_notifs'><span id='al_list_title'>Alarmas</span><ul id='notificaciones'>" + lis + "</ul></div>"+read_all+"</div>";
-                    alarms_list.append(dialog);
-                }
-            });
-        }
-        $(document).ready(function(){
-            $("#main_menu").find(".alarmas").live("click", function(){
-               $("#main_menu").find(".alarmas").find("#notif_container").slideToggle();
-            });
             $.ajax({
                 url: "/configuracion/get_unread_notifs_count/",
                 type: "GET",
                 success: function(data){
                     var main_menu = $("#main_menu");
-                    if(data != "false"){
+                    if(data != "false" && data != 0){
+                        //data = number of alarm groups
                         var notif_span = '<span id="notification_number"><span>'+data+'</span></span>';
-                        var span_ = main_menu.find(".alarmas").find("#notification_number");
+                        main_menu.find("li.alarmas").find("#notification_number").remove();
                         main_menu.find("li.alarmas").append(notif_span);
                     }
+                    var alarms_list = main_menu.find(".alarmas");
+                    $.ajax({
+                        url: "/configuracion/get_latest_notifs/",
+                        type: "GET",
+                        success: function(data2){
+                            var lis = '';
+                            var read_all = '';
+                            if(data2.length>0){
+                                data2.forEach(function(notif){
+                                    if(notif.identifier != "Interrupción de Datos"){
+                                        lis += '<li class="readed_'+notif.readed+'" rel="'+notif.group+'"><div class="comp_img" style="background: url(/static/media/'+notif.image+') no-repeat 50% 50%; background-size: 100% auto;"></div>';
+                                        var occurrency;
+                                        if(notif.count==1){
+                                            occurrency = "veces"
+                                        }else{
+                                            occurrency = "vez"
+                                        }
+                                        lis += '<p>Se han disparado <span class="n_count">' + notif.count + '</span> ' + occurrency + ' la alarma establecida para el parámetro <span class="parameter">'+notif.parameter+'</span> saliéndose del rango establecido entre <span class="range">'+parseFloat(notif.min_val).toFixed(2)+notif.units+'</span> y <span class="range">'+parseFloat(notif.max_val).toFixed(2)+notif.units+'</span> para la configuración de <span class="consumer_unit_alarm">'+notif.building_name+' en ' + notif.electric_device + '</span></p>';
+                                        lis += '</li>';
+                                    }else{
+                                        lis += '<li class="readed_'+notif.readed+'" rel="'+notif.group+'"><div class="comp_img" style="background: url(/static/media/'+notif.image+') no-repeat 50% 50%; background-size: 100% auto;"></div>';
+                                        lis += '<p>El envío de datos ha cesado para la configuración de <span class="consumer_unit_alarm">'+notif.building_name+' en ' + notif.electric_device + '</span></p>';
+                                        lis += '</li>';
+                                    }
+                                });
+                                read_all ="<span class='see_all_n'><a href='/configuracion/user_notifications/?todas=1&notificacionesPorGrupo=1'>Ver Todas</a></span>";
+                            }else{
+                                lis += '<li class="readed_true">';
+                                lis += '<p>No hay notificaciones sin leer</p>';
+                                lis += '</li>';
+                            }
 
-                    latest_notifs();
+
+                            var not_ = alarms_list.find("#notif_container");
+                            if (not_.length > 0){
+                                not_.remove();
+                            }
+
+                            var dialog = "<div id='notif_container' class='hidden'><div class='globe_tip'></div><span id='al_list_title'>Alarmas</span><div id='recent_notifs'><ul id='notificaciones'>" + lis + "</ul></div>"+read_all+"</div>";
+                            alarms_list.append(dialog);
+                        }
+                    });
 
                 }
             });
+        }
+        $(document).ready(function(){
+            $("#main_menu").find(".alarmas").live("click", function(){
+               if ($("#notif_container").is(":visible")){
+                   $("#main_menu").find(".alarmas").find("#notif_container").animate({height:0},200,function(){$("#notif_container").hide()});
+               }else{
+                   $("#main_menu").find(".alarmas").find("#notif_container").show().animate({height:340},200);
+               }
 
+            });
+            $("#notificaciones li").live("click", function(){
+                var group = $(this).attr("rel");
+                window.location = "/configuracion/user_notifications/?group="+group;
+            });
+            latest_notifs();
 
 
             $("#content").on("click", function(){
@@ -136,6 +153,11 @@
                 if(com_list.is(":visible")){
                     com_list.slideUp();
                 }
+                var notif_container = $("#notif_container");
+                if(notif_container.is(":visible")){
+                    notif_container.animate({height:0},200,function(){$("#notif_container").hide()});
+                }
+
             });
 
             building_list_gen();
@@ -230,8 +252,8 @@
     <table id="table_container">
         <tbody>
         <tr id="tr_menu">
-            <td>
-                {% include "top_menu.html" %}
+             <td>
+                {% include "top_menu.html"  %}
             </td>
         </tr>
         <tr>

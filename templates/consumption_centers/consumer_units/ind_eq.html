@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
     <link rel="stylesheet" href="/static/css/forms/c_centers.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="/static/js/external/jquery-validator/css/validator.css">
+    <link rel="stylesheet" href="/static/css/forms/rbac_general.css" type="text/css" />
     <link rel="stylesheet" href="/static/css/forms/rbac_user_list.css" type="text/css" />
     <link href="/static/js/external/messi/messi.css" rel="stylesheet" type="text/css" media="screen" />
     <link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
@@ -195,10 +196,18 @@
                     }
                 },
                 success: function(msg){
-                    $("#search").val("");
-                    $("#id_pm").val("");
-                    var registro = msg[0];
-                    form_row(registro.pm, registro.alias, registro.marca, registro.modelo, registro.serie, registro.status);
+
+                    if(msg != "No tiene permisos sobre este edificio")
+                    {
+                        $("#search").val("");
+                        $("#id_pm").val("");
+                        var registro = msg[0];
+                        form_row(registro.pm, registro.alias, registro.marca, registro.modelo, registro.serie, registro.status);
+                    }
+                    else
+                    {
+                       $("#powermeters_table").parent().parent().prepend("<span class='notif n_error'>"+msg+" <a href='' onclick='$(this).parent().remove(); '>X</a>    </span>");
+                    }
                 },
             });
 
@@ -233,7 +242,7 @@
         <div class="divider" id="divider_top">&nbsp;</div>
         <div id="form_container" class="g12">
             {% if message %}
-                <span class="notif {{ msg_type }}">
+                <span id='mensaje' class="notif {{ msg_type }}">
                     {% autoescape off %}{{ message }}{% endautoescape %}
                     <a href="#" onclick="$(this).parent().remove(); History.replaceState({}, '', ' ');">X</a>
                 </span>

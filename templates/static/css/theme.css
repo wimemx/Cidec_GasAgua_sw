@@ -706,10 +706,21 @@ a.aqua_btn:hover, a.grey_btn:hover{
 #al_list_title{
     font-weight: 700;
     display: block;
-    width: 100%;
+    width: 323px;
     text-align: left;
-    margin-left: 15px;
+    margin: 10px 0;
     color: #666;
+    z-index: 999;
+    position: absolute;
+    top: 12px;
+    left: 1px;
+    background-color: white;
+    border-left: 1px solid transparent;
+    -webkit-border-radius:9px 0 0 0;
+	-moz-border-radius:9px 0 0 0;
+	border-radius:9px 0 0 0;
+    text-indent: 20px;
+
 }
 #recent_notifs{
     position:absolute;
@@ -727,6 +738,7 @@ a.aqua_btn:hover, a.grey_btn:hover{
 	-moz-border-radius:10px;
 	border-radius:10px;
     width: 100%;
+    padding-top: 10px;
 }
 
 #notificaciones{
@@ -736,12 +748,16 @@ a.aqua_btn:hover, a.grey_btn:hover{
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
+    background-color: transparent !important;
 }
 #notificaciones li{
     display: block !important;
     height: 120px;
     padding: 5px;
-    background: none !important;
+    background: transparent !important;
+}
+#notificaciones li:first-child{
+    margin-top: 47px !important;
 }
 #notificaciones li:hover{
     background: url("images/bgs/blue_notif_bg.png") !important;

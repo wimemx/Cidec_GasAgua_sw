@@ -97,15 +97,42 @@ def get_consumer_unit_electric_data_raw(
         electric_data_name
     )
 
-    for electric_data_value in electric_data_values:
-        electric_data = electric_data_value[electric_data_name]
-        medition_date = electric_data_value['medition_date']
-        electric_data_raw.append(
-            dict(datetime=int(time.mktime(
-                     django.utils.timezone.localtime(medition_date).timetuple())),
-                 value=abs(electric_data),
-                 certainty=True))
+    if electric_data_values:
+        first_m = electric_data_values[0]['medition_date']
+        second_m = electric_data_values[1]['medition_date']
 
+        delta_m = second_m - first_m
+
+        time_m = start_localtime
+        cont = 0
+        while time_m < end_localtime:
+            #difference between readings default to delta_m
+            adj_time = delta_m
+            try:
+                #real difference between readings
+                adj_time = electric_data_values[cont]['medition_date'] - time_m
+            except IndexError:
+                adj_time += delta_m
+            else:
+                electric_data = electric_data_values[cont][electric_data_name]
+                medition_date = electric_data_values[cont]['medition_date']
+                electric_data_raw.append(
+                    dict(datetime=int(time.mktime(
+                             django.utils.timezone.localtime(medition_date).timetuple())),
+                         value=abs(electric_data),
+                         certainty=True))
+            time_m += delta_m
+            #add a margin of 3 seconds between readings
+            if adj_time > (delta_m + datetime.timedelta(seconds=3)):
+                #probably an empty spot
+                electric_data_raw.append(
+                    dict(datetime=int(time.mktime(
+                             django.utils.timezone.localtime(time_m).timetuple())),
+                         value=None,
+                         certainty=False))
+            else:
+                #print "data"
+                cont += 1
     return electric_data_raw
 
 
@@ -855,7 +882,7 @@ def render_graphics(request):
                                               electric_data_list,
                                               limits)
 
-        print template_variables['rows_data']
+
 
         template_variables['columns'] = consumer_unit_and_time_interval_information_list
         template_variables['limits'] = limits
@@ -874,7 +901,6 @@ def render_graphics(request):
 
 
 def render_graphics_extended(request):
-    print "render_graphics_extended"
     if request.method == "GET":
         try:
             granularity = request.GET['granularity']
@@ -984,8 +1010,6 @@ def render_graphics_extended(request):
         template_variables['rows_data'] = get_electric_data_list_json(
             electric_data_list,
             limits)
-
-        print template_variables['rows_data']
 
         template_variables['columns'] = consumer_unit_and_time_interval_information_list
         template_variables['limits'] = limits

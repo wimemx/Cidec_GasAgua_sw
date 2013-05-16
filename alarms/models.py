@@ -70,6 +70,7 @@ class UserNotifications(models.Model):
     user = models.ForeignKey(django.contrib.auth.models.User,
                              on_delete=models.PROTECT)
     read = models.BooleanField(default=False)
+    notification_group = models.IntegerField(blank=False, null=True, default=1)
 
     def __unicode__(self):
         return self.user.username + " - " + self.alarm_event.alarm.alarm_identifier

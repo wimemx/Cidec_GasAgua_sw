@@ -1,8 +1,23 @@
+# -*- coding: utf-8 -*-
+#standard library imports
 import datetime
+import pytz
 
+#related third party imports
+#from socketIO_client import SocketIO
 from celery import task
 from celery.task.schedules import crontab
 from celery.decorators import periodic_task
+
+import django.utils.timezone
+from django.core.mail import send_mail, EmailMultiAlternatives
+
+#local application/library specific imports
+import data_warehouse_extended.globals
+import data_warehouse_extended.models
+import alarms.models
+import c_center.models
+import data_warehouse_extended.views
 
 from data_warehouse.views import populate_data_warehouse, \
     data_warehouse_update
@@ -10,14 +25,6 @@ from c_center.c_center_functions import save_historic, dailyReportAll, \
     asign_electric_data_to_pw, calculateMonthlyReport_all
 from c_center.calculations import reTagHolidays
 
-import data_warehouse_extended.globals
-import data_warehouse_extended.models
-import data_warehouse_extended.views
-
-import c_center.models
-
-
-from datetime import date
 
 @task(ignore_result=True)
 def change_profile_electric_data(serials):
@@ -173,23 +180,72 @@ def process_dw_consumerunit_electrical_parameter(
         consumer_unit, first, last, electrical_parameter, instant_delta
     )
 
+
 @task(ignore_result=True)
 def tag_batch(initial, last):
     recursive_tag(initial, last)
+
 
 @task(ignore_result=True)
 def calculate_dw(granularity):
     data_warehouse_update(granularity)
 
+
 @task(ignore_resulset=True)
 def daily_report():
     dailyReportAll()
+
 
 @task(ignore_resulset=True)
 def save_historic_delay(cd_b, building):
     save_historic(cd_b, building)
 
-# this will run every minute, see http://celeryproject.org/docs/reference/celery.task.schedules.html#celery.task.schedules.crontab
+
+@task(ignore_result=True)
+def update_data_dw_delta(end, start, delta_name):
+    consumer_unit_profiles = \
+        data_warehouse_extended.models.ConsumerUnitProfile.objects.all()
+
+    electrical_parameters = \
+        data_warehouse_extended.models.ElectricalParameter.objects.all()
+
+    instant_delta = \
+        data_warehouse_extended.models.InstantDelta.objects.get(
+            name=delta_name)
+
+    #
+    # Generate data for each Consumer Unit Profile
+    #
+    for consumer_unit_profile in consumer_unit_profiles:
+        try:
+            consumer_unit = \
+                c_center.models.ConsumerUnit.objects.get(
+                    pk=consumer_unit_profile.pk)
+
+        except c_center.models.ConsumerUnit.DoesNotExist:
+            print "unidad de consumo no encontrada", consumer_unit_profile
+            continue
+
+        #
+        # Generate data for each Instant Delta.
+        #
+
+        #
+        # Generate data for each Electrical Parameter.
+        #
+        for electrical_parameter in electrical_parameters:
+            process_dw_consumerunit_electrical_parameter.delay(
+                consumer_unit, start, end,
+                electrical_parameter,
+                instant_delta)
+
+#############################
+#                           #
+#       Periodic Tasks      #
+#                           #
+#############################
+
+
 @periodic_task(run_every=crontab(minute='*/60'))
 def data_warehouse_one_hour():
     #calculate_dw.delay("hour")
@@ -259,40 +315,70 @@ def data_warehouse_day():
     print "firing periodic task - DW 10 days :)"
 
 
-@task(ignore_result=True)
-def update_data_dw_delta(end, start, delta_name):
-    consumer_unit_profiles = \
-        data_warehouse_extended.models.ConsumerUnitProfile.objects.all()
+@periodic_task(run_every=crontab(minute='*/30'))
+def last_data_received():
+    delta_t = datetime.timedelta(minutes=30)
+    cus = c_center.models.ConsumerUnit.objects.exclude(
+        profile_powermeter__powermeter__powermeter_anotation="Medidor Virtual")
 
-    electrical_parameters = \
-        data_warehouse_extended.models.ElectricalParameter.objects.all()
+    subject = "Interrupción en la adquisición de datos"
+    from_email = "noreply@auditem.mx"
+    to_mail = []
 
-    instant_delta = \
-        data_warehouse_extended.models.InstantDelta.objects.get(
-            name=delta_name)
-
-    #
-    # Generate data for each Consumer Unit Profile
-    #
-    for consumer_unit_profile in consumer_unit_profiles:
+    for cu in cus:
+        profile = cu.profile_powermeter
+        last_data = c_center.models.ElectricDataTemp.objects.filter(
+            profile_powermeter=profile).order_by("-medition_date")[0]
+        date_last = last_data.medition_date
+        now_dt = datetime.datetime.now(tz=pytz.utc)
         try:
-            consumer_unit = \
-                c_center.models.ConsumerUnit.objects.get(
-                    pk=consumer_unit_profile.pk)
-
-        except c_center.models.ConsumerUnit.DoesNotExist:
-            print "unidad de consumo no encontrada", consumer_unit_profile
+            alarm_cu = alarms.models.Alarms.objects.get(
+                alarm_identifier="Interrupción de Datos",
+                consumer_unit=cu)
+        except alarms.models.Alarms.DoesNotExist:
             continue
 
-        #
-        # Generate data for each Instant Delta.
-        #
+        if (now_dt - date_last) > delta_t:
+            ae = alarms.models.AlarmEvents(alarm=alarm_cu, value=0)
+            ae.save()
+            #send push notification
+            socketIO = SocketIO('localhost', 9999)
+            socketIO.emit('stopped_sa', {'alarm_event': ae.pk})
 
-        #
-        # Generate data for each Electrical Parameter.
-        #
-        for electrical_parameter in electrical_parameters:
-            process_dw_consumerunit_electrical_parameter.delay(
-                consumer_unit, start, end,
-                electrical_parameter,
-                instant_delta)
+            users_to_notify = \
+                alarms.models.UserNotificationSettings.objects.filter(
+                    alarm=alarm_cu
+                )
+            for user in users_to_notify:
+                if user.notification_type == 3:
+                    to_mail.append(user.user.email)
+                us_not = alarms.models.UserNotifications(user=user.user,
+                                                         alarm_event=ae)
+                us_not.save()
+            if to_mail:
+                str_data = (cu.building.building_name,
+                            cu.electric_device_type.electric_device_type_name,
+                            django.utils.timezone.localtime(date_last))
+                text_content = """Saludos.\nEl presente es un correo
+                autogenerado por Auditem con el fin de notificarle que:\n
+                No se han obtenido datos eléctricos para la configuración de
+                %s en %s,
+                la última lectura fue tomada a las %s\n
+                Por favor revise el estado del sistema
+                de adquisición""".decode("utf-8") % str_data
+
+                html_content = """<h2>Saludos.</h2><p>
+                El presente es un correo autogenerado por
+                Auditem con el fin de notificarle que:</p>
+                <p>No se han obtenido datos eléctricos para la configuración de
+                <span style="font-weight:700">%s</span> en
+                <span style="font-weight:700">%s
+                </span>,la última lectura fue tomada a las %s</p>
+                <p>Por favor revise el estado del sistema de
+                adquisición</p>""".decode("utf-8") % str_data
+                msg = EmailMultiAlternatives(subject,
+                                             text_content,
+                                             from_email,
+                                             to_mail)
+                msg.attach_alternative(html_content, "text/html")
+                msg.send()
