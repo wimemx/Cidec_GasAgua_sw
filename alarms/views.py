@@ -728,8 +728,6 @@ def edit_alarm_suscription(request, id_alarm):
 
 
             usernoti = UserNotificationSettings.objects.get(pk=id_alarm)
-            print "dos"
-            print usernoti
             usernoti.alarm = alarma
             usernoti.user = usuario
             usernoti.notification_type = notificacion
@@ -845,7 +843,6 @@ def user_notifications(request):
 
         if "notificacionesPorGrupo" in request.GET:
             notifs = UserNotifications.objects.filter(Q(read=False)).order_by("notification_group")
-            print "entra gpo"
             if has_permission(request.user,
                       VIEW,
                       "Ver suscripciones a alarmas") or \
@@ -885,25 +882,30 @@ def user_notifications(request):
 
                 parameterType = request.GET.get('parameterType')
                 buildings = request.GET.get('buildings')
-                print parameterType
-                print buildings
-                if parameterType == '0':
-                    notifs = UserNotifications.objects.filter(
-                    Q(user= request.user),
-                    Q(alarm_event__alarm__consumer_unit__building__pk=buildings)).order_by("-alarm_event__triggered_time")
-                if buildings == '0':
-                    notifs = UserNotifications.objects.filter(
-                    Q(alarm_event__alarm__electric_parameter__pk=parameterType),
-                    Q(user= request.user)).order_by("-alarm_event__triggered_time")
-                if buildings != '0' and parameterType != '0':
-                    notifs = UserNotifications.objects.filter(
-                        Q(alarm_event__alarm__electric_parameter__pk=parameterType),
+
+                if parameterType == '-1':
+                    if buildings == '0':
+                        notifs = UserNotifications.objects.filter(
+                        Q(user= request.user),
+                        Q(alarm_event__alarm__alarm_identifier='Interrupción de Datos')).order_by("-alarm_event__triggered_time")
+                    else:
+                        notifs = UserNotifications.objects.filter(
+                        Q(user= request.user),
+                        Q(alarm_event__alarm__alarm_identifier='Interrupción de Datos'), Q(alarm_event__alarm__consumer_unit__building__pk=buildings)).order_by("-alarm_event__triggered_time")
+                else:
+                    if parameterType == '0':
+                        notifs = UserNotifications.objects.filter(
                         Q(user= request.user),
                         Q(alarm_event__alarm__consumer_unit__building__pk=buildings)).order_by("-alarm_event__triggered_time")
-
-
-
-
+                    if buildings == '0':
+                        notifs = UserNotifications.objects.filter(
+                        Q(alarm_event__alarm__electric_parameter__pk=parameterType),
+                        Q(user= request.user)).order_by("-alarm_event__triggered_time")
+                    if buildings != '0' and parameterType != '0':
+                        notifs = UserNotifications.objects.filter(
+                            Q(alarm_event__alarm__electric_parameter__pk=parameterType),
+                            Q(user= request.user),
+                            Q(alarm_event__alarm__consumer_unit__building__pk=buildings)).order_by("-alarm_event__triggered_time")
 
         if not request.GET:
             notifs = UserNotifications.objects.filter(
@@ -920,7 +922,7 @@ def user_notifications(request):
         tz = timezone.get_current_timezone()
         for notif in notifs:
             notif.read = True
-            #notif.save()
+            notif.save()
             #get localized time
             local_triggered_time = variety.convert_from_utc(
                 notif.alarm_event.triggered_time.time(), tz)
