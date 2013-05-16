@@ -19,6 +19,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+
 from collections import defaultdict
 
 from rbac.rbac_functions import get_buildings_context, has_permission
@@ -1011,3 +1013,18 @@ def get_latest_notifs(request):
                      ))
         return HttpResponse(content=json.dumps(arr_notif),
                             mimetype="application/json")
+
+
+@csrf_exempt
+def refresh_ie_config(request):
+    if request.method == "POST":
+        if 'ie' in request.POST:
+            ie = get_object_or_404(IndustrialEquipment,
+                                   pk=int(request.POST['ie']))
+            if ie.has_new_alarm_config:
+                new_al_config = json.loads(ie.new_alarm_config)
+
+
+            return HttpResponse(status=200)
+    else:
+        raise Http404
