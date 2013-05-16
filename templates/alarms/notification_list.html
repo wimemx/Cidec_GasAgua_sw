@@ -6,11 +6,9 @@
     <link rel="stylesheet" href="/static/css/forms/rbac_user_list.css" type="text/css" />
     <link rel="stylesheet" href="/static/css/alarms/notification_list_full.css" type="text/css" />
     <link rel="stylesheet" href="/static/js/external/fancybox/jquery.fancybox.css" type="text/css" />
-    <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
 {% endblock %}
 {% block externaljs %}
     <script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
-    <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
     <script type="text/javascript">
 
     </script>
@@ -28,18 +26,7 @@
         closeEffect	: 'none'
     });
 
-    $( "#slider-range" ).slider({
-      range: true,
-      min: 0,
-      max: 400,
-      values: [ 0, 100 ],
-      slide: function( event, ui ) {
-        $( "#amount" ).val(ui.values[ 0 ] + "-" + ui.values[ 1 ] );
-      }
-    });
 
-    $( "#amount" ).val($( "#slider-range" ).slider( "values", 0 ) +
-      "-" + $( "#slider-range" ).slider( "values", 1 ) );
 
 
     $("#moreResultsNotificacions").click(function(e){
@@ -73,7 +60,7 @@
 
                 {% endif %}
             </h2>
-            {% if ncount != '' %}
+             {% if not ncount  %}
                 <a href="#" id="moreResultsNotificacions">Busqueda avanzada</a>
                 <form action="#" method="get" id="notificationFilter">
                     <p>
@@ -85,10 +72,7 @@
                             {% endfor %}
                         </select>
                     </p>
-                    <div class="divSplit">
-                        <label for="rangeNotification" id="rengeNotification">Rango:</label><div id="slider-range"></div>
-                        <input name="rangeNotification" type="text" id="amount" style="margin-left:40px;" />
-                    </div>
+
                     <p>
                        <label for="buildingNotification">Edificio:</label>
                         <select name="buildings" id="buildings">
@@ -105,7 +89,8 @@
                     </div>
                 </form>
             {% endif %}
-            {% if ncount == "" %}
+
+            {% if not ncount  %}
                 {% for key, value in notifications.items|sortKeys:"reverse" %}
                     <div class="vacio"></div>
                     <div class="notif_days">
@@ -122,7 +107,7 @@
                             <p class="notif_detail item{{ forloop.counter0 }}">
                             <span class="t_hour">{{ notif.triggered|time:"f A" }}</span>
                             {% if notif.notif.alarm_event.alarm.alarm_identifier == "Interrupción de Datos" %}
-                                El envío de datos ha cesado para la configuración de <span class="consumer_unit_alarm">{{ notif.notif.alarm_event.alarm.consumer_unit.building.building_name }} en {{ notif.notif.alarm_event.alarm.consumer_unit.electric_device_type.electric_device_type_name }}.</span> Por favor revise que el sistema de adquisici&oacute;n se encuentre funcionando.
+                              El envío de datos ha cesado para la configuración de <span class="consumer_unit_alarm">{{ notif.notif.alarm_event.alarm.consumer_unit.building.building_name }} en {{ notif.notif.alarm_event.alarm.consumer_unit.electric_device_type.electric_device_type_name }}.</span> Por favor revise que el sistema de adquisici&oacute;n se encuentre funcionando.
                             {% else %}
                                 <span class="t_hour">{{ notif.triggered|time:"f A" }}</span>
                                 La lectura del par&aacute;metro <span class="parameter">{{ notif.notif.alarm_event.alarm.electric_parameter.name }}</span>
@@ -137,6 +122,8 @@
                 {% endfor %}
             {% endif %}
             {% if ncount %}
+                <div class="vacio"></div>
+                    <div class="notif_days">
                 {% for key, value in diccionario.items %}
 
                     {% for key2, value2 in value.items %}

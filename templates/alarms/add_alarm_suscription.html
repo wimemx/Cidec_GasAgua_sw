@@ -237,7 +237,7 @@
                     <br/>
                     Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
                 </p>
-                <form method="post" action=".">
+                {% if operation == 'edit' %}<form method="post" action="#">  {% else %}<form method="post" action="."> {% endif %}
                 {% csrf_token %}
                 <h3 class="g12">Informaci&oacute;n de suscripción a alarmas</h3>
                 <div id="cluster_fields">
@@ -272,7 +272,7 @@
                     <div class="fields_row g9">
                         <label for="alarmselector" class="g2">Alarma<span class="required">*</span></label>
                         <select name="alarmselector" id="alarmselector" class="g9 validate notnull" onchange='AlarmChange()'>
-                            {% if operation == 'edit' %} <option selected="selected" value='{{ edit_suscription.alarm.electric_parameter.name }}'> {{ edit_suscription.alarm.consumer_unit.building.building_name }}--{{ edit_suscription.alarm.electric_parameter.name }} </option>
+                            {% if operation == 'edit' %} <option selected="selected" value='{{ edit_suscription.alarm.id }}'> {{ edit_suscription.alarm.consumer_unit.building.building_name }}--{{ edit_suscription.alarm.electric_parameter.name }} </option>
                             {% else %}<option value='0'>Selecciona una alarma:</option>
                             {% endif %}
                         </select>
