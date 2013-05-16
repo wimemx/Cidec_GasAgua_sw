@@ -9,9 +9,14 @@ from django.shortcuts import render_to_response, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.template.context import RequestContext
 from django.db.models import Q
+from django.utils import timezone
 from rbac.rbac_functions import get_buildings_context
 from electric_rates.models import *
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
+from django.contrib.auth.decorators import login_required
+
+from c_center.c_center_functions import set_default_session_vars
+
 
 #"""
 #Tarifa 3
@@ -996,5 +1001,170 @@ def view_tarifa_DAC(request):
         template_vars["sidebar"] = request.session['sidebar']
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
+
+
+@login_required(login_url='/')
+def tarifaHM_header(request, tarifa_n):
+    datacontext = get_buildings_context(request.user)[0]
+    if request.user.is_superuser:
+        set_default_session_vars(request, datacontext)
+        template_vars = {"type": "cfe", "datacontext": datacontext,
+                         'empresa': request.session['main_building'],
+                         'company': request.session['company'],
+                         'sidebar': request.session['sidebar']}
+        year_list = []
+        if tarifa_n == 'HM':
+            year_list = [__date.year for __date in ElectricRatesDetail.objects.all().dates('date_init','year')]
+            template_vars['tipo_tarifa'] = 'HM'
+
+        elif tarifa_n == 'DAC':
+            year_list = [__date.year for __date in DACElectricRateDetail.objects.all().dates('date_init','year')]
+            template_vars['tipo_tarifa'] = 'DAC'
+
+        elif tarifa_n == '3':
+            year_list = [__date.year for __date in ThreeElectricRateDetail.objects.all().dates('date_init','year')]
+            template_vars['tipo_tarifa'] = 'T3'
+
+        today = datetime.datetime.today()
+
+        year = int(today.year)
+        template_vars['year'] = year
+        template_vars['year_list'] = year_list
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("electric_rates/tarifaHM_header.html",
+                                  template_vars_template)
+    else:
+        return render_to_response("generic_error.html",
+                                  RequestContext(request,
+                                                 {"datacontext": datacontext}))
+
+
+def getRatesTable(request):
+
+    response_html = ''
+
+    datacontext = get_buildings_context(request.user)[0]
+    if request.user.is_superuser:
+
+        set_default_session_vars(request, datacontext)
+
+        template_vars = dict(type="cfe", datacontext=datacontext,
+                             empresa=request.session['main_building'])
+
+        if request.GET:
+            year = int(request.GET['year'])
+        else:
+            #Obtener la fecha actual
+            today = datetime.datetime.today()
+            year = int(today.year)
+        rate_type = request.GET['tarifa']
+
+        if rate_type == 'HM':
+            template_vars['tarifas'] = getHM_table(year)
+            response_html = 'electric_rates/tarifaHM_table.html'
+        elif rate_type == 'DAC':
+            template_vars['tarifas'] = getDAC_table(year)
+            response_html = 'electric_rates/tarifaDAC_table.html'
+        elif rate_type == 'T3':
+            template_vars['tarifas'] = getT3_table(year)
+            response_html = 'electric_rates/tarifa3_table.html'
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response(
+            response_html,
+            template_vars_template)
+    else:
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
+
+
+def getHM_table(year):
+    regions_dict = dict()
+
+    #Se obtienen todas las regiones
+    regiones = Region.objects.all().order_by('region_name')
+    for region in regiones:
+        #Se obtienen las tarifas para ese año
+        tarifasHM = ElectricRatesDetail.objects.filter(region = region,
+                    date_init__year = year)
+        if tarifasHM:
+            arregloDemanda = [None] * 12
+            arregloKWHP = [None] * 12
+            arregloKWHI = [None] * 12
+            arregloKWHB = [None] * 12
+            arregloFRI = [None] * 12
+            arregloFRB = [None] * 12
+            arregloIds = [None] * 12
+            for tf in tarifasHM:
+                arregloDemanda[tf.date_init.month-1] = tf.KDF
+                arregloKWHP[tf.date_init.month-1] = tf.KWHP
+                arregloKWHI[tf.date_init.month-1] = tf.KWHI
+                arregloKWHB[tf.date_init.month-1] = tf.KWHB
+                arregloFRI[tf.date_init.month-1] = tf.FRI
+                arregloFRB[tf.date_init.month-1] = tf.FRB
+                arregloIds[tf.date_init.month-1] = tf.pk
+
+            arregloContenedor = []
+            arregloContenedor.append(arregloDemanda)
+            arregloContenedor.append(arregloKWHP)
+            arregloContenedor.append(arregloKWHI)
+            arregloContenedor.append(arregloKWHB)
+            arregloContenedor.append(arregloFRI)
+            arregloContenedor.append(arregloFRB)
+            arregloContenedor.append(arregloIds)
+            regions_dict[region.region_name] = arregloContenedor
+
+    return regions_dict
+
+
+def getDAC_table(year):
+    regions_dict = dict()
+
+    #Se obtienen todas las regiones
+    regiones = Region.objects.all().order_by('region_name')
+    for region in regiones:
+        #Se obtienen las tarifas para ese año
+        tarifasDAC = DACElectricRateDetail.objects.filter(region = region,
+                    date_init__year = year)
+
+        if tarifasDAC:
+            arregloMes = [None] * 12
+            arregloKWH = [None] * 12
+            arregloIds = [None] * 12
+            for tf in tarifasDAC:
+                arregloMes[tf.date_init.month-1] = tf.month_rate
+                arregloKWH[tf.date_init.month-1] = tf.kwh_rate
+                arregloIds[tf.date_init.month-1] = tf.pk
+
+            arregloContenedor = []
+            arregloContenedor.append(arregloMes)
+            arregloContenedor.append(arregloKWH)
+            arregloContenedor.append(arregloIds)
+            regions_dict[region.region_name] = arregloContenedor
+
+    return regions_dict
+
+def getT3_table(year):
+    tarifas3 = ThreeElectricRateDetail.objects.filter(date_init__year = year)
+    arregloKWH = [None] * 12
+    arregloKW = [None] * 12
+    arregloIds = [None] * 12
+    for t3 in tarifas3:
+        arregloKWH[t3.date_init.month-1] = t3.kwh_rate
+        arregloKW[t3.date_init.month-1] = t3.kw_rate
+        arregloIds[t3.date_init.month-1] = t3.pk
+    arregloContenedor = []
+    arregloContenedor.append(arregloKWH)
+    arregloContenedor.append(arregloKW)
+    arregloContenedor.append(arregloIds)
+
+    return arregloContenedor
+
+
 
 

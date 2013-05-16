@@ -1,0 +1,130 @@
+
+<html>
+<head>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <link rel="stylesheet" href="/static/css/consumption_centers/cfe_bill.css">
+
+    <script type="text/javascript" src="/static/js/external/jquery.tools.min.js"></script>
+    <script type="text/javascript">
+
+        $(document).ready(function(){
+
+            //$(this).contents().find("#cal").DatePicker();
+        });
+
+    </script>
+
+</head>
+
+<body>
+<div class="iframe_container">
+
+<h4>Tarifa HM</h4>
+
+{% if tarifas %}
+    {% for tarifa in tarifas.items %}
+        <table border="1">
+            <tr>
+                <td>{{ tarifa.0 }}</td>
+                <td>Ene</td><td>Feb</td>
+                <td>Mar</td><td>Abr</td>
+                <td>May</td><td>Jun</td>
+                <td>Jul</td><td>Ago</td>
+                <td>Sep</td><td>Oct</td>
+                <td>Nov</td><td>Dic</td>
+            </tr>
+            <tr>
+                <td>Demanda</td>
+                {% for tf in tarifa.1.0 %}
+                    <td>
+                    {% if tf %}
+                        {{ tf|floatformat:2 }}
+                    {% else %}
+                        -
+                    {% endif %}
+                    </td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <td>KWH Punta</td>
+                {% for tf in tarifa.1.1 %}
+                    <td>
+                        {% if tf %}
+                            {{ tf|floatformat:4 }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <td>KWH Intermedio</td>
+                {% for tf in tarifa.1.2 %}
+                    <td>
+                        {% if tf %}
+                            {{ tf|floatformat:4 }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <td>KWH Base</td>
+                {% for tf in tarifa.1.3 %}
+                    <td>
+                        {% if tf %}
+                            {{ tf|floatformat:4 }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <td>FRI</td>
+                {% for tf in tarifa.1.4 %}
+                    <td>
+                        {% if tf %}
+                            {{ tf|floatformat:4 }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <td>FRB</td>
+                {% for tf in tarifa.1.5 %}
+                    <td>
+                        {% if tf %}
+                            {{ tf|floatformat:4 }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <td></td>
+                {% for tf in tarifa.1.6 %}
+                    <td>
+                        {% if tf %}
+                            <a class="edit" title="Editar Cuota"
+                               target="_parent"
+                               href="/electric_rates/editar_tarifaHM/{{ tf }}/">Editar</a>
+                        {% endif %}
+                    </td>
+                {% endfor %}
+            </tr>
+
+
+
+
+        </table>
+    {% endfor %}
+{% endif %}
+
+</div>
+</body>
+</html>

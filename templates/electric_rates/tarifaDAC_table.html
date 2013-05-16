@@ -1,0 +1,77 @@
+
+<html>
+<head>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <link rel="stylesheet" href="/static/css/consumption_centers/cfe_bill.css">
+
+    <script type="text/javascript" src="/static/js/external/jquery.tools.min.js"></script>
+    <script type="text/javascript">
+
+        $(document).ready(function(){
+
+            //$(this).contents().find("#cal").DatePicker();
+        });
+
+    </script>
+
+</head>
+
+<body>
+<div class="iframe_container">
+
+    {% if tarifas %}
+        {% for tarifa in tarifas.items %}
+            <table border="1">
+                <tr>
+                    <td>{{ tarifa.0 }}</td>
+                    <td>Ene</td><td>Feb</td>
+                    <td>Mar</td><td>Abr</td>
+                    <td>May</td><td>Jun</td>
+                    <td>Jul</td><td>Ago</td>
+                    <td>Sep</td><td>Oct</td>
+                    <td>Nov</td><td>Dic</td>
+                </tr>
+                <tr>
+                    <td>Costo Fijo Mensual</td>
+                    {% for tf in tarifa.1.0 %}
+                        <td>
+                            {% if tf %}
+                                {{ tf|floatformat:2 }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td>Cargo por Energía Consumida</td>
+                    {% for tf in tarifa.1.1 %}
+                        <td>
+                            {% if tf %}
+                                {{ tf|floatformat:3 }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td></td>
+                    {% for tf in tarifa.1.2 %}
+                        <td>
+                            {% if tf %}
+                                <a class="edit" title="Editar Cuota"
+                                   target="_parent"
+                                   href="/electric_rates/editar_tarifaDac/{{ tf }}/">Editar</a>
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+
+            </table>
+        {% endfor %}
+    {% endif %}
+
+</div>
+</body>
+</html>
