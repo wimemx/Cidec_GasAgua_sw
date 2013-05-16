@@ -41,9 +41,9 @@ class AlarmEvents(models.Model):
     value = models.DecimalField(max_digits=20, decimal_places=6)
 
     def __unicode__(self):
-        return  self.alarm.alarm_identifier + " - " + str(self.value) +\
-                self.alarm.electric_parameter.name + " - " + str(
-            self.triggered_time)
+        return self.alarm.alarm_identifier + " - " + str(self.value) +\
+            self.alarm.electric_parameter.name + " - " + \
+            str(self.triggered_time)
 
 
 class UserNotificationSettings(models.Model):

@@ -156,7 +156,7 @@ def populate_data_warehouse_specific(
 
     except c_center.models.ConsumerUnit.DoesNotExist:
         print "Unidad de consumo no encontrada", consumer_unit
-
+        return
     #
     # Generate data for Instant Delta.
     # Generate data for each Electrical Parameter.

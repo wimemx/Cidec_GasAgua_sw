@@ -1159,13 +1159,13 @@ def get_profile(request):
     else:
         raise Http404
 
-def all_dailyreportAll():
+def all_dailyreportAll(from_date):
     buildings = Building.objects.all()
-    initial_d = datetime.datetime(2013,1,12)
+    initial_d = from_date
     #datos = DailyData.objects.filter(data_day__gte=initial_d)
     #datos.delete()
     dia = datetime.timedelta(days=1)
-    while initial_d < datetime.datetime(2013,3,1):
+    while initial_d < datetime.datetime.now():
         for buil in buildings:
             cus = ConsumerUnit.objects.filter(building=buil)
             if cus:
@@ -1605,7 +1605,7 @@ def getMonthlyReport(consumer_u, month, year):
                     demanda_max=mes.max_demand,
                     consumo_maximo=mes.max_cons,
                     emisiones=mes.carbon_emitions,
-                    factor_potencia=float(mes.carbon_emitions),
+                    factor_potencia=float(mes.power_factor),
                     demanda_min=float(mes.min_demand),
                     demanda_promedio=float(mes.average_demand),
                     consumo_minimo=float(mes.min_cons),

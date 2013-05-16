@@ -101,7 +101,7 @@
             var chart;
             var vaxes = {
             {% for axis in axis_list  %}
-                {{ forloop.counter0 }}: {logScale: false, title: '{{ axis.name }}', titleTextStyle:{color: colors[arr_pos[{{ forloop.counter0 }}]], fontSize: 11, italic: false}, textStyle:{color: colors[arr_pos[{{ forloop.counter0 }}]], fontSize: 11, italic: false}, {% if axis.name == "V" or axis.name == "I" %}minValue: 0, {% endif %}textPosition: "{% cycle 'out' 'in' %}"},
+                {{ forloop.counter0 }}: {logScale: false, title: '{{ axis.name }}', titleTextStyle:{color: colors[arr_pos[{{ forloop.counter0 }}]], fontSize: 11, italic: false}, textStyle:{color: colors[arr_pos[{{ forloop.counter0 }}]], fontSize: 11, italic: false}, {% if axis.name == "V" or axis.name == "I" or axis.name == "PF" %}minValue: 0, {% endif %}textPosition: "{% cycle 'out' 'in' %}"},
             {% endfor %}
             };
             var vseries = {

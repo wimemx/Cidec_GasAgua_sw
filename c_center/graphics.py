@@ -248,11 +248,14 @@ def get_consumer_unit_electric_data_interval_raw_optimized(
     timedelta_tolerance = timedelta(minutes=10)
     for electric_data_raw_dictionary in electric_data_raw_dictionaries:
         medition_date_current = electric_data_raw_dictionary['medition_date']
-        electric_data_current = electric_data_raw_dictionary[electric_data_name_local]
-        datetime_hour_current = variety.get_hour_from_datetime(medition_date_current)
+        electric_data_current = \
+            electric_data_raw_dictionary[electric_data_name_local]
+        datetime_hour_current = \
+            variety.get_hour_from_datetime(medition_date_current)
         timedelta_current = abs(medition_date_current - datetime_hour_current)
         if timedelta_current < timedelta_tolerance:
-            datetime_hour_current_string = datetime_hour_current.strftime("%Y-%m-%d-%H")
+            datetime_hour_current_string = \
+                datetime_hour_current.strftime("%Y-%m-%d-%H")
             medition_date_current_stored, electric_data_current_stored =\
                 electric_data_raw_hours_dictionary.get(
                     datetime_hour_current_string,
@@ -260,14 +263,16 @@ def get_consumer_unit_electric_data_interval_raw_optimized(
                      None)
                 )
 
-            if abs(medition_date_current_stored - datetime_hour_current) > timedelta_current:
+            if abs(medition_date_current_stored - datetime_hour_current) > \
+                    timedelta_current:
                 electric_data_raw_hours_dictionary[datetime_hour_current_string] =\
                     (medition_date_current, electric_data_current)
 
         datetime_hour_next = datetime_hour_current + timedelta(hours=1)
         timedelta_next = abs(medition_date_current - datetime_hour_next)
         if timedelta_next < timedelta_tolerance:
-            datetime_hour_next_string = datetime_hour_next.strftime("%Y-%m-%d-%H")
+            datetime_hour_next_string = \
+                datetime_hour_next.strftime("%Y-%m-%d-%H")
             medition_date_next_stored, electric_data_next_stored =\
             electric_data_raw_hours_dictionary.get(
                 datetime_hour_next_string,
@@ -275,7 +280,8 @@ def get_consumer_unit_electric_data_interval_raw_optimized(
                  None)
             )
 
-            if abs(medition_date_next_stored - datetime_hour_next) > timedelta_next:
+            if abs(medition_date_next_stored - datetime_hour_next) > \
+                    timedelta_next:
                 electric_data_raw_hours_dictionary[datetime_hour_next_string] =\
                     (medition_date_current, electric_data_current)
 
@@ -287,25 +293,32 @@ def get_consumer_unit_electric_data_interval_raw_optimized(
                                              tzinfo=django.utils.timezone.utc)
 
     while datetime_current_utc <= end_utc:
-        datetime_current_utc_string = datetime_current_utc.strftime("%Y-%m-%d-%H")
+        datetime_current_utc_string = \
+            datetime_current_utc.strftime("%Y-%m-%d-%H")
         datetime_next_utc = datetime_current_utc + hour_delta
         datetime_next_utc_string = datetime_next_utc.strftime("%Y-%m-%d-%H")
         electric_data_value = 0
-        if electric_data_raw_hours_dictionary.has_key(datetime_current_utc_string) and\
-           electric_data_raw_hours_dictionary.has_key(datetime_next_utc_string):
+        if 'datetime_current_utc_string' in \
+                electric_data_raw_hours_dictionary and \
+                'datetime_next_utc_string' in \
+                electric_data_raw_hours_dictionary:
 
             medition_date_value_current, electric_data_value_current =\
-                electric_data_raw_hours_dictionary.get(datetime_current_utc_string)
+                electric_data_raw_hours_dictionary.get(
+                    datetime_current_utc_string)
 
             medition_date_value_next, electric_data_value_next =\
                 electric_data_raw_hours_dictionary.get(datetime_next_utc_string)
 
-            electric_data_value = electric_data_value_next - electric_data_value_current
+            electric_data_value = \
+                electric_data_value_next - electric_data_value_current
 
-        datetime_current_localtime = datetime_current_utc.astimezone(current_timezone)
-        electric_data_raw_item = dict(datetime=int(time.mktime(datetime_current_localtime.timetuple())),
-                                      electric_data=abs(electric_data_value),
-                                      certainty=True)
+        datetime_current_localtime = \
+            datetime_current_utc.astimezone(current_timezone)
+        electric_data_raw_item = dict(
+            datetime=int(time.mktime(datetime_current_localtime.timetuple())),
+            electric_data=abs(electric_data_value),
+            certainty=True)
 
         electric_data_raw.append(electric_data_raw_item)
         datetime_current_utc += hour_delta

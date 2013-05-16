@@ -25,7 +25,7 @@
     <script type="text/javascript">
 
         {% if request.user %}
-        var server = io.connect("http://node.wimelabs.com:9999");
+        var server = io.connect("http://166.78.139.234:9999");
         server.on("connect", function(data){
             server.emit("join", {{ request.user.pk }});
         });

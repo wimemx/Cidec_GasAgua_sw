@@ -30,6 +30,8 @@ from rbac.models import DataContextPermission, Object, PermissionAsigment, \
     UserRole, GroupObject, MenuCategs, MenuHierarchy
 from rbac.rbac_functions import get_buildings_context
 from variety import unique_from_array, timed
+from data_warehouse_extended.models import InstantDelta, ConsumerUnitProfile
+from tareas.tasks import populate_data_warehouse_specific
 
 from django.shortcuts import redirect, render
 
@@ -63,8 +65,7 @@ def set_timezone(request):
 # TODO change data warehouse implementation
 
 def parse_csv(request):
-    return HttpResponse("")
-"""
+
     dir_path = '/home/satest/cidec_sw/templates/static/media/datos_perdidos'
     files = os.listdir(dir_path)
     dir_fd = os.open(dir_path, os.O_RDONLY)
@@ -154,7 +155,6 @@ def parse_csv(request):
         populate_interval_facts=True
     )
     return HttpResponse(html)
-"""
 
 def _login(request):
     error = username = password = ''
@@ -402,4 +402,34 @@ def migrate_electric_data(serials):
             f.save(using="production")
             f.profile_powermeter = profile
             f.save(using="production")
+    return "done"
+
+
+@timed
+def migrate_data(date_time):
+    """ searches for electric data with date greater than 'date_time' in a
+    remote database then save each electic data in the local database
+    """
+    #ed = ElectricDataTemp.objects.using("auditem").filter(
+    #    medition_date__gte=date_time)
+    #print len(ed)
+    #for e in ed:
+    #    f = e
+    #    f.pk = None
+    #    f.save(using="default")
+    #    print f
+    #    tag_this(f.pk)
+    #    print "tagged!"
+
+    instant_deltas = InstantDelta.objects.all()
+    cus = ConsumerUnitProfile.objects.all()
+    for instant in instant_deltas:
+        print instant.name
+        for cu in cus:
+            print cu.building_name, cu.electric_device_type_name
+            populate_data_warehouse_specific(
+                cu,
+                instant,
+                date_time
+            )
     return "done"
