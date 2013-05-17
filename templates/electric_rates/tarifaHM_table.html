@@ -3,6 +3,7 @@
 <head>
     <link rel="stylesheet" href="/static/css/theme.css">
     <link rel="stylesheet" href="/static/css/consumption_centers/cfe_bill.css">
+    <link rel="stylesheet" href="/static/css/forms/rbac_general.css" type="text/css" />
 
     <script type="text/javascript" src="/static/js/external/jquery.tools.min.js"></script>
     <script type="text/javascript">
@@ -16,27 +17,30 @@
 
 </head>
 
-<body>
+<body style="background: none">
 <div class="iframe_container">
 
-<h4>Tarifa HM</h4>
+<div id="grid_container" style="border: none">
 
 {% if tarifas %}
     {% for tarifa in tarifas.items %}
-        <table border="1">
-            <tr>
-                <td>{{ tarifa.0 }}</td>
-                <td>Ene</td><td>Feb</td>
-                <td>Mar</td><td>Abr</td>
-                <td>May</td><td>Jun</td>
-                <td>Jul</td><td>Ago</td>
-                <td>Sep</td><td>Oct</td>
-                <td>Nov</td><td>Dic</td>
-            </tr>
-            <tr>
+        <div class="grid_cont">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 16%;">{{ tarifa.0 }}</th>
+                    <th style="width: 7%;">Ene</th><th style="width: 7%;">Feb</th>
+                    <th style="width: 7%;">Mar</th><th style="width: 7%;">Abr</th>
+                    <th style="width: 7%;">May</th><th style="width: 7%;">Jun</th>
+                    <th style="width: 7%;">Jul</th><th style="width: 7%;">Ago</th>
+                    <th style="width: 7%;">Sep</th><th style="width: 7%;">Oct</th>
+                    <th style="width: 7%;">Nov</th><th style="width: 7%;">Dic</th>
+                </tr>
+            </thead>
+            <tr class="row1">
                 <td>Demanda</td>
                 {% for tf in tarifa.1.0 %}
-                    <td>
+                    <td class="c">
                     {% if tf %}
                         {{ tf|floatformat:2 }}
                     {% else %}
@@ -45,10 +49,10 @@
                     </td>
                 {% endfor %}
             </tr>
-            <tr>
+            <tr class="row2">
                 <td>KWH Punta</td>
                 {% for tf in tarifa.1.1 %}
-                    <td>
+                    <td class="c">
                         {% if tf %}
                             {{ tf|floatformat:4 }}
                         {% else %}
@@ -57,10 +61,10 @@
                     </td>
                 {% endfor %}
             </tr>
-            <tr>
+            <tr class="row1">
                 <td>KWH Intermedio</td>
                 {% for tf in tarifa.1.2 %}
-                    <td>
+                    <td class="c">
                         {% if tf %}
                             {{ tf|floatformat:4 }}
                         {% else %}
@@ -69,10 +73,10 @@
                     </td>
                 {% endfor %}
             </tr>
-            <tr>
+            <tr class="row2">
                 <td>KWH Base</td>
                 {% for tf in tarifa.1.3 %}
-                    <td>
+                    <td class="c">
                         {% if tf %}
                             {{ tf|floatformat:4 }}
                         {% else %}
@@ -81,10 +85,10 @@
                     </td>
                 {% endfor %}
             </tr>
-            <tr>
+            <tr class="row1">
                 <td>FRI</td>
                 {% for tf in tarifa.1.4 %}
-                    <td>
+                    <td class="c">
                         {% if tf %}
                             {{ tf|floatformat:4 }}
                         {% else %}
@@ -93,10 +97,10 @@
                     </td>
                 {% endfor %}
             </tr>
-            <tr>
+            <tr class="row2">
                 <td>FRB</td>
                 {% for tf in tarifa.1.5 %}
-                    <td>
+                    <td class="c">
                         {% if tf %}
                             {{ tf|floatformat:4 }}
                         {% else %}
@@ -105,10 +109,10 @@
                     </td>
                 {% endfor %}
             </tr>
-            <tr>
+            <tr class="row1">
                 <td></td>
                 {% for tf in tarifa.1.6 %}
-                    <td>
+                    <td class="c">
                         {% if tf %}
                             <a class="edit" title="Editar Cuota"
                                target="_parent"
@@ -117,14 +121,12 @@
                     </td>
                 {% endfor %}
             </tr>
-
-
-
-
         </table>
+        </div>
     {% endfor %}
 {% endif %}
 
+</div>
 </div>
 </body>
 </html>

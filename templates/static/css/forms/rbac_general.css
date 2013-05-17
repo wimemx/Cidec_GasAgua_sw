@@ -411,6 +411,14 @@ label span
 	overflow: hidden;
 }
 
+.grid_cont
+{
+    border: solid 1px #9ebfc7;
+    margin-top: 20px;
+    border-radius: 7px;
+    overflow: hidden;
+}
+
 #grid_container table
 {
 	width: 100%;
