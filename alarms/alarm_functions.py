@@ -26,7 +26,8 @@ def set_alarm_json(building, user):
     for cu in cunits:
         p_serial = cu.profile_powermeter.powermeter.powermeter_serial
         eDeviceAlarms = []
-        cu_alarms = Alarms.objects.filter(consumer_unit=cu)
+        cu_alarms = Alarms.objects.filter(consumer_unit=cu).exclude(
+            status=False)
 
         for cua in cu_alarms:
             status = 1 if cua.status else 0
