@@ -22,7 +22,7 @@ import data_warehouse_extended.views
 from data_warehouse.views import populate_data_warehouse, \
     data_warehouse_update
 from c_center.c_center_functions import save_historic, dailyReportAll, \
-    asign_electric_data_to_pw, calculateMonthlyReport_all
+    asign_electric_data_to_pw, calculateMonthlyReport_all, all_dailyreportAll
 from c_center.calculations import reTagHolidays
 
 
@@ -195,6 +195,10 @@ def calculate_dw(granularity):
 def daily_report():
     dailyReportAll()
 
+
+@task(ignore_resulset=True)
+def all_daily_report_all(from_date):
+    all_dailyreportAll(from_date)
 
 @task(ignore_resulset=True)
 def save_historic_delay(cd_b, building):

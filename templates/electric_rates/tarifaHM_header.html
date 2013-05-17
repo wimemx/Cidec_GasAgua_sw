@@ -54,11 +54,6 @@
     </script>
 {% endblock %}
 {% block document_ready %}
-
-    var now3 = new Date();
-    now3.addDays(-60);
-    var now4 = new Date();
-
     refresh_iframe_height();
 
     var state = false;
@@ -96,7 +91,7 @@
 
             </div>
             <div id="data_container">
-                <h2 id="titulo_reporte" class="report_icon">Tarifas HM</h2>
+                <h2 id="titulo_reporte" class="report_icon">Tarifa {{ tipo_tarifa }}</h2>
 
                 <input type="hidden" name="empresa_act" id="empresa_act" value="{{ empresa.pk }}"/>
 
