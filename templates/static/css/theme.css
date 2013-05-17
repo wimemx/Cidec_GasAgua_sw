@@ -762,6 +762,10 @@ a.aqua_btn:hover, a.grey_btn:hover{
 #notificaciones li:hover{
     background: url("images/bgs/blue_notif_bg.png") !important;
 }
+#notificaciones .readed_true:hover{
+    background: none !important;
+}
+
 #notif_container .see_all_n{
     width: 100%;
     z-index: 4;

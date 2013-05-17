@@ -126,6 +126,13 @@
 
                             var dialog = "<div id='notif_container' class='hidden'><div class='globe_tip'></div><span id='al_list_title'>Alarmas</span><div id='recent_notifs'><ul id='notificaciones'>" + lis + "</ul></div>"+read_all+"</div>";
                             alarms_list.append(dialog);
+
+                            if($("#notificaciones .readed_true").size() == 1)
+                            {
+
+                                $(".readed_true p").die('click');
+                            }
+                            console.log($("#notificaciones .readed_true").size())
                         }
                     });
 
@@ -133,6 +140,7 @@
             });
         }
         $(document).ready(function(){
+
             $("#main_menu").find(".alarmas").live("click", function(){
                if ($("#notif_container").is(":visible")){
                    $("#main_menu").find(".alarmas").find("#notif_container").animate({height:0},200,function(){$("#notif_container").hide()});
@@ -141,7 +149,14 @@
                }
 
             });
+
+
+
             $("#notificaciones li").live("click", function(){
+
+                if($(this).hasClass('readed_true'))
+                    return
+
                 var group = $(this).attr("rel");
                 window.location = "/configuracion/user_notifications/?group="+group;
             });
@@ -231,10 +246,12 @@
                     }
                 });
             });
-            {% block document_ready %}{% endblock %}
-            $("#user_menu").find("li a[title]").tooltip({effect: 'slide'}).dynamic({ bottom: { direction: 'down', bounce: true } });
-        });
+            {% block document_ready %}console.log($("#notificaciones .readed_true").size()){% endblock %}
 
+            $("#user_menu").find("li a[title]").tooltip({effect: 'slide'}).dynamic({ bottom: { direction: 'down', bounce: true } });
+
+        });
+        console.log($("#notificaciones .readed_true").size())
     </script>
 </head>
 <body>
@@ -264,4 +281,5 @@
         </tbody>
     </table>
 </body>
+<script>console.log($("#notificaciones .readed_true").size())</script>
 </html>
