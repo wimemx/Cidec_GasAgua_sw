@@ -490,7 +490,7 @@ def cfe_calculations(request):
                 resultado_mensual['costo_dfacturable'] = \
                     cfe_historico[0].billable_demand_cost
                 resultado_mensual['costo_fpotencia'] = \
-                    cfe_historico[0].billable_demand_cost
+                    cfe_historico[0].power_factor_bonification
                 resultado_mensual['subtotal'] = cfe_historico[0].subtotal
                 resultado_mensual['iva'] = cfe_historico[0].iva
                 resultado_mensual['total'] = cfe_historico[0].total

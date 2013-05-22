@@ -1257,7 +1257,7 @@ def dailyReport(building, consumer_unit, today):
     if consumer_units:
 
         if len(consumer_units) > 1:
-
+            print "Medidor Virtual"
             virtual_cu =\
             c_functions_get_consumer_unit_electrical_parameter_data_clustered(
                 consumer_unit,
@@ -1294,13 +1294,15 @@ def dailyReport(building, consumer_unit, today):
                             astimezone(timezone.get_current_timezone()).time()
 
         else:
-
+            print "Medidor Normal"
+            print "Profile Powermeter", consumer_units[0].profile_powermeter
             #Se obtiene la demanda max
             demanda_max_obj = ElectricDataTemp.objects.\
             filter(profile_powermeter = consumer_units[0].profile_powermeter).\
             filter(medition_date__gte=today_s_utc).\
             filter(medition_date__lte=today_e_utc).\
             order_by('-kW_import_sliding_window_demand')
+            print "dem max obj", demanda_max_obj[0].kW_import_sliding_window_demand
             if demanda_max_obj:
                 demanda_max_temp = demanda_max_obj[0].\
                 kW_import_sliding_window_demand
@@ -1509,7 +1511,7 @@ def dailyReport(building, consumer_unit, today):
         KVARH = str(kvarh_totales)
     )
 
-    new_daily.save()
+    #new_daily.save()
     #print new_daily
     return 'OK'
 

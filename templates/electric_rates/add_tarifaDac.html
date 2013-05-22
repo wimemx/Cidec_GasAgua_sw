@@ -199,85 +199,90 @@ $("a.back").click(function(e){e.preventDefault(); History.back();});
     </ul>
 
 </div>
-<div id="contenido_interno">
-    <h2 id="titulo_form" class="building_attr">
-        {% if operation == "edit" %}Editar un {% else %}Alta de {% endif %}cuota de Tarifa DAC
-    </h2>
+<div id="page_content">
+    <div id="contenido_interno">
+        <h2 id="titulo_form" class="building_attr">
+            {% if operation == "edit" %}
+                Editar Tarifa DAC -
+            {% else %}
+                Alta de Tarifa DAC
+            {% endif %}
+        </h2>
 
 
-    <div class="divider" id="divider_top">&nbsp;</div>
-    <div id="form_container">
-        {% if message %}
-                <span class="notif {{ type }}">
-                    {% autoescape off %}{{ message }}{% endautoescape %}
-                    <a href="#" onclick="$(this).parent().remove();">X</a>
-                </span>
-        {% endif %}
-        <p class="description">
-            Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
-            <br/>
-            Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
-        </p>
-        <form method="post" action=".">
-            {% csrf_token %}
+        <div class="divider" id="divider_top">&nbsp;</div>
+        <div id="form_container">
+            {% if message %}
+                    <span class="notif {{ type }}">
+                        {% autoescape off %}{{ message }}{% endautoescape %}
+                        <a href="#" onclick="$(this).parent().remove();">X</a>
+                    </span>
+            {% endif %}
+            <p class="description">
+                Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
+                <br/>
+                Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
+            </p>
+            <form method="post" action=".">
+                {% csrf_token %}
 
-            <div id="attr_info">
-                <div class="fields_row g12">
-                    <label for="month" class="g2">Mes<span class="required">*</span></label>
-                    <input type="text" name="month" id="month" class="g4" value="{{ post.month }}"/>
-                    <span></span>
-                </div>
-                <div class="fields_row g12">
-                    <label for="t_region" class="g2">Regi&oacute;n<span class="required">*</span></label>
-                    <select name="t_region" id="t_region" class="g4">
-                        <option value="">Selecciona una región</option>
-                        {% if regiones_lst %}
-                        {% for rgn in regiones_lst %}
-                        <option value="{{rgn.id}}" {% if post.region == rgn.id %} selected {% endif %}>{{ rgn.region_name }}</option>
-                        {% endfor %}
-                        {% endif %}
-                    </select>
-                    <span id="sel_region"></span>
-                </div>
-                <div class="fields_row g12">
-                    <label for="t_periodo" class="g2">Periodo</label>
-                    <select name="t_periodo" id="t_periodo" class="g4">
-                        <option value="">Selecciona un periodo</option>
-                        {% if periodos_lst %}
-                        {% for prd in periodos_lst %}
-                        <option value="{{prd.id}}" {% if post.periodo == prd.id %} selected {% endif %}>{{ prd.interval_identifier }}: {{ prd.date_init }} - {{ prd.date_end }} </option>
-                        {% endfor %}
-                        {% endif %}
+                <div id="attr_info">
+                    <div class="fields_row g12">
+                        <label for="month" class="g2">Mes<span class="required">*</span></label>
+                        <input type="text" name="month" id="month" class="g4 text" value="{{ post.month }}"/>
+                        <span></span>
+                    </div>
+                    <div class="fields_row g12">
+                        <label for="t_region" class="g2">Regi&oacute;n<span class="required">*</span></label>
+                        <select name="t_region" id="t_region" class="g4">
+                            <option value="">Selecciona una región</option>
+                            {% if regiones_lst %}
+                            {% for rgn in regiones_lst %}
+                            <option value="{{rgn.id}}" {% if post.region == rgn.id %} selected {% endif %}>{{ rgn.region_name }}</option>
+                            {% endfor %}
+                            {% endif %}
+                        </select>
+                        <span id="sel_region"></span>
+                    </div>
+                    <div class="fields_row g12">
+                        <label for="t_periodo" class="g2">Periodo</label>
+                        <select name="t_periodo" id="t_periodo" class="g4">
+                            <option value="">Selecciona un periodo</option>
+                            {% if periodos_lst %}
+                            {% for prd in periodos_lst %}
+                            <option value="{{prd.id}}" {% if post.periodo == prd.id %} selected {% endif %}>{{ prd.interval_identifier }}: {{ prd.date_init }} - {{ prd.date_end }} </option>
+                            {% endfor %}
+                            {% endif %}
 
-                    </select>
-                    <span id="sel_period"></span>
+                        </select>
+                        <span id="sel_period"></span>
+                    </div>
+                    <div class="fields_row g12">
+                        <label for="monthly_rate" class="g2">
+                            Cargo Mensual Fijo<span class="required">*</span>
+                        </label>
+                        <input type="text" name="monthly_rate" id="monthly_rate" class="g4 text" value="{{ post.monthly_rate|floatformat:2 }}"/>
+                        <span></span>
+                    </div>
+                    <div class="fields_row g12">
+                        <label for="kwh_rate" class="g2">
+                            Cargo KWH<span class="required">*</span>
+                        </label>
+                        <input type="text" name="kwh_rate" id="kwh_rate" class="g4 text" value="{{ post.kwh_rate|floatformat:3 }}"/>
+                        <span></span>
+                    </div>
                 </div>
-                <div class="fields_row g12">
-                    <label for="monthly_rate" class="g2">
-                        Cargo Mensual Fijo<span class="required">*</span>
-                    </label>
-                    <input type="text" name="monthly_rate" id="monthly_rate" class="g4" value="{{ post.monthly_rate }}"/>
-                    <span></span>
+                <div class="buttons g12">
+                    <div class="g9">
+                        <button class="aqua_btn fl" id="save">
+                            Guardar
+                        </button>
+                    </div>
                 </div>
-                <div class="fields_row g12">
-                    <label for="kwh_rate" class="g2">
-                        Cargo KWH<span class="required">*</span>
-                    </label>
-                    <input type="text" name="kwh_rate" id="kwh_rate" class="g4" value="{{ post.kwh_rate }}"/>
-                    <span></span>
-                </div>
-            </div>
-            <div class="buttons g12">
-                <div class="g9">
-                    <button class="aqua_btn fl" id="save">
-                        Guardar
-                    </button>
-                </div>
-            </div>
-        </form>
+            </form>
+
+        </div>
 
     </div>
-
-
 </div>
 {% endblock %}

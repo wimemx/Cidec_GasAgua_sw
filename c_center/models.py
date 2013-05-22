@@ -739,6 +739,22 @@ class ElectricRateForElectricData(models.Model):
         unique_together = ('electric_rates_periods', 'electric_data')
 
 
+class ElectricDataTags(models.Model):
+    electric_rates_periods = models.ForeignKey(ElectricRatesPeriods,
+                                               on_delete=models.PROTECT)
+    electric_data = models.ForeignKey(ElectricDataTemp,
+                                      on_delete=models.PROTECT)
+    identifier = models.IntegerField(default=1)
+
+    def __unicode__(self):
+        return "Electric Data: " + str(self.electric_data.pk) + " " +\
+               str(self.identifier) + " - " +\
+               self.electric_rates_periods.electric_rate.electric_rate_name
+
+    class META:
+        unique_together = ('electric_rates_periods', 'electric_data')
+
+
 class IndustrialEquipment(models.Model):
     """
 

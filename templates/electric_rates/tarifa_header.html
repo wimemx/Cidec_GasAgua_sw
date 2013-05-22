@@ -30,7 +30,14 @@
 
         function refresh_iframe_height(){
             // regresca el height del iframe para ajustarse a su conte
-            setTimeout("parent.document.getElementById('graphFrame').height = 750;", 1000);
+
+            {% if tipo_tarifa == 'HM'  %}
+                setTimeout("parent.document.getElementById('graphFrame').height =2200;", 1000);
+            {% elif tipo_tarifa == 'DAC' %}
+                setTimeout("parent.document.getElementById('graphFrame').height =1200;", 1000);
+            {% else %}
+                setTimeout("parent.document.getElementById('graphFrame').height =200;", 1000);
+            {% endif %}
         }
         function makeIframe(src){
             var graphFrame = document.createElement("IFRAME");
