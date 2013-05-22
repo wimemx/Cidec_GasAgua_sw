@@ -4,7 +4,7 @@ import datetime
 import pytz
 
 #related third party imports
-#from socketIO_client import SocketIO
+from socketIO_client import SocketIO
 from celery import task
 from celery.task.schedules import crontab
 from celery.decorators import periodic_task
@@ -174,6 +174,48 @@ def populate_data_warehouse_specific(
     return
 
 
+def populate_data_warehouse_specific_int(
+        consumer_unit,
+        instant_delta,
+        date_from,
+        date_to
+):
+    """
+        Description:
+            This function populates basic data for the Data Warehouse Extended
+            to start working.
+
+        Arguments:
+            consumer_unit - the consumer unit to generate.
+
+            instant_delta - the desired granularity.
+
+            date_from - Datetime (the begining for the process)
+
+            date_to - Datetime (the end for the process)
+
+        Return:
+            None.
+    """
+
+    electrical_parameters = \
+        data_warehouse_extended.models.ElectricalParameter.objects.all()
+
+    #
+    # Generate data for Instant Delta.
+    # Generate data for each Electrical Parameter.
+    #
+    for electrical_parameter in electrical_parameters:
+        process_dw_consumerunit_electrical_parameter.delay(
+            consumer_unit,
+            date_from,
+            date_to,
+            electrical_parameter,
+            instant_delta)
+
+    return
+
+
 @task(ignore_result=True)
 def process_dw_consumerunit_electrical_parameter(
         consumer_unit, first, last, electrical_parameter, instant_delta):
@@ -250,16 +292,23 @@ def update_data_dw_delta(end, start, delta_name):
 #############################
 
 
-@periodic_task(run_every=crontab(minute='*/60'))
-def data_warehouse_one_hour():
-    #calculate_dw.delay("hour")
-    data_warehouse_update("hour")
-    print "firing periodic task - DW Hour, :)"
+#@periodic_task(run_every=crontab(minute='*/60'))
+#def data_warehouse_one_hour():
+#    #calculate_dw.delay("hour")
+#    data_warehouse_update("hour")
+#    print "firing periodic task - DW Hour, :)"
 
-@periodic_task(run_every=crontab(minute=0, hour=0))
-def data_warehouse_one_day():
-    calculate_dw.delay("day")
-    print "firing periodic task - DW Day"
+#@periodic_task(run_every=crontab(minute=0, hour=0))
+#def data_warehouse_one_day():
+#    calculate_dw.delay("day")
+#    print "firing periodic task - DW Day"
+
+
+#@periodic_task(run_every=crontab(minute=0, hour=0, day_of_week='sun'))
+#def data_warehouse_one_week():
+#    calculate_dw.delay("week")
+#    print "firing periodic task - DW week"
+
 
 @periodic_task(run_every=crontab(minute=1, hour=0))
 def reporte_diario_para_reporte_mensual():
@@ -272,12 +321,6 @@ def calculateMonthlyReport():
     past_month_dt = datetime.date.today() - datetime.timedelta(days=2)
     calculateMonthlyReport_all(past_month_dt.month, past_month_dt.year)
     print "Task done: calculateMonthlyReport_all"
-
-@periodic_task(run_every=crontab(minute=0, hour=0, day_of_week='sun'))
-def data_warehouse_one_week():
-    calculate_dw.delay("week")
-    print "firing periodic task - DW week"
-
 # this will run every minute, see http://celeryproject.org/docs/reference/celery.task.schedules.html#celery.task.schedules.crontab
 #@periodic_task(run_every=crontab(hour="*", minute="*/2", day_of_week="*"))
 #def test_two_minute():

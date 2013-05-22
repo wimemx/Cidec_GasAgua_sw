@@ -34,6 +34,10 @@ urlpatterns = patterns('',
                            'alarms.views.user_notifications'),
                        url(r'^get_latest_notifs/',
                            'alarms.views.get_latest_notifs'),
+
+                       url(r'^refresh_ie_config/',
+                           'alarms.views.refresh_ie_config'),
+
                        )
 
 

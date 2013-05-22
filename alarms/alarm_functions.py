@@ -26,7 +26,8 @@ def set_alarm_json(building, user):
     for cu in cunits:
         p_serial = cu.profile_powermeter.powermeter.powermeter_serial
         eDeviceAlarms = []
-        cu_alarms = Alarms.objects.filter(consumer_unit=cu)
+        cu_alarms = Alarms.objects.filter(consumer_unit=cu).exclude(
+            status=False)
 
         for cua in cu_alarms:
             status = 1 if cua.status else 0
@@ -50,13 +51,13 @@ def set_alarm_json(building, user):
     i_eq.save()
 
 
-def get_alarm_from_building(id):
+def get_alarm_from_building(id_bld):
     """ Return the alarm for the request building
     :param building: Object.- Building instance
     """
 
     alarma = Alarms.objects.filter(
-        consumer_unit__building__pk=id,
+        consumer_unit__building__pk=id_bld,
         status=True).values("pk",
                             "consumer_unit__building__building_name",
                             "electric_parameter__name")
