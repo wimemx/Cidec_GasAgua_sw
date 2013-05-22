@@ -330,12 +330,14 @@ def alarm_list(request):
                     consumer_unit__building__building_name__icontains=
                     request.GET['search']) |
                 Q(electric_parameter__name__icontains=request.GET['search']) |
-                Q(
-                    consumer_unit__profile_powermeter__powermeter__icontains=
-                    request.GET['search'])).order_by(order)
+                Q(consumer_unit__profile_powermeter__powermeter__powermeter_anotation__icontains=
+                    request.GET['search'])
+            ).exclude(
+                alarm_identifier="Interrupción de Datos").order_by(order)
 
         else:
-            lista = Alarms.objects.all().order_by(order)
+            lista = Alarms.objects.all().exclude(
+                alarm_identifier="Interrupción de Datos").order_by(order)
 
         # muestra 10 resultados por pagina
         paginator = Paginator(lista, 10)
@@ -502,10 +504,7 @@ def mostrar_suscripcion_alarma(request, id_alarm):
         else:
             notificacion = 'Ninguno'
 
-
-
-
-    template_vars['notification'] = notificacion
+        template_vars['notification'] = notificacion
 
     template_vars_template = RequestContext(request, template_vars)
     return render_to_response("alarms/alarm_suscription_detail.html",
@@ -1042,21 +1041,9 @@ def refresh_ie_config(request):
             ie = get_object_or_404(IndustrialEquipment,
                                    pk=int(request.POST['ie']))
             if ie.has_new_alarm_config:
-                new_al_config = json.loads(ie.new_alarm_config)
-                eAlarmsPerEDevices = new_al_config["eAlarmsPerEDevices"]
-                cu_alarms = ConsumerUnit.objects.filter(building=ie.building)
-                for cu in cu_alarms:
-                    alarms = Alarms.objects.filter(consumer_unit=cu)
-                    alarms.update(status_alarm=False)
-                    alarmas_idents = [al.alarm_identifier for al in alarms]
-                    for e_device_alarms in eAlarmsPerEDevices['EDeviceAlarms']:
-                        print e_device_alarms
-                        #for al_det in e_device["EDeviceAlarms"]:
-                        #    if al_det['alarm_identifier'] \
-                        #            in alarmas_idents:
-                        #        al = Alarms.objects.get(
-                        #            alarm_identifier=al_det['alarm_identifier'])
-                        #        al.save()
+                update_alarm_config(ie.new_alarm_config, ie.pk)
+            if ie.has_new_config:
+                update_ie_config(ie.new_config, ie.pk)
         return HttpResponse(status=200)
     else:
         raise Http404

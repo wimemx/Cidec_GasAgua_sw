@@ -19,6 +19,7 @@ from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from django.contrib.auth.decorators import login_required
 from collections import defaultdict
+from django.utils import timezone
 
 #local application/library specific imports
 from c_center.models import ProfilePowermeter, ElectricData, ElectricDataTemp, \
@@ -31,9 +32,11 @@ from rbac.models import DataContextPermission, Object, PermissionAsigment, \
 from rbac.rbac_functions import get_buildings_context
 from variety import unique_from_array, timed
 from data_warehouse_extended.models import InstantDelta, ConsumerUnitProfile
-from tareas.tasks import populate_data_warehouse_specific
+from tareas.tasks import populate_data_warehouse_specific, \
+    populate_data_warehouse_specific_int
 
 from django.shortcuts import redirect, render
+import variety
 
 GRAPHS = ['Potencia Activa (kW)', 'Potencia Reactiva (KVar)',
           'Factor de Potencia (PF)',
@@ -410,17 +413,63 @@ def migrate_data(date_time):
     """ searches for electric data with date greater than 'date_time' in a
     remote database then save each electic data in the local database
     """
-    #ed = ElectricDataTemp.objects.using("auditem").filter(
-    #    medition_date__gte=date_time)
-    #print len(ed)
-    #for e in ed:
-    #    f = e
-    #    f.pk = None
-    #    f.save(using="default")
-    #    print f
-    #    tag_this(f.pk)
-    #    print "tagged!"
+    ed = ElectricDataTemp.objects.using("auditem").filter(
+        medition_date__gte=date_time)
+    print len(ed)
+    for e in ed:
+        print "original: ", e
+        local_ed, created = ElectricDataTemp.objects.get_or_create(
+            profile_powermeter=e.profile_powermeter,
+            V1=e.V1,
+            V2=e.V2,
+            V3=e.V3,
+            I1=e.I1,
+            I2=e.I2,
+            I3=e.I3,
+            kWL1=e.kWL1,
+            kWL2=e.kWL2,
+            kWL3=e.kWL3,
+            kvarL1=e.kvarL1,
+            kvarL2=e.kvarL2,
+            kvarL3=e.kvarL3,
+            kVAL1=e.kVAL1,
+            kVAL2=e.kVAL2,
+            kVAL3=e.kVAL3,
+            PFL1=e.PFL1,
+            PFL2=e.PFL2,
+            PFL3=e.PFL3,
+            kW=e.kW,
+            kvar=e.kvar,
+            TotalkVA=e.TotalkVA,
+            PF=e.PF,
+            FREQ=e.FREQ,
+            TotalkWhIMPORT=e.TotalkWhIMPORT,
+            powermeter_serial=e.powermeter_serial,
+            TotalkvarhIMPORT=e.TotalkvarhIMPORT,
+            kWhL1=e.kWhL1,
+            kWhL2=e.kWhL2,
+            kwhL3=e.kwhL3,
+            kvarhL1=e.kvarhL1,
+            kvarhL2=e.kvarhL2,
+            kvarhL3=e.kvarhL3,
+            kVAhL1=e.kVAhL1,
+            kVAhL2=e.kVAhL2,
+            kVAhL3=e.kVAhL3,
+            kW_import_sliding_window_demand=e.kW_import_sliding_window_demand,
+            kvar_import_sliding_window_demand=e.kvar_import_sliding_window_demand,
+            kVA_sliding_window_demand=e.kVA_sliding_window_demand,
+            kvahTOTAL=e.kvahTOTAL
+        )
+        print "created: ", created
+        local_ed.medition_date = e.medition_date
+        local_ed.save(using="default")
+        print "local: ", local_ed
 
+    regenerate_dw_from_date(date_time)
+    return "done"
+
+
+def regenerate_dw_from_date(date_time):
     instant_deltas = InstantDelta.objects.all()
     cus = ConsumerUnitProfile.objects.all()
     for instant in instant_deltas:
@@ -433,3 +482,20 @@ def migrate_data(date_time):
                 date_time
             )
     return "done"
+
+
+def regenerate_dw_in_interval(d1, d2):
+    instant_deltas = InstantDelta.objects.all()
+    cus = ConsumerUnit.objects.all()
+    for instant_delta in instant_deltas:
+        delta = datetime.timedelta(seconds=instant_delta.delta_seconds)
+        delta_time = d2 - d1
+        if delta_time > delta:
+            print cu.building_name, cu.electric_device_type_name
+            for cu in cus:
+                print cu, instant_delta, d1, d2
+                populate_data_warehouse_specific_int(
+                    cu,
+                    instant_delta,
+                    d1, d2
+                )

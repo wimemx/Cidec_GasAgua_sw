@@ -308,7 +308,7 @@ def main_page(request):
                 graphs_type = GRAPHS[request.GET['g_type']]
             except KeyError:
                 graphs_type = GRAPHS['energia']
-        # TODO revisar rbac para nuevas graficas
+
         graphs = graphs_permission(request.user,
                                    request.session['consumer_unit'],
                                    graphs_type)
@@ -2087,6 +2087,7 @@ def add_powermeter(request):
             pw_alias = request.POST.get('pw_alias').strip()
             pw_model = request.POST.get('pw_model')
             pw_serial = request.POST.get('pw_serial').strip()
+            pw_modbus = pw_serial = request.POST.get('pw_modbus').strip()
             message = ''
             _type = ''
 
@@ -2111,6 +2112,12 @@ def add_powermeter(request):
                 _type = "n_notif"
                 continuar = False
 
+            try:
+                pw_modbus = int(pw_modbus)
+            except ValueError:
+                message = "La dirección de ModBus debe de ser numérica."
+                _type = "n_notif"
+
             #Valida por si le da muchos clics al boton
             pwValidate = Powermeter.objects.filter(
                 powermeter_model__pk=pw_model).filter(
@@ -2130,12 +2137,12 @@ def add_powermeter(request):
                 newPowerMeter = Powermeter(
                     powermeter_model=pw_model,
                     powermeter_anotation=pw_alias,
-                    powermeter_serial=pw_serial
-
+                    powermeter_serial=pw_serial,
+                    modbus_address=pw_modbus
                 )
                 newPowerMeter.save()
                 ProfilePowermeter(powermeter=newPowerMeter).save()
-                change_profile_electric_data([pw_serial])
+                change_profile_electric_data.delay([pw_serial])
 
                 template_vars["message"] = "Medidor creado exitosamente"
                 template_vars["type"] = "n_success"
@@ -2177,7 +2184,8 @@ def edit_powermeter(request, id_powermeter):
 
         post = {'pw_alias': powermeter.powermeter_anotation,
                 'pw_model': powermeter.powermeter_model.pk,
-                'pw_serial': powermeter.powermeter_serial}
+                'pw_serial': powermeter.powermeter_serial,
+                'pw_modbus': powermeter.modbus_address}
 
         empresa = request.session['main_building']
         message = ''
@@ -2187,6 +2195,7 @@ def edit_powermeter(request, id_powermeter):
             pw_alias = request.POST.get('pw_alias').strip()
             pw_model = request.POST.get('pw_model')
             pw_serial = request.POST.get('pw_serial').strip()
+            pw_modbus = request.POST.get('pw_modbus').strip()
 
             continuar = True
             if pw_alias == '':
@@ -2207,7 +2216,12 @@ def edit_powermeter(request, id_powermeter):
                 message = "El número serial del medidor no puede quedar vacío"
                 _type = "n_notif"
                 continuar = False
-
+            try:
+                pw_modbus = int(pw_modbus)
+            except ValueError:
+                message = "La dirección ModBus debe de ser un valor numérico"
+                _type = "n_notif"
+                continuar = False
             #Valida el nombre (para el caso de los repetidos)
             if powermeter.powermeter_model_id != pw_model and \
                             powermeter.powermeter_serial != pw_serial:
@@ -2230,8 +2244,9 @@ def edit_powermeter(request, id_powermeter):
                 powermeter.powermeter_anotation = pw_alias
                 powermeter.powermeter_serial = pw_serial
                 powermeter.powermeter_model = pw_model
+                powermeter.modbus_address = pw_modbus
                 powermeter.save()
-                change_profile_electric_data([pw_serial])
+                change_profile_electric_data.delay([pw_serial])
 
                 message = "Medidor editado exitosamente"
                 _type = "n_success"
@@ -2456,9 +2471,10 @@ def see_powermeter(request, id_powermeter):
             powermeter=powermeter).filter(profile_powermeter_status=1)
         if profile_powermeter_objs:
             profile = profile_powermeter_objs[0]
-
+            print profile
             consumer_unit_objs = ConsumerUnit.objects.filter(
                 profile_powermeter=profile)
+            print consumer_unit_objs
             c_unit = consumer_unit_objs[0]
             location = c_unit.building.building_name
 
@@ -6088,6 +6104,7 @@ def add_ie(request):
                 modified_by=request.user
             )
             ie.save()
+            regenerate_ie_config(ie.pk)
             message = "El equipo industrial se ha creado exitosamente"
             _type = "n_success"
             if has_permission(request.user, VIEW,
@@ -6197,6 +6214,7 @@ def edit_ie(request, id_ie):
             industrial_eq.building = building
             industrial_eq.modified_by = request.user
             industrial_eq.save()
+            regenerate_ie_config(industrial_eq.pk)
             message = "El equipo industrial se ha actualizado exitosamente"
             _type = "n_success"
             if has_permission(request.user, VIEW,
@@ -6334,7 +6352,9 @@ def status_ie(request, id_ie):
         else:
             ind_eq.status = True
             str_status = "Activo"
+        ind_eq.modified_by = request.user
         ind_eq.save()
+        regenerate_ie_config(ind_eq.pk)
         mensaje = "El estatus del equipo industrial " + ind_eq.alias + \
                   ", ha cambiado a " + str_status
         _type = "n_success"
@@ -6369,7 +6389,9 @@ def status_batch_ie(request):
                     else:
                         equipo_ind.status = True
 
+                    equipo_ind.modified_by = request.user
                     equipo_ind.save()
+                    regenerate_ie_config(equipo_ind.pk)
 
             mensaje = "Los equipos industriales seleccionados han " \
                       "cambiado su estatus correctamente"
@@ -6503,36 +6525,38 @@ def search_pm(request):
 
 @login_required(login_url='/')
 def asign_pm(request, id_ie):
-    if (not (not has_permission(
+    if (has_permission(
             request.user,
             CREATE,
-            "Asignación de medidores eléctricos a equipos industriales") and not
-    request.user.is_superuser)) and "pm" in request.GET:
+            "Asignación de medidores eléctricos a equipos industriales") or
+            request.user.is_superuser) and "pm" in request.GET:
         ie = get_object_or_404(IndustrialEquipment, pk=int(id_ie))
 
         permission="Asignación de medidores eléctricos a equipos industriales"
-        buildings = get_all_buildings_for_operation(permission, CREATE, request.user)
+        buildings = get_all_buildings_for_operation(permission, CREATE,
+                                                    request.user)
 
         for buil in buildings:
             if buil == ie.building:
-                valid = True
                 pm = get_object_or_404(Powermeter, pk=int(request.GET['pm']))
-                pm_ie = PowermeterForIndustrialEquipment(powermeter=pm,
-                                                 industrial_equipment=ie)
+                pm_ie = PowermeterForIndustrialEquipment(
+                    powermeter=pm, industrial_equipment=ie)
                 pm_ie.save()
-                pm_data = dict(pm=pm.pk,
-                       alias=pm.powermeter_anotation,
-                       modelo=pm.powermeter_model.powermeter_model,
-                       marca=pm.powermeter_model.powermeter_brand,
-                       serie=pm.powermeter_serial,
-                       status=pm.status)
+                ie.modified_by = request.user
+                ie.save()
+                regenerate_ie_config(ie.pk)
+                pm_data = dict(
+                    pm=pm.pk,
+                    alias=pm.powermeter_anotation,
+                    modelo=pm.powermeter_model.powermeter_model,
+                    marca=pm.powermeter_model.powermeter_brand,
+                    serie=pm.powermeter_serial,
+                    status=pm.status)
                 data = simplejson.dumps([pm_data])
-                return HttpResponse(content=data, content_type="application/json")
-                break
-            else:
-               valid = False
+                return HttpResponse(content=data,
+                                    content_type="application/json")
 
-        if valid == False:
+        else:
             mensaje = "No tiene permisos sobre este edificio"
             data = simplejson.dumps(mensaje)
             return HttpResponse(content=data, content_type="application/json")
@@ -6552,6 +6576,9 @@ def detach_pm(request, id_ie):
         ie = get_object_or_404(IndustrialEquipment, pk=int(id_ie))
         PowermeterForIndustrialEquipment.objects. \
             filter(powermeter=pm, industrial_equipment=ie).delete()
+        ie.modified_by = request.user
+        ie.save()
+        regenerate_ie_config(ie.pk)
         mensaje = "El medidor se ha desvinculado"
         return HttpResponseRedirect("/buildings/editar_ie/" +
                                     id_ie + "/?msj=" + mensaje +
@@ -6588,49 +6615,21 @@ def configure_ie(request, id_ie):
             template_vars['powermeters'] = []
             for pm in powermeters:
                 read_time_rate = request.POST['read_time_rate_' + str(pm.pk)]
-                send_time_rate = request.POST['send_time_rate_' + str(pm.pk)]
-                initial_send_time = request.POST['initial_send_time_h_' +
-                                                 str(pm.pk)]
-                send_time_duration = request.POST['send_time_duration_' +
-                                                  str(pm.pk)]
+                send_time_rate = request.POST['send_rate']
+
                 pm.read_time_rate = read_time_rate
                 pm.send_time_rate = send_time_rate
-                h = initial_send_time.split(":")
-                # noinspection PyCallByClass
-                hora_ = datetime.time(int(h[0]), int(h[1]))
-                hora = variety.convert_to_utc(hora_, tz)
-                pm.initial_send_time = hora[0]
-                pm.send_time_duration = send_time_duration
                 pm.save()
                 template_vars['powermeters'].append(
                     dict(pk=pm.pk,
                          anotation=pm.powermeter.powermeter_anotation,
                          read_time_rate=pm.read_time_rate,
-                         send_time_rate=pm.send_time_rate,
-                         initial_send_time=hora_,
-                         send_time_duration=pm.send_time_duration
-                    ))
-
-                settings_pm.append(dict(
-                    identifier=pm.powermeter.powermeter_serial,
-                    read_time_rate=read_time_rate,
-                    send_time_rate=send_time_rate,
-                    initial_send_time=str(hora[0]),
-                    send_time_duration=send_time_duration,
-                    model=pm.powermeter.powermeter_model.powermeter_model,
-                    status=pm.powermeter.status
-                ))
+                         send_time_rate=pm.send_time_rate))
             ie.monitor_time_rate = request.POST['monitor_time_rate']
             ie.check_config_time_rate = request.POST['check_config_time_rate']
-            ie.has_new_config = True
             ie.modified_by = request.user
             ie.save()
-            settings_ie = [dict(
-                monitor_time_rate=ie.monitor_time_rate,
-                check_config_time_rate=ie.check_config_time_rate,
-                powermeters=settings_pm)]
-            ie.new_config = simplejson.dumps(settings_ie)
-            ie.save()
+            regenerate_ie_config(ie.pk)
             template_vars['message'] = "El equipo industrial ha guardado su" \
                                        " configuración correctamente"
             template_vars['msg_type'] = "n_success"
@@ -6845,6 +6844,7 @@ def save_add_powermeter_popup(request):
         pw_alias = request.POST.get('pw_alias').strip()
         pw_model = request.POST.get('pw_model')
         pw_serial = request.POST.get('pw_serial').strip()
+        pw_modbus = request.POST.get('pw_modbus').strip()
 
         continuar = True
         if pw_alias == '':
@@ -6857,6 +6857,11 @@ def save_add_powermeter_popup(request):
             continuar = False
 
         if pw_serial == '':
+            continuar = False
+
+        try:
+            pw_modbus = int(pw_modbus)
+        except ValueError:
             continuar = False
 
         #Valida por si le da muchos clics al boton
@@ -6872,13 +6877,13 @@ def save_add_powermeter_popup(request):
             newPowerMeter = Powermeter(
                 powermeter_model=pw_model,
                 powermeter_anotation=pw_alias,
-                powermeter_serial=pw_serial
-
+                powermeter_serial=pw_serial,
+                modbus_address=pw_modbus
             )
             newPowerMeter.save()
             profile = ProfilePowermeter(powermeter=newPowerMeter)
             profile.save()
-            change_profile_electric_data([pw_serial])
+            change_profile_electric_data.delay([pw_serial])
 
             return HttpResponse(content=profile.pk,
                                 content_type="text/plain",

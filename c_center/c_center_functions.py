@@ -2493,16 +2493,19 @@ def tarifa_3_v2(building, s_date, e_date, month, year):
 
 def asign_electric_data_to_pw(serials):
     """ change the profile_powermeter of all the meditions with an specific
-    power_meter_serial
+    power_meter_serial and unregistered powermeter
     serials: an array containing strings: powermeter_serials
     """
     for serial in serials:
         profile = ProfilePowermeter.objects.get(
             powermeter__powermeter_serial=serial)
-        ed = ElectricDataTemp.objects.filter(powermeter_serial=serial)
-        for e in ed:
-            e.profile_powermeter = profile
-            e.save()
+        ed = ElectricDataTemp.objects.filter(
+            powermeter_serial=serial,
+            profile_powermeter__powermeter__powermeter_anotation="No Registrado")
+        if ed:
+            for e in ed:
+                e.profile_powermeter = profile
+                e.save()
 
     return "done"
 
@@ -3101,6 +3104,29 @@ def getAllRates():
 
     print "All Rates Crawlers - Done"
 
+def regenerate_ie_config(ie_id):
+    ie = IndustrialEquipment.objects.get(pk=ie_id)
+    json_dic = dict(eDevicesConfigList=[])
+    ie_pm = PowermeterForIndustrialEquipment.objects.filter(
+        industrial_equipment=ie)
+    if ie_pm:
+        for pm in ie_pm:
+            consumer = ConsumerUnit.objects.get(
+                profile_powermeter__powermeter=pm.powermeter)
+            pm_dict = dict(IdMedidorESN=pm.powermeter.powermeter_serial,
+                           EDeviceModel=pm.powermeter.powermeter_model \
+                               .powermeter_model,
+                           ProfileIndex=consumer.profile_powermeter.pk,
+                           ProfileConsumerUnit=consumer.pk,
+                           ModbusAddress=pm.powermeter.modbus_address,
+                           ReadTimeRate=consumer.profile_powermeter \
+                               .read_time_rate,
+                           SendTimeRate=consumer.profile_powermeter \
+                               .send_time_rate,
+                           status=pm.powermeter.status)
+            json_dic['eDevicesConfigList'].append(pm_dict)
+    ie.has_new_config = True
+    ie.new_config = simplejson.dumps(json_dic)
+    ie.save()
 
-
-
+    return

@@ -263,6 +263,7 @@ class Powermeter(models.Model):
         default=datetime.datetime.now())
     powermeter_serial = models.CharField(max_length=128)
     status = models.IntegerField("Estatus", choices=STATUS, default=1)
+    modbus_address = models.SmallIntegerField()
 
     def __unicode__(self):
         return self.powermeter_anotation

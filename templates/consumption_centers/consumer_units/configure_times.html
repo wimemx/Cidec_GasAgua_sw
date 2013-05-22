@@ -68,9 +68,9 @@
             {% csrf_token %}
                 <div id="industrial_eq" class="g12">
                     <h3 id="notice" class="g12">Este equipo fue modificado por &uacute;ltima vez el {{ last_changed|date:"l d" }} de {{ last_changed|date:"F" }} de {{ last_changed|date:"Y" }}, a las {{  last_changed|date:"H:i e" }}</h3>
-                    <label for="monitor_time_rate" class="g3">Frecuencia de medici&oacute;n para el medidor, en segundos</label>
+                    <label for="monitor_time_rate" class="g3">Frecuecia de env&iacute;o, en segundos</label>
                     <div class="g2">
-                        <input type="text" class="integer fl spinner" id="monitor_time_rate" name="monitor_time_rate" value="{{ ie.monitor_time_rate }}"/>
+                        <input type="text" class="integer fl spinner" id="send_rate" name="send_rate" value="{{ powermeters.0.send_time_rate }}"/>
                     </div>
                     <span class="g2"></span>
                     <label for="check_config_time_rate" class="g3">Tiempo para verificar nueva configuraci&oacute;n, en segundos</label>
@@ -88,26 +88,6 @@
                             <label for="read_time_rate_{{ pm.pk }}" class="g3">Frecuencia de lectura, en segundos</label>
                             <div class="g2">
                                 <input type="text" class="integer fl spinner" id="read_time_rate_{{ pm.pk }}" name="read_time_rate_{{ pm.pk }}" value="{{ pm.read_time_rate }}"/>
-                            </div>
-                            <span class="g2"></span>
-                            <label for="send_time_rate_{{ pm.pk }}" class="g3">Frecuencia de env&iacute;o, en segundos</label>
-                            <div class="g2">
-                                <input type="text" class="integer fl spinner" id="send_time_rate_{{ pm.pk }}" name="send_time_rate_{{ pm.pk }}" value="{{ pm.send_time_rate }}"/>
-                            </div>
-
-                            <label for="initial_send_time_h_{{ pm.pk }}" class="g3">Hora del primer env&iacute;o &ndash; (H:M)</label>
-
-
-                            <div class="g2">
-                                <input type="text" name="initial_send_time_h_{{ pm.pk }}" class="fl initial_send_time_h" id="initial_send_time_h_{{ pm.pk }}" value="{{ pm.initial_send_time|time:"H:i" }}"/>
-
-                            </div>
-
-
-                            <span class="g2"></span>
-                            <label class="g3" for="send_time_duration_{{ pm.pk }}">Duraci&oacute;n del env&iacute;o, en segundos</label>
-                            <div class="g2">
-                                <input type="text" class="integer fl spinner" id="send_time_duration_{{ pm.pk }}" name="send_time_duration_{{ pm.pk }}" value="{{ pm.send_time_duration }}"/>
                             </div>
                         </div>
                     {% endfor %}

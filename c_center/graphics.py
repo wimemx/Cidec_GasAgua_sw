@@ -113,14 +113,7 @@ def get_consumer_unit_electric_data_raw(
                 adj_time = electric_data_values[cont]['medition_date'] - time_m
             except IndexError:
                 adj_time += delta_m
-            else:
-                electric_data = electric_data_values[cont][electric_data_name]
-                medition_date = electric_data_values[cont]['medition_date']
-                electric_data_raw.append(
-                    dict(datetime=int(time.mktime(
-                             django.utils.timezone.localtime(medition_date).timetuple())),
-                         value=abs(electric_data),
-                         certainty=True))
+
             time_m += delta_m
             #add a margin of 3 seconds between readings
             if adj_time > (delta_m + datetime.timedelta(seconds=3)):
@@ -132,6 +125,13 @@ def get_consumer_unit_electric_data_raw(
                          certainty=False))
             else:
                 #print "data"
+                electric_data = electric_data_values[cont][electric_data_name]
+                medition_date = electric_data_values[cont]['medition_date']
+                electric_data_raw.append(
+                    dict(datetime=int(time.mktime(
+                             django.utils.timezone.localtime(medition_date).timetuple())),
+                         value=abs(electric_data),
+                         certainty=True))
                 cont += 1
     return electric_data_raw
 
@@ -322,7 +322,8 @@ def get_consumer_unit_electric_data_interval_raw_optimized(
 
         electric_data_raw.append(electric_data_raw_item)
         datetime_current_utc += hour_delta
-
+    #TODO check this
+    print electric_data_raw
     return electric_data_raw
 
 
