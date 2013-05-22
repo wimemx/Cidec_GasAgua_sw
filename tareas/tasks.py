@@ -22,8 +22,9 @@ import data_warehouse_extended.views
 from data_warehouse.views import populate_data_warehouse, \
     data_warehouse_update
 from c_center.c_center_functions import save_historic, dailyReportAll, \
-    asign_electric_data_to_pw, calculateMonthlyReport_all, all_dailyreportAll
-from c_center.calculations import reTagHolidays
+    asign_electric_data_to_pw, calculateMonthlyReport_all, all_dailyreportAll,\
+    getRatesCurrentMonth
+from c_center.calculations import recursive_tag
 
 
 @task(ignore_result=True)
@@ -221,7 +222,6 @@ def process_dw_consumerunit_electrical_parameter(
     data_warehouse_extended.views.process_consumer_unit_electrical_parameter(
         consumer_unit, first, last, electrical_parameter, instant_delta
     )
-
 
 @task(ignore_result=True)
 def tag_batch(initial, last):
@@ -429,3 +429,10 @@ def last_data_received():
                                              to_mail)
                 msg.attach_alternative(html_content, "text/html")
                 msg.send()
+
+
+
+@periodic_task(run_every=crontab(day_of_month='1'))
+def getCFERates():
+    getRatesCurrentMonth()
+    print "Task done: getCFERates"

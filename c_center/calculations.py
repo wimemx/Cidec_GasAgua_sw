@@ -902,7 +902,7 @@ def recursive_tag(initial=None, last=None):
 
     if not initial:
         initial_pk = ElectricDataTemp.objects.filter(
-            medition_date__gte=datetime.datetime(2013, 4, 7, 9, 0, 0)).values("pk").order_by("medition_date")[0]
+            medition_date__gte=datetime.datetime(2013, 5, 10, 0, 0, 0)).values("pk").order_by("medition_date")[0]
         initial = initial_pk['pk']
     if not last:
         last_pk = ElectricDataTemp.objects.all().values("pk").order_by("-medition_date")[0]
@@ -1180,3 +1180,101 @@ def reTagHolidays():
                         tag_reading_unique_id(electObj.pk)
 
     print "Done with Holidays"
+
+
+def daytag_reading(readingObj):
+    """
+        Tag the readings. Separate days
+    """
+    #readingObj = ElectricDataTemp.objects.get(id=reading_id)
+    #Si la lectura proviene de cualquier medidor menos del No Asignado
+    if readingObj.profile_powermeter.pk != 4:
+        #Se revisa que esa medicion no este etiquetada ya.
+        tagged_reading = ElectricDataTags.objects.\
+        filter(electric_data = readingObj)
+
+        if not tagged_reading:
+            #Se obtiene el Consumer Unit, para poder obtener el edificio, una
+            # vez obtenido el edificio, se puede obtener la region y la tarifa
+            consumerUnitObj = ConsumerUnit.objects.filter(
+                profile_powermeter=readingObj.profile_powermeter)
+            buildingObj = Building.objects.get(
+                id=consumerUnitObj[0].building.id)
+
+            #La hora de la medicion (UTC) se convierte a hora local
+            fecha_zhor = readingObj.medition_date.astimezone(
+                tz=timezone.get_current_timezone())
+            #Obtiene el periodo de la lectura actual
+            reading_period_type = obtenerTipoPeriodoObj(fecha_zhor,
+                                                        buildingObj.region)
+
+            #Obtiene las ultimas lecturas de ese medidor
+            last_reading = ElectricDataTags.objects.filter(
+                electric_data__profile_powermeter=readingObj.
+                profile_powermeter).\
+            order_by("-electric_data__pk")
+
+            #Si existen registros para ese medidor
+            if last_reading:
+                #Se revisa la hora local de la ultima lectura.
+                #Si la lectura es de un día nuevo, el identificador se reinicia a 1
+
+                fecha_anterior = last_reading[0].electric_data.medition_date.\
+                astimezone(tz=timezone.get_current_timezone())
+
+                if fecha_anterior.hour == 23 and fecha_zhor.hour == 0:
+                    tag = 1
+                else:
+                    #Obtiene el periodo de la ultima lectura de ese medidor
+                    last_reading_type = last_reading[0].\
+                    electric_rates_periods.period_type
+
+                    #    Se compara el periodo actual con el periodo del ultimo registro.
+                    #    Si los periodos son iguales, el identificador será el mismo
+
+                    if reading_period_type.period_type == last_reading_type:
+                        tag = last_reading[0].identifier
+                    else:
+                        #Si los periodos son diferentes, al identificador anterior,
+                        # se le sumara 1.
+                        tag = last_reading[0].identifier + 1
+
+            else: #Si será un registro para un nuevo medidor
+                tag = 1
+
+            print "Period", reading_period_type
+            print "Electric Data", readingObj,
+            print "Tag", tag
+
+            #Guarda el registro etiquetado
+            newTaggedReading = ElectricDataTags(
+                electric_rates_periods=reading_period_type,
+                electric_data=readingObj,
+                identifier=tag
+            )
+            newTaggedReading.save()
+
+            return True
+    return False
+
+def daytag_day(day, profile_powermeter):
+
+    """
+        day = datetime
+        profile_powermeter
+    """
+
+    #Se convierte ese dia a hora UTC
+    next_day = day + datetime.timedelta(days=1)
+
+    #Se obtienen todas las lecturas para ese profile powermeter
+
+    readings =  ElectricDataTemp.objects.filter(
+        profile_powermeter=profile_powermeter, medition_date__gte=day,
+        medition_date__lt=next_day).\
+    order_by('pk')
+
+    for rd in readings:
+        daytag_reading(rd)
+
+

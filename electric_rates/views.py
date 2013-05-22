@@ -435,7 +435,7 @@ def edit_tarifaHM(request, id_hm):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/")
     if request.user.is_superuser:
-        datacontext = get_buildings_context(request.user)
+        datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
         post = ''
@@ -448,6 +448,7 @@ def edit_tarifaHM(request, id_hm):
         post = {
             'month':month_str,
             'region':int(hm_obj.region_id),
+            'region_name': hm_obj.region.region_name,
             'demand_rate':hm_obj.KDF,
             'kwh_punta':hm_obj.KWHP,
             'kwh_int':hm_obj.KWHI,
@@ -463,6 +464,7 @@ def edit_tarifaHM(request, id_hm):
             empresa=empresa,
             company=company,
             post=post,
+            operation="edit",
             regiones_lst=regiones_lst,
             sidebar=request.session['sidebar']
         )
@@ -470,8 +472,6 @@ def edit_tarifaHM(request, id_hm):
         if request.method == "POST":
             template_vars["post"] = request.POST
 
-            hm_month = request.POST.get('month').strip()
-            hm_region = request.POST.get('t_region').strip()
             hm_demanda = request.POST.get('demand_rate').strip()
             hm_kwhp = request.POST.get('kwh_punta').strip()
             hm_kwhi = request.POST.get('kwh_int').strip()
@@ -483,16 +483,6 @@ def edit_tarifaHM(request, id_hm):
             type = ""
 
             continuar = True
-            if hm_month == '':
-                message = "Se debe seleccionar el mes"
-                type = "n_notif"
-                continuar = False
-
-            if hm_region == '':
-                message = "Se debe seleccionar una región"
-                type = "n_notif"
-                continuar = False
-                hm_region = 0
 
             if hm_demanda == '':
                 message = "El cargo de Demanda Facturable no puede quedar vacío"
@@ -524,32 +514,9 @@ def edit_tarifaHM(request, id_hm):
                 type = "n_notif"
                 continuar = False
 
-            #Se parsea el mes para ponerlo en el formato debido
-            arr_month = hm_month.split('/')
-            billing_month = datetime.date(year=int(arr_month[1]), month=int(arr_month[0]), day=1)
-            last_day = monthrange(int(arr_month[1]),int(arr_month[0]))
-            billing_end = datetime.date(year=int(arr_month[1]), month=int(arr_month[0]), day=last_day[1])
-
-            if continuar:
-
-                #Se obtiene el objeto de la region
-                regionObj = get_object_or_404(Region, pk=hm_region)
-
-                #Se verifica que no haya una tarifa ya registrada para ese mes
-                if hm_obj.date_init != billing_month or hm_obj.region != regionObj:
-
-                    bmonth_exists = ElectricRatesDetail.objects.filter(date_init__lte = billing_month).\
-                    filter(date_end__gte = billing_month).filter(region=regionObj)
-
-                    if bmonth_exists:
-                        message = "Ya hay una tarifa registrada para este mes"
-                        type = "n_notif"
-                        continuar = False
-                        hm_region = hm_obj.region_id
-
             post = {
-                'month':hm_month,
-                'region':int(hm_region),
+                'month':month_str,
+                'region':int(hm_obj.region_id),
                 'demand_rate':hm_demanda,
                 'kwh_punta':hm_kwhp,
                 'kwh_int':hm_kwhi,
@@ -559,10 +526,6 @@ def edit_tarifaHM(request, id_hm):
             }
 
             if continuar:
-
-                #Se obtiene el objeto de la tarifa HM
-                HM_erate = get_object_or_404(ElectricRates, pk = 1)
-
                 #Se edita la cuota
                 hm_obj.KDF = hm_demanda
                 hm_obj.KWHP = hm_kwhp
@@ -570,9 +533,6 @@ def edit_tarifaHM(request, id_hm):
                 hm_obj.KWHB = hm_kwhb
                 hm_obj.FRI = hm_fri
                 hm_obj.FRB = hm_frb
-                hm_obj.date_init = billing_month
-                hm_obj.date_end = billing_end
-                hm_obj.region = regionObj
 
                 hm_obj.save()
 
@@ -588,7 +548,8 @@ def edit_tarifaHM(request, id_hm):
             template_vars["type"] = type
 
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("electric_rates/add_tarifaHM.html", template_vars_template)
+        return render_to_response("electric_rates/tarifas.html", template_vars_template)
+        #return HttpResponseRedirect("/")
     else:
         datacontext = get_buildings_context(request.user)
         template_vars = {}
@@ -1004,7 +965,7 @@ def view_tarifa_DAC(request):
 
 
 @login_required(login_url='/')
-def tarifaHM_header(request, tarifa_n):
+def tarifa_header(request, tarifa_n):
     datacontext = get_buildings_context(request.user)[0]
     if request.user.is_superuser:
         set_default_session_vars(request, datacontext)
@@ -1032,7 +993,7 @@ def tarifaHM_header(request, tarifa_n):
         template_vars['year_list'] = year_list
 
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("electric_rates/tarifaHM_header.html",
+        return render_to_response("electric_rates/tarifa_header.html",
                                   template_vars_template)
     else:
         return render_to_response("generic_error.html",
