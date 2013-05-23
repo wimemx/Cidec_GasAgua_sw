@@ -838,45 +838,52 @@ def user_notifications(request):
         electricParameters = ElectricParameters.objects.all()
         template_vars['electricParameters'] = electricParameters
         #get all buildings
-        buildings = Building.objects.all();
+        buildings = Building.objects.all()
         template_vars['buildings'] = buildings
 
-
         if "notificacionesPorGrupo" in request.GET:
-            notifs = UserNotifications.objects.filter(Q(read=False)).order_by("notification_group")
-            if has_permission(request.user,
-                      VIEW,
-                      "Ver suscripciones a alarmas") or \
-            request.user.is_superuser:
-                n_count = UserNotifications.objects.filter(Q(
-                user=request.user, read=False
-                )).values("notification_group").annotate(
-                Count("notification_group"))
+            notifs = UserNotifications.objects.filter(Q(read=False)).order_by(
+                "notification_group")
+            if has_permission(
+                    request.user, VIEW,
+                    "Ver suscripciones a alarmas") or request.user.is_superuser:
+                n_count = UserNotifications.objects.filter(
+                    Q(user=request.user, read=False)).values(
+                        "notification_group").annotate(
+                            Count("notification_group"))
                 template_vars['ncount']= n_count
                 diccionario = {}
                 fechas = {}
 
                 for item in n_count:
-                    notifs_groups = UserNotifications.objects.filter(Q(user=request.user, read=False, notification_group=item['notification_group'])).order_by("notification_group")
+                    notifs_groups = UserNotifications.objects.filter(
+                        Q(
+                            user=request.user,
+                            read=False,
+                            notification_group=item['notification_group'])
+                    ).order_by("notification_group")
                     data = defaultdict(list)
 
                     for item2 in notifs_groups:
                         locale.setlocale(locale.LC_ALL, 'es_ES')
-                        data[str(item2.alarm_event.triggered_time.date().strftime(
-                                '%d de %B'))].append(item2)
+                        dict_key = item2.alarm_event.triggered_time.date()\
+                            .strftime('%d de %B')
+                        data[str(dict_key)].append(item2)
 
                     diccionario[str(item['notification_group'])] = dict(data)
 
                 template_vars['diccionario'] = diccionario
 
         if "todas" in request.GET:
-            notifs = UserNotifications.objects.filter(Q(read=True)).order_by("-alarm_event__triggered_time")
+            notifs = UserNotifications.objects.filter(
+                Q(read=True)).order_by("-alarm_event__triggered_time")
             template_vars['all'] = True
 
 
         if "group" in request.GET:
             group = request.GET.get('group')
-            notifs = UserNotifications.objects.filter(Q(notification_group=group),Q(read=False))
+            notifs = UserNotifications.objects.filter(
+                Q(notification_group=group),Q(read=False))
 
 
         if "parameterType" in request.GET or "buildings" in request.GET:
@@ -887,26 +894,39 @@ def user_notifications(request):
                 if parameterType == '-1':
                     if buildings == '0':
                         notifs = UserNotifications.objects.filter(
-                        Q(user= request.user),
-                        Q(alarm_event__alarm__alarm_identifier='Interrupción de Datos')).order_by("-alarm_event__triggered_time")
+                            Q(user= request.user),
+                            Q(alarm_event__alarm__alarm_identifier=
+                                'Interrupción de Datos')).order_by(
+                                    "-alarm_event__triggered_time")
                     else:
                         notifs = UserNotifications.objects.filter(
-                        Q(user= request.user),
-                        Q(alarm_event__alarm__alarm_identifier='Interrupción de Datos'), Q(alarm_event__alarm__consumer_unit__building__pk=buildings)).order_by("-alarm_event__triggered_time")
+                            Q(user= request.user),
+                            Q(alarm_event__alarm__alarm_identifier=
+                                'Interrupción de Datos'),
+                            Q(alarm_event__alarm__consumer_unit__building__pk=
+                                buildings)).order_by(
+                                    "-alarm_event__triggered_time")
                 else:
                     if parameterType == '0':
                         notifs = UserNotifications.objects.filter(
-                        Q(user= request.user),
-                        Q(alarm_event__alarm__consumer_unit__building__pk=buildings)).order_by("-alarm_event__triggered_time")
+                            Q(user= request.user),
+                            Q(alarm_event__alarm__consumer_unit__building__pk=
+                                buildings)).order_by(
+                                    "-alarm_event__triggered_time")
                     if buildings == '0':
                         notifs = UserNotifications.objects.filter(
-                        Q(alarm_event__alarm__electric_parameter__pk=parameterType),
-                        Q(user= request.user)).order_by("-alarm_event__triggered_time")
+                            Q(alarm_event__alarm__electric_parameter__pk=
+                                parameterType),
+                            Q(user= request.user)).order_by(
+                                "-alarm_event__triggered_time")
                     if buildings != '0' and parameterType != '0':
                         notifs = UserNotifications.objects.filter(
-                            Q(alarm_event__alarm__electric_parameter__pk=parameterType),
+                            Q(alarm_event__alarm__electric_parameter__pk
+                            =parameterType),
                             Q(user= request.user),
-                            Q(alarm_event__alarm__consumer_unit__building__pk=buildings)).order_by("-alarm_event__triggered_time")
+                            Q(alarm_event__alarm__consumer_unit__building__pk
+                            =buildings)).order_by(
+                                "-alarm_event__triggered_time")
 
         if not request.GET:
             notifs = UserNotifications.objects.filter(
