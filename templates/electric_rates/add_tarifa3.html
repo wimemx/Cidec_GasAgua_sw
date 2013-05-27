@@ -164,6 +164,7 @@ $("a.back").click(function(e){e.preventDefault(); History.back();});
     </ul>
 
 </div>
+<div id='page_content'>
 <div id="contenido_interno">
     <h2 id="titulo_form" class="building_attr">
         {% if operation == "edit" %}Editar un {% else %}Alta de {% endif %}cuota de Tarifa 3
@@ -189,7 +190,7 @@ $("a.back").click(function(e){e.preventDefault(); History.back();});
             <div id="attr_info">
                 <div class="fields_row g12">
                     <label for="month" class="g2">Mes<span class="required">*</span></label>
-                    <input type="text" name="month" id="month" class="g4" value="{{ post.month }}"/>
+                    <input type="text" name="month" id="month" class="g4 text" value="{{ post.month }}"/>
                     <span></span>
                 </div>
 
@@ -197,14 +198,14 @@ $("a.back").click(function(e){e.preventDefault(); History.back();});
                     <label for="kw_rate" class="g2">
                         Cargo Demanda Máxima<span class="required">*</span>
                     </label>
-                    <input type="text" name="kw_rate" id="kw_rate" class="g4" value="{{ post.kw_rate }}"/>
+                    <input type="text" name="kw_rate" id="kw_rate" class="g4 text" value="{{ post.kw_rate }}"/>
                     <span></span>
                 </div>
                 <div class="fields_row g12">
                     <label for="kwh_rate" class="g2">
                         Cargo KWH<span class="required">*</span>
                     </label>
-                    <input type="text" name="kwh_rate" id="kwh_rate" class="g4" value="{{ post.kwh_rate }}"/>
+                    <input type="text" name="kwh_rate" id="kwh_rate" class="g4 text" value="{{ post.kwh_rate }}"/>
                     <span></span>
                 </div>
             </div>
@@ -219,6 +220,6 @@ $("a.back").click(function(e){e.preventDefault(); History.back();});
 
     </div>
 
-
+    </div>
 </div>
 {% endblock %}
