@@ -49,6 +49,11 @@
             </p>
 
             <p>
+                <span class="strong label">Dirección ModBus:</span>
+                {{ powermeter.modbus_address }}
+            </p>
+
+            <p>
                 <span class="strong label">Estado:</span>
                 {% if powermeter.status == 1 %}
                     Activo

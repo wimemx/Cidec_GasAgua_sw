@@ -330,12 +330,14 @@ def alarm_list(request):
                     consumer_unit__building__building_name__icontains=
                     request.GET['search']) |
                 Q(electric_parameter__name__icontains=request.GET['search']) |
-                Q(
-                    consumer_unit__profile_powermeter__powermeter__icontains=
-                    request.GET['search'])).order_by(order)
+                Q(consumer_unit__profile_powermeter__powermeter__powermeter_anotation__icontains=
+                    request.GET['search'])
+            ).exclude(
+                alarm_identifier="Interrupción de Datos").order_by(order)
 
         else:
-            lista = Alarms.objects.all().order_by(order)
+            lista = Alarms.objects.all().exclude(
+                alarm_identifier="Interrupción de Datos").order_by(order)
 
         # muestra 10 resultados por pagina
         paginator = Paginator(lista, 10)
@@ -502,10 +504,7 @@ def mostrar_suscripcion_alarma(request, id_alarm):
         else:
             notificacion = 'Ninguno'
 
-
-
-
-    template_vars['notification'] = notificacion
+        template_vars['notification'] = notificacion
 
     template_vars_template = RequestContext(request, template_vars)
     return render_to_response("alarms/alarm_suscription_detail.html",
@@ -655,7 +654,7 @@ def add_alarm_suscription(request):
     template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
 
-    permission = "Ver alta suscripción alarma"
+    permission = "Alta suscripción de alarma"
     #Operación es CREATE
     if has_permission(request.user, CREATE,
                       permission) or \
@@ -709,7 +708,7 @@ def edit_alarm_suscription(request, id_alarm):
     suscripcion=get_object_or_404(UserNotificationSettings, pk=id_alarm)
     template_vars['edit_suscription'] = suscripcion
     template_vars['operation'] = 'edit'
-    permission = "Modificar suscripción a alarmas"
+    permission = "Modificar suscripcion a alarma"
     if has_permission(request.user, UPDATE,
                       permission) or \
             request.user.is_superuser:
@@ -839,48 +838,52 @@ def user_notifications(request):
         electricParameters = ElectricParameters.objects.all()
         template_vars['electricParameters'] = electricParameters
         #get all buildings
-        buildings = Building.objects.all();
+        buildings = get_all_buildings_for_operation\
+                ("Ver edificios", VIEW, request.user)
         template_vars['buildings'] = buildings
 
-
         if "notificacionesPorGrupo" in request.GET:
-            notifs = UserNotifications.objects.filter(Q(read=False)).order_by("notification_group")
-            if has_permission(request.user,
-                      VIEW,
-                      "Ver suscripciones a alarmas") or \
-            request.user.is_superuser:
-                n_count = UserNotifications.objects.filter(Q(
-                user=request.user, read=False
-                )).values("notification_group").annotate(
-                Count("notification_group"))
+            notifs = UserNotifications.objects.filter(read=False).order_by(
+                "notification_group")
+            if has_permission(
+                    request.user, VIEW,
+                    "Ver suscripciones a alarmas") or request.user.is_superuser:
+                n_count = UserNotifications.objects.filter(
+                    user=request.user, read=False).values(
+                        "notification_group").annotate(
+                            Count("notification_group"))
                 template_vars['ncount']= n_count
                 diccionario = {}
-                fechas = {}
 
                 for item in n_count:
-                    notifs_groups = UserNotifications.objects.filter(Q(user=request.user, read=False, notification_group=item['notification_group'])).order_by("notification_group")
+                    notifs_groups = UserNotifications.objects.filter\
+                            (user=request.user,
+                             read=False,
+                             notification_group=item['notification_group']
+                            ).order_by("notification_group")
                     data = defaultdict(list)
 
                     for item2 in notifs_groups:
                         locale.setlocale(locale.LC_ALL, 'es_ES')
-                        data[str(item2.alarm_event.triggered_time.date().strftime(
-                                '%d de %B'))].append(item2)
+                        dict_key = item2.alarm_event.triggered_time.date()\
+                            .strftime('%d de %B')
+                        data[str(dict_key)].append(item2)
 
                     diccionario[str(item['notification_group'])] = dict(data)
 
                 template_vars['diccionario'] = diccionario
 
-        if "todas" in request.GET:
-            notifs = UserNotifications.objects.filter(Q(read=True)).order_by("-alarm_event__triggered_time")
+        elif "todas" in request.GET:
+            notifs = UserNotifications.objects.filter(read=True)\
+                .order_by("-alarm_event__triggered_time")
             template_vars['all'] = True
 
-
-        if "group" in request.GET:
+        elif "group" in request.GET:
             group = request.GET.get('group')
-            notifs = UserNotifications.objects.filter(Q(notification_group=group),Q(read=False))
+            notifs = UserNotifications.objects.filter(
+                notification_group=group,read=False, user= request.user)
 
-
-        if "parameterType" in request.GET or "buildings" in request.GET:
+        elif "parameterType" in request.GET or "buildings" in request.GET:
 
                 parameterType = request.GET.get('parameterType')
                 buildings = request.GET.get('buildings')
@@ -888,26 +891,43 @@ def user_notifications(request):
                 if parameterType == '-1':
                     if buildings == '0':
                         notifs = UserNotifications.objects.filter(
-                        Q(user= request.user),
-                        Q(alarm_event__alarm__alarm_identifier='Interrupción de Datos')).order_by("-alarm_event__triggered_time")
+                            Q(user= request.user),
+                            Q(alarm_event__alarm__alarm_identifier=
+                                'Interrupción de Datos')).order_by(
+                                    "-alarm_event__triggered_time")
                     else:
                         notifs = UserNotifications.objects.filter(
-                        Q(user= request.user),
-                        Q(alarm_event__alarm__alarm_identifier='Interrupción de Datos'), Q(alarm_event__alarm__consumer_unit__building__pk=buildings)).order_by("-alarm_event__triggered_time")
+                            Q(user= request.user),
+                            Q(alarm_event__alarm__alarm_identifier=
+                                'Interrupción de Datos'),
+                            Q(alarm_event__alarm__consumer_unit__building__pk=
+                                buildings)).order_by(
+                                    "-alarm_event__triggered_time")
                 else:
                     if parameterType == '0':
                         notifs = UserNotifications.objects.filter(
-                        Q(user= request.user),
-                        Q(alarm_event__alarm__consumer_unit__building__pk=buildings)).order_by("-alarm_event__triggered_time")
+                            Q(user= request.user),
+                            Q(alarm_event__alarm__consumer_unit__building__pk=
+                                buildings)).order_by(
+                                    "-alarm_event__triggered_time")
                     if buildings == '0':
                         notifs = UserNotifications.objects.filter(
-                        Q(alarm_event__alarm__electric_parameter__pk=parameterType),
-                        Q(user= request.user)).order_by("-alarm_event__triggered_time")
+                            Q(alarm_event__alarm__electric_parameter__pk=
+                                parameterType),
+                            Q(user= request.user)).order_by(
+                                "-alarm_event__triggered_time")
                     if buildings != '0' and parameterType != '0':
                         notifs = UserNotifications.objects.filter(
-                            Q(alarm_event__alarm__electric_parameter__pk=parameterType),
+                            Q(alarm_event__alarm__electric_parameter__pk
+                            =parameterType),
                             Q(user= request.user),
-                            Q(alarm_event__alarm__consumer_unit__building__pk=buildings)).order_by("-alarm_event__triggered_time")
+                            Q(alarm_event__alarm__consumer_unit__building__pk
+                            =buildings)).order_by(
+                                "-alarm_event__triggered_time")
+        else:
+            notifs = UserNotifications.objects\
+                .filter(read=True, user=request.user)\
+                .order_by("-alarm_event__triggered_time")
 
         if not request.GET:
             notifs = UserNotifications.objects.filter(
@@ -916,7 +936,7 @@ def user_notifications(request):
                 alarm_event__alarm__status=False
             ).order_by("-alarm_event__triggered_time")
             template_vars['all'] = False
-            template_vars['ncount']= ''
+            template_vars['ncount'] = ''
         arr_day_notif = {}
 
         today_str = str(datetime.date.today())
@@ -1042,21 +1062,9 @@ def refresh_ie_config(request):
             ie = get_object_or_404(IndustrialEquipment,
                                    pk=int(request.POST['ie']))
             if ie.has_new_alarm_config:
-                new_al_config = json.loads(ie.new_alarm_config)
-                eAlarmsPerEDevices = new_al_config["eAlarmsPerEDevices"]
-                cu_alarms = ConsumerUnit.objects.filter(building=ie.building)
-                for cu in cu_alarms:
-                    alarms = Alarms.objects.filter(consumer_unit=cu)
-                    alarms.update(status_alarm=False)
-                    alarmas_idents = [al.alarm_identifier for al in alarms]
-                    for e_device_alarms in eAlarmsPerEDevices['EDeviceAlarms']:
-                        print e_device_alarms
-                        #for al_det in e_device["EDeviceAlarms"]:
-                        #    if al_det['alarm_identifier'] \
-                        #            in alarmas_idents:
-                        #        al = Alarms.objects.get(
-                        #            alarm_identifier=al_det['alarm_identifier'])
-                        #        al.save()
+                update_alarm_config(ie.new_alarm_config, ie.pk)
+            if ie.has_new_config:
+                update_ie_config(ie.new_config, ie.pk)
         return HttpResponse(status=200)
     else:
         raise Http404
