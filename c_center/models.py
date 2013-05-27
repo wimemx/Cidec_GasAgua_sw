@@ -744,11 +744,11 @@ class ElectricDataTags(models.Model):
                                                on_delete=models.PROTECT)
     electric_data = models.ForeignKey(ElectricDataTemp,
                                       on_delete=models.PROTECT)
-    identifier = models.IntegerField(default=1)
+    identifier = models.CharField(max_length=128)
 
     def __unicode__(self):
         return "Electric Data: " + str(self.electric_data.pk) + " " +\
-               str(self.identifier) + " - " +\
+               self.identifier + " - " +\
                self.electric_rates_periods.electric_rate.electric_rate_name
 
     class META:

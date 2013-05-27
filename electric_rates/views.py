@@ -548,8 +548,8 @@ def edit_tarifaHM(request, id_hm):
             template_vars["type"] = type
 
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("electric_rates/tarifas.html", template_vars_template)
-        #return HttpResponseRedirect("/")
+        #return render_to_response("electric_rates/tarifas.html", template_vars_template)
+        return HttpResponseRedirect("/electric_rates/tarifas/HM")
     else:
         datacontext = get_buildings_context(request.user)
         template_vars = {}
