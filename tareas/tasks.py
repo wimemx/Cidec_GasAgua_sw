@@ -25,6 +25,7 @@ from c_center.c_center_functions import save_historic, dailyReportAll, \
     asign_electric_data_to_pw, calculateMonthlyReport_all, all_dailyreportAll,\
     getRatesCurrentMonth
 from c_center.calculations import recursive_tag
+from tareas.models import *
 
 
 @task(ignore_result=True)
@@ -344,22 +345,40 @@ def data_warehouse_hour():
     print "firing periodic task - DW 150 min, :)"
 
 
-@periodic_task(run_every=crontab(hour='*/60'))
+@periodic_task(run_every=crontab(hour='*/12'))
 def data_warehouse_six_hour():
     end = datetime.datetime.now()
-    start = datetime.datetime.now() - datetime.timedelta(hours=60)
-    delta_name = "Six Hours Delta"
-    update_data_dw_delta.delay(end, start, delta_name)
-    print "firing periodic task - DW 60 hours, :)"
+    last, created = test_tasks.objects.get_or_create(
+        task="6hr", value="",
+        defaults={'executed_time': datetime.datetime.now()})
+    delta1 = datetime.datetime.now(tz=pytz.utc) - last.executed_time
+    if delta1 > datetime.timedelta(hours=60):
+        start = datetime.datetime.now() - datetime.timedelta(hours=60)
+        delta_name = "Six Hours Delta"
+        last.executed_time = datetime.datetime.now(tz=pytz.utc)
+        last.save()
+        update_data_dw_delta.delay(end, start, delta_name)
+        print "firing periodic task - DW 60 hours, :)"
+    else:
+        print "not firing:", str(delta1), "to fire"
 
 
-@periodic_task(run_every=crontab(hour='*/240'))
+@periodic_task(run_every=crontab(minute=0, hour=0))
 def data_warehouse_day():
     end = datetime.datetime.now()
-    start = datetime.datetime.now() - datetime.timedelta(days=10)
-    delta_name = "Day Delta"
-    update_data_dw_delta.delay(end, start, delta_name)
-    print "firing periodic task - DW 10 days :)"
+    last, created = test_tasks.objects.get_or_create(
+        task="1day", value="",
+        defaults={'executed_time': datetime.datetime.now()})
+    delta1 = datetime.datetime.now(tz=pytz.utc) - last.executed_time
+    if delta1 > datetime.timedelta(days=10):
+        start = datetime.datetime.now() - datetime.timedelta(days=10)
+        delta_name = "Day Delta"
+        last.executed_time = datetime.datetime.now(tz=pytz.utc)
+        last.save()
+        update_data_dw_delta.delay(end, start, delta_name)
+        print "firing periodic task - DW 10 days :)"
+    else:
+        print "not firing:", str(delta1), "to fire"
 
 
 @periodic_task(run_every=crontab(minute='*/30'))

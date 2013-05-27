@@ -110,6 +110,7 @@ def update_ie_config(new_config, ie_pk):
         profile.send_time_rate = int(device['SendTimeRate'])
         profile.save()
         profile.powermeter.modbus_address = int(device['ModbusAddress'])
+        profile.powermeter.powermeter_anotation = device['PowermeterAnnotation']
         profile.powermeter.status = True
         profile.powermeter.save()
     ie.has_new_config = False
