@@ -1180,6 +1180,16 @@ def all_dailyreportAll(from_date):
         initial_d += dia
     print "Done AlldailyReportAll"
 
+def dailyReportPeriodofTime(building, consumer_unit, start_date, end_date):
+
+    actual_date = start_date
+    dia = datetime.timedelta(days=1)
+    while actual_date <= end_date:
+        dailyReport(building, consumer_unit, actual_date)
+        actual_date += dia
+
+    print "Done dailyReportPeriodofTime"
+
 def dailyReportAll():
 
     buildings = Building.objects.all()
@@ -1198,8 +1208,8 @@ def dailyReportAll():
 
     print "Done dailyReportAll"
 
-def dailyReport(building, consumer_unit, today):
 
+def dailyReport(building, consumer_unit, today):
     #Inicializacion de variables
     kwh_totales = 0
     kwh_punta = 0
@@ -1219,8 +1229,10 @@ def dailyReport(building, consumer_unit, today):
 
     costo_energia_total = 0
 
-    #Se agregan las horas
-    today_s_str = str(today.year) + "-" + str(today.month) + "-" + \
+    day_delta = datetime.timedelta(days=1)
+
+    #Se agregan las horas (Formato UTC)
+    today_s_str = str(today.year) + "-" + str(today.month) + "-" +\
                   str(today.day)+" 00:00:00"
     today_s_str = time.strptime(today_s_str, "%Y-%m-%d  %H:%M:%S")
     today_s_tuple = time.gmtime(time.mktime(today_s_str))
@@ -1232,20 +1244,7 @@ def dailyReport(building, consumer_unit, today):
                                     second=today_s_tuple[5],
                                     tzinfo = pytz.utc)
 
-    today_e_str = str(today.year) + "-" + str(today.month) + "-" + \
-                  str(today.day)+" 23:59:59"
-    today_e_str = time.strptime(today_e_str, "%Y-%m-%d  %H:%M:%S")
-    today_e_tuple = time.gmtime(time.mktime(today_e_str))
-    today_e_utc = datetime.datetime(year= today_e_tuple[0],
-                                    month=today_e_tuple[1],
-                                    day=today_e_tuple[2],
-                                    hour=today_e_tuple[3],
-                                    minute=today_e_tuple[4],
-                                    second=today_e_tuple[5],
-                                    tzinfo = pytz.utc)
-
-    #print "Today s_utc", today_s_utc
-    #print "Today e_utc", today_e_utc
+    today_e_utc = today_s_utc + day_delta
 
     #Se obtiene la región
     region = building.region
@@ -1255,9 +1254,7 @@ def dailyReport(building, consumer_unit, today):
 
     consumer_units = get_consumer_units(consumer_unit)
     if consumer_units:
-
         if len(consumer_units) > 1:
-            print "Medidor Virtual"
             virtual_cu =\
             c_functions_get_consumer_unit_electrical_parameter_data_clustered(
                 consumer_unit,
@@ -1292,17 +1289,14 @@ def dailyReport(building, consumer_unit, today):
                             utcfromtimestamp(vcu['datetime']).\
                             replace(tzinfo=pytz.utc).\
                             astimezone(timezone.get_current_timezone()).time()
-
         else:
-            print "Medidor Normal"
-            print "Profile Powermeter", consumer_units[0].profile_powermeter
             #Se obtiene la demanda max
             demanda_max_obj = ElectricDataTemp.objects.\
             filter(profile_powermeter = consumer_units[0].profile_powermeter).\
             filter(medition_date__gte=today_s_utc).\
             filter(medition_date__lte=today_e_utc).\
             order_by('-kW_import_sliding_window_demand')
-            print "dem max obj", demanda_max_obj[0].kW_import_sliding_window_demand
+
             if demanda_max_obj:
                 demanda_max_temp = demanda_max_obj[0].\
                 kW_import_sliding_window_demand
@@ -1333,103 +1327,13 @@ def dailyReport(building, consumer_unit, today):
             profile_powermeter =  c_unit.profile_powermeter
             #print "Profile Powermeter:", profile_powermeter.pk
 
-            #KWH
-            #Se obtienen todos los identificadores para los KWH
-            lecturas_identificadores = ElectricRateForElectricData.objects \
-                .filter(
-                electric_data__profile_powermeter = profile_powermeter). \
-                filter(electric_data__medition_date__gte=today_s_utc).filter(
-                electric_data__medition_date__lte=today_e_utc). \
-                order_by("electric_data__medition_date").values(
-                "identifier").annotate(Count("identifier"))
+            kwh_dia_dic = getKWHperDay(today_s_utc, today_e_utc, profile_powermeter)
 
-            if lecturas_identificadores:
-                ultima_lectura = 0
-                ultimo_id = None
-                kwh_por_periodo = []
+            kwh_base = kwh_dia_dic['base']
+            kwh_intermedio = kwh_dia_dic['intermedio']
+            kwh_punta = kwh_dia_dic['punta']
+            kwh_totales = kwh_base + kwh_intermedio + kwh_punta
 
-
-                for lectura in lecturas_identificadores:
-
-                    electric_info = ElectricRateForElectricData.objects.filter(
-                        identifier=lectura["identifier"]). \
-                        filter(
-                        electric_data__profile_powermeter=profile_powermeter). \
-                        filter(
-                        electric_data__medition_date__gte=today_s_utc
-                    ).filter(electric_data__medition_date__lte=today_e_utc). \
-                        order_by("electric_data__medition_date")
-
-                    num_lecturas = len(electric_info)
-                    ultimo_id = electric_info[num_lecturas-1].electric_data.pk
-                    #print "Ultimo ID", ultimo_id
-                    primer_lectura = electric_info[0].electric_data.TotalkWhIMPORT
-                    ultima_lectura = electric_info[
-                        num_lecturas - 1].electric_data.TotalkWhIMPORT
-                    #print electric_info[0].electric_data.pk,"Primer Lectura:",
-                    # primer_lectura,"-",
-                    # electric_info[num_lecturas-1].electric_data.pk,
-                    # " Ultima Lectura:",ultima_lectura
-
-                    #Obtener el tipo de periodo: Base, punta, intermedio
-                    tipo_periodo = electric_info[
-                        0].electric_rates_periods.period_type
-                    t = primer_lectura, tipo_periodo
-                    kwh_por_periodo.append(t)
-
-                kwh_periodo_long = len(kwh_por_periodo)
-
-                kwh_base_t = 0
-                kwh_intermedio_t = 0
-                kwh_punta_t = 0
-
-                #Se obtiene la primer lectura del dia siguiente para que
-                # concuerde la suma de los KWH
-                #Si el dia actual es igual al ultimo dia del mes, no se hace
-                # nada.
-                diasmes_arr = monthrange(today.year, today.month)
-                if not today.day is diasmes_arr[1]:
-                    nextReading = ElectricDataTemp.objects.filter(
-                        profile_powermeter=profile_powermeter). \
-                        filter(pk__gt = ultimo_id)
-                    if nextReading:
-                        ultima_lectura = nextReading[0].TotalkWhIMPORT
-
-                    #sirve para los kvarh
-                    kvarhs_anterior = True
-
-
-                for idx, kwh_p in enumerate(kwh_por_periodo):
-                    #print "Lectura:", kwh_p[0], "-:",kwh_p[1]
-                    inicial = kwh_p[0]
-                    periodo_t = kwh_p[1]
-                    if idx + 1 <= kwh_periodo_long - 1:
-                        kwh_p2 = kwh_por_periodo[idx + 1]
-                        final = kwh_p2[0]
-                    else:
-                        final = ultima_lectura
-
-                    kwh_netos = final - inicial
-                    #print "Inicial:",inicial,"Final:",final, "Netos:",kwh_netos
-
-                    if periodo_t == 'base':
-                        kwh_base_t += kwh_netos
-                    elif periodo_t == 'intermedio':
-                        kwh_intermedio_t += kwh_netos
-                    elif periodo_t == 'punta':
-                        kwh_punta_t += kwh_netos
-
-                kwh_base_t = int(ceil(kwh_base_t))
-                kwh_base += kwh_base_t
-
-                kwh_intermedio_t = int(ceil(kwh_intermedio_t))
-                kwh_intermedio += kwh_intermedio_t
-
-                kwh_punta_t = int(ceil(ceil(kwh_punta_t)))
-                kwh_punta += kwh_punta_t
-
-                kwh_t = kwh_base_t + kwh_intermedio_t + kwh_punta_t
-                kwh_totales += kwh_t
 
             #Se obtienen los kvarhs por medidor
             kvarh_totales += obtenerKVARH_dia(profile_powermeter,
@@ -1437,13 +1341,12 @@ def dailyReport(building, consumer_unit, today):
                                               today_e_utc,
                                               kvarhs_anterior)
 
-
     #Si es tarifa HM
     if electric_rate.pk == 1:
         #Obtiene el id de la tarifa correspondiente para el mes en cuestion
         tarifasObj = ElectricRatesDetail.objects.filter(electric_rate=1).filter(
-                region=region).filter(date_init__lte=today).filter(
-                date_end__gte=today)
+            region=region).filter(date_init__lte=today).filter(
+            date_end__gte=today)
 
         if tarifasObj:
             tarifa_kwh_base = tarifasObj[0].KWHB
@@ -1453,9 +1356,9 @@ def dailyReport(building, consumer_unit, today):
 
         #Se obtiene costo de energía
         costo_energia_total = costoenergia(kwh_base, kwh_intermedio,
-                                       kwh_punta, tarifa_kwh_base,
-                                       tarifa_kwh_intermedio,
-                                       tarifa_kwh_punta)
+                                           kwh_punta, tarifa_kwh_base,
+                                           tarifa_kwh_intermedio,
+                                           tarifa_kwh_punta)
 
     elif electric_rate.pk == 2:#Si es tarifa Dac
         #Para las regiones BC y BCS es necesario obtener revisar si se aplica
@@ -1489,11 +1392,6 @@ def dailyReport(building, consumer_unit, today):
     #Se obtiene Factor de Potencia
     factor_potencia_total = factorpotencia(kwh_totales, kvarh_totales)
 
-    print "Demanda Max:",demanda_max
-    print "Demanda Max Time:", dem_max_time
-    print "Demanda Min:",demanda_min
-    print "Demanda Min Time:", dem_min_time
-
     #Se guarda en la BD
     new_daily = DailyData(
         consumer_unit = consumer_unit,
@@ -1510,11 +1408,8 @@ def dailyReport(building, consumer_unit, today):
         power_factor = str(factor_potencia_total),
         KVARH = str(kvarh_totales)
     )
-
-    #new_daily.save()
-    #print new_daily
+    new_daily.save()
     return 'OK'
-
 
 def getDailyReports(consumer, month, year, days_offset=None):
     """ Returns an array of dicts with the daily data for the year-month
@@ -1886,6 +1781,197 @@ def save_historic(monthly_cutdate, building):
             total=resultado_mensual['total']
         )
         newHistoric.save()
+
+def tarifaHM_nuevaversion(building, s_date, e_date, month, year):
+    status = 'OK'
+    diccionario_final_cfe = dict(status=status)
+    #Variables que almacenan todos los campos
+    tarifa_kwh_base = 0
+    tarifa_kwh_intermedio = 0
+    tarifa_kwh_punta = 0
+    tarifa_fri = 0
+    tarifa_frb = 0
+    tarifa_demanda_facturable = 0
+    diccionario_final_cfe["kw_base"] = 0
+    diccionario_final_cfe["kw_intermedio"] = 0
+    diccionario_final_cfe["kw_punta"] = 0
+    diccionario_final_cfe["kwh_base"] = 0
+    diccionario_final_cfe["kwh_intermedio"] = 0
+    diccionario_final_cfe["kwh_punta"] = 0
+    diccionario_final_cfe["kwh_totales"] = 0
+    diccionario_final_cfe['kvarh_totales'] = 0
+
+    #Se obtiene la región
+    region = building.region
+    #Se obtiene el tipo de tarifa (HM)
+    hm_id = building.electric_rate
+
+    billing_mrates = datetime.date(year=year, month=month, day=1)
+
+    periodo = s_date.astimezone(timezone.get_current_timezone()).strftime(
+        '%d/%m/%Y %I:%M %p') +\
+              " - " + e_date.astimezone(
+        timezone.get_current_timezone()).strftime('%d/%m/%Y %I:%M %p')
+    periodo_dias = (e_date - s_date).days
+    periodo_horas = periodo_dias * 24
+
+    demanda_max = 0
+
+    #Se obtiene el medidor padre del edificio
+    main_cu = ConsumerUnit.objects.get(
+        building=building,
+        electric_device_type__electric_device_type_name="Total Edificio")
+    #Se obtienen todos los medidores necesarios
+    consumer_units = get_consumer_units(main_cu)
+
+    #Se obtienen las tuplas Dia Inicio - Dia Fin
+    tupleDays_arr = getTupleDays(s_date, e_date)
+
+    if consumer_units:
+
+        if len(consumer_units) > 1:
+
+            virtual_cu =\
+            c_functions_get_consumer_unit_electrical_parameter_data_clustered(
+                main_cu,
+                s_date.astimezone(timezone.get_current_timezone()),
+                e_date.astimezone(timezone.get_current_timezone()),
+                'kW',
+                300
+            )
+
+            arr_kw_base = []
+            arr_kw_int = []
+            arr_kw_punta = []
+
+            for vcu in virtual_cu:
+                kw_date =  datetime.datetime.utcfromtimestamp(vcu['datetime']).\
+                replace(tzinfo=pytz.utc).\
+                astimezone(timezone.get_current_timezone())
+
+                periodo_mv = obtenerTipoPeriodoObj(kw_date, region)
+                if periodo_mv.period_type == 'base':
+                    arr_kw_base.append(vcu['value'])
+                elif periodo_mv.period_type == 'intermedio':
+                    arr_kw_int.append(vcu['value'])
+                elif periodo_mv.period_type == 'punta':
+                    arr_kw_punta.append(vcu['value'])
+
+            diccionario_final_cfe["kw_base"] =\
+            obtenerDemanda_kw_valores(arr_kw_base)
+
+            diccionario_final_cfe["kw_intermedio"] =\
+            obtenerDemanda_kw_valores(arr_kw_int)
+
+            diccionario_final_cfe["kw_punta"] =\
+            obtenerDemanda_kw_valores(arr_kw_punta)
+
+        else:
+
+            for tupleDay in tupleDays_arr:
+                kw_dia_dic = getKWperDay(tupleDay[0], tupleDay[1], consumer_units[0].profile_powermeter)
+                if kw_dia_dic['base'] > diccionario_final_cfe["kw_base"]:
+                    diccionario_final_cfe["kw_base"] = kw_dia_dic['base']
+                if kw_dia_dic['intermedio'] > diccionario_final_cfe["kw_intermedio"]:
+                    diccionario_final_cfe["kw_intermedio"] = kw_dia_dic['intermedio']
+                if kw_dia_dic['punta'] > diccionario_final_cfe["kw_punta"]:
+                    diccionario_final_cfe["kw_punta"] = kw_dia_dic['punta']
+
+        if diccionario_final_cfe["kw_base"] > demanda_max:
+            demanda_max = diccionario_final_cfe["kw_base"]
+        elif diccionario_final_cfe["kw_intermedio"] > demanda_max:
+            demanda_max = diccionario_final_cfe["kw_intermedio"]
+        elif diccionario_final_cfe["kw_punta"] > demanda_max:
+            demanda_max = diccionario_final_cfe["kw_punta"]
+
+        for c_unit in consumer_units:
+            #Se obtienen directamente los kw Base, Intermedio y Punta.
+
+            profile_powermeter = c_unit.profile_powermeter
+
+            for tupleDay in tupleDays_arr:
+
+                kwh_dia_dic = getKWHperDay(tupleDay[0], tupleDay[1], profile_powermeter)
+                diccionario_final_cfe["kwh_base"] += kwh_dia_dic['base']
+                diccionario_final_cfe["kwh_intermedio"] += kwh_dia_dic['intermedio']
+                diccionario_final_cfe["kwh_punta"] += kwh_dia_dic['punta']
+                diccionario_final_cfe["kwh_totales"] += kwh_dia_dic['base'] + kwh_dia_dic['intermedio'] + kwh_dia_dic['punta']
+
+            #Se obtienen los kvarhs por medidor
+            diccionario_final_cfe['kvarh_totales'] += obtenerKVARH(
+                profile_powermeter, s_date, e_date)
+
+    #Obtiene el id de la tarifa correspondiente para el mes en cuestion
+    tarifasObj = ElectricRatesDetail.objects.filter(electric_rate=hm_id).filter(
+        region=region).filter(date_init__lte=billing_mrates).filter(
+        date_end__gte=billing_mrates)
+
+    if tarifasObj:
+        tarifa_kwh_base = tarifasObj[0].KWHB
+        tarifa_kwh_intermedio = tarifasObj[0].KWHI
+        tarifa_kwh_punta = tarifasObj[0].KWHP
+        tarifa_fri = tarifasObj[0].FRI
+        tarifa_frb = tarifasObj[0].FRB
+        tarifa_demanda_facturable = tarifasObj[0].KDF
+
+    #Demanda Facturable
+    df_t = demandafacturable(diccionario_final_cfe["kw_base"],
+                             diccionario_final_cfe["kw_intermedio"],
+                             diccionario_final_cfe["kw_punta"], tarifa_fri,
+                             tarifa_frb)
+
+    #Factor de Potencia
+    factor_potencia_total = factorpotencia(diccionario_final_cfe["kwh_totales"],
+                                           diccionario_final_cfe[
+                                           'kvarh_totales'])
+
+    #Costo Energía
+    costo_energia_total = costoenergia(diccionario_final_cfe["kwh_base"],
+                                       diccionario_final_cfe["kwh_intermedio"],
+                                       diccionario_final_cfe["kwh_punta"],
+                                       tarifa_kwh_base, tarifa_kwh_intermedio,
+                                       tarifa_kwh_punta)
+
+    #Costo Demanda Facturable
+    costo_demanda_facturable = costodemandafacturable(df_t,
+                                                      tarifa_demanda_facturable)
+
+    #Costo Factor Potencia
+    costo_factor_potencia = costofactorpotencia(factor_potencia_total,
+                                                costo_energia_total,
+                                                costo_demanda_facturable)
+
+    #Subtotal
+    subtotal_final = obtenerSubtotal(costo_energia_total,
+                                     costo_demanda_facturable,
+                                     costo_factor_potencia)
+
+    #Total
+    total_final = obtenerTotal(subtotal_final, 16)
+
+    if demanda_max == 0:
+        factor_carga = 0
+    else:
+        factor_carga = (float(diccionario_final_cfe["kwh_totales"]) / float(
+            demanda_max * periodo_horas)) * 100
+
+    diccionario_final_cfe['periodo'] = periodo
+    diccionario_final_cfe['demanda_facturable'] = df_t
+    diccionario_final_cfe['factor_potencia'] = factor_potencia_total
+    diccionario_final_cfe['factor_carga'] = factor_carga
+    diccionario_final_cfe['tarifa_kwhb'] = tarifa_kwh_base
+    diccionario_final_cfe['tarifa_kwhi'] = tarifa_kwh_intermedio
+    diccionario_final_cfe['tarifa_kwhp'] = tarifa_kwh_punta
+    diccionario_final_cfe['tarifa_df'] = tarifa_demanda_facturable
+    diccionario_final_cfe['costo_energia'] = costo_energia_total
+    diccionario_final_cfe['costo_dfacturable'] = costo_demanda_facturable
+    diccionario_final_cfe['costo_fpotencia'] = costo_factor_potencia
+    diccionario_final_cfe['subtotal'] = subtotal_final
+    diccionario_final_cfe['iva'] = obtenerIva(subtotal_final, 16)
+    diccionario_final_cfe['total'] = total_final
+
+    return diccionario_final_cfe
+
 
 # noinspection PyArgumentList
 def tarifaHM_2(building, s_date, e_date, month, year):
@@ -2261,7 +2347,7 @@ def tarifaDAC_2(building, s_date, e_date, month, year):
     return diccionario_final_cfe
 
 
-def tarifa_3_01(building, s_date, e_date, month, year):
+def tarifa_3(building, s_date, e_date, month, year):
     status = 'OK'
     diccionario_final_cfe = dict(status=status)
 
@@ -2289,61 +2375,67 @@ def tarifa_3_01(building, s_date, e_date, month, year):
         tarifa_kwh = tarifasObj[0].kwh_rate
         tarifa_kw = tarifasObj[0].kw_rate
 
+    #Se obtiene el medidor padre del edificio
     main_cu = ConsumerUnit.objects.get(
         building=building,
         electric_device_type__electric_device_type_name="Total Edificio")
-    c_units = get_consumer_units(main_cu)
-    #Si es medidor virtual
-    if len(c_units) > 1:
-        for cu in c_units:
+    #Se obtienen todos los medidores necesarios
+    consumer_units = get_consumer_units(main_cu)
 
-            #Se deben obtener los kW para obtener la demanda maxima
+    #Se obtienen las tuplas Dia Inicio - Dia Fin
+    tupleDays_arr = getTupleDays(s_date, e_date)
+
+    if consumer_units:
+        if len(consumer_units) > 1:
+
+            virtual_cu =\
+            c_functions_get_consumer_unit_electrical_parameter_data_clustered(
+                main_cu,
+                s_date.astimezone(timezone.get_current_timezone()),
+                e_date.astimezone(timezone.get_current_timezone()),
+                'kW',
+                300
+            )
+
+            arr_kw = []
+
+            for vcu in virtual_cu:
+                arr_kw.append(vcu['value'])
+
+            demanda_max = obtenerDemanda_kw_valores(arr_kw)
+
+        else:
+
+            profile_powermeter = consumer_units[0].profile_powermeter
+
+            lectura_max = ElectricDataTemp.objects.filter(
+                profile_powermeter=profile_powermeter,
+                medition_date__gte=s_date,
+                medition__date__lt=e_date).\
+            aggregate(Max('kW_import_sliding_window_demand'))
+
+            demanda_max = lectura_max['kW_import_sliding_window_demand']
 
 
-            datos_kwh = ConsumerUnitInstantElectricalData.objects.filter(
-                instant_instant_delta__name = "Five Minute Delta",
-                consumer_unit_profile__transactional_id=cu.pk,
-                instant__instant_delta__instant_datetime__gte = s_date,
-                instant_instant_delta__instant_datetime__lt = e_date,
-                electrical_parameter__pk = 24).\
-                order_by("instant__instant_delta__instant_datetime")
+        for c_unit in consumer_units:
+            profile_powermeter = c_unit.profile_powermeter
 
-            num_lecturas = len(datos_kwh)
-            primer_lectura = datos_kwh[0]
-            ultima_lectura = datos_kwh[num_lecturas-1]
-            kwh_netos += (ultima_lectura - primer_lectura)
+            #Se obtienen los kwh de ese periodo de tiempo.
+            kwh_lecturas = ElectricDataTemp.objects.filter(
+                profile_powermeter=profile_powermeter).\
+            filter(medition_date__gte=s_date).filter(
+                medition_date__lt=e_date).\
+            order_by('pk')
+            total_lecturas = len(kwh_lecturas)
 
+            if kwh_lecturas:
+                kwh_inicial = kwh_lecturas[0].TotalkWhIMPORT
+                kwh_final = kwh_lecturas[total_lecturas - 1].TotalkWhIMPORT
 
+                kwh_netos += int(ceil(kwh_final - kwh_inicial))
 
-    else: #Si es medidor fisico
-        profile_powermeter = main_cu
-
-        #Se obtienen los KW, para obtener la demanda maxima
-        lecturas_totales = ElectricRateForElectricData.objects.filter(
-            electric_data__profile_powermeter=profile_powermeter).\
-        filter(electric_data__medition_date__gte=s_date).filter(
-            electric_data__medition_date__lt=e_date).\
-        order_by('electric_data__medition_date')
-
-        demanda_max = obtenerDemanda_kw(lecturas_totales)
-
-        #Se obtienen los kwh de ese periodo de tiempo.
-        kwh_lecturas = ElectricDataTemp.objects.filter(
-            profile_powermeter=profile_powermeter).\
-        filter(medition_date__gte=s_date).filter(
-            medition_date__lt=e_date).\
-        order_by('medition_date')
-
-        total_lecturas = len(kwh_lecturas)
-
-        if kwh_lecturas:
-            kwh_inicial = kwh_lecturas[0].TotalkWhIMPORT
-            kwh_final = kwh_lecturas[total_lecturas - 1].TotalkWhIMPORT
-
-            kwh_netos = int(ceil(kwh_final - kwh_inicial))
-
-        #Se obtienen los kvarhs por medidor
-        kvarh_netos += obtenerKVARH(profile_powermeter, s_date, e_date)
+            #Se obtienen los kvarhs por medidor
+            kvarh_netos += obtenerKVARH(profile_powermeter, s_date, e_date)
 
 
     #Factor de Potencia
@@ -2382,9 +2474,6 @@ def tarifa_3_01(building, s_date, e_date, month, year):
     diccionario_final_cfe['total'] = float(total)
 
     return diccionario_final_cfe
-
-
-
 
 
 # noinspection PyArgumentList
@@ -2692,120 +2781,124 @@ def crawler_hm_rate(year, month):
     date_end = datetime.date(year,month,last_day[1])
     HM_erate = ElectricRates.objects.get(pk = 1)
 
-    page = urllib2.urlopen("http://app.cfe.gob.mx/Aplicaciones/CCFE/Tarifas/Tarifas/tarifas_negocio.asp?Tarifa=HM&Anio="+str(year)+"&mes="+str(month))
-    soup = BeautifulSoup(page.read())
+    try:
+        page = urllib2.urlopen("http://app.cfe.gob.mx/Aplicaciones/CCFE/Tarifas/Tarifas/tarifas_negocio.asp?Tarifa=HM&Anio="+str(year)+"&mes="+str(month))
+    except IOError:
+        print "URL Error. No Connection"
+    else:
+        soup = BeautifulSoup(page.read())
 
-    tablasTarifa = soup.find_all('table',{"class" : "tablaTarifa"})
-    for tabla in tablasTarifa:
-        header_t = tabla.find('tr').find_all('th')
+        tablasTarifa = soup.find_all('table',{"class" : "tablaTarifa"})
+        for tabla in tablasTarifa:
+            header_t = tabla.find('tr').find_all('th')
 
-        if str(header_t[1].find(text=True)).replace('\n','').replace('\t','') == 'Cargo por kilowatt de demanda facturable':
-            renglones_tarifa = tabla.find_all('tr')
-            for chld in renglones_tarifa:
-                arreglo_tarifas = []
-                tds = chld.find_all('td')
-                if len(tds) > 0:
-                    try:
-                        region = str(tds[0].find(text=True)).strip()
-                        demanda_f = str(tds[1].find(text=True))
-                        kwhp = str(tds[2].find(text=True))
-                        kwhi = str(tds[3].find(text=True))
-                        kwhb = str(tds[4].find(text=True))
-                    except IndexError:
-                        continue
+            if str(header_t[1].find(text=True)).replace('\n','').replace('\t','') == 'Cargo por kilowatt de demanda facturable':
+                renglones_tarifa = tabla.find_all('tr')
+                for chld in renglones_tarifa:
+                    arreglo_tarifas = []
+                    tds = chld.find_all('td')
+                    if len(tds) > 0:
+                        try:
+                            region = str(tds[0].find(text=True)).strip()
+                            demanda_f = str(tds[1].find(text=True))
+                            kwhp = str(tds[2].find(text=True))
+                            kwhi = str(tds[3].find(text=True))
+                            kwhb = str(tds[4].find(text=True))
+                        except IndexError:
+                            continue
 
-                    arreglo_tarifas.append(demanda_f.replace('$ ',''))
-                    arreglo_tarifas.append(kwhp.replace('$ ',''))
-                    arreglo_tarifas.append(kwhi.replace('$ ',''))
-                    arreglo_tarifas.append(kwhb.replace('$ ',''))
+                        arreglo_tarifas.append(demanda_f.replace('$ ',''))
+                        arreglo_tarifas.append(kwhp.replace('$ ',''))
+                        arreglo_tarifas.append(kwhi.replace('$ ',''))
+                        arreglo_tarifas.append(kwhb.replace('$ ',''))
 
-                    regiones_dict[region] = arreglo_tarifas
+                        regiones_dict[region] = arreglo_tarifas
 
 
-        elif str(header_t[1].find(text=True)).strip() == 'FRI':
-            renglones_fri = tabla.find_all('tr')
-            for r_fri in renglones_fri:
-                arreglo_fri = []
-                tds = r_fri.find_all('td')
-                if len(tds) > 0:
-                    try:
-                        region = str(tds[0].find(text=True)).strip()
-                        fri = str(tds[1].find(text=True))
-                        frb = str(tds[2].find(text=True))
-                    except IndexError:
-                        print "Error: Error al parsear tabla FRI - FRB - Index Error"
-                        continue
+            elif str(header_t[1].find(text=True)).strip() == 'FRI':
+                renglones_fri = tabla.find_all('tr')
+                for r_fri in renglones_fri:
+                    arreglo_fri = []
+                    tds = r_fri.find_all('td')
+                    if len(tds) > 0:
+                        try:
+                            region = str(tds[0].find(text=True)).strip()
+                            fri = str(tds[1].find(text=True))
+                            frb = str(tds[2].find(text=True))
+                        except IndexError:
+                            print "Error: Error al parsear tabla FRI - FRB - Index Error"
+                            continue
 
-                    arreglo_fri.append(fri)
-                    arreglo_fri.append(frb)
+                        arreglo_fri.append(fri)
+                        arreglo_fri.append(frb)
 
-                    regiones_fri[region] = arreglo_fri
+                        regiones_fri[region] = arreglo_fri
 
-    for region in regiones_dict.keys():
-        ar_tarifas = regiones_dict[region]
-        ar_fri = regiones_fri[region]
+        for region in regiones_dict.keys():
+            ar_tarifas = regiones_dict[region]
+            ar_fri = regiones_fri[region]
 
-        region_obj = None
+            region_obj = None
 
-        if region == 'Baja California':
-            region_obj = Region.objects.get(region_name = 'Baja California')
-        elif region == 'Baja California Sur':
-            region_obj = Region.objects.get(region_name = 'Baja California Sur')
-        elif region == 'Central':
-            region_obj = Region.objects.get(region_name = 'Central')
-        elif region == 'Noreste':
-            region_obj = Region.objects.get(region_name = 'Noreste')
-        elif region == 'Noroeste':
-            region_obj = Region.objects.get(region_name = 'Noroeste')
-        elif region == 'Norte':
-            region_obj = Region.objects.get(region_name = 'Norte')
-        elif region == 'Peninsular':
-            region_obj = Region.objects.get(region_name = 'Peninsular')
-        elif region == 'Sur':
-            region_obj = Region.objects.get(region_name = 'Sur')
+            if region == 'Baja California':
+                region_obj = Region.objects.get(region_name = 'Baja California')
+            elif region == 'Baja California Sur':
+                region_obj = Region.objects.get(region_name = 'Baja California Sur')
+            elif region == 'Central':
+                region_obj = Region.objects.get(region_name = 'Central')
+            elif region == 'Noreste':
+                region_obj = Region.objects.get(region_name = 'Noreste')
+            elif region == 'Noroeste':
+                region_obj = Region.objects.get(region_name = 'Noroeste')
+            elif region == 'Norte':
+                region_obj = Region.objects.get(region_name = 'Norte')
+            elif region == 'Peninsular':
+                region_obj = Region.objects.get(region_name = 'Peninsular')
+            elif region == 'Sur':
+                region_obj = Region.objects.get(region_name = 'Sur')
 
-        #Se da de alta la nueva cuota
-        try:
-            #Se verifica que no haya una tarifa ya registrada para ese mes
-            bmonth_exists = ElectricRatesDetail.objects.\
-            filter(date_init = date_init).\
-            filter(region = region_obj)
+            #Se da de alta la nueva cuota
+            try:
+                #Se verifica que no haya una tarifa ya registrada para ese mes
+                bmonth_exists = ElectricRatesDetail.objects.\
+                filter(date_init = date_init).\
+                filter(region = region_obj)
 
-            #Si ya existe se actualiza
-            if bmonth_exists:
-                bmonth_exists[0].KDF = ar_tarifas[0]
-                bmonth_exists[0].KWHP = ar_tarifas[1]
-                bmonth_exists[0].KWHI = ar_tarifas[2]
-                bmonth_exists[0].KWHB = ar_tarifas[3]
-                bmonth_exists[0].FRI = ar_fri[0]
-                bmonth_exists[0].FRI = ar_fri[1]
-                bmonth_exists[0].KWDMM = 0
-                bmonth_exists[0].KWHEC = 0
-                bmonth_exists[0].date_init = date_init
-                bmonth_exists[0].date_end = date_end
-                bmonth_exists[0].save()
+                #Si ya existe se actualiza
+                if bmonth_exists:
+                    bmonth_exists[0].KDF = ar_tarifas[0]
+                    bmonth_exists[0].KWHP = ar_tarifas[1]
+                    bmonth_exists[0].KWHI = ar_tarifas[2]
+                    bmonth_exists[0].KWHB = ar_tarifas[3]
+                    bmonth_exists[0].FRI = ar_fri[0]
+                    bmonth_exists[0].FRI = ar_fri[1]
+                    bmonth_exists[0].KWDMM = 0
+                    bmonth_exists[0].KWHEC = 0
+                    bmonth_exists[0].date_init = date_init
+                    bmonth_exists[0].date_end = date_end
+                    bmonth_exists[0].save()
 
-            else: #Si no existe, se inserta la tarifa
-                newHM = ElectricRatesDetail(
-                    electric_rate = HM_erate,
-                    KDF = ar_tarifas[0],
-                    KWHP = ar_tarifas[1],
-                    KWHI = ar_tarifas[2],
-                    KWHB = ar_tarifas[3],
-                    FRI = ar_fri[0],
-                    FRB = ar_fri[1],
-                    KWDMM = 0,
-                    KWHEC = 0,
-                    date_init = date_init,
-                    date_end = date_end,
-                    region = region_obj
-                )
-                newHM.save()
-        except IndexError:
-            print "Error: No se pudo insertar objeto de Tarifa HM - Index Error"
-            continue
+                else: #Si no existe, se inserta la tarifa
+                    newHM = ElectricRatesDetail(
+                        electric_rate = HM_erate,
+                        KDF = ar_tarifas[0],
+                        KWHP = ar_tarifas[1],
+                        KWHI = ar_tarifas[2],
+                        KWHB = ar_tarifas[3],
+                        FRI = ar_fri[0],
+                        FRB = ar_fri[1],
+                        KWDMM = 0,
+                        KWHEC = 0,
+                        date_init = date_init,
+                        date_end = date_end,
+                        region = region_obj
+                    )
+                    newHM.save()
+            except IndexError:
+                print "Error: No se pudo insertar objeto de Tarifa HM - Index Error"
+                continue
 
-    print "HM crawler for "+str(month)+"/"+str(year)+" - Done"
+        print "HM crawler for "+str(month)+"/"+str(year)+" - Done"
 
 
 def crawler_DAC_rate(year, month):
@@ -2815,83 +2908,46 @@ def crawler_DAC_rate(year, month):
     date_init = datetime.date(year,month,1)
     date_end = datetime.date(year,month,last_day[1])
 
-    page = urllib2.urlopen("http://app.cfe.gob.mx/Aplicaciones/CCFE/Tarifas/Tarifas/tarifas_casa.asp?Tarifa=DAC2003&Anio="+str(year)+"&mes="+str(month))
-    soup = BeautifulSoup(page.read())
+    try:
+        page = urllib2.urlopen("http://app.cfe.gob.mx/Aplicaciones/CCFE/Tarifas/Tarifas/tarifas_casa.asp?Tarifa=DAC2003&Anio="+str(year)+"&mes="+str(month))
+    except IOError:
+        print "URL Error. No Connection"
+    else:
+        soup = BeautifulSoup(page.read())
 
-    tablasTarifa = soup.find_all('table',{"class" : "tablaTarifa"})
-    #La primer tabla es para tarifas de BC y BC Sur (que tienen Verano e Invierno)
-    if len(tablasTarifa) > 0:
-        bc_bcs_tarifas = tablasTarifa[0].find_all('tr')
-        for bc_t in bc_bcs_tarifas:
-            tds = bc_t.find_all('td')
-            if len(tds) > 0:
-                try:
-                    region = str(tds[0].find(text=True)).strip()
-                    cargo_fijo = str(tds[1].find(text=True)).replace('$ ','')
-                    kwh_verano = str(tds[2].find(text=True)).replace('$ ','')
-                    kwh_invierno = str(tds[3].find(text=True)).replace('$ ','')
-                except IndexError:
-                    continue
-                else:
-                    region_obj = None
-
-                    if region == 'Baja California':
-                        region_obj = Region.objects.\
-                        get(region_name = 'Baja California')
-                    elif region == 'Baja California Sur':
-                        region_obj = Region.objects.\
-                        get(region_name = 'Baja California Sur')
-
-                    #Se revisa si el mes cae en verano o invierno
-                    tf_ver_inv = obtenerHorarioVeranoInvierno(date_init, 2)
-                    #Si el periodo es Verano
-                    if tf_ver_inv.interval_period == 1:
-                        kwh_t = kwh_verano
-                    else: #Si el periodo es Invierno
-                        kwh_t = kwh_invierno
-
-                    #Se verifica que no haya una tarifa ya registrada para ese mes
-                    bmonth_exists = DACElectricRateDetail.objects.\
-                    filter(date_init = date_init).\
-                    filter(region=region_obj)
-
-                    if bmonth_exists:
-                        #Actualiza la tarifa
-                        bmonth_exists[0].region = region_obj
-                        bmonth_exists[0].month_rate = cargo_fijo
-                        bmonth_exists[0].kwh_rate = kwh_t
-                        bmonth_exists[0].date_interval = tf_ver_inv
-                        bmonth_exists[0].date_init = date_init
-                        bmonth_exists[0].date_end = date_end
-                        bmonth_exists[0].save()
-
+        tablasTarifa = soup.find_all('table',{"class" : "tablaTarifa"})
+        #La primer tabla es para tarifas de BC y BC Sur (que tienen Verano e Invierno)
+        if len(tablasTarifa) > 0:
+            bc_bcs_tarifas = tablasTarifa[0].find_all('tr')
+            for bc_t in bc_bcs_tarifas:
+                tds = bc_t.find_all('td')
+                if len(tds) > 0:
+                    try:
+                        region = str(tds[0].find(text=True)).strip()
+                        cargo_fijo = str(tds[1].find(text=True)).replace('$ ','')
+                        kwh_verano = str(tds[2].find(text=True)).replace('$ ','')
+                        kwh_invierno = str(tds[3].find(text=True)).replace('$ ','')
+                    except IndexError:
+                        continue
                     else:
-                        #Se crea la tarifa
-                        newDac = DACElectricRateDetail(
-                            region = region_obj,
-                            month_rate = cargo_fijo,
-                            date_interval = tf_ver_inv,
-                            kwh_rate = kwh_t,
-                            date_init = date_init,
-                            date_end = date_end,
-                            )
-                        newDac.save()
+                        region_obj = None
 
-        resto_tarifas = tablasTarifa[1].find_all('tr')
-        for resto_t in resto_tarifas:
-            tds = resto_t.find_all('td')
-            if len(tds) > 0:
-                try:
-                    region = str(tds[0].find(text=True)).strip()
-                    cargo_fijo = str(tds[1].find(text=True)).replace('$ ','')
-                    kwh_t= str(tds[2].find(text=True)).replace('$ ','')
-                except IndexError:
-                    continue
-                else:
-                    if region == 'Norte y Noreste':
-                        region_obj = Region.objects.get(region_name = 'Norte')
+                        if region == 'Baja California':
+                            region_obj = Region.objects.\
+                            get(region_name = 'Baja California')
+                        elif region == 'Baja California Sur':
+                            region_obj = Region.objects.\
+                            get(region_name = 'Baja California Sur')
 
-                        #Se verifica que si la tarifa para la region norte ya esta registrada
+                        #Se revisa si el mes cae en verano o invierno
+                        tf_ver_inv = obtenerHorarioVeranoInvierno(date_init, 2)
+                        #Si el periodo es Verano
+                        if tf_ver_inv.interval_period == 1:
+                            kwh_t = kwh_verano
+                        else: #Si el periodo es Invierno
+                            kwh_t = kwh_invierno
+
+                        #Se verifica que no haya una tarifa ya registrada para ese mes
                         bmonth_exists = DACElectricRateDetail.objects.\
                         filter(date_init = date_init).\
                         filter(region=region_obj)
@@ -2901,134 +2957,175 @@ def crawler_DAC_rate(year, month):
                             bmonth_exists[0].region = region_obj
                             bmonth_exists[0].month_rate = cargo_fijo
                             bmonth_exists[0].kwh_rate = kwh_t
+                            bmonth_exists[0].date_interval = tf_ver_inv
                             bmonth_exists[0].date_init = date_init
                             bmonth_exists[0].date_end = date_end
                             bmonth_exists[0].save()
+
                         else:
-                            #Se da de alta la nueva tarifa
+                            #Se crea la tarifa
                             newDac = DACElectricRateDetail(
                                 region = region_obj,
                                 month_rate = cargo_fijo,
+                                date_interval = tf_ver_inv,
                                 kwh_rate = kwh_t,
                                 date_init = date_init,
                                 date_end = date_end,
                                 )
                             newDac.save()
 
-                        region_obj = Region.objects.get(region_name = 'Noreste')
-
-                        #Se verifica que si la tarifa para la region noreste ya esta registrada
-                        bmonth_exists = DACElectricRateDetail.objects.\
-                        filter(date_init = date_init).\
-                        filter(region=region_obj)
-
-                        if bmonth_exists:
-                            #Actualiza la tarifa
-                            bmonth_exists[0].region = region_obj
-                            bmonth_exists[0].month_rate = cargo_fijo
-                            bmonth_exists[0].kwh_rate = kwh_t
-                            bmonth_exists[0].date_init = date_init
-                            bmonth_exists[0].date_end = date_end
-                            bmonth_exists[0].save()
-                        else:
-                            #Se da de alta la nueva cuota
-                            newDac = DACElectricRateDetail(
-                                region = region_obj,
-                                month_rate = cargo_fijo,
-                                kwh_rate = kwh_t,
-                                date_init = date_init,
-                                date_end = date_end,
-                                )
-                            newDac.save()
-
-                    elif region == 'Sur y Peninsular':
-                        region_obj = Region.objects.get(region_name = 'Sur')
-
-                        #Se verifica que si la tarifa para la region Sur ya esta registrada
-                        bmonth_exists = DACElectricRateDetail.objects.\
-                        filter(date_init = date_init).\
-                        filter(region=region_obj)
-
-                        if bmonth_exists:
-                            #Actualiza la tarifa
-                            bmonth_exists[0].region = region_obj
-                            bmonth_exists[0].month_rate = cargo_fijo
-                            bmonth_exists[0].kwh_rate = kwh_t
-                            bmonth_exists[0].date_init = date_init
-                            bmonth_exists[0].date_end = date_end
-                            bmonth_exists[0].save()
-                        else:
-                            #Se da de alta la nueva cuota
-                            newDac = DACElectricRateDetail(
-                                region = region_obj,
-                                month_rate = cargo_fijo,
-                                kwh_rate = kwh_t,
-                                date_init = date_init,
-                                date_end = date_end,
-                                )
-                            newDac.save()
-
-                        region_obj = Region.objects.get(region_name = 'Peninsular')
-
-                        #Se verifica que si la tarifa para la region Peninsular ya esta registrada
-                        bmonth_exists = DACElectricRateDetail.objects.\
-                        filter(date_init = date_init).\
-                        filter(region=region_obj)
-
-                        if bmonth_exists:
-                            #Actualiza la tarifa
-                            bmonth_exists[0].region = region_obj
-                            bmonth_exists[0].month_rate = cargo_fijo
-                            bmonth_exists[0].kwh_rate = kwh_t
-                            bmonth_exists[0].date_init = date_init
-                            bmonth_exists[0].date_end = date_end
-                            bmonth_exists[0].save()
-                        else:
-                            #Se da de alta la nueva cuota
-                            newDac = DACElectricRateDetail(
-                                region = region_obj,
-                                month_rate = cargo_fijo,
-                                kwh_rate = kwh_t,
-                                date_init = date_init,
-                                date_end = date_end,
-                                )
-                            newDac.save()
-
+            resto_tarifas = tablasTarifa[1].find_all('tr')
+            for resto_t in resto_tarifas:
+                tds = resto_t.find_all('td')
+                if len(tds) > 0:
+                    try:
+                        region = str(tds[0].find(text=True)).strip()
+                        cargo_fijo = str(tds[1].find(text=True)).replace('$ ','')
+                        kwh_t= str(tds[2].find(text=True)).replace('$ ','')
+                    except IndexError:
+                        continue
                     else:
+                        if region == 'Norte y Noreste':
+                            region_obj = Region.objects.get(region_name = 'Norte')
 
-                        if region == 'Central':
-                            region_obj = Region.objects.\
-                            get(region_name = 'Central')
+                            #Se verifica que si la tarifa para la region norte ya esta registrada
+                            bmonth_exists = DACElectricRateDetail.objects.\
+                            filter(date_init = date_init).\
+                            filter(region=region_obj)
 
-                        elif region == 'Noroeste':
-                            region_obj = Region.objects.\
-                            get(region_name = 'Noroeste')
+                            if bmonth_exists:
+                                #Actualiza la tarifa
+                                bmonth_exists[0].region = region_obj
+                                bmonth_exists[0].month_rate = cargo_fijo
+                                bmonth_exists[0].kwh_rate = kwh_t
+                                bmonth_exists[0].date_init = date_init
+                                bmonth_exists[0].date_end = date_end
+                                bmonth_exists[0].save()
+                            else:
+                                #Se da de alta la nueva tarifa
+                                newDac = DACElectricRateDetail(
+                                    region = region_obj,
+                                    month_rate = cargo_fijo,
+                                    kwh_rate = kwh_t,
+                                    date_init = date_init,
+                                    date_end = date_end,
+                                    )
+                                newDac.save()
 
-                        #Se verifica que si la tarifa para las regiones central y noroeste ya esta registrada
-                        bmonth_exists = DACElectricRateDetail.objects.\
-                        filter(date_init = date_init).\
-                        filter(region=region_obj)
+                            region_obj = Region.objects.get(region_name = 'Noreste')
 
-                        if bmonth_exists:
-                            #Actualiza la tarifa
-                            bmonth_exists[0].region = region_obj
-                            bmonth_exists[0].month_rate = cargo_fijo
-                            bmonth_exists[0].kwh_rate = kwh_t
-                            bmonth_exists[0].date_init = date_init
-                            bmonth_exists[0].date_end = date_end
-                            bmonth_exists[0].save()
+                            #Se verifica que si la tarifa para la region noreste ya esta registrada
+                            bmonth_exists = DACElectricRateDetail.objects.\
+                            filter(date_init = date_init).\
+                            filter(region=region_obj)
+
+                            if bmonth_exists:
+                                #Actualiza la tarifa
+                                bmonth_exists[0].region = region_obj
+                                bmonth_exists[0].month_rate = cargo_fijo
+                                bmonth_exists[0].kwh_rate = kwh_t
+                                bmonth_exists[0].date_init = date_init
+                                bmonth_exists[0].date_end = date_end
+                                bmonth_exists[0].save()
+                            else:
+                                #Se da de alta la nueva cuota
+                                newDac = DACElectricRateDetail(
+                                    region = region_obj,
+                                    month_rate = cargo_fijo,
+                                    kwh_rate = kwh_t,
+                                    date_init = date_init,
+                                    date_end = date_end,
+                                    )
+                                newDac.save()
+
+                        elif region == 'Sur y Peninsular':
+                            region_obj = Region.objects.get(region_name = 'Sur')
+
+                            #Se verifica que si la tarifa para la region Sur ya esta registrada
+                            bmonth_exists = DACElectricRateDetail.objects.\
+                            filter(date_init = date_init).\
+                            filter(region=region_obj)
+
+                            if bmonth_exists:
+                                #Actualiza la tarifa
+                                bmonth_exists[0].region = region_obj
+                                bmonth_exists[0].month_rate = cargo_fijo
+                                bmonth_exists[0].kwh_rate = kwh_t
+                                bmonth_exists[0].date_init = date_init
+                                bmonth_exists[0].date_end = date_end
+                                bmonth_exists[0].save()
+                            else:
+                                #Se da de alta la nueva cuota
+                                newDac = DACElectricRateDetail(
+                                    region = region_obj,
+                                    month_rate = cargo_fijo,
+                                    kwh_rate = kwh_t,
+                                    date_init = date_init,
+                                    date_end = date_end,
+                                    )
+                                newDac.save()
+
+                            region_obj = Region.objects.get(region_name = 'Peninsular')
+
+                            #Se verifica que si la tarifa para la region Peninsular ya esta registrada
+                            bmonth_exists = DACElectricRateDetail.objects.\
+                            filter(date_init = date_init).\
+                            filter(region=region_obj)
+
+                            if bmonth_exists:
+                                #Actualiza la tarifa
+                                bmonth_exists[0].region = region_obj
+                                bmonth_exists[0].month_rate = cargo_fijo
+                                bmonth_exists[0].kwh_rate = kwh_t
+                                bmonth_exists[0].date_init = date_init
+                                bmonth_exists[0].date_end = date_end
+                                bmonth_exists[0].save()
+                            else:
+                                #Se da de alta la nueva cuota
+                                newDac = DACElectricRateDetail(
+                                    region = region_obj,
+                                    month_rate = cargo_fijo,
+                                    kwh_rate = kwh_t,
+                                    date_init = date_init,
+                                    date_end = date_end,
+                                    )
+                                newDac.save()
+
                         else:
-                            #Se da de alta la nueva cuota
-                            newDac = DACElectricRateDetail(
-                                region = region_obj,
-                                month_rate = cargo_fijo,
-                                kwh_rate = kwh_t,
-                                date_init = date_init,
-                                date_end = date_end,
-                                )
-                            newDac.save()
 
-    print "DAC crawler for "+str(month)+"/"+str(year)+" - Done"
+                            if region == 'Central':
+                                region_obj = Region.objects.\
+                                get(region_name = 'Central')
+
+                            elif region == 'Noroeste':
+                                region_obj = Region.objects.\
+                                get(region_name = 'Noroeste')
+
+                            #Se verifica que si la tarifa para las regiones central y noroeste ya esta registrada
+                            bmonth_exists = DACElectricRateDetail.objects.\
+                            filter(date_init = date_init).\
+                            filter(region=region_obj)
+
+                            if bmonth_exists:
+                                #Actualiza la tarifa
+                                bmonth_exists[0].region = region_obj
+                                bmonth_exists[0].month_rate = cargo_fijo
+                                bmonth_exists[0].kwh_rate = kwh_t
+                                bmonth_exists[0].date_init = date_init
+                                bmonth_exists[0].date_end = date_end
+                                bmonth_exists[0].save()
+                            else:
+                                #Se da de alta la nueva cuota
+                                newDac = DACElectricRateDetail(
+                                    region = region_obj,
+                                    month_rate = cargo_fijo,
+                                    kwh_rate = kwh_t,
+                                    date_init = date_init,
+                                    date_end = date_end,
+                                    )
+                                newDac.save()
+
+        print "DAC crawler for "+str(month)+"/"+str(year)+" - Done"
 
 
 
@@ -3040,52 +3137,56 @@ def crawler_t3_rate(year, month):
     date_init = datetime.date(year,month,1)
     date_end = datetime.date(year,month,last_day[1])
 
-    page = urllib2.urlopen("http://app.cfe.gob.mx/Aplicaciones/CCFE/Tarifas/Tarifas/tarifas_negocio.asp?Tarifa=3&Anio="+str(year)+"&mes="+str(month))
-    soup = BeautifulSoup(page.read())
-
-    form_tabla = soup.find('form')
-
-    tablasTarifa = form_tabla.find_all('table')
-    for tablaTarifa in tablasTarifa:
-        rows = tablaTarifa.find_all('tr')
-        for idx, tds in enumerate(rows):
-            if tds.td:
-                renglon = tds.td.find('span')
-                if renglon:
-                    try:
-                        if renglon.string == u'2.1 Cargo por demanda máxima':
-                            tarifa_demanda = rows[idx+1].td.b.string.replace('$ ','')
-                        elif renglon.string == u'2.2 Cargo adicional por la energía consumida':
-                            tarifa_kwh = rows[idx+1].td.b.string.replace('$ ','')
-                    except IndexError:
-                        print "Error: Error al parsear tabla - Index Error"
-                        continue
-
-    if not tarifa_demanda and not tarifa_kwh:
-        print "Error: No se encontraron las tarifas dentro del documento"
+    try:
+        page = urllib2.urlopen("http://app.cfe.gob.mx/Aplicaciones/CCFE/Tarifas/Tarifas/tarifas_negocio.asp?Tarifa=3&Anio="+str(year)+"&mes="+str(month))
+    except IOError:
+        print "URL Error. No Connection"
     else:
-        #Se verifica que no haya una tarifa ya registrada para ese mes
-        bmonth_exists = ThreeElectricRateDetail.objects.\
-        filter(date_init__lte = date_init).\
-        filter(date_end__gte = date_init)
+        soup = BeautifulSoup(page.read())
 
-        if bmonth_exists:
-            bmonth_exists[0].kw_rate = tarifa_demanda
-            bmonth_exists[0].kwh_rate = tarifa_kwh
-            bmonth_exists[0].date_init = date_init
-            bmonth_exists[0].date_end = date_end
-            bmonth_exists[0].save()
+        form_tabla = soup.find('form')
+
+        tablasTarifa = form_tabla.find_all('table')
+        for tablaTarifa in tablasTarifa:
+            rows = tablaTarifa.find_all('tr')
+            for idx, tds in enumerate(rows):
+                if tds.td:
+                    renglon = tds.td.find('span')
+                    if renglon:
+                        try:
+                            if renglon.string == u'2.1 Cargo por demanda máxima':
+                                tarifa_demanda = rows[idx+1].td.b.string.replace('$ ','')
+                            elif renglon.string == u'2.2 Cargo adicional por la energía consumida':
+                                tarifa_kwh = rows[idx+1].td.b.string.replace('$ ','')
+                        except IndexError:
+                            print "Error: Error al parsear tabla - Index Error"
+                            continue
+
+        if not tarifa_demanda and not tarifa_kwh:
+            print "Error: No se encontraron las tarifas dentro del documento"
         else:
-            #Se guarda la nueva tarifa
-            newT3 = ThreeElectricRateDetail(
-                kw_rate = tarifa_demanda,
-                kwh_rate = tarifa_kwh,
-                date_init = date_init,
-                date_end = date_end
-            )
-            newT3.save()
+            #Se verifica que no haya una tarifa ya registrada para ese mes
+            bmonth_exists = ThreeElectricRateDetail.objects.\
+            filter(date_init__lte = date_init).\
+            filter(date_end__gte = date_init)
 
-    print "T3 crawler for "+str(month)+"/"+str(year)+" - Done"
+            if bmonth_exists:
+                bmonth_exists[0].kw_rate = tarifa_demanda
+                bmonth_exists[0].kwh_rate = tarifa_kwh
+                bmonth_exists[0].date_init = date_init
+                bmonth_exists[0].date_end = date_end
+                bmonth_exists[0].save()
+            else:
+                #Se guarda la nueva tarifa
+                newT3 = ThreeElectricRateDetail(
+                    kw_rate = tarifa_demanda,
+                    kwh_rate = tarifa_kwh,
+                    date_init = date_init,
+                    date_end = date_end
+                )
+                newT3.save()
+
+        print "T3 crawler for "+str(month)+"/"+str(year)+" - Done"
 
 
 def getRatesCurrentMonth():
@@ -3105,6 +3206,39 @@ def getAllRates():
     crawler_t3_rate(2012, 1)
 
     print "All Rates Crawlers - Done"
+
+
+def getTupleDays(s_date_utc, e_date_utc):
+    arr_b_days = []
+    arr_e_days = []
+
+    #Recibe fechas en formato UTC
+    #Se convierten a fechas locales
+    s_date = s_date_utc.astimezone(timezone.get_current_timezone())
+    e_date = e_date_utc.astimezone(timezone.get_current_timezone())
+
+    day_delta = datetime.timedelta(days=1)
+
+    s_date_end = s_date + day_delta
+    s_date_end = s_date_end.replace(hour = 0, minute = 0)
+
+    actual_date_end = s_date_end
+    arr_b_days.append(s_date.astimezone(timezone.utc))
+    arr_e_days.append(s_date_end.astimezone(timezone.utc))
+
+    while actual_date_end < (e_date - day_delta):
+        actual_date_begin = actual_date_end
+        actual_date_end = actual_date_begin + day_delta
+
+
+        arr_b_days.append(actual_date_begin.astimezone(timezone.utc))
+        arr_e_days.append(actual_date_end.astimezone(timezone.utc))
+
+    e_date_begin = actual_date_end
+    arr_b_days.append(e_date_begin.astimezone(timezone.utc))
+    arr_e_days.append(e_date.astimezone(timezone.utc))
+
+    return zip(arr_b_days,arr_e_days)
 
 def regenerate_ie_config(ie_id):
     ie = IndustrialEquipment.objects.get(pk=ie_id)
