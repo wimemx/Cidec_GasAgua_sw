@@ -42,3 +42,14 @@ class MenuHierarchyAdmin(admin.ModelAdmin):
 
 admin.site.register(rbac.models.MenuHierarchy,
                     MenuHierarchyAdmin)
+
+admin.site.register(rbac.models.ControlPanel)
+
+
+class CPanelHierarchyAdmin(admin.ModelAdmin):
+    list_display = ['parent_cat', 'child_cat']
+    list_filter = ['parent_cat', 'parent_cat']
+
+
+admin.site.register(rbac.models.CPanelHierarchy,
+                    CPanelHierarchyAdmin)

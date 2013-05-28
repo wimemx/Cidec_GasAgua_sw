@@ -322,6 +322,8 @@ def calculateMonthlyReport():
     past_month_dt = datetime.date.today() - datetime.timedelta(days=2)
     calculateMonthlyReport_all(past_month_dt.month, past_month_dt.year)
     print "Task done: calculateMonthlyReport_all"
+    getRatesCurrentMonth()
+    print "Task done: getCFERates"
 # this will run every minute, see http://celeryproject.org/docs/reference/celery.task.schedules.html#celery.task.schedules.crontab
 #@periodic_task(run_every=crontab(hour="*", minute="*/2", day_of_week="*"))
 #def test_two_minute():
@@ -448,10 +450,3 @@ def last_data_received():
                                              to_mail)
                 msg.attach_alternative(html_content, "text/html")
                 msg.send()
-
-
-
-@periodic_task(run_every=crontab(day_of_month='1'))
-def getCFERates():
-    getRatesCurrentMonth()
-    print "Task done: getCFERates"

@@ -259,3 +259,40 @@ class MenuHierarchy(models.Model):
         if self.child_cat:
             t = self.child_cat.categ_name
         return s + " > " + t
+
+
+class ControlPanel(models.Model):
+    caption = models.CharField(max_length=100)
+    image_icon = models.ImageField(upload_to="control_panel", null=True,
+                                   blank=True)
+    group = models.IntegerField(blank=True, null=True)
+    order = models.IntegerField(blank=True, null=True)
+    access_point = models.CharField(max_length=200, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+
+    def __unicode__(self):
+        return self.caption
+
+
+class CPanelHierarchy(models.Model):
+    parent_cat = models.ForeignKey(ControlPanel,
+        related_name="parent_cat_composite",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        default=None)
+    child_cat = models.ForeignKey(ControlPanel,
+        related_name="parent_cat_leaf",
+        on_delete=models.PROTECT,
+        blank=True,
+        null=True,
+        default=None)
+
+    def __unicode__(self):
+        s = ""
+        t = ""
+        if self.parent_cat:
+            s = self.parent_cat.caption
+        if self.child_cat:
+            t = self.child_cat.caption
+        return s + " > " + t
