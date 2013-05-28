@@ -842,25 +842,30 @@ def user_notifications(request):
                 ("Ver edificios", VIEW, request.user)
         template_vars['buildings'] = buildings
 
+        usr_ntfs = UserNotifications.objects.filter(user=request.user).exclude(
+            alarm_event__alarm__status=False
+        )
+        notifs = usr_ntfs.order_by("-alarm_event__triggered_time")
+        template_vars['all'] = False
+        template_vars['ncount'] = ''
+
         if "notificacionesPorGrupo" in request.GET:
-            notifs = UserNotifications.objects.filter(read=False).order_by(
+            notifs = usr_ntfs.filter(read=False).order_by(
                 "notification_group")
             if has_permission(
                     request.user, VIEW,
                     "Ver suscripciones a alarmas") or request.user.is_superuser:
-                n_count = UserNotifications.objects.filter(
-                    user=request.user, read=False).values(
+                n_count = usr_ntfs.filter(read=False).values(
                         "notification_group").annotate(
                             Count("notification_group"))
-                template_vars['ncount']= n_count
+                template_vars['ncount'] = n_count
                 diccionario = {}
 
                 for item in n_count:
-                    notifs_groups = UserNotifications.objects.filter\
-                            (user=request.user,
-                             read=False,
-                             notification_group=item['notification_group']
-                            ).order_by("notification_group")
+                    notifs_groups = usr_ntfs.filter(
+                        read=False,
+                        notification_group=item['notification_group']
+                    ).order_by("notification_group")
                     data = defaultdict(list)
 
                     for item2 in notifs_groups:
@@ -874,14 +879,14 @@ def user_notifications(request):
                 template_vars['diccionario'] = diccionario
 
         elif "todas" in request.GET:
-            notifs = UserNotifications.objects.filter(read=True)\
-                .order_by("-alarm_event__triggered_time")
+            notifs = usr_ntfs.order_by("-alarm_event__triggered_time")
             template_vars['all'] = True
 
         elif "group" in request.GET:
             group = request.GET.get('group')
-            notifs = UserNotifications.objects.filter(
-                notification_group=group,read=False, user= request.user)
+            notifs = usr_ntfs.filter(
+                notification_group=group,
+                read=False)
 
         elif "parameterType" in request.GET or "buildings" in request.GET:
 
@@ -890,53 +895,34 @@ def user_notifications(request):
 
                 if parameterType == '-1':
                     if buildings == '0':
-                        notifs = UserNotifications.objects.filter(
-                            Q(user= request.user),
-                            Q(alarm_event__alarm__alarm_identifier=
-                                'Interrupción de Datos')).order_by(
-                                    "-alarm_event__triggered_time")
+                        notifs = usr_ntfs.filter(
+                            alarm_event__alarm__alarm_identifier=
+                            'Interrupción de Datos').order_by(
+                            "-alarm_event__triggered_time")
                     else:
-                        notifs = UserNotifications.objects.filter(
-                            Q(user= request.user),
-                            Q(alarm_event__alarm__alarm_identifier=
-                                'Interrupción de Datos'),
-                            Q(alarm_event__alarm__consumer_unit__building__pk=
-                                buildings)).order_by(
-                                    "-alarm_event__triggered_time")
+                        notifs = usr_ntfs.filter(
+                            alarm_event__alarm__alarm_identifier=
+                            'Interrupción de Datos',
+                            alarm_event__alarm__consumer_unit__building__pk=
+                            buildings).order_by("-alarm_event__triggered_time")
                 else:
                     if parameterType == '0':
-                        notifs = UserNotifications.objects.filter(
-                            Q(user= request.user),
-                            Q(alarm_event__alarm__consumer_unit__building__pk=
-                                buildings)).order_by(
-                                    "-alarm_event__triggered_time")
+                        notifs = usr_ntfs.filter(
+                            alarm_event__alarm__consumer_unit__building__pk=
+                            buildings).order_by(
+                                "-alarm_event__triggered_time")
                     if buildings == '0':
-                        notifs = UserNotifications.objects.filter(
-                            Q(alarm_event__alarm__electric_parameter__pk=
-                                parameterType),
-                            Q(user= request.user)).order_by(
+                        notifs = usr_ntfs.filter(
+                            alarm_event__alarm__electric_parameter__pk=
+                            parameterType).order_by(
                                 "-alarm_event__triggered_time")
                     if buildings != '0' and parameterType != '0':
-                        notifs = UserNotifications.objects.filter(
-                            Q(alarm_event__alarm__electric_parameter__pk
-                            =parameterType),
-                            Q(user= request.user),
-                            Q(alarm_event__alarm__consumer_unit__building__pk
-                            =buildings)).order_by(
-                                "-alarm_event__triggered_time")
-        else:
-            notifs = UserNotifications.objects\
-                .filter(read=True, user=request.user)\
-                .order_by("-alarm_event__triggered_time")
+                        notifs = usr_ntfs.filter(
+                            alarm_event__alarm__electric_parameter__pk
+                            =parameterType,
+                            alarm_event__alarm__consumer_unit__building__pk
+                            =buildings).order_by("-alarm_event__triggered_time")
 
-        if not request.GET:
-            notifs = UserNotifications.objects.filter(
-                user=request.user
-            ).exclude(
-                alarm_event__alarm__status=False
-            ).order_by("-alarm_event__triggered_time")
-            template_vars['all'] = False
-            template_vars['ncount'] = ''
         arr_day_notif = {}
 
         today_str = str(datetime.date.today())

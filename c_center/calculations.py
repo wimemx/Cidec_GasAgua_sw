@@ -2,7 +2,9 @@
 # Create your views here.
 
 #standard library imports
-import pytz, datetime
+import pytz
+import datetime
+import json
 from time import strftime
 from math import *
 from decimal import *
@@ -13,6 +15,7 @@ from django.http import *
 from django.db.models.aggregates import *
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
+from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 
@@ -458,7 +461,7 @@ def obtenerTipoPeriodoObj(fecha, region):
     electric_type = ElectricRatesPeriods.objects.filter(region=region).filter(
         date_interval__in=horario_ver_inv).filter(groupdays=grupo_id).filter(
         Q(time_init__lte=fecha), Q(
-            time_end__gte=fecha))
+            time_end__gt=fecha))
 
     return electric_type[0]
 
@@ -470,6 +473,29 @@ def obtenerHorarioVeranoInvierno(fecha, tarifa_id):
         date_end__gte=datetime.date(fecha.year, fecha.month, fecha.day)).\
             filter(electric_rate=tarifa_id)
     return horario[0]
+
+
+def get_time_saving_type(request):
+    if "ie_id" in request.GET:
+        try:
+            ie_id = request.GET['ie_id']
+        except ValueError:
+            raise Http404
+        else:
+            ie = get_object_or_404(IndustrialEquipment, pk=ie_id)
+            electric_rate = ie.building.electric_rate.pk
+            time_saving = obtenerHorarioVeranoInvierno(datetime.date.today(),
+                                                       electric_rate)
+            if time_saving.interval_period == 1:
+                time_saving = 'Verano'
+            else:
+                time_saving = 'Invierno'
+            time_saving = dict(time_saving=time_saving.interval_period)
+            return HttpResponse(content=json.dumps(time_saving),
+                                status=200,
+                                mimetype="application/json")
+    else:
+        raise Http404
 
 
 def obtenerKWTarifa(pr_powermeter, tarifa_id):

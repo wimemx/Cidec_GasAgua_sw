@@ -4,7 +4,7 @@ import datetime
 import pytz
 
 #related third party imports
-#from socketIO_client import SocketIO
+from socketIO_client import SocketIO
 from celery import task
 from celery.task.schedules import crontab
 from celery.decorators import periodic_task

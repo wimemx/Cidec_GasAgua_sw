@@ -309,6 +309,8 @@ urlpatterns = patterns('',
                            'c_center.views.montly_data_w_for_building'),
                        url(r'^month_analitics_day/',
                            'c_center.views.month_analitics_day'),
+                       url(r'^get_dayligth_time/',
+                           'c_center.calculations.get_time_saving_type'),
                        (r'^test/$',
                         direct_to_template,
                         {'template':
