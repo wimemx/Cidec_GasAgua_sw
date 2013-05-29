@@ -8,16 +8,21 @@
 {% endblock %}
 {% block document_ready %}
 {% endblock %}
-{% block contenido %}
-    
+{% block breadcumbs %}
     <div id="bread_crumbs">
+        <a href="/profile/{{ request.user.pk }}/" class="fl username">{{ request.user.first_name }} {{ request.user.last_name }}</a>
         <ul>
             <li><a href="/main/">Inicio</a></li>
             <li>Panel de control</li>
         </ul>
     </div>
+{% endblock %}
+{% block contenido %}
+    
+
     <div id="page_content">
     <div id="contenido_interno">
+        <img id="panelImg" src="/static/css/images/imgs_icns/cpanel_icon.png" alt=""/>
         <h2 id="titulo_reporte">Panel de control</h2>
         <div class="divider" id="divider_top">&nbsp;</div>
         {% for group in object_permission %}
