@@ -38,16 +38,46 @@ UPDATE = Operation.objects.get(operation_name="Modificar")
 
 @login_required(login_url='/')
 def control_panel(request):
-    objetos = Object.objects.exclude(Q(object_access_point='') |
-                                     Q(object_access_point="/"))
-    object_permission = []
-    for obj in objetos:
-        if has_permission(request.user, VIEW, obj.object_name) or \
-                has_permission(request.user, CREATE, obj.object_name) or \
-                has_permission(request.user, DELETE, obj.object_name) or \
-                has_permission(request.user, UPDATE, obj.object_name) or \
-                request.user.is_superuser:
-            object_permission.append(obj)
+    if not request.GET:
+        #Obtiene el primer nivel
+        objetos = CPanelHierarchy.objects.all()
+        childs = [cat.child_cat.pk for cat in objetos]
+        parents_gps = ControlPanel.objects.all().exclude(
+            pk__in=childs).values("group").annotate(
+                Count("group")).order_by("group")
+        get_childs = False
+    else:
+        if "cat" in request.GET:
+            objetos = CPanelHierarchy.objects.filter(
+                parent_cat__pk=int(request.GET['cat']))
+            if not objetos:
+                raise Http404
+            else:
+                childs = [cat.child_cat.pk for cat in objetos]
+                parents_gps = ControlPanel.objects.filter(
+                    pk__in=childs).values("group").annotate(
+                        Count("group")).order_by("group")
+                get_childs = True
+        else:
+            raise Http404
+    panel_elements = []
+    for parent_gp in parents_gps:
+        if get_childs:
+            parents = ControlPanel.objects.filter(
+                group=parent_gp['group'], pk__in=childs)
+        else:
+            parents = ControlPanel.objects.filter(
+                group=parent_gp['group']).exclude(pk__in=childs)
+
+        group_elements = []
+        for parent in parents:
+            accessp = "?cat=" + str(parent.pk) if not parent.access_point \
+                else parent.access_point
+            group_elements.append(
+                dict(caption=parent.caption,
+                     access_point=accessp,
+                     image=parent.image_icon.url))
+        panel_elements.append(group_elements)
 
     template_vars = dict(
         sidebar=request.session['sidebar'],
@@ -55,7 +85,7 @@ def control_panel(request):
         empresa=request.session['main_building'],
         operations=Operation.objects.all(),
         company=request.session['company'],
-        object_permission=object_permission
+        object_permission=panel_elements
     )
     template_vars_template = RequestContext(request, template_vars)
     return render_to_response("panel_de_control.html", template_vars_template)

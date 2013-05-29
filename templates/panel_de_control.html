@@ -20,11 +20,16 @@
     <div id="contenido_interno">
         <h2 id="titulo_reporte">Panel de control</h2>
         <div class="divider" id="divider_top">&nbsp;</div>
-        <ul id="permissions">
-            {% for option in object_permission %}
-                <li><a href="{{ option.object_access_point }}">{{ option.object_name }}</a></li>
+        {% for group in object_permission %}
+            <div class="element_row">
+            {% for element in group %}
+                <div class="element">
+                    <img src="{{ element.image }}" alt="{{ element.caption }}"/>
+                    <a href="{{ element.access_point }}" class="caption">{{ element.caption }}</a>
+                </div>
             {% endfor %}
-        </ul>
+            </div>
+        {% endfor %}
     </div>
     </div>    
 {% endblock %}

@@ -415,7 +415,7 @@ def last_data_received():
 
             users_to_notify = \
                 alarms.models.UserNotificationSettings.objects.filter(
-                    alarm=alarm_cu
+                    alarm=alarm_cu, status=1
                 )
             for user in users_to_notify:
                 if user.notification_type == 3:
