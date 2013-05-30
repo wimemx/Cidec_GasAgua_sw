@@ -190,6 +190,7 @@ body{
     position:relative;
     top:-10px;
     overflow: hidden;
+
 }
 #contenido_interno{
     width: 986px;
@@ -377,6 +378,7 @@ h2 span{
 #navigation_menu{
     position: relative;
     left:-130px;
+    bottom:5px;
 }
 #main_menu{
     width: 562px;
