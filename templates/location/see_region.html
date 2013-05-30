@@ -30,9 +30,10 @@ $("a.fbox").fancybox({
 });
 {% endblock %}
 
-{% block contenido %}
+{% block breadcumbs %}
 
-<div id="bread_crumbs">
+    <div id="bread_crumbs">
+    <a href="/profile/{{ request.user.pk }}/" class="fl username">{{ request.user.first_name }} {{ request.user.last_name }}</a>
     <ul>
         <li><a href="/main/">Inicio</a></li>
         <li><a href="/location/ver_regiones/">Regiones</a></li>
@@ -40,6 +41,12 @@ $("a.fbox").fancybox({
     </ul>
 
 </div>
+
+{% endblock %}
+
+{% block contenido %}
+
+
 <div id="page_content">
 <div id="contenido_interno" class="cluster_content">
     <h2 id="titulo_form" class="cluster">

@@ -169,22 +169,17 @@ body{
 
 #table_container{
     position: relative;
-    top: 107px;
-    height: 100%;
-    background: #f3f3f3;
-    background-image: url(images/bgs/gray_steel.png); /* fallback */
-    background-image: url(images/bgs/gray_steel.png), -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#333333)); /* Saf4+, Chrome */
-    background-image: url(images/bgs/gray_steel.png), -webkit-linear-gradient(top, #ffffff, #333333); /* Chrome 10+, Saf5.1+ */
-    background-image: url(images/bgs/gray_steel.png),    -moz-linear-gradient(top, #ffffff, #333333); /* FF3.6+ */
-    background-image: url(images/bgs/gray_steel.png),     -ms-linear-gradient(top, #ffffff, #333333); /* IE10 */
-    background-image: url(images/bgs/gray_steel.png),      -o-linear-gradient(top, #ffffff, #333333); /* Opera 11.10+ */
-    background-image: url(images/bgs/gray_steel.png),         linear-gradient(top, #ffffff, #333333); /* W3C */
+    /*top: 107px;*/
     width: 1024px !important;
+    display: block;
+    overflow: hidden;
+    padding-top: 0px;
+    top:40px;
 }
 #table_container tr{
     height: 100%;
     width: 1024px !important;
-    display: block;
+    background-color:white;
 }
 #table_container td{
     vertical-align: top;
@@ -192,11 +187,12 @@ body{
 #page_content{
     border-top: solid 1px #2b87a3;
     background: #fff;
-    margin-top: 16px;
-    overflow: auto;
+    position:relative;
+    top:-10px;
+    overflow: hidden;
 }
 #contenido_interno{
-    width: 1162px;
+    width: 986px;
     display: block;
     margin: 0 auto;
     min-height: 800px;
@@ -212,6 +208,8 @@ body{
     width: inherit !important;
     position: relative;
     top: -20px;
+    padding-bottom:45px;
+    overflow: hidden;
 }
 #form_container{
     display: block;
@@ -220,10 +218,9 @@ body{
     width: 900px;
 }
 #header{
-    position: absolute;
     top: 0;
     width: inherit !important;
-    height: 106px;
+    height: 53px;
 
 }
 .main_logo{
@@ -445,13 +442,7 @@ h2 span{
     font-weight: bold;
     padding-top: 5px;
 }
-#main_menu li.first_level.settings{
-    background: url(images/imgs_icns/menu_settings.png) no-repeat left center;
-}
-#main_menu li.first_level.settings a{
-    display: block;
-    height: 100%;
-}
+
 /*all nested uls*/
 #main_menu li.first_level ul{
     background: #fff;
@@ -865,6 +856,16 @@ a.aqua_btn:hover, a.grey_btn:hover{
     width: 1024px;
     margin:0 auto;
     overflow: hidden;
+    margin-bottom: 20px;
+    position: relative;
+
+}
+.subwrapper{
+    height: auto;
+    display: block;
+    width: 100%;
+    position: relative;
+
 }
 .element_row{
     display: block;
