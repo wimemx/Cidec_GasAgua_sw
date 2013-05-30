@@ -104,8 +104,11 @@ def update_ie_config(new_config, ie_pk):
         pw.powermeter.save()
 
     for device in config['eDevicesConfigList']:
-        profile = ProfilePowermeter.objects.get(
-            powermeter__powermeter_serial=str(device['IdMedidorESN']))
+        try:
+            profile = ProfilePowermeter.objects.get(
+                powermeter__powermeter_serial=str(device['IdMedidorESN']))
+        except ObjectDoesNotExist:
+            return False
         profile.read_time_rate = int(device['ReadTimeRate'])
         profile.send_time_rate = int(device['SendTimeRate'])
         profile.save()

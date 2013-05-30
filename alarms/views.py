@@ -21,6 +21,8 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
+from django.contrib.auth.models import User
+
 from collections import defaultdict
 
 from rbac.rbac_functions import get_buildings_context, has_permission
@@ -32,6 +34,7 @@ from alarms.alarm_functions import *
 from alarms.models import *
 from c_center.models import Building, IndustrialEquipment, CompanyBuilding
 from rbac.models import Operation
+from c_center.c_center_functions import regenerate_ie_config
 
 
 VIEW = Operation.objects.get(operation_name="Ver")
@@ -1044,13 +1047,21 @@ def get_latest_notifs(request):
 @csrf_exempt
 def refresh_ie_config(request):
     if request.method == "POST":
+        status_conf = 200
         if 'ie' in request.POST:
             ie = get_object_or_404(IndustrialEquipment,
                                    pk=int(request.POST['ie']))
+            al_conf = True
+            ie_conf = True
             if ie.has_new_alarm_config:
-                update_alarm_config(ie.new_alarm_config, ie.pk)
+                al_conf = update_alarm_config(ie.new_alarm_config, ie.pk)
+
             if ie.has_new_config:
-                update_ie_config(ie.new_config, ie.pk)
-        return HttpResponse(status=200)
+                ie_conf = update_ie_config(ie.new_config, ie.pk)
+            if not ie_conf or not al_conf:
+                user = User.objects.get(pk=1)
+                set_alarm_json(ie.building, user)
+                regenerate_ie_config(ie.pk, user)
+        return HttpResponse(status=status_conf)
     else:
         raise Http404
