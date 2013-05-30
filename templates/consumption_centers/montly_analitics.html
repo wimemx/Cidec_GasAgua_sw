@@ -328,14 +328,21 @@
         closeEffect	: 'none'
     });
 {% endblock %}
-{% block contenido %}
-    
+{% block breadcumbs %}
+
     <div id="bread_crumbs">
+    <a href="/profile/{{ request.user.pk }}/" class="fl username">{{ request.user.first_name }} {{ request.user.last_name }}</a>
         <ul>
             <li><a href="/main/">Inicio</a></li>
             <li><a href="/reportes/analisis_mensual/">An&aacute;lisis de Consumo El&eacute;ctrico Mensual</a></li>
         </ul>
     </div>
+
+{% endblock %}
+
+{% block contenido %}
+    
+
     <div id="page_content">
     <div id="contenido_interno">
         <h2 class="titulo_reporte"><span class="building">{{ building.building_name }}</span> - <span class="device">{{ request.session.consumer_unit.electric_device_type.electric_device_type_name }}</span></h2>

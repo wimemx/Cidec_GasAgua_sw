@@ -156,44 +156,44 @@ a:hover{
 
 /*--Overall look and feel--*/
 body{
-    background: #f3f3f3;
+    background: url("images/bgs/bg.jpg") transparent repeat;
+   /* background: #f3f3f3;
     background-image: url(images/bgs/gray_steel.png); /* fallback */
-    background-image: url(images/bgs/gray_steel.png), -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#333333)); /* Saf4+, Chrome */
-    background-image: url(images/bgs/gray_steel.png), -webkit-linear-gradient(top, #ffffff, #333333); /* Chrome 10+, Saf5.1+ */
-    background-image: url(images/bgs/gray_steel.png),    -moz-linear-gradient(top, #ffffff, #333333); /* FF3.6+ */
-    background-image: url(images/bgs/gray_steel.png),     -ms-linear-gradient(top, #ffffff, #333333); /* IE10 */
-    background-image: url(images/bgs/gray_steel.png),      -o-linear-gradient(top, #ffffff, #333333); /* Opera 11.10+ */
-    background-image: url(images/bgs/gray_steel.png),         linear-gradient(top, #ffffff, #333333); /* W3C */
+   /* background-image: url(images/bgs/gray_steel.png), -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#333333)); /* Saf4+, Chrome */
+  /*  background-image: url(images/bgs/gray_steel.png), -webkit-linear-gradient(top, #ffffff, #333333); /* Chrome 10+, Saf5.1+ */
+    /*background-image: url(images/bgs/gray_steel.png),    -moz-linear-gradient(top, #ffffff, #333333); /* FF3.6+ */
+   /* background-image: url(images/bgs/gray_steel.png),     -ms-linear-gradient(top, #ffffff, #333333); /* IE10 */
+   /* background-image: url(images/bgs/gray_steel.png),      -o-linear-gradient(top, #ffffff, #333333); /* Opera 11.10+ */
+    /*background-image: url(images/bgs/gray_steel.png),         linear-gradient(top, #ffffff, #333333); /* W3C */
 }
 
 #table_container{
     position: relative;
-    top: 59px;
-    height: 100%;
-    background: #f3f3f3;
-    background-image: url(images/bgs/gray_steel.png); /* fallback */
-    background-image: url(images/bgs/gray_steel.png), -webkit-gradient(linear, left top, left bottom, from(#ffffff), to(#333333)); /* Saf4+, Chrome */
-    background-image: url(images/bgs/gray_steel.png), -webkit-linear-gradient(top, #ffffff, #333333); /* Chrome 10+, Saf5.1+ */
-    background-image: url(images/bgs/gray_steel.png),    -moz-linear-gradient(top, #ffffff, #333333); /* FF3.6+ */
-    background-image: url(images/bgs/gray_steel.png),     -ms-linear-gradient(top, #ffffff, #333333); /* IE10 */
-    background-image: url(images/bgs/gray_steel.png),      -o-linear-gradient(top, #ffffff, #333333); /* Opera 11.10+ */
-    background-image: url(images/bgs/gray_steel.png),         linear-gradient(top, #ffffff, #333333); /* W3C */
-    width: 100%;
+    /*top: 107px;*/
+    width: 1024px !important;
+    display: block;
+    overflow: hidden;
+    padding-top: 0px;
+    top:40px;
 }
 #table_container tr{
     height: 100%;
+    width: 1024px !important;
+    background-color:white;
 }
 #table_container td{
     vertical-align: top;
 }
 #page_content{
     border-top: solid 1px #2b87a3;
-    background: url("images/bgs/bg_pattern.png") #fff;
-    margin-top: 10px;
-    overflow: auto;
+    background: #fff;
+    position:relative;
+    top:-10px;
+    overflow: hidden;
+
 }
 #contenido_interno{
-    width: 1162px;
+    width: 986px;
     display: block;
     margin: 0 auto;
     min-height: 800px;
@@ -206,7 +206,11 @@ body{
 }
 #content{
     min-width: 870px;
-    width: 100%;
+    width: inherit !important;
+    position: relative;
+    top: -20px;
+    padding-bottom:45px;
+    overflow: hidden;
 }
 #form_container{
     display: block;
@@ -215,10 +219,9 @@ body{
     width: 900px;
 }
 #header{
-    position: absolute;
     top: 0;
-    width: 100%;
-    height: 59px;
+    width: inherit !important;
+    height: 53px;
 
 }
 .main_logo{
@@ -263,10 +266,10 @@ h2 span{
     height: 61px !important;
 }
 #top_menu{
-    height: 62px;
+    height: 58px;
     display: block;
-    width: 100%;
-    background: url(images/bgs/menu_bar_blue_green.png) repeat-x;
+    width: 1024px ;
+    background: url(images/imgs_icns/menu.png) repeat-x;
 }
 #top_menu #menu_container{
     display: block;
@@ -296,7 +299,7 @@ h2 span{
     background: url(images/imgs_icns/company_arrow_d.png) no-repeat 100% 50%;
     line-height: 56px;
     color: #dbe2f2;
-    font-size: 13px;
+    font-size: 19px;
 }
 #companies_container #empresa.expanded{
     background: url(images/imgs_icns/company_arrow_u.png) no-repeat 100% 50%;
@@ -374,6 +377,8 @@ h2 span{
 /*-----NAV MENU------*/
 #navigation_menu{
     position: relative;
+    left:-130px;
+    bottom:5px;
 }
 #main_menu{
     width: 562px;
@@ -396,36 +401,50 @@ h2 span{
 }
 #main_menu li.first_level.dashboard{
     width: 79px !important;
-    background: url(images/imgs_icns/menu_myrios.png) no-repeat left center;
+    background: url(images/imgs_icns/menu_myrios.png) no-repeat 50px 0px;
     padding-left: 21px;
+    position: relative;
+    top: 10px;
+    font-weight: bold;
+    padding-top: 5px;
 }
 #main_menu li.first_level.analisis{
     width: 62px !important;
-    background: url(images/imgs_icns/menu_bolt.png) no-repeat left center;
+    background: url(images/imgs_icns/menu_bolt.png) no-repeat 41px 0px;
     padding-left: 15px;
+    position: relative;
+    top: 5px;
+    font-weight: bold;
+    padding-top: 10px;
 }
 #main_menu li.first_level.consumo{
     width: 61px !important;
-    background: url(images/imgs_icns/menu_meter.png) no-repeat left center;
+    background: url(images/imgs_icns/menu_meter.png) no-repeat 50px 0px;
     padding-left: 27px;
+    position: relative;
+    top: 10px;
+    font-weight: bold;
+    padding-top: 5px;
 }
 #main_menu li.first_level.edificio{
     width: 55px !important;
-    background: url(images/imgs_icns/menu_building.png) no-repeat left center;
+    background: url(images/imgs_icns/menu_building.png) no-repeat 43px 0px;
     padding-left: 28px;
+    position: relative;
+    top: 5px;
+    font-weight: bold;
+    padding-top: 10px;
 }
 #main_menu li.first_level.alarmas{
     width: 59px !important;
-    background: url(images/imgs_icns/menu_alarm.png) no-repeat left center;
+    background: url(images/imgs_icns/menu_alarm.png) no-repeat 43px 0px;
     padding-left: 23px;
+    position: relative;
+    top: 10px;
+    font-weight: bold;
+    padding-top: 5px;
 }
-#main_menu li.first_level.settings{
-    background: url(images/imgs_icns/menu_settings.png) no-repeat left center;
-}
-#main_menu li.first_level.settings a{
-    display: block;
-    height: 100%;
-}
+
 /*all nested uls*/
 #main_menu li.first_level ul{
     background: #fff;
@@ -519,10 +538,13 @@ ul#main_menu ul ul li:hover{
 #configuracion a{ background: url(images/imgs_icns/settings_icon_topbar.png) no-repeat;}
 #salir a{ background: url(images/imgs_icns/exit_icon_topbar.png) no-repeat;}
 #header-container{
-    padding: 10px;
-    width: 1162px;
+    padding: 10px 0;
+    width: inherit !important;
     margin: 0 auto;
-    height: 69%;
+    height: 45px;
+    background-color: white;
+    overflow: hidden;
+    clear: both;
 }
 
 /* ----- Buttons -----*/
@@ -583,16 +605,26 @@ a.aqua_btn:hover, a.grey_btn:hover{
 /*------------Breadcrumbs-----------*/
 #bread_crumbs{
     background: url(images/bgs/bread_crumbs_bg.png) repeat-x;
-    border: solid 1px #9ebfc7;
     margin-top: 10px;
     height: 32px;
     line-height: 32px;
+    -webkit-border-radius: 6px 6px 0px 0px;
+    -moz-border-radius: 6px 6px 0px 0px;
+    border-radius: 6px 6px 0px 0px;
 }
 #bread_crumbs ul{
     display: block;
     width: 1162px;
     padding: 0 28px;
     margin: 0 auto;
+}
+#bread_crumbs .username,#auditem
+{
+    margin-left: 30px;
+}
+#myrios
+{
+    margin-right: 30px;
 }
 #bread_crumbs ul li:first-child{
     background: none;
@@ -818,4 +850,57 @@ a.aqua_btn:hover, a.grey_btn:hover{
     float: right;
     margin-right: 15px;
     color: #999;
+}
+
+/* 1024 px redesign*/
+.wrapper{
+    display: block;
+    width: 1024px;
+    margin:0 auto;
+    overflow: hidden;
+    margin-bottom: 20px;
+    position: relative;
+
+}
+.subwrapper{
+    height: auto;
+    display: block;
+    width: 100%;
+    position: relative;
+
+}
+.element_row{
+    display: block;
+    clear: both;
+    margin: 10px 0 !important;
+    height: 90px;
+    overflow: hidden;
+    margin-left: 15px !important;
+}
+
+.element_row .element{
+    display: block;
+    float: left;
+    margin-right: 20px;
+}
+.element_row .element a{
+    display: block;
+    margin-top: 5px;
+    width: 51px;
+    color:#636363;
+}
+#bread_crumbs .username{
+    color:#5692a5;
+    text-decoration: underline;
+    font-weight: bold;
+    margin-right: 40px;
+}
+#panelImg{
+    display: block;
+    float: left;
+    margin-right: 10px;
+    margin-left: 15px;
+}
+#titulo_reporte{
+    float: left;
 }

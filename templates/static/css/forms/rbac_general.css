@@ -338,7 +338,7 @@ label.input span.incorrect,label.input span.correct
 
 #user_actions form
 {
-	float: left;
+
 	width: 665px;
 }
 
@@ -368,7 +368,7 @@ label.input span.incorrect,label.input span.correct
 
 form
 {
-	overflow: auto;
+	overflow: hidden;
 	color: #6c6c6c;
 }
 

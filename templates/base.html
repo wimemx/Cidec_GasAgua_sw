@@ -252,8 +252,12 @@
     </script>
 </head>
 <body>
-
+<div class="wrapper">
+<div class="subwrapper">
     <div id="header">
+        <div id="breadcumbs">
+            {% block breadcumbs %}{% endblock %}
+        </div>
         <div id="header-container">
             <div class="main_logo fl" id="auditem">
                 <a href="/"></a>
@@ -277,5 +281,7 @@
         </tr>
         </tbody>
     </table>
+</div>
+</div>
 </body>
 </html>
