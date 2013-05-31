@@ -382,6 +382,8 @@ h2 span{
 }
 #main_menu{
     width: 562px;
+    position: relative;
+    left: -99px;
 }
 #main_menu li.first_level a{
     text-decoration: none;
@@ -447,13 +449,15 @@ h2 span{
 
 /*all nested uls*/
 #main_menu li.first_level ul{
-    background: #fff;
+
     border: solid 1px #2b87a3;
+
 }
 /*second level*/
 ul#main_menu ul{
     margin-left: -19px;
     width: 222px;
+    background: white;
 }
 ul#main_menu ul ul{
     position: absolute !important;
@@ -471,6 +475,8 @@ ul#main_menu ul li:hover{
 /*third level*/
 ul#main_menu ul ul{
     width: 200px;
+    position: relative;
+    left: 241px;
 }
 ul#main_menu ul ul li{
     background: url(images/bgs/bread_crumb_sep.png) no-repeat 6% 50%;
@@ -903,4 +909,11 @@ a.aqua_btn:hover, a.grey_btn:hover{
 }
 #titulo_reporte{
     float: left;
+}
+ul .sub_list
+{
+    z-index: 999;
+    position: relative;
+    top: -20px;
+    left: 0px;
 }
