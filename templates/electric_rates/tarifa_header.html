@@ -16,6 +16,7 @@
     <script type="text/javascript">
 
         function getRate(){
+            $('#rates_loader').addClass('rates_spinner');
 
             var year = $("#crawler_year").val();
             var month = $("#crawler_month").val();
@@ -27,9 +28,12 @@
                     var url = '/electric_rates/tabla_tarifaHM/?tarifa={{ tipo_tarifa }}&year='+year+'&crawler='+data;
                     $('#hm_container').addClass('iframe_spinner');
                     makeIframe(url);
+                    $('#rates_loader').removeClass('rates_spinner');
 
                 }
             });
+
+
         }
 
         function viewHM(){
@@ -146,6 +150,7 @@
                         {% endif %}
                     </select>
                     <button class="aqua_btn" onclick="getRate();">Obtener Tarifa</button>
+                    <span id="rates_loader" style="width: 20px; height: 20px; display: block"></span>
                 </div>
 
             </div>

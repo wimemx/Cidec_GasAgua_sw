@@ -2869,12 +2869,13 @@ def crawler_hm_rate(year, month):
 
                 #Si ya existe se actualiza
                 if bmonth_exists:
+
                     bmonth_exists[0].KDF = ar_tarifas[0]
                     bmonth_exists[0].KWHP = ar_tarifas[1]
                     bmonth_exists[0].KWHI = ar_tarifas[2]
                     bmonth_exists[0].KWHB = ar_tarifas[3]
                     bmonth_exists[0].FRI = ar_fri[0]
-                    bmonth_exists[0].FRI = ar_fri[1]
+                    bmonth_exists[0].FRB = ar_fri[1]
                     bmonth_exists[0].KWDMM = 0
                     bmonth_exists[0].KWHEC = 0
                     bmonth_exists[0].date_init = date_init
