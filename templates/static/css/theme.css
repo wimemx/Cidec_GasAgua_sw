@@ -172,7 +172,6 @@ body{
     /*top: 107px;*/
     width: 1024px !important;
     display: block;
-    overflow: hidden;
     padding-top: 0px;
     top:40px;
 }
@@ -265,8 +264,7 @@ h2 span{
 #tr_menu{
     height: 61px !important;
     display: block;
-    overflow: hidden;
-    z-index: 999;
+    z-index: 998;
     position: relative;
 }
 #container_content{
@@ -388,7 +386,7 @@ h2 span{
 /*-----NAV MENU------*/
 #navigation_menu{
     position: relative;
-    left:-130px;
+    left:-65px;
 }
 #main_menu{
     width: 562px;
@@ -871,11 +869,15 @@ a.aqua_btn:hover, a.grey_btn:hover{
 /* 1024 px redesign*/
 .wrapper{
     display: block;
+    margin-top: 30px !important;
     width: 1024px;
     margin:0 auto;
-    overflow: hidden;
     margin-bottom: 20px;
     position: relative;
+    -webkit-box-shadow: 0px 0px 30px rgba(0, 0, 0, 0.77);
+    -moz-box-shadow:    0px 0px 30px rgba(0, 0, 0, 0.77);
+    box-shadow:         0px 0px 30px rgba(0, 0, 0, 0.77);
+
 
 }
 .subwrapper{
@@ -887,10 +889,10 @@ a.aqua_btn:hover, a.grey_btn:hover{
 }
 .element_row{
     display: block;
-    clear: both;
     margin: 10px 0 !important;
     height: 90px;
     overflow: hidden;
+    float:left;
     margin-left: 15px !important;
 }
 
