@@ -65,6 +65,9 @@ footer, header, hgroup, menu, nav, section {
 }
 body {
     line-height: 1;
+    width: 1024px;
+    display: block;
+    overflow-x: hidden;
     /*background-image: url("../images/general/body_back.png");*/
 }
 ol, ul {
@@ -208,7 +211,6 @@ body{
     width: inherit !important;
     position: relative;
     top: -20px;
-    padding-bottom:45px;
     overflow: hidden;
 }
 #form_container{
@@ -268,7 +270,6 @@ h2 span{
     position: relative;
 }
 #container_content{
-    min-height: 900px;
     position: relative;
     top: 0px;
     display: block;
@@ -872,6 +873,7 @@ a.aqua_btn:hover, a.grey_btn:hover{
     margin-top: 30px !important;
     width: 1024px;
     margin:0 auto;
+    padding-bottom: 10px;
     margin-bottom: 20px;
     position: relative;
     -webkit-box-shadow: 0px 0px 30px rgba(0, 0, 0, 0.77);
@@ -906,6 +908,7 @@ a.aqua_btn:hover, a.grey_btn:hover{
     margin-top: 5px;
     width: 51px;
     color:#636363;
+    text-align: center;
 }
 #bread_crumbs .username{
     color:#5692a5;
