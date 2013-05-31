@@ -25,6 +25,7 @@ from c_center.c_center_functions import save_historic, dailyReportAll, \
     asign_electric_data_to_pw, calculateMonthlyReport_all, all_dailyreportAll,\
     getRatesCurrentMonth
 from c_center.calculations import daytag_period_allProfilePowermeters
+from tareas.models import *
 
 
 @task(ignore_result=True)
@@ -224,8 +225,10 @@ def process_dw_consumerunit_electrical_parameter(
     )
 
 @task(ignore_result=True)
-def tag_batch(start_day = datetime.datetime(2012,8,1), end_day = datetime.datetime(2013,5,29) ):
+def tag_batch(start_day=datetime.datetime(2012, 8, 1),
+              end_day=datetime.datetime(2013, 5, 29)):
     daytag_period_allProfilePowermeters(start_day, end_day)
+
 
 @task(ignore_result=True)
 def calculate_dw(granularity):
@@ -320,6 +323,8 @@ def calculateMonthlyReport():
     past_month_dt = datetime.date.today() - datetime.timedelta(days=2)
     calculateMonthlyReport_all(past_month_dt.month, past_month_dt.year)
     print "Task done: calculateMonthlyReport_all"
+    getRatesCurrentMonth()
+    print "Task done: getCFERates"
 # this will run every minute, see http://celeryproject.org/docs/reference/celery.task.schedules.html#celery.task.schedules.crontab
 #@periodic_task(run_every=crontab(hour="*", minute="*/2", day_of_week="*"))
 #def test_two_minute():
@@ -343,22 +348,40 @@ def data_warehouse_hour():
     print "firing periodic task - DW 150 min, :)"
 
 
-@periodic_task(run_every=crontab(hour='*/60'))
+@periodic_task(run_every=crontab(hour='*/12'))
 def data_warehouse_six_hour():
     end = datetime.datetime.now()
-    start = datetime.datetime.now() - datetime.timedelta(hours=60)
-    delta_name = "Six Hours Delta"
-    update_data_dw_delta.delay(end, start, delta_name)
-    print "firing periodic task - DW 60 hours, :)"
+    last, created = test_tasks.objects.get_or_create(
+        task="6hr", value="",
+        defaults={'executed_time': datetime.datetime.now()})
+    delta1 = datetime.datetime.now(tz=pytz.utc) - last.executed_time
+    if delta1 > datetime.timedelta(hours=60):
+        start = datetime.datetime.now() - datetime.timedelta(hours=60)
+        delta_name = "Six Hours Delta"
+        last.executed_time = datetime.datetime.now(tz=pytz.utc)
+        last.save()
+        update_data_dw_delta.delay(end, start, delta_name)
+        print "firing periodic task - DW 60 hours, :)"
+    else:
+        print "not firing:", str(delta1), "to fire"
 
 
-@periodic_task(run_every=crontab(hour='*/240'))
+@periodic_task(run_every=crontab(minute=0, hour=0))
 def data_warehouse_day():
     end = datetime.datetime.now()
-    start = datetime.datetime.now() - datetime.timedelta(days=10)
-    delta_name = "Day Delta"
-    update_data_dw_delta.delay(end, start, delta_name)
-    print "firing periodic task - DW 10 days :)"
+    last, created = test_tasks.objects.get_or_create(
+        task="1day", value="",
+        defaults={'executed_time': datetime.datetime.now()})
+    delta1 = datetime.datetime.now(tz=pytz.utc) - last.executed_time
+    if delta1 > datetime.timedelta(days=10):
+        start = datetime.datetime.now() - datetime.timedelta(days=10)
+        delta_name = "Day Delta"
+        last.executed_time = datetime.datetime.now(tz=pytz.utc)
+        last.save()
+        update_data_dw_delta.delay(end, start, delta_name)
+        print "firing periodic task - DW 10 days :)"
+    else:
+        print "not firing:", str(delta1), "to fire"
 
 
 @periodic_task(run_every=crontab(minute='*/30'))
@@ -393,7 +416,7 @@ def last_data_received():
 
             users_to_notify = \
                 alarms.models.UserNotificationSettings.objects.filter(
-                    alarm=alarm_cu
+                    alarm=alarm_cu, status=1
                 )
             for user in users_to_notify:
                 if user.notification_type == 3:
@@ -428,10 +451,3 @@ def last_data_received():
                                              to_mail)
                 msg.attach_alternative(html_content, "text/html")
                 msg.send()
-
-
-
-@periodic_task(run_every=crontab(day_of_month='1'))
-def getCFERates():
-    getRatesCurrentMonth()
-    print "Task done: getCFERates"

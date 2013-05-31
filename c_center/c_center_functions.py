@@ -3248,7 +3248,7 @@ def getTupleDays(s_date_utc, e_date_utc):
 
     return zip(arr_b_days,arr_e_days)
 
-def regenerate_ie_config(ie_id):
+def regenerate_ie_config(ie_id, user):
     ie = IndustrialEquipment.objects.get(pk=ie_id)
     json_dic = dict(eDevicesConfigList=[])
     ie_pm = PowermeterForIndustrialEquipment.objects.filter(
@@ -3257,11 +3257,14 @@ def regenerate_ie_config(ie_id):
         for pm in ie_pm:
             consumer = ConsumerUnit.objects.get(
                 profile_powermeter__powermeter=pm.powermeter)
+            pm_annotation = consumer.profile_powermeter.powermeter\
+                .powermeter_anotation
             pm_dict = dict(IdMedidorESN=pm.powermeter.powermeter_serial,
                            EDeviceModel=pm.powermeter.powermeter_model \
                                .powermeter_model,
                            ProfileIndex=consumer.profile_powermeter.pk,
                            ProfileConsumerUnit=consumer.pk,
+                           PowermeterAnnotation=pm_annotation,
                            ModbusAddress=pm.powermeter.modbus_address,
                            ReadTimeRate=consumer.profile_powermeter \
                                .read_time_rate,
@@ -3271,6 +3274,7 @@ def regenerate_ie_config(ie_id):
             json_dic['eDevicesConfigList'].append(pm_dict)
     ie.has_new_config = True
     ie.new_config = simplejson.dumps(json_dic)
+    ie.modified_by = user
     ie.save()
 
     return

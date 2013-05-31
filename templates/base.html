@@ -92,7 +92,7 @@
                         type: "GET",
                         success: function(data2){
                             var lis = '';
-                            var read_all = '';
+                            var read_all = "<span class='see_all_n'><a href='/configuracion/user_notifications/?notificacionesPorGrupo=1'>Ver Todas</a></span>";
                             if(data2.length>0){
                                 data2.forEach(function(notif){
                                     if(notif.identifier != "Interrupción de Datos"){
@@ -111,7 +111,7 @@
                                         lis += '</li>';
                                     }
                                 });
-                                read_all ="<span class='see_all_n'><a href='/configuracion/user_notifications/?notificacionesPorGrupo=1'>Ver Todas</a></span>";
+
                             }else{
                                 lis += '<li class="readed_true">';
                                 lis += '<p>No hay notificaciones sin leer</p>';
@@ -127,12 +127,12 @@
                             var dialog = "<div id='notif_container' class='hidden'><div class='globe_tip'></div><span id='al_list_title'>Alarmas</span><div id='recent_notifs'><ul id='notificaciones'>" + lis + "</ul></div>"+read_all+"</div>";
                             alarms_list.append(dialog);
 
-                            if($("#notificaciones .readed_true").size() == 1)
+                            if($("#notificaciones").find(".readed_true").size() == 1)
                             {
 
                                 $(".readed_true p").die('click');
                             }
-                            console.log($("#notificaciones .readed_true").size())
+
                         }
                     });
 
@@ -150,12 +150,10 @@
 
             });
 
-
-
-            $("#notificaciones li").live("click", function(){
+            $("#notificaciones").find("li").live("click", function(){
 
                 if($(this).hasClass('readed_true'))
-                    return
+                    return;
 
                 var group = $(this).attr("rel");
                 window.location = "/configuracion/user_notifications/?group="+group;
@@ -203,7 +201,6 @@
             search_building.keyup(function(){
                 var texto = $.trim(search_building.val());
                 var list = $(".building_list");
-                console.log(texto);
                 if(texto != ''){
                     list.each(function(){
                         $(this).hide();
@@ -246,17 +243,21 @@
                     }
                 });
             });
-            {% block document_ready %}console.log($("#notificaciones .readed_true").size()){% endblock %}
+            {% block document_ready %}{% endblock %}
 
             $("#user_menu").find("li a[title]").tooltip({effect: 'slide'}).dynamic({ bottom: { direction: 'down', bounce: true } });
 
         });
-        console.log($("#notificaciones .readed_true").size())
+
     </script>
 </head>
 <body>
-
+<div class="wrapper">
+<div class="subwrapper">
     <div id="header">
+        <div id="breadcumbs">
+            {% block breadcumbs %}{% endblock %}
+        </div>
         <div id="header-container">
             <div class="main_logo fl" id="auditem">
                 <a href="/"></a>
@@ -280,6 +281,7 @@
         </tr>
         </tbody>
     </table>
+</div>
+</div>
 </body>
-<script>console.log($("#notificaciones .readed_true").size())</script>
 </html>

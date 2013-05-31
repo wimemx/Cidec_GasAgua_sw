@@ -298,9 +298,9 @@ def get_consumer_unit_electric_data_interval_raw_optimized(
         datetime_next_utc = datetime_current_utc + hour_delta
         datetime_next_utc_string = datetime_next_utc.strftime("%Y-%m-%d-%H")
         electric_data_value = 0
-        if 'datetime_current_utc_string' in \
+        if datetime_current_utc_string in \
                 electric_data_raw_hours_dictionary and \
-                'datetime_next_utc_string' in \
+                datetime_next_utc_string in \
                 electric_data_raw_hours_dictionary:
 
             medition_date_value_current, electric_data_value_current =\
@@ -322,8 +322,7 @@ def get_consumer_unit_electric_data_interval_raw_optimized(
 
         electric_data_raw.append(electric_data_raw_item)
         datetime_current_utc += hour_delta
-    #TODO check this
-    print electric_data_raw
+
     return electric_data_raw
 
 

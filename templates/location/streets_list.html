@@ -130,10 +130,9 @@
 
 {% endblock %}
 
-
-{% block contenido %}
-
-    <div id="bread_crumbs">
+{% block breadcumbs %}
+     <div id="bread_crumbs">
+     <a href="/profile/{{ request.user.pk }}/" class="fl username">{{ request.user.first_name }} {{ request.user.last_name }}</a>
         <ul>
             <li><a href="/main/">Inicio</a></li>
             <li><a href="/panel_de_control/location/">Ubicaciones</a></li>
@@ -141,6 +140,11 @@
         </ul>
 
     </div>
+
+{% endblock %}
+
+{% block contenido %}
+
     <div id="page_content">
     <div id="contenido_interno">
         <h2 id="titulo_form" class="user_role">Ver calles</h2>

@@ -1172,7 +1172,7 @@ def render_report_consumed_by_month(
             last_week_end_datetime,
             electrical_parameter_name,
             granularity_seconds)
-
+    print data_cluster_consumed
     template_variables['rows'] = data_cluster_consumed
     maximun, minimun = get_data_cluster_limits(data_cluster_consumed)
 
@@ -1450,6 +1450,7 @@ def rates_for_data_cluster(data_cluster_consumed, region):
     for data_cluster in data_cluster_consumed:
 
         date_time = datetime.datetime.fromtimestamp(data_cluster["datetime"])
+        print date_time
         periodo = c_center.calculations.obtenerTipoPeriodoObj(
             date_time, region).period_type
         if periodo == "base":

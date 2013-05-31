@@ -103,15 +103,20 @@
     });
 
 {% endblock %}
-{% block contenido %}
 
-    <div id="bread_crumbs">
+{% block breadcumbs %}
+     <div id="bread_crumbs">
         <ul>
             <li><a href="/main/">Inicio</a></li>
             <li><a href="/main/">Reportes</a></li>
         </ul>
 
     </div>
+
+{% endblock %}
+{% block contenido %}
+
+
     <div id="page_content">
         <div id="contenido_interno">
             <h2 id="titulo_reporte">{{ empresa.building_name }}
