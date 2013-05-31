@@ -924,6 +924,24 @@ a.aqua_btn:hover, a.grey_btn:hover{
 }
 #titulo_reporte{
     float: left;
+    display: block;
+    position:relative;
+    left: 25px;
+    top: 17px;
+    color:#dbe2f2;
+    font-weight: 100;
+
+}
+#titulo_reporte span{
+    display: block;
+    float: left;
+}
+#arrow_lightbox{
+    display: block;
+    float: left;
+    width: 20px;
+    height: 20px;
+    background: url('images/imgs_icns/company_arrow_d.png') transparent no-repeat 10px 10px;
 }
 ul .sub_list
 {
