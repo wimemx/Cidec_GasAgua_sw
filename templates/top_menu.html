@@ -35,6 +35,17 @@
 
 
         </div>
+         <h2 id="titulo_reporte">
+        <span>
+            {% if consumer_unit.part_of_building %}
+                {{ consumer_unit.part_of_building.part_of_building_name }}
+            {% else %}
+                {{ consumer_unit.electric_device_type.electric_device_type_name }}
+            {% endif %}
+        </span>
+         <a id='arrow_lightbox' class="various" data-fancybox-type="iframe"  href="/reportes/set_consumer_unit/">&nbsp;</a>
+        </h2>
+
         <div id="navigation_menu" class="fr">
             {{ sidebar|safe }}
         </div>
