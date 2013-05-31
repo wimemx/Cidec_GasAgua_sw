@@ -267,6 +267,12 @@ iframe{
     background-position: 50% 0%;
 }
 
+.rates_spinner{
+    background-image: url(../images/white-loader.gif);
+    background-repeat: no-repeat;
+    background-position: 50% 0%;
+}
+
 #date_cutdates{
     float:left;
 }
