@@ -18,7 +18,16 @@
 </head>
 
 <body style="background: none">
+
+
 <div class="iframe_container">
+
+{% if message %}
+    <span class="notif {{ msg_type }}">
+                {% autoescape off %}{{ message }}{% endautoescape %}
+            <a href="#" onclick="$(this).parent().remove(); History.replaceState({}, '', '?page=1');">X</a>
+            </span>
+{% endif %}
 
 <div id="grid_container" style="border: none; margin-top: 0px">
 
@@ -90,7 +99,7 @@
                 {% for tf in tarifa.1.4 %}
                     <td class="c">
                         {% if tf %}
-                            {{ tf|floatformat:4 }}
+                            {{ tf|floatformat:3 }}
                         {% else %}
                             -
                         {% endif %}
@@ -102,7 +111,7 @@
                 {% for tf in tarifa.1.5 %}
                     <td class="c">
                         {% if tf %}
-                            {{ tf|floatformat:4 }}
+                            {{ tf|floatformat:3 }}
                         {% else %}
                             -
                         {% endif %}

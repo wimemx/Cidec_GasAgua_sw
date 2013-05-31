@@ -13,4 +13,6 @@ urlpatterns = patterns('',
     url(r'^alta_tarifaDac/', 'electric_rates.views.add_tarifaDac'),
     url(r'^editar_tarifaDac/(?P<id_dac>\d+)/', 'electric_rates.views.edit_tarifaDac'),
     url(r'^tarifaDac/', 'electric_rates.views.view_tarifa_DAC'),
+
+    url(r'^crawler_tarifas/', 'electric_rates.views.getMonthRate'),
 )

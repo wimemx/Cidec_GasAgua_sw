@@ -589,6 +589,9 @@ def cfe_calculations(request):
                                                 relativedelta(days=+30)
                         last_cutdate.save()
 
+                        #Se genera el recibo de la CFE y se guarda
+                        save_historic_delay.delay(last_cutdate, building)
+
                         #Se guarda el siguiente mes de facturación.
                         #Fecha inicial = fecha final del mes anterior.
                         #Fecha final = vacía
@@ -635,7 +638,7 @@ def cfe_calculations(request):
 
             elif tipo_tarifa.pk == 3: #Tarifa 3
                 #print "Calculo Tarifa 3"
-                resultado_mensual = tarifa_3_v2(
+                resultado_mensual = tarifa_3(
                     request.session['main_building'], s_date, e_date, month,
                     year)
 

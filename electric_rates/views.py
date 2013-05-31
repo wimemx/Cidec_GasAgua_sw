@@ -2,6 +2,7 @@
 # Create your views here.
 import pytz
 import datetime
+import json as simplejson
 from time import strftime
 from calendar import monthrange
 
@@ -15,7 +16,10 @@ from electric_rates.models import *
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.contrib.auth.decorators import login_required
 
-from c_center.c_center_functions import set_default_session_vars
+from c_center.c_center_functions import set_default_session_vars, \
+    crawler_hm_rate, crawler_DAC_rate, crawler_t3_rate
+
+
 
 
 #"""
@@ -138,18 +142,12 @@ def edit_tarifa3(request, id_t3):
 
         if request.method == "POST":
             template_vars["post"] = request.POST
-            t3_month = request.POST.get('month').strip()
             t3_kw = request.POST.get('kw_rate').strip()
             t3_kwh = request.POST.get('kwh_rate').strip()
             message = ""
             type = ""
 
             continuar = True
-            if t3_month == '':
-                message = "Se debe seleccionar el mes"
-                type = "n_notif"
-                continuar = False
-
             if t3_kw == '':
                 message = "La tarifa de Demanda Máxima no puede quedar vacía"
                 type = "n_notif"
@@ -160,6 +158,7 @@ def edit_tarifa3(request, id_t3):
                 type = "n_notif"
                 continuar = False
 
+            """
             #Se parsea el mes para ponerlo en el formato debido
             arr_month = t3_month.split('/')
             billing_month = datetime.date(year=int(arr_month[1]), month=int(arr_month[0]), day=1)
@@ -176,25 +175,20 @@ def edit_tarifa3(request, id_t3):
                     type = "n_notif"
                     continuar = False
                     t3_month = month_str
+            """
 
-            post = {'month': t3_month, 'kw_rate':t3_kw, 'kwh_rate':t3_kwh }
+            post = {'kw_rate':t3_kw, 'kwh_rate':t3_kwh }
 
             if continuar:
                 #Se guarda la nueva tarifa
                 t3_obj.kw_rate = t3_kw
                 t3_obj.kwh_rate = t3_kwh
-                t3_obj.date_init = billing_month
-                t3_obj.date_end = billing_end
-
                 t3_obj.save()
 
                 template_vars["message"] = "Cuota editada exitosamente"
                 template_vars["type"] = "n_success"
 
-                if request.user.is_superuser:
-                    return HttpResponseRedirect("/electric_rates/tarifa3/?msj=" +
-                                                template_vars["message"] +
-                                                "&ntype=n_success")
+                return HttpResponseRedirect("/electric_rates/tarifas/3/")
 
             template_vars["post"] = post
             template_vars["message"] = message
@@ -539,17 +533,14 @@ def edit_tarifaHM(request, id_hm):
                 template_vars["message"] = "Cuota registrada exitosamente"
                 template_vars["type"] = "n_success"
 
-                if request.user.is_superuser:
-                    return HttpResponseRedirect("/electric_rates/tarifaHM?msj=" +
-                                                template_vars["message"] +
-                                                "&ntype=n_success")
+                return HttpResponseRedirect("/electric_rates/tarifas/HM/")
+
             template_vars["post"] = post
             template_vars["message"] = message
             template_vars["type"] = type
 
         template_vars_template = RequestContext(request, template_vars)
-        #return render_to_response("electric_rates/tarifas.html", template_vars_template)
-        return HttpResponseRedirect("/electric_rates/tarifas/HM")
+        return render_to_response("electric_rates/add_tarifaHM.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)
         template_vars = {}
@@ -784,6 +775,7 @@ def edit_tarifaDac(request, id_dac):
         post = {
             'month':month_str,
             'region':int(dac_obj.region_id),
+            'region_name': dac_obj.region.region_name,
             'periodo': d_interval,
             'monthly_rate':dac_obj.month_rate,
             'kwh_rate':dac_obj.kwh_rate
@@ -801,28 +793,12 @@ def edit_tarifaDac(request, id_dac):
         if request.method == "POST":
             template_vars["post"] = request.POST
 
-            dac_month = request.POST.get('month').strip()
-            dac_region = request.POST.get('t_region').strip()
-            dac_periodo = request.POST.get('t_periodo').strip()
             dac_m_rate = request.POST.get('monthly_rate').strip()
             dac_kwh = request.POST.get('kwh_rate').strip()
             message = ""
             type = ""
 
             continuar = True
-            if dac_month == '':
-                message = "Se debe seleccionar el mes"
-                type = "n_notif"
-                continuar = False
-
-            if dac_region == '':
-                message = "Se debe seleccionar una región"
-                type = "n_notif"
-                continuar = False
-                dac_region = 0
-
-            if dac_periodo == '':
-                dac_periodo = 0
 
             if dac_m_rate == '':
                 message = "El cargo mensual no puede quedar vacío"
@@ -834,6 +810,7 @@ def edit_tarifaDac(request, id_dac):
                 type = "n_notif"
                 continuar = False
 
+            """
             #Se parsea el mes para ponerlo en el formato debido
             arr_month = dac_month.split('/')
             billing_month = datetime.date(year=int(arr_month[1]), month=int(arr_month[0]), day=1)
@@ -860,11 +837,9 @@ def edit_tarifaDac(request, id_dac):
                         continuar = False
                         dac_month = month_str
                         dac_region = dac_obj.region_id
+            """
 
             post = {
-                'month':dac_month,
-                'region':int(dac_region),
-                'periodo':int(dac_periodo),
                 'monthly_rate':dac_m_rate,
                 'kwh_rate':dac_kwh
             }
@@ -873,21 +848,15 @@ def edit_tarifaDac(request, id_dac):
 
                 #Se edita la cuota con los nuevos datos
 
-                dac_obj.region = regionObj
-                dac_obj.date_interval = periodoObj
                 dac_obj.month_rate = dac_m_rate
                 dac_obj.kwh_rate = dac_kwh
-                dac_obj.date_init = billing_month
-                dac_obj.date_end = billing_end
                 dac_obj.save()
 
                 template_vars["message"] = "Cuota editada exitosamente"
                 template_vars["type"] = "n_success"
 
-                if request.user.is_superuser:
-                    return HttpResponseRedirect("/electric_rates/tarifaDac?msj=" +
-                                                template_vars["message"] +
-                                                "&ntype=n_success")
+                return HttpResponseRedirect("/electric_rates/tarifas/DAC/")
+
             template_vars["post"] = post
             template_vars["message"] = message
             template_vars["type"] = type
@@ -989,8 +958,15 @@ def tarifa_header(request, tarifa_n):
         today = datetime.datetime.today()
 
         year = int(today.year)
+
+        crawler_year_list = []
+        for yr in range(2012,year+1):
+            crawler_year_list.append(yr)
+
         template_vars['year'] = year
         template_vars['year_list'] = year_list
+        template_vars['crawler_year_list'] = crawler_year_list
+
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("electric_rates/tarifa_header.html",
@@ -1004,6 +980,7 @@ def tarifa_header(request, tarifa_n):
 def getRatesTable(request):
 
     response_html = ''
+    crler_resp = ''
 
     datacontext = get_buildings_context(request.user)[0]
     if request.user.is_superuser:
@@ -1015,10 +992,13 @@ def getRatesTable(request):
 
         if request.GET:
             year = int(request.GET['year'])
+            if 'crawler' in request.GET:
+                crler_resp = request.GET['crawler']
         else:
             #Obtener la fecha actual
             today = datetime.datetime.today()
             year = int(today.year)
+
         rate_type = request.GET['tarifa']
 
         if rate_type == 'HM':
@@ -1030,6 +1010,17 @@ def getRatesTable(request):
         elif rate_type == 'T3':
             template_vars['tarifas'] = getT3_table(year)
             response_html = 'electric_rates/tarifa3_table.html'
+
+        if crler_resp:
+            if crler_resp == 'Success':
+                template_vars['message'] = 'La tarifa para el mes seleccionado se ha obtenido exitosamente'
+                template_vars['msg_type'] = 'n_success'
+            elif crler_resp == 'Fail':
+                template_vars['message'] = 'La tarifa para el mes seleccionado no pudo obtenerse. Compruebe que tenga acceso a Internet'
+                template_vars['msg_type'] = 'n_notif'
+            elif crler_resp == 'Error_Month':
+                template_vars['message'] = 'La tarifa para el mes seleccionado todavía no está disponible'
+                template_vars['msg_type'] = 'n_notif'
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -1125,6 +1116,46 @@ def getT3_table(year):
     arregloContenedor.append(arregloIds)
 
     return arregloContenedor
+
+@login_required(login_url='/')
+def getMonthRate(request):
+    status = ""
+    if request.GET:
+        year = int(request.GET['year'])
+        month = int(request.GET['month'])
+        rate_type = request.GET['tarifa']
+
+        #Se obtiene el mes actual
+        requested_month = datetime.datetime(year, month, 1)
+        current_month = datetime.datetime.now()
+        if requested_month > current_month:
+            status = "Error_Month"
+        else:
+            if rate_type == 'HM':
+                if crawler_hm_rate(year, month):
+                    status = "Success"
+                else:
+                    status = "Fail"
+            elif rate_type == 'DAC':
+                if crawler_DAC_rate(year, month):
+                    status = "Success"
+                else:
+                    status = "Fail"
+            elif rate_type == 'T3':
+                if crawler_t3_rate(year, month):
+                    status = "Success"
+                else:
+                    status = "Fail"
+    else:
+        status = "No GET Request"
+
+    data = simplejson.dumps(status)
+    return HttpResponse(content=data, content_type="application/json")
+
+
+
+
+
 
 
 

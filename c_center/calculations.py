@@ -1325,7 +1325,7 @@ def getKWHperDay(s_date, e_date, profile_powermeter):
         electric_data__profile_powermeter = profile_powermeter).\
     filter(electric_data__medition_date__gte=s_date).filter(
         electric_data__medition_date__lt=e_date).\
-    order_by("electric_data__pk").values(
+    order_by("electric_data__medition_date").values(
         "identifier").annotate(Count("identifier"))
 
     if lecturas_identificadores:
@@ -1342,7 +1342,7 @@ def getKWHperDay(s_date, e_date, profile_powermeter):
             filter(
                 electric_data__medition_date__gte=s_date
             ).filter(electric_data__medition_date__lt=e_date).\
-            order_by("electric_data__pk")
+            order_by("electric_data__medition_date")
 
             num_lecturas = len(electric_info)
             ultimo_id = electric_info[num_lecturas-1].electric_data.pk

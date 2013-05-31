@@ -15,6 +15,23 @@
     </script>
     <script type="text/javascript">
 
+        function getRate(){
+
+            var year = $("#crawler_year").val();
+            var month = $("#crawler_month").val();
+
+            $.ajax({
+                url: '/electric_rates/crawler_tarifas/?tarifa={{ tipo_tarifa }}&month='+month+'&year='+year,
+                type: "GET",
+                success: function(data){
+                    var url = '/electric_rates/tabla_tarifaHM/?tarifa={{ tipo_tarifa }}&year='+year+'&crawler='+data;
+                    $('#hm_container').addClass('iframe_spinner');
+                    makeIframe(url);
+
+                }
+            });
+        }
+
         function viewHM(){
             var year = $("#year_01").val();
 
@@ -85,17 +102,44 @@
 
             <div class="divider" id="divider_top">&nbsp;</div>
             <div id="datepicker_component">
-                <span class="period_tag">Año</span>
+                <div>
+                    <span class="period_tag">Año</span>
 
-                {% if year_list %}
-                    <select name="year_01" id="year_01">
-                        {% for yr in year_list %}
-                            <option value="{{yr}}" {% if year == yr %} selected{% endif %}>{{yr}}</option>
-                        {% endfor %}
+                    {% if year_list %}
+                        <select name="year_01" id="year_01">
+                            {% for yr in year_list %}
+                                <option value="{{yr}}" {% if year == yr %} selected{% endif %}>{{yr}}</option>
+                            {% endfor %}
+                        </select>
+                    {% endif %}
+
+                    <button class="aqua_btn" onclick="viewHM();">Ver</button>
+                </div>
+                <div>
+                    <span class="period_tag">Recolector de Tarifas</span>
+                    <select name="crawler_month" id="crawler_month">
+                        <option value="1">Enero</option>
+                        <option value="2">Febrero</option>
+                        <option value="3">Marzo</option>
+                        <option value="4">Abril</option>
+                        <option value="5">Mayo</option>
+                        <option value="6">Junio</option>
+                        <option value="7">Julio</option>
+                        <option value="8">Agosto</option>
+                        <option value="9">Septiembre</option>
+                        <option value="10">Octubre</option>
+                        <option value="11">Noviembre</option>
+                        <option value="12">Diciembre</option>
                     </select>
-                {% endif %}
-
-                <button class="aqua_btn" onclick="viewHM();">Ver</button>
+                    <select name="crawler_year" id="crawler_year">
+                        {% if crawler_year_list %}
+                            {% for yr in crawler_year_list %}
+                                <option value="{{yr}}" {% if year == yr %} selected{% endif %}>{{yr}}</option>
+                            {% endfor %}
+                        {% endif %}
+                    </select>
+                    <button class="aqua_btn" onclick="getRate();">Obtener Tarifa</button>
+                </div>
 
             </div>
             <div id="data_container">

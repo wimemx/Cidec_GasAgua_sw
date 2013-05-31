@@ -19,6 +19,13 @@
 
 <body style="background: none">
 <div class="iframe_container">
+    {% if message %}
+        <span class="notif {{ msg_type }}">
+                {% autoescape off %}{{ message }}{% endautoescape %}
+            <a href="#" onclick="$(this).parent().remove(); History.replaceState({}, '', '?page=1');">X</a>
+            </span>
+    {% endif %}
+
     <div id="grid_container"  style="border: none; margin-top: 0px">
 
     {% if tarifas %}
@@ -37,7 +44,7 @@
         </thead>
             <tr>
                 <td>Cargo por Demanda Máxima</td>
-                {% for tf in tarifas.0 %}
+                {% for tf in tarifas.1 %}
                     <td class="c">
                         {% if tf %}
                             {{ tf|floatformat:2 }}
@@ -49,7 +56,7 @@
             </tr>
             <tr>
                 <td>Cargo adicional por kWh</td>
-                {% for tf in tarifas.1 %}
+                {% for tf in tarifas.0 %}
                     <td class="c">
                         {% if tf %}
                             {{ tf|floatformat:3 }}

@@ -4,7 +4,7 @@ import datetime
 import pytz
 
 #related third party imports
-#from socketIO_client import SocketIO
+from socketIO_client import SocketIO
 from celery import task
 from celery.task.schedules import crontab
 from celery.decorators import periodic_task
@@ -24,7 +24,7 @@ from data_warehouse.views import populate_data_warehouse, \
 from c_center.c_center_functions import save_historic, dailyReportAll, \
     asign_electric_data_to_pw, calculateMonthlyReport_all, all_dailyreportAll,\
     getRatesCurrentMonth
-from c_center.calculations import recursive_tag
+from c_center.calculations import daytag_period_allProfilePowermeters
 
 
 @task(ignore_result=True)
@@ -224,9 +224,8 @@ def process_dw_consumerunit_electrical_parameter(
     )
 
 @task(ignore_result=True)
-def tag_batch(initial, last):
-    recursive_tag(initial, last)
-
+def tag_batch(start_day = datetime.datetime(2012,8,1), end_day = datetime.datetime(2013,5,29) ):
+    daytag_period_allProfilePowermeters(start_day, end_day)
 
 @task(ignore_result=True)
 def calculate_dw(granularity):

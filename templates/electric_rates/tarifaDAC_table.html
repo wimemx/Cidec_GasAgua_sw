@@ -19,6 +19,13 @@
 
 <body style="background: none">
 <div class="iframe_container">
+    {% if message %}
+        <span class="notif {{ msg_type }}">
+                {% autoescape off %}{{ message }}{% endautoescape %}
+            <a href="#" onclick="$(this).parent().remove(); History.replaceState({}, '', '?page=1');">X</a>
+            </span>
+    {% endif %}
+
     <div id="grid_container" style="border: none; margin-top: 0px">
     {% if tarifas %}
         {% for tarifa in tarifas.items %}

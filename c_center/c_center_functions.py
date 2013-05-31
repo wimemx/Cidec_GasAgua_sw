@@ -1745,7 +1745,7 @@ def save_historic(monthly_cutdate, building):
         newHistoric.save()
 
     elif building.electric_rate.pk == 3:#Tarifa 3
-        resultado_mensual = tarifa_3_v2(building,
+        resultado_mensual = tarifa_3(building,
             monthly_cutdate.date_init,
             monthly_cutdate.date_end, month, year)
 
@@ -1782,7 +1782,8 @@ def save_historic(monthly_cutdate, building):
         )
         newHistoric.save()
 
-def tarifaHM_nuevaversion(building, s_date, e_date, month, year):
+def tarifaHM_2(building, s_date, e_date, month, year):
+
     status = 'OK'
     diccionario_final_cfe = dict(status=status)
     #Variables que almacenan todos los campos
@@ -1869,6 +1870,7 @@ def tarifaHM_nuevaversion(building, s_date, e_date, month, year):
         else:
 
             for tupleDay in tupleDays_arr:
+                print tupleDay
                 kw_dia_dic = getKWperDay(tupleDay[0], tupleDay[1], consumer_units[0].profile_powermeter)
                 if kw_dia_dic['base'] > diccionario_final_cfe["kw_base"]:
                     diccionario_final_cfe["kw_base"] = kw_dia_dic['base']
@@ -1890,7 +1892,7 @@ def tarifaHM_nuevaversion(building, s_date, e_date, month, year):
             profile_powermeter = c_unit.profile_powermeter
 
             for tupleDay in tupleDays_arr:
-
+                print tupleDay
                 kwh_dia_dic = getKWHperDay(tupleDay[0], tupleDay[1], profile_powermeter)
                 diccionario_final_cfe["kwh_base"] += kwh_dia_dic['base']
                 diccionario_final_cfe["kwh_intermedio"] += kwh_dia_dic['intermedio']
@@ -1974,7 +1976,7 @@ def tarifaHM_nuevaversion(building, s_date, e_date, month, year):
 
 
 # noinspection PyArgumentList
-def tarifaHM_2(building, s_date, e_date, month, year):
+def tarifaHM_2__(building, s_date, e_date, month, year):
     status = 'OK'
     diccionario_final_cfe = dict(status=status)
     #Variables que almacenan todos los campos
@@ -2785,6 +2787,7 @@ def crawler_hm_rate(year, month):
         page = urllib2.urlopen("http://app.cfe.gob.mx/Aplicaciones/CCFE/Tarifas/Tarifas/tarifas_negocio.asp?Tarifa=HM&Anio="+str(year)+"&mes="+str(month))
     except IOError:
         print "URL Error. No Connection"
+        return False
     else:
         soup = BeautifulSoup(page.read())
 
@@ -2899,6 +2902,7 @@ def crawler_hm_rate(year, month):
                 continue
 
         print "HM crawler for "+str(month)+"/"+str(year)+" - Done"
+        return True
 
 
 def crawler_DAC_rate(year, month):
@@ -2912,6 +2916,7 @@ def crawler_DAC_rate(year, month):
         page = urllib2.urlopen("http://app.cfe.gob.mx/Aplicaciones/CCFE/Tarifas/Tarifas/tarifas_casa.asp?Tarifa=DAC2003&Anio="+str(year)+"&mes="+str(month))
     except IOError:
         print "URL Error. No Connection"
+        return False
     else:
         soup = BeautifulSoup(page.read())
 
@@ -3126,6 +3131,7 @@ def crawler_DAC_rate(year, month):
                                 newDac.save()
 
         print "DAC crawler for "+str(month)+"/"+str(year)+" - Done"
+        return True
 
 
 
@@ -3141,6 +3147,7 @@ def crawler_t3_rate(year, month):
         page = urllib2.urlopen("http://app.cfe.gob.mx/Aplicaciones/CCFE/Tarifas/Tarifas/tarifas_negocio.asp?Tarifa=3&Anio="+str(year)+"&mes="+str(month))
     except IOError:
         print "URL Error. No Connection"
+        return False
     else:
         soup = BeautifulSoup(page.read())
 
@@ -3187,6 +3194,7 @@ def crawler_t3_rate(year, month):
                 newT3.save()
 
         print "T3 crawler for "+str(month)+"/"+str(year)+" - Done"
+        return True
 
 
 def getRatesCurrentMonth():
