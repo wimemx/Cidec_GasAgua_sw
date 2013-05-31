@@ -65,6 +65,9 @@ footer, header, hgroup, menu, nav, section {
 }
 body {
     line-height: 1;
+    width: 1024px;
+    display: block;
+    overflow-x: hidden;
     /*background-image: url("../images/general/body_back.png");*/
 }
 ol, ul {
@@ -172,14 +175,13 @@ body{
     /*top: 107px;*/
     width: 1024px !important;
     display: block;
-    overflow: hidden;
     padding-top: 0px;
     top:40px;
 }
 #table_container tr{
     height: 100%;
     width: 1024px !important;
-    background-color:white;
+
 }
 #table_container td{
     vertical-align: top;
@@ -209,7 +211,6 @@ body{
     width: inherit !important;
     position: relative;
     top: -20px;
-    padding-bottom:45px;
     overflow: hidden;
 }
 #form_container{
@@ -264,9 +265,17 @@ h2 span{
 /*--Main menu--*/
 #tr_menu{
     height: 61px !important;
+    display: block;
+    z-index: 998;
+    position: relative;
+}
+#container_content{
+    position: relative;
+    top: 0px;
+    display: block;
 }
 #top_menu{
-    height: 58px;
+    height: 79px !important;
     display: block;
     width: 1024px ;
     background: url(images/bgs/menu.png) repeat-x;
@@ -300,6 +309,7 @@ h2 span{
     line-height: 56px;
     color: #dbe2f2;
     font-size: 19px;
+    font-weight: 100;
 }
 #companies_container #empresa.expanded{
     background: url(images/imgs_icns/company_arrow_u.png) no-repeat 100% 50%;
@@ -377,8 +387,7 @@ h2 span{
 /*-----NAV MENU------*/
 #navigation_menu{
     position: relative;
-    left:-130px;
-    bottom:5px;
+    left:-65px;
 }
 #main_menu{
     width: 562px;
@@ -407,7 +416,7 @@ h2 span{
     padding-left: 21px;
     position: relative;
     top: 10px;
-    font-weight: bold;
+    font-weight: 100;
     padding-top: 5px;
 }
 #main_menu li.first_level.analisis{
@@ -416,7 +425,7 @@ h2 span{
     padding-left: 15px;
     position: relative;
     top: 5px;
-    font-weight: bold;
+    font-weight: 100;
     padding-top: 10px;
 }
 #main_menu li.first_level.consumo{
@@ -425,7 +434,7 @@ h2 span{
     padding-left: 27px;
     position: relative;
     top: 10px;
-    font-weight: bold;
+    font-weight: 100;
     padding-top: 5px;
 }
 #main_menu li.first_level.edificio{
@@ -434,7 +443,7 @@ h2 span{
     padding-left: 28px;
     position: relative;
     top: 5px;
-    font-weight: bold;
+    font-weight: 100;
     padding-top: 10px;
 }
 #main_menu li.first_level.alarmas{
@@ -443,7 +452,7 @@ h2 span{
     padding-left: 23px;
     position: relative;
     top: 10px;
-    font-weight: bold;
+    font-weight: 100;
     padding-top: 5px;
 }
 
@@ -861,11 +870,16 @@ a.aqua_btn:hover, a.grey_btn:hover{
 /* 1024 px redesign*/
 .wrapper{
     display: block;
+    margin-top: 30px !important;
     width: 1024px;
     margin:0 auto;
-    overflow: hidden;
+    padding-bottom: 10px;
     margin-bottom: 20px;
     position: relative;
+    -webkit-box-shadow: 0px 0px 30px rgba(0, 0, 0, 0.77);
+    -moz-box-shadow:    0px 0px 30px rgba(0, 0, 0, 0.77);
+    box-shadow:         0px 0px 30px rgba(0, 0, 0, 0.77);
+
 
 }
 .subwrapper{
@@ -877,10 +891,10 @@ a.aqua_btn:hover, a.grey_btn:hover{
 }
 .element_row{
     display: block;
-    clear: both;
     margin: 10px 0 !important;
     height: 90px;
     overflow: hidden;
+    float:left;
     margin-left: 15px !important;
 }
 
@@ -894,6 +908,7 @@ a.aqua_btn:hover, a.grey_btn:hover{
     margin-top: 5px;
     width: 51px;
     color:#636363;
+    text-align: center;
 }
 #bread_crumbs .username{
     color:#5692a5;
