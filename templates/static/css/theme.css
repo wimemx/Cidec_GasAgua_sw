@@ -179,7 +179,7 @@ body{
 #table_container tr{
     height: 100%;
     width: 1024px !important;
-    background-color:white;
+
 }
 #table_container td{
     vertical-align: top;
@@ -264,9 +264,19 @@ h2 span{
 /*--Main menu--*/
 #tr_menu{
     height: 61px !important;
+    display: block;
+    overflow: hidden;
+    z-index: 999;
+    position: relative;
+}
+#container_content{
+    min-height: 900px;
+    position: relative;
+    top: 0px;
+    display: block;
 }
 #top_menu{
-    height: 58px;
+    height: 79px !important;
     display: block;
     width: 1024px ;
     background: url(images/bgs/menu.png) repeat-x;
@@ -300,6 +310,7 @@ h2 span{
     line-height: 56px;
     color: #dbe2f2;
     font-size: 19px;
+    font-weight: 100;
 }
 #companies_container #empresa.expanded{
     background: url(images/imgs_icns/company_arrow_u.png) no-repeat 100% 50%;
@@ -378,7 +389,6 @@ h2 span{
 #navigation_menu{
     position: relative;
     left:-130px;
-    bottom:5px;
 }
 #main_menu{
     width: 562px;
@@ -407,7 +417,7 @@ h2 span{
     padding-left: 21px;
     position: relative;
     top: 10px;
-    font-weight: bold;
+    font-weight: 100;
     padding-top: 5px;
 }
 #main_menu li.first_level.analisis{
@@ -416,7 +426,7 @@ h2 span{
     padding-left: 15px;
     position: relative;
     top: 5px;
-    font-weight: bold;
+    font-weight: 100;
     padding-top: 10px;
 }
 #main_menu li.first_level.consumo{
@@ -425,7 +435,7 @@ h2 span{
     padding-left: 27px;
     position: relative;
     top: 10px;
-    font-weight: bold;
+    font-weight: 100;
     padding-top: 5px;
 }
 #main_menu li.first_level.edificio{
@@ -434,7 +444,7 @@ h2 span{
     padding-left: 28px;
     position: relative;
     top: 5px;
-    font-weight: bold;
+    font-weight: 100;
     padding-top: 10px;
 }
 #main_menu li.first_level.alarmas{
@@ -443,7 +453,7 @@ h2 span{
     padding-left: 23px;
     position: relative;
     top: 10px;
-    font-weight: bold;
+    font-weight: 100;
     padding-top: 5px;
 }
 
