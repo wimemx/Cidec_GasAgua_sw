@@ -9250,3 +9250,123 @@ def power_performance(request):
         template_vars["sidebar"] = request.session['sidebar']
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
+
+
+@login_required(login_url='/')
+def parse_csv(request):
+    datacontext = get_buildings_context(request.user)[0]
+    if request.user.is_superuser:
+        set_default_session_vars(request, datacontext)
+
+        todays_date = datetime.datetime.now().strftime("%Y/%m/%d/")
+        url_get_last = "/get_files/"+todays_date
+        delete_file_url = "/del_file/"+todays_date
+        media_folder = "/static/media/csv_files/"+todays_date
+        all_files_url = "/get_all_files/"+todays_date
+        template_variables = dict(url_get_last=url_get_last,
+                             delete_file_url=delete_file_url,
+                             media_folder=media_folder,
+                             all_files_url=all_files_url,
+                             datacontext=datacontext,
+                             empresa=request.session['main_building'])
+        variables_template = RequestContext(request, template_variables)
+        return render_to_response("consumption_centers/parse_form.html",
+                                  variables_template)
+    else:
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
+
+
+    dir_path = '/home/satest/cidec_sw/templates/static/media/datos_perdidos'
+    files = os.listdir(dir_path)
+    dir_fd = os.open(dir_path, os.O_RDONLY)
+    os.fchdir(dir_fd)
+    html = ''
+    for _file in files:
+        if file == '.DS_Store':
+            continue
+        data = csv.reader(open(_file, "U"))
+        # Read the column names from the first line of the file
+        fields = data.next()
+        for row in data:
+        # Zip together the field names and values
+            #if row:
+            items = zip(fields, row)
+            item = {}
+            # Add the value to our dictionary
+            for (name, value) in items:
+                item[name.strip()] = value.strip()
+            fecha = item['Fecha']
+            medition_date = datetime.datetime.strptime(
+                fecha, "%a %b %d %H:%M:%S %Z %Y")
+            timezone_ = pytz.timezone("US/Central")
+            medition_date.replace(tzinfo=timezone_)
+
+            powerp = ProfilePowermeter.objects.filter(
+                powermeter__powermeter_serial=item["Id medidor"])
+            try:
+                powerp = powerp[0]
+            except IndexError:
+                continue
+            else:
+                elec_data = ElectricDataTemp(
+                    profile_powermeter=powerp,
+                    medition_date=medition_date,
+                    V1=item['Voltaje Fase 1'],
+                    V2=item['Voltaje Fase 1'],
+                    V3=item['Voltaje Fase 1'],
+                    I1=item['Corriente Fase 1'],
+                    I2=item['Corriente Fase 2'],
+                    I3=item['Corriente Fase 3'],
+                    kWL1=item['KiloWatts Fase 1'],
+                    kWL2=item['KiloWatts Fase 2'],
+                    kWL3=item['KiloWatts Fase 3'],
+                    kvarL1=item['KiloVoltAmpereReactivo Fase 1'],
+                    kvarL2=item['KiloVoltAmpereReactivo Fase 2'],
+                    kvarL3=item['KiloVoltAmpereReactivo Fase 3'],
+                    kVAL1=item['KiloVoltAmpere Fase 1'],
+                    kVAL2=item['KiloVoltAmpere Fase 2'],
+                    kVAL3=item['KiloVoltAmpere Fase 3'],
+                    PFL1=item['Factor de Potencia Fase 1'],
+                    PFL2=item['Factor de Potencia Fase 2'],
+                    PFL3=item['Factor de Potencia Fase 3'],
+                    kW=item['KiloWatts Totales'],
+                    kvar=item['KiloVoltAmperesReactivo Totales'],
+                    TotalkVA=item['KiloVoltAmpere Totales'],
+                    PF=item['Factor de Potencia Total'],
+                    FREQ=item['Frecuencia Fase'],
+                    TotalkWhIMPORT=item['KiloWattHora Totales'],
+                    powermeter_serial=powerp.powermeter.powermeter_serial,
+                    TotalkvarhIMPORT=item['KiloVoltAmpereReactivoHora Totales'],
+                    kWhL1=item['KiloWattHora Fase 1'],
+                    kWhL2=item['KiloWattHora Fase 2'],
+                    kwhL3=item['KiloWattHora Fase 3'],
+                    kvarhL1=item['KiloVoltAmpereReactivoHora Fase 1'],
+                    kvarhL2=item['KiloVoltAmpereReactivoHora Fase 2'],
+                    kvarhL3=item['KiloVoltAmpereReactivoHora Fase 3'],
+                    kVAhL1=item['KiloVoltAmpereHora Fase 1'],
+                    kVAhL2=item['KiloVoltAmpereHora Fase 2'],
+                    kVAhL3=item['KiloVoltAmpereHora Fase 3'],
+                    kW_import_sliding_window_demand=item['kW import sliding window demand'],
+                    kvar_import_sliding_window_demand=item['kvar impor sliding window demand'],
+                    kVA_sliding_window_demand=item['kVA sliding window demand'],
+                    kvahTOTAL=item['KiloVoltAmpereHora Totales'],
+                )
+
+                elec_data.save()
+                tag_this(elec_data.pk)
+                html += str(elec_data) + "<br/>"
+            html += "<hr/><br/>"
+    os.close(dir_fd)
+    datawarehouse_run.delay(
+        fill_instants=None,
+        fill_intervals=None,
+        _update_consumer_units=None,
+        populate_instant_facts=True,
+        populate_interval_facts=True
+    )
+    return HttpResponse(html)

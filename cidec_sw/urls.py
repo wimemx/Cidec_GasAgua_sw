@@ -14,7 +14,17 @@ urlpatterns = patterns('',
     url(r'^logout/$', 'cidec_sw.views.logout_page'),
     url(r'^forgot_password/','rbac.views.forgot_password'),
     url(r'^main/', 'cidec_sw.views.index'),
-    url(r'^parse/', 'cidec_sw.views.parse_csv'),
+
+    url(r'^restaurar_datos/', 'c_center.views.parse_csv'),
+    url(r'^plupload/', 'plupload.views.upload_file'),
+    url(r'^get_files/(\d{4})/(\d{2})/(\d+)/$',
+        'plupload.views.get_files'),
+    url(r'^del_file/(\d{4})/(\d{2})/(\d+)/$',
+        'plupload.views.del_file'),
+    #retrieves a list of all files in a dir, change as convenient
+    url(r'^get_all_files/(\d{4})/(\d{2})/(\d+)/$',
+        'plupload.views.get_all_files'),
+
     url(r'^reportes/', include(c_center_urls)),
     #url(r'^reportes-extendidos/', include(reports_urls)),
     url(r'^buildings/', include(c_center_urls)),

@@ -22,15 +22,16 @@
 
     <div id="page_content">
     <div id="contenido_interno">
-        <img id="panelImg" src="/static/css/images/imgs_icns/cpanel_icon.png" alt=""/>
+        <img id="panelImg" src="/static/css/images/imgs_icns/gear.png" alt=""/>
         <h2 id="titulo_reporte">Panel de control</h2>
         <div class="divider" id="divider_top">&nbsp;</div>
         {% for group in object_permission %}
             <div class="element_row">
             {% for element in group %}
                 <div class="element">
+                    <a href="{{ element.access_point }}" class="caption">
                     <img src="{{ element.image }}" alt="{{ element.caption }}"/>
-                    <a href="{{ element.access_point }}" class="caption">{{ element.caption }}</a>
+                    {{ element.caption }}</a>
                 </div>
             {% endfor %}
             </div>
