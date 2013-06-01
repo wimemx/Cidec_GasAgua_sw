@@ -879,6 +879,9 @@ a.aqua_btn:hover, a.grey_btn:hover{
     -webkit-box-shadow: 0px 0px 30px rgba(0, 0, 0, 0.77);
     -moz-box-shadow:    0px 0px 30px rgba(0, 0, 0, 0.77);
     box-shadow:         0px 0px 30px rgba(0, 0, 0, 0.77);
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
 
 
 }
@@ -901,7 +904,7 @@ a.aqua_btn:hover, a.grey_btn:hover{
 .element_row .element{
     display: block;
     float: left;
-    margin-right: 20px;
+    margin-right: 30px;
 }
 .element_row .element a{
     display: block;
@@ -935,6 +938,7 @@ a.aqua_btn:hover, a.grey_btn:hover{
 #titulo_reporte span{
     display: block;
     float: left;
+    font-size: 18px ;
 }
 #arrow_lightbox{
     display: block;

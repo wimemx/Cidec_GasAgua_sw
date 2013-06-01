@@ -43,7 +43,7 @@
                 {{ consumer_unit.electric_device_type.electric_device_type_name }}
             {% endif %}
         </span>
-         <a id='arrow_lightbox' class="various" data-fancybox-type="iframe"  href="/reportes/set_consumer_unit/">&nbsp;</a>
+         {% if consumer_unit.part_of_building %}<a id='arrow_lightbox' class="various" data-fancybox-type="iframe"  href="/reportes/set_consumer_unit/">&nbsp;</a>{% endif %}
         </h2>
 
         <div id="navigation_menu" class="fr">
