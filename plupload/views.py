@@ -74,7 +74,7 @@ def handle_uploaded_file(f, ext):
     """
     filelist = os.listdir(os.getcwd())
     filelist = filter(lambda x: not os.path.isdir(x), filelist)
-    print "handle", filelist
+
     filelist.sort(reverse=True)
     if not filelist[0].startswith("."):
         try:
@@ -86,6 +86,7 @@ def handle_uploaded_file(f, ext):
     print file_n
     file_n += "." + ext
     with open(file_n, 'wb+') as destination:
+        print "chunks", f.chunks()
         for chunk in f.chunks():
             destination.write(chunk)
 

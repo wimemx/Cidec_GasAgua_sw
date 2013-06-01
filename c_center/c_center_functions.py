@@ -47,6 +47,8 @@ from bs4 import BeautifulSoup
 
 import variety
 
+import pdb
+
 VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
 DELETE = Operation.objects.get(operation_name="Eliminar")
@@ -2792,6 +2794,7 @@ def crawler_hm_rate(year, month):
         soup = BeautifulSoup(page.read())
 
         tablasTarifa = soup.find_all('table',{"class" : "tablaTarifa"})
+        pdb.set_trace()
         for tabla in tablasTarifa:
             header_t = tabla.find('tr').find_all('th')
 
