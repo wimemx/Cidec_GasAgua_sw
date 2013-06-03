@@ -388,20 +388,3 @@ def regenerate_dw_from_date(date_time):
                 date_time
             )
     return "done"
-
-
-def regenerate_dw_in_interval(d1, d2):
-    instant_deltas = InstantDelta.objects.all()
-    cus = ConsumerUnit.objects.all()
-    for instant_delta in instant_deltas:
-        delta = datetime.timedelta(seconds=instant_delta.delta_seconds)
-        delta_time = d2 - d1
-        if delta_time > delta:
-            print cu.building_name, cu.electric_device_type_name
-            for cu in cus:
-                print cu, instant_delta, d1, d2
-                populate_data_warehouse_specific_int(
-                    cu,
-                    instant_delta,
-                    d1, d2
-                )

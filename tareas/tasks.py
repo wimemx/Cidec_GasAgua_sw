@@ -294,24 +294,6 @@ def update_data_dw_delta(end, start, delta_name):
 #############################
 
 
-#@periodic_task(run_every=crontab(minute='*/60'))
-#def data_warehouse_one_hour():
-#    #calculate_dw.delay("hour")
-#    data_warehouse_update("hour")
-#    print "firing periodic task - DW Hour, :)"
-
-#@periodic_task(run_every=crontab(minute=0, hour=0))
-#def data_warehouse_one_day():
-#    calculate_dw.delay("day")
-#    print "firing periodic task - DW Day"
-
-
-#@periodic_task(run_every=crontab(minute=0, hour=0, day_of_week='sun'))
-#def data_warehouse_one_week():
-#    calculate_dw.delay("week")
-#    print "firing periodic task - DW week"
-
-
 @periodic_task(run_every=crontab(minute=1, hour=0))
 def reporte_diario_para_reporte_mensual():
     daily_report.delay()
@@ -325,10 +307,7 @@ def calculateMonthlyReport():
     print "Task done: calculateMonthlyReport_all"
     getRatesCurrentMonth()
     print "Task done: getCFERates"
-# this will run every minute, see http://celeryproject.org/docs/reference/celery.task.schedules.html#celery.task.schedules.crontab
-#@periodic_task(run_every=crontab(hour="*", minute="*/2", day_of_week="*"))
-#def test_two_minute():
-#    print "firing another test"
+
 
 @periodic_task(run_every=crontab(minute='*/50'))
 def data_warehouse_five_minute():

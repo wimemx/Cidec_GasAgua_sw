@@ -7,6 +7,7 @@ from electric_rates import urls as electric_rates_urls
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 admin.autodiscover()
+from django.conf import settings
 
 urlpatterns = patterns('',
     # Examples:
@@ -17,8 +18,6 @@ urlpatterns = patterns('',
 
     url(r'^restaurar_datos/', 'c_center.views.parse_csv'),
     url(r'^plupload/', 'plupload.views.upload_file'),
-    url(r'^get_files/(\d{4})/(\d{2})/(\d+)/$',
-        'plupload.views.get_files'),
     url(r'^del_file/(\d{4})/(\d{2})/(\d+)/$',
         'plupload.views.del_file'),
     #retrieves a list of all files in a dir, change as convenient
@@ -51,4 +50,6 @@ urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
     (r'^grappelli/', include('grappelli.urls')),
+    (r'^static/(?P<path>.*)$', 'django.views.static.serve',
+         {'document_root': settings.STATIC_ROOT}),
 )

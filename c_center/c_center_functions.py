@@ -2786,7 +2786,9 @@ def crawler_hm_rate(year, month):
     HM_erate = ElectricRates.objects.get(pk = 1)
 
     try:
-        page = urllib2.urlopen("http://app.cfe.gob.mx/Aplicaciones/CCFE/Tarifas/Tarifas/tarifas_negocio.asp?Tarifa=HM&Anio="+str(year)+"&mes="+str(month))
+        page = urllib2.urlopen("http://app.cfe.gob.mx/Aplicaciones/CCFE/"
+                               "Tarifas/Tarifas/tarifas_negocio.asp?Tarifa="
+                               "HM&Anio="+str(year)+"&mes="+str(month))
     except IOError:
         print "URL Error. No Connection"
         return False
@@ -2798,7 +2800,9 @@ def crawler_hm_rate(year, month):
         for tabla in tablasTarifa:
             header_t = tabla.find('tr').find_all('th')
 
-            if str(header_t[1].find(text=True)).replace('\n','').replace('\t','') == 'Cargo por kilowatt de demanda facturable':
+            if str(header_t[1].find(text=True)).replace(
+                    '\n','').replace('\t','') == \
+                        'Cargo por kilowatt de demanda facturable':
                 renglones_tarifa = tabla.find_all('tr')
                 for chld in renglones_tarifa:
                     arreglo_tarifas = []
@@ -2832,7 +2836,8 @@ def crawler_hm_rate(year, month):
                             fri = str(tds[1].find(text=True))
                             frb = str(tds[2].find(text=True))
                         except IndexError:
-                            print "Error: Error al parsear tabla FRI - FRB - Index Error"
+                            print "Error: Error al parsear tabla FRI - FRB - " \
+                                  "Index Error"
                             continue
 
                         arreglo_fri.append(fri)
@@ -2849,7 +2854,8 @@ def crawler_hm_rate(year, month):
             if region == 'Baja California':
                 region_obj = Region.objects.get(region_name = 'Baja California')
             elif region == 'Baja California Sur':
-                region_obj = Region.objects.get(region_name = 'Baja California Sur')
+                region_obj = Region.objects.get(
+                    region_name = 'Baja California Sur')
             elif region == 'Central':
                 region_obj = Region.objects.get(region_name = 'Central')
             elif region == 'Noreste':
@@ -2902,7 +2908,8 @@ def crawler_hm_rate(year, month):
                     )
                     newHM.save()
             except IndexError:
-                print "Error: No se pudo insertar objeto de Tarifa HM - Index Error"
+                print "Error: No se pudo insertar objeto de Tarifa HM - " \
+                      "Index Error"
                 continue
 
         print "HM crawler for "+str(month)+"/"+str(year)+" - Done"
@@ -2917,25 +2924,32 @@ def crawler_DAC_rate(year, month):
     date_end = datetime.date(year,month,last_day[1])
 
     try:
-        page = urllib2.urlopen("http://app.cfe.gob.mx/Aplicaciones/CCFE/Tarifas/Tarifas/tarifas_casa.asp?Tarifa=DAC2003&Anio="+str(year)+"&mes="+str(month))
+        page = urllib2.urlopen("http://app.cfe.gob.mx/Aplicaciones/CCFE/"
+                               "Tarifas/Tarifas/tarifas_casa.asp?Tarifa="
+                               "DAC2003&Anio="+str(year)+"&mes="+str(month))
     except IOError:
         print "URL Error. No Connection"
         return False
     else:
         soup = BeautifulSoup(page.read())
+        tablasTarifa = soup.find_all('table', {"class" : "tablaTarifa"})
 
-        tablasTarifa = soup.find_all('table',{"class" : "tablaTarifa"})
-        #La primer tabla es para tarifas de BC y BC Sur (que tienen Verano e Invierno)
+        #La primer tabla es para tarifas de BC y BC Sur
+        # (que tienen Verano e Invierno)
         if len(tablasTarifa) > 0:
             bc_bcs_tarifas = tablasTarifa[0].find_all('tr')
             for bc_t in bc_bcs_tarifas:
+
                 tds = bc_t.find_all('td')
                 if len(tds) > 0:
                     try:
                         region = str(tds[0].find(text=True)).strip()
-                        cargo_fijo = str(tds[1].find(text=True)).replace('$ ','')
-                        kwh_verano = str(tds[2].find(text=True)).replace('$ ','')
-                        kwh_invierno = str(tds[3].find(text=True)).replace('$ ','')
+                        cargo_fijo = str(tds[1].find(text=True)).replace('$ ',
+                                                                         '')
+                        kwh_verano = str(tds[2].find(text=True)).replace('$ ',
+                                                                         '')
+                        kwh_invierno = str(tds[3].find(text=True)).replace('$ ',
+                                                                           '')
                     except IndexError:
                         continue
                     else:
@@ -2956,11 +2970,11 @@ def crawler_DAC_rate(year, month):
                         else: #Si el periodo es Invierno
                             kwh_t = kwh_invierno
 
-                        #Se verifica que no haya una tarifa ya registrada para ese mes
+                        #Se verifica que no haya una tarifa
+                        # ya registrada para ese mes
                         bmonth_exists = DACElectricRateDetail.objects.\
                         filter(date_init = date_init).\
                         filter(region=region_obj)
-
                         if bmonth_exists:
                             #Actualiza la tarifa
                             bmonth_exists[0].region = region_obj
@@ -2989,15 +3003,18 @@ def crawler_DAC_rate(year, month):
                 if len(tds) > 0:
                     try:
                         region = str(tds[0].find(text=True)).strip()
-                        cargo_fijo = str(tds[1].find(text=True)).replace('$ ','')
+                        cargo_fijo = str(tds[1].find(text=True)).replace('$ ',
+                                                                         '')
                         kwh_t= str(tds[2].find(text=True)).replace('$ ','')
                     except IndexError:
                         continue
                     else:
                         if region == 'Norte y Noreste':
-                            region_obj = Region.objects.get(region_name = 'Norte')
+                            region_obj = Region.objects.get(
+                                region_name = 'Norte')
 
-                            #Se verifica que si la tarifa para la region norte ya esta registrada
+                            #Se verifica que si la tarifa para la region norte
+                            # ya esta registrada
                             bmonth_exists = DACElectricRateDetail.objects.\
                             filter(date_init = date_init).\
                             filter(region=region_obj)
@@ -3021,9 +3038,11 @@ def crawler_DAC_rate(year, month):
                                     )
                                 newDac.save()
 
-                            region_obj = Region.objects.get(region_name = 'Noreste')
+                            region_obj = Region.objects.get(region_name =
+                            'Noreste')
 
-                            #Se verifica que si la tarifa para la region noreste ya esta registrada
+                            #Se verifica que si la tarifa para la region
+                            # noreste ya esta registrada
                             bmonth_exists = DACElectricRateDetail.objects.\
                             filter(date_init = date_init).\
                             filter(region=region_obj)
@@ -3050,7 +3069,8 @@ def crawler_DAC_rate(year, month):
                         elif region == 'Sur y Peninsular':
                             region_obj = Region.objects.get(region_name = 'Sur')
 
-                            #Se verifica que si la tarifa para la region Sur ya esta registrada
+                            #Se verifica que si la tarifa para la region
+                            # Sur ya esta registrada
                             bmonth_exists = DACElectricRateDetail.objects.\
                             filter(date_init = date_init).\
                             filter(region=region_obj)
@@ -3074,9 +3094,11 @@ def crawler_DAC_rate(year, month):
                                     )
                                 newDac.save()
 
-                            region_obj = Region.objects.get(region_name = 'Peninsular')
+                            region_obj = Region.objects.get(
+                                region_name = 'Peninsular')
 
-                            #Se verifica que si la tarifa para la region Peninsular ya esta registrada
+                            #Se verifica que si la tarifa para la region
+                            # Peninsular ya esta registrada
                             bmonth_exists = DACElectricRateDetail.objects.\
                             filter(date_init = date_init).\
                             filter(region=region_obj)
@@ -3110,7 +3132,8 @@ def crawler_DAC_rate(year, month):
                                 region_obj = Region.objects.\
                                 get(region_name = 'Noroeste')
 
-                            #Se verifica que si la tarifa para las regiones central y noroeste ya esta registrada
+                            #Se verifica que si la tarifa para las regiones
+                            # central y noroeste ya esta registrada
                             bmonth_exists = DACElectricRateDetail.objects.\
                             filter(date_init = date_init).\
                             filter(region=region_obj)
@@ -3282,3 +3305,82 @@ def regenerate_ie_config(ie_id, user):
     ie.save()
 
     return
+
+
+def parse_file(_file):
+    """ Parses a csv file and stores it in DB
+    IMPORTANT change dir before call this function
+    :param _file: The file name
+    """
+    if _file.startswith('.'):
+        return -1
+    data = csv.reader(open(_file, "U"))
+    # Read the column names from the first line of the file
+    fields = data.next()
+    for row in data:
+    # Zip together the field names and values
+        #if row:
+        items = zip(fields, row)
+        item = {}
+        # Add the value to our dictionary
+        for (name, value) in items:
+            item[name.strip()] = value.strip()
+        fecha = item['Fecha']
+        medition_date = datetime.datetime.strptime(
+            fecha, "%a %b %d %H:%M:%S %Z %Y")
+        timezone_ = pytz.timezone("US/Central")
+        medition_date.replace(tzinfo=timezone_)
+        try:
+            powerp = ProfilePowermeter.objects.get(
+                powermeter__powermeter_serial=item["Id medidor"])
+        except ObjectDoesNotExist:
+            powerp = ProfilePowermeter.objects.get(
+                powermeter__powermeter_anotation="No Registrado"
+            )
+        elec_data = ElectricDataTemp(
+            profile_powermeter=powerp,
+            medition_date=medition_date,
+            V1=item['Voltaje Fase 1'],
+            V2=item['Voltaje Fase 2'],
+            V3=item['Voltaje Fase 3'],
+            I1=item['Corriente Fase 1'],
+            I2=item['Corriente Fase 2'],
+            I3=item['Corriente Fase 3'],
+            kWL1=item['KiloWatts Fase 1'],
+            kWL2=item['KiloWatts Fase 2'],
+            kWL3=item['KiloWatts Fase 3'],
+            kvarL1=item['KiloVoltAmpereReactivo Fase 1'],
+            kvarL2=item['KiloVoltAmpereReactivo Fase 2'],
+            kvarL3=item['KiloVoltAmpereReactivo Fase 3'],
+            kVAL1=item['KiloVoltAmpere Fase 1'],
+            kVAL2=item['KiloVoltAmpere Fase 2'],
+            kVAL3=item['KiloVoltAmpere Fase 3'],
+            PFL1=item['Factor de Potencia Fase 1'],
+            PFL2=item['Factor de Potencia Fase 2'],
+            PFL3=item['Factor de Potencia Fase 3'],
+            kW=item['KiloWatts Totales'],
+            kvar=item['KiloVoltAmperesReactivo Totales'],
+            TotalkVA=item['KiloVoltAmpere Totales'],
+            PF=item['Factor de Potencia Total'],
+            FREQ=item['Frecuencia Fase'],
+            TotalkWhIMPORT=item['KiloWattHora Totales'],
+            powermeter_serial=powerp.powermeter.powermeter_serial,
+            TotalkvarhIMPORT=item['KiloVoltAmpereReactivoHora Totales'],
+            kWhL1=item['KiloWattHora Fase 1'],
+            kWhL2=item['KiloWattHora Fase 2'],
+            kwhL3=item['KiloWattHora Fase 3'],
+            kvarhL1=item['KiloVoltAmpereReactivoHora Fase 1'],
+            kvarhL2=item['KiloVoltAmpereReactivoHora Fase 2'],
+            kvarhL3=item['KiloVoltAmpereReactivoHora Fase 3'],
+            kVAhL1=item['KiloVoltAmpereHora Fase 1'],
+            kVAhL2=item['KiloVoltAmpereHora Fase 2'],
+            kVAhL3=item['KiloVoltAmpereHora Fase 3'],
+            kW_import_sliding_window_demand=
+            item['kW import sliding window demand'],
+            kvar_import_sliding_window_demand=
+            item['kvar impor sliding window demand'],
+            kVA_sliding_window_demand=item['kVA sliding window demand'],
+            kvahTOTAL=item['KiloVoltAmpereHora Totales'],
+        )
+
+        elec_data.save()

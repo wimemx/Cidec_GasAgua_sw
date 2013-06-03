@@ -8,7 +8,7 @@
 {% block externaljs %}
 
     {% load plupload %}
-    {% plupload_script_custom csrf_token '/plupload/' url_get_last delete_file_url media_folder all_files_url %}
+    {% plupload_script_custom csrf_token '/plupload/' delete_file_url media_folder all_files_url %}
 
 {% endblock %}
 {% block document_ready %}
