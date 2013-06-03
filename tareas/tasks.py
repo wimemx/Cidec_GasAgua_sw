@@ -23,7 +23,7 @@ from data_warehouse.views import populate_data_warehouse, \
     data_warehouse_update
 from c_center.c_center_functions import save_historic, dailyReportAll, \
     asign_electric_data_to_pw, calculateMonthlyReport_all, all_dailyreportAll,\
-    getRatesCurrentMonth
+    getRatesCurrentMonth, dailyReportPeriodofTime, dailyReportAll_Period
 from c_center.calculations import daytag_period_allProfilePowermeters
 from tareas.models import *
 
@@ -239,6 +239,9 @@ def calculate_dw(granularity):
 def daily_report():
     dailyReportAll()
 
+@task(ignore_resulset=True)
+def daily_report_all_period(start_date, end_date):
+    dailyReportAll_Period(start_date, end_date)
 
 @task(ignore_resulset=True)
 def all_daily_report_all(from_date):

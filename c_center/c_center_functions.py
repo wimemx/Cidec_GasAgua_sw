@@ -1182,6 +1182,20 @@ def all_dailyreportAll(from_date):
         initial_d += dia
     print "Done AlldailyReportAll"
 
+
+def dailyReportAll_Period(start_date, end_date):
+    buildings = Building.objects.all()
+    for buil in buildings:
+
+        # ----- iterative daily report for all consumer units
+        cus = ConsumerUnit.objects.filter(building=buil)
+
+        for cu in cus:
+            dailyReportPeriodofTime(buil, cu, start_date, end_date)
+
+    print "Done dailyReportAll"
+
+
 def dailyReportPeriodofTime(building, consumer_unit, start_date, end_date):
 
     actual_date = start_date
@@ -1234,6 +1248,7 @@ def dailyReport(building, consumer_unit, today):
     day_delta = datetime.timedelta(days=1)
 
     #Se agregan las horas (Formato UTC)
+    """
     today_s_str = str(today.year) + "-" + str(today.month) + "-" +\
                   str(today.day)+" 00:00:00"
     today_s_str = time.strptime(today_s_str, "%Y-%m-%d  %H:%M:%S")
@@ -1245,7 +1260,8 @@ def dailyReport(building, consumer_unit, today):
                                     minute=today_s_tuple[4],
                                     second=today_s_tuple[5],
                                     tzinfo = pytz.utc)
-
+    """
+    today_s_utc = today
     today_e_utc = today_s_utc + day_delta
 
     #Se obtiene la región
