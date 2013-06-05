@@ -2,6 +2,7 @@
 #standard library imports
 import datetime
 import pytz
+import os
 
 #related third party imports
 from socketIO_client import SocketIO
@@ -19,13 +20,55 @@ import alarms.models
 import c_center.models
 import data_warehouse_extended.views
 
+import variety
+
 from data_warehouse.views import populate_data_warehouse, \
     data_warehouse_update
 from c_center.c_center_functions import save_historic, dailyReportAll, \
     asign_electric_data_to_pw, calculateMonthlyReport_all, all_dailyreportAll,\
-    getRatesCurrentMonth, dailyReportPeriodofTime, dailyReportAll_Period
-from c_center.calculations import daytag_period_allProfilePowermeters
+    getRatesCurrentMonth, dailyReportPeriodofTime, dailyReportAll_Period, \
+    parse_file, getMonthlyReport
+from c_center.calculations import daytag_period_allProfilePowermeters, \
+    daytag_period
 from tareas.models import *
+
+
+@task(ignore_result=True)
+def restore_data(_file, dir_path):
+    dir_fd = os.open(dir_path, os.O_RDONLY)
+    os.fchdir(dir_fd)
+    fi, ff, cus = parse_file(_file)
+    #Regenerate DW and tag data for the file
+    if cus:
+        for cu in cus:
+            regenerate_dw_in_interval(fi, ff, cu)
+            daytag_period(fi, ff, cu.profile_powermeter)
+            dailyReportPeriodofTime(
+                cu.building,
+                cu,
+                fi, ff)
+            #month operations
+            f_i = fi
+            while f_i < ff:
+                getMonthlyReport(cu, f_i.month, f_i.year)
+
+                cut = c_center.models.MonthlyCutDates.objects.get(
+                    building=cu.building,
+                    billing_month=f_i.month
+                )
+                if cut.date_end:
+                    save_historic_delay.delay(cut, cu.building)
+                f_i = variety.add_months(f_i, 1)
+    os.close(dir_fd)
+
+
+def regenerate_dw_in_interval(d1, d2, cu):
+    instant_deltas = data_warehouse_extended.models.InstantDelta.objects.all()
+    for instant_delta in instant_deltas:
+        delta = datetime.timedelta(seconds=instant_delta.delta_seconds)
+        delta_time = d2 - d1
+        if delta_time > delta:
+            populate_data_warehouse_specific_int(cu, instant_delta, d1, d2)
 
 
 @task(ignore_result=True)

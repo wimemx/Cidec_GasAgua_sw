@@ -12,6 +12,7 @@ import pytz
 import threading
 from math import ceil
 import urllib2
+import csv
 
 #local application/library specific imports
 from django.shortcuts import HttpResponse, get_object_or_404
@@ -1246,6 +1247,15 @@ def dailyReport(building, consumer_unit, today):
     costo_energia_total = 0
 
     day_delta = datetime.timedelta(days=1)
+
+    #Se borra el día si existe
+    try:
+        day_data = DailyData.objects.get(consumer_unit=consumer_unit,
+                                         data_day=today)
+    except ObjectDoesNotExist:
+        pass
+    else:
+        day_data.delete()
 
     #Se agregan las horas (Formato UTC)
     """
@@ -3333,6 +3343,8 @@ def parse_file(_file):
     data = csv.reader(open(_file, "U"))
     # Read the column names from the first line of the file
     fields = data.next()
+    consumer_units = []
+    dates_arr = []
     for row in data:
     # Zip together the field names and values
         #if row:
@@ -3353,6 +3365,10 @@ def parse_file(_file):
             powerp = ProfilePowermeter.objects.get(
                 powermeter__powermeter_anotation="No Registrado"
             )
+        else:
+            consumer_units.append(
+                ConsumerUnit.objects.get(profile_powermeter=powerp))
+        dates_arr.append(medition_date)
         elec_data = ElectricDataTemp(
             profile_powermeter=powerp,
             medition_date=medition_date,
@@ -3400,3 +3416,7 @@ def parse_file(_file):
         )
 
         elec_data.save()
+
+    dates_arr.sort()
+    consumer_units = variety.unique_from_array(consumer_units)
+    return dates_arr[0], dates_arr[-1], consumer_units

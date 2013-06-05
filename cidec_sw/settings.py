@@ -1,6 +1,6 @@
 # Django settings for cidec_sw project.
-#import djcelery
-#djcelery.setup_loader()
+import djcelery
+djcelery.setup_loader()
 import os
 BROKER_HOST = "myhost"
 BROKER_PORT = "5672"
@@ -162,8 +162,8 @@ INSTALLED_APPS = (
     'alarms',
     'django_tables2',
     'plupload',
-    #'djcelery',
-    #'tareas',
+    'djcelery',
+    'tareas',
 )
 
 # A sample logging configuration. The only tangible logging

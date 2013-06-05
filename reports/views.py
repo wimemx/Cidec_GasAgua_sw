@@ -1138,9 +1138,9 @@ def render_report_consumed_by_month(
         request
 ):
     template_variables = {
-        'max' : None,
-        'min' : None,
-        'rows' : None,
+        'max': None,
+        'min': None,
+        'rows': None,
     }
 
     if not request.method == "GET":
@@ -1172,7 +1172,6 @@ def render_report_consumed_by_month(
             last_week_end_datetime,
             electrical_parameter_name,
             granularity_seconds)
-    print data_cluster_consumed
     template_variables['rows'] = data_cluster_consumed
     maximun, minimun = get_data_cluster_limits(data_cluster_consumed)
 
@@ -1417,12 +1416,15 @@ def render_report_powerprofile_by_month(
         cont += 1
         month_array = [[], [], [], [], [], []]
         for day in day_data:
+            print day
             medition_date = datetime.datetime.fromtimestamp(day["datetime"])
             for i in range(0, len(weeks)):
                 if weeks[i][0] <= medition_date < weeks[i][1]:
                     if param == "PF" and abs(day['value']) > 1:
                         day['value'] = 1
-                    month_array[i].append(abs(float(day['value'])))
+                    if day["certainty"]:
+                        month_array[i].append(abs(float(day['value'])))
+                    
                     break
                 else:
                     continue

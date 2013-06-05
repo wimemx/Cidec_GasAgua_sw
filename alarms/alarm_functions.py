@@ -79,6 +79,7 @@ def update_alarm_config(new_alarm_config, ie_pk):
                                 max_value=str(alarm['max_value']),
                                 min_value=str(alarm['min_value']),
                                 consumer_unit=cu)
+                    al.save()
                 else:
                     al.electric_parameter = param
                     al.consumer_unit = cu

@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, date
 import pytz
 from functools import wraps
 from time import time
+import calendar
 from decimal import Decimal
 import decimal
 from decimal import InvalidOperation
@@ -20,6 +21,21 @@ from dateutil.relativedelta import relativedelta
 #import StringIO
 #from django.template.loader import get_template
 #from xhtml2pdf import pisa
+
+
+def add_months(sourcedate, months):
+    """ Adds "months" to sourcedate
+
+    :param sourcedate: datetime to add months
+    :param months: number of months to add
+    :return: adjusted sourcedate
+    """
+    month = sourcedate.month - 1 + months
+    year = sourcedate.year + month / 12
+    month = month % 12 + 1
+    day = min(sourcedate.day,calendar.monthrange(year,month)[1])
+    return datetime(year, month, day)
+
 
 def get_hour_from_datetime(datetime_input):
     hour_datetime = datetime(year=datetime_input.year,

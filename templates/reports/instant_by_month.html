@@ -497,9 +497,9 @@ $(document).on("ready", function(){
                 {% for data in param_data.month_data %}
                 <tr class="{% cycle 'row1' 'row1' %}">
                     <td>{{ forloop.counter }}</td>
-                    <td class="table_value">{{ data.mean|floatformat:2 }}</td>
-                    <td class="table_value">{{ data.maximum|floatformat:2 }}</td>
-                    <td class="table_value">{{ data.minimum|floatformat:2 }}</td>
+                    <td class="table_value">{% if data.mean %}{{ data.mean|floatformat:2 }}{% else %}-{% endif %}</td>
+                    <td class="table_value">{% if data.maximum %}{{ data.maximum|floatformat:2 }}{% else %}-{% endif %}</td>
+                    <td class="table_value">{% if data.minimum %}{{ data.minimum|floatformat:2 }}{% else %}-{% endif %}</td>
                 </tr>
                 {% endfor %}
                 </tbody>

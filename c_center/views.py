@@ -62,7 +62,7 @@ import json as simplejson
 import sys
 from tareas.tasks import save_historic_delay, \
     change_profile_electric_data, populate_data_warehouse_extended, \
-    populate_data_warehouse_specific, populate_data_warehouse_specific_int
+    populate_data_warehouse_specific, restore_data
 
 VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
@@ -9270,12 +9270,9 @@ def parse_csv(request):
             todays_dir = datetime.datetime.now().strftime("%Y-%m-%d/")
             dir_path = os.path.join(settings.PROJECT_PATH, FILE_FOLDER)
             files = os.listdir(dir_path+todays_dir)
-            dir_fd = os.open(dir_path+todays_dir, os.O_RDONLY)
-            os.fchdir(dir_fd)
+            dir_path = dir_path+todays_dir
             for _file in files:
-                parse_file(_file)
-            os.close(dir_fd)
-            ######
+                restore_data.delay(_file, dir_path)
 
         delete_file_url = "/del_file/"+todays_date
         media_folder = "/static/media/csv_files/"+todays_date
@@ -9295,12 +9292,3 @@ def parse_csv(request):
         template_vars["sidebar"] = request.session['sidebar']
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
-
-
-def regenerate_dw_in_interval(d1, d2, cu):
-    instant_deltas = InstantDelta.objects.all()
-    for instant_delta in instant_deltas:
-        delta = datetime.timedelta(seconds=instant_delta.delta_seconds)
-        delta_time = d2 - d1
-        if delta_time > delta:
-            populate_data_warehouse_specific_int(cu, instant_delta, d1, d2)
