@@ -1258,19 +1258,7 @@ def dailyReport(building, consumer_unit, today):
         day_data.delete()
 
     #Se agregan las horas (Formato UTC)
-    """
-    today_s_str = str(today.year) + "-" + str(today.month) + "-" +\
-                  str(today.day)+" 00:00:00"
-    today_s_str = time.strptime(today_s_str, "%Y-%m-%d  %H:%M:%S")
-    today_s_tuple = time.gmtime(time.mktime(today_s_str))
-    today_s_utc = datetime.datetime(year= today_s_tuple[0],
-                                    month=today_s_tuple[1],
-                                    day=today_s_tuple[2],
-                                    hour=today_s_tuple[3],
-                                    minute=today_s_tuple[4],
-                                    second=today_s_tuple[5],
-                                    tzinfo = pytz.utc)
-    """
+
     today_s_utc = today
     today_e_utc = today_s_utc + day_delta
 
@@ -1362,6 +1350,10 @@ def dailyReport(building, consumer_unit, today):
             kwh_punta = kwh_dia_dic['punta']
             kwh_totales = kwh_base + kwh_intermedio + kwh_punta
 
+            print "Base:", kwh_base
+            print "Intermedio:", kwh_intermedio
+            print "Punta:",kwh_punta
+
 
             #Se obtienen los kvarhs por medidor
             kvarh_totales += obtenerKVARH_dia(profile_powermeter,
@@ -1437,6 +1429,7 @@ def dailyReport(building, consumer_unit, today):
         KVARH = str(kvarh_totales)
     )
     new_daily.save()
+
     return 'OK'
 
 def getDailyReports(consumer, month, year, days_offset=None):
