@@ -20,7 +20,7 @@ from django.http import Http404
 from django.utils import simplejson, timezone
 from django.db.models import Q
 from django.db.models.aggregates import *
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.views.decorators.csrf import csrf_exempt
 
 from calendar import monthrange
@@ -1556,20 +1556,31 @@ def calculateMonthlyReport_all(month, year):
             continue
         else:
             mes_new = calculateMonthlyReport(consumer_u, month, year)
-            mes = MonthlyData(consumer_unit=consumer_u,
-                              month=month,
-                              year=year,
-                              KWH_total=mes_new['consumo_acumulado'],
-                              max_demand=mes_new['demanda_max'],
-                              max_cons=mes_new['consumo_maximo'],
-                              carbon_emitions=mes_new['emisiones'],
-                              power_factor=str(mes_new['factor_potencia']),
-                              min_demand=mes_new['demanda_min'],
-                              average_demand=mes_new['demanda_promedio'],
-                              min_cons=mes_new['consumo_minimo'],
-                              average_cons=str(mes_new['consumo_promedio']),
-                              median_cons=str(mes_new['consumo_mediana']),
-                              deviation_cons=str(mes_new['consumo_desviacion']))
+            try:
+                mes, created = \
+                    MonthlyData.objects.get_or_create(
+                        consumer_unit=consumer_u,
+                        month=month,
+                        year=year)
+            except MultipleObjectsReturned:
+                MonthlyData.objects.filter(
+                    consumer_unit=consumer_u,
+                    month=month,
+                    year=year).delete()
+                mes = MonthlyData(consumer_unit=consumer_u,  month=month,
+                                  year=year)
+                mes.save()
+            mes.KWH_total = mes_new['consumo_acumulado']
+            mes.max_demand = mes_new['demanda_max']
+            mes.max_cons = mes_new['consumo_maximo']
+            mes.carbon_emitions = mes_new['emisiones']
+            mes.power_factor = str(mes_new['factor_potencia'])
+            mes.min_demand = mes_new['demanda_min']
+            mes.average_demand = mes_new['demanda_promedio']
+            mes.min_cons = mes_new['consumo_minimo']
+            mes.average_cons = str(mes_new['consumo_promedio'])
+            mes.median_cons = str(mes_new['consumo_mediana'])
+            mes.deviation_cons = str(mes_new['consumo_desviacion'])
             mes.save()
     return "done calculateMonthlyReport_all"
 
