@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block titulo %}An&aacute;lisis de Consumo El&eacute;ctrico Mensual - {{ building.building_name }}{% endblock %}
+{% block titulo %}Restaurar datos el&eacute;ctricos{% endblock %}
 {% block externalcss %}
     <!--suppress HtmlUnknownTarget -->
     <link rel="stylesheet" href="/static/css/consumption_centers/main.css" type="text/css" />
@@ -32,6 +32,12 @@
             <h2 class="titulo_reporte"><span class="building">{{ building.building_name }}</span> - <span class="device">{{ request.session.consumer_unit.electric_device_type.electric_device_type_name }}</span></h2>
 
             <div class="divider" id="divider_top">&nbsp;</div>
+            {% if message %}
+                <span class="notif {{ msg_type }}">
+                    {% autoescape off %}{{ message }}{% endautoescape %}
+                <a href="#" onclick="$(this).parent().remove();">X</a>
+                </span>
+            {% endif %}
             <h3 id="titulo_reporte" class="titulo_reporte report_icon">Restaurar Datos El&eacute;ctricos</h3>
             <div id="content">
                 <div id="formulario">

@@ -1048,6 +1048,7 @@ def get_latest_notifs(request):
 def refresh_ie_config(request):
     if request.method == "POST":
         status_conf = 200
+        content = ''
         if 'ie' in request.POST:
             ie = get_object_or_404(IndustrialEquipment,
                                    pk=int(request.POST['ie']))
@@ -1055,13 +1056,22 @@ def refresh_ie_config(request):
             ie_conf = True
             if ie.has_new_alarm_config:
                 al_conf = update_alarm_config(ie.new_alarm_config, ie.pk)
-
+                content += " alarm_set=" + str(al_conf)
             if ie.has_new_config:
                 ie_conf = update_ie_config(ie.new_config, ie.pk)
+                content += " ie_conf= " + str(ie_conf)
             if not ie_conf or not al_conf:
-                user = User.objects.get(pk=1)
+                user = User.objects.get(pk=2)
                 set_alarm_json(ie.building, user)
                 regenerate_ie_config(ie.pk, user)
-        return HttpResponse(status=status_conf)
+                content += " Default Config "
+            else:
+                content += " Configuration update successful "
+            print "content:", content
+        else:
+            print "IE not found"
+            raise Http404("IE not found")
+        return HttpResponse(content=content, status=status_conf)
     else:
-        raise Http404
+        print "POST required"
+        raise Http404("POST required")
