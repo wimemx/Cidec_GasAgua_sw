@@ -303,8 +303,7 @@ h2 span{
     margin-left: 7px;
 }
 #companies_container #empresa{
-    width: auto;
-    padding-right: 20px;
+    width: 130px;
     display: block;
     background: url(images/imgs_icns/company_arrow_d.png) no-repeat 100% 50%;
     line-height: 56px;
@@ -395,12 +394,10 @@ h2 span{
     position: relative;
     left: -99px;
 }
-#main_menu li{
-    cursor: pointer;
-}
 #main_menu li.first_level a{
     text-decoration: none;
     color: #dbe2f2;
+
 }
 #main_menu li.first_level{
     vertical-align: middle;

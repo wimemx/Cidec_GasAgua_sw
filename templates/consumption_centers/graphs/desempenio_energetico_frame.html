@@ -35,7 +35,7 @@
                             new google.visualization.ColumnChart(document.getElementById('{{ atributo.nombre_seguro }}')).
                                     draw({{ atributo.nombre_seguro }}_data,
                                     {
-                                        width:900, height:400, vAxis: {title: "Energía (KWh)"}, colors:['#5093c7','#f78a3d'],legend:'none'
+                                        width:780, height:400, vAxis: {title: "Energía (KWh)", titleTextStyle: {italic: false }},'fontName':'Droid Sans', colors:['#5093c7','#f78a3d'],legend:'none'
 
                                     }
                             );
