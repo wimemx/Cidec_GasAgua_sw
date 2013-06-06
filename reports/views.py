@@ -1416,7 +1416,7 @@ def render_report_powerprofile_by_month(
         cont += 1
         month_array = [[], [], [], [], [], []]
         for day in day_data:
-            print day
+            #print day
             medition_date = datetime.datetime.fromtimestamp(day["datetime"])
             for i in range(0, len(weeks)):
                 if weeks[i][0] <= medition_date < weeks[i][1]:
@@ -1452,7 +1452,6 @@ def rates_for_data_cluster(data_cluster_consumed, region):
     for data_cluster in data_cluster_consumed:
 
         date_time = datetime.datetime.fromtimestamp(data_cluster["datetime"])
-        print date_time
         periodo = c_center.calculations.obtenerTipoPeriodoObj(
             date_time, region).period_type
         if periodo == "base":

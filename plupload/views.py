@@ -55,7 +55,9 @@ def upload_file(request):
         os.chdir(dir_name)
 
         for _file in request.FILES:
-            handle_uploaded_file(request.FILES[_file], request.POST['chunk'])
+            handle_uploaded_file(request.FILES[_file],
+                                 request.POST['chunk'],
+                                 request.POST['filename'])
         os.close(dir_fd)
         #response only to notify plUpload that the upload was successful
         return HttpResponse()
@@ -63,7 +65,7 @@ def upload_file(request):
         raise Http404
 
 
-def handle_uploaded_file(f, chunk):
+def handle_uploaded_file(f, chunk, filename):
     """
     Here you can do whatever you like with your files, like resize them if they
     are images
@@ -72,10 +74,10 @@ def handle_uploaded_file(f, chunk):
     """
     if int(chunk) > 0:
         #opens for append
-        _file = open(f._name, 'a')
+        _file = open(filename, 'a')
     else:
         #erases content
-        _file = open(f._name, 'wb+')
+        _file = open(filename, 'w')
 
     if f.multiple_chunks:
         for chunk in f.chunks():

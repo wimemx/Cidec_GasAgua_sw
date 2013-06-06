@@ -1028,7 +1028,7 @@ def tag_reading(request):
         #Obtiene el Id de la medicion
         reading_id = request.REQUEST.get("id_reading", "")
         if reading_id:
-            tag_this(reading_id)
+            daytag_reading(reading_id)
         return HttpResponse(content='', content_type=None, status=200)
     return HttpResponse(content='', content_type=None, status=404)
 
@@ -1216,13 +1216,6 @@ def daytag_reading(reading_id):
     readingObj = ElectricDataTemp.objects.get(id=reading_id)
     #Si la lectura proviene de cualquier medidor menos del No Asignado
     if readingObj.profile_powermeter.pk != 4:
-        #Se revisa que esa medicion no este etiquetada ya.
-        tagged_reading = ElectricDataTags.objects.\
-        filter(electric_data = readingObj)
-
-        if tagged_reading:
-            tagged_reading.delete()
-
         #Se obtiene el Consumer Unit, para poder obtener el edificio, una
         # vez obtenido el edificio, se puede obtener la region y la tarifa
         consumerUnitObj = ConsumerUnit.objects.filter(
@@ -1321,9 +1314,13 @@ def daytag_period(actual_day, end_day, profile_powermeter):
     """
         :param start_day: Datetime
     """
+    ElectricDataTags.objects.filter(
+        electric_data__profile_powermeter=profile_powermeter,
+        electric_data__medition_date__gte=actual_day,
+        electric_data__medition_date__lte=end_day).delete()
     day_delta = datetime.timedelta(days=1)
 
-    no_dia =  0
+    no_dia = 0
     while actual_day <= end_day:
         daytag_day(actual_day,profile_powermeter)
         actual_day = actual_day + day_delta

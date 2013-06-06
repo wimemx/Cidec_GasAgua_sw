@@ -68,6 +68,7 @@ def update_alarm_config(new_alarm_config, ie_pk):
         else:
             Alarms.objects.filter(consumer_unit=cu).update(status=False)
             for alarm in device['EDeviceAlarms']:
+                print "alarm: ", alarm
                 param = ElectricParameters.objects.get(
                     pk=alarm['electric_parameter_id'])
                 try:

@@ -9264,20 +9264,28 @@ def parse_csv(request):
             datacontext=datacontext,
             empresa=request.session['main_building'])
         todays_date = datetime.datetime.now().strftime("%Y/%m/%d/")
-
+        todays_dir = datetime.datetime.now().strftime("%Y-%m-%d/")
+        message = ''
         if request.method == "POST":
             #parse csv files
-            todays_dir = datetime.datetime.now().strftime("%Y-%m-%d/")
+
             dir_path = os.path.join(settings.PROJECT_PATH, FILE_FOLDER)
-            files = os.listdir(dir_path+todays_dir)
-            dir_path = dir_path+todays_dir
+            try:
+                files = os.listdir(dir_path+todays_dir)
+            except OSError:
+                message = "No se ha subido ningún archivo"
+            dir_path += todays_dir
             for _file in files:
                 restore_data.delay(_file, dir_path)
+            else:
+                message = "Las tareas de recuperación se han registrado " \
+                          "exitosamente"
 
         delete_file_url = "/del_file/"+todays_date
-        media_folder = "/static/media/csv_files/"+todays_date
+        media_folder = "/static/media/csv_files/"+todays_dir
         all_files_url = "/get_all_files/"+todays_date
 
+        template_variables['message'] = message
         template_variables['delete_file_url'] = delete_file_url
         template_variables['media_folder'] = media_folder
         template_variables['all_files_url'] = all_files_url
