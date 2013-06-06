@@ -6,9 +6,12 @@
 #titulo_reporte{
     height: 22px;
     padding-left: 39px;
+    margin-bottom: 30px;
 }
 #titulo_reporte.report_icon{
     background: url("../images/imgs_icns/graph_icon.png") no-repeat;
+
+
 }
 #datepicker_component {
     position: relative;
@@ -99,7 +102,7 @@ h4{
 
 #sumary span.r{
     text-align: right;
-    font-size: 15px;
+    font-size: 13px;
     width: 50%;
 }
 #sumary span.l{
@@ -112,7 +115,7 @@ h4{
     font-size: 25px !important;
 }
 .inner_col table{
-    width: 100%;
+    width: 97%;
     border: solid 1px #9ebfc7;
     border-radius: 5px;
     -webkit-border-radius: 5px;
@@ -133,6 +136,7 @@ h4{
     -webkit-border-radius: 5px;
     -moz-border-radius: 5px;
     background: #fff;
+    width: 574px;
 }
 #graph_title{
     display: block;
