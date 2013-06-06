@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block titulo %}Restaurar datos el&eacute;ctricos{% endblock %}
+{% block externalcss %}
+    <!--suppress HtmlUnknownTarget -->
+    <link rel="stylesheet" href="/static/css/consumption_centers/main.css" type="text/css" />
+
+{% endblock %}
+{% block externaljs %}
+<script type="text/javascript">
+$(document).ready(function(){
+    	// Smart Wizard
+  	  $('#formulario').smartWizard({transitionEffect:'slideleft',onLeaveStep:leaveAStepCallback,onFinish:onFinishCallback,enableFinishButton:true});
+
+      function leaveAStepCallback(obj){
+        var step_num= obj.attr('rel');
+        return validateSteps(step_num);
+      }
+
+      function onFinishCallback(){
+       if(validateAllSteps()){
+        $('form').submit();
+       }
+      }
+		});
+
+    function validateAllSteps(){
+       var isStepValid = true;
+
+       if(validateStep1() == false){
+         isStepValid = false;
+         $('#formulario').smartWizard('setError',{stepnum:1,iserror:true});
+       }else{
+         $('#formulario').smartWizard('setError',{stepnum:1,iserror:false});
+       }
+
+       if(validateStep3() == false){
+         isStepValid = false;
+         $('#formulario').smartWizard('setError',{stepnum:3,iserror:true});
+       }else{
+         $('#formulario').smartWizard('setError',{stepnum:3,iserror:false});
+       }
+
+       if(!isStepValid){
+          $('#formulario').smartWizard('showMessage','Please correct the errors in the steps and continue');
+       }
+
+       return isStepValid;
+    }
+
+
+    function validateSteps(step){
+        var wizard = $('#formulario');
+        var isStepValid = true;
+        // validate step 1
+        if(step == 1){
+            if(validateStep1() == false ){
+                isStepValid = false;
+                wizard.smartWizard('showMessage','Please correct the errors in step'+step+ ' and click next.');
+                wizard.smartWizard('setError',{stepnum:step,iserror:true});
+            }else{
+                wizard.smartWizard('setError',{stepnum:step,iserror:false});
+            }
+        }
+        // validate step3
+        if(step == 3){
+            if(validateStep3() == false ){
+                isStepValid = false;
+                wizard.smartWizard('showMessage','Please correct the errors in step'+step+ ' and click next.');
+                wizard.smartWizard('setError',{stepnum:step,iserror:true});
+            }else{
+                wizard.smartWizard('setError',{stepnum:step,iserror:false});
+            }
+        }
+
+        return isStepValid;
+    }
+    function validateStep1(){
+        var isValid = true;
+        //validate
+
+        return isValid;
+    }
+    function validateStep3(){
+        var isValid = true;
+        //validate
+
+        return isValid;
+    }
+</script>
+
+{% endblock %}
+{% block document_ready %}
+    // Smart Wizard
+  	$('#content').smartWizard({contentURL:'services/service.php?action=1',transitionEffect:'slideleft',onFinish:onFinishCallback});
+    function onFinishCallback(){
+        alert('Finish Called');
+    }
+{% endblock %}
+{% block breadcumbs %}
+
+     <div id="bread_crumbs">
+     <a href="/profile/{{ request.user.pk }}/" class="fl username">{{ request.user.first_name }} {{ request.user.last_name }}</a>
+        <ul>
+            <li><a href="/main/">Inicio</a></li>
+            <li>Alta de estructura inicial</li>
+        </ul>
+    </div>
+
+{% endblock %}
+
+{% block contenido %}
+
+    <div id="page_content">
+        <div id="contenido_interno">
+            <h2 class="titulo_reporte"><span class="building">Alta de estrictura inicial</span></h2>
+
+            <div class="divider" id="divider_top">&nbsp;</div>
+            {% if message %}
+                <span class="notif {{ msg_type }}">
+                    {% autoescape off %}{{ message }}{% endautoescape %}
+                <a href="#" onclick="$(this).parent().remove();">X</a>
+                </span>
+            {% endif %}
+
+            <div id="content">
+                <form method="post" action=".">
+                <div id="formulario">
+                    <ul>
+                        <li><a href="#step-1">Ubicaci&oacute;n de la instalaci&oacute;n</a></li>
+                        <li><a href="#step-2">Estructura de la instalación</a></li>
+                        <li><a href="#step-3">Alarmas</a></li>
+                        <li><a href="#step-4">Usuarios y permisos</a></li>
+                    </ul>
+                    <div id="step-1">
+
+                    </div>
+                    <div id="step-2">
+
+                    </div>
+                    <div id="step-3">
+
+                    </div>
+                    <div id="step-4">
+
+                    </div>
+
+
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

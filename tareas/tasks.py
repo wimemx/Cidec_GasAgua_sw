@@ -409,9 +409,9 @@ def data_warehouse_day():
         print "not firing:", str(delta1), "to fire"
 
 
-@periodic_task(run_every=crontab(minute='*/30'))
+@periodic_task(run_every=crontab(hour='*/12'))
 def last_data_received():
-    delta_t = datetime.timedelta(minutes=30)
+    delta_t = datetime.timedelta(hours=12)
     cus = c_center.models.ConsumerUnit.objects.exclude(
         profile_powermeter__powermeter__powermeter_anotation="Medidor Virtual")
 

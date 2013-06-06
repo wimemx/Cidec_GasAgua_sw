@@ -7999,7 +7999,7 @@ def montly_analitics(request):
     template_vars["sidebar"] = request.session['sidebar']
     template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
-    if has_permission(request.user, VIEW, "Consultar recibo CFE") or \
+    if has_permission(request.user, VIEW, "Consumo Energético Mensual") or \
             request.user.is_superuser:
 
         template_vars_template = RequestContext(request, template_vars)
@@ -8089,7 +8089,8 @@ def month_analitics_day(request):
 @login_required(login_url='/')
 def billing_analisis_header(request):
     datacontext = get_buildings_context(request.user)[0]
-    if request.user.is_superuser:
+    if has_permission(request.user, VIEW, "Análisis de facturación") or \
+            request.user.is_superuser:
         set_default_session_vars(request, datacontext)
 
         template_vars = {"type": "cfe", "datacontext": datacontext,
@@ -8127,7 +8128,8 @@ def billing_analisis_header(request):
 @login_required(login_url='/')
 def billing_c_analisis_header(request):
     datacontext = get_buildings_context(request.user)[0]
-    if request.user.is_superuser:
+    if has_permission(request.user, VIEW, "Análisis de costo de facturación") \
+            or request.user.is_superuser:
         set_default_session_vars(request, datacontext)
 
         template_vars = {"type": "cfe", "datacontext": datacontext,
@@ -8141,13 +8143,13 @@ def billing_c_analisis_header(request):
 
         if tipo_tarifa.pk == 1:
             years = [__date.year for __date in ElectricRatesDetail.objects.
-            all().dates('date_init','year')]
+                all().dates('date_init', 'year')]
         elif tipo_tarifa.pk == 2:
             years = [__date.year for __date in DACElectricRateDetail.objects.
-            all().dates('date_init','year')]
+                all().dates('date_init', 'year')]
         elif tipo_tarifa.pk == 3:
             years = [__date.year for __date in ThreeElectricRateDetail.objects.
-            all().dates('date_init','year')]
+                all().dates('date_init', 'year')]
         template_vars['years'] = years[::-1]
 
         template_vars_template = RequestContext(request, template_vars)
@@ -8164,7 +8166,8 @@ def billing_c_analisis_header(request):
 @login_required(login_url='/')
 def power_performance_header(request):
     datacontext = get_buildings_context(request.user)[0]
-    if request.user.is_superuser:
+    if has_permission(request.user, VIEW, "Desempeño energético") or \
+            request.user.is_superuser:
         set_default_session_vars(request, datacontext)
 
         template_vars = {"type": "cfe", "datacontext": datacontext,
@@ -8227,7 +8230,8 @@ def getMonthName(index):
 def billing_analisis(request):
     """Renders the cfe bill and the historic data chart"""
     datacontext = get_buildings_context(request.user)[0]
-    if request.user.is_superuser:
+    if has_permission(request.user, VIEW, "Análisis de facturación") or \
+            request.user.is_superuser:
         if not request.session['consumer_unit']:
             return HttpResponse(
                 content=MSG_PERMIT_ERROR)
@@ -8786,7 +8790,8 @@ def billing_analisis(request):
 def billing_cost_analisis(request):
     """Renders the cfe bill and the historic data chart"""
     datacontext = get_buildings_context(request.user)[0]
-    if request.user.is_superuser:
+    if has_permission(request.user, VIEW, "Análisis de costo de facturación") \
+            or request.user.is_superuser:
         if not request.session['consumer_unit']:
             return HttpResponse(
                 content=MSG_PERMIT_ERROR)
@@ -9054,7 +9059,8 @@ def billing_cost_analisis(request):
 def power_performance(request):
     """Renders the cfe bill and the historic data chart"""
     datacontext = get_buildings_context(request.user)[0]
-    if request.user.is_superuser:
+    if has_permission(request.user, VIEW, "Desempeño energético") or \
+            request.user.is_superuser:
         if not request.session['consumer_unit']:
             return HttpResponse(
                 content=MSG_PERMIT_ERROR)
