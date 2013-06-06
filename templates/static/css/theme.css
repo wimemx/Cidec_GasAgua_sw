@@ -394,10 +394,12 @@ h2 span{
     position: relative;
     left: -99px;
 }
+#main_menu li{
+    cursor: pointer;
+}
 #main_menu li.first_level a{
     text-decoration: none;
     color: #dbe2f2;
-
 }
 #main_menu li.first_level{
     vertical-align: middle;
