@@ -1902,7 +1902,6 @@ def tarifaHM_2(building, s_date, e_date, month, year):
         else:
 
             for tupleDay in tupleDays_arr:
-                print tupleDay
                 kw_dia_dic = getKWperDay(tupleDay[0], tupleDay[1], consumer_units[0].profile_powermeter)
                 if kw_dia_dic['base'] > diccionario_final_cfe["kw_base"]:
                     diccionario_final_cfe["kw_base"] = kw_dia_dic['base']
@@ -1930,6 +1929,7 @@ def tarifaHM_2(building, s_date, e_date, month, year):
                 diccionario_final_cfe["kwh_intermedio"] += kwh_dia_dic['intermedio']
                 diccionario_final_cfe["kwh_punta"] += kwh_dia_dic['punta']
                 diccionario_final_cfe["kwh_totales"] += kwh_dia_dic['base'] + kwh_dia_dic['intermedio'] + kwh_dia_dic['punta']
+                print "kWh Totales:", kwh_dia_dic['base'] + kwh_dia_dic['intermedio'] + kwh_dia_dic['punta']
 
             #Se obtienen los kvarhs por medidor
             diccionario_final_cfe['kvarh_totales'] += obtenerKVARH(
@@ -3294,7 +3294,6 @@ def getTupleDays(s_date_utc, e_date_utc):
     while actual_date_end < (e_date - day_delta):
         actual_date_begin = actual_date_end
         actual_date_end = actual_date_begin + day_delta
-
 
         arr_b_days.append(actual_date_begin.astimezone(timezone.utc))
         arr_e_days.append(actual_date_end.astimezone(timezone.utc))
