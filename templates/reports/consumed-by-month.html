@@ -46,7 +46,11 @@ var control = new google.visualization.ControlWrapper({
             'chartOptions': {
                 'chartArea': {'width': '90%'},
                 'hAxis': {'baselineColor': 'none'},
-                'colors': ["#b0feb1", "#fedfbc", "#fdb1b1"]
+                {% if periods %}
+                    'colors': ["#00FF00", "#fd9827", "#FF0000"],
+                {% else %}
+                    'colors': ["#00A5FF", "#fd9827", "#FF0000"],
+                {% endif %}
             },
             // Display a single series that shows the closing value of the stock.
             // Thus, this view has two columns: the date (axis) and the stock value (line series).
@@ -93,7 +97,11 @@ function drawVisualization() {
             'vAxis': {'viewWindow': {'min': {{ min }}, 'max': {{max}} }},
             'legend': {'position': 'top', 'alignment': 'center'},
             'isStacked': true,
+            {% if periods %}
             'colors': ["#00FF00", "#fd9827", "#FF0000"],
+            {% else %}
+            'colors': ["#00A5FF", "#fd9827", "#FF0000"],
+            {% endif %}
             'fontName':'Droid Sans'
         }
     });

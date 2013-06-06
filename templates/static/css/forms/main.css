@@ -1,0 +1,71 @@
+#add_permissions{
+    display: none;
+}
+
+#divider_top.divider{
+    margin-top: 40px;
+}
+.description{
+    color: #636363;
+    line-height: 150%;
+    margin: 30px 0;
+}
+#basic_rol_info{
+    width: 650px;
+}
+#basic_rol_info label{
+    margin: 10px 0;
+}
+#basic_rol_info input{
+    width: 98.7%;
+}
+.buttons a, .buttons a:active{
+    font-weight: 700;
+    color: #636363;
+}
+.widgetField{
+    text-align: center;
+    color: #6e6e6e;
+    height: 26px;
+    float: left;
+    line-height: 26px;
+    background: url(../images/bgs/datepicker_select_bg.png) repeat-x;
+    border: solid 1px #BDBDBD;
+    border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+}
+.widgetField a{
+    float: right;
+    width: 21px;
+    background: url(../images/imgs_icns/arrow_down_sm_gray.png) no-repeat 0 50%;
+    display: inline-block;
+}
+.delete, .edit, .del, .add{
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+}
+.delete{
+    background: url(../images/imgs_icns/minus_red.png) no-repeat 50% 50%;
+}
+.del{
+    background: url(../images/imgs_icns/del_circle.png) no-repeat 50% 50%;
+}
+.add{
+    background: url(../images/imgs_icns/plus_circle.png) no-repeat 50% 50%;
+}
+.edit{
+    background: url(../images/imgs_icns/edit_squere.png) no-repeat 50% 50%;
+}
+.inactive_switch, .active_switch{
+    display: inline-block;
+    width: 40px;
+    height: 18px;
+}
+.inactive_switch{
+    background: url(../images/imgs_icns/cidec_btn_off.png) no-repeat 50% 50%;
+}
+.active_switch{
+    background: url(../images/imgs_icns/cidec_btn_on.png) no-repeat 50% 50%;
+}
