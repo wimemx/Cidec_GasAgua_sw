@@ -274,6 +274,15 @@ def tag_batch(start_day=datetime.datetime(2012, 8, 1),
 
 
 @task(ignore_result=True)
+def tag_batch_cu(
+        cu_pk,
+        fi=datetime.datetime(2012, 8, 1),
+        ff=datetime.datetime(2013, 5, 29)):
+    cu = c_center.models.ConsumerUnit.objects.get(pk=cu_pk)
+    daytag_period(fi, ff, cu.profile_powermeter)
+
+
+@task(ignore_result=True)
 def calculate_dw(granularity):
     data_warehouse_update(granularity)
 
@@ -289,6 +298,17 @@ def daily_report_all_period(start_date, end_date):
 @task(ignore_resulset=True)
 def all_daily_report_all(from_date):
     all_dailyreportAll(from_date)
+
+
+@task(ignore_resulset=True)
+def calculateAllMonthlyReportsInt(init, end):
+    month = datetime.datetime(init.year, init.month, 1)
+    end = datetime.datetime(end.year, end.month, 1)
+    while month <= end:
+        calculateMonthlyReport_all(month.month, month.year)
+        month = variety.add_months(month, 1)
+
+
 
 @task(ignore_resulset=True)
 def save_historic_delay(cd_b, building):
