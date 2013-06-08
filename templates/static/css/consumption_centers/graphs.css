@@ -488,3 +488,6 @@ div.container{
     color: #3e8e17;
     font-weight: 700;
 }
+#consumo .g4,#demanda .g4{
+    margin-right: 10px;
+}

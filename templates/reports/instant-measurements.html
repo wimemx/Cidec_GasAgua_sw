@@ -40,6 +40,13 @@
                           "#009900", "#6666cc", "#ff6633"
                          ];
             var total = {{columns|length}}*3;
+
+            var cols_ = [];
+            {% for column in columns %}
+                cols_.push("{{ column }}");
+            {% endfor %}
+            cols_ = arrNoDupe(cols_);
+
             var columnas = [];
             for(var i=0; i<total; i++){
                 if(i==0 || i==1){
@@ -62,7 +69,8 @@
                         'chartType': 'LineChart',
                         'chartOptions': {
                             'chartArea': {'width': '90%'},
-                            'hAxis': {'baselineColor': 'none'}
+                            'hAxis': {'baselineColor': 'none'},
+                            'fontName':'Droid Sans'
                         },
                         // Display a single series that shows the closing value of the stock.
                         // Thus, this view has two columns: the date (axis) and the stock value (line series).
@@ -101,7 +109,7 @@
             var chart;
             var vaxes = {
             {% for axis in axis_list  %}
-                {{ forloop.counter0 }}: {logScale: false, title: '{{ axis.name }}', titleTextStyle:{color: colors[arr_pos[{{ forloop.counter0 }}]], fontSize: 11, italic: false}, textStyle:{color: colors[arr_pos[{{ forloop.counter0 }}]], fontSize: 11, italic: false}, {% if axis.name == "V" or axis.name == "I" or axis.name == "PF" %}minValue: 0, {% endif %}textPosition: "{% cycle 'out' 'in' %}"},
+                {{ forloop.counter0 }}: {logScale: false, title: '{{ axis.name }}', titleTextStyle:{color: colors[arr_pos[{{ forloop.counter0 }}]], fontSize: 11, italic: false}, textStyle:{color: colors[arr_pos[{{ forloop.counter0 }}]], fontSize: 11, italic: false}, {% if axis.name == "V" or axis.name == "I" or axis.name == "PF" %}minValue: 0, {% endif %}{% if axis.name == "PF" %}maxValue: 1,{% endif %}textPosition: "{% cycle 'out' 'in' %}"},
             {% endfor %}
             };
             var vseries = {
@@ -129,6 +137,7 @@
                         'vAxes': vaxes,
                         'series': vseries,
                         colors: colors,
+                        'fontName':'Droid Sans',
                         'legend': {'position': 'top', 'alignment': 'center'}
                     }
                 });
@@ -150,10 +159,11 @@
                 var True = true;
                 var False = false;
                 var rows_data = {% autoescape off %}{{ rows }}{% endautoescape %};
-                for(var row_index = 0; row_index < rows_data.length; row_index++){
+
+                for(var row_index = 0; row_index < rows_data.length; row_index++){ //por cada parametro
                     var row_data = rows_data[row_index];
                     var row_array = [];
-                    for(var data_index = 0; data_index < row_data.length; data_index++){
+                    for(var data_index = 0; data_index < row_data.length; data_index++){ // para cada dato electrico
                         var data_object = row_data[data_index];
                         var object_datetime = new Date();
                         object_datetime.setTime((data_object['datetime']*1000));
@@ -180,7 +190,6 @@
                 dashboard.draw(view);
 
                 $(".column-checkbox").click(function(){
-                    console.log("por aqui esta el pez");
 
                     if($(":checkbox").filter(':checked').length == 0 && !$(this).is(":checked")){
 
@@ -188,122 +197,7 @@
                         $(this).parent().addClass("checked");
                         return false;
                     }else{
-                        var cols_cant = {{ columns|length }};
-                        var columns_set_array = [];
-                        var total_columns_set_array = [];
-                        var checkboxes = document.forms['column-controls']['column-control'];
-
-                        var color_position = [];
-                        var control_cols = columnas.slice(0);
-                        var colum_units_temp = [];
-                        var colum_units_copy = column_units.slice(0);
-                        for (var index = 0; index < checkboxes.length; index++) {
-                            if(checkboxes[index].checked){
-                                columns_set_array.push((index * 3) + 0);
-                                columns_set_array.push((index * 3) + 1);
-                                columns_set_array.push((index * 3) + 2);
-                            }else{
-                                color_position.push(colors[index]);
-                                control_cols.pop();
-                                colum_units_temp.push(column_units[index]);
-                            }
-                            total_columns_set_array.push((index * 3) + 0);
-                            total_columns_set_array.push((index * 3) + 1);
-                            total_columns_set_array.push((index * 3) + 2);
-                        }
-
-                        var totales = total_columns_set_array.slice(0);
-                        //gets subset of arrays
-                        for (index = total_columns_set_array.length - 1; index >= 0; --index) {
-                            if (columns_set_array.indexOf(total_columns_set_array[index]) >= 0) {
-                                total_columns_set_array.splice(index, 1);
-                            }
-                        }
-                        //copy colors
-                        var colores = colors.slice(0);
-                        //gets subset of arrays
-                        for (index = colores.length - 1; index >= 0; --index) {
-                            if (color_position.indexOf(colores[index]) >= 0) {
-                                colores.splice(index, 1);
-                            }
-                        }
-
-
-
-                        //console.log("colum_units a desactivar", colum_units_temp);
-                        //subset
-                        for (index = colum_units_copy.length - 1; index >= 0; --index) {
-                            if (colum_units_temp.indexOf(colum_units_copy[index]) >= 0) {
-                                colum_units_copy.splice(index, 1);
-                            }
-                        }
-                        //get unique values for colum_units_copy
-                        var u = [];
-                        for (index=0; index<colum_units_copy.length; index++){
-                            var x = colum_units_copy[index];
-                            var band = true;
-                            for(var j=0; j<u.length; j++){
-                                var y = u[j];
-                                if(JSON.stringify(y) === JSON.stringify(x) ){
-                                    band = false;
-                                }
-                            }
-                            if (band) {
-                                u.push(x);
-                            }
-                        }
-                        //console.log("colum_units activas", colum_units_copy);
-
-                        var vaxes_new = {};
-                        var vaxis_index = {};
-                        for(index=0; index<u.length; index++){
-                            var pos = "out";
-                            if(index%2 == 0){
-                                pos="in"
-                            }
-                            var unit;
-                            var u_index = u[index];
-                            for(var serie in u_index){
-                                unit = u_index[serie];
-                                vaxis_index[index] = unit;
-                            }
-                            vaxes_new[index] = {logScale: false, title: unit, titleTextStyle:{color: colores[index], fontSize: 11, italic: false}, textStyle:{color: colores[index], fontSize: 11, italic: false}, minValue: 0, textPosition: pos}
-                        }
-
-                        //console.log("vaxes_new", vaxes_new);
-                        //console.log("vaxis_index", vaxis_index)
-
-                        var vseries_new = {};
-                        for(index=0; index<colum_units_copy.length;index++){
-                            var eje;
-                            var prop = colum_units_copy[index];
-                            for(var param in prop){
-                                eje = prop[param];
-                            }
-                            //console.log("eje", eje);
-                            for(var indice=0; indice<Object.size(vaxis_index);indice++){
-
-                                //console.log("vaxis_index[indice]", vaxis_index[indice]);
-
-                                if(vaxis_index[indice]==eje){
-                                    vseries_new[index] = {targetAxisIndex:indice};
-                                    break;
-                                }
-                            }
-                            //var axis = vaxis_index.indexOf(eje);
-                            //vseries_new[index] = {targetAxisIndex:axis};
-                        }
-                        //console.log("vseries_new", vseries_new);
-                        control.setOption('ui.chartView.columns',control_cols);
-                        view.setColumns(totales);
-
-                        view.hideColumns(total_columns_set_array);
-                        chart.setOption('colors', colores);
-                        chart.setOption('vAxes', vaxes_new);
-                        chart.setOption('series', vseries);
-                        dashboard.bind(control, chart);
-                        dashboard.draw(view);
-                        control.draw();
+                        console.log($(this).val());
                     }
                 });
 
@@ -401,6 +295,12 @@
             }
 
             $(document).on("ready", function(){
+                {% for column in columns %}
+                    <input type="checkbox" class="column-checkbox" name="column-control" value="{{ column }}" checked="checked"/>
+                    <label>{{ column }}</label>
+                {% endfor %}
+
+
                 $("select, input, input:checkbox, input:radio, input:file, textarea").uniform();
                 var rango =  $("#compare_interval").find("li");
                 rango.each(function(){
@@ -465,12 +365,7 @@
 
 
         <div id="parameter_controls">
-            <form id="column-controls">
-                {% for column in columns %}
-                    <input type="checkbox" class="column-checkbox" name="column-control" value="{{ column }}" checked="checked"/>
-                    <label>{{ column }}</label>
-                {% endfor %}
-            </form>
+
         </div>
 
         <!-- dashboard start -->
