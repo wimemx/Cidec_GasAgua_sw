@@ -296,6 +296,10 @@ def daily_report_all_period(start_date, end_date):
     dailyReportAll_Period(start_date, end_date)
 
 @task(ignore_resulset=True)
+def daily_report_period(building, consumer_unit, start_date, end_date):
+    dailyReportPeriodofTime(building, consumer_unit, start_date, end_date)
+
+@task(ignore_resulset=True)
 def all_daily_report_all(from_date):
     all_dailyreportAll(from_date)
 

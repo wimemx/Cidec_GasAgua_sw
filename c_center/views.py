@@ -62,7 +62,8 @@ import json as simplejson
 import sys
 from tareas.tasks import save_historic_delay, \
     change_profile_electric_data, populate_data_warehouse_extended, \
-    populate_data_warehouse_specific, restore_data
+    populate_data_warehouse_specific, restore_data, tag_batch_cu, \
+    daily_report_period
 
 VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
@@ -9413,9 +9414,12 @@ def retag_ajax(request):
                                    month=e_date_utc_tuple[1],
                                    day=e_date_utc_tuple[2])
 
-        print s_date, e_date
-
-
+        #Reetiqueta los diarios
+        tag_batch_cu.delay(consumer_unit.pk,s_date,e_date)
+        #Calcula el reporte diario
+        daily_report_period.delay(consumer_unit.building,
+                                  consumer_unit,
+                                  s_date, e_date)
 
         resp_dic = dict()
         resp_dic["status"] = "Success"
