@@ -1336,6 +1336,31 @@ def daytag_period_allProfilePowermeters(start_day, end_day):
 
     print "All ProfilePowermeters - Day Tag Done"
 
+def getKWHSimplePerDay(s_date, e_date, profile_powermeter):
+    kwh_netos = 0
+
+    #Se obtienen los kwh de ese periodo de tiempo.
+    kwh_lecturas = ElectricDataTemp.objects.filter(
+        profile_powermeter=profile_powermeter).\
+    filter(medition_date__gte=s_date).filter(
+        medition_date__lt=e_date).\
+    order_by('medition_date')
+    total_lecturas = len(kwh_lecturas)
+
+    if kwh_lecturas:
+        #print "Profile",
+        # kwh_lecturas[0].profile_powermeter_id
+        #print "Primer Lectura",
+        # kwh_lecturas[0].id, "-", kwh_lecturas[0].medition_date
+        #print "Ultima Lectura", kwh_lecturas[total_lecturas - 1].id,
+        # "-", kwh_lecturas[total_lecturas - 1].medition_date
+        kwh_inicial = kwh_lecturas[0].TotalkWhIMPORT
+        kwh_final = kwh_lecturas[total_lecturas - 1].TotalkWhIMPORT
+
+        kwh_netos = int(ceil(kwh_final - kwh_inicial))
+
+    return kwh_netos
+
 def getKWHperDay(s_date, e_date, profile_powermeter):
 
     kwh_container = dict()
@@ -1371,12 +1396,15 @@ def getKWHperDay(s_date, e_date, profile_powermeter):
             order_by("electric_data__medition_date")
 
             num_lecturas = len(electric_info)
-            ultimo_id = electric_info[num_lecturas-1].electric_data.pk
-            ultima_fecha = electric_info[num_lecturas-1].electric_data.medition_date
-            #print "Ultimo ID", ultimo_id
+
             primer_lectura = electric_info[0].electric_data.TotalkWhIMPORT
             ultima_lectura = electric_info[
                              num_lecturas - 1].electric_data.TotalkWhIMPORT
+            """
+            ultima_fecha = electric_info[
+                           num_lecturas - 1].electric_data.medition_date
+            """
+
             print electric_info[0].electric_data.pk,"Primer Lectura:", \
                 primer_lectura,"-", \
                 electric_info[num_lecturas-1].electric_data.pk, \
@@ -1388,15 +1416,7 @@ def getKWHperDay(s_date, e_date, profile_powermeter):
             t = primer_lectura, tipo_periodo
             kwh_por_periodo.append(t)
 
-        kwh_periodo_long = len(kwh_por_periodo)
-
-        kwh_base = 0
-        kwh_intermedio = 0
-        kwh_punta = 0
-
-        #Se obtiene la primer lectura del dia siguiente para que
-        # concuerde la suma de los KWH
-
+        """
         nextReading = ElectricDataTemp.objects.filter(
             profile_powermeter=profile_powermeter,
             medition_date__gt = ultima_fecha)\
@@ -1404,7 +1424,13 @@ def getKWHperDay(s_date, e_date, profile_powermeter):
 
         if nextReading:
             ultima_lectura = nextReading[0].TotalkWhIMPORT
+        """
 
+        kwh_periodo_long = len(kwh_por_periodo)
+
+        kwh_base = 0
+        kwh_intermedio = 0
+        kwh_punta = 0
 
         for idx, kwh_p in enumerate(kwh_por_periodo):
             print "Lectura:", kwh_p[0], "-:",kwh_p[1]
