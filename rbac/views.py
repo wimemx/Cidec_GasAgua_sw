@@ -82,7 +82,7 @@ def control_panel(request):
     template_vars = dict(
         sidebar=request.session['sidebar'],
         datacontext=get_buildings_context(request.user)[0],
-        empresa=request.session['main_building'],
+
         operations=Operation.objects.all(),
         company=request.session['company'],
         object_permission=panel_elements
@@ -163,7 +163,6 @@ def add_role(request):
                     template_vars = dict(sidebar=request.session['sidebar'],
                                          datacontext=datacontext,
                                          company=company,
-                                         empresa=empresa,
                                          operations=Operation.objects.all(),
                                          message=mensaje,
                                          msg_type=ntype)
@@ -179,7 +178,6 @@ def add_role(request):
 
                 template_vars = dict(sidebar=request.session['sidebar'],
                                      datacontext=datacontext,
-                                     empresa=empresa,
                                      operations=Operation.objects.all(),
                                      company=company,
                                      message=mensaje,
@@ -192,7 +190,6 @@ def add_role(request):
         else:
             template_vars = dict(sidebar=request.session['sidebar'],
                                  datacontext=datacontext,
-                                 empresa=empresa,
                                  company=company,
                                  operations=Operation.objects.all())
             template_vars_template = RequestContext(request, template_vars)
@@ -283,7 +280,6 @@ def edit_role(request, id_role):
         template_vars = dict(sidebar=request.session['sidebar'],
                              rol=rol,
                              datacontext=datacontext,
-                             empresa=empresa,
                              company=company,
                              operations=Operation.objects.all(),
                              message=mensaje,
@@ -390,7 +386,6 @@ def see_role(request, id_role):
         template_vars = dict(sidebar=request.session['sidebar'],
                              rol=rol,
                              datacontext=datacontext,
-                             empresa=empresa,
                              company=company,
                              operations=Operation.objects.all())
         permissions = PermissionAsigment.objects.filter(role=rol)
@@ -672,7 +667,6 @@ def view_roles(request):
                              order_name=order_name,
                              order_desc=order_desc,
                              order_status=order_status,
-                             empresa=empresa,
                              company=company,
                              datacontext=datacontext)
         # Make sure page request is an int. If not, deliver first page.
@@ -821,7 +815,6 @@ def add_user(request):
         company = request.session['company']
         template_vars = dict(sidebar=request.session['sidebar'],
                              datacontext=datacontext,
-                             empresa=empresa,
                              company=company)
         if request.method == "POST":
             post = variety.get_post_data(request.POST)
@@ -965,8 +958,7 @@ def view_users(request):
                              order_name=order_name,
                              order_username=order_username,
                              order_email=order_email, order_status=order_status,
-                             datacontext=datacontext,
-                             empresa=empresa, company=company)
+                             datacontext=datacontext)
         # Make sure page request is an int. If not, deliver first page.
         try:
             page = int(request.GET.get('page', '1'))
@@ -1103,7 +1095,6 @@ def edit_user(request, id_user):
 
         template_vars = dict(sidebar=request.session['sidebar'],
                              datacontext=datacontext,
-                             empresa=empresa,
                              company=company,
                              post=post,
                              operation="edit",
@@ -1179,7 +1170,7 @@ def see_user(request, id_user):
             (date.today() - profile.user_profile_birth_dates).days / 365.25)
         template_vars = dict(sidebar=request.session['sidebar'], user1=user1,
                              company=company, profile=profile,
-                             datacontext=datacontext, age=age, empresa=empresa)
+                             datacontext=datacontext, age=age)
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("rbac/see_user.html", template_vars_template)
