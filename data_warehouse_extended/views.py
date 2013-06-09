@@ -202,7 +202,8 @@ def build_curve_fit_function_interpolation(
             scipy.interpolate.interp1d(
                 independent_data_list,
                 dependent_data_list,
-                'cubic')
+                'nearest')
+        print "nearest"
 
     except:
         logger.error(

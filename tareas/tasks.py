@@ -71,6 +71,20 @@ def regenerate_dw_in_interval(d1, d2, cu):
             populate_data_warehouse_specific_int(cu, instant_delta, d1, d2)
 
 
+def regenerate_dw_cumulative_in_interval(d1, d2):
+    electrical_parameters = \
+            data_warehouse_extended.models.ElectricalParameter.objects.filter(
+                type=2
+            )
+    instants_delta = data_warehouse_extended.models.InstantDelta.objects.all()
+    consumer_units = c_center.models.ConsumerUnit.objects.all()
+    for instant_delta in instants_delta:
+        for electrical_parameter in electrical_parameters:
+            for cu in consumer_units:
+                process_dw_consumerunit_electrical_parameter.delay(
+                    cu, d1, d2, electrical_parameter, instant_delta)
+
+
 @task(ignore_result=True)
 def change_profile_electric_data(serials):
     asign_electric_data_to_pw(serials)
