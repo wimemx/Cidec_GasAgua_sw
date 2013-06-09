@@ -317,4 +317,9 @@ urlpatterns = patterns('',
                              'consumption_centers/graphs/'
                              'graphics_month_consumption_trend.html'}),
 
+                       url(r'^etiquetas/',
+                           'c_center.views.view_tags'),
+                       url(r'^retag_ajax/',
+                           'c_center.views.retag_ajax'),
+
 )

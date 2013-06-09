@@ -46,7 +46,11 @@ var control = new google.visualization.ControlWrapper({
             'chartOptions': {
                 'chartArea': {'width': '90%'},
                 'hAxis': {'baselineColor': 'none'},
-                'colors': ["#b0feb1", "#fedfbc", "#fdb1b1"]
+                {% if periods %}
+                    'colors': ["#00FF00", "#fd9827", "#FF0000"],
+                {% else %}
+                    'colors': ["#00A5FF", "#fd9827", "#FF0000"],
+                {% endif %}
             },
             // Display a single series that shows the closing value of the stock.
             // Thus, this view has two columns: the date (axis) and the stock value (line series).
@@ -93,7 +97,12 @@ function drawVisualization() {
             'vAxis': {'viewWindow': {'min': {{ min }}, 'max': {{max}} }},
             'legend': {'position': 'top', 'alignment': 'center'},
             'isStacked': true,
-            'colors': ["#00FF00", "#fd9827", "#FF0000"]
+            {% if periods %}
+            'colors': ["#00FF00", "#fd9827", "#FF0000"],
+            {% else %}
+            'colors': ["#00A5FF", "#fd9827", "#FF0000"],
+            {% endif %}
+            'fontName':'Droid Sans'
         }
     });
 
@@ -438,16 +447,16 @@ function update_bars_color(){
             </div>
             <div class="g8">
                 <p class="g12">
-                    Mensual:<span class="param_value"> {{ month_data.consumo_acumulado }}kWh</span>
+                    Mensual:<span class="param_value"> {{ month_data.consumo_acumulado }}</span>
                 </p>
                 <p class="g12">
-                    Promedio diario:<span class="param_value"> {{ month_data.consumo_promedio }}kWh</span>
+                    Promedio diario:<span class="param_value"> {{ month_data.consumo_promedio }}</span>
                 </p>
                 <p class="g12">
-                    M&aacute;ximo:<span class="param_value"> {{ month_data.consumo_maximo }}kWh</span>
+                    M&aacute;ximo:<span class="param_value"> {{ month_data.consumo_maximo }}</span>
                 </p>
                 <p class="g12">
-                    M&iacute;nimo:<span class="param_value"> {{ month_data.consumo_minimo }}kWh</span>
+                    M&iacute;nimo:<span class="param_value"> {{ month_data.consumo_minimo }}</span>
                 </p>
             </div>
         </div>
@@ -459,13 +468,13 @@ function update_bars_color(){
             </div>
             <div class="g8">
                 <p class="g12">
-                    Promedio diario:<span class="param_value"> {{ month_data.demanda_promedio }}kW</span>
+                    Promedio diario:<span class="param_value"> {{ month_data.demanda_promedio }}</span>
                 </p>
                 <p class="g12">
-                    M&aacute;ximo:<span class="param_value"> {{ month_data.demanda_max }} kW</span>
+                    M&aacute;ximo:<span class="param_value"> {{ month_data.demanda_max }} </span>
                 </p>
                 <p class="g12">
-                    M&iacute;nimo:<span class="param_value"> {{ month_data.demanda_min }} kW</span>
+                    M&iacute;nimo:<span class="param_value"> {{ month_data.demanda_min }} </span>
                 </p>
             </div>
         </div>
