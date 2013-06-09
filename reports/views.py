@@ -604,13 +604,20 @@ def get_data_clusters_statistics(
         for data_dictionary in data_cluster:
             data_cluster_values_list.append(float(data_dictionary['value']))
 
-        data_cluster_values_array = numpy.array(data_cluster_values_list)
-        data_cluster_values_array.sort()
-        data_cluster_mean = data_cluster_values_array.mean()
-        data_cluster_maximum = data_cluster_values_array.max()
-        data_cluster_minimum = data_cluster_values_array.min()
-        data_cluster_median = numpy.median(data_cluster_values_array)
-        data_cluster_standard_deviation = data_cluster_values_array.std()
+        if data_cluster_values_list:
+            data_cluster_values_array = numpy.array(data_cluster_values_list)
+            data_cluster_values_array.sort()
+            data_cluster_mean = data_cluster_values_array.mean()
+            data_cluster_maximum = data_cluster_values_array.max()
+            data_cluster_minimum = data_cluster_values_array.min()
+            data_cluster_median = numpy.median(data_cluster_values_array)
+            data_cluster_standard_deviation = data_cluster_values_array.std()
+        else:
+            data_cluster_mean = 0
+            data_cluster_maximum = 0
+            data_cluster_minimum = 0
+            data_cluster_median = 0
+            data_cluster_standard_deviation = 0
 
         data_clusters_statistics.append({
             "mean": data_cluster_mean,
@@ -1249,6 +1256,8 @@ def render_report_consumed_by_month(
         template_variables['rows'] = rates_for_data_cluster(
             data_cluster_consumed, cu.building.region)
         template_variables['periods'] = True
+
+
 
     template_context =\
         django.template.context.RequestContext(request, template_variables)

@@ -62,7 +62,6 @@ def add_alarm(request):
         template_vars["datacontext"] = datacontext
 
     template_vars["sidebar"] = request.session['sidebar']
-    template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
     permission = "Alta de alarma eléctrica"
     if has_permission(request.user, CREATE,
@@ -153,7 +152,6 @@ def edit_alarm(request, id_alarm):
         template_vars["datacontext"] = datacontext
 
     template_vars["sidebar"] = request.session['sidebar']
-    template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
     template_vars["operation"] = "edit"
     alarm = get_object_or_404(Alarms, pk=int(id_alarm))
@@ -256,7 +254,6 @@ def alarm_list(request):
         template_vars["datacontext"] = datacontext
 
     template_vars["sidebar"] = request.session['sidebar']
-    template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
 
     if has_permission(request.user, VIEW,
@@ -492,7 +489,6 @@ def mostrar_suscripcion_alarma(request, id_alarm):
             template_vars["datacontext"] = datacontext
 
         template_vars["sidebar"] = request.session['sidebar']
-        template_vars["empresa"] = request.session['main_building']
         template_vars["company"] = request.session['company']
         alarm = get_object_or_404(UserNotificationSettings, id=id_alarm)
 
@@ -522,7 +518,6 @@ def alarm_suscription_list(request):
     if datacontext:
         template_vars["datacontext"] = datacontext
         template_vars["sidebar"] = request.session['sidebar']
-        template_vars["empresa"] = request.session['main_building']
         template_vars["company"] = request.session['company']
 
     permission = "Ver suscripciones a alarmas"
@@ -654,7 +649,6 @@ def add_alarm_suscription(request):
         template_vars["datacontext"] = datacontext
 
     template_vars["sidebar"] = request.session['sidebar']
-    template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
 
     permission = "Alta suscripción de alarma"

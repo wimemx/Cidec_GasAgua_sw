@@ -62,7 +62,8 @@ import json as simplejson
 import sys
 from tareas.tasks import save_historic_delay, \
     change_profile_electric_data, populate_data_warehouse_extended, \
-    populate_data_warehouse_specific, restore_data
+    populate_data_warehouse_specific, restore_data, tag_batch_cu, \
+    daily_report_period
 
 VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
@@ -5312,7 +5313,6 @@ def add_building(request):
             'building_attributes_type_name')
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              company=company,
                              post=post,
                              empresas_lst=empresas_lst,
@@ -5892,7 +5892,6 @@ def edit_building(request, id_bld):
                                                 "&ntype=n_success")
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              company=company,
                              post=post,
                              empresas_lst=empresas_lst,
@@ -5995,7 +5994,7 @@ def view_building(request):
                              order_municipality=order_municipality,
                              order_company=order_company,
                              order_status=order_status,
-                             datacontext=datacontext, empresa=empresa,
+                             datacontext=datacontext,
                              company=company,
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
@@ -7999,6 +7998,7 @@ def montly_analitics(request):
     template_vars["sidebar"] = request.session['sidebar']
     template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
+    template_vars["consumer_unit"] = request.session['consumer_unit']
     if has_permission(request.user, VIEW, "Consumo Energético Mensual") or \
             request.user.is_superuser:
 
@@ -9306,3 +9306,127 @@ def parse_csv(request):
         template_vars["sidebar"] = request.session['sidebar']
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
+
+
+
+# noinspection PyArgumentList
+@login_required(login_url='/')
+def view_tags(request):
+    datacontext = get_buildings_context(request.user)[0]
+    if request.user.is_superuser:
+        empresa = request.session['main_building']
+        post = ''
+
+        message = ""
+        _type = ""
+
+        #Se obtiene el dia actual
+        today = datetime.datetime.now()
+
+        template_vars = dict(datacontext=datacontext,
+                             empresa=empresa,
+                             today = today,
+                             company=request.session['company'],
+                             sidebar=request.session['sidebar']
+        )
+
+        if request.method == "POST":
+            template_vars["post"] = request.POST
+            init_str = request.POST.get('date_init').strip()
+            end_str = request.POST.get('date_end').strip()
+
+            s_date_str = time.strptime(init_str, "%Y-%m-%d")
+            s_date_utc_tuple = time.gmtime(time.mktime(s_date_str))
+            s_date = datetime.datetime(year=s_date_utc_tuple[0],
+                                           month=s_date_utc_tuple[1],
+                                           day=s_date_utc_tuple[2])
+
+            e_date_str = time.strptime(end_str, "%Y-%m-%d")
+            e_date_utc_tuple = time.gmtime(time.mktime(e_date_str))
+            e_date = datetime.datetime(year=e_date_utc_tuple[0],
+                                       month=e_date_utc_tuple[1],
+                                       day=e_date_utc_tuple[2])
+
+
+            consumer_unit = request.session['consumer_unit']
+            profile_powermeter = consumer_unit.profile_powermeter
+
+            tags_dict = []
+
+            #Timedelta para recorrer todos los dias
+            dia = datetime.timedelta(days=1)
+
+            #Se consiguen cada uno de los tags
+            while s_date <= e_date:
+                tags = ElectricDataTags.objects.filter(
+                    electric_data__profile_powermeter = profile_powermeter,
+                    electric_data__medition_date__gte = s_date,
+                    electric_data__medition_date__lt = s_date+dia
+                ).order_by('electric_data__medition_date')
+
+
+                arr_tags = []
+
+                for tg in tags:
+                    ar_val = []
+                    ar_val.append(tg.electric_data.medition_date.astimezone(timezone.get_current_timezone()).strftime('%d-%m-%Y %H:%M'))
+                    ar_val.append(tg.electric_rates_periods.period_type)
+                    ar_val.append(tg.identifier)
+                    arr_tags.append(ar_val)
+
+                s_date = s_date + dia
+
+                tags_dict.append(arr_tags)
+
+            template_vars["tags"] = tags_dict
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response(
+            "consumption_centers/buildings/electrictags.html",
+            template_vars_template)
+
+    else:
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
+
+def retag_ajax(request):
+    if "s_date" in request.GET and "e_date" in request.GET:
+        consumer_unit = request.session['consumer_unit']
+        profile_powermeter = consumer_unit.profile_powermeter
+
+        init_str = request.GET['s_date']
+        end_str = request.GET['e_date']
+
+        s_date_str = time.strptime(init_str, "%Y-%m-%d")
+        s_date_utc_tuple = time.gmtime(time.mktime(s_date_str))
+        s_date = datetime.datetime(year=s_date_utc_tuple[0],
+                                   month=s_date_utc_tuple[1],
+                                   day=s_date_utc_tuple[2])
+
+        e_date_str = time.strptime(end_str, "%Y-%m-%d")
+        e_date_utc_tuple = time.gmtime(time.mktime(e_date_str))
+        e_date = datetime.datetime(year=e_date_utc_tuple[0],
+                                   month=e_date_utc_tuple[1],
+                                   day=e_date_utc_tuple[2])
+
+        #Reetiqueta los diarios
+        tag_batch_cu.delay(consumer_unit.pk,s_date,e_date)
+        #Calcula el reporte diario
+        daily_report_period.delay(consumer_unit.building,
+                                  consumer_unit,
+                                  s_date, e_date)
+
+        resp_dic = dict()
+        resp_dic["status"] = "Success"
+        data = simplejson.dumps(resp_dic)
+        return HttpResponse(content=data, content_type="application/json")
+    else:
+        raise Http404
+
+
+
+

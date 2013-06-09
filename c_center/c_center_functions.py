@@ -1922,14 +1922,44 @@ def tarifaHM_2(building, s_date, e_date, month, year):
 
             profile_powermeter = c_unit.profile_powermeter
 
+            #Se obtiene y calcula el día de inicio
+            tuple_first = tupleDays_arr[0]
+            kwh_dia_dic = getKWHperDay(tuple_first[0], tuple_first[1], profile_powermeter)
+            diccionario_final_cfe["kwh_base"] += kwh_dia_dic['base']
+            diccionario_final_cfe["kwh_intermedio"] += kwh_dia_dic['intermedio']
+            diccionario_final_cfe["kwh_punta"] += kwh_dia_dic['punta']
+            diccionario_final_cfe["kwh_totales"] += kwh_dia_dic['base'] + kwh_dia_dic['intermedio'] + kwh_dia_dic['punta']
+
+
+            #Se obtiene y calcula el día final
+            tuple_last = tupleDays_arr[len(tupleDays_arr)-1]
+            kwh_dia_dic = getKWHperDay(tuple_last[0], tuple_last[1], profile_powermeter)
+            diccionario_final_cfe["kwh_base"] += kwh_dia_dic['base']
+            diccionario_final_cfe["kwh_intermedio"] += kwh_dia_dic['intermedio']
+            diccionario_final_cfe["kwh_punta"] += kwh_dia_dic['punta']
+            diccionario_final_cfe["kwh_totales"] += kwh_dia_dic['base'] + kwh_dia_dic['intermedio'] + kwh_dia_dic['punta']
+
+
+            tupleDays_arr = tupleDays_arr[1:-1]
+
             for tupleDay in tupleDays_arr:
-                print tupleDay
-                kwh_dia_dic = getKWHperDay(tupleDay[0], tupleDay[1], profile_powermeter)
-                diccionario_final_cfe["kwh_base"] += kwh_dia_dic['base']
-                diccionario_final_cfe["kwh_intermedio"] += kwh_dia_dic['intermedio']
-                diccionario_final_cfe["kwh_punta"] += kwh_dia_dic['punta']
-                diccionario_final_cfe["kwh_totales"] += kwh_dia_dic['base'] + kwh_dia_dic['intermedio'] + kwh_dia_dic['punta']
-                print "kWh Totales:", kwh_dia_dic['base'] + kwh_dia_dic['intermedio'] + kwh_dia_dic['punta']
+
+                try:
+                    a_day = datetime.date(tupleDay[0].year,tupleDay[0].month,tupleDay[0].day)
+                    daily_info = DailyData.objects.get(consumer_unit = c_unit, data_day = a_day)
+                except ObjectDoesNotExist:
+                    kwh_dia_dic = getKWHperDay(tupleDay[0], tupleDay[1], profile_powermeter)
+                    diccionario_final_cfe["kwh_base"] += kwh_dia_dic['base']
+                    diccionario_final_cfe["kwh_intermedio"] += kwh_dia_dic['intermedio']
+                    diccionario_final_cfe["kwh_punta"] += kwh_dia_dic['punta']
+                    diccionario_final_cfe["kwh_totales"] += kwh_dia_dic['base'] + kwh_dia_dic['intermedio'] + kwh_dia_dic['punta']
+                    print "kWh Totales:", kwh_dia_dic['base'] + kwh_dia_dic['intermedio'] + kwh_dia_dic['punta']
+                else:
+                    diccionario_final_cfe["kwh_base"] += daily_info.KWH_base
+                    diccionario_final_cfe["kwh_intermedio"] += daily_info.KWH_intermedio
+                    diccionario_final_cfe["kwh_punta"] += daily_info.KWH_punta
+                    diccionario_final_cfe["kwh_totales"] += daily_info.KWH_base + daily_info.KWH_intermedio + daily_info.KWH_punta
+
 
             #Se obtienen los kvarhs por medidor
             diccionario_final_cfe['kvarh_totales'] += obtenerKVARH(
@@ -2340,10 +2370,33 @@ def tarifaDAC_2(building, s_date, e_date, month, year):
 
     kwh_netos = 0
 
+    #Se obtienen las tuplas Dia Inicio - Dia Fin
+    tupleDays_arr = getTupleDays(s_date, e_date)
+
     if consumer_units:
         for c_unit in consumer_units:
             profile_powermeter = c_unit.profile_powermeter
 
+            #Se obtiene y calcula el día de inicio
+            tuple_first = tupleDays_arr[0]
+            kwh_netos += getKWHSimplePerDay(tuple_first[0], tuple_first[1], profile_powermeter)
+
+            #Se obtiene y calcula el día final
+            tuple_last = tupleDays_arr[len(tupleDays_arr)-1]
+            kwh_netos += getKWHSimplePerDay(tuple_last[0], tuple_last[1], profile_powermeter)
+
+            tupleDays_arr = tupleDays_arr[1:-1]
+
+            for tupleDay in tupleDays_arr:
+                try:
+                    a_day = datetime.date(tupleDay[0].year,tupleDay[0].month,tupleDay[0].day)
+                    daily_info = DailyData.objects.get(consumer_unit = c_unit, data_day = a_day)
+                except ObjectDoesNotExist:
+                    kwh_netos += getKWHSimplePerDay(tupleDay[0], tupleDay[1], profile_powermeter)
+                else:
+                    kwh_netos += daily_info.KWH_total
+
+            """
             #Se obtienen los kwh de ese periodo de tiempo.
             kwh_lecturas = ElectricDataTemp.objects.filter(
                 profile_powermeter=profile_powermeter).\
@@ -2353,16 +2406,11 @@ def tarifaDAC_2(building, s_date, e_date, month, year):
             total_lecturas = len(kwh_lecturas)
 
             if kwh_lecturas:
-                #print "Profile",
-                # kwh_lecturas[0].profile_powermeter_id
-                #print "Primer Lectura",
-                # kwh_lecturas[0].id, "-", kwh_lecturas[0].medition_date
-                #print "Ultima Lectura", kwh_lecturas[total_lecturas - 1].id,
-                # "-", kwh_lecturas[total_lecturas - 1].medition_date
                 kwh_inicial = kwh_lecturas[0].TotalkWhIMPORT
                 kwh_final = kwh_lecturas[total_lecturas - 1].TotalkWhIMPORT
 
                 kwh_netos += int(ceil(kwh_final - kwh_inicial))
+            """
 
     importe = kwh_netos * tarifa_kwh
     costo_energia = importe + tarifa_mes
@@ -2454,6 +2502,27 @@ def tarifa_3(building, s_date, e_date, month, year):
         for c_unit in consumer_units:
             profile_powermeter = c_unit.profile_powermeter
 
+
+            #Se obtiene y calcula el día de inicio
+            tuple_first = tupleDays_arr[0]
+            kwh_netos += getKWHSimplePerDay(tuple_first[0], tuple_first[1], profile_powermeter)
+
+            #Se obtiene y calcula el día final
+            tuple_last = tupleDays_arr[len(tupleDays_arr)-1]
+            kwh_netos += getKWHSimplePerDay(tuple_last[0], tuple_last[1], profile_powermeter)
+
+            tupleDays_arr = tupleDays_arr[1:-1]
+
+            for tupleDay in tupleDays_arr:
+                try:
+                    a_day = datetime.date(tupleDay[0].year,tupleDay[0].month,tupleDay[0].day)
+                    daily_info = DailyData.objects.get(consumer_unit = c_unit, data_day = a_day)
+                except ObjectDoesNotExist:
+                    kwh_netos += getKWHSimplePerDay(tupleDay[0], tupleDay[1], profile_powermeter)
+                else:
+                    kwh_netos += daily_info.KWH_total
+
+            """
             #Se obtienen los kwh de ese periodo de tiempo.
             kwh_lecturas = ElectricDataTemp.objects.filter(
                 profile_powermeter=profile_powermeter).\
@@ -2467,10 +2536,10 @@ def tarifa_3(building, s_date, e_date, month, year):
                 kwh_final = kwh_lecturas[total_lecturas - 1].TotalkWhIMPORT
 
                 kwh_netos += int(ceil(kwh_final - kwh_inicial))
+            """
 
             #Se obtienen los kvarhs por medidor
             kvarh_netos += obtenerKVARH(profile_powermeter, s_date, e_date)
-
 
     #Factor de Potencia
     factor_potencia_total = factorpotencia(kwh_netos, kvarh_netos)
@@ -3271,6 +3340,30 @@ def getAllRates():
     crawler_t3_rate(2012, 1)
 
     print "All Rates Crawlers - Done"
+
+def getPlainDays(s_date_utc, e_date_utc):
+    arr_b_days = []
+    s_date = s_date_utc.astimezone(timezone.get_current_timezone())
+    e_date = e_date_utc.astimezone(timezone.get_current_timezone())
+
+    day_delta = datetime.timedelta(days=1)
+
+    s_date_end = s_date + day_delta
+    s_date_end = s_date_end.replace(hour = 0, minute = 0)
+
+    actual_date_begin = s_date_end
+    arr_b_days.append(s_date.astimezone(timezone.utc))
+
+    while actual_date_begin < (e_date - day_delta):
+        actual_date_begin = actual_date_begin
+        actual_date_begin = actual_date_begin + day_delta
+
+        arr_b_days.append(actual_date_begin.astimezone(timezone.utc))
+
+    e_date_begin = actual_date_begin
+    arr_b_days.append(e_date_begin.astimezone(timezone.utc))
+
+    return arr_b_days
 
 
 def getTupleDays(s_date_utc, e_date_utc):

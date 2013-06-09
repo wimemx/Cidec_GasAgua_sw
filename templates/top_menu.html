@@ -4,10 +4,12 @@
         <div id="company_options" class="fl">
 
             <div id="companies_container" class="fl">
+            {% if empresa %}
                 <span id="empresa">
                 {{empresa.building_name|slice:"17" }}
                     {% if empresa.building_name|length > 17 %}...{% endif %}
                 </span>
+            {% endif %}
                 <ul id="company_list" class="hidden">
 
                 </ul>
@@ -30,12 +32,15 @@
                             <span class="building_location">Quer&eacute;taro</span>
                         </li>
                     </ul>
+
                 </div>
+
             </div>
 
 
         </div>
          <h2 id="titulo_reporte">
+
         <span>
             {% if consumer_unit.part_of_building %}
                 {{ consumer_unit.part_of_building.part_of_building_name }}
@@ -44,6 +49,8 @@
             {% endif %}
         </span>
          {% if consumer_unit.part_of_building %}<a id='arrow_lightbox' class="various" data-fancybox-type="iframe"  href="/reportes/set_consumer_unit/">&nbsp;</a>{% endif %}
+         {% if consumer_unit.electric_device_type.electric_device_type_name %}<a id='arrow_lightbox' class="various" data-fancybox-type="iframe"  href="/reportes/set_consumer_unit/">&nbsp;</a>{% endif %}
+
         </h2>
 
         <div id="navigation_menu" class="fr">
