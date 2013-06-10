@@ -5313,7 +5313,6 @@ def add_building(request):
             'building_attributes_type_name')
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              company=company,
                              post=post,
                              empresas_lst=empresas_lst,
@@ -5893,7 +5892,6 @@ def edit_building(request, id_bld):
                                                 "&ntype=n_success")
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              company=company,
                              post=post,
                              empresas_lst=empresas_lst,
@@ -5996,7 +5994,7 @@ def view_building(request):
                              order_municipality=order_municipality,
                              order_company=order_company,
                              order_status=order_status,
-                             datacontext=datacontext, empresa=empresa,
+                             datacontext=datacontext,
                              company=company,
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
@@ -8000,6 +7998,7 @@ def montly_analitics(request):
     template_vars["sidebar"] = request.session['sidebar']
     template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
+    template_vars["consumer_unit"] = request.session['consumer_unit']
     if has_permission(request.user, VIEW, "Consumo Energético Mensual") or \
             request.user.is_superuser:
 

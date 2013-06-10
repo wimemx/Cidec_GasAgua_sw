@@ -1257,6 +1257,8 @@ def render_report_consumed_by_month(
             data_cluster_consumed, cu.building.region)
         template_variables['periods'] = True
 
+
+
     template_context =\
         django.template.context.RequestContext(request, template_variables)
 
