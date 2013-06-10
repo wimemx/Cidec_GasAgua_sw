@@ -199,8 +199,10 @@
     width: 100%;
     overflow: auto;
 }
+
 iframe{
     width: 100%;
+    overflow: hidden !important;
 }
 #chart rect{
     fill-opacity: .3;
@@ -261,4 +263,20 @@ h3{
     height: 30px;
     line-height: 30px;
     background: url("../images/imgs_icns/electric_icon.png") no-repeat left center;
+}
+
+#upload_buttons
+{
+    position: relative;
+    top: 20px;
+}
+#formulario p button{
+    position: relative;
+    top: 20px;
+}
+#formulario{
+    display: block;
+    overflow: hidden;
+    clear: both;
+    margin-top: 40px;
 }

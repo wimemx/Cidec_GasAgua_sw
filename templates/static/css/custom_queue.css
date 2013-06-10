@@ -29,14 +29,17 @@ div.thumb_container .file_name{
 #table_cont{
     width:40%;
     float:left;
-    height:100%;
+    min-height:340px !important;
 }
 
 div#filelist {
     border-left:solid 1px #aaa;
     border-right:solid 1px #aaa;
-    min-height:162px;
+    min-height: 279px;
+    border-bottom: 1px solid #aaa;
 }
+
+
 div#filelist div:nth-child(2n+1){
     background-color: #eee;
 }
@@ -112,7 +115,8 @@ margin-top:1em;
     max-width:130px;
 }
 #thumbs_cont{
-    min-height:200px;
+    height:278px !important;
+    min-height:278px !important;
     border-top: solid 1px #aaa;
     border-right: solid 1px #aaa;
     border-bottom: solid 1px #aaa;
