@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "popup_forms_base.html" %}
 {% block titulo %}
 {% if operation == "edit" %}Editar{% else %}Alta de{% endif %} Grupo de Empresas
 {% endblock %}
@@ -116,11 +116,6 @@
 {% endblock %}
 
 {% block contenido %}
-
-<div id="page_content">
-<div id="contenido_interno">
     {% include "consumption_centers/buildings/just_forms/just_form_add_cluster.html" %}
 
-</div>
-</div>
 {% endblock %}

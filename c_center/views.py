@@ -9441,3 +9441,91 @@ def wizard(request):
         template_vars["sidebar"] = request.session['sidebar']
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
+
+@login_required(login_url='/')
+def add_cluster_pop(request):
+    datacontext = get_buildings_context(request.user)[0]
+    if has_permission(request.user, CREATE, "Alta de grupos de empresas") or \
+            request.user.is_superuser:
+        empresa = request.session['main_building']
+        message = ''
+        _type = ''
+        #Se obtienen los sectores
+        sectores = SectoralType.objects.filter(sectoral_type_status=1)
+        template_vars = dict(datacontext=datacontext,
+                             empresa=empresa,
+                             sectores=sectores,
+                             company=request.session['company'],
+                             sidebar=request.session['sidebar']
+        )
+
+        if request.method == "POST":
+            template_vars["post"] = request.POST
+            clustername = request.POST.get('clustername').strip()
+            clusterdescription = request.POST.get('clusterdescription').strip()
+            clustersector = request.POST.get('clustersector')
+
+            continuar = True
+            if clustername == '':
+                message = "El nombre del Cluster no puede quedar vacío"
+                _type = "n_notif"
+                continuar = False
+            elif not variety.validate_string(clustername):
+                message = "El nombre del Cluster contiene caracteres inválidos"
+                _type = "n_notif"
+                clustername = ""
+                continuar = False
+
+            if clustersector == '':
+                message = "El Cluster debe pertenecer a un tipo de sector"
+                _type = "n_notif"
+                continuar = False
+
+
+            #Valida por si le da muchos clics al boton
+            clusterValidate = Cluster.objects.filter(cluster_name=clustername)
+            if clusterValidate:
+                message = "Ya existe un cluster con ese nombre"
+                _type = "n_notif"
+                continuar = False
+
+            post = {'clustername': clustername,
+                    'clusterdescription': clusterdescription,
+                    'clustersector': int(clustersector)}
+            template_vars['post'] = post
+
+            if continuar:
+                sector_type = SectoralType.objects.get(pk=clustersector)
+
+                newCluster = Cluster(
+                    sectoral_type=sector_type,
+                    cluster_description=clusterdescription,
+                    cluster_name=clustername,
+                )
+                newCluster.save()
+
+                template_vars["message"] = "Cluster de Empresas creado " \
+                                           "exitosamente"
+                template_vars["type"] = "n_success"
+
+                if has_permission(request.user, VIEW, "Ver clusters") or \
+                        request.user.is_superuser:
+                    return HttpResponseRedirect("/buildings/clusters?msj=" +
+                                                template_vars["message"] +
+                                                "&ntype=n_success")
+
+            template_vars["post"] = post
+            template_vars["message"] = message
+            template_vars["type"] = _type
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response(
+            "consumption_centers/buildings/add_cluster.html",
+            template_vars_template)
+
+    else:
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)

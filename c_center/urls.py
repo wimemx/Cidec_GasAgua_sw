@@ -324,5 +324,7 @@ urlpatterns = patterns('',
 
                        url(r'^asistente_nueva_instalacion/',
                            'c_center.views.wizard'),
+                       url(r'^add_cluster_pop/',
+                           'c_center.views.add_cluster_pop'),
 
 )
