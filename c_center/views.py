@@ -63,7 +63,7 @@ import sys
 from tareas.tasks import save_historic_delay, \
     change_profile_electric_data, populate_data_warehouse_extended, \
     populate_data_warehouse_specific, restore_data, tag_batch_cu, \
-    daily_report_period
+    daily_report_period, tag_n_daily_report
 
 VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
@@ -319,11 +319,6 @@ def main_page(request):
                                    request.session['consumer_unit'],
                                    graphs_type)
         if graphs:
-            #valid years for reporting
-            request.session['years'] = [__date.year for __date in
-                                        ElectricDataTemp.objects.all().
-                                        dates('medition_date', 'year')]
-
             template_vars = {"graph_type": graphs[0],
                              "datacontext": datacontext,
                              'empresa': request.session['main_building'],
@@ -9413,11 +9408,7 @@ def retag_ajax(request):
                                    day=e_date_utc_tuple[2])
 
         #Reetiqueta los diarios
-        tag_batch_cu.delay(consumer_unit.pk,s_date,e_date)
-        #Calcula el reporte diario
-        daily_report_period.delay(consumer_unit.building,
-                                  consumer_unit,
-                                  s_date, e_date)
+        tag_n_daily_report.delay(consumer_unit.pk, s_date, e_date)
 
         resp_dic = dict()
         resp_dic["status"] = "Success"

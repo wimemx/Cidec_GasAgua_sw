@@ -77,6 +77,10 @@ def _login(request):
             if user.is_active:
                 login(request, user)
                 request.session.set_expiry(1900)
+                #valid years for reporting
+                request.session['years'] = [__date.year for __date in
+                                            ElectricDataTemp.objects.all().
+                                            dates('medition_date', 'year')]
                 ur_get = request.META['HTTP_REFERER']
                 ur_get = ur_get.split("next=")
                 url = "/main/"
