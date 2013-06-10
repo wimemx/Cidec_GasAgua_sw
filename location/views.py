@@ -2,6 +2,7 @@
 import variety
 import re
 import json as simplejson
+import datetime
 #local application/library specific imports
 from django.shortcuts import render_to_response, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect, Http404
@@ -1668,3 +1669,30 @@ def get_select_municipalities(request, id_state, id_region):
             mun.municipio.pk, mun.municipio.municipio_name)
 
     return HttpResponse(content=string_to_return, content_type="text/html")
+
+def get_datetime_type(request, date_capture, c_unit):
+    #Regresa un offset y  un datetime con el ajuste de hora realizado dependiendo la fecha
+
+    isborder= c_unit.building.municipio.border
+
+    if isborder:
+        periodos = DateSavingTimes.objects.get(date_start__gte= date_capture,
+                                              date_end__lte=date_capture, identifier__contains='frontera')
+    else:
+        periodos = DateSavingTimes.objects.get(date_start__gte= date_capture,
+                                              date_end__lte=date_capture, ~Q(identifier__contains='frontera'))
+
+
+    if periodos.periodo == 'Verano':
+        offset = c_unit.building.municipio.dst_offset
+    else:
+        offset = c_unit.building.municipio.raw_offset
+
+    date_capture = date_capture +  datetime.timedelta(hours=offset)
+
+
+    return offset, date_capture
+
+
+
+
