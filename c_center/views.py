@@ -9309,7 +9309,6 @@ def parse_csv(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
-
 # noinspection PyArgumentList
 @login_required(login_url='/')
 def view_tags(request):
@@ -9429,5 +9428,26 @@ def retag_ajax(request):
         raise Http404
 
 
+@login_required(login_url='/')
+def wizard(request):
+    datacontext = get_buildings_context(request.user)[0]
+    if has_permission(request.user, UPDATE,
+                      "Alta de equipos industriales") or \
+            request.user.is_superuser:
+        clusters = get_clusters_for_operation("Alta de equipos industriales",
+                                              CREATE, request.user)
+        template_vars = dict(datacontext=datacontext,
+                             sidebar=request.session['sidebar'],
+                             company=request.session['company'],
+                             clusters=clusters
+                             )
 
-
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("wizard.html", template_vars_template)
+    else:
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
