@@ -322,4 +322,7 @@ urlpatterns = patterns('',
                        url(r'^retag_ajax/',
                            'c_center.views.retag_ajax'),
 
+                       url(r'^asistente_nueva_instalacion/',
+                           'c_center.views.wizard'),
+
 )

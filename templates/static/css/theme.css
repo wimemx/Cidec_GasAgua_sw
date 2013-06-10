@@ -286,6 +286,9 @@ h2 span{
     padding: 0 28px;
     margin: 0 auto;
 }
+#menu_container #company_options,#menu_container #titulo_reporte{
+    cursor: pointer;
+}
 /*-----Company-Building chooser*/
 #logo_container{
     height: 67px;
@@ -362,7 +365,7 @@ h2 span{
     max-height: 313px;
     overflow: auto;
     position: absolute;
-    right: -309px;
+    right: -363px;
     top: 61px;
     width: 215px;
     border: solid 1px #2b87a3;
@@ -957,3 +960,4 @@ ul .sub_list
     top: -20px;
     left: 0px;
 }
+
