@@ -27,7 +27,34 @@
                 url: url,
                 type: "GET",
                 success: function(data){
-                    console.log(data);
+                    if(data.status == 'Success'){
+                        $('#message').addClass("notif");
+                        $('#message').addClass("n_success");
+                        $('#message').html("El proceso de reetiquetado de datos se está ejecutando con éxito. Este proceso puede tardar varios minutos"+
+                                " <a href='#' onclick='$(this).parent().remove();'>X</a>");
+                    }
+                }
+            });
+        }
+
+        function daily(){
+            event.preventDefault();
+            var s_date = $("#date_init").val();
+            var e_date = $("#date_end").val();
+
+            var url = '/buildings/daily_ajax/';
+            url += '?s_date='+s_date+"&e_date="+e_date;
+
+            $.ajax({
+                url: url,
+                type: "GET",
+                success: function(data){
+                    if(data.status == 'Success'){
+                        $('#message').addClass("notif");
+                        $('#message').addClass("n_success");
+                        $('#message').html("El reporte diario para los días seleccionados se está ejecutando con éxito. Este proceso puede tardar varios minutos"+
+                                " <a href='#' onclick='$(this).parent().remove();'>X</a>");
+                    }
                 }
             });
 
@@ -37,16 +64,26 @@
 
 {% endblock %}
 {% block document_ready %}
-    var actual_day = '';
-    {% if today %}
-        actual_day = '{{today|date:'Y-m-d'}}'
+    var s_date = ''
+    var e_date = ''
+
+    {% if s_date %}
+        s_date = '{{ s_date }}';
+    {% else %}
+        s_date = '{{today|date:'Y-m-d'}}';
+    {% endif %}
+
+    {% if e_date %}
+        e_date = '{{ e_date }}';
+    {% else %}
+        e_date = '{{today|date:'Y-m-d'}}';
     {% endif %}
 
     $('#date_cutdates').DatePicker({
     flat: true,
     format: 'Y-m-d',
-    date: [actual_day],
-    current: actual_day,
+    date: [s_date,e_date],
+    current: e_date,
     calendars: 2,
     mode: 'range',
     starts: 1,
@@ -78,6 +115,8 @@
 
             <div class="divider" id="divider_top">&nbsp;</div>
             <div id="form_container">
+
+                <span id="message"></span>
                 {% if message %}
                     <span class="notif {{ type }}">
                     {% autoescape off %}{{ message }}{% endautoescape %}
@@ -90,13 +129,13 @@
                     <div id="cluster_fields">
                         <div class="fields_row g9">
                             <label for="date_init" class="g2">Fecha Inicial<span class="required">*</span></label>
-                            <input type="text" name="date_init" id="date_init" class="g9" value="{{ today|date:'Y-m-d' }}" readonly  />
+                            <input type="text" name="date_init" id="date_init" class="g9" value="{% if s_date %}{{ s_date }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}" readonly  />
                             <span></span>
                         </div>
 
                         <div class="fields_row g9">
                             <label for="date_end" class="g2">Fecha Final</label>
-                            <input type="text" name="date_end" id="date_end" class="g9" value="{{ today|date:'Y-m-d' }}" readonly  />
+                            <input type="text" name="date_end" id="date_end" class="g9" value="{% if e_date %}{{ e_date }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}" readonly  />
                             <span></span>
                         </div>
 
@@ -108,9 +147,10 @@
 
                     <div class="buttons g12">
                         <button class="aqua_btn">Ver Etiquetas</button>
-                        <button class="aqua_btn" onclick="reTag();">Volver a Etiquetar</button>
+                        <button class="aqua_btn" onclick="reTag();">Etiquetas y Diarios</button>
+                        <button class="aqua_btn" onclick="daily();">Diarios</button>
                     </div>
-                    <div>
+                    <div style="height: 500px">
                         {% if tags %}
                             {% for value in tags %}
                                 <table style="margin-top: 20px">

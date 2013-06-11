@@ -9379,6 +9379,9 @@ def view_tags(request):
 
                 tags_dict.append(arr_tags)
 
+
+            template_vars["s_date"] = init_str
+            template_vars["e_date"] = end_str
             template_vars["tags"] = tags_dict
 
         template_vars_template = RequestContext(request, template_vars)
@@ -9414,12 +9417,14 @@ def retag_ajax(request):
                                    month=e_date_utc_tuple[1],
                                    day=e_date_utc_tuple[2])
 
+        """
         #Reetiqueta los diarios
         tag_batch_cu.delay(consumer_unit.pk,s_date,e_date)
         #Calcula el reporte diario
         daily_report_period.delay(consumer_unit.building,
                                   consumer_unit,
                                   s_date, e_date)
+        """
 
         resp_dic = dict()
         resp_dic["status"] = "Success"
@@ -9428,6 +9433,36 @@ def retag_ajax(request):
     else:
         raise Http404
 
+def daily_ajax(request):
+    if "s_date" in request.GET and "e_date" in request.GET:
+        consumer_unit = request.session['consumer_unit']
+        profile_powermeter = consumer_unit.profile_powermeter
+
+        init_str = request.GET['s_date']
+        end_str = request.GET['e_date']
+
+        s_date_str = time.strptime(init_str, "%Y-%m-%d")
+        s_date_utc_tuple = time.gmtime(time.mktime(s_date_str))
+        s_date = datetime.datetime(year=s_date_utc_tuple[0],
+                                   month=s_date_utc_tuple[1],
+                                   day=s_date_utc_tuple[2])
+
+        e_date_str = time.strptime(end_str, "%Y-%m-%d")
+        e_date_utc_tuple = time.gmtime(time.mktime(e_date_str))
+        e_date = datetime.datetime(year=e_date_utc_tuple[0],
+                                   month=e_date_utc_tuple[1],
+                                   day=e_date_utc_tuple[2])
+
+
+        daily_report_period.delay(consumer_unit.building,
+                                  consumer_unit, s_date, e_date)
+
+        resp_dic = dict()
+        resp_dic["status"] = "Success"
+        data = simplejson.dumps(resp_dic)
+        return HttpResponse(content=data, content_type="application/json")
+    else:
+        raise Http404
 
 
 

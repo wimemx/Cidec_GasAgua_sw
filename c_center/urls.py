@@ -321,5 +321,7 @@ urlpatterns = patterns('',
                            'c_center.views.view_tags'),
                        url(r'^retag_ajax/',
                            'c_center.views.retag_ajax'),
+                       url(r'^daily_ajax/',
+                           'c_center.views.daily_ajax'),
 
 )
