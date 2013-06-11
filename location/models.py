@@ -27,6 +27,10 @@ class Estado(models.Model):
 
 class Municipio(models.Model):
     municipio_name = models.CharField(max_length=128)
+    raw_offset = models.IntegerField(max_length=2)
+    dst_offset = models.IntegerField(max_length=2)
+    border = models.BooleanField(default=False)
+
 
     def __unicode__(self):
         return self.municipio_name
@@ -126,3 +130,16 @@ class RegionEstado(models.Model):
 
     class Meta:
         unique_together = ('region', 'estado', 'municipio')
+
+
+class DateSavingTimes(models.Model):
+    period = (("verano", "verano"),
+              ("invierno", "invierno"))
+
+    identifier = models.CharField(max_length=100)
+    period = models.CharField(choices=period,max_length=20)
+    date_start = models.DateTimeField()
+    date_end = models.DateTimeField()
+
+    def __unicode__(self):
+        return self.identifier

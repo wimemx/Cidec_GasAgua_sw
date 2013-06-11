@@ -210,25 +210,25 @@
         <tr>
             <td>Energ&iacute;a en base kWh</td>
             <td>{{ resultados.kwh_base }}</td>
-            <td>{{ resultados.tarifa_kwhb|floatformat:4 }}</td>
+            <td>{{ resultados.tarifa_kwhb|floatformat:2 }}</td>
 
         </tr>
         <tr>
             <td>Energ&iacute;a en intermedia kWh</td>
             <td>{{ resultados.kwh_intermedio }}</td>
-            <td>{{ resultados.tarifa_kwhi|floatformat:4 }}</td>
+            <td>{{ resultados.tarifa_kwhi|floatformat:2 }}</td>
 
         </tr>
         <tr>
             <td>Energ&iacute;a en punta kWh</td>
             <td>{{ resultados.kwh_punta }}</td>
-            <td>{{ resultados.tarifa_kwhp|floatformat:4 }}</td>
+            <td>{{ resultados.tarifa_kwhp|floatformat:2 }}</td>
 
         </tr>
         <tr>
             <td>Demanda facturable kW</td>
             <td>{{ resultados.demanda_facturable }}</td>
-            <td>{{ resultados.tarifa_df|floatformat:4 }}</td>
+            <td>{{ resultados.tarifa_df|floatformat:2 }}</td>
 
         </tr>
         </tbody>
@@ -333,7 +333,7 @@
                     <td>{{ hist.total_kwh }}</td>
                     <td>{{ hist.factor_potencia|floatformat:2 }}</td>
                     <td>{{ hist.factor_carga|floatformat:2 }}</td>
-                    <td>{{ hist.costo_promedio|floatformat:4 }}</td>
+                    <td>{{ hist.costo_promedio|floatformat:2 }}</td>
                 </tr>
             {% endfor %}
         {% elif tipo_tarifa.pk == 2 %}

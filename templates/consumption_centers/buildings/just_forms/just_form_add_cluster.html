@@ -1,0 +1,61 @@
+<h2 id="titulo_form" class="cluster">
+        {% if operation == "edit" %}Editar{% else %}Alta de{% endif %} grupo de empresas
+    </h2>
+
+
+    <div class="divider" id="divider_top">&nbsp;</div>
+    <div id="form_container">
+        {% if message %}
+                <span class="notif {{ type }}">
+                    {% autoescape off %}{{ message }}{% endautoescape %}
+                    <a href="#" onclick="$(this).parent().remove();">X</a>
+                </span>
+        {% endif %}
+        <p class="description">
+            Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
+            <br/>
+            Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
+        </p>
+        <form method="post" action=".">
+            {% csrf_token %}
+            <h3 class="g12">Informaci&oacute;n del Grupo de Empresas</h3>
+            <div id="cluster_fields">
+                <div class="fields_row g9">
+                    <label for="clustername" class="g2">Nombre<span class="required">*</span></label>
+                    <input type="text" name="clustername" id="clustername" class="g9"
+                           value="{{ post.clustername }}"
+                    />
+                    <span></span>
+                </div>
+                <div class="fields_row g9">
+                    <label for="clusterdescription" class="g2">Descripci&oacute;n</label>
+                    <textarea rows="5" name="clusterdescription" id="clusterdescription" class="g9">{{ post.clusterdescription }}</textarea>
+                    <!--<input type="text" name="clusterdescription" id="clusterdescription" class="g9"
+                           value="{{ post.clusterdescription }}"
+                            />-->
+                    <span></span>
+                </div>
+                <div class="fields_row g9">
+                    <label for="clustersector" class="g2">Sector<span class="required">*</span></label>
+                    <select name="clustersector" id="clustersector" class="g9">
+                        <option value="">Selecciona un sector </option>
+                        {% if sectores %}
+                            {% for sector in sectores %}
+                                <option value="{{sector.id}}" {% if post.clustersector == sector.id %} selected {% endif %}>{{ sector.sectorial_type_name }}</option>
+                            {% endfor %}
+                        {% endif %}
+
+                    </select>
+                    <span id="sel_sector"></span>
+                </div>
+
+            </div>
+
+            <div class="buttons g12">
+                <button class="aqua_btn" id="save">
+                    Guardar
+                </button>
+            </div>
+        </form>
+
+    </div>

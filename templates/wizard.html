@@ -1,15 +1,18 @@
 {% extends "base.html" %}
-{% block titulo %}Restaurar datos el&eacute;ctricos{% endblock %}
+{% block titulo %}Asistente para nueva instalació&oacute;n{% endblock %}
 {% block externalcss %}
     <!--suppress HtmlUnknownTarget -->
     <link rel="stylesheet" href="/static/css/consumption_centers/main.css" type="text/css" />
-
+    <link href="/static/js/external/techlab-SmartWizard-1636c86/styles/smart_wizard.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="/static/js/external/fancybox/jquery.fancybox.css" type="text/css" />
 {% endblock %}
 {% block externaljs %}
+<script type="text/javascript" src="/static/js/external/techlab-SmartWizard-1636c86/js/jquery.smartWizard-2.0.min.js"></script>
+<script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
 <script type="text/javascript">
 $(document).ready(function(){
     	// Smart Wizard
-  	  $('#formulario').smartWizard({transitionEffect:'slideleft',onLeaveStep:leaveAStepCallback,onFinish:onFinishCallback,enableFinishButton:true});
+  	  $('#wizard').smartWizard({transitionEffect:'slideleft',onLeaveStep:leaveAStepCallback,onFinish:onFinishCallback,enableFinishButton:true});
 
       function leaveAStepCallback(obj){
         var step_num= obj.attr('rel');
@@ -28,20 +31,20 @@ $(document).ready(function(){
 
        if(validateStep1() == false){
          isStepValid = false;
-         $('#formulario').smartWizard('setError',{stepnum:1,iserror:true});
+         $('#wizard').smartWizard('setError',{stepnum:1,iserror:true});
        }else{
-         $('#formulario').smartWizard('setError',{stepnum:1,iserror:false});
+         $('#wizard').smartWizard('setError',{stepnum:1,iserror:false});
        }
 
        if(validateStep3() == false){
          isStepValid = false;
-         $('#formulario').smartWizard('setError',{stepnum:3,iserror:true});
+         $('#wizard').smartWizard('setError',{stepnum:3,iserror:true});
        }else{
-         $('#formulario').smartWizard('setError',{stepnum:3,iserror:false});
+         $('#wizard').smartWizard('setError',{stepnum:3,iserror:false});
        }
 
        if(!isStepValid){
-          $('#formulario').smartWizard('showMessage','Please correct the errors in the steps and continue');
+          $('#wizard').smartWizard('showMessage','Please correct the errors in the steps and continue');
        }
 
        return isStepValid;
@@ -49,7 +52,7 @@ $(document).ready(function(){
 
 
     function validateSteps(step){
-        var wizard = $('#formulario');
+        var wizard = $('#wizard');
         var isStepValid = true;
         // validate step 1
         if(step == 1){
@@ -90,11 +93,18 @@ $(document).ready(function(){
 
 {% endblock %}
 {% block document_ready %}
-    // Smart Wizard
-  	$('#content').smartWizard({contentURL:'services/service.php?action=1',transitionEffect:'slideleft',onFinish:onFinishCallback});
-    function onFinishCallback(){
-        alert('Finish Called');
-    }
+    $(".add").fancybox({
+    maxWidth	: 800,
+        maxHeight	: 800,
+        fitToView	: false,
+        width		: '70%',
+        height		: '70%',
+        autoSize	: false,
+        closeClick	: false,
+        openEffect	: 'none',
+        closeEffect	: 'none',
+        afterClose  : function(){click_flag=true;}
+    });
 {% endblock %}
 {% block breadcumbs %}
 
@@ -124,15 +134,57 @@ $(document).ready(function(){
 
             <div id="content">
                 <form method="post" action=".">
-                <div id="formulario">
+                <div id="wizard" class="swMain">
                     <ul>
-                        <li><a href="#step-1">Ubicaci&oacute;n de la instalaci&oacute;n</a></li>
-                        <li><a href="#step-2">Estructura de la instalación</a></li>
-                        <li><a href="#step-3">Alarmas</a></li>
-                        <li><a href="#step-4">Usuarios y permisos</a></li>
+                        <li>
+                            <a href="#step-1">
+                                <span class="stepNumber">1</span>
+                                <span class="stepDesc">
+                                    <small>Ubicaci&oacute;n de la instalaci&oacute;n</small>
+                                </span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#step-2">
+                                <span class="stepNumber">2</span>
+                                <span class="stepDesc">
+                                    <small>Estructura de la instalaci&oacute;n</small>
+                                </span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#step-3">
+                            <span class="stepNumber">3</span>
+                            <span class="stepDesc">
+                                <small>Usuarios y permisos</small>
+                            </span>
+                            </a>
+                        </li>
+                        </li>
+                        <li>
+                            <a href="#step-4">
+                                <span class="stepNumber">4</span>
+                                <span class="stepDesc">
+                                    <small>Alarmas</small>
+                                </span>
+                            </a>
+                        </li>
                     </ul>
-                    <div id="step-1">
 
+                    <div id="step-1">
+                        <div class="form_content">
+                            <label for="company_cluster" class="g2">Grupo de Empresas<span class="required">*</span></label>
+                            <select name="company_cluster" id="company_cluster" class="g9">
+                                <option value="">Selecciona un grupo de empresas </option>
+                                {% if clusters %}
+                                {% for cluster in clusters %}
+                                <option value="{{cluster.id}}" {% if post.cmp_cluster == cluster.id %} selected {% endif %}>{{ cluster.cluster_name }}</option>
+                                {% endfor %}
+                                {% endif %}
+
+                            </select>
+                            <a href="/buildings/add_cluster_pop/" class="add">Agregar Cluster</a>
+                        </div>
                     </div>
                     <div id="step-2">
 

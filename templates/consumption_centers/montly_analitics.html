@@ -102,10 +102,11 @@
             type: "GET",
             success: function(data){
                 var texto_kwh = '-';
+                console.log(data[0])
                 if(data[0].consumo_acumulado != undefined){
                     texto_kwh = addCommas(data[0].consumo_acumulado) + "kWh";
                 }
-                $("#cons_total").text(texto_kwh);
+                $("#cons_total").html(texto_kwh);
 
                 var texto_dt = '-';
                 if(data[0].demanda_max != undefined){
@@ -115,15 +116,17 @@
 
                 var texto_pf = '-';
                 if(data[0].factor_potencia != undefined){
+                    console.log(data[0].factor_potencia)
                     texto_pf = String(data[0].factor_potencia.toFixed(2)) + "%";
                 }
-                $("#pp_total").text(texto_pf);
+                $("#emit_total").text(texto_pf);
 
                 var texto_emit = '-';
                 if(data[0].emisiones != undefined){
                     texto_emit = String(parseInt(data[0].emisiones)) + "ton";
                 }
-                $("#emit_total").text(texto_emit);
+                $("#pp_total").text(texto_emit);
+
 
 
 
@@ -167,7 +170,7 @@
                 if(data.empty == "true"){
                     lateral_content +=     '<span class="no_data">No hay informaci&oacute;n para este d&iacute;a</span>';
                 }else{
-                    lateral_content +=     '<h3>Consumo</h3>';
+                    lateral_content +=     '<span class="no_bolder energia_semanal">Energía</span>';
                     lateral_content +=     '<div id="lat_consumo">';
                     lateral_content +=     '<span class="m_value">'+ addCommas(data.c_tot)+' kWh</span>';
 
@@ -179,19 +182,22 @@
 
                     lateral_content +=     '</div>';
                     lateral_content +=     '<a href="/main/">Ver en una gr&aacute;fica</a>';
-                    lateral_content +=     '<h3>Demanda M&aacute;x</h3>';
+                    lateral_content +=     '<span class="no_bolder demanda_semanal">Demanda M&aacute;xima</span>';
                     lateral_content +=     '<div id="lat_demanda">';
                     lateral_content +=     '<span class="m_value">'+ addCommas(data.d_max)+' kW</span>';
                     lateral_content +=     '<span class="s_value">'+ addCommas(data.d_max_time)+'</span>';
                     lateral_content +=     '</div>';
                     lateral_content +=     '<a href="/main/?g_type=energia&fi=' + day + '&ff=' + day + '">Ver en una gr&aacute;fica</a>';
-                    lateral_content +=     '<h3>Costo Promedio</h3>';
+                    lateral_content +=     '<span class="no_bolder costo_promedio_semanal">Costo Promedio</span>';
                     lateral_content +=     '<div id="lat_costo">';
                     lateral_content +=     '<span class="m_value">$'+ addCommas(data.cost_p)+'</span>';
                     lateral_content +=     '<span class="s_value">MXN</span>';
                     lateral_content +=     '</div>';
-                    lateral_content +=     '<span class="aditional">Factor Potencia: '+ data.pf+'%</span>';
-                    lateral_content +=     '<span class="aditional">kVArh: '+ addCommas(data.kvarh) +' KVar</span>';
+                    lateral_content +=     '<span class="no_bolder factor_potencia">Factor potencia</span>';
+                    lateral_content +=     '<div id="potencia_semanal">';
+                    lateral_content +=     '<span class="m_value">'+ data.pf+'%</span>';
+                    lateral_content +=     '</div>';
+                    //lateral_content +=     '<span class="aditional">kVArh: '+ addCommas(data.kvarh) +' KVar</span>';
                 }
                 $("#lateral").html(lateral_content);
             }
@@ -207,7 +213,7 @@
     function open_lat(){
         if(lateral.hasClass("collapsed")){
             lateral.removeClass("collapsed");
-            lateral.show().animate({width: '255px', right: "-264px", opacity: "1"}, 500);
+            lateral.show().animate({width: '178px', right: "-340px", opacity: "1"}, 500);
         }
     }
 
@@ -345,8 +351,7 @@
 
     <div id="page_content">
     <div id="contenido_interno">
-        <h2 class="titulo_reporte"><span class="building">{{ building.building_name }}</span> - <span class="device">{{ request.session.consumer_unit.electric_device_type.electric_device_type_name }}</span></h2>
-        <a class="various" data-fancybox-type="iframe"  href="/reportes/set_consumer_unit/">Cambiar</a>
+
 
         <div id="logo_container"{% if company.company_logo %}class="c fr" style="background: url(/static/media/{{ company.company_logo }}) no-repeat 50% 50%; background-size: 100% auto; margin-top: -19px;">
         {% else %}class="c fr" style="background: url(/static/css/images/imgs_icns/company_placeholder.png) no-repeat 50% 50%; background-size: 100% auto; margin-top: -19px;">
@@ -357,42 +362,45 @@
         <h3 id="titulo_reporte" class="titulo_reporte report_icon">An&aacute;lisis de Consumo El&eacute;ctrico Mensual</h3>
 
         <div id="month_sumary">
-            <h3>Reporte Mensual</h3>
-            <div class="icon_sumary consumo_t">
-                <span id="cons_total">
-                    -
-                </span>
-                <span>Consumo acumulado/ m</span>
-            </div>
-            <div class="icon_sumary demanda">
-                <span id="dem_total">
-                    -
-                </span>
-                <span>Demanda Máxima / m</span>
-            </div>
-            <div class="icon_sumary emisiones">
-                <span id="emit_total">
-                    404 ton
-                </span>
-                <span>Emisiones de CO2</span>
-            </div>
-            <div class="icon_sumary potencia">
-                <span id="pp_total">
-                    -
-                </span>
-                <span>Factor de Potencia</span>
+            <ul>
+                <li>Consumo Acomulado</li>
+                <li>Demanda</li>
+                <li>Calidad de Energía</li>
+                <li>Emisiones de CO2</li>
+            </ul>
+            <div style='width:100%;overflow:hidden;'>
+                <div class="icon_sumary consumo_t">
+                    <span id="cons_total">
+                        -
+                    </span>
+                </div>
+                <div class="icon_sumary demanda">
+                    <span id="dem_total">
+                        -
+                    </span>
+                </div>
+                <div class="icon_sumary emisiones">
+                    <span id="emit_total">
+                        404 ton
+                    </span>
+                </div>
+                <div class="icon_sumary potencia">
+                    <span id="pp_total">
+                        -
+                    </span>
+                </div>
             </div>
             <div class="month_totals">
-                <span class="label_tot">Demanda Mínima</span>
-                <span class="value_tot" id="month_dem_min">-</span>
+                <span class="label_tot" style="display:none;">Demanda Mínima</span>
+                <span class="value_tot" style="display:none;"id="month_dem_min">-</span>
 
-                <span class="label_tot">Consumo promedio</span>
+                <span class="label_tot">Promedio</span>
                 <span class="value_tot" id="month_cons_prom">-</span>
 
-                <span class="label_tot">Consumo mediana</span>
+                <span class="label_tot">Media</span>
                 <span class="value_tot" id="month_cons_med">-</span>
 
-                <span class="label_tot">Consumo desviación</span>
+                <span class="label_tot">Desviación</span>
                 <span class="value_tot"  id="month_cons_des">-</span>
             </div>
         </div>
@@ -400,8 +408,11 @@
         <div id="widgetCal">
             <span class="ringl"></span>
             <span class="ringr"></span>
-            <div id="week_s">
-                Ver resumen semanal
+            <div id="week_consumed">
+                Consumo
+            </div>
+            <div id="week_demand">
+                Demanda
             </div>
             <div id="lateral">
 

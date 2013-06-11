@@ -42,11 +42,7 @@ def restore_data(_file, dir_path):
     if cus:
         for cu in cus:
             regenerate_dw_in_interval(fi, ff, cu)
-            daytag_period(fi, ff, cu.profile_powermeter)
-            dailyReportPeriodofTime(
-                cu.building,
-                cu,
-                fi, ff)
+            tag_n_daily_report(cu.pk, fi, ff)
             #month operations
             f_i = fi
             while f_i < ff:
@@ -69,6 +65,20 @@ def regenerate_dw_in_interval(d1, d2, cu):
         delta_time = d2 - d1
         if delta_time > delta:
             populate_data_warehouse_specific_int(cu, instant_delta, d1, d2)
+
+
+def regenerate_dw_cumulative_in_interval(d1, d2):
+    electrical_parameters = \
+            data_warehouse_extended.models.ElectricalParameter.objects.filter(
+                type=2
+            )
+    instants_delta = data_warehouse_extended.models.InstantDelta.objects.all()
+    consumer_units = c_center.models.ConsumerUnit.objects.all()
+    for instant_delta in instants_delta:
+        for electrical_parameter in electrical_parameters:
+            for cu in consumer_units:
+                process_dw_consumerunit_electrical_parameter.delay(
+                    cu, d1, d2, electrical_parameter, instant_delta)
 
 
 @task(ignore_result=True)
@@ -280,6 +290,16 @@ def tag_batch_cu(
         ff=datetime.datetime(2013, 5, 29)):
     cu = c_center.models.ConsumerUnit.objects.get(pk=cu_pk)
     daytag_period(fi, ff, cu.profile_powermeter)
+
+
+@task(ignore_result=True)
+def tag_n_daily_report(
+        cu_pk,
+        fi=datetime.datetime(2012, 8, 1),
+        ff=datetime.datetime(2013, 5, 29)):
+    cu = c_center.models.ConsumerUnit.objects.get(pk=cu_pk)
+    daytag_period(fi, ff, cu.profile_powermeter)
+    dailyReportPeriodofTime(cu.building, cu, fi, ff)
 
 
 @task(ignore_result=True)

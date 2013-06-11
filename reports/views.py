@@ -14,6 +14,7 @@ import django.http
 import django.shortcuts
 import django.utils.timezone
 import django.template.context
+from django.contrib.auth.decorators import login_required
 
 # Alarms imports
 import alarms.models
@@ -1000,7 +1001,7 @@ def get_consumer_unit_electrical_parameter_data_clustered(
 # Render Scripts
 #
 ################################################################################
-
+@login_required(login_url="/")
 def render_instant_measurements(
         request
 ):
@@ -1141,6 +1142,7 @@ def render_instant_measurements(
                template_context)
 
 
+@login_required(login_url="/")
 def render_report_consumed_by_month(
         request
 ):
@@ -1257,6 +1259,8 @@ def render_report_consumed_by_month(
             data_cluster_consumed, cu.building.region)
         template_variables['periods'] = True
 
+
+
     template_context =\
         django.template.context.RequestContext(request, template_variables)
 
@@ -1264,6 +1268,7 @@ def render_report_consumed_by_month(
                                                template_context)
 
 
+@login_required(login_url="/")
 def render_report_powerprofile_by_month(
         request
 ):

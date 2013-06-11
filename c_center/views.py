@@ -63,7 +63,7 @@ import sys
 from tareas.tasks import save_historic_delay, \
     change_profile_electric_data, populate_data_warehouse_extended, \
     populate_data_warehouse_specific, restore_data, tag_batch_cu, \
-    daily_report_period
+    daily_report_period, tag_n_daily_report
 
 VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
@@ -319,11 +319,6 @@ def main_page(request):
                                    request.session['consumer_unit'],
                                    graphs_type)
         if graphs:
-            #valid years for reporting
-            request.session['years'] = [__date.year for __date in
-                                        ElectricDataTemp.objects.all().
-                                        dates('medition_date', 'year')]
-
             template_vars = {"graph_type": graphs[0],
                              "datacontext": datacontext,
                              'empresa': request.session['main_building'],
@@ -5313,7 +5308,6 @@ def add_building(request):
             'building_attributes_type_name')
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              company=company,
                              post=post,
                              empresas_lst=empresas_lst,
@@ -5893,7 +5887,6 @@ def edit_building(request, id_bld):
                                                 "&ntype=n_success")
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              company=company,
                              post=post,
                              empresas_lst=empresas_lst,
@@ -5996,7 +5989,7 @@ def view_building(request):
                              order_municipality=order_municipality,
                              order_company=order_company,
                              order_status=order_status,
-                             datacontext=datacontext, empresa=empresa,
+                             datacontext=datacontext,
                              company=company,
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
@@ -8000,6 +7993,7 @@ def montly_analitics(request):
     template_vars["sidebar"] = request.session['sidebar']
     template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
+    template_vars["consumer_unit"] = request.session['consumer_unit']
     if has_permission(request.user, VIEW, "Consumo Energético Mensual") or \
             request.user.is_superuser:
 
@@ -9309,7 +9303,6 @@ def parse_csv(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
-
 # noinspection PyArgumentList
 @login_required(login_url='/')
 def view_tags(request):
@@ -9417,14 +9410,8 @@ def retag_ajax(request):
                                    month=e_date_utc_tuple[1],
                                    day=e_date_utc_tuple[2])
 
-        """
         #Reetiqueta los diarios
-        tag_batch_cu.delay(consumer_unit.pk,s_date,e_date)
-        #Calcula el reporte diario
-        daily_report_period.delay(consumer_unit.building,
-                                  consumer_unit,
-                                  s_date, e_date)
-        """
+        tag_n_daily_report.delay(consumer_unit.pk, s_date, e_date)
 
         resp_dic = dict()
         resp_dic["status"] = "Success"
@@ -9464,5 +9451,114 @@ def daily_ajax(request):
     else:
         raise Http404
 
+@login_required(login_url='/')
+def wizard(request):
+    datacontext = get_buildings_context(request.user)[0]
+    if has_permission(request.user, UPDATE,
+                      "Alta de equipos industriales") or \
+            request.user.is_superuser:
+        clusters = get_clusters_for_operation("Alta de equipos industriales",
+                                              CREATE, request.user)
+        template_vars = dict(datacontext=datacontext,
+                             sidebar=request.session['sidebar'],
+                             company=request.session['company'],
+                             clusters=clusters
+                             )
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("wizard.html", template_vars_template)
+    else:
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
+
+@login_required(login_url='/')
+def add_cluster_pop(request):
+    datacontext = get_buildings_context(request.user)[0]
+    if has_permission(request.user, CREATE, "Alta de grupos de empresas") or \
+            request.user.is_superuser:
+        empresa = request.session['main_building']
+        message = ''
+        _type = ''
+        #Se obtienen los sectores
+        sectores = SectoralType.objects.filter(sectoral_type_status=1)
+        template_vars = dict(datacontext=datacontext,
+                             empresa=empresa,
+                             sectores=sectores,
+                             company=request.session['company'],
+                             sidebar=request.session['sidebar']
+        )
+
+        if request.method == "POST":
+            template_vars["post"] = request.POST
+            clustername = request.POST.get('clustername').strip()
+            clusterdescription = request.POST.get('clusterdescription').strip()
+            clustersector = request.POST.get('clustersector')
+
+            continuar = True
+            if clustername == '':
+                message = "El nombre del Cluster no puede quedar vacío"
+                _type = "n_notif"
+                continuar = False
+            elif not variety.validate_string(clustername):
+                message = "El nombre del Cluster contiene caracteres inválidos"
+                _type = "n_notif"
+                clustername = ""
+                continuar = False
+
+            if clustersector == '':
+                message = "El Cluster debe pertenecer a un tipo de sector"
+                _type = "n_notif"
+                continuar = False
 
 
+            #Valida por si le da muchos clics al boton
+            clusterValidate = Cluster.objects.filter(cluster_name=clustername)
+            if clusterValidate:
+                message = "Ya existe un cluster con ese nombre"
+                _type = "n_notif"
+                continuar = False
+
+            post = {'clustername': clustername,
+                    'clusterdescription': clusterdescription,
+                    'clustersector': int(clustersector)}
+            template_vars['post'] = post
+
+            if continuar:
+                sector_type = SectoralType.objects.get(pk=clustersector)
+
+                newCluster = Cluster(
+                    sectoral_type=sector_type,
+                    cluster_description=clusterdescription,
+                    cluster_name=clustername,
+                )
+                newCluster.save()
+
+                template_vars["message"] = "Cluster de Empresas creado " \
+                                           "exitosamente"
+                template_vars["type"] = "n_success"
+
+                if has_permission(request.user, VIEW, "Ver clusters") or \
+                        request.user.is_superuser:
+                    return HttpResponseRedirect("/buildings/clusters?msj=" +
+                                                template_vars["message"] +
+                                                "&ntype=n_success")
+
+            template_vars["post"] = post
+            template_vars["message"] = message
+            template_vars["type"] = _type
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response(
+            "consumption_centers/buildings/add_cluster.html",
+            template_vars_template)
+
+    else:
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)

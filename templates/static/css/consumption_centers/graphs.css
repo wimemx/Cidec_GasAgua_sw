@@ -416,12 +416,12 @@ div.container{
 }
 .left_grip{
     background: url("../images/imgs_icns/left_grip.png") no-repeat;
-    left: 0;
+    left: 74px;
     top: 14px;
 }
 .right_grip{
     background: url("../images/imgs_icns/right_grip.png") no-repeat;
-    right: 0;
+    right: 74px;
     top: 14px;
 }
 .left_legend, .right_legend{
@@ -437,7 +437,7 @@ div.container{
     background: url("../images/bgs/arrow_right.png") no-repeat center;
 }
 #dias{
-    width: 1050px;
+    width: 875px;
     display: block;
     margin: 13px auto 0 auto;
 }
