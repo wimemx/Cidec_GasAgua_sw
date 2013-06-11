@@ -309,10 +309,10 @@ h2 span{
     width: auto;
     padding-right: 20px;
     display: block;
-    background: url(images/imgs_icns/company_arrow_d.png) no-repeat 100% 50%;
+    background: url(images/imgs_icns/arrow_down.png) no-repeat 100% 50%;
     line-height: 56px;
     color: #dbe2f2;
-    font-size: 19px;
+    font-size: 20px;
     font-weight: 100;
 }
 #companies_container #empresa.expanded{
@@ -411,7 +411,7 @@ h2 span{
     width: 100px;
     height: 57px;
     line-height: 57px;
-    font-size: 13px;
+    font-size: 12px;
     color: #dbe2f2;
     text-align: center;
     margin-left: 5px;
@@ -944,14 +944,14 @@ a.aqua_btn:hover, a.grey_btn:hover{
 #titulo_reporte span{
     display: block;
     float: left;
-    font-size: 18px ;
+    font-size: 16px ;
 }
 #arrow_lightbox{
     display: block;
     float: left;
     width: 20px;
     height: 20px;
-    background: url('images/imgs_icns/company_arrow_d.png') transparent no-repeat 10px 10px;
+    background: url('images/imgs_icns/arrow_down.png') transparent no-repeat 2px 6px;
 }
 ul .sub_list
 {
@@ -959,5 +959,13 @@ ul .sub_list
     position: relative;
     top: -20px;
     left: 0px;
+}
+#header_report{
+    display: block;
+    float: none;
+    clear: both;
+}
+table .bolder{
+    font-weight:bolder !important;
 }
 
