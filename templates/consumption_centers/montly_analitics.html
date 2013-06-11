@@ -353,13 +353,13 @@
     <div id="contenido_interno">
 
 
-        <div id="logo_container"{% if company.company_logo %}class="c fr" style="background: url(/static/media/{{ company.company_logo }}) no-repeat 50% 50%; background-size: 100% auto; margin-top: -19px;">
+        <div id="logo_container" {% if company.company_logo %}class="c fr" style="background: url(/static/media/{{ company.company_logo }}) no-repeat 50% 50%; background-size: 100% auto; margin-top: 0px; position:relative;">
         {% else %}class="c fr" style="background: url(/static/css/images/imgs_icns/company_placeholder.png) no-repeat 50% 50%; background-size: 100% auto; margin-top: -19px;">
         {% endif %}
         </div>
-
-        <div class="divider" id="divider_top">&nbsp;</div>
         <h3 id="titulo_reporte" class="titulo_reporte report_icon">An&aacute;lisis de Consumo El&eacute;ctrico Mensual</h3>
+        <div class="divider" id="divider_top">&nbsp;</div>
+
 
         <div id="month_sumary">
             <ul>

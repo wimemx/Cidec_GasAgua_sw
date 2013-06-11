@@ -961,3 +961,8 @@ ul .sub_list
     left: 0px;
 }
 
+#table_hm th
+{
+    padding-top: 10px;
+}
+

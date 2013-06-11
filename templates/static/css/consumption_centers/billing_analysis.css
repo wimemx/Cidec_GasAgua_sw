@@ -1,6 +1,7 @@
 iframe{
     height: 100%;
     background: #fff !important;
+
 }
 
 #widgetField{
@@ -102,6 +103,7 @@ iframe{
     font-size: 20px;
     padding: 10px 0px;
     color: #1b6b84;
+    margin-top: 40px;
 }
 
 .label_data_graph{
@@ -279,4 +281,10 @@ iframe{
     display: block;
     float: left;
     margin-right: 5px;
+}
+
+
+.iframe_container
+{
+overflow: hidden;
 }
