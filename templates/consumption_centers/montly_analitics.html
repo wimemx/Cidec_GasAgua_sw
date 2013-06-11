@@ -182,7 +182,7 @@
 
                     lateral_content +=     '</div>';
                     lateral_content +=     '<a href="/main/">Ver en una gr&aacute;fica</a>';
-                    lateral_content +=     '<span class="no_bolder demanda_semanal">Demanda M&aacute;xima</span>';
+                    lateral_content +=     '<span class="no_bolder demanda_semanal" href="/main/?g_type=consumo&fi=' + day + '&ff=' + day + '">Demanda M&aacute;xima</span>';
                     lateral_content +=     '<div id="lat_demanda">';
                     lateral_content +=     '<span class="m_value">'+ addCommas(data.d_max)+' kW</span>';
                     lateral_content +=     '<span class="s_value">'+ addCommas(data.d_max_time)+'</span>';
@@ -205,7 +205,7 @@
     }
 
     function close_lat(){
-        lateral.animate({width: 'toggle', right: "0"}, 500, function(){
+        lateral.animate({width: 'toggle', right: "-60px"}, 500, function(){
             $(this).addClass("collapsed");
             $(this).css('opacity', '0');
         });
@@ -213,7 +213,7 @@
     function open_lat(){
         if(lateral.hasClass("collapsed")){
             lateral.removeClass("collapsed");
-            lateral.show().animate({width: '178px', right: "-340px", opacity: "1"}, 500);
+            lateral.show().animate({width: '178px', right: "-255px", opacity: "1"}, 500);
         }
     }
 
@@ -275,7 +275,7 @@
         starts: 7,
         onChange: function(month, selected) {
             var display_day = false;
-            //console.log("selected", selected)
+            console.log("selected", selected)
             current = month.split("-");
             c_month = current[1];
             c_year = current[0];
@@ -333,6 +333,7 @@
         openEffect	: 'none',
         closeEffect	: 'none'
     });
+
 {% endblock %}
 {% block breadcumbs %}
 

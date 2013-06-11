@@ -12,6 +12,7 @@ html, body{
     height: 100%;
     width: 100%;
     min-width: 100% !important;
+    overflow: hidden;
 }
 html, body, div, span, applet, object, iframe,
 h1, h2, h3, h4, h5, h6, p, blockquote, pre,
@@ -442,7 +443,7 @@ div.container{
     margin: 13px auto 0 auto;
 }
 #dias_profile{
-    width: 1050px;
+    width: 1025px;
     display: block;
     margin: 40px auto 0 auto;
 }
@@ -480,6 +481,9 @@ div.container{
 .param_value{
     color: #9b205c;
     font-size: 14px;
+    text-align: left;
+    float: right;
+    margin-right: 20px;
 }
 #demanda .g8{
     margin-top: 12px;

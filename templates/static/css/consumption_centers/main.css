@@ -197,7 +197,7 @@
 }
 #graph_container{
     width: 100%;
-    overflow: auto;
+    overflow: hidden;
 }
 
 iframe{
