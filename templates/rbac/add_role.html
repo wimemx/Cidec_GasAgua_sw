@@ -39,12 +39,15 @@
             });
 
             $("#operation").click(function(){
+                $("ul.ddl").fadeOut("fast");
                 $(this).find("ul.ddl").slideToggle();
             });
             $("#group").click(function(){
+                $("ul.ddl").fadeOut("fast");
                 $(this).find("ul.ddl").slideToggle();
             });
             $("#object .legend").click(function(){
+                $("ul.ddl").fadeOut("fast");
                 $(this).parent().find("ul.ddl").slideToggle();
             });
             $("#operation_list li").click(function(){

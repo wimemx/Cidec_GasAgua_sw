@@ -258,11 +258,16 @@ ul#permissions li a{
     margin: 0 auto;
 }
 h3{
-    color: #878787;
-    padding-left: 45px;
-    height: 30px;
-    line-height: 30px;
-    background: url("../images/imgs_icns/electric_icon.png") no-repeat left center;
+   background: url("../images/imgs_icns/electric_icon.png") no-repeat;
+    height: 22px;
+    padding-left: 39px;
+    display:block;
+    margin-bottom: 5px;
+    color:#666 !important;
+    float:left;
+    font-size: 20px;
+    font-weight: 100;
+    margin-top: 10px;
 }
 
 #upload_buttons
