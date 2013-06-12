@@ -260,9 +260,10 @@ h3.titulo_reporte{
     height: 22px;
     padding-left: 39px;
     display:block;
-    margin-bottom: 35px;
-    clear:both;
-    color:#666;
+    margin-bottom: 5px;
+    color:#666 !important;
+    margin-top: 15px;
+    float:left;
 }
 /*--------BARRA LATERAL------*/
 #lateral.collapsed{
