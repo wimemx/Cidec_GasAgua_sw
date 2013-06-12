@@ -351,8 +351,10 @@ def get_cluster_companies(request, id_cluster):
                                   all=all_cluster))
         data = simplejson.dumps(companies)
     elif all_cluster:
+        #has permission, but the custer has no companies
         data = simplejson.dumps([dict(all="all")])
     else:
+        #user don't have permission
         data = simplejson.dumps([dict(all="none")])
     return HttpResponse(content=data, content_type="application/json")
 
@@ -1274,8 +1276,8 @@ def dailyReport(building, consumer_unit, today):
             virtual_cu =\
             c_functions_get_consumer_unit_electrical_parameter_data_clustered(
                 consumer_unit,
-                today_s_utc.astimezone(timezone.get_current_timezone()),
-                today_e_utc.astimezone(timezone.get_current_timezone()),
+                today_s_utc,
+                today_e_utc,
                 'kW',
                 300
             )

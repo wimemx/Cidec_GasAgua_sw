@@ -1,12 +1,13 @@
 (function($){
- $.fn.validate = function() {
+ $.fn.validate = function(c_options) {
    var defaults = {
       class_: ".validate",
       maxlength: 300,
       correct_img: "/static/css/images/imgs_icns/correct.png",
-      incorrect_img: "/static/css/images/imgs_icns/incorrect.png"
+      incorrect_img: "/static/css/images/imgs_icns/incorrect.png",
+      onsubmit: null
    };
-   var options = $.extend(defaults, options);
+   var options = $.extend(defaults, c_options);
    var back_correct = "url("+options.correct_img+") no-repeat";
    var back_incorrect = "url("+options.incorrect_img+") no-repeat";
    var send = 0;
@@ -87,8 +88,7 @@
             var element = $("#"+e.delegateTarget.id);
             var element_value = $.trim(element.val());
             var element_type = e.delegateTarget.nodeName.toLowerCase();
-
-            if(element_type == "input"){
+            if(element_type == "input" || element_type == "textarea"){
                validate_input(element, element_value);
             }else{
                 //validate option
@@ -103,7 +103,7 @@
                 var element = $(this);
                 var element_value = $.trim(element.val());
                 var element_type = element[0].tagName.toLowerCase();
-                if(element_type == "input"){
+                if(element_type == "input" || element_type == "textarea"){
                     valid_form = validate_input(element, element_value);
                 }else{
                     //validate option
@@ -116,7 +116,11 @@
             send++;
          }
 
-         return send === 1;
+         if(send === 1 && options.onsubmit){
+             return options.onsubmit(obj.serialize());
+         }else{
+             return send === 1;
+         }
       });
    });
  };

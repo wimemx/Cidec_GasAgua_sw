@@ -328,5 +328,11 @@ urlpatterns = patterns('',
                            'c_center.views.wizard'),
                        url(r'^add_cluster_pop/',
                            'c_center.views.add_cluster_pop'),
+                       url(r'^save_add_cluster_popup/',
+                           'c_center.views.save_add_cluster_popup'),
+                       url(r'^add_company_pop/',
+                           'c_center.views.add_company_pop'),
+                       url(r'^save_add_company_popup/',
+                           'c_center.views.save_add_company_popup'),
 
 )
