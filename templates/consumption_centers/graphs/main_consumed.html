@@ -149,6 +149,9 @@
             {% else %}class="c fr" style="background: url(/static/css/images/imgs_icns/company_placeholder.png) no-repeat 50% 50%; background-size: 100% auto; margin-top: -19px;">
             {% endif %}
             </div>
+            <h3>
+                {{ graph_type.object_description }}
+            </h3>
 
 
             <div class="divider" id="divider_top">&nbsp;</div>
@@ -178,9 +181,7 @@
                 <button class="aqua_btn">Aceptar</button>
             </div>
 
-            <h3>
-                {{ graph_type.object_description }}
-            </h3>
+
 
             <div id="graphs_container">
                 <div id="compare" class="fl">

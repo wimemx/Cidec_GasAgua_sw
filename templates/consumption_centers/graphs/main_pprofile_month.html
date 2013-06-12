@@ -83,6 +83,11 @@
             }
             return params_;
         }
+        $('iframe').load(function(){
+            $(this).contents().find('body').css({
+                'overflow': 'hidden'
+            });
+        });
     </script>
 {% endblock %}
 {% block document_ready %}

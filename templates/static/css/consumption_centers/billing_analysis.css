@@ -1,9 +1,8 @@
 iframe{
     height: 100%;
     background: #fff !important;
-
 }
-
+iframe body{overflow: hidden;}
 
 #widgetField{
     width: 255px !important;
@@ -154,6 +153,9 @@ iframe{
     width: 32%;
     padding-right: 5px;
     float: left;
+    position: relative;
+    top: -270px;
+    left: 316px;
 }
 
 .graph_container{
@@ -166,11 +168,11 @@ iframe{
     padding-top: 130px;
     padding-right: 25px;
     text-align: center;
+    position: relative;
 }
 
 .right_info_small{
     height: auto;
-    padding-top: 130px;
     padding-right: 30px;
     text-align: center;
 }
@@ -205,7 +207,7 @@ iframe{
 }
 
 .half_column{
-    width: 48%;
+    width: 45%;
     height: 400px;
     float: left;
     border: solid 1px #9ebfc7;
@@ -288,5 +290,6 @@ iframe{
 
 .iframe_container
 {
-overflow: hidden;
+    overflow: hidden;
+    margin-top: 25px;
 }
