@@ -955,7 +955,7 @@ def tarifa_header(request, tarifa_n):
             year_list = [__date.year for __date in ThreeElectricRateDetail.objects.all().dates('date_init','year')]
             template_vars['tipo_tarifa'] = 'T3'
 
-        today = datetime.datetime.today()
+        today = datetime.datetime.now()
 
         year = int(today.year)
 

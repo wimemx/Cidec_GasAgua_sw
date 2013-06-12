@@ -61,8 +61,8 @@
 
         function monthly(){
             event.preventDefault();
-            var month = $("#date_init").val();
-            var year = $("#date_end").val();
+            var month = $("#month_01").val();
+            var year = $("#year_01").val();
 
             var url = '/buildings/monthly_ajax/';
             url += '?month='+month+"&year="+year;
@@ -148,6 +148,7 @@
 
                 <form method="post" action=".">
                     {% csrf_token %}
+                    <div style="width: 100%; height: 310px">
                     <div id="cluster_fields">
                         <div class="fields_row g9">
                             <label for="date_init" class="g2">Fecha Inicial<span class="required">*</span></label>
@@ -172,12 +173,40 @@
                         <button class="aqua_btn" onclick="reTag();">Etiquetas y Diarios</button>
                         <button class="aqua_btn" onclick="daily();">Diarios</button>
                     </div>
-
-                    <div class="buttons g12">
-                        <button class="aqua_btn" onclick="monthly();>Reporte Mensual</button>
                     </div>
 
-                    <div style="height: 500px">
+
+                    <div style="width: 100%; height: 100px">
+
+                        <select name="month_mreport" id="month_01">
+                            <option value="1">Enero</option>
+                            <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Mayo</option>
+                            <option value="6">Junio</option>
+                            <option value="7">Julio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+                        <select name="year_mreport" id="year_01">
+                            {% if monthly_years %}
+                                {% for yr in monthly_years %}
+                                    <option value="{{yr}}">{{yr}}</option>
+                                {% endfor %}
+                            {% endif %}
+                        </select>
+
+                        <div class="buttons g12">
+                            <button class="aqua_btn" onclick="monthly();">Reporte Mensual</button>
+                        </div>
+                    </div>
+
+
+                    <div style="height: 500px; overflow: scroll;">
                         {% if tags %}
                             {% for value in tags %}
                                 <table style="margin-top: 20px">

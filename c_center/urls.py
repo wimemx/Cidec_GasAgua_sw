@@ -323,10 +323,18 @@ urlpatterns = patterns('',
                            'c_center.views.retag_ajax'),
                        url(r'^daily_ajax/',
                            'c_center.views.daily_ajax'),
+                       url(r'^monthly_ajax/',
+                           'c_center.views.monthly_ajax'),
 
                        url(r'^asistente_nueva_instalacion/',
                            'c_center.views.wizard'),
                        url(r'^add_cluster_pop/',
                            'c_center.views.add_cluster_pop'),
+                       url(r'^save_add_cluster_popup/',
+                           'c_center.views.save_add_cluster_popup'),
+                       url(r'^add_company_pop/',
+                           'c_center.views.add_company_pop'),
+                       url(r'^save_add_company_popup/',
+                           'c_center.views.save_add_company_popup'),
 
 )

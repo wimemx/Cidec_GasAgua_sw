@@ -351,8 +351,10 @@ def get_cluster_companies(request, id_cluster):
                                   all=all_cluster))
         data = simplejson.dumps(companies)
     elif all_cluster:
+        #has permission, but the custer has no companies
         data = simplejson.dumps([dict(all="all")])
     else:
+        #user don't have permission
         data = simplejson.dumps([dict(all="none")])
     return HttpResponse(content=data, content_type="application/json")
 
@@ -1274,8 +1276,8 @@ def dailyReport(building, consumer_unit, today):
             virtual_cu =\
             c_functions_get_consumer_unit_electrical_parameter_data_clustered(
                 consumer_unit,
-                today_s_utc.astimezone(timezone.get_current_timezone()),
-                today_e_utc.astimezone(timezone.get_current_timezone()),
+                today_s_utc,
+                today_e_utc,
                 'kW',
                 300
             )
@@ -1345,22 +1347,20 @@ def dailyReport(building, consumer_unit, today):
 
             kwh_dia_dic = getKWHperDay(today_s_utc, today_e_utc, profile_powermeter)
 
-            kwh_base = kwh_dia_dic['base']
-            kwh_intermedio = kwh_dia_dic['intermedio']
-            kwh_punta = kwh_dia_dic['punta']
-            kwh_totales = kwh_base + kwh_intermedio + kwh_punta
+            kwh_base += kwh_dia_dic['base']
+            kwh_intermedio += kwh_dia_dic['intermedio']
+            kwh_punta += kwh_dia_dic['punta']
+            kwh_totales += kwh_base + kwh_intermedio + kwh_punta
 
             print "Base:", kwh_base
             print "Intermedio:", kwh_intermedio
             print "Punta:",kwh_punta
-
 
             #Se obtienen los kvarhs por medidor
             kvarh_totales += obtenerKVARH_dia(profile_powermeter,
                                               today_s_utc,
                                               today_e_utc,
                                               kvarhs_anterior)
-
     #Si es tarifa HM
     if electric_rate.pk == 1:
         #Obtiene el id de la tarifa correspondiente para el mes en cuestion
@@ -1867,8 +1867,8 @@ def tarifaHM_2(building, s_date, e_date, month, year):
             virtual_cu =\
             c_functions_get_consumer_unit_electrical_parameter_data_clustered(
                 main_cu,
-                s_date.astimezone(timezone.get_current_timezone()),
-                e_date.astimezone(timezone.get_current_timezone()),
+                s_date,
+                e_date,
                 'kW',
                 300
             )
@@ -2841,6 +2841,8 @@ def c_functions_get_consumer_unit_electrical_parameter_data_clustered(
                     value_current += consumer_unit_data.value
 
                 instant_dictionary_current['value'] = value_current
+            else:
+                instant_dictionary_current['value'] = None
 
             instants_dictionary[instant_key_current] =\
             instant_dictionary_current.copy()

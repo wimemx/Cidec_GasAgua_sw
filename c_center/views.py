@@ -63,7 +63,7 @@ import sys
 from tareas.tasks import save_historic_delay, \
     change_profile_electric_data, populate_data_warehouse_extended, \
     populate_data_warehouse_specific, restore_data, tag_batch_cu, \
-    daily_report_period, tag_n_daily_report
+    daily_report_period, tag_n_daily_report, calculateMonthlyReport
 
 VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
@@ -9317,12 +9317,21 @@ def view_tags(request):
         #Se obtiene el dia actual
         today = datetime.datetime.now()
 
+        year = int(today.year)
+
+        monthly_years = []
+        for yr in range(2012,year+1):
+            monthly_years.append(yr)
+
         template_vars = dict(datacontext=datacontext,
                              empresa=empresa,
                              today = today,
+                             monthly_years=monthly_years,
                              company=request.session['company'],
                              sidebar=request.session['sidebar']
         )
+
+
 
         if request.method == "POST":
             template_vars["post"] = request.POST
@@ -9451,6 +9460,22 @@ def daily_ajax(request):
     else:
         raise Http404
 
+def monthly_ajax(request):
+    if "month" in request.GET and "year" in request.GET:
+        consumer_unit = request.session['consumer_unit']
+
+        month = int(request.GET['month'])
+        year = int(request.GET['year'])
+
+        calculateMonthlyReport.delay(consumer_unit, month, year)
+
+        resp_dic = dict()
+        resp_dic["status"] = "Success"
+        data = simplejson.dumps(resp_dic)
+        return HttpResponse(content=data, content_type="application/json")
+    else:
+        raise Http404
+
 @login_required(login_url='/')
 def wizard(request):
     datacontext = get_buildings_context(request.user)[0]
@@ -9459,10 +9484,13 @@ def wizard(request):
             request.user.is_superuser:
         clusters = get_clusters_for_operation("Alta de equipos industriales",
                                               CREATE, request.user)
+        operation = Object.objects.filter(
+            object_name="Alta de equipos industriales").values("pk")[0]['pk']
         template_vars = dict(datacontext=datacontext,
                              sidebar=request.session['sidebar'],
                              company=request.session['company'],
-                             clusters=clusters
+                             clusters=clusters,
+                             operation=operation
                              )
 
         template_vars_template = RequestContext(request, template_vars)
@@ -9474,6 +9502,7 @@ def wizard(request):
         template_vars["sidebar"] = request.session['sidebar']
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
+
 
 @login_required(login_url='/')
 def add_cluster_pop(request):
@@ -9491,71 +9520,111 @@ def add_cluster_pop(request):
                              company=request.session['company'],
                              sidebar=request.session['sidebar']
         )
-
-        if request.method == "POST":
-            template_vars["post"] = request.POST
-            clustername = request.POST.get('clustername').strip()
-            clusterdescription = request.POST.get('clusterdescription').strip()
-            clustersector = request.POST.get('clustersector')
-
-            continuar = True
-            if clustername == '':
-                message = "El nombre del Cluster no puede quedar vacío"
-                _type = "n_notif"
-                continuar = False
-            elif not variety.validate_string(clustername):
-                message = "El nombre del Cluster contiene caracteres inválidos"
-                _type = "n_notif"
-                clustername = ""
-                continuar = False
-
-            if clustersector == '':
-                message = "El Cluster debe pertenecer a un tipo de sector"
-                _type = "n_notif"
-                continuar = False
-
-
-            #Valida por si le da muchos clics al boton
-            clusterValidate = Cluster.objects.filter(cluster_name=clustername)
-            if clusterValidate:
-                message = "Ya existe un cluster con ese nombre"
-                _type = "n_notif"
-                continuar = False
-
-            post = {'clustername': clustername,
-                    'clusterdescription': clusterdescription,
-                    'clustersector': int(clustersector)}
-            template_vars['post'] = post
-
-            if continuar:
-                sector_type = SectoralType.objects.get(pk=clustersector)
-
-                newCluster = Cluster(
-                    sectoral_type=sector_type,
-                    cluster_description=clusterdescription,
-                    cluster_name=clustername,
-                )
-                newCluster.save()
-
-                template_vars["message"] = "Cluster de Empresas creado " \
-                                           "exitosamente"
-                template_vars["type"] = "n_success"
-
-                if has_permission(request.user, VIEW, "Ver clusters") or \
-                        request.user.is_superuser:
-                    return HttpResponseRedirect("/buildings/clusters?msj=" +
-                                                template_vars["message"] +
-                                                "&ntype=n_success")
-
-            template_vars["post"] = post
-            template_vars["message"] = message
-            template_vars["type"] = _type
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
-            "consumption_centers/buildings/add_cluster.html",
+            "consumption_centers/buildings/popups/popup_add_cluster.html",
             template_vars_template)
 
     else:
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
+
+
+@login_required(login_url='/')
+def save_add_cluster_popup(request):
+    if has_permission(request.user, CREATE, "Alta de grupos de empresas") or \
+            request.user.is_superuser and request.method == "POST":
+        template_vars = dict()
+        template_vars["post"] = request.POST
+        clustername = request.POST.get('clustername').strip()
+        clusterdescription = request.POST.get('clusterdescription').strip()
+        clustersector = request.POST.get('clustersector')
+
+        continuar = True
+        message = ''
+        _type = ''
+        if clustername == '':
+            message = "El nombre del Cluster no puede quedar vacío"
+            _type = "n_notif"
+            continuar = False
+        elif not variety.validate_string(clustername):
+            message = "El nombre del Cluster contiene caracteres inválidos"
+            _type = "n_notif"
+            clustername = ""
+            continuar = False
+
+        if clustersector == '':
+            message = "El Cluster debe pertenecer a un tipo de sector"
+            _type = "n_notif"
+            continuar = False
+
+
+        #Valida por si le da muchos clics al boton
+        clusterValidate = Cluster.objects.filter(cluster_name=clustername)
+        if clusterValidate:
+            message = "Ya existe un cluster con ese nombre"
+            _type = "n_notif"
+            continuar = False
+
+        post = {'clustername': clustername,
+                'clusterdescription': clusterdescription,
+                'clustersector': int(clustersector)}
+        template_vars['post'] = post
+
+        template_vars["post"] = post
+        template_vars["message"] = message
+        template_vars["type"] = _type
+
+        if continuar:
+            sector_type = SectoralType.objects.get(pk=clustersector)
+
+            newCluster = Cluster(
+                sectoral_type=sector_type,
+                cluster_description=clusterdescription,
+                cluster_name=clustername,
+            )
+            newCluster.save()
+            template_vars["cluster_new"] = newCluster.pk
+            template_vars["message"] = "Cluster de Empresas creado " \
+                                       "exitosamente"
+            template_vars["type"] = "n_success"
+        return HttpResponse(content=simplejson.dumps(template_vars),
+                            content_type="application/json", status=200)
+
+
+@login_required(login_url='/')
+def add_company_pop(request):
+    datacontext = get_buildings_context(request.user)[0]
+    if has_permission(request.user, CREATE,
+                      "Alta de empresas") or request.user.is_superuser:
+        datacontext = get_buildings_context(request.user)[0]
+        empresa = request.session['main_building']
+        post = ''
+        #Get Clusters
+        clusters = get_clusters_for_operation("Alta de empresas", CREATE,
+                                              request.user)
+        #Get Sectors
+        sectors = SectoralType.objects.filter(sectoral_type_status=1)
+        company = int(request.GET['company'])
+        template_vars = dict(datacontext=datacontext,
+                             empresa=empresa,
+                             post=post,
+                             clusters=clusters,
+                             sectors=sectors,
+                             ref_company=company,
+                             company=request.session['company'],
+                             sidebar=request.session['sidebar'])
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response(
+            "consumption_centers/buildings/popups/popup_add_company.html",
+            template_vars_template)
+
+    else:
+        datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
         if datacontext:
             template_vars = {"datacontext": datacontext}

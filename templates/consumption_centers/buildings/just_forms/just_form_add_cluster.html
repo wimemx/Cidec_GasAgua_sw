@@ -16,28 +16,23 @@
             <br/>
             Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
         </p>
-        <form method="post" action=".">
+        <form method="post" action="." id="cluster_form">
             {% csrf_token %}
             <h3 class="g12">Informaci&oacute;n del Grupo de Empresas</h3>
             <div id="cluster_fields">
                 <div class="fields_row g9">
                     <label for="clustername" class="g2">Nombre<span class="required">*</span></label>
-                    <input type="text" name="clustername" id="clustername" class="g9"
+                    <input type="text" name="clustername" id="clustername" class="g9 validate notnull alphanumeric"
                            value="{{ post.clustername }}"
                     />
-                    <span></span>
                 </div>
                 <div class="fields_row g9">
                     <label for="clusterdescription" class="g2">Descripci&oacute;n</label>
-                    <textarea rows="5" name="clusterdescription" id="clusterdescription" class="g9">{{ post.clusterdescription }}</textarea>
-                    <!--<input type="text" name="clusterdescription" id="clusterdescription" class="g9"
-                           value="{{ post.clusterdescription }}"
-                            />-->
-                    <span></span>
+                    <textarea rows="5" name="clusterdescription" id="clusterdescription" class="g9 validate alphanumeric">{{ post.clusterdescription }}</textarea>
                 </div>
                 <div class="fields_row g9">
                     <label for="clustersector" class="g2">Sector<span class="required">*</span></label>
-                    <select name="clustersector" id="clustersector" class="g9">
+                    <select name="clustersector" id="clustersector" class="g9 validate notnull">
                         <option value="">Selecciona un sector </option>
                         {% if sectores %}
                             {% for sector in sectores %}
@@ -46,7 +41,6 @@
                         {% endif %}
 
                     </select>
-                    <span id="sel_sector"></span>
                 </div>
 
             </div>

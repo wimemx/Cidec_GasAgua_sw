@@ -104,18 +104,15 @@
 
     <div id="page_content">
         <div id="contenido_interno">
-            <h3 class="fl">{{ empresa.building_name }}</h3>
-
             <div id="logo_container"{% if company.company_logo %}class="c fr" style="background: url(/static/media/{{ company.company_logo }}) no-repeat 50% 50%; background-size: 100% auto; margin-top: -19px;">
             {% else %}class="c fr" style="background: url(/static/css/images/imgs_icns/company_placeholder.png) no-repeat 50% 50%; background-size: 100% auto; margin-top: -19px;">
             {% endif %}
             </div>
-
+            <h2 id="titulo_reporte" class="report_icon">Tarifa {{ tipo_tarifa }}</h2>
             <div class="divider" id="divider_top">&nbsp;</div>
             <div id="datepicker_component">
                 <div>
-                    <span class="period_tag">Año</span>
-
+                    <span class="period_tag">Tarifa del:</span>
                     {% if year_list %}
                         <select name="year_01" id="year_01">
                             {% for yr in year_list %}
@@ -126,9 +123,9 @@
 
                     <button class="aqua_btn" onclick="viewHM();">Ver</button>
                 </div>
-                <div>
+                <div id='recolector'>
                     <span class="period_tag">Recolector de Tarifas</span>
-                    <select name="crawler_month" id="crawler_month">
+                    <select name="crawler_month" id="month_01">
                         <option value="1">Enero</option>
                         <option value="2">Febrero</option>
                         <option value="3">Marzo</option>
@@ -150,12 +147,13 @@
                         {% endif %}
                     </select>
                     <button class="aqua_btn" onclick="getRate();">Obtener Tarifa</button>
-                    <span id="rates_loader" style="width: 20px; height: 20px; display: block"></span>
+                    <span id="rates_loader" style="width: 20px; height: 20px; display: block; float:right; position:relative; top:-25px; left:20px;"></span>
                 </div>
 
             </div>
+
             <div id="data_container">
-                <h2 id="titulo_reporte" class="report_icon">Tarifa {{ tipo_tarifa }}</h2>
+
 
                 <input type="hidden" name="empresa_act" id="empresa_act" value="{{ empresa.pk }}"/>
 
