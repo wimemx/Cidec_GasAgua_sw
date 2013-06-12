@@ -351,8 +351,10 @@ def get_cluster_companies(request, id_cluster):
                                   all=all_cluster))
         data = simplejson.dumps(companies)
     elif all_cluster:
+        #has permission, but the custer has no companies
         data = simplejson.dumps([dict(all="all")])
     else:
+        #user don't have permission
         data = simplejson.dumps([dict(all="none")])
     return HttpResponse(content=data, content_type="application/json")
 

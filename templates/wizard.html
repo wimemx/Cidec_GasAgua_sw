@@ -12,7 +12,13 @@
 <script type="text/javascript">
 $(document).ready(function(){
     	// Smart Wizard
-  	  $('#wizard').smartWizard({transitionEffect:'slideleft',onLeaveStep:leaveAStepCallback,onFinish:onFinishCallback,enableFinishButton:true});
+  	  $('#wizard').smartWizard({
+          labelNext: "Siguiente",
+          labelPrevious: "Anterior",
+          labelFinish: "Finalizar",
+          transitionEffect:'slideleft',
+          onLeaveStep:leaveAStepCallback,
+          onFinish:onFinishCallback,enableFinishButton:true});
 
       function leaveAStepCallback(obj){
         var step_num= obj.attr('rel');
@@ -58,7 +64,7 @@ $(document).ready(function(){
         if(step == 1){
             if(validateStep1() == false ){
                 isStepValid = false;
-                wizard.smartWizard('showMessage','Please correct the errors in step'+step+ ' and click next.');
+                wizard.smartWizard('showMessage', 'Por favor selecciona un grupo de empresas, una empresa y el edificio donde se hará la instalación');
                 wizard.smartWizard('setError',{stepnum:step,iserror:true});
             }else{
                 wizard.smartWizard('setError',{stepnum:step,iserror:false});
@@ -78,10 +84,7 @@ $(document).ready(function(){
         return isStepValid;
     }
     function validateStep1(){
-        var isValid = true;
-        //validate
-
-        return isValid;
+        return ($("#company_cluster").val()>0 && $("#company").val()>0 && $("#building").val()>0);
     }
     function validateStep3(){
         var isValid = true;
@@ -105,6 +108,120 @@ $(document).ready(function(){
         closeEffect	: 'none',
         afterClose  : function(){click_flag=true;}
     });
+    $("#add_empresa").one("click", function(evt){
+                evt.preventDefault();
+                var url = $(this).attr("href");
+                url += "?cluster="+$("#company_cluster").val();
+                console.log(url);
+                $(this).attr("href", url).fancybox({
+                    maxWidth	: 800,
+                    maxHeight	: 800,
+                    fitToView	: false,
+                    width		: '70%',
+                    height		: '70%',
+                    autoSize	: false,
+                    closeClick	: false,
+                    openEffect	: 'none',
+                    closeEffect	: 'none',
+                    afterClose  : function(){click_flag=true;}
+                });
+                $(this).click();
+
+
+    });
+    var non_selected_building = function(){
+        $("#building").parent().find("span").text("Selecciona un edificio");
+        $("#building").html('<option value="0">Selecciona un edificio</option>');
+        $('#building option[value="0"]').attr("selected", "selected");
+    }
+    var non_selected_company = function(){
+        $("#company").parent().find("span").text("Selecciona una empresa");
+        $("#company").html('<option value="0">Selecciona una empresa</option>');
+        $('#company option[value="0"]').attr("selected", "selected");
+    }
+    $("#company_cluster").change(function(){
+        if($(this).val()>0){
+            $.ajax({
+                url: "/buildings/get_cluster_companies/"+$(this).val()+"/?op={{ operation }}",
+                type: "GET",
+                dataType: 'json',
+                async: 'true',
+                success: function(datos){
+                    var append_text = '';
+                    var notice_text = '';
+
+                    if(datos[0].all == "none"){
+                        notice_text = 'Tu esquema de permisos no tiene permitido dar de alta nuevas empresas para la instalación de un equipo industrial.'+
+                                      'Por favor ponte en contacto con el administrador';
+                    }else{
+                        var first_option = '';
+                        first_option='<option value="0">'+
+                                'Selecciona una empresa</option>';
+
+                        if(datos[0].company != undefined){
+                            append_text = '';
+                            for(var i=0; i<datos.length; i++){
+                                append_text+='<option value="' + datos[i].pk + '"> ' +
+                                        datos[i].company +
+                                        '</option>';
+                            }
+                            non_selected_company();
+                            $("#company").html(first_option+append_text);
+                            non_selected_building();
+                        }else{
+                            notice_text = 'El grupo de empresas seleccionado no tiene empresas asociadas.';
+                            non_selected_company();
+                            non_selected_building();
+                        }
+                    }
+                    $("#add_cluster").find(".notice").text(notice_text);
+                }
+            });
+        }else{
+            non_selected_company();
+            non_selected_building();
+        }
+    });
+    $("#company").change(function(){
+        if($(this).val()>0){
+            $.ajax({
+                url: "/buildings/get_company_buildings/"+$(this).val()+"/?op={{ operation }}",
+                type: "GET",
+                dataType: 'json',
+                async: 'true',
+                success: function(datos){
+                    var append_text = '';
+                    var notice_text = '';
+                    if(datos[0].all == "none"){
+                        notice_text = 'Tu esquema de permisos no tiene permitido dar de alta nuevos edificios para la instalación de un equipo industrial.'+
+                                      'Por favor ponte en contacto con el administrador';
+                    }else{
+                        var first_option = '';
+                        first_option='<option value="0">'+
+                                'Selecciona un edificio</option>';
+
+                        if(datos[0].building != undefined){
+                            append_text = '';
+                            for(var i=0; i<datos.length; i++){
+                                append_text+='<option value="' + datos[i].pk + '"> ' +
+                                        datos[i].building +
+                                        '</option>';
+                            }
+                            non_selected_building();
+                            $("#building").html(first_option+append_text);
+                        }else{
+                            notice_text = 'La empresa no tiene edificios asociados';
+                            non_selected_building();
+                        }
+                    }
+                    $("#add_building").find(".notice").text(notice_text);
+                }
+            });
+        }else{
+            non_selected_building();
+        }
+    });
+
 {% endblock %}
 {% block breadcumbs %}
 
@@ -160,7 +277,6 @@ $(document).ready(function(){
                             </span>
                             </a>
                         </li>
-                        </li>
                         <li>
                             <a href="#step-4">
                                 <span class="stepNumber">4</span>
@@ -172,18 +288,37 @@ $(document).ready(function(){
                     </ul>
 
                     <div id="step-1">
-                        <div class="form_content">
-                            <label for="company_cluster" class="g2">Grupo de Empresas<span class="required">*</span></label>
-                            <select name="company_cluster" id="company_cluster" class="g9">
-                                <option value="">Selecciona un grupo de empresas </option>
-                                {% if clusters %}
-                                {% for cluster in clusters %}
-                                <option value="{{cluster.id}}" {% if post.cmp_cluster == cluster.id %} selected {% endif %}>{{ cluster.cluster_name }}</option>
-                                {% endfor %}
-                                {% endif %}
+                        <div class="form_content g12">
+                            <div class="g12" id="add_cluster">
+                                <span class="notice g12"></span>
+                                <label for="company_cluster" class="g2">Grupo de empresas<span class="required">*</span></label>
+                                <select name="company_cluster" id="company_cluster" class="g9">
+                                    <option value="0">Selecciona un grupo de empresas </option>
+                                    {% if clusters %}
+                                    {% for cluster in clusters %}
+                                    <option value="{{cluster.id}}" {% if post.cmp_cluster == cluster.id %} selected {% endif %}>{{ cluster.cluster_name }}</option>
+                                    {% endfor %}
+                                    {% endif %}
 
-                            </select>
-                            <a href="/buildings/add_cluster_pop/" class="add">Agregar Cluster</a>
+                                </select>
+                                <a href="/buildings/add_cluster_pop/" class="add" data-fancybox-type="iframe">Nuevo grupo de empresas</a>
+                            </div>
+                            <div class="g12" id="add_company">
+                                <span class="notice g12"></span>
+                                <label for="company" class="g2">Empresa<span class="required">*</span></label>
+                                <select name="company" id="company" class="g9">
+                                    <option value="0">Selecciona una empresa </option>
+                                </select>
+                                <a href="/buildings/add_company_pop/" id="add_empresa">Nueva empresa</a>
+                            </div>
+                            <div class="g12" id="add_building">
+                                <span class="notice g12"></span>
+                                <label for="building" class="g2">Edificio<span class="required">*</span></label>
+                                <select name="building" id="building" class="g9">
+                                    <option value="0">Selecciona un edificio</option>
+                                </select>
+                                <a href="/buildings/add_company_pop/" class="add" data-fancybox-type="iframe">Nuevo edificio</a>
+                            </div>
                         </div>
                     </div>
                     <div id="step-2">

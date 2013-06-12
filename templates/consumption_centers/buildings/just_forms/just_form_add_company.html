@@ -1,0 +1,84 @@
+<h2 id="titulo_form" class="company">
+    {% if operation == "edit" %}Edici&oacute;n de{% else %}Alta de{% endif %} empresas
+</h2>
+
+
+<div class="divider" id="divider_top">&nbsp;</div>
+<div id="form_container">
+    {% if message %}
+            <span class="notif {{ type }}">
+                {% autoescape off %}{{ message }}{% endautoescape %}
+                <a href="#" onclick="$(this).parent().remove();">X</a>
+            </span>
+    {% endif %}
+    <p class="description">
+        Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
+        <br/>
+        Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
+    </p>
+    <form method="post" action="." enctype="multipart/form-data" id="#company_form">
+        {% csrf_token %}
+        <h3 class="g12">Informaci&oacute;n de la Empresa</h3>
+        <div id="company_logo_upload">
+            <div id="company_logo">
+                {% if post.cmp_logo %}
+                    <img src="/static/media/{{post.cmp_logo}}">
+                {% else %}
+                    <img src="/static/css/images/imgs_icns/company_logo.png">
+                {% endif %}
+            </div>
+            <input type="file" name="logo" id="logo" value="Seleccionar Archivo">
+        </div>
+        <div id="cluster_fields" class="company_fields">
+            <div class="fields_row g12">
+                <label for="company_name" class="g2">Nombre<span class="required">*</span></label>
+                <input type="text" name="company_name" id="company_name" class="g9 validate notnull alphanumeric"
+                       value="{{ post.cmp_name }}"
+                        />
+                <span></span>
+            </div>
+            <div class="fields_row g12">
+                <label for="company_description" class="g2">Descripci&oacute;n</label>
+                <textarea rows="5" name="company_description" id="company_description" class="g9 validate notnull alphanumeric">{{ post.cmp_description }}</textarea>
+                <!--<input type="text" name="clusterdescription" id="clusterdescription" class="g9"
+                       value="{{ post.clusterdescription }}"
+                        />-->
+                <span></span>
+            </div>
+            <div class="fields_row g12">
+                <label for="company_cluster" class="g2">Grupo de Empresas<span class="required">*</span></label>
+                <select name="company_cluster" id="company_cluster" class="g9">
+                    <option value="">Selecciona un grupo de empresas </option>
+                    {% if clusters %}
+                    {% for cluster in clusters %}
+                    <option value="{{cluster.id}}" {% if post.cmp_cluster == cluster.id %} selected {% endif %}>{{ cluster.cluster_name }}</option>
+                    {% endfor %}
+                    {% endif %}
+
+                </select>
+                <span id="sel_cluster"></span>
+            </div>
+            <div class="fields_row g12">
+                <label for="company_sector" class="g2">Tipo de Sector<span class="required">*</span></label>
+                <select name="company_sector" id="company_sector" class="g9 validate notnull">
+                    <option value="">Selecciona un tipo de sector </option>
+                    {% if sectors %}
+                    {% for sector in sectors %}
+                    <option value="{{sector.id}}" {% if post.cmp_sector == sector.id %} selected {% endif %}>{{ sector.sectorial_type_name }}</option>
+                    {% endfor %}
+                    {% endif %}
+
+                </select>
+                <span id="sel_sector"></span>
+            </div>
+
+        </div>
+
+        <div class="buttons g12">
+            <button class="aqua_btn" id="save">
+                Guardar
+            </button>
+        </div>
+    </form>
+
+</div>
