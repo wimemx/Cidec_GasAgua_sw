@@ -143,8 +143,8 @@
                         <option value="12">Diciembre</option>
                     </select>
                     <select name="crawler_year" id="crawler_year">
-                        {% if crawler_year_list %}
-                            {% for yr in crawler_year_list %}
+                        {% if year_list %}
+                            {% for yr in year_list %}
                                 <option value="{{yr}}" {% if year == yr %} selected{% endif %}>{{yr}}</option>
                             {% endfor %}
                         {% endif %}

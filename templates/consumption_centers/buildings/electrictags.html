@@ -57,6 +57,28 @@
                     }
                 }
             });
+        }
+
+        function monthly(){
+            event.preventDefault();
+            var month = $("#date_init").val();
+            var year = $("#date_end").val();
+
+            var url = '/buildings/monthly_ajax/';
+            url += '?month='+month+"&year="+year;
+
+            $.ajax({
+                url: url,
+                type: "GET",
+                success: function(data){
+                    if(data.status == 'Success'){
+                        $('#message').addClass("notif");
+                        $('#message').addClass("n_success");
+                        $('#message').html("El reporte mensual se está generando con éxito. Este proceso puede tardar varios minutos"+
+                                " <a href='#' onclick='$(this).parent().remove();'>X</a>");
+                    }
+                }
+            });
 
         }
 
@@ -150,6 +172,11 @@
                         <button class="aqua_btn" onclick="reTag();">Etiquetas y Diarios</button>
                         <button class="aqua_btn" onclick="daily();">Diarios</button>
                     </div>
+
+                    <div class="buttons g12">
+                        <button class="aqua_btn" onclick="monthly();>Reporte Mensual</button>
+                    </div>
+
                     <div style="height: 500px">
                         {% if tags %}
                             {% for value in tags %}

@@ -2895,7 +2895,6 @@ def crawler_hm_rate(year, month):
         soup = BeautifulSoup(page.read())
 
         tablasTarifa = soup.find_all('table',{"class" : "tablaTarifa"})
-        pdb.set_trace()
         for tabla in tablasTarifa:
             header_t = tabla.find('tr').find_all('th')
 
