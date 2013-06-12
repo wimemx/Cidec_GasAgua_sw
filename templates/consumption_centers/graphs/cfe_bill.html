@@ -92,62 +92,105 @@
 <div id="left_col" class="fl inner_col">
 
     {% if tipo_tarifa.pk == 1 %}
-    <div id="sumary">
-        <span class="l l_period">Periodo</span>
-        <span class="r r_period">{{ resultados.periodo }}
-            {% if control %}
-                <a target="_parent" class="username" href="/buildings/establecer_fecha/{{ control }}">Cambiar</a>
-            {% endif %}
-        </span>
-        <span class="l">Energ&iacute;a</span>
-        <span class="r">${{ resultados.costo_energia|floatformat:2 }}</span>
-        <span class="l">Demanda Facturable</span>
-        <span class="r">${{ resultados.costo_dfacturable|floatformat:2 }}</span>
-        <span class="l">Bonificaci&oacute;n Factor de Potencia</span>
-        <span class="r">${{ resultados.costo_fpotencia|floatformat:2 }}</span>
-        <span class="l">Sub Total</span>
-        <span class="r">${{ resultados.subtotal|floatformat:2 }}</span>
-        <span class="l">IVA 16%</span>
-        <span class="r">${{ resultados.iva|floatformat:2 }}</span>
-        <span class="l">Total</span>
-        <span class="r total">$ {{ resultados.total|floatformat:2 }}</span>
-    </div>
+        <table id="sumary_month">
+            <tbody>
+                <tr>
+                    <td colspan="2" class="bolder">
+                        Periodo {{ resultados.periodo }}
+                        {% if control %}
+                            <a target="_parent" class="username" href="/buildings/establecer_fecha/{{ control }}">Cambiar</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td>Energía</td>
+                    <td>${{ resultados.costo_energia|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Demanda Facturable</td>
+                    <td>${{ resultados.costo_dfacturable|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Bonificación Factor de Potencia</td>
+                    <td>${{ resultados.costo_fpotencia|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Sub Total</td>
+                    <td>${{ resultados.subtotal|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>IVA 16%</td>
+                    <td>${{ resultados.iva|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Total</td>
+                    <td>$ {{ resultados.total|floatformat:2 }}</td>
+                </tr>
+            </tbody>
+        </table>
+
     {% elif tipo_tarifa.pk == 2 %}
-    <div id="sumary">
-        <span class="l l_period">Periodo</span>
-        <span class="r r_period">{{ resultados.periodo }}
-            {% if control %}
-                <a target="_parent" class="username" href="/buildings/establecer_fecha/{{ control }}">Cambiar</a>
-            {% endif %}
-        </span>
-        <span class="l">Energ&iacute;a</span>
-        <span class="r">${{ resultados.costo_energia|floatformat:2 }}</span>
-        <span class="l">IVA 16%</span>
-        <span class="r">${{ resultados.iva|floatformat:2 }}</span>
-        <span class="l">Total</span>
-        <span class="r total">${{ resultados.total|floatformat:2 }}</span>
-    </div>
+        <table id="sumary_month">
+            <tbody>
+                <tr>
+                    <td colspan="2" class="bolder">
+                        Periodo {{ resultados.periodo }}
+                        {% if control %}
+                           <a target="_parent" class="username" href="/buildings/establecer_fecha/{{ control }}">Cambiar</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td>Energía</td>
+                    <td>${{ resultados.costo_energia|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>IVA 16%</td>
+                    <td>${{ resultados.iva|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Total</td>
+                    <td>$ {{ resultados.total|floatformat:2 }}</td>
+                </tr>
+            </tbody>
+        </table>
     {% elif tipo_tarifa.pk == 3 %}
-    <div id="sumary">
-        <span class="l l_period">Periodo</span>
-        <span class="r r_period">{{ resultados.periodo }}
-            {% if control %}
-                <a target="_parent" class="username" href="/buildings/establecer_fecha/{{ control }}">Cambiar</a>
-            {% endif %}
-        </span>
-        <span class="l">Energ&iacute;a</span>
-        <span class="r">${{ resultados.costo_energia|floatformat:2 }}</span>
-        <span class="l">Demanda M&aacute;xima</span>
-        <span class="r">${{ resultados.costo_demanda|floatformat:2 }}</span>
-        <span class="l">Bonificaci&oacute;n Factor de Potencia</span>
-        <span class="r">${{ resultados.costo_fpotencia|floatformat:2 }}</span>
-        <span class="l">Sub Total</span>
-        <span class="r">${{ resultados.subtotal|floatformat:2 }}</span>
-        <span class="l">IVA 16%</span>
-        <span class="r">${{ resultados.iva|floatformat:2 }}</span>
-        <span class="l">Total</span>
-        <span class="r total">$addCommas({{ resultados.total|floatformat:2 }})</span>
-    </div>
+        <table id="sumary_month">
+            <tbody>
+                <tr>
+                    <td colspan="2" class="bolder">
+                        Periodo {{ resultados.periodo }}
+                        {% if control %}
+                            <a target="_parent" class="username" href="/buildings/establecer_fecha/{{ control }}">Cambiar</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td>Energía</td>
+                    <td>${{ resultados.costo_energia|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Demanda M&aacute;xima</td>
+                    <td>${{ resultados.costo_demanda|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Bonificación Factor de Potencia</td>
+                    <td>${{ resultados.costo_fpotencia|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Sub Total</td>
+                    <td>${{ resultados.subtotal|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>IVA 16%</td>
+                    <td>${{ resultados.iva|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Total</td>
+                    <td>$ {{ resultados.total|floatformat:2 }}</td>
+                </tr>
+            </tbody>
+        </table>
     {% endif %}
 
     {% if tipo_tarifa.pk == 1 %}
@@ -210,25 +253,25 @@
         <tr>
             <td>Energ&iacute;a en base kWh</td>
             <td>{{ resultados.kwh_base }}</td>
-            <td>{{ resultados.tarifa_kwhb|floatformat:2 }}</td>
+            <td>{{ resultados.tarifa_kwhb|floatformat:4 }}</td>
 
         </tr>
         <tr>
             <td>Energ&iacute;a en intermedia kWh</td>
             <td>{{ resultados.kwh_intermedio }}</td>
-            <td>{{ resultados.tarifa_kwhi|floatformat:2 }}</td>
+            <td>{{ resultados.tarifa_kwhi|floatformat:4 }}</td>
 
         </tr>
         <tr>
             <td>Energ&iacute;a en punta kWh</td>
             <td>{{ resultados.kwh_punta }}</td>
-            <td>{{ resultados.tarifa_kwhp|floatformat:2 }}</td>
+            <td>{{ resultados.tarifa_kwhp|floatformat:4 }}</td>
 
         </tr>
         <tr>
             <td>Demanda facturable kW</td>
             <td>{{ resultados.demanda_facturable }}</td>
-            <td>{{ resultados.tarifa_df|floatformat:2 }}</td>
+            <td>{{ resultados.tarifa_df|floatformat:3 }}</td>
 
         </tr>
         </tbody>
@@ -248,15 +291,15 @@
         </tr>
         <tr>
             <td>Tarifa $/kWh</td>
-            <td>{{ resultados.tarifa_kwh|floatformat:4 }}</td>
+            <td>{{ resultados.tarifa_kwh|floatformat:2 }}</td>
         </tr>
         <tr>
             <td>Importe</td>
-            <td>{{ resultados.importe|floatformat:4 }}</td>
+            <td>{{ resultados.importe|floatformat:2 }}</td>
         </tr>
         <tr>
             <td>Cargo Fijo Mensual</td>
-            <td>{{ resultados.tarifa_mes|floatformat:4 }}</td>
+            <td>{{ resultados.tarifa_mes|floatformat:2 }}</td>
         </tr>
         </tbody>
     </table>
@@ -275,7 +318,7 @@
         </tr>
         <tr>
             <td>Tarifa $/kWh</td>
-            <td>{{ resultados.tarifa_kwh|floatformat:4 }}</td>
+            <td>{{ resultados.tarifa_kwh|floatformat:2 }}</td>
         </tr>
         <tr>
             <td>Demanda Máxima KW</td>
@@ -283,7 +326,7 @@
         </tr>
         <tr>
             <td>Tarifa $/Kw</td>
-            <td>{{ resultados.tarifa_kw|floatformat:4 }}</td>
+            <td>{{ resultados.tarifa_kw|floatformat:2 }}</td>
         </tr>
         <tr>
             <td>Factor de Potencia</td>
@@ -299,7 +342,7 @@
 </div>
 <div id="right_col" class="fl inner_col">
     <div id="notes">
-        <span>Tarifa:</span><span>{{tipo_tarifa.electric_rate_name}}</span>
+        <h2 id="header_report">Tarifa:{{tipo_tarifa.electric_rate_name}}</h2>
         <span>Carga conectada kW:</span><span>150</span>
         <span>Demanda contratada kW:</span><span>134</span>
         <span>Multiplicador:</span><span>240</span>
@@ -344,7 +387,7 @@
                     <td>{{ hist.total_kwh }}</td>
                     <td>-</td>
                     <td>-</td>
-                    <td>{{ hist.costo_promedio|floatformat:4 }}</td>
+                    <td>{{ hist.costo_promedio|floatformat:2 }}</td>
                 </tr>
             {% endfor %}
         {% elif tipo_tarifa.pk == 3 %}
@@ -355,7 +398,7 @@
                     <td>{{ hist.total_kwh }}</td>
                     <td>{{ hist.factor_potencia|floatformat:2 }}</td>
                     <td>{{ hist.factor_carga|floatformat:2 }}</td>
-                    <td>{{ hist.costo_promedio|floatformat:4 }}</td>
+                    <td>{{ hist.costo_promedio|floatformat:2 }}</td>
                 </tr>
             {% endfor %}
         {% endif %}
