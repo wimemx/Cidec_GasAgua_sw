@@ -1276,8 +1276,8 @@ def dailyReport(building, consumer_unit, today):
             virtual_cu =\
             c_functions_get_consumer_unit_electrical_parameter_data_clustered(
                 consumer_unit,
-                today_s_utc.astimezone(timezone.get_current_timezone()),
-                today_e_utc.astimezone(timezone.get_current_timezone()),
+                today_s_utc,
+                today_e_utc,
                 'kW',
                 300
             )

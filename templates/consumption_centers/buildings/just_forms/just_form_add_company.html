@@ -47,11 +47,11 @@
             </div>
             <div class="fields_row g12">
                 <label for="company_cluster" class="g2">Grupo de Empresas<span class="required">*</span></label>
-                <select name="company_cluster" id="company_cluster" class="g9">
+                <select name="company_cluster" id="company_cluster" class="g9" {% if ref_company %}readonly="readonly"{% endif %}>
                     <option value="">Selecciona un grupo de empresas </option>
                     {% if clusters %}
                     {% for cluster in clusters %}
-                    <option value="{{cluster.id}}" {% if post.cmp_cluster == cluster.id %} selected {% endif %}>{{ cluster.cluster_name }}</option>
+                    <option value="{{cluster.id}}" {% if post.cmp_cluster == cluster.id or cluster.id == ref_company %} selected {% endif %}>{{ cluster.cluster_name }}</option>
                     {% endfor %}
                     {% endif %}
 

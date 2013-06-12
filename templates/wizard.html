@@ -108,26 +108,10 @@ $(document).ready(function(){
         closeEffect	: 'none',
         afterClose  : function(){click_flag=true;}
     });
-    $("#add_empresa").one("click", function(evt){
-                evt.preventDefault();
-                var url = $(this).attr("href");
-                url += "?cluster="+$("#company_cluster").val();
-                console.log(url);
-                $(this).attr("href", url).fancybox({
-                    maxWidth	: 800,
-                    maxHeight	: 800,
-                    fitToView	: false,
-                    width		: '70%',
-                    height		: '70%',
-                    autoSize	: false,
-                    closeClick	: false,
-                    openEffect	: 'none',
-                    closeEffect	: 'none',
-                    afterClose  : function(){click_flag=true;}
-                });
-                $(this).click();
-
-
+    $("#add_empresa").on("click", function(evt){
+        if($("#company_cluster").val()=='0'){
+            return false;
+        }
     });
     var non_selected_building = function(){
         $("#building").parent().find("span").text("Selecciona un edificio");
@@ -140,7 +124,8 @@ $(document).ready(function(){
         $('#company option[value="0"]').attr("selected", "selected");
     }
     $("#company_cluster").change(function(){
-        if($(this).val()>0){
+        var cluster = $(this).val();
+        if(cluster>0){
             $.ajax({
                 url: "/buildings/get_cluster_companies/"+$(this).val()+"/?op={{ operation }}",
                 type: "GET",
@@ -149,6 +134,13 @@ $(document).ready(function(){
                 success: function(datos){
                     var append_text = '';
                     var notice_text = '';
+                    var url = $("#add_empresa").attr("href");
+                    url = url.split("/");
+                    url.splice(3, url.length-1);
+                    url = url.join("/");
+                    url = url+"/?company="+cluster;
+                    $("#add_empresa").attr("href", url);
+
 
                     if(datos[0].all == "none"){
                         notice_text = 'Tu esquema de permisos no tiene permitido dar de alta nuevas empresas para la instalación de un equipo industrial.'+
@@ -309,7 +301,7 @@ $(document).ready(function(){
                                 <select name="company" id="company" class="g9">
                                     <option value="0">Selecciona una empresa </option>
                                 </select>
-                                <a href="/buildings/add_company_pop/" id="add_empresa">Nueva empresa</a>
+                                <a href="/buildings/add_company_pop/" id="add_empresa" class="add" data-fancybox-type="iframe">Nueva empresa</a>
                             </div>
                             <div class="g12" id="add_building">
                                 <span class="notice g12"></span>

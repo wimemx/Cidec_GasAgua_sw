@@ -9584,17 +9584,18 @@ def add_company_pop(request):
                                               request.user)
         #Get Sectors
         sectors = SectoralType.objects.filter(sectoral_type_status=1)
-
+        company = int(request.GET['company'])
         template_vars = dict(datacontext=datacontext,
                              empresa=empresa,
                              post=post,
                              clusters=clusters,
                              sectors=sectors,
+                             ref_company=company,
                              company=request.session['company'],
                              sidebar=request.session['sidebar'])
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
-            "consumption_centers/buildings/add_company.html",
+            "consumption_centers/buildings/popups/popup_add_company.html",
             template_vars_template)
 
     else:
