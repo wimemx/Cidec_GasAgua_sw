@@ -49,4 +49,7 @@ urlpatterns = patterns('',
                            'rbac.views.get_select_group'),
                        url(r'^get_object/(?P<id_group>\d+)',
                            'rbac.views.get_select_object'),
+
+                       url(r'^add_user_pop/', 'rbac.views.add_user_pop'),
+                       url(r'^save_user_pop/', 'rbac.views.add_user_pop'),
 )

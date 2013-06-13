@@ -324,7 +324,7 @@ def all_daily_report_all(from_date):
     all_dailyreportAll(from_date)
 
 @task(ignore_resulset=True)
-def calculateMonthlyReport(consumer_u, month, year, ):
+def calculateMonthlyReportCU(consumer_u, month, year):
     getMonthlyReport(consumer_u, month, year)
 
 @task(ignore_resulset=True)

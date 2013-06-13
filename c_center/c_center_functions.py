@@ -1038,10 +1038,13 @@ def handle_company_logo(i, company, is_new):
                                   "templates/static/media/logotipos/"),
                      os.O_RDONLY)
     os.fchdir(dir_fd)
-
-    imagefile = cStringIO.StringIO(i.read())
-    imagefile.seek(0)
-    imageImage = Image.open(imagefile)
+    try:
+        imagefile = cStringIO.StringIO(i.read())
+        imagefile.seek(0)
+        imageImage = Image.open(imagefile)
+    except IOError:
+        print "could not load image"
+        return False
 
     if imageImage.mode != "RGB":
         imageImage = imageImage.convert("RGB")
@@ -1346,8 +1349,6 @@ def dailyReport(building, consumer_unit, today):
             #print "Profile Powermeter:", profile_powermeter.pk
 
             kwh_dia_dic = getKWHperDay(today_s_utc, today_e_utc, profile_powermeter)
-
-            print kwh_dia_dic
 
             kwh_base += kwh_dia_dic['base']
             kwh_intermedio += kwh_dia_dic['intermedio']

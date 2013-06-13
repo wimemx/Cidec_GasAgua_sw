@@ -292,7 +292,7 @@ h2 span{
 /*-----Company-Building chooser*/
 #logo_container{
     height: 67px;
-    width: 180px;
+    width: 145px;
 }
 #logo_container img{
     max-height: 50px;
@@ -365,8 +365,8 @@ h2 span{
     max-height: 313px;
     overflow: auto;
     position: absolute;
-    right: -363px;
-    top: 61px;
+    right: -359px;
+    top: 57px;
     width: 215px;
     border: solid 1px #2b87a3;
     background: #fff;
@@ -876,18 +876,17 @@ a.aqua_btn:hover, a.grey_btn:hover{
 /* 1024 px redesign*/
 .wrapper{
     display: block;
-    margin-top: 30px !important;
     width: 1024px;
-    margin:0 auto;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
+    margin:30px auto 20px auto !important;
+    padding-bottom: 20px;
     position: relative;
-    -webkit-box-shadow: 0px 0px 30px rgba(0, 0, 0, 0.77);
-    -moz-box-shadow:    0px 0px 30px rgba(0, 0, 0, 0.77);
-    box-shadow:         0px 0px 30px rgba(0, 0, 0, 0.77);
+    -webkit-box-shadow: 0px 0px 30px rgba(46, 46, 46, 0.55);
+    -moz-box-shadow:    0px 0px 30px rgba(46, 46, 46, 0.55);
+    box-shadow:         0px 0px 30px rgba(46, 46, 46, 0.55);
     -webkit-border-radius: 10px;
     -moz-border-radius: 10px;
     border-radius: 10px;
+    background-color: white !important;
 
 
 }
@@ -945,6 +944,7 @@ a.aqua_btn:hover, a.grey_btn:hover{
     display: block;
     float: left;
     font-size: 16px ;
+    color:#dbe2f2;
 }
 #arrow_lightbox{
     display: block;

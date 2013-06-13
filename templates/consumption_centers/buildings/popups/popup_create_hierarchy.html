@@ -1,0 +1,554 @@
+{% extends "popup_forms_base.html" %}
+{% block titulo %}Configurar Jerarqu&iacute;a de Partes y Medidores{% endblock %}
+
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/forms/c_centers.css" type="text/css" />
+    <link rel="stylesheet" href="/static/js/external/jOrgChart/css/jquery.jOrgChart.css"/>
+    <link rel="stylesheet" href="/static/css/consumption_centers/consumer_units_tree.css">
+    <link rel="stylesheet" href="/static/js/external/fancybox/jquery.fancybox.css" type="text/css" />
+{% endblock %}
+{% block externaljs %}
+    <script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
+    <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+    <script type="text/javascript" src="/static/js/external/jOrgChart/jquery.jOrgChart.custom.js"></script>
+    <script type="text/javascript">
+
+        function init_tree(){
+            var opts = {
+                chartElement : '#chart',
+                dragAndDrop  : true
+            };
+            $("#chart").html("");
+            $("#org").jOrgChart(opts);
+
+            $.ajax({
+                type: "GET",
+                url: "/buildings/get_json_pw/",
+                dataType: "json",
+                success: function(data){
+                    var $prof1 = $("#prof_pwr_edit");
+                    var $prof2 = $("#prof_pwr");
+                    var options = '';
+                    for(var i in data){
+                        options += "<option value='";
+                        options += data[i].pk;
+                        options += "'>"+ data[i].powermeter+"</option>";
+                    }
+                    options = "<option value='0'>" +
+                            "Elija una opci&oacute;n" +
+                            "</option>" +
+                            "<option value='newpm'>" +
+                            "Crear un nuevo medidor el&eacute;ctrico" +
+                            "</option>"+options;
+                    $prof1.html(options);
+                    $prof2.html(options);
+                }
+            });
+
+
+        }
+    var click_flag = true;
+    function resetForm(id) {
+        $form = $('#'+id);
+        $form.find("select option[value='0']").each(function(){
+            $(this).attr("selected","selected");
+        });
+    }
+    var add_to_node;
+    var node_to_edit;
+    var options = "<option value='0'>Elija una opci&oacute;n</option> ";
+    var options2 = options;
+    options += "<option value='newed'>Crear un nuevo dispositivo o sistema el&eacute;ctrico</option> ";
+    {% if electric_devices|length > 0 %}
+        {% for device in electric_devices %}
+            options += "<option value='{{ device.pk }}'>{{ device.electric_device_type_name }}</option>";
+        {% endfor %}
+    {% endif %}
+    function genero_lista(ul_lista){
+        var cu_root = $("li.raiz a:eq(0)").attr("rel");
+        $.ajax({
+            type: "POST",
+            url: "/buildings/reset_hierarchy/",
+            data: {csrfmiddlewaretoken: "{{ csrf_token }}", building:"{{ building.pk }}"},
+            success: function(){
+                ul_lista.find("li:not(.temp)").each(function(){
+                    var li = $(this);
+                    var $this_cu = li.find("a:eq(0)").attr("rel");
+                    var texto_li = li.find("a:eq(0)").text();
+
+                    var parent = $(this).parent().parent();
+                    var $parent_cu = parent.find("a:eq(0)").attr("rel");
+                    var texto_parent = parent.find("a:eq(0)").text();
+                    if($this_cu != cu_root && $parent_cu != cu_root){
+                        var asoc_arr={pp:"",pl:"",cl:""};
+                        var tipo_leaf;
+                        if(li.hasClass("consumer_unit")){
+                            asoc_arr["cl"] = $this_cu;
+                        }else{
+                            asoc_arr["pl"] = $this_cu;
+                        }
+                        if(li.hasClass("virtual")){
+                            asoc_arr["pw"] = "0";
+                        }else{
+                            asoc_arr["pw"] = "1";
+                        }
+                        asoc_arr["pp"] = $parent_cu;
+                        asoc_arr["csrfmiddlewaretoken"] = "{{ csrf_token }}";
+                        $.ajax({
+                            type: "POST",
+                            url: "/buildings/add_hierarchy_node/",
+                            data: asoc_arr,
+                            success: function(data){
+
+                            }
+                        });
+                    }
+                });
+            }
+        });
+        $("#tree_notif").show();
+    }
+    </script>
+{% endblock %}
+{% block document_ready %}
+    $("#add_node, #choose_prof_pwr, #choose_node_part, #edit_notif, #edit_node, #tree_notif").hide();
+    init_tree();
+    $(".edit").live("click", function(e){
+        var classList = $(this).parent().parent().attr('class').split(/\s+/);
+        $.each(classList, function(index,item) {
+            if(item != "virtual" && item != "temp" && item != "node" && item != "consumer_unit" && item != "ui-draggable" && item != "part_of_building" && item != "ui-droppable"){
+                add_to_node = item;
+            }
+        });
+        $("#edit_node, #edit_notif").hide();
+        $(".selector span").text("Elija una opción");
+        var nodo=$(this);
+        var nodeDiv = nodo.parent().parent();
+        var cu = nodeDiv.find("a").attr("rel");
+        $("#consumer_unit").val(cu);
+        var classList = nodeDiv.attr('class').split(/\s+/);
+        $("#prof_pwr_edit option").each(function(){
+            $(this).removeAttr("selected");
+        });
+        $("#prof_pwr_edit option[value='0']").attr("selected", "selected");
+        var tipo_n;
+        $.each(classList, function(index,item) {
+            if(item != "temp" && item != "node" && item != "consumer_unit" && item != "ui-draggable" && item != "part_of_building" && item != "ui-droppable" && item != "virtual"){
+                del_node = item;
+            }
+            if(item == "raiz" || item == "consumer_unit" || item == "part_of_building"){
+                tipo_n = item;
+            }
+        });
+        if(tipo_n == "consumer_unit"){
+            $("#choose_prof_pwr_edit").show();
+            $("#node_part_edit").html(options);
+            if($("#prof_pwr_edit").find("option[value='del_pw']").size()>0)
+                $("#prof_pwr_edit").find("option[value='del_pw']").remove();
+            $("#node_part_edit").change(function(){
+                if($(this).val()!="0"){
+                $("#edit_node").show();
+                }
+            });
+        }else if(tipo_n == "part_of_building" || tipo_n == "raiz"){
+            if(tipo_n == "raiz"){
+                $("#choose_node_part_edit").hide();
+                $("#edit_part").val("root");
+            }else{
+                $("#edit_part").val("part");
+                $("#choose_node_part_edit").show();
+            }
+            //$("#edit_part").val("part");
+            //$("#choose_node_part_edit").show();
+            if($("#prof_pwr_edit").find("option[value='del_pw']").size()==0)
+                $("#prof_pwr_edit").find("option[value='newpm']").after("<option value='del_pw'>Medidor Virtual</option>");
+
+            $("#node_part_edit")
+                .html(options2)
+                .append("<option value='edit_part'>Editar parte de edificio</option>")
+                .change(function(){
+                    if($(this).val()=="edit_part"){
+                        var url = "/buildings/editar_parte_edificio_popup/" + cu + "/";
+                        var newwindow=window.open(url,'name','height=600,width=900');
+                        if (window.focus) {newwindow.focus()}
+                        return false;
+                    }
+                });
+        }
+        node_to_edit = $("li."+del_node+":not('.temp')");
+    }).fancybox({
+        maxWidth	: 800,
+        maxHeight	: 800,
+        fitToView	: false,
+        width		: '70%',
+        height		: '70%',
+        autoSize	: false,
+        closeClick	: false,
+        openEffect	: 'none',
+        closeEffect	: 'none'
+    });
+    $("#prof_pwr_edit").change(function(){
+        var val_added_cu = $("#prof_pwr_edit").val();
+        if(val_added_cu == 'newpm'){
+            $("#edit_node").hide();
+            var url = "/buildings/add_powermeter_popup/?edit=edit";
+            var newwindow=window.open(url,'name','height=600,width=800');
+            if (window.focus) {newwindow.focus()}
+            return false;
+        }else{
+            if(val_added_cu == "0"){
+                $("#edit_node").hide();
+            }
+            else{
+                $("#edit_node").show();
+            }
+        }
+    });
+    $("#edit_node").click(function(e){
+        e.preventDefault();
+        if($("#edit_part").val() == "part" && $("#prof_pwr_edit").val()=="0"){
+            resetForm('edit_node_form');
+            $(".selector span").text("Elija una opción");
+            $.fancybox.close();
+            init_tree();
+        }else{
+        $.ajax({
+            type: "POST",
+            url: "/buildings/edit_cu/"+$("#consumer_unit").val()+"/",
+            data: $("#edit_node_form").serialize(),
+            success: function(data){
+                //unidad de consumo agregada, agregar li a la lista, y refrescar arbol
+                var cu = $("#consumer_unit").val();
+                var tipo_nodo = "";
+                var texto = '';
+                var tipo = $("#edit_part").val();
+                if(tipo=="cu"){
+                    tipo_nodo = "consumer_unit";
+                    texto = $("#node_part_edit option[value='"+$("#node_part_edit").val()+"']").text();
+                }else{
+                    if($("#prof_pwr_edit").val() == "del_pw"){
+                        tipo_nodo = "virtual";
+                    }
+                    if(tipo == "root"){
+                        tipo_nodo += " raiz"
+                    }else{
+                        tipo_nodo += " part_of_building"
+                    }
+                    texto = node_to_edit.find("a:eq(0)").text();
+                }
+                tipo_nodo = add_to_node+" "+tipo_nodo;
+                node_to_edit.removeClass().addClass($.trim(tipo_nodo));
+                node_to_edit.find("> a:eq(0)").attr("rel", cu).text(texto);
+                resetForm('edit_node_form');
+                $(".selector span").text("Elija una opción");
+                $.fancybox.close();
+                init_tree();
+            }
+        });
+        }
+    });
+    $(".del").live("click", function(e){
+        var nodo=$(this);
+
+        if(nodo.parent().parent().hasClass("temp")){
+            var texto = $.trim(nodo.parent().parent().find("a:eq(0)").text())
+
+            $("#org").find("li").each(function(index, lista){
+                var texto_lista = $.trim($(lista).find("a:eq(0)").text());
+                if(texto_lista==texto){
+                    $(lista).remove();
+                    init_tree();
+
+                }else{
+                    return;
+                }
+            });
+        }else{
+            var nodeDiv = nodo.parent().parent();
+            var cu = nodeDiv.find("a").attr("rel");
+            var classList = nodeDiv.attr('class').split(/\s+/);
+            $.each(classList, function(index,item) {
+                if(item != "temp" && item != "node" && item != "consumer_unit" && item != "ui-draggable" && item != "part_of_building" && item != "ui-droppable"){
+                    del_node = item;
+                }
+            });
+            var element = $("li."+del_node+":not('.temp')");
+            $.ajax({
+                type: "GET",
+                url: "/buildings/del_cu/"+cu+"/",
+                success: function(){
+                    element.remove();
+                    init_tree();
+                }
+            });
+        }
+
+    });
+    $(".add").live("click", function(){
+        click_flag=false;
+
+        var classList = $(this).parent().parent().attr('class').split(/\s+/);
+        $.each(classList, function(index,item) {
+            if(item != "virtual" && item != "temp" && item != "node" && item != "consumer_unit" && item != "ui-draggable" && item != "part_of_building" && item != "ui-droppable"){
+                add_to_node = item;
+            }
+        });
+        $("#prof_pwr option").each(function(){
+            $(this).removeAttr("selected");
+        });
+        $("#prof_pwr option[value='0']").attr("selected", "selected");
+
+    }).fancybox({
+        maxWidth	: 800,
+        maxHeight	: 800,
+        fitToView	: false,
+        width		: '70%',
+        height		: '70%',
+        autoSize	: false,
+        closeClick	: false,
+        openEffect	: 'none',
+        closeEffect	: 'none',
+        afterClose  : function(){click_flag=true;init_tree()}
+    });
+    $("#type_node").change(function(){
+        var valor = parseInt($(this).val());
+        $("#add_node").hide();
+        $("#choose_prof_pwr").hide();
+        $("#node_part").parent().find("span").text("Elija una opción");
+        $("#node_part").html("");
+        if (valor != 0){
+            $("#choose_node_part").show();
+            if(valor == 1){
+                $("#node_part").html(options2);
+                $("#label_node_part").text("Elija la parte del edificio");
+                var url = "/buildings/add_partbuilding_pop/{{ building.pk }}/"
+                var newwindow=window.open(url,'name','height=600,width=900');
+                if (window.focus) {newwindow.focus()}
+                return false;
+            }else{
+                $("#label_node_part").text("Elija un tipo de sistema");
+                $("#node_part").html();
+                $("#node_part").html(options);
+            }
+        }else{
+            $("#choose_node_part").hide();
+        }
+    });
+    $("#node_part").change(function(){
+        var val_added_cu = $("#node_part").val();
+        if (val_added_cu != "0"){
+
+            pw = val_added_cu.split("_");
+            if(pw.length>1){
+                //caso de que sea parte sin medidor
+                if(pw[1]=="ncu"){
+                    $("#choose_prof_pwr").hide();
+                    $("#add_node").show();
+                }else{
+                    $("#add_node").hide();
+                    $("#choose_prof_pwr").show();
+                }
+            }else{
+                if(val_added_cu == 'newed'){
+                    $("#choose_prof_pwr").hide();
+                    var url = "/buildings/add_electric_device_popup/"
+                    var newwindow=window.open(url,'name','height=600,width=800');
+                    if (window.focus) {newwindow.focus()}
+                    return false;
+                }else{
+                    $("#choose_prof_pwr").show();
+                }
+            }
+        }else{
+            $("#choose_prof_pwr").hide();
+        }
+    });
+    $("#prof_pwr").change(function(){
+
+        var val_added_cu = $("#prof_pwr").val();
+        if(val_added_cu == 'newpm'){
+            $("#add_node").hide();
+            var url = "/buildings/add_powermeter_popup/?edit=add";
+            var newwindow=window.open(url,'name','height=600,width=800');
+            if (window.focus) {newwindow.focus()}
+            return false;
+        }else{
+            if(val_added_cu != "0")
+                $("#add_node").show();
+            else
+                $("#add_node").hide();
+
+        }
+    });
+    $("#add_node").click(function(e){
+        e.preventDefault();
+        $.ajax({
+            type: "POST",
+            url: "/buildings/add_cu/",
+            data: $("#add_node_form").serialize(),
+            success: function(data){
+                //unidad de consumo agregada, agregar li a la lista, y refrescar arbol
+                $("#choose_node_part").hide();
+                $("#choose_prof_pwr").hide();
+                $("#add_node").hide();
+                var cu = data.split("*");
+                var tipo_nodo = "";
+                var texto = '';
+
+
+                if(cu[1]=="consumer_unit"){
+                    tipo_nodo = "consumer_unit";
+                    texto = $("#node_part option[value='"+$("#node_part").val()+"']").text();
+                }else{
+                    texto = $("#node_part option[value='"+$("#node_part").val()+"']").text();
+                    texto = texto.split(" - ");
+                    if(texto[1] == "Sin medidor"){
+                        tipo_nodo = "virtual";
+                    }
+                    texto = texto[0];
+                    tipo_nodo += " part_of_building"
+                }
+                var $node = $("li."+add_to_node+":not('.temp')");
+                var childs = $node.find("ul:eq(0) > li:not('.temp')").size();
+                childs++;
+                tipo_nodo += " "+add_to_node+"_"+childs;
+                var append_text = "<li class='"+ tipo_nodo +"'>";
+                append_text += "<a href='#' rel='" + cu[0] + "'>" + texto + "</a>"
+                append_text += "</li>";
+                if($node.find("ul").size()==0){
+                    append_text = "<ul>" + append_text + "</ul>";
+                    $node.append(append_text);
+                }else{
+                    $node.find("ul:eq(0)").append(append_text);
+                }
+                resetForm('add_node_form');
+                $(".selector span").text("Elija una opción");
+                $.fancybox.close();
+                init_tree();
+            }
+        });
+    });
+    $("#save_hierarchy").click(function(e){
+        e.preventDefault();
+        var lista =  $("ul#org");
+        genero_lista(lista);
+    });
+
+
+{% endblock %}
+
+{% block contenido %}
+        <h2 id="titulo_form" class="powermeter">
+            Configurar Jerarqu&iacute;a de Partes y Medidores - {{ building.building_name }}
+        </h2>
+
+
+        <div class="divider" id="divider_top">&nbsp;</div>
+        <span id="tree_notif" class="notif n_success">
+            La jerarqu&iacute;a de partes y medidores se ha guardado exitosamente
+        <a href="#" onclick="$(this).parent().hide();">X</a>
+        </span>
+        <p class="description">
+            Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
+            <br/>
+            Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
+        </p>
+
+        <div class="g12" id="form_container">
+                <div id="hierarchy" class="g12">
+                        <div id="chart"></div>
+                        <button id="save_hierarchy" class="aqua_btn c">Guardar Jerarqu&iacute;a</button>
+                        <div class="hidden">{{ list|safe }}</div>
+                </div>
+                <div id="fancy" class="hidden">
+                    <form action="." method="post" id="add_node_form">
+                        {% csrf_token %}
+                        <input type="hidden" name="building" value="{{ building.pk }}"/>
+                        <h1 id="title_lb">Crear Nuevo Nodo</h1>
+                        <p id="notice">
+                            Selecciona que tipo de nodo deseas agregar
+                        </p>
+                        <div class="g12" id="agregar_nodo">
+                            <div class="g3">
+                                <label class="fl"> Elija un tipo de nodo</label>
+                                <select class="fl" id="type_node" name="type_node">
+                                    <option value="0">Elija una opci&oacute;n</option>
+                                    <option value="1">
+                                        Parte de edificio
+                                    </option>
+                                    <option value="2">
+                                        Sistema o dispositivo el&eacute;ctrico
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="g3 hidden" id="choose_node_part">
+                                <label class="fl" id="label_node_part" for="node_part"> Elija un tipo de nodo</label>
+                                <select class="fl" id="node_part" name="node_part">
+                                    <option value="0">Elija una opci&oacute;n</option>
+                                </select>
+                            </div>
+                            <div class="g3 hidden" id="choose_prof_pwr">
+                                <label class="fl" id="label_pwer" for="prof_pwr"> Elija un medidor</label>
+                                <select class="fl" id="prof_pwr" name="prof_pwr">
+                                    <option value='0'>Elija una opci&oacute;n</option>
+                                    <option value='newpm'>Crear un nuevo medidor el&eacute;ctrico</option>
+                                    {% if prof_pwmeters|length > 0 %}
+                                        {% for pm in prof_pwmeters %}
+                                            <option value='{{ pm.pk }}'>{{ pm.powermeter.powermeter_anotation }}</option>
+                                        {% endfor %}
+                                    {% endif %}
+                                </select>
+
+                            </div>
+                            <div class="g3 hidden">
+                                <button id="add_node" class="aqua_btn">agregar</button>
+                            </div>
+
+                        </div>
+                    </form>
+                </div>
+
+            <div id="fancy_edit" class="hidden">
+                <form action="." method="post" id="edit_node_form">
+                    {% csrf_token %}
+                    <input type="hidden" name="consumer_unit" id="consumer_unit" value=""/>
+                    <input type="hidden" name="edit_part" value="" id="edit_part"/>
+                    <h1 id="title_lb">Editar Nodo</h1>
+                    <p id="notice">
+                        Selecciona la nueva informaci&oacute;n para la unidad de consumo, selecciona las opciones que deseas cambiar.
+                        No modifiques la lista desplegable si deseas conservar la misma información para el tipo de nodo
+                    </p>
+                    <span id="edit_notif" class="notif n_success">
+                        La parte se ha editado correctamente
+                    <a href="#" onclick="$(this).parent().hide();">X</a>
+                    </span>
+                    <div class="g12" id="agregar_nodo">
+                        <div class="g4 hidden" id="choose_node_part_edit">
+                            <label class="fl" id="label_node_part_edit" for="node_part_edit"> Elija un tipo de nodo</label>
+                            <select class="fl" id="node_part_edit" name="node_part_edit">
+                                <option value="0">Elija una opci&oacute;n</option>
+                            </select>
+                        </div>
+                        <div class="g4 hidden" id="choose_prof_pwr_edit">
+                            <label class="fl" id="label_pwer_edit" for="prof_pwr_edit">Cambiar medidor</label>
+                            <select class="fl" id="prof_pwr_edit" name="prof_pwr_edit">
+                                <option value='0'>Elija una opci&oacute;n</option>
+                                <option value='newpm'>Crear un nuevo medidor el&eacute;ctrico</option>
+                                {% if prof_pwmeters|length > 0 %}
+                                    {% for pm in prof_pwmeters %}
+                                        <option value='{{ pm.pk }}'>{{ pm.powermeter.powermeter_anotation }}</option>
+                                    {% endfor %}
+                                {% endif %}
+                            </select>
+
+                        </div>
+                        <div class="g4 hidden">
+                            <button id="edit_node" class="aqua_btn">guardar</button>
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+        </div>
+{% endblock %}

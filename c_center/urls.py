@@ -336,5 +336,12 @@ urlpatterns = patterns('',
                            'c_center.views.add_company_pop'),
                        url(r'^save_add_company_popup/',
                            'c_center.views.save_add_company_popup'),
+                       url(r'^add_building_pop/',
+                           'c_center.views.add_building_pop'),
+                       url(r'^save_add_building_popup/',
+                           'c_center.views.save_add_building_popup'),
+                       url(r'^create_hierarchy_pop/(?P<id_building>\d+)/',
+                           'c_center.views.create_hierarchy_pop'),
+
 
 )

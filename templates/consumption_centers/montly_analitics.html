@@ -102,7 +102,7 @@
             type: "GET",
             success: function(data){
                 var texto_kwh = '-';
-                console.log(data[0])
+                //console.log(data[0])
                 if(data[0].consumo_acumulado != undefined){
                     texto_kwh = addCommas(data[0].consumo_acumulado) + "kWh";
                 }
@@ -116,14 +116,14 @@
 
                 var texto_pf = '-';
                 if(data[0].factor_potencia != undefined){
-                    console.log(data[0].factor_potencia)
+                    //console.log(data[0].factor_potencia)
                     texto_pf = String(data[0].factor_potencia.toFixed(2)) + "%";
                 }
                 $("#emit_total").text(texto_pf);
 
                 var texto_emit = '-';
                 if(data[0].emisiones != undefined){
-                    texto_emit = String(parseInt(data[0].emisiones)) + "ton";
+                    texto_emit = String(parseInt(data[0].emisiones)) + " TON";
                 }
                 $("#pp_total").text(texto_emit);
 
@@ -138,13 +138,13 @@
                     month_dem_min = addCommas(data[0].demanda_min) + "kW";
                 }
                 if(data[0].consumo_promedio != undefined){
-                    month_cons_prom = addCommas(data[0].consumo_promedio.toFixed(2)) + "kWh";
+                    month_cons_prom = addCommas(data[0].consumo_promedio.toFixed(2));
                 }
                 if(data[0].consumo_mediana != undefined){
-                    month_cons_med = addCommas(data[0].consumo_mediana.toFixed(2)) + "kWh";
+                    month_cons_med = addCommas(data[0].consumo_mediana.toFixed(2)) ;
                 }
                 if(data[0].consumo_desviacion != undefined){
-                    month_cons_des = addCommas(data[0].consumo_desviacion.toFixed(2)) + "kWh";
+                    month_cons_des = addCommas(data[0].consumo_desviacion.toFixed(2)) ;
                 }
                 month_totals.find("#month_dem_min").text(month_dem_min);
                 month_totals.find("#month_cons_prom").text(month_cons_prom);
@@ -181,8 +181,8 @@
                     }
 
                     lateral_content +=     '</div>';
-                    lateral_content +=     '<a href="/main/">Ver en una gr&aacute;fica</a>';
-                    lateral_content +=     '<span class="no_bolder demanda_semanal" href="/main/?g_type=consumo&fi=' + day + '&ff=' + day + '">Demanda M&aacute;xima</span>';
+                    lateral_content +=     '<a href="/main/?g_type=consumo&fechaGrafica=' + day + '">Ver en una gr&aacute;fica</a>';
+                    lateral_content +=     '<span class="no_bolder demanda_semanal">Demanda M&aacute;xima</span>';
                     lateral_content +=     '<div id="lat_demanda">';
                     lateral_content +=     '<span class="m_value">'+ addCommas(data.d_max)+' kW</span>';
                     lateral_content +=     '<span class="s_value">'+ addCommas(data.d_max_time)+'</span>';
@@ -275,7 +275,7 @@
         starts: 7,
         onChange: function(month, selected) {
             var display_day = false;
-            console.log("selected", selected)
+            //console.log("selected", selected)
             current = month.split("-");
             c_month = current[1];
             c_year = current[0];
@@ -382,7 +382,7 @@
                 </div>
                 <div class="icon_sumary emisiones">
                     <span id="emit_total">
-                        404 ton
+                        404 TON
                     </span>
                 </div>
                 <div class="icon_sumary potencia">
@@ -393,16 +393,16 @@
             </div>
             <div class="month_totals">
                 <span class="label_tot" style="display:none;">Demanda Mínima</span>
-                <span class="value_tot" style="display:none;"id="month_dem_min">-</span>
+                <span class="value_tot" style="display:none;"id="month_dem_min">-</span><br>
 
                 <span class="label_tot">Promedio</span>
-                <span class="value_tot" id="month_cons_prom">-</span>
+                <span class="value_tot" id="month_cons_prom">-</span><br>
 
-                <span class="label_tot">Media</span>
-                <span class="value_tot" id="month_cons_med">-</span>
+                <span class="label_tot" style="clear:left;">Media</span>
+                <span class="value_tot" id="month_cons_med">-</span><br>
 
-                <span class="label_tot">Desviación</span>
-                <span class="value_tot"  id="month_cons_des">-</span>
+                <span class="label_tot" style="clear:left;">Desviación</span>
+                <span class="value_tot"  id="month_cons_des">-</span><br>
             </div>
         </div>
 

@@ -7,103 +7,35 @@
 <link rel="stylesheet" href="/static/css/forms/rbac_general.css" type="text/css" />
 <link rel="stylesheet" href="/static/css/forms/c_centers.css" type="text/css" />
 <link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css" href="/static/js/external/jquery-validator/css/validator.css">
 {% endblock %}
 {% block externaljs %}
 <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+<script type="text/javascript" src="/static/js/external/jquery-validator/js/validator.js"></script>
 <script type="text/javascript">
-    var form_valid = true;
-    var send_form = 0;
     $(document).ready(function(){
         $("#company_name").focus();
-        $(".required").each(function(){
-            var _span;
-            if ($(this).parent().next()[0].nodeName.toLowerCase() == 'input'){
-                $(this).parent().next().blur(function(e){
-
-                    if($.trim(e.delegateTarget.value)==''){
-
-                        _span = "incorrect";
-                        form_valid = false;
-                    }else{
-                        if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ ]+$/.test(e.delegateTarget.value)){
-                            _span = "correct";
-                            form_valid = true;
-                        }else{
-                            _span = "incorrect";
-                            form_valid = false;
-                        }
+        $("#company_form").validate({onsubmit: function(form){
+            $.ajax({
+                type: "POST",
+                url: "/buildings/save_add_company_popup/",
+                data: form,
+                success: function(data){
+                    if(data.type == "n_success"){
+                        parent.jQuery("#company").append("<option value='"+data.company_new+"'>"+data.post.cmp_name+"</option>");
+                        parent.jQuery("#company").parent().find("span").text(data.post.cmp_name);
+                        parent.jQuery("#company option[value='"+data.company_new+"']").attr("selected", "selected");
+                        parent.update_building_url(data.company_new);
+                        parent.jQuery.fancybox.close();
                     }
+                }
+            });
 
-                    var n_span = $("#"+e.delegateTarget.id).next();
-                    n_span.removeClass("incorrect");
-                    n_span.removeClass("correct");
-                    n_span.addClass(_span);
-                });
-            }else if ($(this).parent().next()[0].nodeName.toLowerCase() == 'select'){
-                var id_select = $(this).parent().next().attr('id')
-                $("#"+id_select).change(function(e){
-                    if($.trim(e.delegateTarget.value)==''){
-                        _span = "incorrect";
-                        form_valid = false;
-                    }else{
-                        _span = "correct";
-                        form_valid = true;
-                    }
-
-                    var n_span =  $("#"+id_select).parent().next();
-                    n_span.removeClass("incorrect");
-                    n_span.removeClass("correct");
-                    n_span.addClass(_span);
-                });
-            }
-        });
-        $("#save").click(function(){
-            validate_form();
-            return send_form == 1;
-        });
+            return false;
+        }});
     });
-    function validate_form(){
-        if (form_valid){
-            var _span;
-            var company_name = $("#company_name");
-            if(company_name.val()==''){
-                _span = "incorrect";
-                form_valid = false;
-            }else{
-                _span = "correct";
-            }
-            company_name.next().removeClass("incorrect");
-            company_name.next().removeClass("correct");
-            company_name.next().addClass(_span);
-
-            var cluster = $("#company_cluster");
-            if(cluster.val()==''){
-                _span = "incorrect";
-                form_valid = false;
-            }else{
-                _span = "correct";
-            }
-            $("#sel_cluster").removeClass("incorrect").removeClass("correct").addClass(_span);
-
-            var sector = $("#company_sector");
-            if(sector.val()==''){
-                _span = "incorrect";
-                form_valid = false;
-            }else{
-                _span = "correct";
-            }
-            $("#sel_sector").removeClass("incorrect").removeClass("correct").addClass(_span);
-
-        }
-        if (form_valid){
-            send_form++;
-        }
-
-        return form_valid
-    }
 </script>
 {% endblock %}
-
 {% block contenido %}
     {% include "consumption_centers/buildings/just_forms/just_form_add_company.html" %}
 {% endblock %}

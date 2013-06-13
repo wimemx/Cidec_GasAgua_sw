@@ -961,7 +961,8 @@ def get_consumer_unit_electrical_parameter_data_clustered(
                     value_current += consumer_unit_data.value
 
                 instant_dictionary_current['value'] = value_current
-
+            else:
+                instant_dictionary_current['value'] = None
             instants_dictionary[instant_key_current] =\
                 instant_dictionary_current.copy()
 
