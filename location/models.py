@@ -1,4 +1,14 @@
+# -*- coding: utf-8 -*-
 from django.db import models
+
+
+class Timezones(models.Model):
+    name = models.CharField(max_length=140)
+    raw_offset = models.SmallIntegerField(max_length=2)
+
+    def __unicode__(self):
+        return self.name
+
 
 class Pais(models.Model):
     pais_name = models.CharField(max_length=128)
@@ -30,7 +40,7 @@ class Municipio(models.Model):
     raw_offset = models.IntegerField(max_length=2)
     dst_offset = models.IntegerField(max_length=2)
     border = models.BooleanField(default=False)
-
+    timezone = models.ForeignKey(Timezones, on_delete=models.PROTECT)
 
     def __unicode__(self):
         return self.municipio_name

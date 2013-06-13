@@ -102,7 +102,7 @@
             type: "GET",
             success: function(data){
                 var texto_kwh = '-';
-                console.log(data[0])
+                //console.log(data[0])
                 if(data[0].consumo_acumulado != undefined){
                     texto_kwh = addCommas(data[0].consumo_acumulado) + "kWh";
                 }
@@ -116,7 +116,7 @@
 
                 var texto_pf = '-';
                 if(data[0].factor_potencia != undefined){
-                    console.log(data[0].factor_potencia)
+                    //console.log(data[0].factor_potencia)
                     texto_pf = String(data[0].factor_potencia.toFixed(2)) + "%";
                 }
                 $("#emit_total").text(texto_pf);
@@ -275,7 +275,7 @@
         starts: 7,
         onChange: function(month, selected) {
             var display_day = false;
-            console.log("selected", selected)
+            //console.log("selected", selected)
             current = month.split("-");
             c_month = current[1];
             c_year = current[0];

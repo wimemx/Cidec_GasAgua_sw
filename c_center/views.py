@@ -63,7 +63,7 @@ import sys
 from tareas.tasks import save_historic_delay, \
     change_profile_electric_data, populate_data_warehouse_extended, \
     populate_data_warehouse_specific, restore_data, tag_batch_cu, \
-    daily_report_period, tag_n_daily_report, calculateMonthlyReport
+    daily_report_period, tag_n_daily_report, calculateMonthlyReportCU
 
 VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
@@ -5651,7 +5651,7 @@ def edit_building(request, id_bld):
                                      bp_att_building_attributes_pk + ',' + \
                                      bp_att_building_attributes_value + \
                                      '"/></div>'
-
+        #TODO regresar la zona horaria
         post = {
             'b_name': buildingObj.building_name,
             'b_description': buildingObj.building_description,
@@ -5665,6 +5665,7 @@ def edit_building(request, id_bld):
             'b_state': buildingObj.estado.estado_name,
             'b_municipality_id': buildingObj.municipio_id,
             'b_municipality': buildingObj.municipio.municipio_name,
+            #'b_timezone': buildingObj.municipio.municipio_name,
             'b_neighborhood_id': buildingObj.colonia_id,
             'b_neighborhood': buildingObj.colonia.colonia_name,
             'b_street_id': buildingObj.calle_id,
@@ -9467,7 +9468,7 @@ def monthly_ajax(request):
         month = int(request.GET['month'])
         year = int(request.GET['year'])
 
-        calculateMonthlyReport.delay(consumer_unit, month, year)
+        calculateMonthlyReportCU.delay(consumer_unit, month, year)
 
         resp_dic = dict()
         resp_dic["status"] = "Success"
@@ -9594,11 +9595,12 @@ def save_add_cluster_popup(request):
             template_vars["type"] = "n_success"
         return HttpResponse(content=simplejson.dumps(template_vars),
                             content_type="application/json", status=200)
+    else:
+        raise Http404
 
 
 @login_required(login_url='/')
 def add_company_pop(request):
-    datacontext = get_buildings_context(request.user)[0]
     if has_permission(request.user, CREATE,
                       "Alta de empresas") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
@@ -9631,3 +9633,387 @@ def add_company_pop(request):
         template_vars["sidebar"] = request.session['sidebar']
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
+
+
+@login_required(login_url='/')
+def save_add_company_popup(request):
+    if has_permission(
+            request.user, CREATE,
+            "Alta de empresas") or request.user.is_superuser and \
+            request.method == "POST":
+        template_vars = dict()
+        template_vars["post"] = request.POST
+        cmp_name = request.POST.get('company_name').strip()
+        cmp_description = request.POST.get('company_description').strip()
+        cmp_cluster = request.POST.get('company_cluster')
+        cmp_sector = request.POST.get('company_sector')
+
+        message = ''
+        _type = ''
+
+        continuar = True
+        if cmp_name == '':
+            message = "El nombre de la empresa no puede quedar vacío"
+            _type = "n_notif"
+            continuar = False
+        elif not variety.validate_string(cmp_name):
+            message = "El nombre de la empresa contiene caracteres " \
+                      "inválidos"
+            _type = "n_notif"
+            cmp_name = ""
+            continuar = False
+
+        if cmp_cluster == '':
+            message = "La empresa debe pertenencer a un grupo de empresas"
+            _type = "n_notif"
+            continuar = False
+
+        if cmp_sector == '':
+            message = "La empresa debe pertenencer a un sector"
+            _type = "n_notif"
+            continuar = False
+
+        #Valida no puede haber empresas con el mismo nombre
+        companyValidate = Company.objects.filter(company_name=cmp_name)
+        if companyValidate:
+            message = "Ya existe una empresa con ese nombre"
+            _type = "n_notif"
+            continuar = False
+
+        post = {'cmp_name': cmp_name, 'cmp_description': cmp_description,
+                'cmp_cluster': int(cmp_cluster),
+                'cmp_sector': int(cmp_sector)}
+
+        if continuar:
+            template_vars["post"] = post
+            template_vars["message"] = message
+            template_vars["type"] = _type
+            #Se obtiene el objeto del sector
+            sectorObj = SectoralType.objects.get(pk=cmp_sector)
+
+            newCompany = Company(
+                sectoral_type=sectorObj,
+                company_name=cmp_name,
+                company_description=cmp_description
+            )
+            newCompany.save()
+            template_vars["company_new"] = newCompany.pk
+            #Se relaciona la empresa con el cluster
+            #Se obtiene el objeto del cluster
+            clusterObj = Cluster.objects.get(pk=cmp_cluster)
+
+            newCompanyCluster = ClusterCompany(
+                cluster=clusterObj,
+                company=newCompany
+            )
+            newCompanyCluster.save()
+
+            #Guarda la foto
+            if 'logo' in request.FILES:
+                handle_company_logo(request.FILES['logo'], newCompany, True)
+
+            template_vars["message"] = "Empresa creada exitosamente"
+            template_vars["type"] = "n_success"
+
+        return HttpResponse(content=simplejson.dumps(template_vars),
+                        content_type="application/json", status=200)
+    else:
+        raise Http404
+
+
+@login_required(login_url='/')
+def add_building_pop(request):
+    if has_permission(request.user, CREATE,
+                      "Alta de edificios") or request.user.is_superuser:
+        #Se obtienen las empresas
+        empresas_lst = get_all_companies_for_operation("Alta de edificios",
+                                                       CREATE, request.user)
+        empresa = request.GET['company']
+        #Se obtienen las tarifas
+        tarifas = ElectricRates.objects.all()
+
+        #Se obtienen los tipos de edificios
+        tipos_edificio_lst = BuildingType.objects.filter(
+            building_type_status=1).order_by('building_type_name')
+
+        #Se obtienen las regiones
+        regiones_lst = Region.objects.all()
+
+        #Se obtienen los tipos de atributos de edificios
+        tipos_atributos = BuildingAttributesType.objects.filter(
+            building_attributes_type_status=1).order_by(
+            'building_attributes_type_name')
+
+        template_vars = dict(datacontext=datacontext,
+                             company=company,
+                             post=post,
+                             empresas_lst=empresas_lst,
+                             tipos_edificio_lst=tipos_edificio_lst,
+                             tarifas=tarifas,
+                             regiones_lst=regiones_lst,
+                             tipos_atributos=tipos_atributos,
+                             sidebar=request.session['sidebar']
+        )
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response(
+            "consumption_centers/buildings/popups/popup_add_building.html",
+            template_vars_template)
+    else:
+        datacontext = get_buildings_context(request.user)[0]
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
+
+
+@login_required(login_url='/')
+def save_add_building_popup(request):
+    if has_permission(
+            request.user, CREATE,
+            "Alta de edificios") or request.user.is_superuser and \
+            request.method == "POST":
+        message = ''
+        _type = ''
+        template_vars["post"] = request.POST
+        b_name = request.POST.get('b_name').strip()
+        b_description = request.POST.get('b_description').strip()
+        b_company = request.POST.get('b_company')
+        b_type_arr = request.POST.getlist('b_type')
+        b_mt2 = request.POST.get('b_mt2').strip()
+        b_electric_rate_id = request.POST.get('b_electric_rate')
+        b_country_id = request.POST.get('b_country_id')
+        b_country_name = request.POST.get('b_country').strip()
+        b_state_id = request.POST.get('b_state_id')
+        b_state_name = request.POST.get('b_state').strip()
+        b_municipality_id = request.POST.get('b_municipality_id')
+        b_municipality_name = request.POST.get('b_municipality').strip()
+        b_neighborhood_id = request.POST.get('b_neighborhood_id')
+        b_neighborhood_name = request.POST.get('b_neighborhood').strip()
+        b_street_id = request.POST.get('b_street_id')
+        b_street_name = request.POST.get('b_street').strip()
+        b_ext = request.POST.get('b_ext').strip()
+        b_int = request.POST.get('b_int').strip()
+        b_zip = request.POST.get('b_zip').strip()
+        b_long = request.POST.get('b_longitude')
+        b_lat = request.POST.get('b_latitude')
+        b_region_id = request.POST.get('b_region')
+
+        if not bool(b_int):
+            b_int = '0'
+
+        if not bool(b_mt2):
+            b_mt2 = '0'
+        else:
+            b_mt2 = b_mt2.replace(",", "")
+
+        continuar = True
+        if b_name == '':
+            message += "El nombre del Edificio no puede quedar vacío"
+            _type = "n_notif"
+            continuar = False
+        elif not variety.validate_string(b_name):
+            message += "El nombre del Edificio contiene caracteres " \
+                       "inválidos"
+            _type = "n_notif"
+            b_name = ""
+            continuar = False
+
+        if b_company == '':
+            message += " - Se debe seleccionar una empresa"
+            _type = "n_notif"
+            continuar = False
+
+        if not b_type_arr:
+            message += " - El edificio debe ser al menos de un tipo"
+            _type = "n_notif"
+            continuar = False
+
+        if b_electric_rate_id == '':
+            message += " - Se debe seleccionar un tipo de tarifa"
+            _type = "n_notif"
+            continuar = False
+
+        if b_ext == '':
+            message += " - El edificio debe tener un número exterior"
+            _type = "n_notif"
+            continuar = False
+
+        if b_zip == '':
+            message += " - El edificio debe tener un código postal"
+            _type = "n_notif"
+            continuar = False
+
+        if b_long == '' and b_lat == '':
+            message += " - Debes ubicar el edificio en el mapa"
+            _type = "n_notif"
+            continuar = False
+
+        if b_region_id == '':
+            message += " - El edificio debe pertenecer a una región"
+            _type = "n_notif"
+            continuar = False
+
+        #Valida por si le da muchos clics al boton
+        buildingValidate = Building.objects.filter(building_name=b_name)
+        if buildingValidate:
+            message = "Ya existe un Edificio con ese nombre"
+            _type = "n_notif"
+            continuar = False
+
+        post = {
+            'b_name': b_name,
+            'b_description': b_description,
+            'b_company': int(b_company),
+            'b_type_arr': b_type_arr,
+            'b_mt2': b_mt2,
+            'b_electric_rate_id': int(b_electric_rate_id),
+            'b_country_id': b_country_id,
+            'b_country': b_country_name,
+            'b_state_id': b_state_id,
+            'b_state': b_state_name,
+            'b_municipality_id': b_municipality_id,
+            'b_municipality': b_municipality_name,
+            'b_neighborhood_id': b_neighborhood_id,
+            'b_neighborhood': b_neighborhood_name,
+            'b_street_id': b_street_id,
+            'b_street': b_street_name,
+            'b_ext': b_ext,
+            'b_int': b_int,
+            'b_zip': b_zip,
+            'b_long': b_long,
+            'b_lat': b_lat,
+            'b_region_id': int(b_region_id)
+        }
+
+        if continuar:
+            #se obtiene el objeto de la tarifa
+            tarifaObj = get_object_or_404(ElectricRates,
+                                          pk=b_electric_rate_id)
+
+            #Se obtiene la compañia
+            companyObj = get_object_or_404(Company, pk=b_company)
+
+            #Se obtiene el objeto de la region
+            regionObj = get_object_or_404(Region, pk=b_region_id)
+
+            countryObj, stateObj, municipalityObj, neighborhoodObj, \
+            streetObj = location_objects(
+                b_country_id, b_country_name,
+                b_state_id, b_state_name, b_municipality_id,
+                b_municipality_name, b_neighborhood_id, b_neighborhood_name,
+                b_street_id, b_street_name)
+
+            #Se crea la cadena con la direccion concatenada
+            formatted_address = streetObj.calle_name + " " + b_ext
+            if b_int:
+                formatted_address += "-" + b_int
+            formatted_address += " Colonia: " + \
+                                 neighborhoodObj.colonia_name + " " + \
+                                 municipalityObj.municipio_name
+            formatted_address += " " + stateObj.estado_name + " " + \
+                                 countryObj.pais_name + "C.P." + b_zip
+
+            #Se da de alta el edificio
+            newBuilding = Building(
+                building_name=b_name,
+                building_description=b_description,
+                building_formatted_address=formatted_address,
+                pais=countryObj,
+                estado=stateObj,
+                municipio=municipalityObj,
+                colonia=neighborhoodObj,
+                calle=streetObj,
+                region=regionObj,
+                building_external_number=b_ext,
+                building_internal_number=b_int,
+                building_code_zone=b_zip,
+                building_long_address=b_long,
+                building_lat_address=b_lat,
+                electric_rate=tarifaObj,
+                mts2_built=b_mt2,
+            )
+            newBuilding.save()
+            template_vars["building"] = newBuilding.pk
+            #Se da de alta la fecha de corte
+
+            date_init = datetime.datetime.today().utcnow().replace(
+                tzinfo=pytz.utc)
+            billing_month = datetime.date(year=date_init.year,
+                                          month=date_init.month, day=1)
+
+            new_cut = MonthlyCutDates(
+                building=newBuilding,
+                billing_month=billing_month,
+                date_init=date_init,
+            )
+            new_cut.save()
+
+            #Se relaciona la compania con el edificio
+            newBldComp = CompanyBuilding(
+                company=companyObj,
+                building=newBuilding,
+            )
+            newBldComp.save()
+
+            #Se dan de alta los tipos de edificio
+            for b_type in b_type_arr:
+                #Se obtiene el objeto del tipo de edificio
+                typeObj = get_object_or_404(BuildingType, pk=b_type)
+                bt_n = newBuilding.building_name + " - " + \
+                       typeObj.building_type_name
+                newBuildingTypeBuilding = BuildingTypeForBuilding(
+                    building=newBuilding,
+                    building_type=typeObj,
+                    building_type_for_building_name=bt_n
+                )
+                newBuildingTypeBuilding.save()
+
+            for key in request.POST:
+                if re.search('^atributo_\w+', key):
+                    atr_value_complete = request.POST.get(key)
+                    atr_value_arr = atr_value_complete.split(',')
+                    #Se obtiene el objeto tipo de atributo
+                    #Se obtiene el objeto atributo
+                    attribute_obj = BuildingAttributes.objects.get(
+                        pk=atr_value_arr[1])
+
+                    newBldAtt = BuildingAttributesForBuilding(
+                        building=newBuilding,
+                        building_attributes=attribute_obj,
+                        building_attributes_value=atr_value_arr[2]
+                    )
+                    newBldAtt.save()
+
+            electric_device_type = ElectricDeviceType.objects.get(
+                electric_device_type_name="Total Edificio")
+            cu = ConsumerUnit(
+                building=newBuilding,
+                electric_device_type=electric_device_type,
+                profile_powermeter=VIRTUAL_PROFILE
+            )
+            cu.save()
+            #Add the consumer_unit instance for the DW
+            populate_data_warehouse_extended(
+                populate_instants=None,
+                populate_consumer_unit_profiles=True,
+                populate_data=None)
+
+            template_vars["message"] = "Edificio creado exitosamente"
+            template_vars["type"] = "n_success"
+
+            if has_permission(request.user, VIEW,
+                              "Ver edificios") or request.user.is_superuser:
+                return HttpResponseRedirect("/buildings/edificios?msj=" +
+                                            template_vars["message"] +
+                                            "&ntype=n_success")
+        template_vars["post"] = post
+        template_vars["message"] = message
+        template_vars["type"] = _type
+
+        return HttpResponse(content=simplejson.dumps(template_vars),
+                        content_type="application/json", status=200)
+    else:
+        raise Http404
