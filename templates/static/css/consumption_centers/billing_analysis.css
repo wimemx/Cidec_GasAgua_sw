@@ -233,8 +233,9 @@ iframe body{overflow: hidden;}
 
 .periodo_info{
     float: left;
-    width: 33%;
+    width: 28%;
     padding-top: 30px;
+    margin: 0 0 0 15px;
 }
 
 .periodo_porcentajes{
@@ -252,12 +253,12 @@ iframe body{overflow: hidden;}
 
 .positive{
     color: #4d5b65 ;
-    font-size: 28px;
+    font-size: 22px;
 }
 
 .negative{
     color: #f78a3d;
-    font-size: 28px;
+    font-size: 23px;
 }
 
 #color_legend_base{

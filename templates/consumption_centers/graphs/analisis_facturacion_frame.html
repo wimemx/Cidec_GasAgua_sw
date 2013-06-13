@@ -135,7 +135,7 @@
                     new google.visualization.BarChart(document.getElementById('m_kwh_periodo_graph')).
                             draw(data4,
                             {
-                                width:500, height:250, colors:['#5093c7','#f78a3d','#cb4d56'],legend:'none'
+                                width:450, height:250, colors:['#5093c7','#f78a3d','#cb4d56'],legend:'none'
 
                             }
                     );
@@ -420,9 +420,9 @@
                 </div>
                 <div id="periodo_container">
                     <div class="periodo_info">
-                        <div class="label_data">
+                        <div class="label_data" style="margin-left: 25px;">
                         <span id="color_legend_base"></span>
-                        <span class="periodo_label">Base:</span>
+                        <span class="periodo_label">Base:</span><br><br>
                         {% if positive_b == -1  %}
                             <img src="/static/css/images/imgs_icns/ba_up_arrow_small.png"/>
                             <span class="periodo_porcentajes positive">{{ diff_tbase|floatformat:2 }}%</span>
@@ -441,9 +441,9 @@
                         </div>
                     </div>
                     <div class="periodo_info">
-                        <div class="label_data">
+                        <div class="label_data" style="margin-left: 25px;">
                         <span id="color_legend_intermedio"></span>
-                        <span class="periodo_label">Intermedio:</span>
+                        <span class="periodo_label">Intermedio:</span><br><br>
                         {% if positive_i == -1  %}
                             <img src="/static/css/images/imgs_icns/ba_up_arrow_small.png"/>
                             <span class="periodo_porcentajes positive">{{ diff_tint|floatformat:2 }}%</span>
@@ -463,9 +463,9 @@
                         </div>
                     </div>
                     <div class="periodo_info">
-                        <div class="label_data">
+                        <div class="label_data" style="margin-left: 25px;">
                         <span id="color_legend_punta"></span>
-                        <span class="periodo_label">Punta:</span>
+                        <span class="periodo_label">Punta:</span><br><br>
                         {% if positive_p == -1  %}
                             <img src="/static/css/images/imgs_icns/ba_up_arrow_small.png"/>
                             <span class="periodo_porcentajes positive">{{ diff_tpunta|floatformat:2 }}%</span>
