@@ -25,6 +25,7 @@
                         parent.jQuery("#company_cluster").append("<option value='"+data.cluster_new+"'>"+data.post.clustername+"</option>");
                         parent.jQuery("#company_cluster").parent().find("span").text(data.post.clustername);
                         parent.jQuery("#company_cluster option[value='"+data.cluster_new+"']").attr("selected", "selected");
+                        parent.update_company_url(data.cluster_new);
                         parent.jQuery.fancybox.close();
                     }
                 }

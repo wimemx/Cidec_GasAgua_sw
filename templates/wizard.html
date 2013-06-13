@@ -18,7 +18,8 @@ $(document).ready(function(){
           labelFinish: "Finalizar",
           transitionEffect:'slideleft',
           onLeaveStep:leaveAStepCallback,
-          onFinish:onFinishCallback,enableFinishButton:true});
+          onFinish:onFinishCallback,
+          enableFinishButton:true});
 
       function leaveAStepCallback(obj){
         var step_num= obj.attr('rel');
@@ -92,12 +93,64 @@ $(document).ready(function(){
 
         return isValid;
     }
+
+    var non_selected_building = function(){
+        var building = $("#building");
+        building.parent().find("span").text("Selecciona un edificio");
+        building.html('<option value="0">Selecciona un edificio</option>');
+        building.find('option[value="0"]').attr("selected", "selected");
+    };
+    var non_selected_company = function(){
+        var company = $("company");
+        company.parent().find("span").text("Selecciona una empresa");
+        company.html('<option value="0">Selecciona una empresa</option>');
+        company.find('option[value="0"]').attr("selected", "selected");
+    };
+    var update_company_url = function(cluster){
+        var add_c = $("#add_empresa");
+        var url = add_c.attr("href");
+        url = url.split("/");
+        url.splice(3, url.length-1);
+        url = url.join("/");
+        url = url+"/?company="+cluster;
+        add_c.attr("href", url);
+    };
+    var update_building_url = function(company){
+        var add_b = $("#add_building");
+        var url = add_b.attr("href");
+        url = url.split("/");
+        url.splice(3, url.length-1);
+        url = url.join("/");
+        url = url+"/?company="+company;
+        add_b.attr("href", url);
+    };
+
+    var building_set = function(building){
+        var url = "/buildings/create_hierarchy_pop/"+building+"/";
+        var graphFrame = document.createElement("IFRAME");
+        graphFrame.id = "graphFrame";
+        graphFrame.src = url;
+        $("#step-2").html(graphFrame);
+        refresh_iframe_height();
+    };
+
+    function refresh_iframe_height(){
+        // regresca el height del iframe para ajustarse a su conte
+        setTimeout("parent.document.getElementById('graphFrame').height = 600;", 1000);
+    }
+
+    function added_user(username, fname, lname){
+        var messages = $("#messages");
+        messages.append("<span class='msj'>"+fname+" "+lname+" se ha dado de alta con el nombre de usuario '"+username+"'<a onclick=function(){$(this).parent().remove();}>X</a></span>");
+    }
+
+
 </script>
 
 {% endblock %}
 {% block document_ready %}
     $(".add").fancybox({
-        maxWidth	: 900,
+        maxWidth	: 1000,
         maxHeight	: 800,
         fitToView	: false,
         width		: '70%',
@@ -113,16 +166,7 @@ $(document).ready(function(){
             return false;
         }
     });
-    var non_selected_building = function(){
-        $("#building").parent().find("span").text("Selecciona un edificio");
-        $("#building").html('<option value="0">Selecciona un edificio</option>');
-        $('#building option[value="0"]').attr("selected", "selected");
-    }
-    var non_selected_company = function(){
-        $("#company").parent().find("span").text("Selecciona una empresa");
-        $("#company").html('<option value="0">Selecciona una empresa</option>');
-        $('#company option[value="0"]').attr("selected", "selected");
-    }
+
     $("#company_cluster").change(function(){
         var cluster = $(this).val();
         if(cluster>0){
@@ -134,13 +178,8 @@ $(document).ready(function(){
                 success: function(datos){
                     var append_text = '';
                     var notice_text = '';
-                    var url = $("#add_empresa").attr("href");
-                    url = url.split("/");
-                    url.splice(3, url.length-1);
-                    url = url.join("/");
-                    url = url+"/?company="+cluster;
-                    $("#add_empresa").attr("href", url);
 
+                    update_company_url(cluster);
 
                     if(datos[0].all == "none"){
                         notice_text = 'Tu esquema de permisos no tiene permitido dar de alta nuevas empresas para la instalación de un equipo industrial.'+
@@ -176,6 +215,7 @@ $(document).ready(function(){
     });
     $("#company").change(function(){
         if($(this).val()>0){
+            var company = $(this).val();
             $.ajax({
                 url: "/buildings/get_company_buildings/"+$(this).val()+"/?op={{ operation }}",
                 type: "GET",
@@ -188,6 +228,9 @@ $(document).ready(function(){
                         notice_text = 'Tu esquema de permisos no tiene permitido dar de alta nuevos edificios para la instalación de un equipo industrial.'+
                                       'Por favor ponte en contacto con el administrador';
                     }else{
+
+                        update_building_url(company);
+
                         var first_option = '';
                         first_option='<option value="0">'+
                                 'Selecciona un edificio</option>';
@@ -211,6 +254,12 @@ $(document).ready(function(){
             });
         }else{
             non_selected_building();
+        }
+    });
+
+    $("#building").change(function(){
+        if($(this).val()>0){
+            building_set($(this).val());
         }
     });
 
@@ -281,7 +330,7 @@ $(document).ready(function(){
 
                     <div id="step-1">
                         <div class="form_content g12">
-                            <div class="g12" id="add_cluster">
+                            <div class="g12" id="add_cluster_cont">
                                 <span class="notice g12"></span>
                                 <label for="company_cluster" class="g2">Grupo de empresas<span class="required">*</span></label>
                                 <select name="company_cluster" id="company_cluster" class="g9">
@@ -295,7 +344,7 @@ $(document).ready(function(){
                                 </select>
                                 <a href="/buildings/add_cluster_pop/" class="add" data-fancybox-type="iframe">Nuevo grupo de empresas</a>
                             </div>
-                            <div class="g12" id="add_company">
+                            <div class="g12" id="add_company_cont">
                                 <span class="notice g12"></span>
                                 <label for="company" class="g2">Empresa<span class="required">*</span></label>
                                 <select name="company" id="company" class="g9">
@@ -303,21 +352,29 @@ $(document).ready(function(){
                                 </select>
                                 <a href="/buildings/add_company_pop/" id="add_empresa" class="add" data-fancybox-type="iframe">Nueva empresa</a>
                             </div>
-                            <div class="g12" id="add_building">
+                            <div class="g12" id="add_building_cont">
                                 <span class="notice g12"></span>
                                 <label for="building" class="g2">Edificio<span class="required">*</span></label>
                                 <select name="building" id="building" class="g9">
                                     <option value="0">Selecciona un edificio</option>
                                 </select>
-                                <a href="/buildings/add_company_pop/" class="add" data-fancybox-type="iframe">Nuevo edificio</a>
+                                <a href="/buildings/add_building_pop/" id="add_building" class="add" data-fancybox-type="iframe">Nuevo edificio</a>
                             </div>
                         </div>
                     </div>
                     <div id="step-2">
 
+
                     </div>
                     <div id="step-3">
-
+                        <div class="form_content g12">
+                            <span id="messages"></span>
+                            <ul id="user_role_options">
+                                <li>
+                                    <a id="add_user"  class="add" data-fancybox-type="iframe">Alta de usuarios</a>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                     <div id="step-4">
 

@@ -8,14 +8,13 @@ from django.shortcuts import render_to_response, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.template.context import RequestContext
 from django.db.models import Q, Count
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.db.models.deletion import ProtectedError
 from django.contrib.auth.decorators import login_required
 from location.models import *
 from rbac.models import Operation
-from rbac.rbac_functions import  has_permission, get_buildings_context
-from c_center.views import graphs_permission
+from rbac.rbac_functions import  get_buildings_context
+
 
 VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
@@ -1670,28 +1669,39 @@ def get_select_municipalities(request, id_state, id_region):
 
     return HttpResponse(content=string_to_return, content_type="text/html")
 
-def get_datetime_type(request, date_capture, c_unit):
-    #Regresa un offset y  un datetime con el ajuste de hora realizado dependiendo la fecha
 
+def get_datetime_type(request, date_capture, c_unit):
+    """Regresa un offset y  un datetime con el ajuste de hora realizado
+    dependiendo la fecha
+
+    :param request:
+    :param date_capture: naive datetime
+    :param c_unit: ConsumerUnit object
+    :return:
+    """
     isborder= c_unit.building.municipio.border
 
     if isborder:
-        periodos = DateSavingTimes.objects.get(date_start__gte= date_capture,
-                                              date_end__lte=date_capture, identifier__contains='frontera')
+        periodos = DateSavingTimes.objects.filter(
+            date_start__gte= date_capture,
+            date_end__lte=date_capture,
+            identifier__contains='frontera')
     else:
-        periodos = DateSavingTimes.objects.get(date_start__gte= date_capture,
-                                              date_end__lte=date_capture, ~Q(identifier__contains='frontera'))
+        periodos = DateSavingTimes.objects.filter(
+            date_start__gte= date_capture,
+            date_end__lte=date_capture).exclude(
+            identifier__contains='frontera')
 
+    if periodos:
+        periodos = periodos[0]
+        if periodos.period == 'Verano':
+            offset = c_unit.building.municipio.dst_offset
+        else:
+            offset = c_unit.building.municipio.raw_offset
 
-    if periodos.periodo == 'Verano':
-        offset = c_unit.building.municipio.dst_offset
-    else:
-        offset = c_unit.building.municipio.raw_offset
+        date_capture = date_capture +  datetime.timedelta(hours=offset)
 
-    date_capture = date_capture +  datetime.timedelta(hours=offset)
-
-
-    return offset, date_capture
+        return offset, date_capture
 
 
 

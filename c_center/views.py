@@ -9728,7 +9728,7 @@ def add_building_pop(request):
         #Se obtienen las empresas
         empresas_lst = get_all_companies_for_operation("Alta de edificios",
                                                        CREATE, request.user)
-        empresa = request.GET['company']
+        empresa = int(request.GET['company'])
         #Se obtienen las tarifas
         tarifas = ElectricRates.objects.all()
 
@@ -9742,17 +9742,14 @@ def add_building_pop(request):
         #Se obtienen los tipos de atributos de edificios
         tipos_atributos = BuildingAttributesType.objects.filter(
             building_attributes_type_status=1).order_by(
-            'building_attributes_type_name')
+                'building_attributes_type_name')
 
-        template_vars = dict(datacontext=datacontext,
-                             company=company,
-                             post=post,
-                             empresas_lst=empresas_lst,
+        template_vars = dict(empresas_lst=empresas_lst,
                              tipos_edificio_lst=tipos_edificio_lst,
                              tarifas=tarifas,
                              regiones_lst=regiones_lst,
                              tipos_atributos=tipos_atributos,
-                             sidebar=request.session['sidebar']
+                             empresa=empresa
         )
 
         template_vars_template = RequestContext(request, template_vars)
@@ -9775,6 +9772,7 @@ def save_add_building_popup(request):
             request.user, CREATE,
             "Alta de edificios") or request.user.is_superuser and \
             request.method == "POST":
+        template_vars = dict()
         message = ''
         _type = ''
         template_vars["post"] = request.POST
@@ -10004,16 +10002,39 @@ def save_add_building_popup(request):
             template_vars["message"] = "Edificio creado exitosamente"
             template_vars["type"] = "n_success"
 
-            if has_permission(request.user, VIEW,
-                              "Ver edificios") or request.user.is_superuser:
-                return HttpResponseRedirect("/buildings/edificios?msj=" +
-                                            template_vars["message"] +
-                                            "&ntype=n_success")
         template_vars["post"] = post
-        template_vars["message"] = message
-        template_vars["type"] = _type
 
         return HttpResponse(content=simplejson.dumps(template_vars),
                         content_type="application/json", status=200)
     else:
         raise Http404
+
+
+@login_required(login_url='/')
+def create_hierarchy_pop(request, id_building):
+    template_vars = dict()
+
+    if has_permission(request.user, CREATE,
+                      "Alta de jerarquía de partes") or \
+            request.user.is_superuser:
+        building = get_object_or_404(Building, pk=id_building)
+        _list = get_hierarchy_list(building, request.user)
+        template_vars['list'] = _list
+        template_vars['building'] = building
+
+        cus = ConsumerUnit.objects.all()
+        ids_prof = [cu.profile_powermeter.pk for cu in cus]
+        profs = ProfilePowermeter.objects.exclude(
+            pk__in=ids_prof).exclude(
+            powermeter__powermeter_anotation="No Registrado").exclude(
+            powermeter__powermeter_anotation="Medidor Virtual"
+        )
+        template_vars['electric_devices'] = ElectricDeviceType.objects.all()
+        template_vars['prof_pwmeters'] = profs
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response(
+            "consumption_centers/buildings/popups/popup_create_hierarchy.html",
+            template_vars_template)
+    else:
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)

@@ -25,6 +25,7 @@
                         parent.jQuery("#company").append("<option value='"+data.company_new+"'>"+data.post.cmp_name+"</option>");
                         parent.jQuery("#company").parent().find("span").text(data.post.cmp_name);
                         parent.jQuery("#company option[value='"+data.company_new+"']").attr("selected", "selected");
+                        parent.update_building_url(data.company_new);
                         parent.jQuery.fancybox.close();
                     }
                 }

@@ -147,7 +147,7 @@ class DateSavingTimes(models.Model):
               ("invierno", "invierno"))
 
     identifier = models.CharField(max_length=100)
-    period = models.CharField(choices=period,max_length=20)
+    period = models.CharField(choices=period, max_length=20)
     date_start = models.DateTimeField()
     date_end = models.DateTimeField()
 

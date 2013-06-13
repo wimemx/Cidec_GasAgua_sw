@@ -16,7 +16,7 @@
         <br/>
         Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
     </p>
-    <form method="post" action=".">
+    <form method="post" action="." id="building_form">
         {% csrf_token %}
         <div>
         <div class="building_info_top">
@@ -37,11 +37,12 @@
                 </div>
                 <div class="fields_row g12">
                     <label for="b_company" class="g3">Empresa<span class="required">*</span></label>
-                    <select name="b_company" id="b_company" class="g8">
+                    {% if empresa %}<input type="hidden" value="{{ empresa }}" name="b_company">{% endif %}
+                    <select name="b_company" id="b_company" class="g8" {% if empresa %}disabled="disabled" {% endif %}>
                         <option value="">Selecciona una empresa</option>
                         {% if empresas_lst %}
                         {% for empr in empresas_lst %}
-                        <option value="{{empr.id}}" {% if post.b_company == empr.id %} selected {% endif %}>{{ empr.company_name }}</option>
+                        <option value="{{empr.id}}" {% if post.b_company == empr.id or empr.id == empresa%} selected {% endif %}>{{ empr.company_name }}</option>
                         {% endfor %}
                         {% endif %}
 
@@ -156,14 +157,6 @@
                         {% endfor %}
                         {% endif %}
 
-                    </select>
-                    <span id="sel_region"></span>
-                </div>
-                <div class="fields_row g12">
-                    <label for="time_zone" class="g3">Zona Horaria<span class="required">*</span></label>
-                    <select name="time_zone" id="time_zone" class="g8">
-                        <option value="">Selecciona una zona horaria</option>
-                        <option value="{{rgn.id}}" {% if post.b_municipality == rgn.id %} selected {% endif %}>{{ rgn.region_name }}</option>
                     </select>
                     <span id="sel_region"></span>
                 </div>

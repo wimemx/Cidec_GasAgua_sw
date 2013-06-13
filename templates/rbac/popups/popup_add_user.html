@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "popup_forms_base.html" %}
 {% block titulo %}
     {% if operation == "edit" %}Editar{% else %}Alta de{% endif %} usuario
 {% endblock %}
@@ -85,9 +85,23 @@
                     n_span.addClass(_span);
                 });
             });
-            $("#save").click(function(){
+            $("#save").click(function(evt){
+                evt.preventDefault();
                 validate_form();
-                return send_form == 1;
+                if(send_form == 1){
+                    var form = $("#add_user_form").serialize();
+                    $.ajax({
+                        url: "/rbac/save_user_pop/",
+                        type: "post",
+                        data: form,
+                        success: function(data){
+                            if(data.type == "n_success"){
+                                parent.added_user(data.username, data.fname, data.lname);
+                                parent.jQuery.fancybox.close();
+                            }
+                        }
+                    });
+                }
             });
         });
     function validate_form(){
@@ -95,16 +109,16 @@
 
             var _span;
 
-
-            if($.trim($("#dob").val()) == ''){
+            var dob = $("#dob");
+            if($.trim(dob.val()) == ''){
                 _span = "incorrect";
                 form_valid = false;
             }else{
                 _span = "correct";
             }
-            $("#dob").next().removeClass("incorrect");
-            $("#dob").next().removeClass("correct");
-            $("#dob").next().addClass(_span);
+            dob.next().removeClass("incorrect");
+            dob.next().removeClass("correct");
+            dob.next().addClass(_span);
 
 
 
@@ -207,36 +221,6 @@
     </script>
 {% endblock %}
 
-{% block breadcumbs %}
-
-    <div id="bread_crumbs">
-    <a href="/profile/{{ request.user.pk }}/" class="fl username">{{ request.user.first_name }} {{ request.user.last_name }}</a>
-        <ul>
-            <li><a href="/main/">Inicio</a></li>
-            <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
-            <li><a href="/panel_de_control/usuarios/">Usuarios</a></li>
-            {% if operation == "edit" %}
-                <li>
-
-                        Edici&oacute;n de usuario
-
-                </li>
-            {% else %}
-                <li>Alta de usuario</li>
-            {% endif %}
-
-        </ul>
-
-    </div>
-
-{% endblock %}
-
 {% block contenido %}
-
-
-<div id="page_content">
-    <div id="contenido_interno">
-        {% include "rbac/just_forms/just_form_add_user.html" %}
-    </div>
-</div>
+{% include "rbac/just_forms/just_form_add_user.html" %}
 {% endblock %}

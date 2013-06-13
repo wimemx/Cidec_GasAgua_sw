@@ -1555,3 +1555,95 @@ def forgot_password(request):
     return render_to_response("forgot_password.html",
                                   template_vars_template)
 
+
+@login_required(login_url="/")
+def add_user_pop(request):
+    if has_permission(request.user, CREATE, "Alta de usuarios") or \
+            request.user.is_superuser:
+        datacontext = get_buildings_context(request.user)[0]
+        empresa = request.session['main_building']
+        company = request.session['company']
+        template_vars = dict(sidebar=request.session['sidebar'],
+                             datacontext=datacontext,
+                             company=company)
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("rbac/add_user.html", template_vars_template)
+    else:
+        datacontext = get_buildings_context(request.user)[0]
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
+
+
+@login_required(login_url="/")
+def save_user_pop(request):
+    if request.method == "POST":
+        template_vars = dict()
+        post = variety.get_post_data(request.POST)
+        template_vars["post"] = post
+        valid = validate_user(post)
+
+        if valid:
+            age = int((date.today() - valid['fnac']).days / 365.25)
+
+            if age < 18:
+                template_vars["message"] = "El usuario debe de ser " \
+                                           "mayor de 18 a&ntilde;os"
+                template_vars["type"] = "n_notif"
+            elif age > 90:
+                template_vars["message"] = "Edad incorrecta, por favor " \
+                                           "revise la fecha de nacimiento"
+                template_vars["type"] = "n_notif"
+            else:
+                try:
+                    newUser = User.objects.create_user(valid['username'],
+                                                       valid['mail'],
+                                                       valid['pass'])
+                except IntegrityError:
+                    template_vars["message"] = "El nombre de usuario " \
+                                               "ya existe, por favor " \
+                                               "elija otro e intente " \
+                                               "de nuevo"
+                    template_vars["type"] = "n_notif"
+                else:
+                    newUser.first_name = valid['name']
+                    newUser.last_name = valid['last_name']
+                    newUser.is_staff = False
+                    newUser.is_active = True
+                    newUser.is_superuser = False
+                    newUser.save()
+                    template_vars["username"] = newUser.username
+                    template_vars["fname"] = newUser.first_name
+                    template_vars["lname"] = newUser.last_name
+                    user_activation_key = variety.random_string_generator(
+                        size=10)
+                    ExtendedUser(
+                        user=newUser,
+                        user_activation_key=user_activation_key
+                    ).save()
+                    UserProfile(
+                        user=newUser,
+                        user_profile_surname_mother=valid['surname'],
+                        user_profile_birth_dates=valid['fnac'],
+                        user_profile_sex=request.POST['sex'],
+                        user_profile_office_phone1=request.POST['tel_o'],
+                        user_profile_mobile_phone=request.POST['tel_m'],
+                        user_profile_contact_email=valid['mail']
+                    ).save()
+
+                    template_vars["message"] = "Usuario creado exitosamente"
+                    template_vars["type"] = "n_success"
+
+        else:
+            template_vars["message"] = "Ha ocurrido un error al validar " \
+                                       "los datos por favor revise que no" \
+                                       " haya caracteres inv&aacute;lidos"
+            template_vars["type"] = "n_notif"
+        return HttpResponse(content=simplejson.dumps(template_vars),
+                        content_type="application/json", status=200)
+    else:
+        raise Http404

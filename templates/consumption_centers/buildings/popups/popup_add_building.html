@@ -86,10 +86,26 @@
                 });
             }
         });
-        $("#save").click(function(){
-
+        $("#save").click(function(evt){
+            evt.preventDefault();
             validate_form();
-            return send_form == 1;
+            if(send_form == 1){
+                var form = $("#building_form").serialize();
+                $.ajax({
+                    type: "POST",
+                    url: "/buildings/save_add_building_popup/",
+                    data: form,
+                    success: function(data){
+                        if(data.type == "n_success"){
+                            parent.jQuery("#building").append("<option value='"+data.building+"'>"+data.post.b_name+"</option>");
+                            parent.jQuery("#building").parent().find("span").text(data.post.b_name);
+                            parent.jQuery("#building option[value='"+data.building+"']").attr("selected", "selected");
+                            parent.building_set(data.building);
+                            parent.jQuery.fancybox.close();
+                        }
+                    }
+                });
+            }
 
         });
     });
@@ -590,10 +606,6 @@ $("a.back").click(function(e){e.preventDefault(); History.back();});
 
 {% block contenido %}
     
+{% include "consumption_centers/buildings/just_forms/just_form_add_building.html" %}
 
-<div id="page_content">
-<div id="contenido_interno">
-    {% include "consumption_centers/buildings/just_forms/just_form_add_building.html" %}
-</div>
-</div>
 {% endblock %}
