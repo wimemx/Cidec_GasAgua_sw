@@ -1347,14 +1347,14 @@ def dailyReport(building, consumer_unit, today):
 
             kwh_dia_dic = getKWHperDay(today_s_utc, today_e_utc, profile_powermeter)
 
+            print kwh_dia_dic
+
             kwh_base += kwh_dia_dic['base']
             kwh_intermedio += kwh_dia_dic['intermedio']
             kwh_punta += kwh_dia_dic['punta']
-            kwh_totales += kwh_base + kwh_intermedio + kwh_punta
-
-            print "Base:", kwh_base
-            print "Intermedio:", kwh_intermedio
-            print "Punta:",kwh_punta
+            kwh_totales += kwh_dia_dic['base'] + \
+                           kwh_dia_dic['intermedio'] + \
+                           kwh_dia_dic['punta']
 
             #Se obtienen los kvarhs por medidor
             kvarh_totales += obtenerKVARH_dia(profile_powermeter,
@@ -1878,17 +1878,19 @@ def tarifaHM_2(building, s_date, e_date, month, year):
             arr_kw_punta = []
 
             for vcu in virtual_cu:
-                kw_date =  datetime.datetime.utcfromtimestamp(vcu['datetime']).\
-                replace(tzinfo=pytz.utc).\
-                astimezone(timezone.get_current_timezone())
+                if vcu['value']:
+                    kw_date =  datetime.datetime.utcfromtimestamp(vcu['datetime']).\
+                    replace(tzinfo=pytz.utc).\
+                    astimezone(timezone.get_current_timezone())
 
-                periodo_mv = obtenerTipoPeriodoObj(kw_date, region)
-                if periodo_mv.period_type == 'base':
-                    arr_kw_base.append(vcu['value'])
-                elif periodo_mv.period_type == 'intermedio':
-                    arr_kw_int.append(vcu['value'])
-                elif periodo_mv.period_type == 'punta':
-                    arr_kw_punta.append(vcu['value'])
+                    periodo_mv = obtenerTipoPeriodoObj(kw_date, region)
+                    print "Valor ",vcu['value']
+                    if periodo_mv.period_type == 'base':
+                        arr_kw_base.append(vcu['value'])
+                    elif periodo_mv.period_type == 'intermedio':
+                        arr_kw_int.append(vcu['value'])
+                    elif periodo_mv.period_type == 'punta':
+                        arr_kw_punta.append(vcu['value'])
 
             diccionario_final_cfe["kw_base"] =\
             obtenerDemanda_kw_valores(arr_kw_base)
@@ -2376,7 +2378,7 @@ def tarifaDAC_2(building, s_date, e_date, month, year):
     if consumer_units:
         for c_unit in consumer_units:
             profile_powermeter = c_unit.profile_powermeter
-
+            """
             #Se obtiene y calcula el día de inicio
             tuple_first = tupleDays_arr[0]
             kwh_netos += getKWHSimplePerDay(tuple_first[0], tuple_first[1], profile_powermeter)
@@ -2395,8 +2397,8 @@ def tarifaDAC_2(building, s_date, e_date, month, year):
                     kwh_netos += getKWHSimplePerDay(tupleDay[0], tupleDay[1], profile_powermeter)
                 else:
                     kwh_netos += daily_info.KWH_total
-
             """
+
             #Se obtienen los kwh de ese periodo de tiempo.
             kwh_lecturas = ElectricDataTemp.objects.filter(
                 profile_powermeter=profile_powermeter).\
@@ -2410,7 +2412,7 @@ def tarifaDAC_2(building, s_date, e_date, month, year):
                 kwh_final = kwh_lecturas[total_lecturas - 1].TotalkWhIMPORT
 
                 kwh_netos += int(ceil(kwh_final - kwh_inicial))
-            """
+
 
     importe = kwh_netos * tarifa_kwh
     costo_energia = importe + tarifa_mes
@@ -2502,7 +2504,7 @@ def tarifa_3(building, s_date, e_date, month, year):
         for c_unit in consumer_units:
             profile_powermeter = c_unit.profile_powermeter
 
-
+            """
             #Se obtiene y calcula el día de inicio
             tuple_first = tupleDays_arr[0]
             kwh_netos += getKWHSimplePerDay(tuple_first[0], tuple_first[1], profile_powermeter)
@@ -2521,8 +2523,8 @@ def tarifa_3(building, s_date, e_date, month, year):
                     kwh_netos += getKWHSimplePerDay(tupleDay[0], tupleDay[1], profile_powermeter)
                 else:
                     kwh_netos += daily_info.KWH_total
-
             """
+
             #Se obtienen los kwh de ese periodo de tiempo.
             kwh_lecturas = ElectricDataTemp.objects.filter(
                 profile_powermeter=profile_powermeter).\
@@ -2536,7 +2538,6 @@ def tarifa_3(building, s_date, e_date, month, year):
                 kwh_final = kwh_lecturas[total_lecturas - 1].TotalkWhIMPORT
 
                 kwh_netos += int(ceil(kwh_final - kwh_inicial))
-            """
 
             #Se obtienen los kvarhs por medidor
             kvarh_netos += obtenerKVARH(profile_powermeter, s_date, e_date)
@@ -2841,8 +2842,6 @@ def c_functions_get_consumer_unit_electrical_parameter_data_clustered(
                     value_current += consumer_unit_data.value
 
                 instant_dictionary_current['value'] = value_current
-            else:
-                instant_dictionary_current['value'] = None
 
             instants_dictionary[instant_key_current] =\
             instant_dictionary_current.copy()

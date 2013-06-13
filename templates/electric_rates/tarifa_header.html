@@ -20,6 +20,8 @@
 
             var year = $("#crawler_year").val();
             var month = $("#crawler_month").val();
+            console.log(year);
+            console.log(month);
 
             $.ajax({
                 url: '/electric_rates/crawler_tarifas/?tarifa={{ tipo_tarifa }}&month='+month+'&year='+year,
@@ -32,11 +34,9 @@
 
                 }
             });
-
-
         }
 
-        function viewHM(){
+        function viewRate(){
             var year = $("#year_01").val();
 
             var url = '/electric_rates/tabla_tarifaHM/?tarifa={{ tipo_tarifa }}&year='+year;
@@ -121,11 +121,11 @@
                         </select>
                     {% endif %}
 
-                    <button class="aqua_btn" onclick="viewHM();">Ver</button>
+                    <button class="aqua_btn" onclick="viewRate();">Ver</button>
                 </div>
                 <div id='recolector'>
                     <span class="period_tag">Recolector de Tarifas</span>
-                    <select name="crawler_month" id="month_01">
+                    <select name="crawler_month" id="crawler_month">
                         <option value="1">Enero</option>
                         <option value="2">Febrero</option>
                         <option value="3">Marzo</option>

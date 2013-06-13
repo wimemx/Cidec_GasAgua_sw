@@ -1400,15 +1400,15 @@ def getKWHperDay(s_date, e_date, profile_powermeter):
             primer_lectura = electric_info[0].electric_data.TotalkWhIMPORT
             ultima_lectura = electric_info[
                              num_lecturas - 1].electric_data.TotalkWhIMPORT
-            """
             ultima_fecha = electric_info[
                            num_lecturas - 1].electric_data.medition_date
-            """
 
+            """
             print electric_info[0].electric_data.pk,"Primer Lectura:", \
                 primer_lectura,"-", \
                 electric_info[num_lecturas-1].electric_data.pk, \
                 " Ultima Lectura:",ultima_lectura
+            """
 
             #Obtener el tipo de periodo: Base, punta, intermedio
             tipo_periodo = electric_info[
@@ -1416,15 +1416,18 @@ def getKWHperDay(s_date, e_date, profile_powermeter):
             t = primer_lectura, tipo_periodo
             kwh_por_periodo.append(t)
 
-        """
+
         nextReading = ElectricDataTemp.objects.filter(
             profile_powermeter=profile_powermeter,
             medition_date__gt = ultima_fecha)\
         .order_by('medition_date')
 
+        #Se revisa que la siguiente lectura sea menor a 10 min.
+        tenmin_delta = datetime.timedelta(minutes=10)
+
         if nextReading:
-            ultima_lectura = nextReading[0].TotalkWhIMPORT
-        """
+            if nextReading[0].medition_date < (ultima_fecha + tenmin_delta):
+                ultima_lectura = nextReading[0].TotalkWhIMPORT
 
         kwh_periodo_long = len(kwh_por_periodo)
 
@@ -1433,7 +1436,7 @@ def getKWHperDay(s_date, e_date, profile_powermeter):
         kwh_punta = 0
 
         for idx, kwh_p in enumerate(kwh_por_periodo):
-            print "Lectura:", kwh_p[0], "-:",kwh_p[1]
+            #print "Lectura:", kwh_p[0], "-:",kwh_p[1]
             inicial = kwh_p[0]
             periodo_t = kwh_p[1]
             if idx + 1 <= kwh_periodo_long - 1:
@@ -1443,7 +1446,7 @@ def getKWHperDay(s_date, e_date, profile_powermeter):
                 final = ultima_lectura
 
             kwh_netos = final - inicial
-            print "Inicial:",inicial,"Final:",final, "Netos:",kwh_netos
+            #print "Inicial:",inicial,"Final:",final, "Netos:",kwh_netos
 
             if periodo_t == 'base':
                 kwh_base += kwh_netos
