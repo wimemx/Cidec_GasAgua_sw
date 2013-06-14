@@ -377,19 +377,3 @@ h1#title_lb span{
 #notice{
     font-size: 12px !important;
 }
-#list{
-    display: none;
-}
-.jOrgChart table{
-    margin: 0 auto;
-}
-.jOrgChart .node{
-    background: #fafafa !important;
-    border: solid 2px #869baf;
-    -moz-border-radius: 5px;
-    -webkit-border-radius: 5px;
-    border-radius: 5px;
-}
-.consumer_unit{
-    background: url(../images/imgs_icns/consumer_unit_icon.png) 50% 50% no-repeat #fff !important;
-}

@@ -628,7 +628,11 @@ def get_hierarchy_list(building, user):
 
     """
     hierarchy = HierarchyOfPart.objects.filter(
-        part_of_building_composite__building=building)
+        part_of_building_composite__building=building).exclude(
+        part_of_building_composite__part_of_building_status=False,
+        part_of_building_leaf__part_of_building_status=False,
+        consumer_unit_composite__profile_powermeter__powermeter__status=False,
+        consumer_unit_leaf__profile_powermeter__powermeter__status=False)
     ids_hierarchy = []
     for hy in hierarchy:
         if hy.part_of_building_leaf:
@@ -636,8 +640,8 @@ def get_hierarchy_list(building, user):
 
     #sacar el padre(partes de edificios que no son hijos de nadie)
     parents = PartOfBuilding.objects.filter(building=building).exclude(
-        pk__in=ids_hierarchy)
-
+        pk__in=ids_hierarchy, part_of_building_status=False)
+    print parents
     main_cu = ConsumerUnit.objects.get(
         building=building,
         electric_device_type__electric_device_type_name="Total Edificio")
@@ -664,7 +668,8 @@ def get_hierarchy_list(building, user):
         for parent in parents:
             c_unit_parent = ConsumerUnit.objects.filter(
                 building=building, part_of_building=parent).exclude(
-                electric_device_type__electric_device_type_name="Total Edificio")
+                electric_device_type__electric_device_type_name="Total Edificio",
+                profile_powermeter__powermeter__status=False)
             clase = "class='part_of_building "
             clase += "disabled" if not parent.part_of_building_status else ""
             cu_part = ConsumerUnit.objects.get(part_of_building=parent)
@@ -693,6 +698,8 @@ def get_hierarchy_list(building, user):
     #(dispositivos que no estén como hojas en el arbol de jerarquía)
     hierarchy = HierarchyOfPart.objects.filter(
         consumer_unit_leaf__building=building
+    ).exclude(
+        consumer_unit_leaf__profile_powermeter__powermeter__status=False
     )
     ids_hierarchy = []
     for hy in hierarchy:
@@ -703,7 +710,9 @@ def get_hierarchy_list(building, user):
         building=building, part_of_building=None).exclude(
         Q(pk__in=ids_hierarchy) |
         Q(electric_device_type__electric_device_type_name="Total Edificio")
-        )
+        ).exclude(
+        profile_powermeter__profile_powermeter_status=False
+    )
     try:
         parents[0]
     except IndexError:
@@ -3425,7 +3434,6 @@ def regenerate_ie_config(ie_id, user):
     ie.new_config = simplejson.dumps(json_dic)
     ie.modified_by = user
     ie.save()
-
     return
 
 
