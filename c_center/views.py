@@ -282,10 +282,17 @@ def week_report_kwh(request):
             return render_to_response("consumption_centers/main.html",
                                       template_vars_template)
         else:
+            template_vars = dict(
+                datacontext=datacontext,
+                empresa=request.session['main_building'],
+                company=request.session['company'],
+                consumer_unit=request.session['consumer_unit'],
+                sidebar=request.session['sidebar'])
+            template_vars_template = RequestContext(request, template_vars)
             return render_to_response("generic_error.html",
                                       RequestContext(
                                           request, {"datacontext": datacontext}
-                                      ))
+                                      ),template_vars_template)
     else:
         template_vars = {}
         if datacontext:
@@ -337,11 +344,18 @@ def main_page(request):
             return render_to_response(template,
                                       template_vars_template)
         else:
+            template_vars = {'datacontext': datacontext,
+                             'empresa': request.session['main_building'],
+                             'company': request.session['company'],
+                             'consumer_unit': request.session['consumer_unit'],
+                             'sidebar': request.session['sidebar']}
+
+            template_vars_template = RequestContext(request, template_vars)
             return render_to_response("generic_error.html",
                                       RequestContext(
                                           request,
                                           {"datacontext": datacontext}
-                                      ))
+                                      ),template_vars_template)
     else:
         template_vars = {}
         if datacontext:
@@ -8085,14 +8099,16 @@ def month_analitics_day(request):
 @login_required(login_url='/')
 def billing_analisis_header(request):
     datacontext = get_buildings_context(request.user)[0]
+    template_vars = {"type": "cfe", "datacontext": datacontext,
+                         'empresa': request.session['main_building'],
+                         'company': request.session['company'],
+                         'sidebar': request.session['sidebar'],
+                         'user':request.user }
     if has_permission(request.user, VIEW, "Análisis de facturación") or \
             request.user.is_superuser:
         set_default_session_vars(request, datacontext)
 
-        template_vars = {"type": "cfe", "datacontext": datacontext,
-                         'empresa': request.session['main_building'],
-                         'company': request.session['company'],
-                         'sidebar': request.session['sidebar']}
+
 
         building = request.session['main_building']
         #Se obtiene el tipo de tarifa del edificio
@@ -8115,23 +8131,27 @@ def billing_analisis_header(request):
             "consumption_centers/graphs/analisis_facturacion.html",
                                   template_vars_template)
     else:
+        template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html",
                                   RequestContext(request,
-                                                 {"datacontext": datacontext}))
+                                                 {"datacontext": datacontext}),
+                                                    template_vars_template)
 
 
 # noinspection PyArgumentList
 @login_required(login_url='/')
 def billing_c_analisis_header(request):
     datacontext = get_buildings_context(request.user)[0]
+    template_vars = {"type": "cfe", "datacontext": datacontext,
+                         'empresa': request.session['main_building'],
+                         'company': request.session['company'],
+                         'sidebar': request.session['sidebar'],
+                         'user':request.user }
     if has_permission(request.user, VIEW, "Análisis de costo de facturación") \
             or request.user.is_superuser:
         set_default_session_vars(request, datacontext)
 
-        template_vars = {"type": "cfe", "datacontext": datacontext,
-                         'empresa': request.session['main_building'],
-                         'company': request.session['company'],
-                         'sidebar': request.session['sidebar']}
+
 
         building = request.session['main_building']
         #Se obtiene el tipo de tarifa del edificio
@@ -8153,23 +8173,26 @@ def billing_c_analisis_header(request):
             "consumption_centers/graphs/analisis_costo_facturacion.html",
             template_vars_template)
     else:
+        template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html",
                                   RequestContext(request,
-                                                 {"datacontext": datacontext}))
+                                                 {"datacontext": datacontext}),template_vars_template)
 
 
 # noinspection PyArgumentList
 @login_required(login_url='/')
 def power_performance_header(request):
     datacontext = get_buildings_context(request.user)[0]
+    template_vars = {"type": "cfe", "datacontext": datacontext,
+                         'empresa': request.session['main_building'],
+                         'company': request.session['company'],
+                         'sidebar': request.session['sidebar'],
+                         'user':request.user }
     if has_permission(request.user, VIEW, "Desempeño energético") or \
             request.user.is_superuser:
         set_default_session_vars(request, datacontext)
 
-        template_vars = {"type": "cfe", "datacontext": datacontext,
-                         'empresa': request.session['main_building'],
-                         'company': request.session['company'],
-                         'sidebar': request.session['sidebar']}
+
 
         building = request.session['main_building']
         #Se obtiene el tipo de tarifa del edificio
@@ -8191,9 +8214,11 @@ def power_performance_header(request):
             "consumption_centers/graphs/desempenio_energetico.html",
             template_vars_template)
     else:
+        template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html",
                                   RequestContext(request,
-                                                 {"datacontext": datacontext}))
+                                                 {"datacontext": datacontext})
+                                                    ,template_vars_template)
 
 
 def getMonthName(index):
