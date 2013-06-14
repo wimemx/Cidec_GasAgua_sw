@@ -11,6 +11,7 @@
 <script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
 <script type="text/javascript">
 $(document).ready(function(){
+        $("#download").hide();
     	// Smart Wizard
   	  $('#wizard').smartWizard({
           labelNext: "Siguiente",
@@ -28,7 +29,8 @@ $(document).ready(function(){
 
       function onFinishCallback(){
        if(validateAllSteps()){
-        $('form').submit();
+           $("#wizard").hide();
+           $("#download").show();
        }
       }
 		});
@@ -43,15 +45,8 @@ $(document).ready(function(){
          $('#wizard').smartWizard('setError',{stepnum:1,iserror:false});
        }
 
-       if(validateStep3() == false){
-         isStepValid = false;
-         $('#wizard').smartWizard('setError',{stepnum:3,iserror:true});
-       }else{
-         $('#wizard').smartWizard('setError',{stepnum:3,iserror:false});
-       }
-
        if(!isStepValid){
-          $('#wizard').smartWizard('showMessage','Please correct the errors in the steps and continue');
+          $('#wizard').smartWizard('showMessage','Por favor corrija los errores e intente de nuevo');
        }
 
        return isStepValid;
@@ -71,27 +66,10 @@ $(document).ready(function(){
                 wizard.smartWizard('setError',{stepnum:step,iserror:false});
             }
         }
-        // validate step3
-        if(step == 3){
-            if(validateStep3() == false ){
-                isStepValid = false;
-                wizard.smartWizard('showMessage','Please correct the errors in step'+step+ ' and click next.');
-                wizard.smartWizard('setError',{stepnum:step,iserror:true});
-            }else{
-                wizard.smartWizard('setError',{stepnum:step,iserror:false});
-            }
-        }
-
         return isStepValid;
     }
     function validateStep1(){
         return ($("#company_cluster").val()>0 && $("#company").val()>0 && $("#building").val()>0);
-    }
-    function validateStep3(){
-        var isValid = true;
-        //validate
-
-        return isValid;
     }
 
     var non_selected_building = function(){
@@ -132,7 +110,7 @@ $(document).ready(function(){
                 dataType: 'json',
                 async: 'true',
                 success: function(datos){
-                    var table_cont = $("#grid_container");
+                    var table_cont = $("#added_context_users");
                     var table = "<table id='asigned_users'><thead><tr>" +
                             "<th style='width: 33%;'>Nombre de usuario</th>" +
                             "<th style='width: 33%;'>Nombre del rol</th>" +
@@ -169,16 +147,18 @@ $(document).ready(function(){
     var show_building_alarms = function(building){
 
         $.ajax({
-            url: "/configuracion/get_asigned_users/"+building+"/",
+            url: "/configuracion/get_building_alarms/"+building+"/",
                 type: "GET",
                 dataType: 'json',
                 async: 'true',
                 success: function(datos){
-                    var table_cont = $("#grid_container");
+                    var table_cont = $("#added_building_alarms");
                     var table = "<table id='asigned_users'><thead><tr>" +
-                            "<th style='width: 33%;'>Nombre de usuario</th>" +
-                            "<th style='width: 33%;'>Nombre del rol</th>" +
-                            "<th>Edificio</th>" +
+                            "<th style='width: 20%;'>Tipo Medidor</th>" +
+                            "<th style='width: 20%;'>Parámetro</th>" +
+                            "<th style='width: 20%;'>Valor Mínimo</th>" +
+                            "<th style='width: 20%;'>Valor Máximo</th>" +
+                            "<th style='width: 20%;'>Edificio</th>" +
                             "</thead></tr><tbody>";
                     var building_name = $("#building").find("option[value='"+building+"']").text();
                     var cont = 0;
@@ -192,10 +172,16 @@ $(document).ready(function(){
                         }
                         table += "<tr class="+css_class+">";
                         table += "<td class='c'>";
-                        table += row["username"];
+                        table += row["device"];
                         table += "</td>";
                         table += "<td class='c'>";
-                        table += row["role_name"];
+                        table += row["param"];
+                        table += "</td>";
+                        table += "<td class='c'>";
+                        table += String(parseFloat(row["min_val"]).toFixed(2));
+                        table += "</td>";
+                        table += "<td class='c'>";
+                        table += String(parseFloat(row["max_val"]).toFixed(2));
                         table += "</td>";
                         table += "<td class='c'>";
                         table += building_name;
@@ -220,8 +206,42 @@ $(document).ready(function(){
         url_data_c = url_data_c.split("/");
         url_data_c.splice(3, url_data_c.length-1);
         url_data_c = url_data_c.join("/");
-        url_data_c = url_data_c+"/?cluster="+$("#company_cluster").val()+"&company="+$("#company").val()+"&building="+$("#building").val();
+
+        var add_alarm_link = $("#add_alarm");
+        var url_add_alarm = add_alarm_link.attr("href");
+        url_add_alarm = url_add_alarm.split("/");
+        url_add_alarm.splice(3, url_add_alarm.length-1);
+        url_add_alarm = url_add_alarm.join("/");
+        var b_val = $("#building").val();
+        var get_vars = "/?cluster="+$("#company_cluster").val()+"&company="+$("#company").val()+"&building="+b_val;
+
+        url_data_c = url_data_c+get_vars;
         data_context_link.attr("href", url_data_c);
+
+        url_add_alarm = url_add_alarm+get_vars;
+        add_alarm_link.attr("href", url_add_alarm);
+
+        var saq_device = $("#saq_device");
+        var url_saq_device = saq_device.attr("href");
+        url_saq_device = url_saq_device.split("/");
+        url_saq_device.splice(3, url_saq_device.length-1);
+        url_saq_device = url_saq_device.join("/");
+        saq_device.attr("href", url_saq_device+"/"+b_val+"/");
+
+        var e_devices = $("#e_devices");
+        var url_e_devices = e_devices.attr("href");
+        url_e_devices = url_e_devices.split("/");
+        url_e_devices.splice(3, url_e_devices.length-1);
+        url_e_devices = url_e_devices.join("/");
+        e_devices.attr("href", url_e_devices+"/"+b_val+"/");
+
+        var e_alarms = $("#e_alarms");
+        var url_e_alarms = e_alarms.attr("href");
+        url_e_alarms = url_e_alarms.split("/");
+        url_e_alarms.splice(3, url_e_alarms.length-1);
+        url_e_alarms = url_e_alarms.join("/");
+        e_alarms.attr("href", url_e_alarms+"/"+b_val+"/");
+
         show_asigned_users(building);
         show_building_alarms(building);
     };
@@ -502,18 +522,32 @@ $(document).ready(function(){
                             <a href="/panel_de_control/add_data_context_permissions_pop/" id="add_data_context" class="add" data-fancybox-type="iframe">Asignar roles a usuarios</a>
                             <span class="message"></span>
                         </div>
-                        <div id="grid_container">
+                        <div class="grid_container" id="added_context_users">
 
                         </div>
                     </div>
                 </div>
                 <div id="step-4">
+                    <div class="form_content g12">
+                        <div class="rbac_links g12" id="add_user_cont">
+                            <a href="/configuracion/add_alarm_popup/" id="add_alarm" class="add" data-fancybox-type="iframe">Agregar alarma</a>
+                            <span class="message"></span>
+                        </div>
 
+                        <div class="grid_container" id="added_building_alarms">
+
+                        </div>
+                    </div>
                 </div>
 
 
             </div>
             </form>
+            <div id="download">
+                <a href="/configuracion/saq_device/" id="saq_device" class="aqua_btn">Descargar Configuración de SA</a>
+                <a href="/configuracion/e_devices/" id="e_devices" class="aqua_btn">Descargar Configuración del dispositivos</a>
+                <a href="/configuracion/e_alarms/" id="e_alarms" class="aqua_btn">Descargar Configuración de alarmas</a>
+            </div>
 
         </div>
     </div>
