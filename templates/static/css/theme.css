@@ -461,6 +461,20 @@ h2 span{
     font-weight: 100;
     padding-top: 5px;
 }
+#main_menu li.first_level.settings{
+    width: 59px !important;
+    background: url(images/imgs_icns/settings.png) no-repeat 18px 0px;
+    padding-left: 23px;
+    position: relative;
+    top: 8px;
+    font-weight: 100;
+    padding-top: 5px;
+}
+#main_menu li.first_level.settings a{
+    display: block;
+    width: 31px;
+    height: 33px;
+}
 
 /*all nested uls*/
 #main_menu li.first_level ul{
@@ -914,9 +928,12 @@ a.aqua_btn:hover, a.grey_btn:hover{
 .element_row .element a{
     display: block;
     margin-top: 5px;
-    width: 51px;
+    width: 80px;
     color:#636363;
     text-align: center;
+}
+.element a img{
+    margin-bottom: 5px;
 }
 #bread_crumbs .username{
     color:#5692a5;
@@ -978,8 +995,9 @@ table .bolder{
     float: right;
     position: relative;
     left: -35px;
-    color: black;
-    text-decoration: none;
+    color: #666;
+    font-size: 11px;
+    text-decoration: underline;
 }
 .botonGuardaJerarquia{
     position: absolute !important;
