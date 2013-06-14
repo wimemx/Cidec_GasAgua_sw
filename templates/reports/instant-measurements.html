@@ -216,6 +216,7 @@
                 dashboard.bind(control, chart);
                 dashboard.draw(view);
 
+
                 $(".column-checkbox").change(function(){
                     if($(":checkbox").filter(':checked').length == 0 && !$(this).is(":checked")){
                         //si nada mas queda una activa
@@ -373,6 +374,12 @@
                         dashboard.draw(view);
                         control.draw();
                     }
+                     if($(".column-checkbox:checked").size()==1){
+                        $('#up').fadeIn("fast");
+                        $('#down').fadeIn("fast");
+
+
+                    }
                 });
 
 
@@ -419,11 +426,11 @@
                             chart.draw();
                         });
 
-
+                $("#up").hide();
+                $("#down").hide();
             }
 
             google.setOnLoadCallback(drawVisualization);
-
 
 
             function changeRange(interval) {
@@ -551,7 +558,7 @@
             <div id="control1"></div>
 
             <!-- slider-range start -->
-            {% if axis_list|length == 1 %}
+
             <div id="slider-range">
                 <div id="up">
                     <input type="text" class="integer" id="upper_limit" step="0.5"/>
@@ -562,7 +569,7 @@
                 </div>
             </div>
             <!-- slider-range end -->
-            {% endif %}
+
         </div>
         <!-- dashboard end -->
 
