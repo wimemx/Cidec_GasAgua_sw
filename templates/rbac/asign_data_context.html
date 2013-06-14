@@ -161,6 +161,10 @@
                                         $("#partes").html("");
                                     }
                                 });
+                            }else{
+                                $("#empresas").html("");
+                                $("#edificios").html("");
+                                $("#partes").html("");
                             }
                         }
                     });
@@ -192,6 +196,7 @@
 
 
         </ul>
+        <a href="/logout" id="userLogOut">Cerrar sesión</a>
 
     </div>
 
@@ -202,83 +207,7 @@
 
 <div id="page_content">
     <div id="contenido_interno">
-        <h2 id="titulo_form" class="privileges">
-            Asignaci&oacute;n de privilegios
-        </h2>
-
-
-        <div class="divider" id="divider_top">&nbsp;</div>
-        <div id="form_container">
-            {% if message %}
-                <span class="notif {{ type }}">
-                    {% autoescape off %}{{ message }}{% endautoescape %}
-                    <a href="#" onclick="$(this).parent().remove();">X</a>
-                </span>
-            {% endif %}
-            <p class="description">
-                Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
-                <br/>
-                Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
-            </p>
-            <form method="post" action="." onsubmit="return valida();">
-                {% csrf_token %}
-
-                <div class="fields_row g12">
-                    <label for="user" class="g2">
-                        Usuario
-                    </label>
-                    <input type="text" name="user" id="user" class="user_role" autocomplete="off"/>
-                    <input type="hidden" name="usuario" id="usuario">
-                </div>
-
-                <div id="asign">
-                    <div class="fields_row g12">
-                        <label for="role" class="g2">
-                            Selecciona un rol
-                        </label>
-                        <select name="role" id="role" class="g9">
-                            {% for rol in roles %}
-                                <option value="{{ rol.pk }}">{{ rol.role_name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="fields_row g12">
-                        <label for="cluster" class="g2">
-                            Selecciona un grupo de empresas
-                        </label>
-                        <select name="cluster" id="cluster" class="g9">
-                            <option value="0">Selecciona un grupo de empresas</option>
-                            {% for cluster in clusters %}
-                                <option value="{{ cluster.pk }}">{{ cluster.cluster_name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="fields_row g12" id="empresas">
-
-                    </div>
-                    <div class="fields_row g12" id="edificios">
-
-                    </div>
-                    <div class="fields_row g12" id="partes">
-
-                    </div>
-
-                    <div class="buttons g12" id="agregar">
-
-                        <span class="g2">&nbsp;</span>
-                        <div class="g9">
-                            <button class="aqua_btn fr" id="save">
-                                Guardar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </form>
-
-        </div>
-
-
+        {% include "rbac/just_forms/just_form_asign_data_context.html" %}
     </div>
 </div>
 {% endblock %}

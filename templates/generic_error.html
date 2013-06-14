@@ -4,14 +4,27 @@
     <link rel="stylesheet" href="/static/css/consumption_centers/main.css" type="text/css" />
     <link rel="stylesheet" href="/static/css/login.css" type="text/css" />
 
+
 {% endblock %}
 {% block externaljs %}
 {% endblock %}
 {% block document_ready %}
 {% endblock %}
+{% block breadcumbs %}
+
+    <div id="bread_crumbs">
+    <ul>
+        <li><a href="#">{{ user }}</a></li>
+
+    </ul>
+    <a href="/logout" id="userLogOut">Cerrar sesión</a>
+
+</div>
+
+{% endblock %}
 {% block contenido %}
 <div id="page_content">
-<div id="login_div">
+<div id="login_div2">
 
     <div id="title">
         <h1><img src="/static/css/images/imgs_icns/auditem_gray_transp.png" alt="Auditem"/></h1>

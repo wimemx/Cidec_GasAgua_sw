@@ -35,8 +35,22 @@ urlpatterns = patterns('',
                        url(r'^get_latest_notifs/',
                            'alarms.views.get_latest_notifs'),
 
+                       url(r'^add_alarm_popup/',
+                           'alarms.views.add_alarm_pop'),
+                       url(r'^save_add_alarm_popup/',
+                           'alarms.views.save_add_alarm_pop'),
+
                        url(r'^refresh_ie_config/',
                            'alarms.views.refresh_ie_config'),
+                       url(r'^get_building_alarms/(?P<id_building>\d+)/',
+                           'alarms.views.get_building_alarms'),
+
+                       url(r'^saq_device/(?P<id_building>\d+)/',
+                           'alarms.views.saq_device'),
+                       url(r'^e_devices/(?P<id_building>\d+)/',
+                           'alarms.views.e_devices'),
+                       url(r'^e_alarms/(?P<id_building>\d+)/',
+                           'alarms.views.e_alarms'),
 
                        )
 

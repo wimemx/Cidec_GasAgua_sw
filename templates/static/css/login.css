@@ -16,6 +16,15 @@ h1{
     margin-left: -265px;
     margin-top: -185px;
 }
+#login_div2 {
+    width: 530px;
+    height: 370px;
+    position: relative;
+    left: 50%;
+    top: 50%;
+    margin-left: -265px;
+    margin-top: 166px;
+}
 button{
     display: block;
     margin: 1em auto;

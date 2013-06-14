@@ -240,7 +240,7 @@ def get_consumer_unit_electric_data_interval_raw_optimized(
             'medition_date'
         ).values(electric_data_name_local, 'medition_date')
 
-    electric_data_raw_results_length = len(electric_data_raw_dictionaries)
+    electric_data_raw_results_length = electric_data_raw_dictionaries.count()
     if not electric_data_raw_results_length:
         return electric_data_raw
 

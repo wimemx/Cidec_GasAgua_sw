@@ -109,6 +109,15 @@
                 fecha = get['ff'].split("-");
                 f_e = new Date(parseInt(fecha[0]), parseInt(fecha[1])-1, parseInt(fecha[2]));
                 f_e = f_e.format("yyyy-mm-dd");
+            }else if(get['fechaGrafica']!=undefined){
+                var fecha = get['fechaGrafica'].split("-");
+                f_i = new Date(parseInt(fecha[0]), parseInt(fecha[1])-1, parseInt(fecha[2]));
+                f_i = f_i.format("yyyy-mm-dd");
+
+                fecha = get['fechaGrafica'].split("-");
+                f_e = new Date(parseInt(fecha[0]), parseInt(fecha[1])-1, parseInt(fecha[2]));
+                f_e = f_e.format("yyyy-mm-dd");
+
             }else{
                 fecha_ini = new Date();
                 fecha_ini.setDate(fecha_ini.getDate()-7);
@@ -318,6 +327,7 @@
         <li><a href="/main/">Inicio</a></li>
         <li>Reportes</li>
     </ul>
+    <a href="/logout" id="userLogOut">Cerrar sesión</a>
 
 </div>
 

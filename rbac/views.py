@@ -1568,7 +1568,7 @@ def add_user_pop(request):
                              company=company)
 
         template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("rbac/add_user.html", template_vars_template)
+        return render_to_response("rbac/popups/popup_add_user.html", template_vars_template)
     else:
         datacontext = get_buildings_context(request.user)[0]
         template_vars = {}
@@ -1643,7 +1643,258 @@ def save_user_pop(request):
                                        "los datos por favor revise que no" \
                                        " haya caracteres inv&aacute;lidos"
             template_vars["type"] = "n_notif"
-        return HttpResponse(content=simplejson.dumps(template_vars),
-                        content_type="application/json", status=200)
+        return HttpResponse(
+            content=simplejson.dumps(template_vars),
+            content_type="application/json", status=200)
     else:
         raise Http404
+
+
+@login_required(login_url='/')
+def add_role_pop(request):
+    """Add role web form"""
+    if has_permission(request.user, CREATE, "Alta de rol") or \
+            request.user.is_superuser:
+
+        template_vars = dict(operations=Operation.objects.all())
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("rbac/popups/popup_add_role.html",
+                                  template_vars_template)
+    else:
+
+        template_vars = {}
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
+
+
+def save_rol_pop(request):
+    """Add role web form"""
+    if has_permission(request.user, CREATE, "Alta de rol") or \
+            request.user.is_superuser and request.method == "POST":
+        template_vars = dict()
+        role = request.POST['role_name'].strip()
+        role_desc = request.POST['role_desc'].strip()
+        rol = Role.objects.filter(role_name__iexact=role)
+        datos = dict(role=role, role_desc=role_desc)
+        valid = validate_role(datos)
+        mensaje = ''
+        ntype = ''
+        if rol:
+            asignation = False
+            mensaje = "El rol ya existe, por favor edita el "
+            mensaje += "existente o crea uno nuevo"
+        elif valid:
+            rol = Role(role_name=role, role_description=role_desc,
+                       role_importance="average")
+            rol.save()
+            template_vars['role_name'] = role
+            if has_permission(request.user, CREATE,
+                              "Asignacion de privilegios") or \
+                    request.user.is_superuser:
+                asignation = False
+                for key in request.POST:
+                    objs_ids = request.POST[str(key)].split(",")
+
+                    #checks the type of the allowed operation for the role
+                    if re.search('^Ver_\w+', key):
+                        asignation, mensaje = save_perm(rol, objs_ids,
+                                                        "Ver")
+
+                    elif re.search('^Crear_\w+', key):
+                        asignation, mensaje = save_perm(rol, objs_ids,
+                                                        "Crear")
+
+                    elif re.search('^Eliminar_\w+', key):
+                        asignation, mensaje = save_perm(rol, objs_ids,
+                                                        "Eliminar")
+
+                    elif re.search('^Modificar_\w+', key):
+                        asignation, mensaje = save_perm(rol, objs_ids,
+                                                        "Modificar")
+            else:
+                asignation = True
+                mensaje = "Debido a tus privilegios, solo se ha "
+                mensaje += "dado de alta el rol"
+                ntype = "notif"
+        else:
+            asignation = False
+            mensaje = 'error en la validaciónd de campos, por favor '
+            mensaje += 'revise que no haya introducido caracteres inválidos'
+            ntype = 'error'
+        if asignation and not ntype:
+            ntype = "n_success"
+        else:
+            #regresa al formulario de alta con el mensaje de error,
+            # borro el rol y los privilegios asociados
+            PermissionAsigment.objects.filter(role=rol).delete()
+            rol.delete()
+        template_vars['message'] = mensaje
+        template_vars['type'] = ntype
+
+        return HttpResponse(
+            content=simplejson.dumps(template_vars),
+            content_type="application/json", status=200)
+    else:
+        raise Http404
+
+
+@login_required(login_url='/')
+def add_data_context_permissions_pop(request):
+    """Permission Asigments
+    show a form for data context permission asigment
+    """
+    if has_permission(request.user, CREATE,
+                      "Asignar roles a usuarios") or request.user.is_superuser:
+        roles = Role.objects.all().exclude(status=False)
+
+        cluster = Cluster.objects.filter(pk=request.GET["cluster"]).values(
+            "pk",
+            "cluster_name")[0]
+        company = Company.objects.filter(pk=request.GET["company"]).values(
+            "pk",
+            "company_name")[0]
+        building = Building.objects.filter(pk=request.GET["building"]).values(
+            "pk",
+            "building_name")[0]
+        parts = PartOfBuilding.objects.filter(
+            building__pk=request.GET["building"]).values(
+                "pk",
+                "part_of_building_name")
+
+        template_vars = dict(roles=roles,
+                             cluster=cluster,
+                             company=company,
+                             building=building,
+                             partes=parts
+                             )
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response(
+            "rbac/popups/popup_asign_data_context.html",
+            template_vars_template)
+    else:
+        datacontext = get_buildings_context(request.user)[0]
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
+
+
+@login_required(login_url='/')
+def save_data_context_permissions_pop(request):
+    """Permission Asigments
+    show a form for data context permission asigment
+    """
+    if has_permission(request.user, CREATE,
+                      "Asignar roles a usuarios") or request.user.is_superuser \
+            and request.method == 'POST':
+        template_vars = dict()
+        try:
+            usuario = User.objects.get(pk=int(request.POST['usuario']))
+            rol = Role.objects.get(pk=int(request.POST['role']))
+            cluster = Cluster.objects.get(pk=int(request.POST['cluster']))
+        except ObjectDoesNotExist:
+            message = "Ha ocurrido un error al validar sus campos, " \
+                      "por favor verifiquelos " \
+                      "e intente de nuevo"
+            type_ = "n_error"
+        else:
+            if "company" in request.POST:
+                if request.POST['company'] != "todos":
+                    try:
+                        company = Company.objects.get(
+                            pk=int(request.POST['company']))
+                    except ObjectDoesNotExist:
+                        message = "Ha ocurrido un error al seleccionar la" \
+                                  " empresa, por favor " \
+                                  "verifique e intente de nuevo"
+                        type_ = "n_error"
+                    else:
+                        if "building" in request.POST:
+                            if request.POST['building'] != "todos":
+                                try:
+                                    building = Building.objects.get(
+                                        pk=int(request.POST['building']))
+                                except ObjectDoesNotExist:
+                                    message = "Ha ocurrido un error al " \
+                                              "seleccionar el edificio, " \
+                                              "por favor " \
+                                              "verifique e intente de nuevo"
+                                    type_ = "n_error"
+                                else:
+                                    if "part" in request.POST:
+                                        if request.POST['part'] != "todas":
+                                            user_role, created = \
+                                                UserRole.objects.\
+                                                    get_or_create(
+                                                    user=usuario,
+                                                    role=rol)
+                                            part = PartOfBuilding.objects \
+                                                .get(
+                                                pk=int(
+                                                    request.POST['part']))
+                                            # noinspection PyUnusedLocal
+                                            data_context, created = \
+                                                DataContextPermission.\
+                                                    objects.get_or_create(
+                                                    user_role=user_role,
+                                                    cluster=cluster,
+                                                    company=company,
+                                                    building=building,
+                                                    part_of_building=part)
+                                            message = "El rol, " \
+                                                      "sus permisos y " \
+                                                      "asignaciones al " \
+                                                      "edificio y " \
+                                                      "sus partes, " \
+                                                      "se ha guardado " \
+                                                      "correctamente"
+                                            type_ = "n_success"
+                                        else:
+                                            message, type_ = \
+                                                add_permission_to_parts(
+                                                    usuario, rol, cluster,
+                                                    company, building)
+                                    else:
+                                        message, type_ = \
+                                            add_permission_to_parts(
+                                                usuario, rol, cluster,
+                                                company, building)
+                            else:
+                                message, type_ = add_permission_to_buildings(
+                                    usuario, rol, cluster,
+                                    request.POST['company'])
+                        else:
+                            message, type_ = add_permission_to_buildings(
+                                usuario, rol, cluster,
+                                request.POST['company'])
+                else:
+                    message, type_ = add_permission_to_companies(usuario,
+                                                                 rol,
+                                                                 cluster)
+            else:
+                message, type_ = add_permission_to_companies(usuario, rol,
+                                                             cluster)
+
+        template_vars['message'] = message
+        template_vars['type'] = type_
+
+        return HttpResponse(
+            content=simplejson.dumps(template_vars),
+            content_type="application/json", status=200)
+    else:
+        raise Http404
+
+
+def get_asigned_users(request, building):
+    building = get_object_or_404(Building, pk=building)
+    users = DataContextPermission.objects.filter(building=building).values(
+        "user_role__user__username", "user_role__role__role_name"
+    )
+    json_content = []
+    for user in users:
+        json_content.append({"username": user['user_role__user__username'],
+                             "role_name": user['user_role__role__role_name']})
+    return HttpResponse(content=simplejson.dumps(json_content),
+                        content_type="application/json", status=200)

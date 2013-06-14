@@ -1,0 +1,112 @@
+        <h2 id="titulo_form" class="user_role">
+            {% if role %}Modificar rol{% else %}Alta de rol{% endif %}
+        </h2>
+
+
+        <div class="divider" id="divider_top">&nbsp;</div>
+        <div id="form_container">
+            {% if message %}
+                <span class="notif {% if msg_type == "success" %}n_success{% else %}n_error{% endif %}">
+                    {% autoescape off %}{{ message }}{% endautoescape %}
+                    <a href="#" onclick="$(this).parent().remove();">X</a>
+                </span>
+            {% endif %}
+            <p class="description">
+                Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
+                <br/>
+                Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
+            </p>
+            <form method="post" action="." onsubmit="return valida();" id="role_form">
+                {% csrf_token %}
+                <div id="basic_rol_info">
+                    <label class="input">
+                        <span>Nombre del rol</span>
+                        <input type="text" name="role_name" id="role_name"
+                                value="{{  post.role_name }}"/>
+                        <span class="g1"></span>
+                    </label>
+
+                    <label class="input">
+                        <span>Descripcion del rol</span>
+                        <input type="text" name="role_desc" id="role_desc" value="{{  post.role_desc }}"/>
+                        <span class="g1"></span>
+                    </label>
+                    <p class="buttons">
+                        <button class="aqua_btn" id="add_permission">
+                            A&ntilde;adir permisos
+                        </button> &oacute;
+                        <a href="#" class="back" rel="cancel">cancelar</a>
+                    </p>
+                </div>
+
+                <div id="add_permissions">
+                    <span id="rolename">{{  post.role_name }}</span>
+                    <a href="#editar" class="edit" title="Editar rol"></a>
+                    <p id="role_description">
+                        {{  post.role_desc }}
+                    </p>
+
+                    <div id="add_another_perm">
+                        <div class="widgetField" id="operation">
+                            <span class="legend">Operaci&oacute;n</span>
+                            <a href="#"></a>
+                            <ul id="operation_list" class="ddl">
+                                {% for operation in operations %}
+                                    <li rel="{{ operation.pk }}">
+                                        {{ operation.operation_name }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        <div class="widgetField" id="group">
+                            <span class="legend">Grupo</span>
+                            <a href="#"></a>
+                            <ul id="group_list" class="ddl">
+                                <li></li>
+                            </ul>
+                        </div>
+
+                        <div class="widgetField" id="object">
+                            <span class="legend">Privilegio</span>
+                            <a href="#"></a>
+                            <ul id="object_list" class="ddl">
+                                <li>
+                                    <label>
+                                        <input type="checkbox" name="uno"/>
+                                        uno
+                                    </label>
+                                </li>
+                                <li>
+                                    <label>
+                                        <input type="checkbox" name="dos"/>
+                                        dos
+                                    </label>
+                                </li>
+                                <li><label><input type="checkbox" name="tres"/>
+                                        tres
+                                    </label>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <p class="buttons" id="add_buttons">
+                            <button class="grey_btn fl" id="add_objects">
+                                <span class="plus"></span>
+                                Agregar
+                            </button>
+                            <span id="add_and_save" class="fl">
+                                o <a href="#" id="add_save">Agregar y guardar</a>
+                            </span>
+                        </p>
+                    </div>
+                    <p class="buttons" id="save_btn">
+                        <button class="aqua_btn">
+                            Guardar Rol
+                        </button>
+                    </p>
+                </div>
+
+            </form>
+
+        </div>

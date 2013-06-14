@@ -93,7 +93,7 @@ font-weight: bold;
     border-right: solid 1px #fff;
 }
 .progreso, #head_progress{
-    width: 54%;
+    width: 53%;
 }
 .progreso span{
     float:left;
