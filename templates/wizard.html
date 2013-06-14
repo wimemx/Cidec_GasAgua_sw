@@ -24,6 +24,10 @@ $(document).ready(function(){
 
       function leaveAStepCallback(obj){
         var step_num= obj.attr('rel');
+        if(step_num==1){
+            $("iframe").contents().find("#save_hierarchy").addClass("botonGuardaJerarquia");
+            $("iframe").contents().find("body").css("overflow","hidden");
+        }
         return validateSteps(step_num);
       }
 
@@ -295,13 +299,13 @@ $(document).ready(function(){
     });
     $("#add_empresa").on("click", function(evt){
         if($("#company_cluster").val()=='0'){
-            $("#add_company_cont").find(".message").html("<span>No se ha seleccionado un cluster<a onclick='$(this).parent().remove();'>X</a></span>");
+            $("#add_company_cont").find(".msgBoxRed").html("<span>No se ha seleccionado un cluster<a onclick='$(this).parent().parent().fadeOut().delay(400).remove();'>X</a></span>").fadeIn("fast");
             return false;
         }
     });
     $("#add_building").on("click", function(evt){
         if($("#company").val()=='0'){
-            $("#add_building_cont").find(".message").html('<span>No se ha seleccionado una empresa<a onclick="$(this).parent().remove();">X</a></span>');
+            $("#add_building_cont").find(".msgBoxRed").html('<span>No se ha seleccionado una empresa<a onclick="$(this).parent().parent().fadeOut().delay(400).remove();">X</a></span>').fadeIn("fast");
             return false;
         }
     });
@@ -482,7 +486,7 @@ $(document).ready(function(){
                                 {% endif %}
 
                             </select>
-                            <a href="/buildings/add_cluster_pop/" class="add" data-fancybox-type="iframe">Nuevo grupo de empresas</a>
+                            <a href="/buildings/add_cluster_pop/" class="add" data-fancybox-type="iframe"><span class="plus"></span>Nuevo grupo de empresas</a>
                         </div>
                         <div class="g12" id="add_company_cont">
                             <span class="notice g12"></span>
@@ -490,8 +494,8 @@ $(document).ready(function(){
                             <select name="company" id="company" class="g9">
                                 <option value="0">Selecciona una empresa </option>
                             </select>
-                            <a href="/buildings/add_company_pop/" id="add_empresa" class="add" data-fancybox-type="iframe">Nueva empresa</a>
-                            <span class="message"></span>
+                            <a href="/buildings/add_company_pop/" id="add_empresa" class="add" data-fancybox-type="iframe"><span class="plus"></span>Nueva empresa</a>
+                            <span class="msgBoxRed"></span>
                         </div>
                         <div class="g12" id="add_building_cont">
                             <span class="notice g12"></span>
@@ -499,8 +503,8 @@ $(document).ready(function(){
                             <select name="building" id="building" class="g9">
                                 <option value="0">Selecciona un edificio</option>
                             </select>
-                            <a href="/buildings/add_building_pop/" id="add_building" class="add" data-fancybox-type="iframe">Nuevo edificio</a>
-                            <span class="message"></span>
+                            <a href="/buildings/add_building_pop/" id="add_building" class="add" data-fancybox-type="iframe"><span class="plus"></span>Nuevo edificio</a>
+                            <span class="msgBoxRed"></span>
                         </div>
                     </div>
                 </div>
@@ -511,15 +515,15 @@ $(document).ready(function(){
                 <div id="step-3">
                     <div class="form_content g12">
                         <div class="rbac_links g12" id="add_user_cont">
-                            <a href="/panel_de_control/add_user_pop/" id="add_user" class="add" data-fancybox-type="iframe">Alta de usuarios</a>
+                            <a href="/panel_de_control/add_user_pop/" id="add_user" class="add" data-fancybox-type="iframe"><span class="plus"></span>Alta de usuarios</a>
                             <span class="message"></span>
                         </div>
                         <div class="rbac_links g12" id="add_role_cont">
-                            <a href="/panel_de_control/nuevo_rol_pop/" id="add_role" class="add" data-fancybox-type="iframe">Alta de Roles</a>
+                            <a href="/panel_de_control/nuevo_rol_pop/" id="add_role" class="add" data-fancybox-type="iframe"><span class="plus"></span>Alta de Roles</a>
                             <span class="message"></span>
                         </div>
                         <div class="rbac_links g12" id="add_datacontext_cont">
-                            <a href="/panel_de_control/add_data_context_permissions_pop/" id="add_data_context" class="add" data-fancybox-type="iframe">Asignar roles a usuarios</a>
+                            <a href="/panel_de_control/add_data_context_permissions_pop/" id="add_data_context" class="add" data-fancybox-type="iframe"><span class="plus"></span>Asignar roles a usuarios</a>
                             <span class="message"></span>
                         </div>
                         <div class="grid_container" id="added_context_users">
@@ -530,7 +534,7 @@ $(document).ready(function(){
                 <div id="step-4">
                     <div class="form_content g12">
                         <div class="rbac_links g12" id="add_user_cont">
-                            <a href="/configuracion/add_alarm_popup/" id="add_alarm" class="add" data-fancybox-type="iframe">Agregar alarma</a>
+                            <a href="/configuracion/add_alarm_popup/" id="add_alarm" class="add" data-fancybox-type="iframe"><span class="plus"></span>Agregar alarma</a>
                             <span class="message"></span>
                         </div>
 

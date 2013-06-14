@@ -981,4 +981,9 @@ table .bolder{
     color: black;
     text-decoration: none;
 }
+.botonGuardaJerarquia{
+    position: absolute !important;
+    top: 550px !important;
+    left: 800px !important;
+}
 
