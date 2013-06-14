@@ -5915,6 +5915,107 @@ def edit_building(request, id_bld):
 
 
 @login_required(login_url='/')
+def info_building(request):
+    if has_permission(request.user, UPDATE,
+                      "Ver edificios") or request.user.is_superuser:
+        datacontext = get_buildings_context(request.user)[0]
+        empresa = request.session['main_building']
+        company = request.session['company']
+        message = ''
+        _type = ''
+
+        #Se obtienen los tipos de edificios
+        tipos_edificio_lst = BuildingType.objects.filter(
+            building_type_status=1).order_by('building_type_name')
+
+
+        #Se obtiene la información del edificio
+        buildingObj = get_object_or_404(Building, pk=empresa.pk)
+
+
+        #Dirección Concatenada
+        address = buildingObj.calle.calle_name+" "+\
+                  buildingObj.building_external_number
+        if buildingObj.building_internal_number:
+            address += "-"+buildingObj.building_internal_number
+        address += ". "+buildingObj.colonia.colonia_name+", "+\
+                   buildingObj.municipio.municipio_name+" "+\
+                   "<BR>"+buildingObj.estado.estado_name+". "+\
+                   buildingObj.building_code_zone+". "+\
+                   buildingObj.pais.pais_name
+
+        #Se obtiene la compañia
+        companyBld = CompanyBuilding.objects.filter(building=buildingObj)
+
+        #Se obtienen los tipos de edificio
+        b_types = BuildingTypeForBuilding.objects.filter(building=buildingObj)
+        b_type_arr_names = [b_tp.building_type.building_type_name for b_tp in b_types]
+
+        #Se obtienen todos los atributos
+        building_attributes = BuildingAttributesForBuilding.objects.filter(
+            building=buildingObj)
+        string_attributes = ''
+        if building_attributes:
+            for bp_att in building_attributes:
+                building_attributes_type_name = bp_att.building_attributes.\
+                building_attributes_type.building_attributes_type_name
+
+                building_attributes_name = bp_att.building_attributes.\
+                building_attributes_name
+
+                string_attributes += '<label class="g3">'+\
+                                     building_attributes_type_name+"</label>"+\
+                                     '<span class="g5">'+\
+                                     building_attributes_name+'</span>'+\
+                                     '<span class="g3">'+\
+                                     str(bp_att.building_attributes_value)+\
+                                     '</span>'
+
+        hierarchy_list = get_hierarchy_list(buildingObj, request.user)
+
+        #Se obtiene el equipo industrial
+        industrial_eq = IndustrialEquipment.objects.filter(building = buildingObj)
+
+        #TODO regresar la zona horaria
+        post = {
+            'b_name': buildingObj.building_name,
+            'b_description': buildingObj.building_description,
+            'b_company': companyBld[0].company.company_name,
+            'b_type_arr_names': b_type_arr_names,
+            'b_mt2': buildingObj.mts2_built,
+            'b_electric_rate_name': buildingObj.electric_rate.electric_rate_name,
+            'b_address': address,
+            'b_long': buildingObj.building_long_address,
+            'b_lat': buildingObj.building_lat_address,
+            'b_region_name': buildingObj.region.region_name,
+            'b_attributes': string_attributes,
+            'hierarchy': hierarchy_list,
+            'industrial_eqp':industrial_eq[0].pk
+        }
+
+        template_vars = dict(datacontext=datacontext,
+                             company=company,
+                             empresa=empresa,
+                             post=post,
+                             tipos_edificio_lst=tipos_edificio_lst,
+                             message=message,
+                             type=_type, sidebar=request.session['sidebar']
+        )
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response(
+            "consumption_centers/buildings/see_building.html",
+            template_vars_template)
+    else:
+        datacontext = get_buildings_context(request.user)[0]
+        template_vars = {}
+        if datacontext:
+            template_vars = {"datacontext": datacontext}
+        template_vars["sidebar"] = request.session['sidebar']
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
+
+@login_required(login_url='/')
 def view_building(request):
     if has_permission(request.user, VIEW,
                       "Ver edificios") or request.user.is_superuser:
@@ -9329,7 +9430,8 @@ def view_tags(request):
                              today = today,
                              monthly_years=monthly_years,
                              company=request.session['company'],
-                             sidebar=request.session['sidebar']
+                             sidebar=request.session['sidebar'],
+                             consumer_unit=request.session['consumer_unit']
         )
 
 

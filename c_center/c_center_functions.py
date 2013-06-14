@@ -1885,7 +1885,6 @@ def tarifaHM_2(building, s_date, e_date, month, year):
                     astimezone(timezone.get_current_timezone())
 
                     periodo_mv = obtenerTipoPeriodoObj(kw_date, region)
-                    print "Valor ",vcu['value']
                     if periodo_mv.period_type == 'base':
                         arr_kw_base.append(vcu['value'])
                     elif periodo_mv.period_type == 'intermedio':

@@ -40,7 +40,7 @@ class Municipio(models.Model):
     raw_offset = models.IntegerField(max_length=2)
     dst_offset = models.IntegerField(max_length=2)
     border = models.BooleanField(default=False)
-    timezone = models.ForeignKey(Timezones, on_delete=models.PROTECT)
+    timezone = models.ForeignKey(Timezones, on_delete=models.PROTECT, blank=True, null=True)
 
     def __unicode__(self):
         return self.municipio_name

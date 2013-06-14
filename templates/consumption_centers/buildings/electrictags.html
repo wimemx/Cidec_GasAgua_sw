@@ -9,10 +9,12 @@
     <link rel="stylesheet" href="/static/css/consumption_centers/cfe_bill.css" type="text/css" />
     <link rel="stylesheet" href="/static/date_picker/css/datepicker.css" type="text/css" />
     <link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/js/external/fancybox/jquery.fancybox.css" type="text/css" />
 {% endblock %}
 {% block externaljs %}
     <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
     <script type="text/javascript" src="/static/date_picker/js/date_picker.js"></script>
+    <script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
     <script type="text/javascript">
 
         function reTag(){
@@ -113,6 +115,18 @@
     $('#date_init').val(formated[0]);
     $('#date_end').val(formated[1]);
     }
+    });
+
+    $(".various").fancybox({
+    maxWidth	: 800,
+    maxHeight	: 800,
+    fitToView	: false,
+    width		: '70%',
+    height		: '70%',
+    autoSize	: false,
+    closeClick	: false,
+    openEffect	: 'none',
+    closeEffect	: 'none'
     });
 
 {% endblock %}
