@@ -303,3 +303,144 @@
   color: #EA8511;
   border: 1px solid #EA8511;  
 }
+
+/*---ADDED STYLES---*/
+#grid_container{
+    border: solid 1px #9ebfc7;
+    margin-top: 20px;
+    border-radius: 7px;
+    overflow: hidden;
+}
+#grid_container table
+{
+	width: 100%;
+	color: #6c6c6c;
+}
+
+#grid_container table th a
+{
+	color: #6c6c6c;
+}
+
+#grid_container table td,#grid_container table th
+{
+	border: solid 1px #9ebfc7;
+	vertical-align: middle;
+}
+
+#grid_container table tr:first-child th
+{
+	border-top: 0;
+}
+
+#grid_container table tr:last-child td
+{
+	border-bottom: 0;
+}
+
+#grid_container table tr td:first-child,#grid_container table tr th:first-child
+{
+	border-left: 0;
+}
+
+#grid_container table tr td:last-child,#grid_container table tr th:last-child
+{
+	border-right: 0;
+}
+
+#grid_container table tr
+{
+	height: 30px;
+}
+
+#grid_container table thead tr
+{
+	background: url(../../../../../static/css/images/bgs/bread_crumbs_bg.png) repeat-x;
+}
+
+#grid_container table tr.row1
+{
+	background-image: linear-gradient(top,#fcfdfd 12%,#f0f5f7 56%);
+	background-image: -o-linear-gradient(top,#fcfdfd 12%,#f0f5f7 56%);
+	background-image: -moz-linear-gradient(top,#fcfdfd 12%,#f0f5f7 56%);
+	background-image: -webkit-linear-gradient(top,#fcfdfd 12%,#f0f5f7 56%);
+	background-image: -ms-linear-gradient(top,#fcfdfd 12%,#f0f5f7 56%);
+	background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0.12,rgb(252,253,253)),color-stop(0.56,rgb(240,245,247)));
+}
+
+#grid_container table tr.row2
+{
+	background: #fff;
+}
+
+#grid_container a,#grid_container a:active
+{
+	color: #6c6c6c;
+}
+
+#grid_container_rate table
+{
+	width: 100%;
+	color: #6c6c6c;
+}
+
+#grid_container_rate table th a
+{
+	color: #6c6c6c;
+}
+
+#grid_container_rate table td,#grid_container table th
+{
+	border: solid 1px #9ebfc7;
+	vertical-align: middle;
+}
+
+#grid_container_rate table tr:first-child th
+{
+	border-top: 0;
+}
+
+#grid_container_rate table tr:last-child td
+{
+	border-bottom: 0;
+}
+
+#grid_container_rate table tr td:first-child,#grid_container table tr th:first-child
+{
+	border-left: 0;
+}
+
+#grid_container_rate table tr td:last-child,#grid_container table tr th:last-child
+{
+	border-right: 0;
+}
+
+#grid_container_rate table tr
+{
+	height: 30px;
+}
+
+#grid_container_rate table thead tr
+{
+	background: url(../../../../../static/css/images/bgs/bread_crumbs_bg.png) repeat-x;
+}
+
+#grid_container_rate table tr.row1
+{
+	background-image: linear-gradient(top,#fcfdfd 12%,#f0f5f7 56%);
+	background-image: -o-linear-gradient(top,#fcfdfd 12%,#f0f5f7 56%);
+	background-image: -moz-linear-gradient(top,#fcfdfd 12%,#f0f5f7 56%);
+	background-image: -webkit-linear-gradient(top,#fcfdfd 12%,#f0f5f7 56%);
+	background-image: -ms-linear-gradient(top,#fcfdfd 12%,#f0f5f7 56%);
+	background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0.12,rgb(252,253,253)),color-stop(0.56,rgb(240,245,247)));
+}
+
+#grid_container_rate table tr.row2
+{
+	background: #fff;
+}
+
+#grid_container_rate a,#grid_container a:active
+{
+	color: #6c6c6c;
+}

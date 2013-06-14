@@ -43,6 +43,8 @@ urlpatterns = patterns('',
                        url(r'^delete_batch_datacontext/$',
                            'rbac.views.delete_batch_data_context'),
 
+                       url(r'^get_asigned_users/(?P<building>\d+)',
+                           'rbac.views.get_asigned_users'),
 
                        url(r'^search_users/', 'rbac.views.search_users'),
                        url(r'^get_group/(?P<id_operation>\d+)',
@@ -51,5 +53,13 @@ urlpatterns = patterns('',
                            'rbac.views.get_select_object'),
 
                        url(r'^add_user_pop/', 'rbac.views.add_user_pop'),
-                       url(r'^save_user_pop/', 'rbac.views.add_user_pop'),
+                       url(r'^save_user_pop/', 'rbac.views.save_user_pop'),
+
+                       url(r'^nuevo_rol_pop/', 'rbac.views.add_role_pop'),
+                       url(r'^save_rol_pop/', 'rbac.views.save_rol_pop'),
+
+                       url(r'^add_data_context_permissions_pop/',
+                           'rbac.views.add_data_context_permissions_pop'),
+                       url(r'^save_data_context_permissions_pop/',
+                           'rbac.views.save_data_context_permissions_pop'),
 )

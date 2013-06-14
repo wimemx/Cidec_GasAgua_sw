@@ -98,6 +98,9 @@
                             if(data.type == "n_success"){
                                 parent.added_user(data.username, data.fname, data.lname);
                                 parent.jQuery.fancybox.close();
+                            }else{
+                                parent.added_user_fail(data.message);
+                                parent.jQuery.fancybox.close();
                             }
                         }
                     });

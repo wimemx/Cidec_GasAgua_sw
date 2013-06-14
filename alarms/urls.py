@@ -37,6 +37,8 @@ urlpatterns = patterns('',
 
                        url(r'^refresh_ie_config/',
                            'alarms.views.refresh_ie_config'),
+                       url(r'^get_building_alarms/(?P<id_building>\d+)/',
+                           'alarms.views.mostrar_alarma')
 
                        )
 
