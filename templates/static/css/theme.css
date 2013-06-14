@@ -330,7 +330,7 @@ h2 span{
     border-bottom: solid 1px #2b87a3;
     border-left: solid 1px #2b87a3;
     border-right: solid 1px #2b87a3;
-    width: 228px;
+    width: 228px !important;
     margin-top: 6px;
     position: absolute;
     z-index: 2;
@@ -365,7 +365,7 @@ h2 span{
     max-height: 313px;
     overflow: auto;
     position: absolute;
-    right: -359px;
+    right: -263px;
     top: 57px;
     width: 215px;
     border: solid 1px #2b87a3;
@@ -972,5 +972,13 @@ table .bolder{
 #table_hm th
 {
     padding-top: 10px;
+}
+#userLogOut{
+    display: block;
+    float: right;
+    position: relative;
+    left: -35px;
+    color: black;
+    text-decoration: none;
 }
 

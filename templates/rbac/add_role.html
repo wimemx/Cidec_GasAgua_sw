@@ -39,15 +39,18 @@
             });
 
             $("#operation").click(function(){
-                $("ul.ddl").fadeOut("fast");
+                $("#group").find("ul.ddl").fadeOut("fast");
+                $("#object .legend").find("ul.ddl").fadeOut("fast");
                 $(this).find("ul.ddl").slideToggle();
             });
             $("#group").click(function(){
-                $("ul.ddl").fadeOut("fast");
+                $("#operation").find("ul.ddl").fadeOut("fast");
+                $("#object .legend").find("ul.ddl").fadeOut("fast");
                 $(this).find("ul.ddl").slideToggle();
             });
             $("#object .legend").click(function(){
-                $("ul.ddl").fadeOut("fast");
+                $("#group").find("ul.ddl").fadeOut("fast");
+                $("#operation").find("ul.ddl").fadeOut("fast");
                 $(this).parent().find("ul.ddl").slideToggle();
             });
             $("#operation_list li").click(function(){
@@ -274,6 +277,7 @@
             <li><a href="/panel_de_control/roles/">Roles</a></li>
             <li>{% if role %}Modificar rol{% else %}Alta de rol{% endif %}</li>
         </ul>
+        <a href="/logout" id="userLogOut">Cerrar sesión</a>
 
     </div>
 
