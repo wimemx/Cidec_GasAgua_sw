@@ -7,12 +7,12 @@
 <link rel="stylesheet" href="/static/css/forms/rbac_general.css" type="text/css" />
 <link rel="stylesheet" href="/static/css/forms/c_centers.css" type="text/css" />
 <link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="/static/js/external/jquery-validator/css/validator.css">
 {% endblock %}
 {% block externaljs %}
 <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+<script type="text/javascript" src="/static/js/external/jquery-validator/js/validator.js"></script>
 <script type="text/javascript">
-    var form_valid = true;
-    var send_form = 0;
     $(document).ready(function(){
         $("#company_form").validate();
         $("#company_name").focus();
@@ -37,6 +37,7 @@
         {% endif %}
 
     </ul>
+    <a href="/logout" id="userLogOut">Cerrar sesión</a>
 
 </div>
 

@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block titulo %}
+    Ver Edificio
+{% endblock %}
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/forms/rbac_general.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/forms/rbac_user_list.css" type="text/css" />
+
+    <link rel="stylesheet" href="/static/css/forms/c_centers.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/forms/c_centers_org_chart.css" type="text/css" />
+    <link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/js/external/jOrgChart/css/jquery.jOrgChart.css"/>
+
+{% endblock %}
+{% block externaljs %}
+    <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+    <script type="text/javascript" src="/static/js/external/maskedinput.js"></script>
+    <script type="text/javascript" src="/static/js/external/autoNumeric-1.7.4.js"></script>
+    <script type="text/javascript" src="/static/js/external/jquery.metadata.js"></script>
+    <script type="text/javascript" src="/static/js/external/maps_api_js.js"></script>
+    <script type="text/javascript" src="/static/js/external/jOrgChart/jquery.jOrgChart.js"></script>
+    <script type="text/javascript">
+
+
+    $(document).ready(function(){
+        $("#org").jOrgChart({
+            chartElement : '#chart',
+            dragAndDrop  : false
+        });
+
+        $("#chart a").click(function(e){
+            e.preventDefault();
+            return false;
+        });
+
+        $("#modTime").click(function(e){
+            e.preventDefault();
+            window.location.replace("/buildings/configurar_equipo_industrial/{{ post.industrial_eqp }}/");
+        });
+    });
+
+    {% if post.b_lat != 0 and post.b_long != 0 %}
+        var mapBusiness;
+        var geocoder;
+        var marker;
+
+        function initialize() {
+            var latlng = new google.maps.LatLng(20.593020, -100.392198);
+            var myOptions = {
+                zoom: 14,
+                center: latlng,
+                mapTypeId: google.maps.MapTypeId.ROADMAP
+            };
+            mapBusiness = new google.maps.Map(document.getElementById("map_canvas_seebld"), myOptions);
+
+
+            //GEOCODER
+            geocoder = new google.maps.Geocoder();
+
+            marker = new google.maps.Marker({
+                map: mapBusiness
+            });
+
+
+            if($('#b_latitude').val() != '0' && $('#b_longitude').val() != '0' ){
+                marker.setPosition(new google.maps.LatLng($('#b_latitude').val(), $('#b_longitude').val()));
+                mapBusiness.setCenter(marker.getPosition());
+            }
+        }
+
+        function locateMarker(location){
+            marker.setPosition(location);
+            $('#b_latitude').val(location.lat());
+            $('#b_longitude').val(location.lng());
+
+        }
+
+    {% endif %}
+
+
+
+    </script>
+{% endblock %}
+
+{% block document_ready %}
+
+    {% if post.b_lat != 0 and post.b_long != 0 %}
+
+        initialize();
+
+    {% endif %}
+
+    $("a.back").click(function(e){e.preventDefault(); History.back();});
+
+{% endblock %}
+
+{% block breadcumbs %}
+    <div id="bread_crumbs">
+        <a href="/profile/{{ request.user.pk }}/" class="fl username">{{ request.user.first_name }} {{ request.user.last_name }}</a>
+        <ul>
+            <li><a href="/main/">Inicio</a></li>
+            <li><a href="/buildings/edificios/">Edificios</a></li>
+            <li>Ver Edificio</li>
+        </ul>
+    </div>
+
+{% endblock %}
+
+{% block contenido %}
+
+
+    <div id="page_content">
+        <div id="contenido_interno">
+            <h2 id="titulo_form" class="company">
+                Ver Edificio
+            </h2>
+
+            <div class="divider" id="divider_top">&nbsp;</div>
+            <div id="form_container">
+
+                {% csrf_token %}
+                <div>
+                    <div style="height: auto">
+                        <h3 class="g12">Jerarquía del Edificio</h3>
+                        <div id="list">
+                            {% autoescape off %}{{ post.hierarchy }}{% endautoescape %}
+                        </div>
+
+                        <div id="chart"></div>
+                    </div>
+                    <div class="building_info_top info_top_seebld">
+
+                        <div class="building_column">
+                            <h3 class="g12">Informaci&oacute;n de Edificio</h3>
+                            <div class="fields_row g12 field_seebld">
+                                <label for="b_name" class="g3">Nombre</label>
+                                <span id="b_name" class="g8">{{ post.b_name }}</span>
+                            </div>
+                            <div class="fields_row g12 field_seebld">
+                                <label for="b_description" class="g3">Descripci&oacute;n</label>
+                                <span id="b_description" class="g8">{{ post.b_description }}</span>
+
+                            </div>
+                            <div class="fields_row g12 field_seebld">
+                                <label for="b_company" class="g3">Empresa</label>
+                                <span id="b_company" class="g8">{{ post.b_company }}</span>
+                            </div>
+                            <div class="fields_row g12 field_seebld">
+                                <label for="b_type_" class="g3">Tipo de Edificio:</label>
+                                <span id="b_type_" class="g8" >
+                                {% if post.b_type_arr_names %}
+                                    <ul>
+                                        {% for t_name in post.b_type_arr_names %}
+                                            <li>{{ t_name }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                                </span>
+                            </div>
+
+                            <div class="fields_row g12 field_seebld">
+                                <label for="b_electric_rate" class="g3">Tarifa:</label>
+                                <span id="b_electric_rate" class="g8">{{ post.b_electric_rate_name }}</span>
+                            </div>
+                            <div class="fields_row g12 field_seebld">
+                                <label for="b_region" class="g3">Regi&oacute;n</label>
+                                <span id="b_region" class="g8">{{ post.b_region_name }}</span>
+
+                            </div>
+                            <div class="fields_row g12 field_seebld">
+                                <label for="b_mt2" class="g3">Mt2 Construidos</label>
+                                <span id="b_mt2" class="g8">{{ post.b_mt2 }}</span>
+                            </div>
+                        </div>
+                        <div class="building_column">
+                            <h3 class="g12">Ubicaci&oacute;n</h3>
+                            <div id="seebld_address">
+                                {{ post.b_address|safe }}
+                            </div>
+
+                            {% if post.b_lat != 0 and post.b_long != 0 %}
+                                <input type="hidden" id="b_latitude" name="b_latitude" value="{% if post.b_lat %}{{post.b_lat}}{% else %}0{% endif %}"/>
+                                <input type="hidden" id="b_longitude" name="b_longitude" value="{% if post.b_long %}{{post.b_long}}{% else %}0{% endif %}"/>
+                                <div id="map_container">
+                                    <div id="map_canvas_seebld" class="map_canvas_seebld"></div>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                    </div>
+
+                    <div class="building_info_top info_top_seebld att_seebld">
+                        <div class="building_column">
+                            <h3 class="g12">Atributos extra</h3>
+                            {{post.b_attributes|safe}}
+                        </div>
+                    </div>
+
+                    <button class="aqua_btn" id="modTime">Modificar Tiempo Equipo Industrial</button>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+{% endblock %}

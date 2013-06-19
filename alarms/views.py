@@ -32,7 +32,8 @@ from c_center.c_center_functions import get_clusters_for_operation, \
 
 from alarms.alarm_functions import *
 from alarms.models import *
-from c_center.models import Building, IndustrialEquipment, CompanyBuilding
+from c_center.models import Building, IndustrialEquipment, CompanyBuilding, \
+    Cluster, Company
 from rbac.models import Operation
 from c_center.c_center_functions import regenerate_ie_config
 
@@ -1061,11 +1062,159 @@ def refresh_ie_config(request):
                 content += " Default Config "
             else:
                 content += " Configuration update successful "
-            print "content:", content
+            #print "content:", content
         else:
-            print "IE not found"
+            #print "IE not found"
             raise Http404("IE not found")
         return HttpResponse(content=content, status=status_conf)
     else:
-        print "POST required"
+        #print "POST required"
         raise Http404("POST required")
+
+
+def get_building_alarms(request, id_building):
+    building = get_object_or_404(Building, pk=int(id_building))
+    alarms = Alarms.objects.filter(consumer_unit__building=building).exclude(
+        status=False).exclude(alarm_identifier="Interrupción de Datos").values(
+        "electric_parameter__name", "max_value",
+        "min_value",
+        "consumer_unit__electric_device_type__electric_device_type_name")
+    arr_alarms = []
+    for alarm in alarms:
+        arr_alarms.append(
+            dict(
+                param=alarm['electric_parameter__name'],
+                device=alarm[
+                    'consumer_unit__electric_device_type__electric_device_type_name'
+                ],
+                min_val=str(alarm['min_value']),
+                max_val=str(alarm['max_value'])))
+    return HttpResponse(content=json.dumps(arr_alarms),
+                            mimetype="application/json")
+
+
+@login_required(login_url='/')
+def add_alarm_pop(request):
+    template_vars = {}
+    permission = "Alta de alarma eléctrica"
+    if has_permission(request.user, CREATE,
+                      permission) or \
+            request.user.is_superuser:
+        template_vars["operation"] = "alta"
+        template_vars['cluster'] = Cluster.objects.get(
+            pk=int(request.GET['cluster']))
+        template_vars['company'] = Company.objects.get(
+            pk=int(request.GET['company']))
+        template_vars['building'] = Building.objects.get(
+            pk=int(request.GET['building']))
+        parameters = ElectricParameters.objects.all()
+        template_vars['parameters'] = parameters
+        template_vars['consumer_units'] = ConsumerUnit.objects.filter(
+            building=template_vars['building']
+        )
+
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response(
+            "alarms/popups/add_alarm_popup.html",
+            template_vars_template)
+    else:
+        template_vars_template = RequestContext(request, template_vars)
+        return render_to_response("generic_error.html", template_vars_template)
+
+
+@login_required(login_url='/')
+def save_add_alarm_pop(request):
+    template_vars = {}
+    permission = "Alta de alarma eléctrica"
+    if has_permission(request.user, CREATE,
+                      permission) or \
+            request.user.is_superuser and request.method == 'POST':
+
+        el = ElectricParameters.objects.get(
+            pk=int(request.POST['alarm_param']))
+        timeunix = time.mktime(datetime.datetime.now().timetuple())
+        timeunix = str(int(timeunix))
+        user_pk = str(request.user.pk)
+        building = Building.objects.get(pk=int(request.POST['building']))
+
+        max_value = request.POST['alarm_max_value'].strip()
+        min_value = request.POST['alarm_min_value'].strip()
+        if not max_value:
+            max_value = 0
+        if not min_value:
+            min_value = 0
+        if request.POST['c_unit'] == "todas":
+            cus = get_c_unitsforbuilding_for_operation(
+                permission, CREATE, request.user, building
+            )[0]
+            for cu in cus:
+                id_al = cu.profile_powermeter.powermeter.powermeter_serial
+                id_al += "_"
+                id_al += timeunix
+                id_al += "_"
+                id_al += user_pk
+                alarma = Alarms(
+                    alarm_identifier=id_al,
+                    electric_parameter=el,
+                    max_value=max_value,
+                    min_value=min_value,
+                    consumer_unit=cu)
+                alarma.save()
+        else:
+            cu = ConsumerUnit.objects.get(pk=int(request.POST['c_unit']))
+            id_al = cu.profile_powermeter.powermeter.powermeter_serial
+            id_al += "_"
+            id_al += timeunix
+            id_al += "_"
+            id_al += user_pk
+
+            alarma = Alarms(
+                alarm_identifier=id_al,
+                electric_parameter=el,
+                max_value=max_value,
+                min_value=min_value,
+                consumer_unit=cu)
+            alarma.save()
+
+        message = "La alarma se ha creado exitosamente"
+        _type = "n_success"
+
+        set_alarm_json(building, request.user)
+        template_vars["message"] = message
+        template_vars["type"] = _type
+
+        return HttpResponse(content=json.dumps(template_vars),
+                            mimetype="application/json", status=200)
+    else:
+        raise Http404
+
+
+def saq_device(request, id_building):
+    buiding = get_object_or_404(Building, pk=id_building)
+    ie = IndustrialEquipment.objects.get(building=buiding)
+    json_sq = dict(SAQIndex=ie.pk,
+                   SAQDescription=ie.description,
+                   MonitorTimeRate=ie.monitor_time_rate,
+                   CheckConfigRate=ie.check_config_time_rate,
+                   status=int(ie.status))
+    res = HttpResponse(json.dumps(json_sq))
+    res['Content-Disposition'] = 'attachment; filename=SAQDevice.config'
+    return res
+
+
+def e_devices(request, id_building):
+    buiding = get_object_or_404(Building, pk=id_building)
+    ie = IndustrialEquipment.objects.get(building=buiding)
+    json_e = json.loads(ie.new_config)
+    res = HttpResponse(json.dumps(json_e))
+    res['Content-Disposition'] = 'attachment; filename=EDevices.config'
+    return res
+
+
+def e_alarms(request, id_building):
+    buiding = get_object_or_404(Building, pk=id_building)
+    ie = IndustrialEquipment.objects.get(building=buiding)
+    json_e_a = json.loads(ie.new_alarm_config)
+    res = HttpResponse(json.dumps(json_e_a))
+    res['Content-Disposition'] = 'attachment; filename=EAlarms.config'
+    return res

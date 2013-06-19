@@ -628,7 +628,11 @@ def get_hierarchy_list(building, user):
 
     """
     hierarchy = HierarchyOfPart.objects.filter(
-        part_of_building_composite__building=building)
+        part_of_building_composite__building=building).exclude(
+        part_of_building_composite__part_of_building_status=False,
+        part_of_building_leaf__part_of_building_status=False,
+        consumer_unit_composite__profile_powermeter__powermeter__status=False,
+        consumer_unit_leaf__profile_powermeter__powermeter__status=False)
     ids_hierarchy = []
     for hy in hierarchy:
         if hy.part_of_building_leaf:
@@ -636,8 +640,8 @@ def get_hierarchy_list(building, user):
 
     #sacar el padre(partes de edificios que no son hijos de nadie)
     parents = PartOfBuilding.objects.filter(building=building).exclude(
-        pk__in=ids_hierarchy)
-
+        pk__in=ids_hierarchy, part_of_building_status=False)
+    print parents
     main_cu = ConsumerUnit.objects.get(
         building=building,
         electric_device_type__electric_device_type_name="Total Edificio")
@@ -664,7 +668,8 @@ def get_hierarchy_list(building, user):
         for parent in parents:
             c_unit_parent = ConsumerUnit.objects.filter(
                 building=building, part_of_building=parent).exclude(
-                electric_device_type__electric_device_type_name="Total Edificio")
+                electric_device_type__electric_device_type_name="Total Edificio",
+                profile_powermeter__powermeter__status=False)
             clase = "class='part_of_building "
             clase += "disabled" if not parent.part_of_building_status else ""
             cu_part = ConsumerUnit.objects.get(part_of_building=parent)
@@ -693,6 +698,8 @@ def get_hierarchy_list(building, user):
     #(dispositivos que no estén como hojas en el arbol de jerarquía)
     hierarchy = HierarchyOfPart.objects.filter(
         consumer_unit_leaf__building=building
+    ).exclude(
+        consumer_unit_leaf__profile_powermeter__powermeter__status=False
     )
     ids_hierarchy = []
     for hy in hierarchy:
@@ -703,7 +710,9 @@ def get_hierarchy_list(building, user):
         building=building, part_of_building=None).exclude(
         Q(pk__in=ids_hierarchy) |
         Q(electric_device_type__electric_device_type_name="Total Edificio")
-        )
+        ).exclude(
+        profile_powermeter__profile_powermeter_status=False
+    )
     try:
         parents[0]
     except IndexError:
@@ -1038,10 +1047,13 @@ def handle_company_logo(i, company, is_new):
                                   "templates/static/media/logotipos/"),
                      os.O_RDONLY)
     os.fchdir(dir_fd)
-
-    imagefile = cStringIO.StringIO(i.read())
-    imagefile.seek(0)
-    imageImage = Image.open(imagefile)
+    try:
+        imagefile = cStringIO.StringIO(i.read())
+        imagefile.seek(0)
+        imageImage = Image.open(imagefile)
+    except IOError:
+        print "could not load image"
+        return False
 
     if imageImage.mode != "RGB":
         imageImage = imageImage.convert("RGB")
@@ -1347,22 +1359,18 @@ def dailyReport(building, consumer_unit, today):
 
             kwh_dia_dic = getKWHperDay(today_s_utc, today_e_utc, profile_powermeter)
 
-            kwh_base = kwh_dia_dic['base']
-            kwh_intermedio = kwh_dia_dic['intermedio']
-            kwh_punta = kwh_dia_dic['punta']
-            kwh_totales = kwh_base + kwh_intermedio + kwh_punta
-
-            print "Base:", kwh_base
-            print "Intermedio:", kwh_intermedio
-            print "Punta:",kwh_punta
-
+            kwh_base += kwh_dia_dic['base']
+            kwh_intermedio += kwh_dia_dic['intermedio']
+            kwh_punta += kwh_dia_dic['punta']
+            kwh_totales += kwh_dia_dic['base'] + \
+                           kwh_dia_dic['intermedio'] + \
+                           kwh_dia_dic['punta']
 
             #Se obtienen los kvarhs por medidor
             kvarh_totales += obtenerKVARH_dia(profile_powermeter,
                                               today_s_utc,
                                               today_e_utc,
                                               kvarhs_anterior)
-
     #Si es tarifa HM
     if electric_rate.pk == 1:
         #Obtiene el id de la tarifa correspondiente para el mes en cuestion
@@ -1869,8 +1877,8 @@ def tarifaHM_2(building, s_date, e_date, month, year):
             virtual_cu =\
             c_functions_get_consumer_unit_electrical_parameter_data_clustered(
                 main_cu,
-                s_date.astimezone(timezone.get_current_timezone()),
-                e_date.astimezone(timezone.get_current_timezone()),
+                s_date,
+                e_date,
                 'kW',
                 300
             )
@@ -1880,17 +1888,18 @@ def tarifaHM_2(building, s_date, e_date, month, year):
             arr_kw_punta = []
 
             for vcu in virtual_cu:
-                kw_date =  datetime.datetime.utcfromtimestamp(vcu['datetime']).\
-                replace(tzinfo=pytz.utc).\
-                astimezone(timezone.get_current_timezone())
+                if vcu['value']:
+                    kw_date =  datetime.datetime.utcfromtimestamp(vcu['datetime']).\
+                    replace(tzinfo=pytz.utc).\
+                    astimezone(timezone.get_current_timezone())
 
-                periodo_mv = obtenerTipoPeriodoObj(kw_date, region)
-                if periodo_mv.period_type == 'base':
-                    arr_kw_base.append(vcu['value'])
-                elif periodo_mv.period_type == 'intermedio':
-                    arr_kw_int.append(vcu['value'])
-                elif periodo_mv.period_type == 'punta':
-                    arr_kw_punta.append(vcu['value'])
+                    periodo_mv = obtenerTipoPeriodoObj(kw_date, region)
+                    if periodo_mv.period_type == 'base':
+                        arr_kw_base.append(vcu['value'])
+                    elif periodo_mv.period_type == 'intermedio':
+                        arr_kw_int.append(vcu['value'])
+                    elif periodo_mv.period_type == 'punta':
+                        arr_kw_punta.append(vcu['value'])
 
             diccionario_final_cfe["kw_base"] =\
             obtenerDemanda_kw_valores(arr_kw_base)
@@ -2378,7 +2387,7 @@ def tarifaDAC_2(building, s_date, e_date, month, year):
     if consumer_units:
         for c_unit in consumer_units:
             profile_powermeter = c_unit.profile_powermeter
-
+            """
             #Se obtiene y calcula el día de inicio
             tuple_first = tupleDays_arr[0]
             kwh_netos += getKWHSimplePerDay(tuple_first[0], tuple_first[1], profile_powermeter)
@@ -2397,8 +2406,8 @@ def tarifaDAC_2(building, s_date, e_date, month, year):
                     kwh_netos += getKWHSimplePerDay(tupleDay[0], tupleDay[1], profile_powermeter)
                 else:
                     kwh_netos += daily_info.KWH_total
-
             """
+
             #Se obtienen los kwh de ese periodo de tiempo.
             kwh_lecturas = ElectricDataTemp.objects.filter(
                 profile_powermeter=profile_powermeter).\
@@ -2412,7 +2421,7 @@ def tarifaDAC_2(building, s_date, e_date, month, year):
                 kwh_final = kwh_lecturas[total_lecturas - 1].TotalkWhIMPORT
 
                 kwh_netos += int(ceil(kwh_final - kwh_inicial))
-            """
+
 
     importe = kwh_netos * tarifa_kwh
     costo_energia = importe + tarifa_mes
@@ -2504,7 +2513,7 @@ def tarifa_3(building, s_date, e_date, month, year):
         for c_unit in consumer_units:
             profile_powermeter = c_unit.profile_powermeter
 
-
+            """
             #Se obtiene y calcula el día de inicio
             tuple_first = tupleDays_arr[0]
             kwh_netos += getKWHSimplePerDay(tuple_first[0], tuple_first[1], profile_powermeter)
@@ -2523,8 +2532,8 @@ def tarifa_3(building, s_date, e_date, month, year):
                     kwh_netos += getKWHSimplePerDay(tupleDay[0], tupleDay[1], profile_powermeter)
                 else:
                     kwh_netos += daily_info.KWH_total
-
             """
+
             #Se obtienen los kwh de ese periodo de tiempo.
             kwh_lecturas = ElectricDataTemp.objects.filter(
                 profile_powermeter=profile_powermeter).\
@@ -2538,7 +2547,6 @@ def tarifa_3(building, s_date, e_date, month, year):
                 kwh_final = kwh_lecturas[total_lecturas - 1].TotalkWhIMPORT
 
                 kwh_netos += int(ceil(kwh_final - kwh_inicial))
-            """
 
             #Se obtienen los kvarhs por medidor
             kvarh_netos += obtenerKVARH(profile_powermeter, s_date, e_date)
@@ -2897,7 +2905,6 @@ def crawler_hm_rate(year, month):
         soup = BeautifulSoup(page.read())
 
         tablasTarifa = soup.find_all('table',{"class" : "tablaTarifa"})
-        pdb.set_trace()
         for tabla in tablasTarifa:
             header_t = tabla.find('tr').find_all('th')
 
@@ -3427,7 +3434,6 @@ def regenerate_ie_config(ie_id, user):
     ie.new_config = simplejson.dumps(json_dic)
     ie.modified_by = user
     ie.save()
-
     return
 
 

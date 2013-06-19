@@ -1,0 +1,230 @@
+{% extends "popup_forms_base.html" %}
+{% block titulo %}
+    {% if operation == "edit" %}Editar{% else %}Alta de{% endif %} usuario
+{% endblock %}
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/forms/rbac_general.css" type="text/css" />
+    <link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
+{% endblock %}
+{% block externaljs %}
+    <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+    <script type="text/javascript" src="/static/js/external/maskedinput.js"></script>
+    <script type="text/javascript">
+    var form_valid = true;
+    var send_form = 0;
+        $(document).ready(function(){
+            $("#username").focus();
+
+            $("#tel_o, #tel_m").mask("(999) 999-9999");
+
+            $( "#dob" ).mask("99-99-9999").datepicker({ monthNames: ["Enero","Febrero","Marzo","Abril","Mayo",
+                "Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"],
+                                     dateFormat: "dd-mm-yy", onSelect: function(){
+                                    var _span;
+                                    if($(this).val()=='__-__-____'){
+                                        _span = "incorrect";
+                                        form_valid = false;
+                                    }else{
+                                        _span = "correct";
+                                        form_valid = true;
+                                    }
+                                    $(this).next().removeClass("incorrect").removeClass("correct").addClass(_span);
+                }});
+            $(".required").each(function(){
+                $(this).parent().next().blur(function(e){
+                    var _span;
+
+                    var valor = $.trim(e.delegateTarget.value);
+
+                    if (e.delegateTarget.id == "pass1"){
+                        if (e.delegateTarget.value.length < 8){
+                            _span = "incorrect";
+                            form_valid = false;
+                        }else{
+                            _span = "correct";
+                            form_valid = true;
+                        }
+                    }else if (e.delegateTarget.id == "pass2"){
+
+                        var pass1 = $("#pass1");
+                        if(pass1.val() != $("#pass2").val()){
+                            _span = "incorrect";
+                            form_valid = false;
+                            pass1.next().removeClass("incorrect");
+                            pass1.next().removeClass("correct");
+                            pass1.next().addClass(_span);
+                        }else{
+                            if (valor !=''){
+                                _span = "correct";
+                                form_valid = true;
+                            }
+
+                        }
+                    }else  if (e.delegateTarget.id == "mail"){
+                        if(isValidEmailAddress(e.delegateTarget.value)){
+                            _span = "correct";
+                            form_valid = true;
+                        }else{
+                            _span = "incorrect";
+                            form_valid = false;
+                        }
+                    }else  if (e.delegateTarget.id == "dob"){
+
+                    }else if(valor=='' || !isValidString(valor)){
+                        _span = "incorrect";
+                        form_valid = false;
+                    }else{
+                        _span = "correct";
+                        form_valid = true;
+                    }
+
+                    var n_span = $("#"+e.delegateTarget.id).next();
+                    n_span.removeClass("incorrect");
+                    n_span.removeClass("correct");
+                    n_span.addClass(_span);
+                });
+            });
+            $("#save").click(function(evt){
+                evt.preventDefault();
+                validate_form();
+                if(send_form == 1){
+                    var form = $("#add_user_form").serialize();
+                    $.ajax({
+                        url: "/rbac/save_user_pop/",
+                        type: "post",
+                        data: form,
+                        success: function(data){
+                            if(data.type == "n_success"){
+                                parent.added_user(data.username, data.fname, data.lname);
+                                parent.jQuery.fancybox.close();
+                            }else{
+                                parent.added_user_fail(data.message);
+                                parent.jQuery.fancybox.close();
+                            }
+                        }
+                    });
+                }
+                return false;
+            });
+        });
+    function validate_form(){
+        form_valid= true;
+
+            var _span;
+
+            var dob = $("#dob");
+            if($.trim(dob.val()) == ''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                _span = "correct";
+            }
+            dob.next().removeClass("incorrect");
+            dob.next().removeClass("correct");
+            dob.next().addClass(_span);
+
+
+
+            var username = $("#username");
+            if($.trim(username.val())=='' || !isValidString(username.val())){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                _span = "correct";
+            }
+            username.next().removeClass("incorrect");
+            username.next().removeClass("correct");
+            username.next().addClass(_span);
+            {% if operation != "edit" %}
+            var pass1 = $("#pass1");
+            var pass2 = $("#pass2");
+            {% if operation != "edit" %}
+            if (pass1.val().length < 8){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+            {% endif %}
+                if(pass1.val() != pass2.val()){
+                    _span = "incorrect";
+                    form_valid = false;
+                }else{
+                    _span = "correct";
+                }
+            {% if operation != "edit" %}
+            }
+            {% endif %}
+            pass1.next().removeClass("incorrect");
+            pass1.next().removeClass("correct");
+            pass1.next().addClass(_span);
+            {% endif %}
+            var lastname = $("#last_name");
+            if($.trim(lastname.val())=='' || !isValidString(lastname.val())){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                _span = "correct";
+            }
+            lastname.next().removeClass("incorrect");
+            lastname.next().removeClass("correct");
+            lastname.next().addClass(_span);
+
+            var surname = $("#surname");
+            if(surname.val()!=''){
+                if(!isValidString(surname.val())){
+                    _span = "incorrect";
+                    form_valid = false;
+                }else{
+                    _span = "correct";
+                }
+                surname.next().removeClass("incorrect");
+                surname.next().removeClass("correct");
+                surname.next().addClass(_span);
+            }else{
+                surname.next().removeClass("incorrect");
+                surname.next().removeClass("correct");
+            }
+
+
+            var name = $("#name");
+            if($.trim(name.val())=='' || !isValidString(name.val())){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                _span = "correct";
+            }
+            name.next().removeClass("incorrect");
+            name.next().removeClass("correct");
+            name.next().addClass(_span);
+
+
+            var mail = $("#mail");
+            if($.trim(mail.val())==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                if(isValidEmailAddress(mail.val())){
+                    _span = "correct";
+                }else{
+                    _span = "incorrect";
+                    form_valid = false;
+                }
+
+            }
+            mail.next().removeClass("incorrect");
+            mail.next().removeClass("correct");
+            mail.next().addClass(_span);
+
+
+        if (form_valid){
+            send_form++;
+        }
+
+        return form_valid;
+    }
+    </script>
+{% endblock %}
+
+{% block contenido %}
+{% include "rbac/just_forms/just_form_add_user.html" %}
+{% endblock %}

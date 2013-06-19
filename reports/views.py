@@ -234,10 +234,12 @@ def get_data_cluster_consumed_normalized (
     # Build the json.
     #
     data_cluster_json = []
-    for data_index in range(0, len(data_cluster) - 1):
+    datos_len = len(data_cluster)
+    for data_index in range(0, datos_len - 1, 12):
         data_dictionary_current = data_cluster[data_index]
-        data_dictionary_next = data_cluster[data_index + 1]
+        data_dictionary_next = data_cluster[data_index + 12]
         datetime_current = data_dictionary_current['datetime']
+        print datetime.datetime.fromtimestamp(datetime_current)
         value_current =\
             data_dictionary_next['value'] - \
             data_dictionary_current['value']
@@ -961,7 +963,8 @@ def get_consumer_unit_electrical_parameter_data_clustered(
                     value_current += consumer_unit_data.value
 
                 instant_dictionary_current['value'] = value_current
-
+            else:
+                instant_dictionary_current['value'] = None
             instants_dictionary[instant_key_current] =\
                 instant_dictionary_current.copy()
 
@@ -1173,7 +1176,7 @@ def render_report_consumed_by_month(
     # For the purposes of this report, the granularity is an hour but this is
     # intended to be extended, it should be retrieved as GET parameter.
     #
-    granularity_seconds = 3600
+    granularity_seconds = 300
     data_cluster_consumed =\
         get_data_cluster_consumed_normalized (
             consumer_unit_id,

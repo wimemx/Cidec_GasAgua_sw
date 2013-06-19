@@ -323,6 +323,9 @@ def daily_report_period(building, consumer_unit, start_date, end_date):
 def all_daily_report_all(from_date):
     all_dailyreportAll(from_date)
 
+@task(ignore_resulset=True)
+def calculateMonthlyReportCU(consumer_u, month, year):
+    getMonthlyReport(consumer_u, month, year)
 
 @task(ignore_resulset=True)
 def calculateAllMonthlyReportsInt(init, end):

@@ -1,0 +1,613 @@
+{% extends "popup_forms_base.html" %}
+{% block titulo %}
+{% if operation == "edit" %}Editar{% else %}Alta de{% endif %} Edificio
+{% endblock %}
+{% block externalcss %}
+<link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
+<link rel="stylesheet" href="/static/css/forms/rbac_general.css" type="text/css" />
+<link rel="stylesheet" href="/static/css/forms/rbac_user_list.css" type="text/css" />
+
+<link rel="stylesheet" href="/static/css/forms/c_centers.css" type="text/css" />
+<link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
+{% endblock %}
+{% block externaljs %}
+<script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+<script type="text/javascript" src="/static/js/external/maskedinput.js"></script>
+<script type="text/javascript" src="/static/js/external/autoNumeric-1.7.4.js"></script>
+<script type="text/javascript" src="/static/js/external/jquery.metadata.js"></script>
+<script type="text/javascript" src="/static/js/external/maps_api_js.js"></script>
+<script type="text/javascript">
+    var form_valid = true;
+    var send_form = 0;
+
+    var mapBusiness;
+    var geocoder;
+    var marker;
+
+    var link_state = '';
+    $(document).ready(function(){
+
+        $('#b_mt2').autoNumeric({asep:',', vMin: "0.00", vMax: "9999.99"});
+
+        $('#attr_value').autoNumeric({asep:',', vMin: "0.00", vMax: "999.99"});
+        $("#b_zip").mask("99999");
+
+
+        $("#b_name").focus();
+        $(".required").each(function(){
+            var _span;
+            if ($(this).parent().next()[0].nodeName.toLowerCase() == 'input'){
+                $(this).parent().next().blur(function(e){
+                    if($.trim(e.delegateTarget.value)==''){
+                        _span = "incorrect";
+                        form_valid = false;
+                    }else{
+                        if(e.delegateTarget.id == "b_country" || e.delegateTarget.id == "b_state" || e.delegateTarget.id == "b_municipality"){
+                            if(/^[A-Za-zÁÉÍÓÚáéíóuñÑ ]+$/.test(e.delegateTarget.value)){
+                                _span = "correct";
+                                form_valid = true;
+                            }else{
+                                _span = "incorrect";
+                                form_valid = false;
+                            }
+                        }else{
+                            if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ ]+$/.test(e.delegateTarget.value)){
+                                _span = "correct";
+                                form_valid = true;
+                            }else{
+                                _span = "incorrect";
+                                form_valid = false;
+                            }
+                        }
+
+
+                    }
+
+                    var n_span = $("#"+e.delegateTarget.id).next();
+                    n_span.removeClass("incorrect");
+                    n_span.removeClass("correct");
+                    n_span.addClass(_span);
+                });
+            }else if ($(this).parent().next()[0].nodeName.toLowerCase() == 'select'){
+                var id_select = $(this).parent().next().attr('id')
+                $("#"+id_select).change(function(e){
+                    if($.trim(e.delegateTarget.value)==''){
+                        _span = "incorrect";
+                        form_valid = false;
+                    }else{
+                        _span = "correct";
+                        form_valid = true;
+                    }
+
+                    var n_span =  $("#"+id_select).parent().next();
+                    n_span.removeClass("incorrect");
+                    n_span.removeClass("correct");
+                    n_span.addClass(_span);
+                });
+            }
+        });
+        $("#save").click(function(evt){
+            evt.preventDefault();
+            validate_form();
+            if(send_form == 1){
+                var form = $("#building_form").serialize();
+                $.ajax({
+                    type: "POST",
+                    url: "/buildings/save_add_building_popup/",
+                    data: form,
+                    success: function(data){
+                        if(data.type == "n_success"){
+                            parent.jQuery("#building").append("<option value='"+data.building+"'>"+data.post.b_name+"</option>");
+                            parent.jQuery("#building").parent().find("span").text(data.post.b_name);
+                            parent.jQuery("#building option[value='"+data.building+"']").attr("selected", "selected");
+                            parent.building_set(data.building);
+                            parent.jQuery.fancybox.close();
+                        }
+                    }
+                });
+            }
+            return false;
+
+        });
+    });
+    function validate_form(){
+
+        if (form_valid){
+            var _span;
+            var building_name = $("#b_name");
+            if($.trim(building_name.val())==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ. ]+$/.test(building_name.val())){
+                    _span = "correct";
+                }else{
+                    _span = "incorrect";
+                    form_valid = false;
+                }
+            }
+            building_name.next().removeClass("incorrect");
+            building_name.next().removeClass("correct");
+            building_name.next().addClass(_span);
+
+            var building_country = $("#b_country");
+            if($.trim(building_country.val())==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ. ]+$/.test(building_country.val())){
+                    _span = "correct";
+                }else{
+                    _span = "incorrect";
+                    form_valid = false;
+                }
+            }
+            building_country.next().removeClass("incorrect");
+            building_country.next().removeClass("correct");
+            building_country.next().addClass(_span);
+
+            var building_state = $("#b_state");
+            if($.trim(building_state.val())==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ. ]+$/.test(building_state.val())){
+                    _span = "correct";
+                }else{
+                    _span = "incorrect";
+                    form_valid = false;
+                }
+            }
+            building_state.next().removeClass("incorrect");
+            building_state.next().removeClass("correct");
+            building_state.next().addClass(_span);
+
+            var building_mun= $("#b_municipality");
+            if($.trim(building_mun.val())==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ. ]+$/.test(building_mun.val())){
+                    _span = "correct";
+                }else{
+                    _span = "incorrect";
+                    form_valid = false;
+                }
+            }
+            building_mun.next().removeClass("incorrect");
+            building_mun.next().removeClass("correct");
+            building_mun.next().addClass(_span);
+
+            var building_col= $("#b_neighborhood");
+            if($.trim(building_col.val())==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ. ]+$/.test(building_col.val())){
+                    _span = "correct";
+                }else{
+                    _span = "incorrect";
+                    form_valid = false;
+                }
+            }
+            building_col.next().removeClass("incorrect");
+            building_col.next().removeClass("correct");
+            building_col.next().addClass(_span);
+
+            var building_street= $("#b_street");
+            if($.trim(building_street.val())==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ. ]+$/.test(building_street.val())){
+                    _span = "correct";
+                }else{
+                    _span = "incorrect";
+                    form_valid = false;
+                }
+            }
+            building_street.next().removeClass("incorrect");
+            building_street.next().removeClass("correct");
+            building_street.next().addClass(_span);
+
+            var building_ext= $("#b_ext");
+            if($.trim(building_ext.val())==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ. ]+$/.test(building_ext.val())){
+                    _span = "correct";
+                }else{
+                    _span = "incorrect";
+                    form_valid = false;
+                }
+            }
+            building_ext.next().removeClass("incorrect");
+            building_ext.next().removeClass("correct");
+            building_ext.next().addClass(_span);
+
+            var building_zip= $("#b_zip");
+            if($.trim(building_zip.val())==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ. ]+$/.test(building_zip.val())){
+                    _span = "correct";
+                }else{
+                    _span = "incorrect";
+                    form_valid = false;
+                }
+            }
+            building_zip.next().removeClass("incorrect");
+            building_zip.next().removeClass("correct");
+            building_zip.next().addClass(_span);
+
+            var electric_rate = $("#b_electric_rate");
+            if(electric_rate.val()==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                _span = "correct";
+            }
+            $("#sel_electric").removeClass("incorrect");
+            $("#sel_electric").removeClass("correct");
+            $("#sel_electric").addClass(_span);
+
+            var tipo = $("#b_type");
+            if(tipo.val()==null){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                _span = "correct";
+            }
+            $("#sel_type").removeClass("incorrect");
+            $("#sel_type").removeClass("correct");
+            $("#sel_type").addClass(_span);
+
+            var company = $("#b_company");
+            if(company.val()==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                _span = "correct";
+            }
+            $("#sel_company").removeClass("incorrect");
+            $("#sel_company").removeClass("correct");
+            $("#sel_company").addClass(_span);
+
+            var region = $("#b_region");
+            if(region.val()==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                _span = "correct";
+            }
+            $("#sel_region").removeClass("incorrect");
+            $("#sel_region").removeClass("correct");
+            $("#sel_region").addClass(_span);
+        }
+        if (form_valid){
+            send_form++;
+        }
+        return form_valid
+    }
+
+    $(function() {
+
+        $("#b_state").focusin(function(){
+            $( "#b_state" ).autocomplete({
+                source: "/buildings/search_bld_state/?country=" + $("#b_country_id").val()
+            });
+
+        });
+
+        $("#b_municipality").focusin(function(){
+            $( "#b_municipality" ).autocomplete({
+                source: "/buildings/search_bld_municipality/?state=" + $("#b_state_id").val()
+            });
+        });
+
+        $("#b_neighborhood").focusin(function(){
+            $( "#b_neighborhood" ).autocomplete({
+                source: "/buildings/search_bld_neighborhood/?municipality=" + $("#b_municipality_id").val()
+            });
+        });
+
+        $("#b_street").focusin(function(){
+            $( "#b_street" ).autocomplete({
+                source: "/buildings/search_bld_street/?neighborhood=" + $("#b_neighborhood_id").val()
+            });
+        });
+
+
+        $( "#b_country" ).autocomplete({
+            source: "/buildings/search_bld_country/",
+            minLength: 2,
+            select: function( event, ui ) {
+                $("#b_country_id").val(ui.item.pk);
+            }
+        }).keyup(function(){
+                    if($.trim($(this).val())==''){
+                        $("#b_country").val();
+                        $("#b_country_id").val('');
+
+                        //Vaciar todos los campos
+                        $("#b_state").val('');
+                        $("#b_state_id").val('');
+
+                        $("#b_municipality").val('');
+                        $("#b_municipality_id").val('');
+
+                        $("#b_neighborhood").val('');
+                        $("#b_neighborhood_id").val('');
+
+                        $("#b_street").val('');
+                        $("#b_street_id").val('');
+
+                    }
+                });
+
+
+        $( "#b_state" ).autocomplete({
+            minLength: 2,
+            select: function( event, ui ) {
+                $("#b_state_id").val(ui.item.pk);
+            }
+        }).keyup(function(){
+                if($.trim($(this).val())==''){
+                    $("#b_state").val();
+                    $("#b_state_id").val('');
+
+                    //Vaciar todos los campos
+                    $("#b_municipality").val('');
+                    $("#b_municipality_id").val('');
+
+                    $("#b_neighborhood").val('');
+                    $("#b_neighborhood_id").val('');
+
+                    $("#b_street").val('');
+                    $("#b_street_id").val('');
+                }
+                });
+
+
+        $( "#b_municipality" ).autocomplete({
+            minLength: 2,
+            select: function( event, ui ) {
+                $("#b_municipality_id").val(ui.item.pk);
+            }
+        }).keyup(function(){
+                    if($.trim($(this).val())==''){
+                        $("#b_municipality").val();
+                        $("#b_municipality_id").val('');
+
+                        //Vaciar todos los campos
+                        $("#b_neighborhood").val('');
+                        $("#b_neighborhood_id").val('');
+
+                        $("#b_street").val('');
+                        $("#b_street_id").val('');
+                    }
+                });
+
+        $( "#b_neighborhood" ).autocomplete({
+            minLength: 2,
+            select: function( event, ui ) {
+                $("#b_neighborhood_id").val(ui.item.pk);
+
+            }
+        }).keyup(function(){
+                    if($.trim($(this).val())==''){
+                        $("#b_neighborhood").val();
+                        $("#b_neighborhood_id").val('');
+
+                        //Vaciar todos los campos
+                        $("#b_street").val('');
+                        $("#b_street_id").val('');
+                    }
+                });
+
+        $( "#b_street" ).autocomplete({
+            minLength: 2,
+            select: function( event, ui ) {
+                $("#b_street_id").val(ui.item.pk);
+            }
+        }).keyup(function(){
+                    if($.trim($(this).val())==''){
+                        $("#b_street").val();
+                        $("#b_street_id").val('');
+                    }
+                });
+
+     });
+
+
+    function append_attribute(tipo_atributo_etiq,atributo_etiq,tipo_atributo,atributo,valor){
+        var append = '<div  class="extra_attributes_building"><span class="delete_attr_icon">' +
+                '<a href="#eliminar" class="delete hidden_icon" ' +
+                'title="eliminar atributo"></a></span>' +
+                '<span class="tip_attribute_part">' +
+                tipo_atributo_etiq +
+                '</span>' +
+                '<span class="attribute_part">' +
+                atributo_etiq +
+                '</span>'+
+                '<span class="attribute_value_part">'+
+                valor +
+                '</span>' +
+                '<input type="hidden" name="atributo_' + tipo_atributo + "_" +atributo +'" ' +
+                'value="' + tipo_atributo +','+ atributo + ','+ valor +
+                '"/></div>';
+        $('#atributes_fields').before(append);
+    }
+
+    function initialize() {
+        var latlng = new google.maps.LatLng(20.593020, -100.392198);
+        var myOptions = {
+            zoom: 14,
+            center: latlng,
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+        mapBusiness = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+
+
+        //GEOCODER
+        geocoder = new google.maps.Geocoder();
+
+        marker = new google.maps.Marker({
+            map: mapBusiness,
+            draggable: true
+        });
+
+
+        if($('#b_latitude').val() != '0' && $('#b_longitude').val() != '0' ){
+            marker.setPosition(new google.maps.LatLng($('#b_latitude').val(), $('#b_longitude').val()));
+            mapBusiness.setCenter(marker.getPosition());
+        }
+    }
+
+    function locateMarker(location){
+        marker.setPosition(location);
+        $('#b_latitude').val(location.lat());
+        $('#b_longitude').val(location.lng());
+
+    }
+
+
+</script>
+{% endblock %}
+
+{% block document_ready %}
+
+$(".extra_attributes_building").mouseenter(function(){
+$(this).find(".hidden_icon").css("visibility","visible");
+}).mouseleave(function(){
+$(this).find(".hidden_icon").css("visibility","hidden");
+});
+
+$(".delete").click(function(e){
+e.preventDefault();
+$(this).parent().parent().remove();
+});
+
+$("#attributes_type").click(function(e){
+e.preventDefault();
+$(this).find("ul.ddl").slideToggle();
+});
+
+$("#attributes").click(function(e){
+e.preventDefault();
+if(!$("ul.ddl").is(":visible")){
+    $(this).find("ul.ddl").slideToggle();
+}else{
+    $(this).find("ul.ddl").slideUp();
+}
+});
+
+$("#attributes_type_list li").click(function(){
+//Limpia los campos ocultos
+$("#attr_type_id_sel").val('');
+$("#attr_id_sel").val('');
+$("#attributes span").text('Atributo');
+
+$("#attribute_list, #object_list").html("").hide();
+var elemento = $(this);
+$("#attributes_type span").text(elemento.text());
+elemento.parent().slideUp().stop();
+var uri = elemento.attr("rel");
+$("#attr_type_id_sel").val(uri);
+var url = "/buildings/get_attributes/"+uri;
+$("#attribute_list").load(url, function(){
+$(this).slideDown();
+$("#attribute_list li").click(function(){
+var elemento = $(this);
+$("#attributes span").text(elemento.text());
+elemento.parent().slideUp();
+$("#attr_id_sel").val(elemento.attr("rel"));
+});
+
+});
+
+});
+
+
+$("#add_attributes").click(function(event){
+event.preventDefault();
+var attribute_value = $("#attr_value").val();
+var attribute_type_id = $("#attr_type_id_sel").val();
+var attribute_type_label = $("#attributes_type span").text();
+var attribute_id = $("#attr_id_sel").val();
+var attribute_label = $("#attributes span").text();
+
+if (attribute_type_id != '' && attribute_id != '' && attribute_value != ''){
+append_attribute(attribute_type_label,attribute_label,attribute_type_id,attribute_id,attribute_value);
+}
+
+$(".extra_attributes_building").mouseenter(function(){
+$(this).find(".hidden_icon").css("visibility","visible");
+}).mouseleave(function(){
+$(this).find(".hidden_icon").css("visibility","hidden");
+});
+
+$(".delete").click(function(e){
+e.preventDefault();
+$(this).parent().parent().remove();
+});
+
+//Limpia las etiquetas de los combos
+$("#attributes_type span").text('Tipos de Atributos');
+$("#attributes span").text('Atributo');
+$("#attr_value").val('');
+
+});
+
+initialize();
+
+google.maps.event.addListener(mapBusiness, 'click', function(event){
+locateMarker(event.latLng);
+
+});
+
+
+google.maps.event.addListener(marker, 'drag', function() {
+geocoder.geocode({'latLng':marker.getPosition()}, function(results, status) {
+if(status == google.maps.GeocoderStatus.OK){
+if(results[0]){
+mapBusiness.setCenter(marker.getPosition());
+$('#b_latitude').val(results[0].geometry.location.lat());
+$('#b_longitude').val(results[0].geometry.location.lng());
+}
+}
+});
+});
+
+
+$("a.back").click(function(e){e.preventDefault(); History.back();});
+
+{% endblock %}
+
+{% block breadcumbs %}
+    <div id="bread_crumbs">
+    <a href="/profile/{{ request.user.pk }}/" class="fl username">{{ request.user.first_name }} {{ request.user.last_name }}</a>
+    <ul>
+        <li><a href="/main/">Inicio</a></li>
+        <li><a href="/buildings/edificios/">Edificios</a></li>
+        {% if operation == "edit" %}
+        <li>
+            Edici&oacute;n de edificio
+        </li>
+        {% else %}
+        <li>Alta de edificio</li>
+        {% endif %}
+
+    </ul>
+    <a href="/logout" id="userLogOut">Cerrar sesión</a>
+</div>
+
+{% endblock %}
+
+{% block contenido %}
+    
+{% include "consumption_centers/buildings/just_forms/just_form_add_building.html" %}
+
+{% endblock %}

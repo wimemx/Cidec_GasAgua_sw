@@ -16,37 +16,38 @@
     <script type="text/javascript">
 
         function getRate(){
-            $('#rates_loader').addClass('rates_spinner');
 
             var year = $("#crawler_year").val();
             var month = $("#crawler_month").val();
 
-            $.ajax({
-                url: '/electric_rates/crawler_tarifas/?tarifa={{ tipo_tarifa }}&month='+month+'&year='+year,
-                type: "GET",
-                success: function(data){
-                    var url = '/electric_rates/tabla_tarifaHM/?tarifa={{ tipo_tarifa }}&year='+year+'&crawler='+data;
-                    $('#hm_container').addClass('iframe_spinner');
-                    makeIframe(url);
-                    $('#rates_loader').removeClass('rates_spinner');
+            if(year != undefined && month != undefined){
+                $('#rates_loader').addClass('rates_spinner');
+                $.ajax({
+                    url: '/electric_rates/crawler_tarifas/?tarifa={{ tipo_tarifa }}&month='+month+'&year='+year,
+                    type: "GET",
+                    success: function(data){
+                        var url = '/electric_rates/tabla_tarifaHM/?tarifa={{ tipo_tarifa }}&year='+year+'&crawler='+data;
+                        $('#hm_container').addClass('iframe_spinner');
+                        makeIframe(url);
+                        $('#rates_loader').removeClass('rates_spinner');
 
-                }
-            });
-
-
+                    }
+                });
+            }
         }
 
-        function viewHM(){
+        function viewRate(){
             var year = $("#year_01").val();
 
-            var url = '/electric_rates/tabla_tarifaHM/?tarifa={{ tipo_tarifa }}&year='+year;
+            if(year != undefined){
+                var url = '/electric_rates/tabla_tarifaHM/?tarifa={{ tipo_tarifa }}&year='+year;
 
-            //$("#cfe_container").append('<img src="/static/css/images/spinner.gif" id="spinner" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">');
-            //$('#cfe_container').load(url, function(){$("#spinner").remove();});
+                //$("#cfe_container").append('<img src="/static/css/images/spinner.gif" id="spinner" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">');
+                //$('#cfe_container').load(url, function(){$("#spinner").remove();});
 
-            $('#hm_container').addClass('iframe_spinner');
-            makeIframe(url);
-
+                $('#hm_container').addClass('iframe_spinner');
+                makeIframe(url);
+            }
         }
 
         function refresh_iframe_height(){
@@ -95,6 +96,7 @@
             <li><a href="/main/">Inicio</a></li>
             <li><a href="/reportes/cfe/">Recibo CFE</a></li>
         </ul>
+        <a href="/logout" id="userLogOut">Cerrar sesión</a>
     </div>
 
 {% endblock %}
@@ -112,21 +114,20 @@
             <div class="divider" id="divider_top">&nbsp;</div>
             <div id="datepicker_component">
                 <div>
-                    <span class="period_tag">Tarifa del:</span>
-
+                    <span class="period_tag">Ver Tarifa del:</span>
+                    <select name="year_01" id="year_01">
                     {% if year_list %}
-                        <select name="year_01" id="year_01">
                             {% for yr in year_list %}
                                 <option value="{{yr}}" {% if year == yr %} selected{% endif %}>{{yr}}</option>
                             {% endfor %}
-                        </select>
                     {% endif %}
+                    </select>
 
-                    <button class="aqua_btn" onclick="viewHM();">Ver</button>
+                    <button class="aqua_btn" onclick="viewRate();">Ver</button>
                 </div>
                 <div id='recolector'>
                     <span class="period_tag">Recolector de Tarifas</span>
-                    <select name="crawler_month" id="month_01">
+                    <select name="crawler_month" id="crawler_month">
                         <option value="1">Enero</option>
                         <option value="2">Febrero</option>
                         <option value="3">Marzo</option>
@@ -140,7 +141,7 @@
                         <option value="11">Noviembre</option>
                         <option value="12">Diciembre</option>
                     </select>
-                    <select name="crawler_year" id="year_01">
+                    <select name="crawler_year" id="crawler_year">
                         {% if crawler_year_list %}
                             {% for yr in crawler_year_list %}
                                 <option value="{{yr}}" {% if year == yr %} selected{% endif %}>{{yr}}</option>

@@ -11,6 +11,7 @@
 <script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
 <script type="text/javascript">
 $(document).ready(function(){
+        $("#download").hide();
     	// Smart Wizard
   	  $('#wizard').smartWizard({
           labelNext: "Siguiente",
@@ -18,16 +19,22 @@ $(document).ready(function(){
           labelFinish: "Finalizar",
           transitionEffect:'slideleft',
           onLeaveStep:leaveAStepCallback,
-          onFinish:onFinishCallback,enableFinishButton:true});
+          onFinish:onFinishCallback,
+          enableFinishButton:true});
 
       function leaveAStepCallback(obj){
         var step_num= obj.attr('rel');
+        if(step_num==1){
+            $("iframe").contents().find("#save_hierarchy").addClass("botonGuardaJerarquia");
+            $("iframe").contents().find("body").css("overflow","hidden");
+        }
         return validateSteps(step_num);
       }
 
       function onFinishCallback(){
        if(validateAllSteps()){
-        $('form').submit();
+           $("#wizard").hide();
+           $("#download").show();
        }
       }
 		});
@@ -42,15 +49,8 @@ $(document).ready(function(){
          $('#wizard').smartWizard('setError',{stepnum:1,iserror:false});
        }
 
-       if(validateStep3() == false){
-         isStepValid = false;
-         $('#wizard').smartWizard('setError',{stepnum:3,iserror:true});
-       }else{
-         $('#wizard').smartWizard('setError',{stepnum:3,iserror:false});
-       }
-
        if(!isStepValid){
-          $('#wizard').smartWizard('showMessage','Please correct the errors in the steps and continue');
+          $('#wizard').smartWizard('showMessage','Por favor corrija los errores e intente de nuevo');
        }
 
        return isStepValid;
@@ -70,34 +70,223 @@ $(document).ready(function(){
                 wizard.smartWizard('setError',{stepnum:step,iserror:false});
             }
         }
-        // validate step3
-        if(step == 3){
-            if(validateStep3() == false ){
-                isStepValid = false;
-                wizard.smartWizard('showMessage','Please correct the errors in step'+step+ ' and click next.');
-                wizard.smartWizard('setError',{stepnum:step,iserror:true});
-            }else{
-                wizard.smartWizard('setError',{stepnum:step,iserror:false});
-            }
-        }
-
         return isStepValid;
     }
     function validateStep1(){
         return ($("#company_cluster").val()>0 && $("#company").val()>0 && $("#building").val()>0);
     }
-    function validateStep3(){
-        var isValid = true;
-        //validate
 
-        return isValid;
+    var non_selected_building = function(){
+        var building = $("#building");
+        building.parent().find("span").text("Selecciona un edificio");
+        building.html('<option value="0">Selecciona un edificio</option>');
+        building.find('option[value="0"]').attr("selected", "selected");
+    };
+    var non_selected_company = function(){
+        var company = $("company");
+        company.parent().find("span").text("Selecciona una empresa");
+        company.html('<option value="0">Selecciona una empresa</option>');
+        company.find('option[value="0"]').attr("selected", "selected");
+    };
+    var update_company_url = function(cluster){
+        var add_c = $("#add_empresa");
+        var url = add_c.attr("href");
+        url = url.split("/");
+        url.splice(3, url.length-1);
+        url = url.join("/");
+        url = url+"/?company="+cluster;
+        add_c.attr("href", url);
+    };
+    var update_building_url = function(company){
+        var add_b = $("#add_building");
+        var url = add_b.attr("href");
+        url = url.split("/");
+        url.splice(3, url.length-1);
+        url = url.join("/");
+        url = url+"/?company="+company;
+        add_b.attr("href", url);
+    };
+    var show_asigned_users = function(building){
+
+        $.ajax({
+            url: "/rbac/get_asigned_users/"+building+"/",
+                type: "GET",
+                dataType: 'json',
+                async: 'true',
+                success: function(datos){
+                    var table_cont = $("#added_context_users");
+                    var table = "<table id='asigned_users'><thead><tr>" +
+                            "<th style='width: 33%;'>Nombre de usuario</th>" +
+                            "<th style='width: 33%;'>Nombre del rol</th>" +
+                            "<th>Edificio</th>" +
+                            "</thead></tr><tbody>";
+                    var building_name = $("#building").find("option[value='"+building+"']").text();
+                    var cont = 0;
+                    datos.forEach(function(row){
+                        cont++;
+                        var css_class;
+                        if(cont%2==1){
+                            css_class = "row1";
+                        }else{
+                            css_class = "row2";
+                        }
+                        table += "<tr class="+css_class+">";
+                        table += "<td class='c'>";
+                        table += row["username"];
+                        table += "</td>";
+                        table += "<td class='c'>";
+                        table += row["role_name"];
+                        table += "</td>";
+                        table += "<td class='c'>";
+                        table += building_name;
+                        table += "</td>";
+                        table += "</tr>";
+                    });
+                    table += "</tbody></table>";
+                    table_cont.html(table)
+                }
+        });
+    };
+
+    var show_building_alarms = function(building){
+
+        $.ajax({
+            url: "/configuracion/get_building_alarms/"+building+"/",
+                type: "GET",
+                dataType: 'json',
+                async: 'true',
+                success: function(datos){
+                    var table_cont = $("#added_building_alarms");
+                    var table = "<table id='asigned_users'><thead><tr>" +
+                            "<th style='width: 20%;'>Tipo Medidor</th>" +
+                            "<th style='width: 20%;'>Parámetro</th>" +
+                            "<th style='width: 20%;'>Valor Mínimo</th>" +
+                            "<th style='width: 20%;'>Valor Máximo</th>" +
+                            "<th style='width: 20%;'>Edificio</th>" +
+                            "</thead></tr><tbody>";
+                    var building_name = $("#building").find("option[value='"+building+"']").text();
+                    var cont = 0;
+                    datos.forEach(function(row){
+                        cont++;
+                        var css_class;
+                        if(cont%2==1){
+                            css_class = "row1";
+                        }else{
+                            css_class = "row2";
+                        }
+                        table += "<tr class="+css_class+">";
+                        table += "<td class='c'>";
+                        table += row["device"];
+                        table += "</td>";
+                        table += "<td class='c'>";
+                        table += row["param"];
+                        table += "</td>";
+                        table += "<td class='c'>";
+                        table += String(parseFloat(row["min_val"]).toFixed(2));
+                        table += "</td>";
+                        table += "<td class='c'>";
+                        table += String(parseFloat(row["max_val"]).toFixed(2));
+                        table += "</td>";
+                        table += "<td class='c'>";
+                        table += building_name;
+                        table += "</td>";
+                        table += "</tr>";
+                    });
+                    table += "</tbody></table>";
+                    table_cont.html(table)
+                }
+        });
+    };
+
+    var building_set = function(building){
+        var url = "/buildings/create_hierarchy_pop/"+building+"/";
+        var frameHierarchy = document.createElement("IFRAME");
+        frameHierarchy.id = "frameHierarchy";
+        frameHierarchy.src = url;
+        $("#step-2").html(frameHierarchy);
+        refresh_iframe_height();
+        var data_context_link = $("#add_data_context");
+        var url_data_c = data_context_link.attr("href");
+        url_data_c = url_data_c.split("/");
+        url_data_c.splice(3, url_data_c.length-1);
+        url_data_c = url_data_c.join("/");
+
+        var add_alarm_link = $("#add_alarm");
+        var url_add_alarm = add_alarm_link.attr("href");
+        url_add_alarm = url_add_alarm.split("/");
+        url_add_alarm.splice(3, url_add_alarm.length-1);
+        url_add_alarm = url_add_alarm.join("/");
+        var b_val = $("#building").val();
+        var get_vars = "/?cluster="+$("#company_cluster").val()+"&company="+$("#company").val()+"&building="+b_val;
+
+        url_data_c = url_data_c+get_vars;
+        data_context_link.attr("href", url_data_c);
+
+        url_add_alarm = url_add_alarm+get_vars;
+        add_alarm_link.attr("href", url_add_alarm);
+
+        var saq_device = $("#saq_device");
+        var url_saq_device = saq_device.attr("href");
+        url_saq_device = url_saq_device.split("/");
+        url_saq_device.splice(3, url_saq_device.length-1);
+        url_saq_device = url_saq_device.join("/");
+        saq_device.attr("href", url_saq_device+"/"+b_val+"/");
+
+        var e_devices = $("#e_devices");
+        var url_e_devices = e_devices.attr("href");
+        url_e_devices = url_e_devices.split("/");
+        url_e_devices.splice(3, url_e_devices.length-1);
+        url_e_devices = url_e_devices.join("/");
+        e_devices.attr("href", url_e_devices+"/"+b_val+"/");
+
+        var e_alarms = $("#e_alarms");
+        var url_e_alarms = e_alarms.attr("href");
+        url_e_alarms = url_e_alarms.split("/");
+        url_e_alarms.splice(3, url_e_alarms.length-1);
+        url_e_alarms = url_e_alarms.join("/");
+        e_alarms.attr("href", url_e_alarms+"/"+b_val+"/");
+
+        show_asigned_users(building);
+        show_building_alarms(building);
+    };
+
+    function refresh_iframe_height(){
+        // regresca el height del iframe para ajustarse a su conte
+        setTimeout("parent.document.getElementById('frameHierarchy').height = 600;", 1000);
     }
+
+    function added_user(username, fname, lname){
+        var messages = $("#add_user_cont").find(".message");
+        messages.append("<span class='msj'>"+fname+" "+lname+" se ha dado de alta con el nombre de usuario '"+username+"'<a onclick='$(this).parent().remove();'>X</a></span>");
+    }
+    function added_user_fail(message){
+        var messages = $("#add_user_cont").find(".message");
+        messages.append("<span class='msj'>"+message+"<a onclick='$(this).parent().remove();'>X</a></span>");
+    }
+
+    function added_role(rolename){
+        var messages = $("#add_role_cont").find(".message");
+        messages.append("<span class='msj'>El rol '"+rolename+"' se ha dado de alta correctamente'<a onclick='$(this).parent().remove();'>X</a></span>");
+    }
+    function added_role_fail(message){
+        var messages = $("#add_role_cont").find(".message");
+        messages.append("<span class='msj'>"+message+"<a onclick='$(this).parent().remove();'>X</a></span>");
+    }
+    function asigned(){
+        var messages = $("#add_datacontext_cont").find(".message");
+        messages.append("<span class='msj'>El rol se ha asigando correctamente para el edificio"+$("#")+"'<a onclick='$(this).parent().remove();'>X</a></span>");
+    }
+    function asigned_fail(message){
+        var messages = $("#add_datacontext_cont").find(".message");
+        messages.append("<span class='msj'>No se ha podido asignar el rol, por favor intente desde la pantalla de asignación de roles<a onclick='$(this).parent().remove();'>X</a></span>");
+    }
+
 </script>
 
 {% endblock %}
 {% block document_ready %}
     $(".add").fancybox({
-    maxWidth	: 800,
+        maxWidth	: 1000,
         maxHeight	: 800,
         fitToView	: false,
         width		: '70%',
@@ -110,19 +299,17 @@ $(document).ready(function(){
     });
     $("#add_empresa").on("click", function(evt){
         if($("#company_cluster").val()=='0'){
+            $("#add_company_cont").find(".msgBoxRed").html("<span>No se ha seleccionado un cluster<a onclick='$(this).parent().parent().fadeOut().delay(400).remove();'>X</a></span>").fadeIn("fast");
             return false;
         }
     });
-    var non_selected_building = function(){
-        $("#building").parent().find("span").text("Selecciona un edificio");
-        $("#building").html('<option value="0">Selecciona un edificio</option>');
-        $('#building option[value="0"]').attr("selected", "selected");
-    }
-    var non_selected_company = function(){
-        $("#company").parent().find("span").text("Selecciona una empresa");
-        $("#company").html('<option value="0">Selecciona una empresa</option>');
-        $('#company option[value="0"]').attr("selected", "selected");
-    }
+    $("#add_building").on("click", function(evt){
+        if($("#company").val()=='0'){
+            $("#add_building_cont").find(".msgBoxRed").html('<span>No se ha seleccionado una empresa<a onclick="$(this).parent().parent().fadeOut().delay(400).remove();">X</a></span>').fadeIn("fast");
+            return false;
+        }
+    });
+
     $("#company_cluster").change(function(){
         var cluster = $(this).val();
         if(cluster>0){
@@ -134,13 +321,8 @@ $(document).ready(function(){
                 success: function(datos){
                     var append_text = '';
                     var notice_text = '';
-                    var url = $("#add_empresa").attr("href");
-                    url = url.split("/");
-                    url.splice(3, url.length-1);
-                    url = url.join("/");
-                    url = url+"/?company="+cluster;
-                    $("#add_empresa").attr("href", url);
 
+                    update_company_url(cluster);
 
                     if(datos[0].all == "none"){
                         notice_text = 'Tu esquema de permisos no tiene permitido dar de alta nuevas empresas para la instalación de un equipo industrial.'+
@@ -176,6 +358,7 @@ $(document).ready(function(){
     });
     $("#company").change(function(){
         if($(this).val()>0){
+            var company = $(this).val();
             $.ajax({
                 url: "/buildings/get_company_buildings/"+$(this).val()+"/?op={{ operation }}",
                 type: "GET",
@@ -188,6 +371,9 @@ $(document).ready(function(){
                         notice_text = 'Tu esquema de permisos no tiene permitido dar de alta nuevos edificios para la instalación de un equipo industrial.'+
                                       'Por favor ponte en contacto con el administrador';
                     }else{
+
+                        update_building_url(company);
+
                         var first_option = '';
                         first_option='<option value="0">'+
                                 'Selecciona un edificio</option>';
@@ -214,6 +400,12 @@ $(document).ready(function(){
         }
     });
 
+    $("#building").change(function(){
+        if($(this).val()>0){
+            building_set($(this).val());
+        }
+    });
+
 {% endblock %}
 {% block breadcumbs %}
 
@@ -223,6 +415,7 @@ $(document).ready(function(){
             <li><a href="/main/">Inicio</a></li>
             <li>Alta de estructura inicial</li>
         </ul>
+        <a href="/logout" id="userLogOut">Cerrar sesión</a>
     </div>
 
 {% endblock %}
@@ -231,7 +424,7 @@ $(document).ready(function(){
 
     <div id="page_content">
         <div id="contenido_interno">
-            <h2 class="titulo_reporte"><span class="building">Alta de estrictura inicial</span></h2>
+            <h2 class="titulo_reporte"><span class="building">Alta de estructura inicial</span></h2>
 
             <div class="divider" id="divider_top">&nbsp;</div>
             {% if message %}
@@ -241,92 +434,125 @@ $(document).ready(function(){
                 </span>
             {% endif %}
 
-            <div id="content">
-                <form method="post" action=".">
-                <div id="wizard" class="swMain">
-                    <ul>
-                        <li>
-                            <a href="#step-1">
-                                <span class="stepNumber">1</span>
-                                <span class="stepDesc">
-                                    <small>Ubicaci&oacute;n de la instalaci&oacute;n</small>
-                                </span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#step-2">
-                                <span class="stepNumber">2</span>
-                                <span class="stepDesc">
-                                    <small>Estructura de la instalaci&oacute;n</small>
-                                </span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#step-3">
-                            <span class="stepNumber">3</span>
+
+            <form method="post" action=".">
+            <div id="wizard" class="swMain">
+                <ul>
+                    <li>
+                        <a href="#step-1">
+                            <span class="stepNumber">1</span>
                             <span class="stepDesc">
-                                <small>Usuarios y permisos</small>
+                                <small>Ubicaci&oacute;n de la instalaci&oacute;n</small>
                             </span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#step-4">
-                                <span class="stepNumber">4</span>
-                                <span class="stepDesc">
-                                    <small>Alarmas</small>
-                                </span>
-                            </a>
-                        </li>
-                    </ul>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#step-2">
+                            <span class="stepNumber">2</span>
+                            <span class="stepDesc">
+                                <small>Estructura de la instalaci&oacute;n</small>
+                            </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#step-3">
+                        <span class="stepNumber">3</span>
+                        <span class="stepDesc">
+                            <small>Usuarios y permisos</small>
+                        </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#step-4">
+                            <span class="stepNumber">4</span>
+                            <span class="stepDesc">
+                                <small>Alarmas</small>
+                            </span>
+                        </a>
+                    </li>
+                </ul>
 
-                    <div id="step-1">
-                        <div class="form_content g12">
-                            <div class="g12" id="add_cluster">
-                                <span class="notice g12"></span>
-                                <label for="company_cluster" class="g2">Grupo de empresas<span class="required">*</span></label>
-                                <select name="company_cluster" id="company_cluster" class="g9">
-                                    <option value="0">Selecciona un grupo de empresas </option>
-                                    {% if clusters %}
-                                    {% for cluster in clusters %}
-                                    <option value="{{cluster.id}}" {% if post.cmp_cluster == cluster.id %} selected {% endif %}>{{ cluster.cluster_name }}</option>
-                                    {% endfor %}
-                                    {% endif %}
+                <div id="step-1">
+                    <div class="form_content g12">
+                        <div class="g12" id="add_cluster_cont">
+                            <span class="notice g12"></span>
+                            <label for="company_cluster" class="g2">Grupo de empresas<span class="required">*</span></label>
+                            <select name="company_cluster" id="company_cluster" class="g9">
+                                <option value="0">Selecciona un grupo de empresas </option>
+                                {% if clusters %}
+                                {% for cluster in clusters %}
+                                <option value="{{cluster.id}}" {% if post.cmp_cluster == cluster.id %} selected {% endif %}>{{ cluster.cluster_name }}</option>
+                                {% endfor %}
+                                {% endif %}
 
-                                </select>
-                                <a href="/buildings/add_cluster_pop/" class="add" data-fancybox-type="iframe">Nuevo grupo de empresas</a>
-                            </div>
-                            <div class="g12" id="add_company">
-                                <span class="notice g12"></span>
-                                <label for="company" class="g2">Empresa<span class="required">*</span></label>
-                                <select name="company" id="company" class="g9">
-                                    <option value="0">Selecciona una empresa </option>
-                                </select>
-                                <a href="/buildings/add_company_pop/" id="add_empresa" class="add" data-fancybox-type="iframe">Nueva empresa</a>
-                            </div>
-                            <div class="g12" id="add_building">
-                                <span class="notice g12"></span>
-                                <label for="building" class="g2">Edificio<span class="required">*</span></label>
-                                <select name="building" id="building" class="g9">
-                                    <option value="0">Selecciona un edificio</option>
-                                </select>
-                                <a href="/buildings/add_company_pop/" class="add" data-fancybox-type="iframe">Nuevo edificio</a>
-                            </div>
+                            </select>
+                            <a href="/buildings/add_cluster_pop/" class="add" data-fancybox-type="iframe"><span class="plus"></span>Nuevo grupo de empresas</a>
+                        </div>
+                        <div class="g12" id="add_company_cont">
+                            <span class="notice g12"></span>
+                            <label for="company" class="g2">Empresa<span class="required">*</span></label>
+                            <select name="company" id="company" class="g9">
+                                <option value="0">Selecciona una empresa </option>
+                            </select>
+                            <a href="/buildings/add_company_pop/" id="add_empresa" class="add" data-fancybox-type="iframe"><span class="plus"></span>Nueva empresa</a>
+                            <span class="msgBoxRed"></span>
+                        </div>
+                        <div class="g12" id="add_building_cont">
+                            <span class="notice g12"></span>
+                            <label for="building" class="g2">Edificio<span class="required">*</span></label>
+                            <select name="building" id="building" class="g9">
+                                <option value="0">Selecciona un edificio</option>
+                            </select>
+                            <a href="/buildings/add_building_pop/" id="add_building" class="add" data-fancybox-type="iframe"><span class="plus"></span>Nuevo edificio</a>
+                            <span class="msgBoxRed"></span>
                         </div>
                     </div>
-                    <div id="step-2">
-
-                    </div>
-                    <div id="step-3">
-
-                    </div>
-                    <div id="step-4">
-
-                    </div>
+                </div>
+                <div id="step-2">
 
 
                 </div>
-                </form>
+                <div id="step-3">
+                    <div class="form_content g12">
+                        <div class="rbac_links g12" id="add_user_cont">
+                            <a href="/panel_de_control/add_user_pop/" id="add_user" class="add" data-fancybox-type="iframe"><span class="plus"></span>Alta de usuarios</a>
+                            <span class="message"></span>
+                        </div>
+                        <div class="rbac_links g12" id="add_role_cont">
+                            <a href="/panel_de_control/nuevo_rol_pop/" id="add_role" class="add" data-fancybox-type="iframe"><span class="plus"></span>Alta de Roles</a>
+                            <span class="message"></span>
+                        </div>
+                        <div class="rbac_links g12" id="add_datacontext_cont">
+                            <a href="/panel_de_control/add_data_context_permissions_pop/" id="add_data_context" class="add" data-fancybox-type="iframe"><span class="plus"></span>Asignar roles a usuarios</a>
+                            <span class="message"></span>
+                        </div>
+                        <div class="grid_container" id="added_context_users">
+
+                        </div>
+                    </div>
+                </div>
+                <div id="step-4">
+                    <div class="form_content g12">
+                        <div class="rbac_links g12" id="add_user_cont">
+                            <a href="/configuracion/add_alarm_popup/" id="add_alarm" class="add" data-fancybox-type="iframe"><span class="plus"></span>Agregar alarma</a>
+                            <span class="message"></span>
+                        </div>
+
+                        <div class="grid_container" id="added_building_alarms">
+
+                        </div>
+                    </div>
+                </div>
+
+
             </div>
+            </form>
+            <div id="download">
+                <a href="/configuracion/saq_device/" id="saq_device" class="aqua_btn">Descargar Configuración de SA</a>
+                <a href="/configuracion/e_devices/" id="e_devices" class="aqua_btn">Descargar Configuración del dispositivos</a>
+                <a href="/configuracion/e_alarms/" id="e_alarms" class="aqua_btn">Descargar Configuración de alarmas</a>
+            </div>
+
         </div>
     </div>
 {% endblock %}

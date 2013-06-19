@@ -1,0 +1,286 @@
+{% extends "popup_forms_base.html" %}
+{% block titulo %}{% if role %}Modificar rol{% else %}Alta de rol{% endif %}{% endblock %}
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/forms/rbac_general.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/forms/rbac_user_list.css" type="text/css" />
+{% endblock %}
+
+    {% block document_ready %}
+            $("#add_permission").click(function(e){
+                e.preventDefault();
+                var rol = $("#role_name");
+                var desc = $("#role_desc");
+                if(isValidString($.trim(rol.val())) && $.trim(rol.val())!= ''){
+                    if(isValidString($.trim(desc.val()))){
+                        rol.val($.trim(rol.val()));
+                        $("#basic_rol_info").hide();
+                        $("#rolename").text(rol.val());
+                        $("#role_description").text($("#role_desc").val());
+                        $("#add_permissions").show();
+                        if(rol.parent().find("span.g1").hasClass("incorrect")){
+                            rol.parent().find("span.g1").removeClass("incorrect");
+                            rol.parent().find("span.g1").addClass("correct");
+                        }
+                        if(desc.parent().find("span.g1").hasClass("incorrect")){
+                            desc.parent().find("span.g1").removeClass("incorrect");
+                            desc.parent().find("span.g1").addClass("correct");
+                        }
+                    }else{
+                        desc.parent().find("span.g1").addClass("incorrect");
+                    }
+                }else{
+                    rol.parent().find("span.g1").addClass("incorrect");
+                }
+            });
+            $(".edit").click(function(e){
+                $("#add_permissions").hide();
+                $("#basic_rol_info").show();
+            });
+
+            $("#operation").click(function(){
+                $("ul.ddl").fadeOut("fast");
+                $(this).find("ul.ddl").slideToggle();
+            });
+            $("#group").click(function(){
+                $("ul.ddl").fadeOut("fast");
+                $(this).find("ul.ddl").slideToggle();
+            });
+            $("#object .legend").click(function(){
+                $("ul.ddl").fadeOut("fast");
+                $(this).parent().find("ul.ddl").slideToggle();
+            });
+            $("#operation_list li").click(function(){
+                $("#group_list, #object_list").html("").hide();
+                var elemento = $(this);
+                $("#operation span").text(elemento.text());
+                elemento.parent().slideUp().stop();
+                var uri = elemento.attr("rel");
+                var url = "/rbac/get_group/"+uri;
+                $("#group_list").load(url, function(){
+                    $(this).slideDown();
+
+
+                    $("#group_list li").click(function(){
+                        $("#object_list").html("").hide();
+                        var elemento = $(this);
+                        $("#group span").text(elemento.text());
+                        elemento.parent().slideUp().stop();
+                        var url2 = elemento.attr("rel");
+                        url2 = "/rbac/get_object/"+url2+"?operation="+uri;
+                        $("#object_list").load(url2, function(){
+
+                            var all = '<li><input type="checkbox" name="all" ' +
+                                    'id="all"/>'+
+                                    '<label for="all" >'+
+                                    'Todos'+
+                                    '</label></li>';
+                            $(this).prepend(all).slideDown();
+                            $("#object_list input:checkbox").each(function(){
+                                check_if_exists($(this));
+                            }).uniform();
+                            $("input[name*='object_']").change(function(){
+                                if($("#all").is(":checked")){
+                                    $("#all").prop("checked", false);
+                                    $.uniform.update();
+                                }
+                            });
+                            $("#add_buttons").show();
+                            $("#all").change(function(){
+
+                                if($(this).is(":checked")){
+                                    $("#object_list").find("input:checkbox").each(function(){
+
+                                        if($(this).attr('id')!="all"){
+                                            $(this).prop("checked", true);
+                                        }
+
+                                    });
+                                }else{
+                                    $("#object_list").find("input:checkbox").each(function(){
+
+                                        if($(this).attr('id')!="all"){
+                                            $(this).prop("checked", false);
+                                        }
+
+                                    });
+                                }
+
+                                $.uniform.update();
+                            });
+                        });
+
+                    });
+
+                });
+
+                $("#add_objects").click(function(e){
+                    e.preventDefault();
+                    add_object();
+                });
+                $("#add_save").click(function(e){
+                    e.preventDefault();
+                    add_object();
+                    $("#save_btn button").click();
+                });
+            });
+            $("a.back").click(function(e){e.preventDefault(); History.back();});
+
+        {% endblock %}
+{% block externaljs %}
+    <script type="text/javascript">
+    function check_if_exists(checkbox){
+
+        var id_check = parseInt(checkbox.attr("id"));
+        var operation_name = $("#operation span.legend").text();
+        operation_name = $.trim(operation_name);
+        var group_name = $("#group span.legend").text();
+        group_name = $.trim(group_name);
+        var grupo_tag = group_name.toLowerCase()
+        grupo_tag = grupo_tag.replace(/á/gi,"a");
+        grupo_tag = grupo_tag.replace(/é/gi,"e");
+        grupo_tag = grupo_tag.replace(/í/gi,"i");
+        grupo_tag = grupo_tag.replace(/ó/gi,"o");
+        grupo_tag = grupo_tag.replace(/ú/gi,"u");
+        grupo_tag = grupo_tag.replace(/ñ/gi,"n");
+        grupo_tag = grupo_tag.replace(/\s/gi,"-");
+        var input_name = operation_name + "_" + grupo_tag;
+
+        $("#add_permissions").find("input[type='hidden']").each(function(){
+            if($(this).attr('name') == input_name){
+                var valores = $(this).val();
+                valores = valores.split(",");
+                for(var i=0; i<valores.length; i++){
+                    if (valores[i] == "all" || parseInt(valores[i]) == id_check){
+                        checkbox.prop("checked", true);
+                    }
+
+                }
+            }
+        });
+    }
+    function add_object(){
+        var added_objects='';
+        var added_objects_ids='';
+        if ($("#all").is(":checked")){
+            added_objects='Todos';
+            $("#object_list").find("input:checkbox").each(function(){
+                if ($(this).is(':checked')){
+                    if (added_objects_ids == ''){
+                        added_objects_ids = $(this).attr('id');
+                    }
+                    else{
+                        added_objects_ids += ',' + $(this).attr('id');
+                    }
+                }
+            });
+        }else{
+            $("#object_list").find("input:checkbox").each(function(){
+                if ($(this).is(':checked')){
+                    if (added_objects == ''){
+                        added_objects = $(this).parent().parent().next().text();
+                        added_objects_ids = $(this).attr('id');
+                    }
+                    else{
+                        added_objects += ',' + $(this).parent().parent().next().text();
+                        added_objects_ids += ',' + $(this).attr('id');
+                    }
+                }
+            });
+        }
+
+        if (added_objects != ''){
+            var operacion = $("#operation span").text().replace(/^\s+/,'').replace(/\s+$/,'');
+
+            var grupo = $("#group span").text().replace(/^\s+/,'').replace(/\s+$/,'');
+            var grupo_tag = grupo.toLowerCase()
+            grupo_tag = grupo_tag.replace(/á/gi,"a");
+            grupo_tag = grupo_tag.replace(/é/gi,"e");
+            grupo_tag = grupo_tag.replace(/í/gi,"i");
+            grupo_tag = grupo_tag.replace(/ó/gi,"o");
+            grupo_tag = grupo_tag.replace(/ú/gi,"u");
+            grupo_tag = grupo_tag.replace(/ñ/gi,"n");
+            grupo_tag = grupo_tag.replace(/\s/gi,"-");
+
+            var append = '<a href="#eliminar" class="delete hidden_icon" ' +
+                    'title="eliminar permiso asignado"></a>' +
+                    '<span class="permission">' +
+                    operacion +
+                    '</span>' +
+                    '<span class="group">' +
+                    grupo +
+                    '</span>'+
+                    '<span class="object">'+
+                    added_objects +
+                    '</span>' +
+                    '<input type="hidden" name="' + operacion + "_" +grupo_tag +'" ' +
+                    'value="' +
+                    added_objects_ids +
+                    '"/>';
+            var change=true;
+            $("#add_permissions").find("input:hidden").each(function(){
+
+                if($(this).attr("name") == operacion + "_" +grupo_tag){
+                    change = false;
+                    $(this).parent().html(append);
+                }
+            });
+            if(change){
+                append = '<div class="added_permissions"> ' +
+                        append +
+                        '</div>';
+                $("#add_another_perm").before(append);
+            }
+
+            $(".added_permissions").mouseenter(function(){
+                $(this).find(".hidden_icon").css("visibility","visible");
+            }).mouseleave(function(){
+                        $(this).find(".hidden_icon").css("visibility","hidden");
+                    });
+            $(".delete").click(function(e){
+                e.preventDefault();
+                $(this).parent().remove();
+                if($(".added_permissions").length > 0){
+                    $("#save_btn").show();
+                }else{
+                    $("#save_btn").hide();
+                }
+            });
+
+            $("#group_list, #object_list").html("").hide();
+            $("#group span.legend").text("Grupo");
+            $("#object span.legend").text("Privilegio");
+            $("#operation span.legend").text("Operación");
+            if($(".added_permissions").length > 0){
+                $("#save_btn").show();
+            }
+        }
+    }
+    var send_form = 0;
+    function valida(){
+        send_form++;
+        if(send_form == 1){
+
+            var form = $("#role_form").serialize();
+            $.ajax({
+                url: "/rbac/save_rol_pop/",
+                type: "post",
+                data: form,
+                success: function(data){
+                    if(data.type == "n_success"){
+                        parent.added_role(data.role_name);
+                        parent.jQuery.fancybox.close();
+                    }else{
+                        parent.added_role_fail(data.message);
+                        parent.jQuery.fancybox.close();
+                    }
+                }
+            });
+        }
+        return false;
+    }
+    </script>
+{% endblock %}
+{% block contenido %}
+{% include "rbac/just_forms/just_form_add_role.html" %}
+{% endblock %}

@@ -7,6 +7,14 @@
 {% block externaljs %}
 {% endblock %}
 {% block document_ready %}
+    function goBack()
+    {
+        window.history.back()
+    }
+    var get = getUrlVars();
+    if(get['cat']!=undefined){
+        $(".element_row").prepend("<div class='element'><a onclick='goBack();' href='/panel_de_control'><img src='/static/css/images/imgs_icns/volver50.png' alt='Volver'/>Volver</a></div>")
+    }
 {% endblock %}
 {% block breadcumbs %}
     <div id="bread_crumbs">
@@ -15,6 +23,7 @@
             <li><a href="/main/">Inicio</a></li>
             <li>Panel de control</li>
         </ul>
+    <a href="/logout" id="userLogOut">Cerrar sesión</a>
     </div>
 {% endblock %}
 {% block contenido %}
@@ -23,7 +32,7 @@
     <div id="page_content">
     <div id="contenido_interno">
         <img id="panelImg" src="/static/css/images/imgs_icns/gear.png" alt=""/>
-        <h2 id="titulo_reporte">Panel de control</h2>
+        <h2 id="titulo_reporte" style="position:relative;top:4px;left:0;">Panel de control</h2>
         <div class="divider" id="divider_top">&nbsp;</div>
        <div class="element_row">
         {% for group in object_permission %}

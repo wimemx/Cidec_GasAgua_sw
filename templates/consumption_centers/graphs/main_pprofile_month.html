@@ -83,6 +83,11 @@
             }
             return params_;
         }
+        $('iframe').load(function(){
+            $(this).contents().find('body').css({
+                'overflow': 'hidden'
+            });
+        });
     </script>
 {% endblock %}
 {% block document_ready %}
@@ -141,6 +146,7 @@
             <li><a href="/main/">Inicio</a></li>
             <li>Reportes</li>
         </ul>
+        <a href="/logout" id="userLogOut">Cerrar sesión</a>
 
     </div>
 

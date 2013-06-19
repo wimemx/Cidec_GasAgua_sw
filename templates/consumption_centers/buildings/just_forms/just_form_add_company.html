@@ -16,7 +16,7 @@
         <br/>
         Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
     </p>
-    <form method="post" action="." enctype="multipart/form-data" id="#company_form">
+    <form method="post" action="." enctype="multipart/form-data" id="company_form">
         {% csrf_token %}
         <h3 class="g12">Informaci&oacute;n de la Empresa</h3>
         <div id="company_logo_upload">
@@ -39,7 +39,7 @@
             </div>
             <div class="fields_row g12">
                 <label for="company_description" class="g2">Descripci&oacute;n</label>
-                <textarea rows="5" name="company_description" id="company_description" class="g9 validate notnull alphanumeric">{{ post.cmp_description }}</textarea>
+                <textarea rows="5" name="company_description" id="company_description" class="g9 validate alphanumeric">{{ post.cmp_description }}</textarea>
                 <!--<input type="text" name="clusterdescription" id="clusterdescription" class="g9"
                        value="{{ post.clusterdescription }}"
                         />-->
@@ -47,8 +47,11 @@
             </div>
             <div class="fields_row g12">
                 <label for="company_cluster" class="g2">Grupo de Empresas<span class="required">*</span></label>
-                <select name="company_cluster" id="company_cluster" class="g9" {% if ref_company %}readonly="readonly"{% endif %}>
-                    <option value="">Selecciona un grupo de empresas </option>
+                {% if ref_company %}
+                    <input type="hidden" id="company_cluster_h" name="company_cluster" value="{{ ref_company }}">
+                {% endif %}
+                <select name="company_cluster" id="company_cluster" class="g9 validate notnull" {% if ref_company %}disabled="disabled"{% endif %}>
+                    <option value="0">Selecciona un grupo de empresas </option>
                     {% if clusters %}
                     {% for cluster in clusters %}
                     <option value="{{cluster.id}}" {% if post.cmp_cluster == cluster.id or cluster.id == ref_company %} selected {% endif %}>{{ cluster.cluster_name }}</option>
@@ -61,11 +64,11 @@
             <div class="fields_row g12">
                 <label for="company_sector" class="g2">Tipo de Sector<span class="required">*</span></label>
                 <select name="company_sector" id="company_sector" class="g9 validate notnull">
-                    <option value="">Selecciona un tipo de sector </option>
+                    <option value="0">Selecciona un tipo de sector </option>
                     {% if sectors %}
-                    {% for sector in sectors %}
-                    <option value="{{sector.id}}" {% if post.cmp_sector == sector.id %} selected {% endif %}>{{ sector.sectorial_type_name }}</option>
-                    {% endfor %}
+                        {% for sector in sectors %}
+                            <option value="{{sector.id}}" {% if post.cmp_sector == sector.id %} selected {% endif %}>{{ sector.sectorial_type_name }}</option>
+                        {% endfor %}
                     {% endif %}
 
                 </select>

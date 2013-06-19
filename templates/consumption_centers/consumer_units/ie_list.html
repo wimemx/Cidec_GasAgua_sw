@@ -152,6 +152,7 @@ window.location = base_url;
         <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
         <li>Equipos Industriales</li>
     </ul>
+    <a href="/logout" id="userLogOut">Cerrar sesión</a>
 
 </div>
 
@@ -250,9 +251,9 @@ window.location = base_url;
                         <td class="c">
                             <a class="edit" title="Editar equipo industrial"
                                href="/buildings/editar_ie/{{ equipo.pk }}/"></a>
-                            <a class="edit" title="Configurar tiempos de equipo industrial"
+                            <a class="edit_times" title="Configurar tiempos de equipo industrial"
                                href="/buildings/configurar_equipo_industrial/{{ equipo.pk }}/"></a>
-                            <a class="edit" title="Jerarquía de medidores para el equipo industrial"
+                            <a class="edit_hierarchy" title="Jerarquía de medidores para el equipo industrial"
                                href="/buildings/crear_jerarquia/{{ equipo.building.pk }}/"></a>
                         </td>
                     </tr>

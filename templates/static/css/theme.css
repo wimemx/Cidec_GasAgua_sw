@@ -292,7 +292,7 @@ h2 span{
 /*-----Company-Building chooser*/
 #logo_container{
     height: 67px;
-    width: 180px;
+    width: 145px;
 }
 #logo_container img{
     max-height: 50px;
@@ -330,7 +330,7 @@ h2 span{
     border-bottom: solid 1px #2b87a3;
     border-left: solid 1px #2b87a3;
     border-right: solid 1px #2b87a3;
-    width: 228px;
+    width: 228px !important;
     margin-top: 6px;
     position: absolute;
     z-index: 2;
@@ -365,8 +365,8 @@ h2 span{
     max-height: 313px;
     overflow: auto;
     position: absolute;
-    right: -363px;
-    top: 61px;
+    right: -263px;
+    top: 57px;
     width: 215px;
     border: solid 1px #2b87a3;
     background: #fff;
@@ -460,6 +460,20 @@ h2 span{
     top: 10px;
     font-weight: 100;
     padding-top: 5px;
+}
+#main_menu li.first_level.settings{
+    width: 59px !important;
+    background: url(images/imgs_icns/settings.png) no-repeat 18px 0px;
+    padding-left: 23px;
+    position: relative;
+    top: 8px;
+    font-weight: 100;
+    padding-top: 5px;
+}
+#main_menu li.first_level.settings a{
+    display: block;
+    width: 31px;
+    height: 33px;
 }
 
 /*all nested uls*/
@@ -876,18 +890,17 @@ a.aqua_btn:hover, a.grey_btn:hover{
 /* 1024 px redesign*/
 .wrapper{
     display: block;
-    margin-top: 30px !important;
     width: 1024px;
-    margin:0 auto;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
+    margin:30px auto 20px auto !important;
+    padding-bottom: 20px;
     position: relative;
-    -webkit-box-shadow: 0px 0px 30px rgba(0, 0, 0, 0.77);
-    -moz-box-shadow:    0px 0px 30px rgba(0, 0, 0, 0.77);
-    box-shadow:         0px 0px 30px rgba(0, 0, 0, 0.77);
+    -webkit-box-shadow: 0px 0px 30px rgba(46, 46, 46, 0.55);
+    -moz-box-shadow:    0px 0px 30px rgba(46, 46, 46, 0.55);
+    box-shadow:         0px 0px 30px rgba(46, 46, 46, 0.55);
     -webkit-border-radius: 10px;
     -moz-border-radius: 10px;
     border-radius: 10px;
+    background-color: white !important;
 
 
 }
@@ -915,9 +928,12 @@ a.aqua_btn:hover, a.grey_btn:hover{
 .element_row .element a{
     display: block;
     margin-top: 5px;
-    width: 51px;
+    width: 80px;
     color:#636363;
     text-align: center;
+}
+.element a img{
+    margin-bottom: 5px;
 }
 #bread_crumbs .username{
     color:#5692a5;
@@ -937,7 +953,7 @@ a.aqua_btn:hover, a.grey_btn:hover{
     position:relative;
     left: 25px;
     top: 17px;
-    color:#dbe2f2;
+    color:#666;
     font-weight: 100;
 
 }
@@ -945,6 +961,7 @@ a.aqua_btn:hover, a.grey_btn:hover{
     display: block;
     float: left;
     font-size: 16px ;
+    color:#dbe2f2;
 }
 #arrow_lightbox{
     display: block;
@@ -973,8 +990,18 @@ table .bolder{
 {
     padding-top: 10px;
 }
-
-#graph_container
-{
-    margin-top: 45px;
+#userLogOut{
+    display: block;
+    float: right;
+    position: relative;
+    left: -35px;
+    color: #666;
+    font-size: 11px;
+    text-decoration: underline;
 }
+.botonGuardaJerarquia{
+    position: absolute !important;
+    top: 550px !important;
+    left: 800px !important;
+}
+

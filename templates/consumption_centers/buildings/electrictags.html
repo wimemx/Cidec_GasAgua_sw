@@ -9,10 +9,12 @@
     <link rel="stylesheet" href="/static/css/consumption_centers/cfe_bill.css" type="text/css" />
     <link rel="stylesheet" href="/static/date_picker/css/datepicker.css" type="text/css" />
     <link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/js/external/fancybox/jquery.fancybox.css" type="text/css" />
 {% endblock %}
 {% block externaljs %}
     <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
     <script type="text/javascript" src="/static/date_picker/js/date_picker.js"></script>
+    <script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
     <script type="text/javascript">
 
         function reTag(){
@@ -57,6 +59,28 @@
                     }
                 }
             });
+        }
+
+        function monthly(){
+            event.preventDefault();
+            var month = $("#month_01").val();
+            var year = $("#year_01").val();
+
+            var url = '/buildings/monthly_ajax/';
+            url += '?month='+month+"&year="+year;
+
+            $.ajax({
+                url: url,
+                type: "GET",
+                success: function(data){
+                    if(data.status == 'Success'){
+                        $('#message').addClass("notif");
+                        $('#message').addClass("n_success");
+                        $('#message').html("El reporte mensual se está generando con éxito. Este proceso puede tardar varios minutos"+
+                                " <a href='#' onclick='$(this).parent().remove();'>X</a>");
+                    }
+                }
+            });
 
         }
 
@@ -93,6 +117,18 @@
     }
     });
 
+    $(".various").fancybox({
+    maxWidth	: 800,
+    maxHeight	: 800,
+    fitToView	: false,
+    width		: '70%',
+    height		: '70%',
+    autoSize	: false,
+    closeClick	: false,
+    openEffect	: 'none',
+    closeEffect	: 'none'
+    });
+
 {% endblock %}
 
 {% block breadcumbs %}
@@ -102,6 +138,7 @@
             <li><a href="/main/">Inicio</a></li>
             <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
         </ul>
+    <a href="/logout" id="userLogOut">Cerrar sesión</a>
 
     </div>
 {% endblock %}
@@ -126,6 +163,7 @@
 
                 <form method="post" action=".">
                     {% csrf_token %}
+                    <div style="width: 100%; height: 310px">
                     <div id="cluster_fields">
                         <div class="fields_row g9">
                             <label for="date_init" class="g2">Fecha Inicial<span class="required">*</span></label>
@@ -150,7 +188,40 @@
                         <button class="aqua_btn" onclick="reTag();">Etiquetas y Diarios</button>
                         <button class="aqua_btn" onclick="daily();">Diarios</button>
                     </div>
-                    <div style="height: 500px">
+                    </div>
+
+
+                    <div style="width: 100%; height: 100px">
+
+                        <select name="month_mreport" id="month_01">
+                            <option value="1">Enero</option>
+                            <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Mayo</option>
+                            <option value="6">Junio</option>
+                            <option value="7">Julio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+                        <select name="year_mreport" id="year_01">
+                            {% if monthly_years %}
+                                {% for yr in monthly_years %}
+                                    <option value="{{yr}}">{{yr}}</option>
+                                {% endfor %}
+                            {% endif %}
+                        </select>
+
+                        <div class="buttons g12">
+                            <button class="aqua_btn" onclick="monthly();">Reporte Mensual</button>
+                        </div>
+                    </div>
+
+
+                    <div style="height: 500px; overflow: scroll;">
                         {% if tags %}
                             {% for value in tags %}
                                 <table style="margin-top: 20px">

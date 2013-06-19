@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import location.models
 from django.contrib import admin
 
@@ -7,6 +8,7 @@ admin.site.register(location.models.Municipio)
 admin.site.register(location.models.Colonia)
 admin.site.register(location.models.Calle)
 admin.site.register(location.models.Region)
+
 
 class PaisEstadoAdmin(admin.ModelAdmin):
     # define the raw_id_fields
@@ -18,6 +20,7 @@ class PaisEstadoAdmin(admin.ModelAdmin):
 
 admin.site.register(location.models.PaisEstado, PaisEstadoAdmin)
 
+
 class EstadoMunicipioAdmin(admin.ModelAdmin):
     # define the raw_id_fields
     raw_id_fields = ('estado', 'municipio')
@@ -28,6 +31,7 @@ class EstadoMunicipioAdmin(admin.ModelAdmin):
 
 admin.site.register(location.models.EstadoMunicipio, EstadoMunicipioAdmin)
 
+
 class MunicipioColoniaAdmin(admin.ModelAdmin):
     # define the raw_id_fields
     raw_id_fields = ('municipio', 'colonia')
@@ -37,6 +41,7 @@ class MunicipioColoniaAdmin(admin.ModelAdmin):
     }
 
 admin.site.register(location.models.MunicipioColonia, MunicipioColoniaAdmin)
+
 
 class ColoniaCalleAdmin(admin.ModelAdmin):
     # define the raw_id_fields
@@ -57,3 +62,7 @@ class RegionEstadoAdmin(admin.ModelAdmin):
     }
 
 admin.site.register(location.models.RegionEstado, RegionEstadoAdmin)
+
+admin.site.register(location.models.DateSavingTimes)
+
+admin.site.register(location.models.Timezones)

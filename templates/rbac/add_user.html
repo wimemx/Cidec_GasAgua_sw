@@ -226,6 +226,7 @@
             {% endif %}
 
         </ul>
+        <a href="/logout" id="userLogOut">Cerrar sesión</a>
 
     </div>
 
@@ -236,135 +237,7 @@
 
 <div id="page_content">
     <div id="contenido_interno">
-        <h2 id="titulo_form" class="user_role">
-            {% if operation == "edit" %}Edici&oacute;n de{% else %}Alta de{% endif %} usuario
-        </h2>
-
-
-        <div class="divider" id="divider_top">&nbsp;</div>
-        <div id="form_container">
-            {% if message %}
-                <span class="notif {{ type }}">
-                    {% autoescape off %}{{ message }}{% endautoescape %}
-                    <a href="#" onclick="$(this).parent().remove();">X</a>
-                </span>
-            {% endif %}
-            <p class="description">
-                Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
-                <br/>
-                Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
-            </p>
-            <form method="post" action=".">
-                {% csrf_token %}
-                <h3 class="g12">Nombre de Usuario y Contraseña</h3>
-                <div id="basic_info">
-                    <div class="fields_row g12">
-                        <label for="username" class="g2">Nombre de
-                            usuario<span class="required">*</span></label>
-                        <input type="text" name="username" id="username" class="g9"
-                               value="{{ post.username }}"
-                               {% if operation == "edit" %}readonly="readonly" {% endif %}
-                                />
-                        <span></span>
-                    </div>
-                    <div class="fields_row g12">
-                        <label for="pass1" class="g2">
-                            Contrase&ntilde;a<span class="required">*</span>
-                            <span class="g12">La contrase&ntilde;a debe contener al menos 8
-                                caracteres</span>
-                        </label>
-
-                        <input type="password" name="pass1" id="pass1" class="g9"/>
-                        <span></span>
-                    </div>
-                    <div class="fields_row g12">
-                        <label for="pass2" class="g2">
-                            Re-introducir Contrase&ntilde;a<span class="required">*</span>
-                            {% if operation == "edit" %}
-                                <span class="g12">Deja los campos vac&iacute;os para
-                                    conservar la misma contrase&ntilde;a
-                                </span>
-                            {% endif %}
-                        </label>
-                        <input type="password" name="pass2" id="pass2" class="g9"/>
-                    </div>
-                </div>
-                <h3 class="g12">Informaci&oacute;n Personal</h3>
-                <div id="personal_info">
-                    <div class="fields_row g12">
-                        <label for="name" class="g2">Nombre(s)<span class="required">*</span></label>
-                        <input type="text" name="name" id="name" class="g9" value="{{ post.name }}"/>
-                        <span></span>
-                    </div>
-                    <div class="fields_row g12">
-                        <label for="last_name" class="g2">Apellido Paterno<span class="required">*</span></label>
-                        <input type="text" name="last_name" id="last_name" class="g9"
-                               value="{{ post.last_name }}"/>
-                        <span></span>
-                    </div>
-                    <div class="fields_row g12">
-                        <label for="surname" class="g2">Apellido Materno</label>
-                        <input type="text" name="surname" id="surname" class="g9" value="{{ post.surname }}"/>
-                        <span></span>
-                    </div>
-                    <div class="fields_row g12">
-                        <label for="mail" class="g2">Correo Electr&oacute;nico<span class="required">*</span></label>
-                        <input type="email" name="mail" id="mail" class="g9" value="{{ post.mail }}"/>
-                        <span></span>
-                    </div>
-                    <div class="fields_row g12">
-                        <span class="label g2">Sexo</span>
-                        <label for="sex_m" class="g2">
-                            <input type="radio" name="sex" id="sex_m" value="M"
-                                       {% if post.sex == "M" %}
-                                            checked="checked"
-                                       {% endif %}
-                                       {% if not post %}
-                                            checked="checked"
-                                       {% endif %}
-                                   />
-                            Masculino
-                        </label>
-                        <label for="sex_f" class="g2">
-                            <input type="radio" name="sex" id="sex_f" value="F"
-                                        {% if post.sex == "F" %}
-                                            checked="checked"
-                                        {% endif %}
-                                    />
-                            Femenino
-                        </label>
-                    </div>
-                    <div class="fields_row g12">
-                        <label for="dob" class="g2">Fecha de Nacimiento<span class="required">*</span></label>
-                        <input type="text" name="dob" id="dob" class="g2"
-                               {% if operation == "edit" %}value="{{ post.dob|date:"d-m-Y" }}"
-                               {% else %}value="{{ post.dob }}"
-                               {% endif %}/>
-                        <span></span>
-                    </div>
-                    <div class="fields_row g12">
-                        <label for="tel_o" class="g2">Tel&eacute;fono Oficina</label>
-                        <input type="text" name="tel_o" id="tel_o" class="g9" value="{{ post.tel_o }}"/>
-                    </div>
-                    <div class="fields_row g12">
-                        <label for="tel_m" class="g2">Tel&eacute;fono Celular</label>
-                        <input type="text" name="tel_m" id="tel_m" class="g9" value="{{ post.tel_m }}"/>
-                    </div>
-                </div>
-                <div class="buttons g12">
-
-                    <span class="g2">&nbsp;</span>
-                    <div class="g9">
-                        <button class="aqua_btn fr" id="save">
-                            Guardar
-                        </button>
-                    </div>
-                </div>
-            </form>
-
-        </div>
-
-
+        {% include "rbac/just_forms/just_form_add_user.html" %}
     </div>
 </div>
 {% endblock %}

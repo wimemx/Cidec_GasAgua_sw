@@ -1,0 +1,94 @@
+{% extends "popup_forms_base.html" %}
+{% block titulo %}
+    {% if operation == "edit" %}Editar{% else %}Alta de{% endif %} Alarma
+{% endblock %}
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/forms/c_centers.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="/static/js/external/jquery-validator/css/validator.css">
+    <link rel="stylesheet" href="/static/css/forms/rbac_general.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/forms/rbac_user_list.css" type="text/css" />
+    <link href="/static/js/external/messi/messi.css" rel="stylesheet" type="text/css" media="screen" />
+    <link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
+{% endblock %}
+{% block externaljs %}
+    <script type="text/javascript" src="/static/jquery-ui-1.8.23/js/jquery-ui-1.8.23.custom.min.js"></script>
+    <script src="/static/js/external/messi/messi.min.js"></script>
+    <script type="text/javascript" src="/static/js/external/jquery-validator/js/validator.js"></script>
+    <script type="text/javascript">
+        $(document).on("ready", function(){
+            $("#alarm").validate({onsubmit: function(form){
+                $.ajax({
+                    url: "/configuracion/save_add_alarm_popup/",
+                    type: "post",
+                    data: form,
+                    success: function(data){
+                        if(data.type == "n_success"){
+                            parent.show_building_alarms({{ building.pk }});
+                            parent.jQuery.fancybox.close();
+                        }
+
+                    }
+                });
+                return false;
+            }});
+            var save_button = $("#save");
+            var min = $("#alarm_min_value");
+            var max = $("#alarm_max_value");
+
+            min.on("blur", function(){
+                if(max.val()!=""){
+                    if(parseFloat(min.val())>parseFloat(max.val())){
+                        min.val("");
+                    }
+                }
+            });
+            max.on("blur", function(){
+                if(min.val()!=""){
+                    if(parseFloat(min.val())>parseFloat(max.val())){
+                        max.val("");
+                    }
+                }
+            });
+
+
+        });
+        function form_row(pm, alias, brand, model, serial, status){
+            var row = '<td>';
+            row += '<input type="checkbox" id="powermeter_'+pm+'" name="powermeter_'+pm+'"/>';
+            row += '<label for="powermeter_'+pm+'">';
+            row += '<a href="/buildings/ver_medidor/'+pm+'/">';
+            row += alias;
+            row += '</a></label></td>';
+            row += '<td class="c">'+brand+'- '+model+'</td>';
+            row += '<td class="c">'+serial+'</td>';
+            row += '<td class="c"><a href="#" rel="'+pm+'"';
+            if (status == 1){
+                row += 'class="switch active_switch" title="desactivar"';
+            }else{
+                row += 'class="switch inactive_switch" title="activar"';
+            }
+            row += '></a></td>';
+            row += '<td class="c"><a class="edit" title="Editar medidor" href="/buildings/editar_medidor/'+pm+'/"></a><a class="remove" title="Desvincular medidor" rel="'+pm+'">Desvincular Medidor</a></td>';
+
+            var tabla = $("#powermeters_table");
+            if($("#powermeters_table tr").size()>1)
+                if(tabla.find("tr:last-child").hasClass("row1")){
+                    tabla.append('<tr class="row2">' + row + '</tr>');
+                }
+                else{
+                    tabla.append('<tr class="row1">' + row + '</tr>');
+                }
+            else{
+                tabla.append('<tr class="row1">' + row + '</tr>');
+            }
+            tabla.find("tr:last-child input").uniform();
+        }
+    </script>
+{% endblock %}
+{% block document_ready %}
+{% endblock %}
+
+{% block contenido %}
+{% include "alarms/just_forms/just_form_add_alarm.html" %}
+{% endblock %}

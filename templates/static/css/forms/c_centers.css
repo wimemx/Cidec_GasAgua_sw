@@ -185,11 +185,21 @@ background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
     width: 100%;
 }
 
+.field_seebld{
+    padding: 0px 0px !important;
+}
+
 .tip_attribute_part{
     width: 200px;
     display: block;
     float: left;
     font-weight: bold;
+}
+
+.tip_attribute_part_seebld{
+    width: 200px;
+    display: block;
+    float: left;
 }
 
 .attribute_part{
@@ -236,9 +246,22 @@ background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
     width: 100%;
 }
 
+#seebld_address{
+    padding: 8px 0px;
+}
+
 .building_info_top{
     width: 100%;
     height: 320px;
+}
+.info_top_seebld{
+    height: 230px !important;
+    padding-top: 30px;
+}
+
+.att_seebld{
+    height: auto !important;
+    min-height: 120px;
 }
 
 .building_info_bottom{
@@ -254,6 +277,11 @@ background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
 .map_canvas{
     width: 100%;
     height: 350px;
+}
+
+.map_canvas_seebld{
+    width: 100%;
+    height: 170px;
 }
 
 .building_column textarea{
@@ -320,4 +348,32 @@ background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
 
 #alarm input[type="text"]{
     width: 182px;
+}
+
+
+
+#chart{
+    display: block;
+    margin: 0 auto;
+}
+#chart a{
+    font-size: 14px;
+    line-height: 150%;
+    color: #909aa2 !important;
+}
+#chart a:hover{
+    color: #505e68 !important;
+}
+h1#title_lb{
+    font-size: 16px !important;
+    font-weight: 400;
+    color: #4a5c65;
+}
+h1#title_lb span{
+    font-size: 16px !important;
+    font-weight: 700;
+    color: #4f5962;
+}
+#notice{
+    font-size: 12px !important;
 }

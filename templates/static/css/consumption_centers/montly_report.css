@@ -22,7 +22,7 @@ table.datepickerViewDays th{
     width: 530px;
     height: 764px;
     display: block;
-    margin: 0 0 0 77px;
+    margin: 0 0 0 165px;
     position: relative;
 }
 
@@ -260,9 +260,10 @@ h3.titulo_reporte{
     height: 22px;
     padding-left: 39px;
     display:block;
-    margin-bottom: 35px;
-    clear:both;
-    color:#666;
+    margin-bottom: 5px;
+    color:#666 !important;
+    margin-top: 15px;
+    float:left;
 }
 /*--------BARRA LATERAL------*/
 #lateral.collapsed{
@@ -297,9 +298,9 @@ h3.titulo_reporte{
 }
 #lateral h2{
     float: none;
-    color: #393b46;
+    color: #898989;
     font-weight: 700;
-    font-size: 18px;
+    font-size: 14px;
     text-align: center;
     margin: 13px auto 5px auto;
 }
@@ -342,7 +343,7 @@ h3.titulo_reporte{
     font-weight: 100 !important;
     color: #ff9000;
     display: block;
-    font-size: 20px;
+    font-size: 15px;
     margin-top: 10px;
     padding-top: 5px;
 }
@@ -351,7 +352,8 @@ h3.titulo_reporte{
 }
 #lat_consumo .m_value{
     margin-bottom: 5px;
-    sidplay:block;
+    display:block;
+    font-size: 15px;
 }
 #lateral .demanda_semanal {
     background: url(../images/imgs_icns/demanda_semanal.png) left 3px no-repeat !important;
@@ -362,7 +364,7 @@ h3.titulo_reporte{
     font-weight: 100 !important;
     color: #9441e5;
     display: block;
-    font-size: 16px;
+    font-size: 15px;
     margin-top: 10px;
     padding-top: 8px;
 }
@@ -375,7 +377,7 @@ h3.titulo_reporte{
     font-weight: 100 !important;
     color: #cc0044;
     display: block;
-    font-size: 16px;
+    font-size: 15px;
     margin-top: 10px;
     padding-top: 8px;
 }
@@ -404,8 +406,8 @@ h3.titulo_reporte{
     float: left;
 }
 .m_value{
-    color: #393b46;
-    font-size: 22px;
+    color: #595959;
+    font-size: 18px;
     font-weight: 700;
     margin-left: 10px;
 }
@@ -485,9 +487,11 @@ h3.titulo_reporte{
 .icon_sumary{
     float: left;
     height: 100%;
-    text-align: center;
-    margin:0;
-    width:25%;
+    text-align: left;
+    margin: 0;
+    width: 20%;
+    padding-left: 32px;
+    text-indent: 5px;
 }
 .month_totals{
     float: left;
@@ -537,7 +541,7 @@ h3.titulo_reporte{
     width: 85px;
 }
 .month_totals .value_tot{
-    font-weight: 700;
+    font-weight: 100;
 }
 /*--------boton lateral - semana---------*/
 #week_consumed {
@@ -575,3 +579,4 @@ h3.titulo_reporte{
 .datepickerContainer table table{
     width:597px !important;
 }
+#pp_total{font-size: 19px !important;}
