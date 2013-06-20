@@ -427,7 +427,8 @@
     margin-right: 5px;
 }
 #download{
-    margin-top: 30px;
+    margin-top: 60px;
+    text-align:center;
 }
 #download a{
     margin-right: 30px;
