@@ -484,7 +484,7 @@ function update_bars_color(){
         <table>
             <thead>
             <tr>
-                <th colspan="9">Resumen Semanal</th>
+                <th colspan="9">Resumen Semanal (KWh)</th>
             </tr>
 
             <tr class="row1">
@@ -504,9 +504,9 @@ function update_bars_color(){
             {% for day in day_data %}
             <tr class="{% cycle row1 row2 %}">
                 <td>{{ forloop.counter }}</td>
-                <td class="table_value green">{% if day.0.week_total %}{{ day.0.week_total }}kWh{% else %}-{% endif %}</td>
+                <td class="table_value green">{% if day.0.week_total %}{{ day.0.week_total }}{% else %}-{% endif %}</td>
                 {% for d_d in day %}
-                    <td class="table_value">{% if d_d.KWH_total %}{{ d_d.KWH_total }}kWh{% else %}-{% endif %}</td>
+                    <td class="table_value">{% if d_d.KWH_total %}{{ d_d.KWH_total }}{% else %}-{% endif %}</td>
                 {% endfor %}
             </tr>
             {% endfor %}

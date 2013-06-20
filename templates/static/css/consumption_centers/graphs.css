@@ -271,6 +271,8 @@ div.container{
     color: #666;
     font-weight: 700;
     margin: 7px;
+    cursor:pointer;
+
 }
 
 .chart-column-active{
@@ -494,4 +496,7 @@ div.container{
 }
 #consumo .g4,#demanda .g4{
     margin-right: 10px;
+}
+#raw_data,#dw{
+    cursor: pointer !important;
 }
