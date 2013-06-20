@@ -1299,7 +1299,6 @@ def add_data_context_permissions(request):
                              datacontext=datacontext,
                              roles=roles,
                              clusters=clusters,
-                             empresa=request.session['main_building'],
                              company=request.session['company'],
                              message=message,
                              type=type_)
@@ -1378,7 +1377,6 @@ def added_data_context_permissions(request):
                              order_role=order_role,
                              order_username=order_username,
                              order_entity=order_entity, datacontext=datacontext,
-                             empresa=empresa,
                              company=company)
         # Make sure page request is an int. If not, deliver first page.
         try:

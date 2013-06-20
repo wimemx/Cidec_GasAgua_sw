@@ -1381,9 +1381,7 @@ def add_cluster(request):
         #Se obtienen los sectores
         sectores = SectoralType.objects.filter(sectoral_type_status=1)
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              sectores=sectores,
-                             company=request.session['company'],
                              sidebar=request.session['sidebar']
         )
 
@@ -1511,8 +1509,6 @@ def view_cluster(request):
                              order_sector=order_sector,
                              order_status=order_status,
                              datacontext=datacontext,
-                             empresa=empresa,
-                             company=request.session['company'],
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
@@ -1685,13 +1681,11 @@ def edit_cluster(request, id_cluster):
                                                 "&ntype=n_success")
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              sectores=sectores,
                              post=post,
                              operation="edit",
                              message=message,
                              type=_type,
-                             company=request.session['company'],
                              sidebar=request.session['sidebar']
         )
         template_vars_template = RequestContext(request, template_vars)
@@ -1721,8 +1715,6 @@ def see_cluster(request, id_cluster):
             datacontext=datacontext,
             cluster=cluster,
             cluster_companies=cluster_companies,
-            empresa=empresa,
-            company=request.session['company'],
             sidebar=request.session['sidebar']
         )
 
@@ -1752,7 +1744,6 @@ def add_powermetermodel(request):
         empresa = request.session['main_building']
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              company=request.session['company'],
                              sidebar=request.session['sidebar']
         )
@@ -1905,7 +1896,6 @@ def edit_powermetermodel(request, id_powermetermodel):
                         "&ntype=n_success")
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              post=post,
                              operation="edit",
                              message=message,
@@ -1979,7 +1969,6 @@ def view_powermetermodels(request):
                              order_model=order_model,
                              order_status=order_status,
                              datacontext=datacontext,
-                             empresa=empresa,
                              company=company,
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
@@ -2088,7 +2077,6 @@ def add_powermeter(request):
         pw_models_list = PowermeterModel.objects.all().exclude(
             status=0).order_by("powermeter_brand")
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              modelos=pw_models_list,
                              post=post,
                              company=request.session['company'],
@@ -2267,7 +2255,6 @@ def edit_powermeter(request, id_powermeter):
                                                 "&ntype=n_success")
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              post=post,
                              modelos=pw_models_list,
                              operation="edit",
@@ -2351,7 +2338,7 @@ def view_powermeter(request):
         template_vars = dict(order_alias=order_alias, order_model=order_model,
                              order_serial=order_serial,
                              order_status=order_status,
-                             datacontext=datacontext, empresa=empresa,
+                             datacontext=datacontext,
                              company=request.session['company'],
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
@@ -2512,7 +2499,6 @@ def see_powermeter(request, id_powermeter):
             datacontext=datacontext,
             powermeter=powermeter,
             location=location,
-            empresa=empresa,
             company=request.session['company'],
             sidebar=request.session['sidebar']
         )
@@ -2543,7 +2529,6 @@ def add_electric_device_type(request):
         post = ''
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              post=post,
                              company=request.session['company'],
                              sidebar=request.session['sidebar']
@@ -2680,7 +2665,6 @@ def edit_electric_device_type(request, id_edt):
                         "&ntype=n_success")
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              post=post,
                              operation="edit",
                              message=message,
@@ -2758,7 +2742,7 @@ def view_electric_device_type(request):
         template_vars = dict(order_name=order_name,
                              order_description=order_description,
                              order_status=order_status,
-                             datacontext=datacontext, empresa=empresa,
+                             datacontext=datacontext,
                              company=request.session['company'],
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
@@ -2915,11 +2899,9 @@ def add_company(request):
         sectors = SectoralType.objects.filter(sectoral_type_status=1)
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              post=post,
                              clusters=clusters,
                              sectors=sectors,
-                             company=request.session['company'],
                              sidebar=request.session['sidebar']
         )
 
@@ -3120,8 +3102,6 @@ def edit_company(request, id_cpy):
                                                 "&ntype=n_success")
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
-                             company=request.session['company'],
                              post=post,
                              operation="edit",
                              message=message,
@@ -3211,8 +3191,7 @@ def view_companies(request):
                              order_cluster=order_cluster,
                              order_sector=order_sector,
                              order_status=order_status,
-                             datacontext=datacontext, empresa=empresa,
-                             company=request.session['company'],
+                             datacontext=datacontext,
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
@@ -3324,7 +3303,7 @@ def see_company(request, id_cpy):
             datacontext=datacontext,
             companies=company,
             company=request.session['company'],
-            empresa=empresa, sidebar=request.session['sidebar'])
+            sidebar=request.session['sidebar'])
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -3410,8 +3389,6 @@ def add_buildingtype(request):
         message = ""
         _type = ""
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
-                             company=company,
                              post=post, sidebar=request.session['sidebar']
         )
 
@@ -3539,8 +3516,6 @@ def edit_buildingtype(request, id_btype):
                         "&ntype=n_success")
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
-                             company=company,
                              post=post,
                              operation="edit",
                              message=message,
@@ -3615,8 +3590,7 @@ def view_buildingtypes(request):
         template_vars = dict(order_name=order_name,
                              order_description=order_description,
                              order_status=order_status,
-                             datacontext=datacontext, empresa=empresa,
-                             company=company,
+                             datacontext=datacontext,
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
@@ -3734,8 +3708,6 @@ def add_sectoraltype(request):
         post = ''
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
-                             company=company,
                              post=post, sidebar=request.session['sidebar']
         )
 
@@ -3867,8 +3839,6 @@ def edit_sectoraltype(request, id_stype):
                         "&ntype=n_success")
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
-                             company=company,
                              post=post,
                              operation="edit",
                              message=message,
@@ -3942,8 +3912,7 @@ def view_sectoraltypes(request):
         template_vars = dict(order_name=order_name,
                              order_description=order_description,
                              order_status=order_status,
-                             datacontext=datacontext, empresa=empresa,
-                             company=company,
+                             datacontext=datacontext,
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
@@ -4062,7 +4031,6 @@ def add_b_attributes_type(request):
         post = ''
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              company=company,
                              post=post, sidebar=request.session['sidebar']
         )
@@ -4199,7 +4167,6 @@ def edit_b_attributes_type(request, id_batype):
                         "&ntype=n_success")
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              company=company,
                              post=post,
                              operation="edit",
@@ -4276,8 +4243,7 @@ def view_b_attributes_type(request):
         template_vars = dict(order_name=order_name,
                              order_description=order_description,
                              order_status=order_status,
-                             datacontext=datacontext, empresa=empresa,
-                             company=company,
+                             datacontext=datacontext,
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
@@ -4608,8 +4574,7 @@ def view_partbuildingtype(request):
         template_vars = dict(order_name=order_name,
                              order_description=order_description,
                              order_status=order_status,
-                             datacontext=datacontext, empresa=empresa,
-                             company=company,
+                             datacontext=datacontext,
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
@@ -6102,7 +6067,6 @@ def view_building(request):
                              order_company=order_company,
                              order_status=order_status,
                              datacontext=datacontext,
-                             company=company,
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
