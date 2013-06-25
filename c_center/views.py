@@ -290,9 +290,7 @@ def week_report_kwh(request):
                 sidebar=request.session['sidebar'])
             template_vars_template = RequestContext(request, template_vars)
             return render_to_response("generic_error.html",
-                                      RequestContext(
-                                          request, {"datacontext": datacontext}
-                                      ),template_vars_template)
+                                      template_vars_template)
     else:
         template_vars = {}
         if datacontext:
@@ -352,10 +350,7 @@ def main_page(request):
 
             template_vars_template = RequestContext(request, template_vars)
             return render_to_response("generic_error.html",
-                                      RequestContext(
-                                          request,
-                                          {"datacontext": datacontext}
-                                      ),template_vars_template)
+                                      template_vars_template)
     else:
         template_vars = {}
         if datacontext:
@@ -1386,9 +1381,7 @@ def add_cluster(request):
         #Se obtienen los sectores
         sectores = SectoralType.objects.filter(sectoral_type_status=1)
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              sectores=sectores,
-                             company=request.session['company'],
                              sidebar=request.session['sidebar']
         )
 
@@ -1516,8 +1509,6 @@ def view_cluster(request):
                              order_sector=order_sector,
                              order_status=order_status,
                              datacontext=datacontext,
-                             empresa=empresa,
-                             company=request.session['company'],
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
@@ -1690,13 +1681,11 @@ def edit_cluster(request, id_cluster):
                                                 "&ntype=n_success")
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              sectores=sectores,
                              post=post,
                              operation="edit",
                              message=message,
                              type=_type,
-                             company=request.session['company'],
                              sidebar=request.session['sidebar']
         )
         template_vars_template = RequestContext(request, template_vars)
@@ -1726,8 +1715,6 @@ def see_cluster(request, id_cluster):
             datacontext=datacontext,
             cluster=cluster,
             cluster_companies=cluster_companies,
-            empresa=empresa,
-            company=request.session['company'],
             sidebar=request.session['sidebar']
         )
 
@@ -1757,7 +1744,6 @@ def add_powermetermodel(request):
         empresa = request.session['main_building']
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              company=request.session['company'],
                              sidebar=request.session['sidebar']
         )
@@ -1910,7 +1896,6 @@ def edit_powermetermodel(request, id_powermetermodel):
                         "&ntype=n_success")
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              post=post,
                              operation="edit",
                              message=message,
@@ -1984,7 +1969,6 @@ def view_powermetermodels(request):
                              order_model=order_model,
                              order_status=order_status,
                              datacontext=datacontext,
-                             empresa=empresa,
                              company=company,
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
@@ -2093,7 +2077,6 @@ def add_powermeter(request):
         pw_models_list = PowermeterModel.objects.all().exclude(
             status=0).order_by("powermeter_brand")
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              modelos=pw_models_list,
                              post=post,
                              company=request.session['company'],
@@ -2272,7 +2255,6 @@ def edit_powermeter(request, id_powermeter):
                                                 "&ntype=n_success")
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              post=post,
                              modelos=pw_models_list,
                              operation="edit",
@@ -2356,7 +2338,7 @@ def view_powermeter(request):
         template_vars = dict(order_alias=order_alias, order_model=order_model,
                              order_serial=order_serial,
                              order_status=order_status,
-                             datacontext=datacontext, empresa=empresa,
+                             datacontext=datacontext,
                              company=request.session['company'],
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
@@ -2517,7 +2499,6 @@ def see_powermeter(request, id_powermeter):
             datacontext=datacontext,
             powermeter=powermeter,
             location=location,
-            empresa=empresa,
             company=request.session['company'],
             sidebar=request.session['sidebar']
         )
@@ -2548,7 +2529,6 @@ def add_electric_device_type(request):
         post = ''
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              post=post,
                              company=request.session['company'],
                              sidebar=request.session['sidebar']
@@ -2685,7 +2665,6 @@ def edit_electric_device_type(request, id_edt):
                         "&ntype=n_success")
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              post=post,
                              operation="edit",
                              message=message,
@@ -2763,7 +2742,7 @@ def view_electric_device_type(request):
         template_vars = dict(order_name=order_name,
                              order_description=order_description,
                              order_status=order_status,
-                             datacontext=datacontext, empresa=empresa,
+                             datacontext=datacontext,
                              company=request.session['company'],
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
@@ -2920,11 +2899,9 @@ def add_company(request):
         sectors = SectoralType.objects.filter(sectoral_type_status=1)
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              post=post,
                              clusters=clusters,
                              sectors=sectors,
-                             company=request.session['company'],
                              sidebar=request.session['sidebar']
         )
 
@@ -3125,8 +3102,6 @@ def edit_company(request, id_cpy):
                                                 "&ntype=n_success")
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
-                             company=request.session['company'],
                              post=post,
                              operation="edit",
                              message=message,
@@ -3216,8 +3191,7 @@ def view_companies(request):
                              order_cluster=order_cluster,
                              order_sector=order_sector,
                              order_status=order_status,
-                             datacontext=datacontext, empresa=empresa,
-                             company=request.session['company'],
+                             datacontext=datacontext,
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
@@ -3329,7 +3303,7 @@ def see_company(request, id_cpy):
             datacontext=datacontext,
             companies=company,
             company=request.session['company'],
-            empresa=empresa, sidebar=request.session['sidebar'])
+            sidebar=request.session['sidebar'])
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -3415,8 +3389,6 @@ def add_buildingtype(request):
         message = ""
         _type = ""
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
-                             company=company,
                              post=post, sidebar=request.session['sidebar']
         )
 
@@ -3544,8 +3516,6 @@ def edit_buildingtype(request, id_btype):
                         "&ntype=n_success")
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
-                             company=company,
                              post=post,
                              operation="edit",
                              message=message,
@@ -3620,8 +3590,7 @@ def view_buildingtypes(request):
         template_vars = dict(order_name=order_name,
                              order_description=order_description,
                              order_status=order_status,
-                             datacontext=datacontext, empresa=empresa,
-                             company=company,
+                             datacontext=datacontext,
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
@@ -3739,8 +3708,6 @@ def add_sectoraltype(request):
         post = ''
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
-                             company=company,
                              post=post, sidebar=request.session['sidebar']
         )
 
@@ -3872,8 +3839,6 @@ def edit_sectoraltype(request, id_stype):
                         "&ntype=n_success")
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
-                             company=company,
                              post=post,
                              operation="edit",
                              message=message,
@@ -3947,8 +3912,7 @@ def view_sectoraltypes(request):
         template_vars = dict(order_name=order_name,
                              order_description=order_description,
                              order_status=order_status,
-                             datacontext=datacontext, empresa=empresa,
-                             company=company,
+                             datacontext=datacontext,
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
@@ -4067,7 +4031,6 @@ def add_b_attributes_type(request):
         post = ''
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              company=company,
                              post=post, sidebar=request.session['sidebar']
         )
@@ -4204,7 +4167,6 @@ def edit_b_attributes_type(request, id_batype):
                         "&ntype=n_success")
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              company=company,
                              post=post,
                              operation="edit",
@@ -4281,8 +4243,7 @@ def view_b_attributes_type(request):
         template_vars = dict(order_name=order_name,
                              order_description=order_description,
                              order_status=order_status,
-                             datacontext=datacontext, empresa=empresa,
-                             company=company,
+                             datacontext=datacontext,
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
@@ -4613,8 +4574,7 @@ def view_partbuildingtype(request):
         template_vars = dict(order_name=order_name,
                              order_description=order_description,
                              order_status=order_status,
-                             datacontext=datacontext, empresa=empresa,
-                             company=company,
+                             datacontext=datacontext,
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
@@ -5492,7 +5452,8 @@ def add_building(request):
                     mts2_built=b_mt2,
                 )
                 newBuilding.save()
-
+                IndustrialEquipment(alias="SA de "+b_name,
+                                    building=newBuilding).save()
                 #Se da de alta la fecha de corte
 
                 date_init = datetime.datetime.today().utcnow().replace(
@@ -6106,7 +6067,6 @@ def view_building(request):
                              order_company=order_company,
                              order_status=order_status,
                              datacontext=datacontext,
-                             company=company,
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
         try:
@@ -7132,7 +7092,10 @@ def del_cu(request, id_cu):
                        "Eliminar unidades de consumo") or
             request.user.is_superuser):
         cu = get_object_or_404(ConsumerUnit, pk=int(id_cu))
-        cu.delete()
+        HierarchyOfPart.objects.filter(consumer_unit_composite=cu).delete()
+        HierarchyOfPart.objects.filter(consumer_unit_leaf=cu).delete()
+        cu.profile_powermeter.profile_powermeter_status = False
+        cu.profile_powermeter.save()
         return HttpResponse(content="",
                             content_type="text/plain",
                             status=200)
@@ -7329,8 +7292,8 @@ def add_hierarchy_node(request):
             h.save()
             ie_building = cu_leaf.building
             ie = IndustrialEquipment.objects.get(building=ie_building)
-            set_alarm_json(ie_building, user)
-            regenerate_ie_config(ie.pk, user)
+            set_alarm_json(ie_building, request.user)
+            regenerate_ie_config(ie.pk, request.user)
             return HttpResponse(status=200)
         elif request.POST['cl'] != '':
             cu_leaf = get_object_or_404(ConsumerUnit,
@@ -7358,6 +7321,7 @@ def reset_hierarchy(request):
             request.user.is_superuser) and request.method == "POST":
         building = get_object_or_404(Building, pk=int(request.POST['building']))
         cus = ConsumerUnit.objects.filter(building=building)
+        ie = IndustrialEquipment.objects.get(building=building)
         parts = []
         consumer_u = []
         for cu in cus:
@@ -7373,6 +7337,10 @@ def reset_hierarchy(request):
                     alarm_identifier="Interrupción de Datos",
                     electric_parameter=param,
                     consumer_unit=cu)
+                PowermeterForIndustrialEquipment.objects.get_or_create(
+                    powermeter=cu.profile_powermeter.powermeter,
+                    industrial_equipment=ie
+                )
 
         h = HierarchyOfPart.objects.filter(
             Q(part_of_building_composite__pk__in=parts) |
@@ -8209,8 +8177,6 @@ def billing_analisis_header(request):
             request.user.is_superuser:
         set_default_session_vars(request, datacontext)
 
-
-
         building = request.session['main_building']
         #Se obtiene el tipo de tarifa del edificio
         tipo_tarifa = building.electric_rate
@@ -8234,9 +8200,7 @@ def billing_analisis_header(request):
     else:
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html",
-                                  RequestContext(request,
-                                                 {"datacontext": datacontext}),
-                                                    template_vars_template)
+                                  template_vars_template)
 
 
 # noinspection PyArgumentList
@@ -8251,8 +8215,6 @@ def billing_c_analisis_header(request):
     if has_permission(request.user, VIEW, "Análisis de costo de facturación") \
             or request.user.is_superuser:
         set_default_session_vars(request, datacontext)
-
-
 
         building = request.session['main_building']
         #Se obtiene el tipo de tarifa del edificio
@@ -8276,8 +8238,7 @@ def billing_c_analisis_header(request):
     else:
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html",
-                                  RequestContext(request,
-                                                 {"datacontext": datacontext}),template_vars_template)
+                                  template_vars_template)
 
 
 # noinspection PyArgumentList
@@ -8292,8 +8253,6 @@ def power_performance_header(request):
     if has_permission(request.user, VIEW, "Desempeño energético") or \
             request.user.is_superuser:
         set_default_session_vars(request, datacontext)
-
-
 
         building = request.session['main_building']
         #Se obtiene el tipo de tarifa del edificio
@@ -8317,9 +8276,7 @@ def power_performance_header(request):
     else:
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html",
-                                  RequestContext(request,
-                                                 {"datacontext": datacontext})
-                                                    ,template_vars_template)
+                                  template_vars_template)
 
 
 def getMonthName(index):
@@ -10061,6 +10018,8 @@ def save_add_building_popup(request):
                 mts2_built=b_mt2,
             )
             newBuilding.save()
+            IndustrialEquipment(alias="SA de "+b_name,
+                                building=newBuilding).save()
             template_vars["building"] = newBuilding.pk
             #Se da de alta la fecha de corte
 
@@ -10165,3 +10124,12 @@ def create_hierarchy_pop(request, id_building):
     else:
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
+
+
+@login_required(login_url='/')
+def refresh_ie_config(request):
+    building = get_object_or_404(Building, pk=int(request.POST['building']))
+    ie = IndustrialEquipment.objects.get(building=building)
+    regenerate_ie_config(ie.pk, request.user)
+    set_alarm_json(building, request.user)
+    return HttpResponse(status=200)

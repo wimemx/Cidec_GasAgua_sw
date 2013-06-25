@@ -105,6 +105,14 @@
                         });
                     }
                 });
+                $.ajax({
+                    type: "POST",
+                    url: "/buildings/refresh_ie_config/",
+                    data: {csrfmiddlewaretoken: '{{ csrf_token }}', building: {{ building.pk }}},
+                    success: function(){
+
+                    }
+                });
             }
         });
         $("#tree_notif").show();

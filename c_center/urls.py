@@ -344,5 +344,6 @@ urlpatterns = patterns('',
                        url(r'^create_hierarchy_pop/(?P<id_building>\d+)/',
                            'c_center.views.create_hierarchy_pop'),
 
-
+                       url(r'^refresh_ie_config/',
+                           'c_center.views.refresh_ie_config'),
 )

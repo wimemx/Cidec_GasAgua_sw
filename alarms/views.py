@@ -464,7 +464,6 @@ def mostrar_alarma(request, id_alarm):
         if datacontext:
             template_vars["datacontext"] = datacontext
         template_vars["sidebar"] = request.session['sidebar']
-        template_vars["empresa"] = request.session['main_building']
         template_vars["company"] = request.session['company']
         alarm = get_object_or_404(Alarms, id=id_alarm)
         template_vars["alarm"] = alarm
@@ -701,7 +700,6 @@ def edit_alarm_suscription(request, id_alarm):
         template_vars["datacontext"] = datacontext
 
     template_vars["sidebar"] = request.session['sidebar']
-    template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
     suscripcion=get_object_or_404(UserNotificationSettings, pk=id_alarm)
     template_vars['edit_suscription'] = suscripcion

@@ -304,7 +304,42 @@
   border: 1px solid #EA8511;  
 }
 
+.swMain .msgBoxRed {
+  position:relative;
+  display:none;
+  float:right;
+  margin: 4px 0 0 5px;
+  padding:5px;
+  border: 1px solid red;
+  background-color: #fbe3e4;
+  font: normal 12px Verdana, Arial, Helvetica, sans-serif;
+  color:#5A5655;
+  -moz-border-radius  : 5px;
+  -webkit-border-radius: 5px;
+  z-index:999;
+  min-width:200px;
+  left: -225px;
+  top: -4px;
+    text-align: center;
+}
+.swMain .msgBoxRed .content {
+  font: normal 12px Verdana,Arial,Helvetica,sans-serif;
+  padding: 0px;
+  float:left;
+}
+.msgBoxRed span a{
+    font-weight: bold;
+    margin-left: 5px;
+}
+.swMain .msgBoxRed .close:hover{
+  color: #EA8511;
+  border: 1px solid #EA8511;
+}
+
 /*---ADDED STYLES---*/
+.required{
+    color: red;
+}
 .grid_container{
     border: solid 1px #9ebfc7;
     margin-top: 20px;
@@ -379,4 +414,22 @@
 .grid_container a, .grid_container a:active
 {
 	color: #6c6c6c;
+}
+
+#wizard .add{
+    text-decoration: none;
+    color:#6c6c6c;
+    font-weight: bold;
+}
+#wizard .plus{
+    position: relative;
+    top: 3px;
+    margin-right: 5px;
+}
+#download{
+    margin-top: 60px;
+    text-align:center;
+}
+#download a{
+    margin-right: 30px;
 }

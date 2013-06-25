@@ -41,7 +41,7 @@
     background: url(../images/imgs_icns/arrow_down_sm_gray.png) no-repeat 0 50%;
     display: inline-block;
 }
-.delete, .edit, .del, .add{
+.delete, .edit, .del, .add, .edit_times, .edit_hierarchy{
     display: inline-block;
     width: 16px;
     height: 16px;
@@ -57,6 +57,12 @@
 }
 .edit{
     background: url(../images/imgs_icns/edit_squere.png) no-repeat 50% 50%;
+}
+.edit_times{
+    background: url(../images/imgs_icns/stopwatch.png) no-repeat 50% 50%;
+}
+.edit_hierarchy{
+    background: url(../images/imgs_icns/jerarquia.jpg) no-repeat 50% 50%;
 }
 .inactive_switch, .active_switch{
     display: inline-block;

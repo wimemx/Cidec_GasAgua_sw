@@ -7,13 +7,53 @@
 {% block externaljs %}
 {% endblock %}
 {% block document_ready %}
+    function goBack()
+    {
+        window.history.back()
+    }
+    var get = getUrlVars();
+    if(get['cat']!=undefined){
+        $(".element_row").prepend("<div class='element'><a onclick='goBack();' href='/panel_de_control'><img src='/static/css/images/imgs_icns/volver50.png' alt='Volver'/>Volver</a></div>")
+    }
+    if(get['cat']=='1'){
+
+        $("#bread_crumbs ul").append("<li> Panel Edificios</li>");
+    }
+    if(get['cat']=='2'){
+
+        $("#bread_crumbs ul").append("<li>Panel Empresas</li>");
+    }
+    if(get['cat']=='3'){
+
+        $("#bread_crumbs ul").append("<li>Panel Índices Energéticos</li>");
+    }
+    if(get['cat']=='4'){
+
+        $("#bread_crumbs ul").append("<li>Panel Alarmas</li>");
+    }
+    if(get['cat']=='5'){
+
+        $("#bread_crumbs ul").append("<li>Panel Usuarios</li>");
+    }
+    if(get['cat']=='6'){
+
+        $("#bread_crumbs ul").append("<li>Panel Medidores</li>");
+    }
+    if(get['cat']=='7'){
+
+        $("#bread_crumbs ul").append("<li>Panel Tarifas</li>");
+    }
+    if(get['cat']=='8'){
+
+        $("#bread_crumbs ul").append("<li>Panel Repositorios</li>");
+    }
 {% endblock %}
 {% block breadcumbs %}
     <div id="bread_crumbs">
         <a href="/profile/{{ request.user.pk }}/" class="fl username">{{ request.user.first_name }} {{ request.user.last_name }}</a>
         <ul>
             <li><a href="/main/">Inicio</a></li>
-            <li>Panel de control</li>
+            <li><a href="/panel_de_control">Panel de control</a></li>
         </ul>
     <a href="/logout" id="userLogOut">Cerrar sesión</a>
     </div>
@@ -24,7 +64,7 @@
     <div id="page_content">
     <div id="contenido_interno">
         <img id="panelImg" src="/static/css/images/imgs_icns/gear.png" alt=""/>
-        <h2 id="titulo_reporte">Panel de control</h2>
+        <h2 id="titulo_reporte" style="position:relative;top:4px;left:0;">Panel de control</h2>
         <div class="divider" id="divider_top">&nbsp;</div>
        <div class="element_row">
         {% for group in object_permission %}
