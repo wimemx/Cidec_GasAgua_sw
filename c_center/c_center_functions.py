@@ -1872,7 +1872,7 @@ def tarifaHM_2(building, s_date, e_date, month, year):
     consumer_units = get_consumer_units(main_cu)
 
     #Se obtienen las tuplas Dia Inicio - Dia Fin
-    tupleDays_arr = getTupleDays(s_date, e_date)
+    tupleDays_global = getTupleDays(s_date, e_date)
 
     if consumer_units:
 
@@ -1937,6 +1937,7 @@ def tarifaHM_2(building, s_date, e_date, month, year):
 
             profile_powermeter = c_unit.profile_powermeter
 
+            tupleDays_arr = tupleDays_global
             #Se obtiene y calcula el día de inicio
             tuple_first = tupleDays_arr[0]
             kwh_dia_dic = getKWHperDay(tuple_first[0], tuple_first[1], profile_powermeter)
@@ -1968,7 +1969,6 @@ def tarifaHM_2(building, s_date, e_date, month, year):
                     diccionario_final_cfe["kwh_intermedio"] += kwh_dia_dic['intermedio']
                     diccionario_final_cfe["kwh_punta"] += kwh_dia_dic['punta']
                     diccionario_final_cfe["kwh_totales"] += kwh_dia_dic['base'] + kwh_dia_dic['intermedio'] + kwh_dia_dic['punta']
-                    print "kWh Totales:", kwh_dia_dic['base'] + kwh_dia_dic['intermedio'] + kwh_dia_dic['punta']
                 else:
                     diccionario_final_cfe["kwh_base"] += daily_info.KWH_base
                     diccionario_final_cfe["kwh_intermedio"] += daily_info.KWH_intermedio

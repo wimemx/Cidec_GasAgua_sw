@@ -25,7 +25,6 @@ from django.utils import timezone
 from c_center.models import ProfilePowermeter, ElectricData, ElectricDataTemp, \
     ConsumerUnit, Powermeter
 from c_center.views import main_page, week_report_kwh
-from c_center.calculations import tag_this
 from c_center.c_center_functions import set_default_session_vars
 from rbac.models import DataContextPermission, Object, PermissionAsigment, \
     UserRole, GroupObject, MenuCategs, MenuHierarchy
