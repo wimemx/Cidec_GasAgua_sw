@@ -85,9 +85,9 @@ def get_clusters_for_operation(permission, operation, user):
 
 
 def get_all_active_companies_for_cluster(cluster):
-    c_comp = ClusterCompany.objects.filter(cluster=cluster)
-    companies_pks = [cc.company.pk for cc in c_comp]
-    return Company.objects.filter(pk__in=companies_pks, company_status=1)
+    c_comp = ClusterCompany.objects.filter(
+        cluster=cluster).values_list("company__pk", flat=True)
+    return Company.objects.filter(pk__in=c_comp, company_status=1)
 
 
 def get_companies_for_operation(permission, operation, user, cluster):
@@ -145,9 +145,9 @@ def get_all_companies_for_operation(permission, operation, user):
 
 
 def get_all_active_buildings_for_company(company):
-    c_buildings = CompanyBuilding.objects.filter(company=company)
-    buildings_pks = [cb.building.pk for cb in c_buildings]
-    return Building.objects.filter(pk__in=buildings_pks, building_status=1)
+    c_buildings = CompanyBuilding.objects.filter(
+        company=company).values_list("building__pk", flat=True)
+    return Building.objects.filter(pk__in=c_buildings, building_status=1)
 
 
 def get_buildings_for_operation(permission, operation, user, company):
@@ -309,9 +309,9 @@ def get_c_unitsforbuilding_for_operation(permission, operation, user, building):
             return get_all_consumer_units_for_building(building), True
         else:
             #lista de roles que tienen permiso de "operation" "permission"
-            roles_pks = [pa.role.pk for pa in
-                         PermissionAsigment.objects.filter(object=permission,
-                                                           operation=operation)]
+            roles_pks = PermissionAsigment.objects.filter(
+                object=permission,
+                operation=operation).values_list("role__pk", flat=True)
             #lista de data_context's del usuario donde tiene permiso de crear
             # asignaciones de roles
             data_context = DataContextPermission.objects.filter(
@@ -477,12 +477,12 @@ def get_pw_profiles(request):
     """ Get all the ProfilePowermeters that are available for use in a
     consumer unit, except for not registered and virtual profile
     """
-    used_profiles = ConsumerUnit.objects.all()
-    used_pks = [pw.profile_powermeter.powermeter.pk for pw in used_profiles]
+    used_profiles = ConsumerUnit.objects.all().values_list(
+        "profile_powermeter__powermeter__pk", flat=True)
     profiles = ProfilePowermeter.objects.all().exclude(
         powermeter__powermeter_anotation="Medidor Virtual").exclude(
         powermeter__powermeter_anotation="No Registrado").exclude(
-        powermeter__id__in=used_pks).values("pk",
+        powermeter__id__in=used_profiles).values("pk",
                                             "powermeter__powermeter_anotation")
     data = []
     for profile in profiles:
@@ -892,21 +892,24 @@ def allowed_cu(consumerUnit, user, building):
     if user.is_superuser:
         return True
     company = CompanyBuilding.objects.get(building=building)
-    context1 = DataContextPermission.objects.filter(user_role__user=user,
-                                                    company=company.company,
-                                                    building=None,
-                                                    part_of_building=None)
+    context1 = DataContextPermission.objects.filter(
+        user_role__user=user,
+        company=company.company,
+        building=None,
+        part_of_building=None).count()
     cluster = ClusterCompany.objects.get(company=company.company)
-    context2 = DataContextPermission.objects.filter(user_role__user=user,
-                                                    cluster=cluster.cluster,
-                                                    company=None, building=None,
-                                                    part_of_building=None)
+    context2 = DataContextPermission.objects.filter(
+        user_role__user=user,
+        cluster=cluster.cluster,
+        company=None, building=None,
+        part_of_building=None).count()
     if context1 or context2:
         return True
     if consumerUnit.electric_device_type.electric_device_type_name == "Total Edificio":
-        context = DataContextPermission.objects.filter(user_role__user=user,
-                                                       building=building,
-                                                       part_of_building=None)
+        context = DataContextPermission.objects.filter(
+            user_role__user=user,
+            building=building,
+            part_of_building=None).count()
         if context:
             return True
         else:
@@ -930,10 +933,10 @@ def allowed_cu(consumerUnit, user, building):
 
 
 def is_in_part_of_building(consumerUnit, part_of_building):
-    """ checks if consumerUnit is part of the part_of_building
+    """checks if consumerUnit is part of the part_of_building
     returns True if consumerUnit is inside the part
-    consumerUnit = ConsumerUnit instance *without part_of_building*
-    part_of_building = PartOfBuilding instance
+    :param consumerUnit: ConsumerUnit instance *without part_of_building*
+    :param part_of_building: PartOfBuilding instance
     """
     part_parent = HierarchyOfPart.objects.filter(
         part_of_building_composite=part_of_building)
@@ -996,29 +999,31 @@ def graphs_permission(user, consumer_unit, graphs_type):
     contextos = []
     for cntx in context:
         if cntx.part_of_building:
+            part = cntx.part_of_building
             #if the user has permission over a part of building, and the
             # consumer unit is
             #the cu for the part of building
-            if consumer_unit.part_of_building == cntx.part_of_building:
+            if consumer_unit.part_of_building == part:
                 contextos.append(cntx)
-            elif is_in_part_of_building(consumer_unit, cntx.part_of_building):
+            elif is_in_part_of_building(consumer_unit, part):
                 contextos.append(cntx)
 
         else: #if cntx.building == consumer_unit.building:
             contextos.append(cntx)
 
-    user_roles = [cntx.user_role.pk for cntx in contextos]
+    user_roles = context.values_list("user_role__pk", flat=True)
 
-    user_role = UserRole.objects.filter(user=user, pk__in=user_roles)
-
+    ur = UserRole.objects.filter(
+        user=user, pk__in=user_roles).values_list(
+        "role__pk", flat=True)
     graphs = []
-    for u_role in user_role:
-        for _object in graphs_type:
-            #ob = Object.objects.get(object_name=object)
-            permission = PermissionAsigment.objects.filter(object=_object,
-                                                           role=u_role.role,
-                                                           operation=operation)
-            if permission or user.is_superuser:
+    for _object in graphs_type:
+        if user.is_superuser:
+            graphs.append(_object)
+        else:
+            permission = PermissionAsigment.objects.filter(
+                object=_object, role__in=ur, operation=operation).count()
+            if permission:
                 graphs.append(_object)
     if graphs:
         return graphs
@@ -1240,7 +1245,6 @@ def dailyReportAll():
     print "Done dailyReportAll"
 
 
-def dailyReport(building, consumer_unit, today):
     #Inicializacion de variables
     kwh_totales = 0
     kwh_punta = 0
@@ -2210,7 +2214,7 @@ def tarifaHM_2__(building, s_date, e_date, month, year):
                     electric_data__medition_date__lt=e_date).\
                 order_by("electric_data__medition_date")
 
-                num_lecturas = len(electric_info)
+                num_lecturas = electric_info.count()
                 primer_lectura = electric_info[0].electric_data.TotalkWhIMPORT
                 ultima_lectura = electric_info[
                                  num_lecturas - 1].electric_data.TotalkWhIMPORT
@@ -2414,7 +2418,7 @@ def tarifaDAC_2(building, s_date, e_date, month, year):
             filter(medition_date__gte=s_date).filter(
                 medition_date__lt=e_date).\
             order_by('medition_date')
-            total_lecturas = len(kwh_lecturas)
+            total_lecturas = kwh_lecturas.count()
 
             if kwh_lecturas:
                 kwh_inicial = kwh_lecturas[0].TotalkWhIMPORT
@@ -2540,7 +2544,7 @@ def tarifa_3(building, s_date, e_date, month, year):
             filter(medition_date__gte=s_date).filter(
                 medition_date__lt=e_date).\
             order_by('pk')
-            total_lecturas = len(kwh_lecturas)
+            total_lecturas = kwh_lecturas.count()
 
             if kwh_lecturas:
                 kwh_inicial = kwh_lecturas[0].TotalkWhIMPORT
@@ -2646,7 +2650,7 @@ def tarifa_3_v2(building, s_date, e_date, month, year):
             filter(medition_date__gte=s_date).filter(
                 medition_date__lt=e_date).\
             order_by('medition_date')
-            total_lecturas = len(kwh_lecturas)
+            total_lecturas = kwh_lecturas.count()
 
             if kwh_lecturas:
                 kwh_inicial = kwh_lecturas[0].TotalkWhIMPORT
@@ -2826,7 +2830,7 @@ def c_functions_get_consumer_unit_electrical_parameter_data_clustered(
         #
         for consumer_unit_data in consumer_unit_data_list:
             instant_key_current =\
-            consumer_unit_data.instant.instant_datetime.strftime(
+            consumer_unit_data['instant__instant_datetime'].strftime(
                 "%Y/%m/%d-%H:%M:%S")
 
             try:
@@ -2838,17 +2842,17 @@ def c_functions_get_consumer_unit_electrical_parameter_data_clustered(
 
             certainty_current = instant_dictionary_current['certainty']
             certainty_current =\
-            certainty_current and consumer_unit_data.value is not None
+            certainty_current and consumer_unit_data['value'] is not None
 
             instant_dictionary_current['certainty'] = certainty_current
 
             if certainty_current:
                 value_current = instant_dictionary_current['value']
                 if value_current is None:
-                    value_current = consumer_unit_data.value
+                    value_current = consumer_unit_data['value']
 
                 else:
-                    value_current += consumer_unit_data.value
+                    value_current += consumer_unit_data['value']
 
                 instant_dictionary_current['value'] = value_current
 

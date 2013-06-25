@@ -239,7 +239,6 @@ def get_data_cluster_consumed_normalized (
         data_dictionary_current = data_cluster[data_index]
         data_dictionary_next = data_cluster[data_index + 12]
         datetime_current = data_dictionary_current['datetime']
-        print datetime.datetime.fromtimestamp(datetime_current)
         value_current =\
             data_dictionary_next['value'] - \
             data_dictionary_current['value']
@@ -892,12 +891,12 @@ def get_consumer_unit_electrical_parameter_data_clustered(
 
     instants_dictionary = dict()
     instant_dictionary_generic_value = {
-        'certainty' : True,
-        'value' :None
+        'certainty': True,
+        'value':None
     }
 
     for instant in instants:
-        key_current = instant.instant_datetime.strftime(
+        key_current = instant['instant_datetime'].strftime(
             reports.globals.Constant.DATETIME_STRING_KEY_FORMAT)
 
         instants_dictionary[key_current] =\
@@ -938,7 +937,7 @@ def get_consumer_unit_electrical_parameter_data_clustered(
         #
         for consumer_unit_data in consumer_unit_data_list:
             instant_key_current =\
-                consumer_unit_data.instant.instant_datetime.strftime(
+                consumer_unit_data['instant__instant_datetime'].strftime(
                     reports.globals.Constant.DATETIME_STRING_KEY_FORMAT)
 
             try:
@@ -950,17 +949,17 @@ def get_consumer_unit_electrical_parameter_data_clustered(
 
             certainty_current = instant_dictionary_current['certainty']
             certainty_current =\
-                certainty_current and consumer_unit_data.value is not None
+                certainty_current and consumer_unit_data['value'] is not None
 
             instant_dictionary_current['certainty'] = certainty_current
 
             if certainty_current:
                 value_current = instant_dictionary_current['value']
                 if value_current is None:
-                    value_current = consumer_unit_data.value
+                    value_current = consumer_unit_data['value']
 
                 else:
-                    value_current += consumer_unit_data.value
+                    value_current += consumer_unit_data['value']
 
                 instant_dictionary_current['value'] = value_current
             else:
@@ -973,7 +972,7 @@ def get_consumer_unit_electrical_parameter_data_clustered(
     #
     consumer_units_data_dictionaries_list = []
     for instant in instants:
-        key_current = instant.instant_datetime.strftime(
+        key_current = instant['instant_datetime'].strftime(
             reports.globals.Constant.DATETIME_STRING_KEY_FORMAT)
 
         try:
@@ -986,7 +985,7 @@ def get_consumer_unit_electrical_parameter_data_clustered(
 
         datetime_localtime_timetuple =\
             django.utils.timezone.localtime(
-                instant.instant_datetime
+                instant['instant_datetime']
             ).timetuple()
 
         data_dictionary_current['datetime'] =\
@@ -1011,13 +1010,13 @@ def render_instant_measurements(
 
     template_variables = {
         'axis_list': None,
-        'columns' : None,
-        'columns_statistics' : None,
+        'columns': None,
+        'columns_statistics': None,
         'column_units': None,
         'column_unit_axis_indexes': None,
-        'max' : None,
-        'min' : None,
-        'rows' : None
+        'max': None,
+        'min': None,
+        'rows': None
     }
 
     if not request.method == "GET":
@@ -1095,11 +1094,16 @@ def render_instant_measurements(
 
     data_clusters_list = get_data_clusters_list(request_data_list_normalized,
                                                 granularity)
+
     normalize_data_clusters_list(data_clusters_list)
 
     #get the raw data for statistics
-    statistics_clusters_list = get_data_clusters_list(
-        request_data_list_normalized, "raw")
+    if granularity == "raw":
+        statistics_clusters_list = data_clusters_list
+    else:
+        statistics_clusters_list = get_data_clusters_list(
+            request_data_list_normalized, "raw")
+
     normalize_data_clusters_list(statistics_clusters_list)
 
     #data_clusters_list para csv
@@ -1472,27 +1476,28 @@ def rates_for_data_cluster(data_cluster_consumed, region):
         if periodo == "base":
             arr_base = data_cluster
             arr_int = dict(certainty=False,
-                                value=None,
-                                datetime=data_cluster["datetime"])
+                           value=None,
+                           datetime=data_cluster["datetime"])
             arr_punt = dict(certainty=False,
-                                 value=None,
-                                 datetime=data_cluster["datetime"])
+                            value=None,
+                            datetime=data_cluster["datetime"])
         elif periodo == "intermedio":
             arr_base = dict(certainty=False,
-                                value=None,
-                                datetime=data_cluster["datetime"])
+                            value=None,
+                            datetime=data_cluster["datetime"])
             arr_int = data_cluster
             arr_punt = dict(certainty=False,
-                                value=None,
-                                datetime=data_cluster["datetime"])
+                            value=None,
+                            datetime=data_cluster["datetime"])
+
         else:
             #periodo == "punta"
             arr_base = dict(certainty=False,
-                                value=None,
-                                datetime=data_cluster["datetime"])
+                            value=None,
+                            datetime=data_cluster["datetime"])
             arr_int = dict(certainty=False,
-                                value=None,
-                                datetime=data_cluster["datetime"])
+                           value=None,
+                           datetime=data_cluster["datetime"])
             arr_punt = data_cluster
         data_cluster_cons.append([arr_base, arr_int, arr_punt])
 

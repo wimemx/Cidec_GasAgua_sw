@@ -21,11 +21,44 @@
     <script type="text/javascript" src="/static/js/external/labels.js"></script>
     <script type="text/javascript" src="/static/js/external/jqueryUniform/jquery.uniform.min.js"></script>
     <script type="text/javascript" src="/static/js/socket.io.js"></script>
-    {% block externaljs %}{% endblock %}
+</head>
+<body>
+<div class="wrapper">
+<div class="subwrapper">
+    <div id="header">
+        <div id="breadcumbs">
+            {% block breadcumbs %}{% endblock %}
+        </div>
+        <div id="header-container">
+            <div class="main_logo fl" id="auditem">
+                <a href="/"></a>
+            </div>
+            <div class="main_logo fr" id="myrios">
+                <a href="/"></a>
+            </div>
+        </div>
+    </div>
+    <table id="table_container">
+        <tbody>
+        <tr id="tr_menu">
+             <td>
+                {% include "top_menu.html"  %}
+            </td>
+        </tr>
+        <tr id='container_content'>
+            <td id="content">
+                {% block contenido %}{% endblock %}
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+{% block externaljs %}{% endblock %}
     <script type="text/javascript">
 
         {% if request.user %}
-        var server = io.connect("http://166.78.139.234:9999");
+        var server = io.connect("{{ SERVER_URL }}:9999");
         server.on("connect", function(data){
             server.emit("join", {{ request.user.pk }});
         });
@@ -250,38 +283,5 @@
         });
 
     </script>
-</head>
-<body>
-<div class="wrapper">
-<div class="subwrapper">
-    <div id="header">
-        <div id="breadcumbs">
-            {% block breadcumbs %}{% endblock %}
-        </div>
-        <div id="header-container">
-            <div class="main_logo fl" id="auditem">
-                <a href="/"></a>
-            </div>
-            <div class="main_logo fr" id="myrios">
-                <a href="/"></a>
-            </div>
-        </div>
-    </div>
-    <table id="table_container">
-        <tbody>
-        <tr id="tr_menu">
-             <td>
-                {% include "top_menu.html"  %}
-            </td>
-        </tr>
-        <tr id='container_content'>
-            <td id="content">
-                {% block contenido %}{% endblock %}
-            </td>
-        </tr>
-        </tbody>
-    </table>
-</div>
-</div>
 </body>
 </html>

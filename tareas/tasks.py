@@ -73,11 +73,14 @@ def regenerate_dw_cumulative_in_interval(d1, d2):
                 type=2
             )
     instants_delta = data_warehouse_extended.models.InstantDelta.objects.all()
-    consumer_units = c_center.models.ConsumerUnit.objects.all()
+    consumer_units = c_center.models.ConsumerUnit.objects.filter(pk__in=[44, 47])
     for instant_delta in instants_delta:
+        print instant_delta
         for electrical_parameter in electrical_parameters:
+            print electrical_parameter
             for cu in consumer_units:
-                process_dw_consumerunit_electrical_parameter.delay(
+                print cu
+                process_dw_consumerunit_electrical_parameter(
                     cu, d1, d2, electrical_parameter, instant_delta)
 
 

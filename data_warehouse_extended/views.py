@@ -569,7 +569,7 @@ def process_consumer_unit_electrical_parameter_instant_group(
 #
 ################################################################################
 
-def get_consumer_unit_electrical_parameter_data_list (
+def get_consumer_unit_electrical_parameter_data_list(
         consumer_unit_profile,
         datetime_from,
         datetime_to,
@@ -627,7 +627,7 @@ def get_consumer_unit_electrical_parameter_data_list (
                 electrical_parameter=electrical_parameter
             ).order_by(
                 "instant__instant_datetime"
-            )
+            ).values("instant__instant_datetime", "value")
 
     return consumer_unit_data_list
 
@@ -818,7 +818,7 @@ def get_instants_list (
             instant_delta=instant_delta
         ).order_by(
             "instant_delta"
-        )
+        ).values("instant_datetime")
 
     return instants
 
