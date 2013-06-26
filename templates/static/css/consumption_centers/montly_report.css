@@ -184,10 +184,20 @@ table.datepickerViewYears td a span{
     color: #666666;
 }
 .inner_day .red{
-    color: #c30000;
+    color: #fff !important;
+    background: #c30000;
+    display: block;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    text-align: center !important;
 }
 .inner_day .green{
-    color: #58b11d;
+    color: #FFF !important;;
+    background: #58b11d;
+    display: block;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    text-align: center !important;
 }
 .demanda_max, .title_inner, .consumo{
     display: block;
@@ -270,11 +280,11 @@ h3.titulo_reporte{
     display: none !important;
 }
 #lateral{
-    background-image: linear-gradient(bottom, #F0F4F7 13%, #E0E2E3 57%, #D3D3D3 79%);
-    background-image: -o-linear-gradient(bottom, #F0F4F7 13%, #E0E2E3 57%, #D3D3D3 79%);
-    background-image: -moz-linear-gradient(bottom, #F0F4F7 13%, #E0E2E3 57%, #D3D3D3 79%);
-    background-image: -webkit-linear-gradient(bottom, #F0F4F7 13%, #E0E2E3 57%, #D3D3D3 79%);
-    background-image: -ms-linear-gradient(bottom, #F0F4F7 13%, #E0E2E3 57%, #D3D3D3 79%);
+    background-image: linear-gradient(bottom, #F0F4F7 13%, #E0E2E3 57%);
+    background-image: -o-linear-gradient(bottom, #F0F4F7 13%, #E0E2E3 57%);
+    background-image: -moz-linear-gradient(bottom, #F0F4F7 13%, #E0E2E3 57%);
+    background-image: -webkit-linear-gradient(bottom, #F0F4F7 13%, #E0E2E3 57%);
+    background-image: -ms-linear-gradient(bottom, #F0F4F7 13%, #E0E2E3 57%);
 
     background-image: -webkit-gradient(
         linear,
@@ -556,7 +566,7 @@ h3.titulo_reporte{
     border: none;
     cursor: default;
     text-align: center;
-    top: 160px;
+    top: 172px;
     left: -50px;
     padding: 3px 5px;
 }
@@ -572,7 +582,7 @@ h3.titulo_reporte{
     border: none;
     cursor: default;
     text-align: center;
-    top: 188px;
+    top: 147px;
     left: -50px;
     padding: 3px 5px;
 }
