@@ -8,6 +8,7 @@ import time
 import sys
 import csv
 import decimal
+import ast
 
 # Django imports
 import django.http
@@ -21,6 +22,7 @@ import alarms.models
 
 # Reports imports
 import reports.globals
+from reports.models import DataStoreMonthlyGraphs
 
 # Data Warehouse Extended imports
 import data_warehouse_extended.models
@@ -169,6 +171,7 @@ def get_data_cluster_consumed_normalized (
         electrical_parameter_name,
         granularity_seconds
 ):
+
     #
     # Localize datetimes (if neccesary) and convert to UTC
     #
@@ -207,6 +210,8 @@ def get_data_cluster_consumed_normalized (
 
         return None
 
+
+
     try:
         consumer_unit =\
             c_center.models.ConsumerUnit.objects.get(pk=consumer_unit_id)
@@ -216,6 +221,8 @@ def get_data_cluster_consumed_normalized (
             reports.globals.SystemError.GET_DATA_CLUSTER_CONSUMED_JSON_ERROR)
 
         return None
+
+
 
     #
     # Get the data cluster.
@@ -675,6 +682,7 @@ def normalize_data_cluster(
     #
     # Get the first and last valid indexes
     #
+
     valid_index_first = None
     valid_index_last = None
     index_counter = 0
@@ -1161,17 +1169,13 @@ def render_report_consumed_by_month(
 
     if not request.method == "GET":
         raise django.http.Http404
-    if not "electrical-parameter-name" in request.GET:
-        return django.http.HttpResponse(content="", status=200)
-    try:
-        consumer_unit_id = request.GET['consumer-unit-id']
-        month = int(request.GET['month'])
-        year = int(request.GET['year'])
-        electrical_parameter_name = request.GET['electrical-parameter-name']
+    consumer_unit_id = request.GET['consumer-unit-id']
+    month = int(request.GET['month'])
+    year = int(request.GET['year'])
 
-    except KeyError:
-        raise django.http.Http404
 
+
+    electrical_parameter_name ="TotalkWhIMPORT"
     days = variety.getMonthDays(month, year)
     first_week_start_datetime = days[0] + datetime.timedelta(days=1)
     last_week_end_datetime = days[-1] + datetime.timedelta(days=2)
@@ -1261,12 +1265,11 @@ def render_report_consumed_by_month(
     template_variables['electric_data'] = electrical_parameter_name
 
     if cu.building.electric_rate.electric_rate_name == "H-M":
-        #parse data_cluster_consumed
-        template_variables['rows'] = rates_for_data_cluster(
-            data_cluster_consumed, cu.building.region)
         template_variables['periods'] = True
 
 
+    template_variables['rows'] = DataStoreMonthlyGraphs.objects.get(
+        consumer_unit_id=consumer_unit_id, year=year, month=month).data_consumed
 
     template_context =\
         django.template.context.RequestContext(request, template_variables)
@@ -1293,19 +1296,15 @@ def render_report_powerprofile_by_month(
     if not request.method == "GET":
         raise django.http.Http404
 
-    if not "electrical-parameter-name01" in request.GET:
-        return django.http.HttpResponse(content="", status=200)
-
     #
     # Build a request data list in order to normalize it.
     #
     request_data_list = []
-    parameter_counter = 1
-    parameter_get_key = "electrical-parameter-name%02d" % parameter_counter
     consumer_unit_id = request.GET['consumer-unit-id']
 
     month = int(request.GET['month'])
     year = int(request.GET['year'])
+
     days = variety.getMonthDays(month, year)
 
     datetime_from = days[0] + datetime.timedelta(days=1)
@@ -1332,31 +1331,24 @@ def render_report_powerprofile_by_month(
     template_variables['current_year'] = year
     template_variables['current_month'] = month
 
-
-    while request.GET.has_key(parameter_get_key):
-        electrical_parameter_name_get_key =\
-            "electrical-parameter-name%02d" % parameter_counter
-
-        try:
-            electrical_parameter_name =\
-                request.GET[electrical_parameter_name_get_key]
-
-        except KeyError:
-            logger.error(
-                reports.globals.SystemError.RENDER_INSTANT_MEASUREMENTS_ERROR)
-
-            raise django.http.Http404
-
-        request_data_list_item =\
+    request_data_list_item =\
             (consumer_unit_id,
              datetime_from,
              datetime_to,
-             electrical_parameter_name)
-
-        request_data_list.append(request_data_list_item)
-        parameter_counter += 1
-        parameter_get_key = "electrical-parameter-name%02d" % parameter_counter
-
+             "kW")
+    request_data_list.append(request_data_list_item)
+    request_data_list_item =\
+            (consumer_unit_id,
+             datetime_from,
+             datetime_to,
+             "kVAr")
+    request_data_list.append(request_data_list_item)
+    request_data_list_item =\
+            (consumer_unit_id,
+             datetime_from,
+             datetime_to,
+             "PF")
+    request_data_list.append(request_data_list_item)
     #
     # Normalize the data list.
     #
@@ -1401,62 +1393,25 @@ def render_report_powerprofile_by_month(
     template_variables['column_unit_axis_indexes'] = column_units_axis_indexes
 
     #
-    # Create the json using the data clusters list normalized
+    # Make a query to retrieve the json for instant_data
     #
-    data_clusters_json = get_data_clusters_json(data_clusters_list)
 
-    if data_clusters_json is None:
-        raise django.http.Http404
+    template_variables['rows'] = DataStoreMonthlyGraphs.objects.get(
+        consumer_unit_id=consumer_unit_id, year=year, month=month).instant_data
 
-    template_variables['rows'] = data_clusters_json
 
     #
-    # Get statistical values
+    #Get statistical values
     #
     maximum, minimum = get_data_clusters_list_limits(data_clusters_list)
 
-    weeks = []
-    for cont in range(0, 6):
-        if cont == 0:
-            weeks.append(
-                (datetime_from, datetime_from + datetime.timedelta(days=7)))
-
-        else:
-            weeks.append(
-                (weeks[cont-1][1],
-                 weeks[cont-1][1] + datetime.timedelta(days=7)))
-
-    cont = 0
-    statistics = []
-    for day_data in data_clusters_list:
-        #day_data = todos los datos de un parámetro para el mes
-        param = column_strings[cont]
-
-        cont += 1
-        month_array = [[], [], [], [], [], []]
-        for day in day_data:
-            #print day
-            medition_date = datetime.datetime.fromtimestamp(day["datetime"])
-            for i in range(0, len(weeks)):
-                if weeks[i][0] <= medition_date < weeks[i][1]:
-                    if param == "PF" and abs(day['value']) > 1:
-                        day['value'] = 1
-                    if day["certainty"]:
-                        month_array[i].append(abs(float(day['value'])))
-                    
-                    break
-                else:
-                    continue
-        for i in range(0, len(month_array)):
-
-            if month_array[i]:
-                month_array[i] = get_data_statistics(month_array[i])
-
-        statistics.append(dict(param=param, month_data=month_array))
-
     template_variables['max'] = maximum
     template_variables['min'] = minimum
-    template_variables['columns_statistics'] = statistics
+
+    template_variables['columns_statistics'] = ast.literal_eval(
+        DataStoreMonthlyGraphs.objects.get(consumer_unit_id=consumer_unit_id,
+                                           year=year, month=month).statistics)
+
     template_context =\
         django.template.context.RequestContext(request, template_variables)
 
@@ -1473,6 +1428,7 @@ def rates_for_data_cluster(data_cluster_consumed, region):
         date_time = datetime.datetime.fromtimestamp(data_cluster["datetime"])
         periodo = c_center.calculations.obtenerTipoPeriodoObj(
             date_time, region).period_type
+
         if periodo == "base":
             arr_base = data_cluster
             arr_int = dict(certainty=False,

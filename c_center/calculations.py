@@ -337,7 +337,6 @@ def obtenerGrupo(catalogo_grupos, fecha):
 
     """
     dias_festivos = obtenerFestivos(fecha.year)
-
     #La fecha se formatea a "dia mes año" sin guiones, solo espacios. 
     fecha_formato = fecha.strftime("%d %m %Y")
     if fecha_formato in dias_festivos:
@@ -347,7 +346,6 @@ def obtenerGrupo(catalogo_grupos, fecha):
             str(fecha.day) + " " + str(fecha.month) + " " + str(fecha.year),
             "%d %m %Y")
         num_dia = strftime("%w", st_time)
-
     return catalogo_grupos[int(num_dia)]
 
 
@@ -357,6 +355,7 @@ def obtenerTipoPeriodo(fecha, region, tarifa, catalogo_grupos):
     en que fue tomada, región y tarifa.
 
     """
+
     grupo_id = obtenerGrupo(catalogo_grupos, fecha)
     horario_ver_inv = DateIntervals.objects.filter(
         date_init__lte=datetime.date(fecha.year,
