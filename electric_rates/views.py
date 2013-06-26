@@ -939,7 +939,6 @@ def tarifa_header(request, tarifa_n):
     if request.user.is_superuser:
         set_default_session_vars(request, datacontext)
         template_vars = {"type": "cfe", "datacontext": datacontext,
-                         'empresa': request.session['main_building'],
                          'company': request.session['company'],
                          'sidebar': request.session['sidebar']}
         year_list = []

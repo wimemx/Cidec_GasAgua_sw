@@ -10,6 +10,7 @@
 
     <link rel="stylesheet" href="/static/date_picker/css/datepicker.css" type="text/css" />
     <script type="text/javascript" src="/static/date_picker/js/date_picker.js"></script>
+    <script type="text/javascript" src="/static/js/functions.js"></script>
     <script type="text/javascript">
         google.load('visualization', '1', {packages: ['corechart']});
     </script>
@@ -104,27 +105,27 @@
                 </tr>
                 <tr>
                     <td>Energía</td>
-                    <td>${{ resultados.costo_energia|floatformat:2 }}</td>
+                    <td>$ <script>document.write(addCommas({{ resultados.costo_energia|floatformat:2 }}));</script></td>
                 </tr>
                 <tr>
                     <td>Demanda Facturable</td>
-                    <td>${{ resultados.costo_dfacturable|floatformat:2 }}</td>
+                    <td>$ <script>document.write(addCommas({{ resultados.costo_dfacturable|floatformat:2 }}));</script></td>
                 </tr>
                 <tr>
                     <td>Bonificación Factor de Potencia</td>
-                    <td>${{ resultados.costo_fpotencia|floatformat:2 }}</td>
+                    <td>$ <script>document.write(addCommas({{ resultados.costo_fpotencia|floatformat:2}}));</script></td>
                 </tr>
                 <tr>
                     <td>Sub Total</td>
-                    <td>${{ resultados.subtotal|floatformat:2 }}</td>
+                    <td>$ <script>document.write(addCommas({{ resultados.subtotal|floatformat:2 }}));</script></td>
                 </tr>
                 <tr>
                     <td>IVA 16%</td>
-                    <td>${{ resultados.iva|floatformat:2 }}</td>
+                    <td>$ <script>document.write(addCommas({{ resultados.iva|floatformat:2 }}));</script></td>
                 </tr>
                 <tr>
                     <td>Total</td>
-                    <td>$ {{ resultados.total|floatformat:2 }}</td>
+                    <td>$ <script>document.write(addCommas({{ resultados.total|floatformat:2 }}));</script></td>
                 </tr>
             </tbody>
         </table>
@@ -142,15 +143,15 @@
                 </tr>
                 <tr>
                     <td>Energía</td>
-                    <td>${{ resultados.costo_energia|floatformat:2 }}</td>
+                    <td>$ <script>document.write(addCommas({{ resultados.costo_energia|floatformat:2 }}));</script></td>
                 </tr>
                 <tr>
                     <td>IVA 16%</td>
-                    <td>${{ resultados.iva|floatformat:2 }}</td>
+                    <td>$ <script>document.write(addCommas({{ resultados.iva|floatformat:2 }}));</script></td>
                 </tr>
                 <tr>
                     <td>Total</td>
-                    <td>$ {{ resultados.total|floatformat:2 }}</td>
+                    <td>$ <script>document.write(addCommas({{ resultados.total|floatformat:2 }}));</script></td>
                 </tr>
             </tbody>
         </table>
@@ -167,27 +168,27 @@
                 </tr>
                 <tr>
                     <td>Energía</td>
-                    <td>${{ resultados.costo_energia|floatformat:2 }}</td>
+                    <td>$ <script>document.write(addCommas({{ resultados.costo_energia|floatformat:2 }}));</script></td>
                 </tr>
                 <tr>
                     <td>Demanda M&aacute;xima</td>
-                    <td>${{ resultados.costo_demanda|floatformat:2 }}</td>
+                    <td>$ <script>document.write(addCommas({{ resultados.costo_demanda|floatformat:2 }}));</script></td>
                 </tr>
                 <tr>
                     <td>Bonificación Factor de Potencia</td>
-                    <td>${{ resultados.costo_fpotencia|floatformat:2 }}</td>
+                    <td>$ <script>document.write(addCommas({{ resultados.costo_fpotencia|floatformat:2 }}));</script></td>
                 </tr>
                 <tr>
                     <td>Sub Total</td>
-                    <td>${{ resultados.subtotal|floatformat:2 }}</td>
+                    <td>$ <script>document.write(addCommas({{ resultados.subtotal|floatformat:2 }}));</script></td>
                 </tr>
                 <tr>
                     <td>IVA 16%</td>
-                    <td>${{ resultados.iva|floatformat:2 }}</td>
+                    <td>$ <script>document.write(addCommas({{ resultados.iva|floatformat:2 }}));</script></td>
                 </tr>
                 <tr>
                     <td>Total</td>
-                    <td>$ {{ resultados.total|floatformat:2 }}</td>
+                    <td>$ <script>document.write(addCommas({{ resultados.total|floatformat:2 }}));</script></td>
                 </tr>
             </tbody>
         </table>
@@ -204,36 +205,36 @@
         <tbody>
         <tr>
             <td>kWh Totales</td>
-            <td>{{ resultados.kwh_totales }}</td>
+            <td><script>document.write(addCommas({{ resultados.kwh_totales }}));</script></td>
         </tr>
         <tr>
             <td>kWh Base</td>
-            <td>{{ resultados.kwh_base }}</td>
+            <td><script>document.write(addCommas({{ resultados.kwh_base }}));</script></td>
         </tr>
         <tr>
             <td>kWh Intermedia</td>
-            <td>{{ resultados.kwh_intermedio }}</td>
+            <td><script>document.write(addCommas({{ resultados.kwh_intermedio }}));</script></td>
         </tr>
         <tr>
             <td>kWh Punta</td>
-            <td>{{ resultados.kwh_punta }}</td>
+            <td><script>document.write(addCommas({{ resultados.kwh_punta }}));</script></td>
         </tr>
 
         <tr>
             <td>kW Base</td>
-            <td>{{ resultados.kw_base }}</td>
+            <td><script>document.write(addCommas({{ resultados.kw_base }}));</script></td>
         </tr>
         <tr>
             <td>kW Intermedia</td>
-            <td>{{ resultados.kw_intermedio }}</td>
+            <td><script>document.write(addCommas({{ resultados.kw_intermedio }}));</script></td>
         </tr>
         <tr>
             <td>kW Punta</td>
-            <td>{{ resultados.kw_punta }}</td>
+            <td><script>document.write(addCommas({{ resultados.kw_punta }}));</script></td>
         </tr>
         <tr>
             <td>kVArh</td>
-            <td>{{ resultados.kvarh_totales }}</td>
+            <td><script>document.write(addCommas({{ resultados.kvarh_totales }}));</script></td>
         </tr>
         <tr>
             <td>Factor de potencia</td>
@@ -252,25 +253,25 @@
         <tbody>
         <tr>
             <td>Energ&iacute;a en base kWh</td>
-            <td>{{ resultados.kwh_base }}</td>
+            <td><script>document.write(addCommas({{ resultados.kwh_base }}));</script></td>
             <td>{{ resultados.tarifa_kwhb|floatformat:4 }}</td>
 
         </tr>
         <tr>
             <td>Energ&iacute;a en intermedia kWh</td>
-            <td>{{ resultados.kwh_intermedio }}</td>
+            <td><script>document.write(addCommas({{ resultados.kwh_intermedio }}));</script></td>
             <td>{{ resultados.tarifa_kwhi|floatformat:4 }}</td>
 
         </tr>
         <tr>
             <td>Energ&iacute;a en punta kWh</td>
-            <td>{{ resultados.kwh_punta }}</td>
+            <td><script>document.write(addCommas({{ resultados.kwh_punta }}))</script></td>
             <td>{{ resultados.tarifa_kwhp|floatformat:4 }}</td>
 
         </tr>
         <tr>
             <td>Demanda facturable kW</td>
-            <td>{{ resultados.demanda_facturable }}</td>
+            <td><script>document.write(addCommas({{ resultados.demanda_facturable }}));</script></td>
             <td>{{ resultados.tarifa_df|floatformat:3 }}</td>
 
         </tr>
@@ -287,7 +288,7 @@
         <tbody>
         <tr>
             <td>Energía kWh</td>
-            <td>{{ resultados.kwh_totales }}</td>
+            <td><script>document.write(addCommas({{ resultados.kwh_totales }}));</script></td>
         </tr>
         <tr>
             <td>Tarifa $/kWh</td>
@@ -295,7 +296,7 @@
         </tr>
         <tr>
             <td>Importe</td>
-            <td>{{ resultados.importe|floatformat:2 }}</td>
+            <td><script>document.write(addCommas({{ resultados.importe }}));</script></td>
         </tr>
         <tr>
             <td>Cargo Fijo Mensual</td>
@@ -314,7 +315,7 @@
         <tbody>
         <tr>
             <td>Energía kWh</td>
-            <td>{{ resultados.kwh_totales }}</td>
+            <td><script>document.write(addCommas({{ resultados.kwh_totales }}));</script></td>
         </tr>
         <tr>
             <td>Tarifa $/kWh</td>
@@ -322,7 +323,7 @@
         </tr>
         <tr>
             <td>Demanda Máxima KW</td>
-            <td>{{ resultados.kw_totales }}</td>
+            <td><script>document.write(addCommas({{ resultados.kw_totales }}));</script></td>
         </tr>
         <tr>
             <td>Tarifa $/Kw</td>
@@ -334,7 +335,7 @@
         </tr>
         <tr>
             <td>Importe</td>
-            <td>{{ resultados.costo_energia|floatformat:2 }}</td>
+            <td><script>document.write(addCommas({{ resultados.costo_energia }}));</script></td>
         </tr>
         </tbody>
     </table>
@@ -372,8 +373,8 @@
             {% for hist in  historico%}
                 <tr>
                     <td>{{ hist.fecha }}</td>
-                    <td>{{ hist.demanda_maxima|floatformat:2 }}</td>
-                    <td>{{ hist.total_kwh }}</td>
+                    <td><script>document.write(addCommas({{ hist.demanda_maxima }}));</script></td>
+                    <td><script>document.write(addCommas({{ hist.total_kwh }}));</script></td>
                     <td>{{ hist.factor_potencia|floatformat:2 }}</td>
                     <td>{{ hist.factor_carga|floatformat:2 }}</td>
                     <td>{{ hist.costo_promedio|floatformat:2 }}</td>
@@ -384,7 +385,7 @@
                 <tr>
                     <td>{{ hist.fecha }}</td>
                     <td>-</td>
-                    <td>{{ hist.total_kwh }}</td>
+                    <td><script>document.write(addCommas({{ hist.total_kwh }}));</script></td>
                     <td>-</td>
                     <td>-</td>
                     <td>{{ hist.costo_promedio|floatformat:2 }}</td>
@@ -394,8 +395,8 @@
             {% for hist in  historico%}
                 <tr>
                     <td>{{ hist.fecha }}</td>
-                    <td>{{ hist.demanda_maxima|floatformat:2 }}</td>
-                    <td>{{ hist.total_kwh }}</td>
+                    <td><script>document.write(addCommas({{ hist.demanda_maxima }}));</script></td>
+                    <td><script>document.write(addCommas({{ hist.total_kwh }}));</script></td>
                     <td>{{ hist.factor_potencia|floatformat:2 }}</td>
                     <td>{{ hist.factor_carga|floatformat:2 }}</td>
                     <td>{{ hist.costo_promedio|floatformat:2 }}</td>

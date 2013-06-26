@@ -403,13 +403,7 @@ label span
 	border-right: solid 1px #9ebfc7;
 }
 
-#grid_container
-{
-	border: solid 1px #9ebfc7;
-	margin-top: 20px;
-	border-radius: 7px;
-	overflow: hidden;
-}
+
 
 #grid_container_rate
 {
@@ -427,6 +421,7 @@ label span
     margin-top: 20px;
     border-radius: 7px;
     overflow: hidden;
+
 }
 
 #grid_container table

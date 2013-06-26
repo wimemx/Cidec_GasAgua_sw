@@ -1916,6 +1916,8 @@ def tarifaHM_2(building, s_date, e_date, month, year):
 
         else:
 
+            tupleDays_arr = tupleDays_global
+
             for tupleDay in tupleDays_arr:
                 kw_dia_dic = getKWperDay(tupleDay[0], tupleDay[1], consumer_units[0].profile_powermeter)
                 if kw_dia_dic['base'] > diccionario_final_cfe["kw_base"]:

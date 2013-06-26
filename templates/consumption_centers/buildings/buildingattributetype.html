@@ -149,9 +149,8 @@ window.location = base_url;
     <ul>
         <li><a href="/main/">Inicio</a></li>
         <li><a href="/panel_de_control/">Panel de Control</a></li>
-        <li><a href="/panel_de_control/?cat=1">Panel Edificios</a></li>
-        <li><a href="/buildings/edificios/">Edificios</a></li>
-        <li>Tipos de Atributos de Edificio</li>
+        <li><a href="/panel_de_control/?cat=3">Panel Índices Energéticos</a></li>
+        <li>Tipos de Índices Energéticos</li>
     </ul>
     <a href="/logout" id="userLogOut">Cerrar sesión</a>
 
@@ -166,7 +165,7 @@ window.location = base_url;
 
 <div id="page_content">
 <div id="contenido_interno">
-    <h2 id="titulo_form" class="building_attr">Tipos de Atributos de Edificio</h2>
+    <h2 id="titulo_form" class="building_attr">Tipos de Índices Energéticos</h2>
 
 
     <div class="divider" id="divider_top">&nbsp;</div>
@@ -187,7 +186,7 @@ window.location = base_url;
         <div id="user_actions">
 
             <a href="/buildings/alta_tipo_atributo_edificio/"><span class="plus"></span>
-                Nuevo Tipo Atributo
+                Nuevo Tipo Índice
             </a>
             <span class="hz_divider"></span>
             <form method="get" action=".">
@@ -208,7 +207,7 @@ window.location = base_url;
                     <tr>
                         <th style="width: 20%;">
                             <a href="#" id="sort_name" rel="{{ order_name }}">
-                                Tipo de Atributo
+                                Tipo de Índice
                                 <span class="sort"></span>
                             </a>
                         </th>

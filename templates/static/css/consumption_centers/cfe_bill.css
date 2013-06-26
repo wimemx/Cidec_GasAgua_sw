@@ -337,8 +337,47 @@ iframe{
 
 #recolector
 {
-    width: 520px;
-position: relative;
-right: 137px;
+
 }
 
+#recolector .selector{
+    width: 100px;
+}
+
+#recolector #uniform-crawler_month span{
+    width: 70px;
+}
+
+#recolector #uniform-crawler_month select{
+    width: 105px;
+    min-width: 105px;
+}
+
+#recolector #uniform-crawler_year span{
+    width: 70px;
+}
+
+#recolector #uniform-crawler_year select{
+    width: 105px;
+    min-width: 105px;
+}
+
+.rates_n_crawler{
+    width: 515px;
+    float: right;
+}
+
+#see_rate{
+    float: right;
+    padding-right: 37px;
+}
+
+#rates_loader{
+    width: 20px;
+    height: 20px;
+    display: block;
+    float:right;
+    position:relative;
+    left:-10px;
+    top: 3px;
+}

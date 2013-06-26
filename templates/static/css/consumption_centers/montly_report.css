@@ -522,6 +522,8 @@ h3.titulo_reporte{
     font-weight: 700;
     font-size: 12px;
 }
+
+
 .icon_sumary #cons_total{
     background: url(../images/imgs_icns/consumo_mensual.png) left center no-repeat;
     padding-left: 30px;

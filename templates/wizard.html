@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block titulo %}Asistente para nueva instalació&oacute;n{% endblock %}
+{% block titulo %}Asistente de Configuraci&oacute;n{% endblock %}
 {% block externalcss %}
     <!--suppress HtmlUnknownTarget -->
     <link rel="stylesheet" href="/static/css/consumption_centers/main.css" type="text/css" />
@@ -413,7 +413,9 @@ $(document).ready(function(){
      <a href="/profile/{{ request.user.pk }}/" class="fl username">{{ request.user.first_name }} {{ request.user.last_name }}</a>
         <ul>
             <li><a href="/main/">Inicio</a></li>
-            <li>Alta de estructura inicial</li>
+            <li><a href="/panel_de_control/">Panel de Control</a></li>
+            <li><a href="/panel_de_control/?cat=1">Panel Edificios</a></li>
+            <li>Asistente de Configuraci&oacute;n</li>
         </ul>
         <a href="/logout" id="userLogOut">Cerrar sesión</a>
     </div>
@@ -424,7 +426,7 @@ $(document).ready(function(){
 
     <div id="page_content">
         <div id="contenido_interno">
-            <h2 class="titulo_reporte"><span class="building">Alta de estructura inicial</span></h2>
+            <h2 class="titulo_reporte"><span class="building">Asistente de Configuraci&oacute;n</span></h2>
 
             <div class="divider" id="divider_top">&nbsp;</div>
             {% if message %}
