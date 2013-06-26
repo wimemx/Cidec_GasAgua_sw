@@ -875,6 +875,7 @@ def user_notifications(request):
                 template_vars['diccionario'] = diccionario
 
         elif "todas" in request.GET:
+            usr_ntfs = UserNotifications.objects.filter(user=request.user)
             notifs = usr_ntfs.order_by("-alarm_event__triggered_time")
             template_vars['all'] = True
 

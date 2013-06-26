@@ -4718,7 +4718,6 @@ def add_partbuilding(request):
             'building_attributes_type_name')
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              company=company,
                              post=post,
                              tipos_parte=tipos_parte,
@@ -5019,7 +5018,6 @@ def edit_partbuilding(request, id_bpart):
                         "&ntype=n_success")
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              company=company,
                              post=post,
                              tipos_parte=tipos_parte,
@@ -5105,7 +5103,7 @@ def view_partbuilding(request):
         template_vars = dict(order_name=order_name, order_type=order_type,
                              order_building=order_building,
                              order_status=order_status,
-                             datacontext=datacontext, empresa=empresa,
+                             datacontext=datacontext,
                              company=company,
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
