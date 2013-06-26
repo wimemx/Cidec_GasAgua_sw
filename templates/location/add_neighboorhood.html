@@ -105,7 +105,7 @@
       <a href="/profile/{{ request.user.pk }}/" class="fl username">{{ request.user.first_name }} {{ request.user.last_name }}</a>
         <ul>
             <li><a href="/main/">Inicio</a></li>
-            <li><a href="/panel_de_control/">Administraci&oacute;n</a></li>
+            <li><a href="/panel_de_control/">Panel de Control</a></li>
             <li><a href="/panel_de_control/location/">Ubicaciones</a></li>
             <li><a href="/location/ver_colonias/">Colonias</a></li>
             <li>{% if operation == "edit" %}Editar{% else %}Alta de{% endif %} colonia</li>
