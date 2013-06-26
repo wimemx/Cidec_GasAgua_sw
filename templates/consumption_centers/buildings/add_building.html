@@ -30,8 +30,8 @@
     $(document).ready(function(){
 
 
-        $('a#see_regions').click(function() {
-            console.log("Veamos");
+        $('a#see_regions').click(function(e) {
+            e.preventDefault();
             window.parent.$.fancybox({
                 href        :'/location/cfe_regiones/',
                 type        :'iframe',
