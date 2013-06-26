@@ -1007,7 +1007,7 @@ def add_building_attr(request):
         message = ""
         attributes = BuildingAttributesType.objects.all().order_by(
             "building_attributes_type_sequence")
-        template_vars = dict(datacontext=datacontext, empresa=empresa,
+        template_vars = dict(datacontext=datacontext,
                              company=company,
                              type=_type,
                              message=message,
@@ -1144,7 +1144,7 @@ def b_attr_list(request):
         paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
         template_vars = dict(roles=paginator, order_attrname=order_attrname,
                              order_type=order_type, order_units=order_units,
-                             order_sequence=order_sequence, empresa=empresa,
+                             order_sequence=order_sequence,
                              order_status=order_status, company=company,
                              datacontext=datacontext,
                              sidebar=request.session['sidebar'])
@@ -1227,7 +1227,7 @@ def editar_b_attr(request, id_b_attr):
         _type = ''
         attributes = BuildingAttributesType.objects.all().order_by(
             "building_attributes_type_sequence")
-        template_vars = dict(datacontext=datacontext, empresa=empresa,
+        template_vars = dict(datacontext=datacontext,
                              message=message, post=post, type=_type,
                              operation="edit", company=company,
                              attributes=attributes,
@@ -4354,7 +4354,6 @@ def add_partbuildingtype(request):
         post = ''
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              company=company,
                              post=post, sidebar=request.session['sidebar']
         )
@@ -4495,7 +4494,6 @@ def edit_partbuildingtype(request, id_pbtype):
                         "&ntype=n_success")
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              company=company,
                              post=post,
                              operation="edit",
@@ -6174,7 +6172,6 @@ def add_ie(request):
         template_vars["datacontext"] = datacontext
 
     template_vars["sidebar"] = request.session['sidebar']
-    template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
     permission = "Alta de equipos industriales"
     if has_permission(request.user, CREATE,
@@ -6228,7 +6225,6 @@ def edit_ie(request, id_ie):
         template_vars["datacontext"] = datacontext
 
     template_vars["sidebar"] = request.session['sidebar']
-    template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
     template_vars["operation"] = "edit"
     industrial_eq = get_object_or_404(IndustrialEquipment, pk=int(id_ie))
@@ -6513,7 +6509,6 @@ def view_ie(request):
         template_vars["datacontext"] = datacontext
 
     template_vars["sidebar"] = request.session['sidebar']
-    template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
 
     if has_permission(request.user, VIEW,
@@ -7438,7 +7433,7 @@ def view_cutdates(request):
 
         paginator = Paginator(contenedorMonthly, 12) # muestra 10 resultados por pagina
         template_vars = dict(order_billing=order_billing,
-                             datacontext=datacontext, empresa=empresa,
+                             datacontext=datacontext,
                              company=request.session['company'],
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
