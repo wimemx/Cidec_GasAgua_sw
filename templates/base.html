@@ -5,14 +5,12 @@
     <title>{% block titulo%}{% endblock %}</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <link rel="stylesheet" href="/static/css/theme.css"/>
-    <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"/>
     <link rel="stylesheet" href="/static/js/external/jqueryUniform/css/uniform.default.css" type="text/css" media="screen" charset="utf-8" />
     {% block externalcss %}{% endblock %}
 
     <script type="text/javascript" src="/static/js/external/jquery.tools.min.js"></script>
     <script type="text/javascript" src="/static/js/external/jquery.effects.core.js"></script>
     <script type="text/javascript" src="/static/js/external/jquery.effects.slide.js"></script>
-    <script type="text/javascript" src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
 
     <!-- Loading JS Files this way is not recommended! Merge them but keep their order -->
     <!-- some basic functions -->
@@ -176,8 +174,7 @@
         }
         $(document).ready(function(){
 
-            $(".settings a").attr("title","Panel de control")
-            $(".settings a").tooltip();
+            $(".settings a").attr("title","Panel de control").tooltip({effect: 'slide'}).dynamic({ bottom: { direction: 'down', bounce: true } });
 
             $("#main_menu").find(".alarmas").live("click", function(){
                if ($("#notif_container").is(":visible")){

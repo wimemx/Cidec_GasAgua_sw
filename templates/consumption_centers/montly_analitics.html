@@ -42,9 +42,9 @@
                         div += "<span class='consumo'>-</span>";
                         div += "</div>";
                     }else{
-                        div += "<span class='demanda_max "+class_d+"' id='demand_"+i+"'>"+ dato.max_demand +" kW</span>";
+                        div += "<span class='demanda_max "+class_d+"' id='demand_"+i+"'>"+ addCommas(dato.max_demand) +" kW</span>";
                         div += "<span class='title_inner'>&nbsp;</span>";
-                        div += "<span class='consumo "+class_k+"' id='cons_"+i+"'>"+ dato.KWH_total +" kWh</span>";
+                        div += "<span class='consumo "+class_k+"' id='cons_"+i+"'>"+ addCommas(dato.KWH_total) +" kWh</span>";
                         div += "</div>";
 
                         var mes = parseInt(dato.fecha.split("-")[1], 10);
@@ -123,7 +123,7 @@
 
                 var texto_emit = '-';
                 if(data[0].emisiones != undefined){
-                    texto_emit = String(parseInt(data[0].emisiones)) + " TON";
+                    texto_emit = addCommas(data[0].emisiones.toFixed(2)) + " TON";
                 }
                 $("#pp_total").text(texto_emit);
 
@@ -370,7 +370,7 @@
                 <li>Calidad de Energía</li>
                 <li>Emisiones de CO2</li>
             </ul>
-            <div style='width:100%;overflow:hidden;'>
+            <div style='width:100%;overflow:hidden;' id="monthly_container">
                 <div class="icon_sumary consumo_t">
                     <span id="cons_total">
                         -
@@ -416,6 +416,10 @@
             <div id="week_demand">
                 Demanda
             </div>
+            <div id="week_s">
+                Semanal
+            </div>
+
             <div id="lateral">
 
             </div>

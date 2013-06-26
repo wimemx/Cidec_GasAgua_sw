@@ -208,7 +208,7 @@ table.datepickerViewYears td a span{
     font-size: 0px !important;
 }
 .datepicker .demanda_max, .datepicker .consumo{
-    font-size: 12px !important;
+    font-size: 11px !important;
     font-weight: 700;
     line-height: 25px;
 }
@@ -470,6 +470,11 @@ h3.titulo_reporte{
     font-weight: 700;
 }
 /*-------TOP-------*/
+#monthly_container{
+    height: 50px;
+    width: 100%;
+    overflow: hidden;
+}
 #month_sumary{
     display: block;
     margin: 30px auto 0 auto;
@@ -498,16 +503,14 @@ h3.titulo_reporte{
     float: left;
     height: 100%;
     text-align: left;
-    margin: 0;
-    width: 20%;
-    padding-left: 32px;
+    width: 23%;
+    margin-left: 12px;
     text-indent: 5px;
 }
+
 .month_totals{
     float: left;
     width: 209px;
-    position: relative;
-    top: -50px;
 }
 .month_totals, .icon_sumary{
     height: 100px;
@@ -536,7 +539,7 @@ h3.titulo_reporte{
     padding-left: 30px;
 }
 #cons_total, #dem_total, #emit_total, #pp_total{
-    font-size: 22px !important;
+    font-size: 17px !important;
     font-weight: 300 !important;
     height: 55px;
     line-height: 55px;
@@ -589,4 +592,3 @@ h3.titulo_reporte{
 .datepickerContainer table table{
     width:597px !important;
 }
-#pp_total{font-size: 19px !important;}

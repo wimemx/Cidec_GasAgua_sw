@@ -13,7 +13,7 @@
     }
     var get = getUrlVars();
     if(get['cat']!=undefined){
-        $(".element_row").prepend("<div class='element'><a onclick='goBack();' href='/panel_de_control'><img src='/static/css/images/imgs_icns/volver50.png' alt='Volver'/>Volver</a></div>")
+        $(".element_row").prepend("<div class='element' style='background: url(/static/css/images/imgs_icns/volver50.png) no-repeat top center;'><a onclick='goBack();' href='/panel_de_control'>Volver</a></div>")
     }
     if(get['cat']=='1'){
 
@@ -70,10 +70,10 @@
         {% for group in object_permission %}
 
             {% for element in group %}
-                <div class="element">
+                <div class="element" style="background: url({{ element.image }}) no-repeat top center;">
                     <a href="{{ element.access_point }}" class="caption">
-                    <img src="{{ element.image }}" alt="{{ element.caption }}"/>
-                    {{ element.caption }}</a>
+                        {{ element.caption }}
+                    </a>
                 </div>
             {% endfor %}
 
