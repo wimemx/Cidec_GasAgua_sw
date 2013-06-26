@@ -50,7 +50,7 @@
                     <span id="sel_company"></span>
                 </div>
                 <div class="fields_row g12">
-                    <label for="b_mt2" class="g3">Mt2 Construidos</label>
+                    <label for="b_mt2" class="g3">Superficie (m<sup>2</sup>)</label>
                     <input type="text" name="b_mt2" id="b_mt2" class="g8" maxlength="3"
                            value="{{ post.b_mt2 }}"
                             />
@@ -159,6 +159,12 @@
 
                     </select>
                     <span id="sel_region"></span>
+
+                </div>
+                <div class="fields_row g12">
+                    <label for="see_reg" class="g3"></label>
+                    <span id="see_reg" class="g8" style="padding: 0px"><a id="see_regions" href="#">Ver Regiones</a></span>
+
                 </div>
             </div>
             <div class="building_column">
@@ -170,13 +176,13 @@
             </div>
         </div>
         <div style="height: auto">
-        <h3 class="g12">Atributos extra</h3>
+        <h3 class="g12">Índices Energéticos</h3>
         {{post.b_attributes|safe}}
         </div>
         <div id="atributes_fields">
             <div id="fields_row g9">
                 <div class="widgetField" id="attributes_type">
-                    <span class="legend">Tipos de Atributos</span>
+                    <span class="legend">Tipos de Índices</span>
                     <a href="#">&nbsp;</a>
                     <ul id="attributes_type_list" class="ddl">
                         {% for tipo_at in tipos_atributos %}
@@ -188,7 +194,7 @@
                 </div>
 
                 <div class="widgetField" id="attributes">
-                    <span class="legend">Atributo</span>
+                    <span class="legend">Índices Energéticos</span>
                     <a href="#">&nbsp;</a>
                     <ul id="attribute_list" class="ddl">
                         <li></li>

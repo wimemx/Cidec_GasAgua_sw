@@ -1643,6 +1643,9 @@ def region_municipalities(request, id_region, id_state):
     return render_to_response("location/region_municipalities.html",
                               template_vars_template)
 
+def regions_list(request):
+    return render_to_response("location/regions_list.html")
+
 
 @login_required(login_url='/')
 def get_select_municipalities(request, id_state, id_region):

@@ -458,16 +458,21 @@ def cfe_calculations(request):
         if cfe_historico:
             #Tarifa HM
             if tipo_tarifa.pk == 1:
-                resultado_mensual["kw_base"] = cfe_historico[0].KW_base
-                resultado_mensual["kw_intermedio"] = \
+                resultado_mensual["kw_base"] = \
+                    cfe_historico[0].KW_base
+                resultado_mensual["kw_intermedio"] =\
                     cfe_historico[0].KW_intermedio
-                resultado_mensual["kw_punta"] = cfe_historico[0].KW_punta
+                resultado_mensual["kw_punta"] = \
+                    cfe_historico[0].KW_punta
 
-                resultado_mensual["kwh_base"] = cfe_historico[0].KWH_base
-                resultado_mensual["kwh_intermedio"] = \
+                resultado_mensual["kwh_base"] = \
+                    cfe_historico[0].KWH_base
+                resultado_mensual["kwh_intermedio"] =\
                     cfe_historico[0].KWH_intermedio
-                resultado_mensual["kwh_punta"] = cfe_historico[0].KWH_punta
-                resultado_mensual["kwh_totales"] = cfe_historico[0].KWH_total
+                resultado_mensual["kwh_punta"] = \
+                    cfe_historico[0].KWH_punta
+                resultado_mensual["kwh_totales"] = \
+                    cfe_historico[0].KWH_total
 
                 fecha_ini = cfe_historico[0].monthly_cut_dates.date_init.\
                     astimezone(timezone.get_current_timezone()).\
@@ -480,13 +485,14 @@ def cfe_calculations(request):
 
                 resultado_mensual['periodo'] = periodo
                 resultado_mensual['corte'] = cfe_historico[0].monthly_cut_dates
-                resultado_mensual['demanda_facturable'] = \
+                resultado_mensual['demanda_facturable'] =\
                     cfe_historico[0].billable_demand
                 resultado_mensual['factor_potencia'] = \
                     cfe_historico[0].power_factor
                 resultado_mensual['factor_carga'] = \
                     cfe_historico[0].charge_factor
-                resultado_mensual['kvarh_totales'] = cfe_historico[0].KVARH
+                resultado_mensual['kvarh_totales'] = \
+                    cfe_historico[0].KVARH
                 resultado_mensual['tarifa_kwhb'] = \
                     cfe_historico[0].KWH_base_rate
                 resultado_mensual['tarifa_kwhi'] = \
@@ -495,15 +501,18 @@ def cfe_calculations(request):
                     cfe_historico[0].KWH_punta_rate
                 resultado_mensual['tarifa_df'] = \
                     cfe_historico[0].billable_demand_rate
-                resultado_mensual['costo_energia'] = \
+                resultado_mensual['costo_energia'] =\
                     cfe_historico[0].energy_cost
-                resultado_mensual['costo_dfacturable'] = \
+                resultado_mensual['costo_dfacturable'] =\
                     cfe_historico[0].billable_demand_cost
-                resultado_mensual['costo_fpotencia'] = \
+                resultado_mensual['costo_fpotencia'] =\
                     cfe_historico[0].power_factor_bonification
-                resultado_mensual['subtotal'] = cfe_historico[0].subtotal
-                resultado_mensual['iva'] = cfe_historico[0].iva
-                resultado_mensual['total'] = cfe_historico[0].total
+                resultado_mensual['subtotal'] = \
+                    cfe_historico[0].subtotal
+                resultado_mensual['iva'] = \
+                    cfe_historico[0].iva
+                resultado_mensual['total'] = \
+                    cfe_historico[0].total
                 resultado_mensual['status'] = 'OK'
 
             #Tarifa Dac
@@ -1313,7 +1322,7 @@ def ver_b_attr(request, id_b_attr):
         _type = ''
         attributes = BuildingAttributesType.objects.all().order_by(
             "building_attributes_type_sequence")
-        template_vars = dict(datacontext=datacontext, empresa=empresa,
+        template_vars = dict(datacontext=datacontext,
                              message=message, company=company, post=post,
                              type=_type, operation="edit",
                              attributes=attributes,
@@ -7883,16 +7892,14 @@ def obtenerHistorico_r(actual_month_arr):
                 dict_periodo["factor_potencia"] = actual_month_arr['factor_potencia']
                 dict_periodo["factor_carga"] = actual_month_arr['factor_carga']
                 if actual_month_arr['kwh_totales']:
-                    dict_periodo["costo_promedio"] = actual_month_arr['subtotal'
-                                                 ] / actual_month_arr['kwh_totales']
+                    dict_periodo["costo_promedio"] = actual_month_arr['subtotal'] / actual_month_arr['kwh_totales']
                 else:
                     dict_periodo["costo_promedio"] = 0
 
             elif building.electric_rate_id == 2:
                 dict_periodo["total_kwh"] = actual_month_arr['kwh_totales']
                 if actual_month_arr['kwh_totales']:
-                    dict_periodo["costo_promedio"] = actual_month_arr['costo_energia'
-                                                 ]/actual_month_arr['kwh_totales']
+                    dict_periodo["costo_promedio"] = actual_month_arr['costo_energia']/ actual_month_arr['kwh_totales']
                 else:
                     dict_periodo["costo_promedio"] = 0
 
@@ -7902,8 +7909,7 @@ def obtenerHistorico_r(actual_month_arr):
                 dict_periodo["factor_potencia"] = actual_month_arr['factor_potencia']
                 dict_periodo["factor_carga"] = actual_month_arr['factor_carga']
                 if actual_month_arr['kwh_totales']:
-                    dict_periodo["costo_promedio"] = actual_month_arr['subtotal'
-                                                 ]/actual_month_arr['kwh_totales']
+                    dict_periodo["costo_promedio"] = actual_month_arr['subtotal']/ actual_month_arr['kwh_totales']
                 else:
                     dict_periodo["costo_promedio"] = 0
 

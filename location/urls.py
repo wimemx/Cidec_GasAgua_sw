@@ -28,6 +28,7 @@ urlpatterns = patterns('location.views',
                            'edit_region'),
                        url(r'^region/(?P<id_region>\d+)/', 'see_region'),
                        url(r'^ver_regiones/', 'view_regions'),
+                       url(r'^cfe_regiones/', 'regions_list'),
                        url(
                            r'^municipios_estado/(?P<id_region>\d+)/'
                            r'(?P<id_state>\d+)',
