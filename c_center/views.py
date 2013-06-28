@@ -72,22 +72,22 @@ UPDATE = Operation.objects.get(operation_name="Modificar")
 
 GRAPHS_ENERGY = [ob.object for ob in GroupObject.objects.filter(
     group__group_name="Energía")]
-GRAPHS_I = [ob.object for ob in GroupObject.objects.filter(
-    group__group_name="Corriente")]
-GRAPHS_V = [ob.object for ob in GroupObject.objects.filter(
-    group__group_name="Voltaje")]
-GRAPHS_PF = [ob.object for ob in GroupObject.objects.filter(
-    group__group_name="Perfil de carga")]
-GRAPHS_F1 = [ob.object for ob in GroupObject.objects.filter(
-    group__group_name="Fase 1")]
-GRAPHS_F2 = [ob.object for ob in GroupObject.objects.filter(
-    group__group_name="Fase 2")]
-GRAPHS_F3 = [ob.object for ob in GroupObject.objects.filter(
-    group__group_name="Fase 3")]
-GRAPHS_CACUM = [ob.object for ob in GroupObject.objects.filter(
-    group__group_name="Consumo Acumulado")]
-GRAPHS_CONS = [ob.object for ob in GroupObject.objects.filter(
-    group__group_name="Consumo")]
+GRAPHS_I = GroupObject.objects.filter(
+    group__group_name="Corriente").values_list("object__pk", flat=True)
+GRAPHS_V = GroupObject.objects.filter(
+    group__group_name="Voltaje").values_list("object__pk", flat=True)
+GRAPHS_PF = GroupObject.objects.filter(
+    group__group_name="Perfil de carga").values_list("object__pk", flat=True)
+GRAPHS_F1 = GroupObject.objects.filter(
+    group__group_name="Fase 1").values_list("object__pk", flat=True)
+GRAPHS_F2 = GroupObject.objects.filter(
+    group__group_name="Fase 2").values_list("object__pk", flat=True)
+GRAPHS_F3 = GroupObject.objects.filter(
+    group__group_name="Fase 3").values_list("object__pk", flat=True)
+GRAPHS_CACUM = GroupObject.objects.filter(
+    group__group_name="Consumo Acumulado").values_list("object__pk", flat=True)
+GRAPHS_CONS = GroupObject.objects.filter(
+    group__group_name="Consumo").values_list("object__pk", flat=True)
 GRAPHS = dict(energia=GRAPHS_ENERGY, corriente=GRAPHS_I, voltaje=GRAPHS_V,
               perfil_carga=GRAPHS_PF, perfil_carga_mes=GRAPHS_PF,
               fase1=GRAPHS_F1, fase2=GRAPHS_F2,

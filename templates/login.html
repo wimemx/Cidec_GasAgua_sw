@@ -20,6 +20,10 @@
         }
         $(document).ready(function(){
             $("input").uniform();
+            $('#password').attr("autocomplete", "off");
+            setTimeout('$("#password").val("");', 150);
+            $('#username').attr("autocomplete", "off");
+            setTimeout('$("#username").val("");', 150);
         });
     </script>
 </head>
@@ -34,11 +38,11 @@
         {% csrf_token %}
         <label class="input">
             <span>Nombre de Usuario</span>
-            <input type="text" name="username" id="username" />
+            <input type="text" name="username" id="username" autocomplete="off"/>
         </label>
         <label class="input">
             <span>Contrase&ntilde;a</span>
-            <input type="password" name="password" id="password"/>
+            <input type="password" name="password" id="password" autocomplete="off"/>
         </label>
         <div class="vacio">&nbsp;</div>
         <a href="/forgot_password">&iquest;Olvidaste la contrase&ntilde;a?</a>

@@ -29,7 +29,7 @@ DATABASES = {
         'HOST': 'audiwime.wimelabs.com',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     },
-    'default': {
+    'production': {
         'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
         'NAME': 'satest_cidec',                      # Or path to database file if using sqlite3.
         'USER': 'satest_cidec',                      # Not used with sqlite3.
@@ -37,7 +37,7 @@ DATABASES = {
         'HOST': 'auditem.mx',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     },
-    'production': {
+    'default': {
         'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
         'NAME': 'satest_cidec',                      # Or path to database file if using sqlite3.
         'USER': 'root',                      # Not used with sqlite3.
@@ -130,7 +130,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'cidec_sw.middleware.timezones.TimezoneMiddleware',
-    #'debug_toolbar.middleware.DebugToolbarMiddleware'
+    'debug_toolbar.middleware.DebugToolbarMiddleware'
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
@@ -167,7 +167,7 @@ INSTALLED_APPS = (
     'plupload',
     'djcelery',
     'tareas',
-    #'debug_toolbar'
+    'debug_toolbar'
 )
 
 

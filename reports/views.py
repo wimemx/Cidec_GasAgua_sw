@@ -164,7 +164,7 @@ def get_column_units_list(
     return column_units_list
 
 
-def get_data_cluster_consumed_normalized (
+def get_data_cluster_consumed_normalized(
         consumer_unit_id,
         datetime_from,
         datetime_to,
@@ -210,8 +210,6 @@ def get_data_cluster_consumed_normalized (
 
         return None
 
-
-
     try:
         consumer_unit =\
             c_center.models.ConsumerUnit.objects.get(pk=consumer_unit_id)
@@ -221,8 +219,6 @@ def get_data_cluster_consumed_normalized (
             reports.globals.SystemError.GET_DATA_CLUSTER_CONSUMED_JSON_ERROR)
 
         return None
-
-
 
     #
     # Get the data cluster.
@@ -810,6 +806,10 @@ def normalize_data_clusters_list(
 # Data Retrieve Scripts
 #
 ################################################################################
+DATETIME_FROM_UTC = None
+DATETIME_TO_UTC = None
+INSTANTS = None
+
 
 def get_consumer_unit_electrical_parameter_data_clustered(
         consumer_unit,
@@ -890,12 +890,17 @@ def get_consumer_unit_electrical_parameter_data_clustered(
             GET_CONSUMER_UNIT_ELECTRICAL_PARAMETER_DATA_CLUSTERED_ERROR)
 
         return None
-
-    instants =\
-        data_warehouse_extended.views.get_instants_list(
-            datetime_from_utc,
-            datetime_to_utc,
-            instant_delta)
+    if DATETIME_FROM_UTC is None and DATETIME_TO_UTC is None:
+        instants = set_instants(datetime_from_utc,
+                                datetime_to_utc,
+                                instant_delta)
+    elif datetime_from_utc == DATETIME_FROM_UTC and \
+            datetime_to_utc == DATETIME_TO_UTC:
+        instants = INSTANTS
+    else:
+        instants = set_instants(datetime_from_utc,
+                                datetime_to_utc,
+                                instant_delta)
 
     instants_dictionary = dict()
     instant_dictionary_generic_value = {
@@ -1005,6 +1010,18 @@ def get_consumer_unit_electrical_parameter_data_clustered(
     return consumer_units_data_dictionaries_list
 
 
+def set_instants(datetime_from_utc, datetime_to_utc, instant_delta):
+    global DATETIME_TO_UTC
+    DATETIME_TO_UTC = datetime_to_utc
+    global DATETIME_FROM_UTC
+    DATETIME_FROM_UTC = datetime_from_utc
+    global INSTANTS
+    INSTANTS = data_warehouse_extended.views.get_instants_list(
+        datetime_from_utc,
+        datetime_to_utc,
+        instant_delta)
+    instants = INSTANTS
+    return instants
 
 ################################################################################
 #
@@ -1372,6 +1389,7 @@ def render_report_powerprofile_by_month(
     while request.GET.has_key(parameter_get_key):
         electrical_parameter_name_get_key =\
             "electrical-parameter-name%02d" % parameter_counter
+
         if virtual == "Medidor Virtual":
             if request.GET[electrical_parameter_name_get_key] == "PF":
                 parameter_counter += 1
@@ -1393,8 +1411,6 @@ def render_report_powerprofile_by_month(
              datetime_from,
              datetime_to,
              electrical_parameter_name)
-
-        print request_data_list_item
 
         request_data_list.append(request_data_list_item)
         parameter_counter += 1
@@ -1508,48 +1524,6 @@ def render_report_powerprofile_by_month(
                template_context)
 
 
-def rates_for_data_cluster(data_cluster_consumed, region):
-
-    data_cluster_cons = []
-    for data_cluster in data_cluster_consumed:
-
-        date_time = datetime.datetime.fromtimestamp(data_cluster["datetime"])
-        periodo = c_center.calculations.obtenerTipoPeriodoObj(
-            date_time, region).period_type
-        if periodo == "base":
-            arr_base = data_cluster
-            arr_int = dict(certainty=False,
-                           value=None,
-                           datetime=data_cluster["datetime"])
-            arr_punt = dict(certainty=False,
-                            value=None,
-                            datetime=data_cluster["datetime"])
-        elif periodo == "intermedio":
-            arr_base = dict(certainty=False,
-                            value=None,
-                            datetime=data_cluster["datetime"])
-            arr_int = data_cluster
-            arr_punt = dict(certainty=False,
-                            value=None,
-                            datetime=data_cluster["datetime"])
-
-        else:
-            #periodo == "punta"
-            arr_base = dict(certainty=False,
-                            value=None,
-                            datetime=data_cluster["datetime"])
-            arr_int = dict(certainty=False,
-                           value=None,
-                           datetime=data_cluster["datetime"])
-            arr_punt = data_cluster
-        data_cluster_cons.append([arr_base, arr_int, arr_punt])
-
-    return data_cluster_cons
-
-
-
-
-
 @login_required(login_url="/")
 def render_report_consumed_by_month_new(
         request
@@ -1579,7 +1553,7 @@ def render_report_consumed_by_month_new(
     #
     granularity_seconds = 300
     data_cluster_consumed =\
-        get_data_cluster_consumed_normalized (
+        get_data_cluster_consumed_normalized(
             consumer_unit_id,
             first_week_start_datetime,
             last_week_end_datetime,
@@ -1822,7 +1796,7 @@ def rates_for_data_cluster(data_cluster_consumed, region):
 
         date_time = datetime.datetime.fromtimestamp(data_cluster["datetime"])
         periodo = c_center.calculations.obtenerTipoPeriodoObj(
-            date_time, region).period_type
+            date_time, region)['period_type']
 
         if periodo == "base":
             arr_base = data_cluster

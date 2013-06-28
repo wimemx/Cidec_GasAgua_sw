@@ -1019,12 +1019,14 @@ def graphs_permission(user, consumer_unit, graphs_type):
     graphs = []
     for _object in graphs_type:
         if user.is_superuser:
-            graphs.append(_object)
+            graph_obj = Object.objects.get(pk=_object)
+            graphs.append(graph_obj)
         else:
             permission = PermissionAsigment.objects.filter(
-                object=_object, role__in=ur, operation=operation).count()
+                object__pk=_object, role__in=ur, operation=operation).count()
             if permission:
-                graphs.append(_object)
+                graph_obj = Object.objects.get(pk=_object)
+                graphs.append(graph_obj)
     if graphs:
         return graphs
     else:
@@ -1464,16 +1466,18 @@ def getDailyReports(consumer, month, year, days_offset=None):
     for day in month_days:
         if days_offset:
             day = day + datetime.timedelta(days=days_offset)
-        try:
-            ddata_obj = DailyData.objects.get(consumer_unit=consumer,
-                                              data_day=day)
-        except DailyData.DoesNotExist:
+
+        ddata_obj = DailyData.objects.filter(
+            consumer_unit=consumer,
+            data_day=day).values("max_demand", "KWH_total")[:1]
+        if not ddata_obj:
             dailyreport_arr.append(dict(fecha=str(day),
                                         empty="true"))
         else:
+            ddata_obj = ddata_obj[0]
             data = dict(fecha=str(day),
-                        max_demand=ddata_obj.max_demand,
-                        KWH_total=ddata_obj.KWH_total,
+                        max_demand=ddata_obj['max_demand'],
+                        KWH_total=ddata_obj['KWH_total'],
                         empty="false"
             )
             dailyreport_arr.append(data)
@@ -1898,11 +1902,11 @@ def tarifaHM_2(building, s_date, e_date, month, year):
                     astimezone(timezone.get_current_timezone())
 
                     periodo_mv = obtenerTipoPeriodoObj(kw_date, region)
-                    if periodo_mv.period_type == 'base':
+                    if periodo_mv['period_type'] == 'base':
                         arr_kw_base.append(vcu['value'])
-                    elif periodo_mv.period_type == 'intermedio':
+                    elif periodo_mv['period_type'] == 'intermedio':
                         arr_kw_int.append(vcu['value'])
-                    elif periodo_mv.period_type == 'punta':
+                    elif periodo_mv['period_type'] == 'punta':
                         arr_kw_punta.append(vcu['value'])
 
             diccionario_final_cfe["kw_base"] =\
@@ -2122,11 +2126,11 @@ def tarifaHM_2__(building, s_date, e_date, month, year):
                 astimezone(timezone.get_current_timezone())
 
                 periodo_mv = obtenerTipoPeriodoObj(kw_date, region)
-                if periodo_mv.period_type == 'base':
+                if periodo_mv['period_type'] == 'base':
                     arr_kw_base.append(vcu['value'])
-                elif periodo_mv.period_type == 'intermedio':
+                elif periodo_mv['period_type'] == 'intermedio':
                     arr_kw_int.append(vcu['value'])
-                elif periodo_mv.period_type == 'punta':
+                elif periodo_mv['period_type'] == 'punta':
                     arr_kw_punta.append(vcu['value'])
 
             diccionario_final_cfe["kw_base"] = \
