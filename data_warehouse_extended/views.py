@@ -534,8 +534,11 @@ def process_consumer_unit_electrical_parameter_instant_group(
         except data_warehouse_extended.models.\
                 ConsumerUnitInstantElectricalData.DoesNotExist:
             if curve_fit_function_evaluation is not None:
-                curve_fit_function_evaluation =\
-                    decimal.Decimal(str(curve_fit_function_evaluation))
+                try:
+                    curve_fit_function_evaluation =\
+                        decimal.Decimal(str(curve_fit_function_evaluation))
+                except decimal.InvalidOperation:
+                    curve_fit_function_evaluation = None
             cursor = connection.cursor()
             sql = "INSERT INTO " \
                   "data_warehouse_extended_consumerunitinstantelectricaldata " \

@@ -70,8 +70,8 @@ CREATE = Operation.objects.get(operation_name="Crear")
 DELETE = Operation.objects.get(operation_name="Eliminar")
 UPDATE = Operation.objects.get(operation_name="Modificar")
 
-GRAPHS_ENERGY = [ob.object for ob in GroupObject.objects.filter(
-    group__group_name="Energía")]
+GRAPHS_ENERGY = GroupObject.objects.filter(
+    group__group_name="Energía").values_list("object__pk", flat=True)
 GRAPHS_I = GroupObject.objects.filter(
     group__group_name="Corriente").values_list("object__pk", flat=True)
 GRAPHS_V = GroupObject.objects.filter(
