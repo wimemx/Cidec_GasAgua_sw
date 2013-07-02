@@ -2802,7 +2802,7 @@ def c_functions_get_consumer_unit_electrical_parameter_data_clustered(
     }
 
     for instant in instants:
-        key_current = instant.instant_datetime.strftime(
+        key_current = instant['instant_datetime'].strftime(
             "%Y/%m/%d-%H:%M:%S")
         instants_dictionary[key_current] =\
         instant_dictionary_generic_value.copy()
@@ -2870,7 +2870,7 @@ def c_functions_get_consumer_unit_electrical_parameter_data_clustered(
     #
     consumer_units_data_dictionaries_list = []
     for instant in instants:
-        key_current = instant.instant_datetime.strftime(
+        key_current = instant['instant_datetime'].strftime(
             "%Y/%m/%d-%H:%M:%S")
 
         try:
@@ -2883,7 +2883,7 @@ def c_functions_get_consumer_unit_electrical_parameter_data_clustered(
 
         datetime_localtime_timetuple =\
         timezone.localtime(
-            instant.instant_datetime
+            instant['instant_datetime']
         ).timetuple()
 
         data_dictionary_current['datetime'] =\
