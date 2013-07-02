@@ -3526,3 +3526,639 @@ def parse_file(_file):
     dates_arr.sort()
     consumer_units = variety.unique_from_array(consumer_units)
     return dates_arr[0], dates_arr[-1], consumer_units
+
+
+def createElectricPeriods():
+
+    l_v = Groupdays.objects.get(pk=4)
+    sab = Groupdays.objects.get(pk=5)
+    dom_f = Groupdays.objects.get(pk=6)
+
+    electric_rate = ElectricRates.objects.get(pk=1)
+    region_bc = Region.objects.get(pk=2)
+    #Se dan de alta los periodos para Baja California
+
+    intervalos_bc_verano = [31,33,35,37,39,41,43]
+
+    """
+    (1,2,1,4,'00:00:00','14:00:00','intermedio'),
+    (1,2,1,4,'18:00:00','23:59:59','intermedio'),
+    (1,2,1,4,'14:00:00','18:00:00','punta'),
+
+    (1,2,1,5,'00:00:00','23:59:59','intermedio'),
+
+    (1,2,1,6,'00:00:00','23:59:59','intermedio'),
+    """
+
+    for i_bc_v in intervalos_bc_verano:
+
+        dint = DateIntervals.objects.get(pk=i_bc_v)
+
+        e_period1 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bc,
+            date_interval = dint,
+            groupdays = l_v,
+            time_init = datetime.time(0,0,0),
+            time_end = datetime.time(14,0,0),
+            period_type = 'intermedio'
+        )
+        e_period1.save()
+
+        e_period2 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bc,
+            date_interval = dint,
+            groupdays = l_v,
+            time_init = datetime.time(18,0,0),
+            time_end = datetime.time(23,59,59),
+            period_type = 'intermedio'
+        )
+        e_period2.save()
+
+        e_period3 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bc,
+            date_interval = dint,
+            groupdays = l_v,
+            time_init = datetime.time(14,0,0),
+            time_end = datetime.time(18,0,0),
+            period_type = 'punta'
+        )
+        e_period3.save()
+
+        e_period4 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bc,
+            date_interval = dint,
+            groupdays = sab,
+            time_init = datetime.time(0,0,0),
+            time_end = datetime.time(23,59,59),
+            period_type = 'intermedio'
+        )
+        e_period4.save()
+
+        e_period5 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bc,
+            date_interval = dint,
+            groupdays = dom_f,
+            time_init = datetime.time(0,0,0),
+            time_end = datetime.time(23,59,59),
+            period_type = 'intermedio'
+        )
+        e_period5.save()
+
+    intervalos_bc_invierno = [32,34,36,38,40,42,44]
+
+    """
+    (1,2,2,4,'00:00:00','17:00:00','base'),
+    (1,2,2,4,'22:00:00','23:59:59','base'),
+    (1,2,2,4,'17:00:00','22:00:00','intermedio'),
+
+    (1,2,2,5,'00:00:00','18:00:00','base'),
+    (1,2,2,5,'21:00:00','23:59:59','base'),
+    (1,2,2,5,'18:00:00','21:00:00','intermedio'),
+
+    (1,2,2,6,'00:00:00','23:59:59','base'),
+    """
+
+    for i_bc_i in intervalos_bc_invierno:
+
+        dint = DateIntervals.objects.get(pk=i_bc_i)
+
+        e_period_bci_01 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bc,
+            date_interval = dint,
+            groupdays = l_v,
+            time_init = datetime.time(0,0,0),
+            time_end = datetime.time(17,0,0),
+            period_type = 'base'
+        )
+        e_period_bci_01.save()
+
+        e_period_bci_02 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bc,
+            date_interval = dint,
+            groupdays = l_v,
+            time_init = datetime.time(22,0,0),
+            time_end = datetime.time(23,59,59),
+            period_type = 'base'
+        )
+        e_period_bci_02.save()
+
+        e_period_bci_03 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bc,
+            date_interval = dint,
+            groupdays = l_v,
+            time_init = datetime.time(17,0,0),
+            time_end = datetime.time(12,0,0),
+            period_type = 'intermedio'
+        )
+        e_period_bci_03.save()
+
+        e_period_bci_04 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bc,
+            date_interval = dint,
+            groupdays = sab,
+            time_init = datetime.time(0,0,0),
+            time_end = datetime.time(18,0,0),
+            period_type = 'base'
+        )
+        e_period_bci_04.save()
+
+        e_period_bci_05 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bc,
+            date_interval = dint,
+            groupdays = sab,
+            time_init = datetime.time(21,0,0),
+            time_end = datetime.time(23,59,59),
+            period_type = 'base'
+        )
+        e_period_bci_05.save()
+
+        e_period_bci_06 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bc,
+            date_interval = dint,
+            groupdays = sab,
+            time_init = datetime.time(18,0,0),
+            time_end = datetime.time(21,0,0),
+            period_type = 'intermedio'
+        )
+        e_period_bci_06.save()
+
+        e_period_bci_07 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bc,
+            date_interval = dint,
+            groupdays = dom_f,
+            time_init = datetime.time(0,0,0),
+            time_end = datetime.time(23,59,59),
+            period_type = 'base'
+        )
+        e_period_bci_07.save()
+
+    """
+    #Baja California Sur
+    """
+
+    region_bcs = Region.objects.get(pk=1)
+    intervalos_bcs_verano = [45,47,49,51,53,55,57]
+
+    for i_bcs_v in intervalos_bcs_verano:
+
+        dint = DateIntervals.objects.get(pk=i_bcs_v)
+
+        #(15,1,1,3,4,'00:00:00','12:00:00','intermedio'),
+        e_bcsv_01 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bcs,
+            date_interval = dint,
+            groupdays = l_v,
+            time_init = datetime.time(0,0,0),
+            time_end = datetime.time(12,0,0),
+            period_type = 'intermedio'
+        )
+        e_bcsv_01.save()
+
+
+        #(16,1,1,3,4,'22:00:00','23:59:59','intermedio'),
+        e_bcsv_02 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bcs,
+            date_interval = dint,
+            groupdays = l_v,
+            time_init = datetime.time(22,0,0),
+            time_end = datetime.time(23,59,59),
+            period_type = 'intermedio'
+        )
+        e_bcsv_02.save()
+
+        #(17,1,1,3,4,'12:00:00','22:00:00','punta'),
+        e_bcsv_03 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bcs,
+            date_interval = dint,
+            groupdays = l_v,
+            time_init = datetime.time(12,0,0),
+            time_end = datetime.time(22,0,0),
+            period_type = 'punta'
+        )
+        e_bcsv_03.save()
+
+        #(18,1,1,3,5,'00:00:00','19:00:00','intermedio'),
+        e_bcsv_04 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bcs,
+            date_interval = dint,
+            groupdays = sab,
+            time_init = datetime.time(0,0,0),
+            time_end = datetime.time(19,0,0),
+            period_type = 'intermedio'
+        )
+        e_bcsv_04.save()
+
+        #(19,1,1,3,5,'22:00:00','23:59:59','intermedio'),
+        e_bcsv_05 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bcs,
+            date_interval = dint,
+            groupdays = sab,
+            time_init = datetime.time(22,0,0),
+            time_end = datetime.time(23,59,59),
+            period_type = 'intermedio'
+        )
+        e_bcsv_05.save()
+
+        #(20,1,1,3,5,'19:00:00','22:00:00','punta'),
+        e_bcsv_06 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bcs,
+            date_interval = dint,
+            groupdays = sab,
+            time_init = datetime.time(19,0,0),
+            time_end = datetime.time(22,00,00),
+            period_type = 'punta'
+        )
+        e_bcsv_06.save()
+
+
+        #(21,1,1,3,6,'00:00:00','23:59:59','intermedio'),
+        e_bcsv_07 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bcs,
+            date_interval = dint,
+            groupdays = dom_f,
+            time_init = datetime.time(0,0,0),
+            time_end = datetime.time(23,59,59),
+            period_type = 'intermedio'
+        )
+        e_bcsv_07.save()
+
+
+    intervalos_bcs_invierno = [46,48,50,52,54,56,58]
+    for i_bcs_i in intervalos_bcs_invierno:
+
+        dint = DateIntervals.objects.get(pk=i_bcs_i)
+
+        #(22,1,1,4,4,'00:00:00','18:00:00','base'),
+        e_bcsi_01 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bcs,
+            date_interval = dint,
+            groupdays = l_v,
+            time_init = datetime.time(0,0,0),
+            time_end = datetime.time(18,0,0),
+            period_type = 'base'
+        )
+        e_bcsi_01.save()
+
+        #(23,1,1,4,4,'22:00:00','23:59:59','base'),
+        e_bcsi_02 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bcs,
+            date_interval = dint,
+            groupdays = l_v,
+            time_init = datetime.time(22,0,0),
+            time_end = datetime.time(23,59,59),
+            period_type = 'base'
+        )
+        e_bcsi_02.save()
+
+        #(24,1,1,4,4,'18:00:00','22:00:00','intermedio'),
+        e_bcsi_03 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bcs,
+            date_interval = dint,
+            groupdays = l_v,
+            time_init = datetime.time(18,0,0),
+            time_end = datetime.time(22,0,0),
+            period_type = 'intermedio'
+        )
+        e_bcsi_03.save()
+
+        #(25,1,1,4,5,'00:00:00','18:00:00','base'),
+        e_bcsi_04 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bcs,
+            date_interval = dint,
+            groupdays = sab,
+            time_init = datetime.time(0,0,0),
+            time_end = datetime.time(18,0,0),
+            period_type = 'base'
+        )
+        e_bcsi_04.save()
+
+        #(26,1,1,4,5,'21:00:00','23:59:59','base'),
+        e_bcsi_05 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bcs,
+            date_interval = dint,
+            groupdays = sab,
+            time_init = datetime.time(21,0,0),
+            time_end = datetime.time(23,59,59),
+            period_type = 'base'
+        )
+        e_bcsi_05.save()
+
+        #(27,1,1,4,5,'18:00:00','21:00:00','intermedio'),
+        e_bcsi_06 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bcs,
+            date_interval = dint,
+            groupdays = sab,
+            time_init = datetime.time(18,0,0),
+            time_end = datetime.time(21,0,0),
+            period_type = 'intermedio'
+        )
+        e_bcsi_06.save()
+
+        #(28,1,1,4,6,'00:00:00','19:00:00','base'),
+        e_bcsi_07 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bcs,
+            date_interval = dint,
+            groupdays = dom_f,
+            time_init = datetime.time(0,0,0),
+            time_end = datetime.time(19,0,0),
+            period_type = 'base'
+        )
+        e_bcsi_07.save()
+
+        #(29,1,1,4,6,'21:00:00','23:59:59','base'),
+        e_bcsi_08 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bcs,
+            date_interval = dint,
+            groupdays = dom_f,
+            time_init = datetime.time(21,0,0),
+            time_end = datetime.time(23,59,59),
+            period_type = 'base'
+        )
+        e_bcsi_08.save()
+
+        #(30,1,1,4,6,'19:00:00','21:00:00','intermedio'),
+        e_bcsi_09 = ElectricRatesPeriods(
+            electric_rate = electric_rate,
+            region = region_bcs,
+            date_interval = dint,
+            groupdays = dom_f,
+            time_init = datetime.time(19,0,0),
+            time_end = datetime.time(21,0,0),
+            period_type = 'intermedio'
+        )
+        e_bcsi_09.save()
+
+
+        """
+        Resto de las regiones
+        """
+
+        regiones_id = [3,4,5,6,7,8]
+
+        for r_id in regiones_id:
+            region_r = Region.objects.get(pk=r_id)
+
+            #Verano
+            for i_bcs_v in intervalos_bcs_verano:
+
+                dint = DateIntervals.objects.get(pk=i_bcs_v)
+
+                #(31,1,3,3,4,'00:00:00','06:00:00','base'),
+                e_resto_v_01 = ElectricRatesPeriods(
+                    electric_rate = electric_rate,
+                    region = region_r,
+                    date_interval = dint,
+                    groupdays = l_v,
+                    time_init = datetime.time(0,0,0),
+                    time_end = datetime.time(6,0,0),
+                    period_type = 'base'
+                )
+                e_resto_v_01.save()
+
+                #(32,1,3,3,4,'06:00:00','20:00:00','intermedio'),
+                e_resto_v_02 = ElectricRatesPeriods(
+                    electric_rate = electric_rate,
+                    region = region_r,
+                    date_interval = dint,
+                    groupdays = l_v,
+                    time_init = datetime.time(6,0,0),
+                    time_end = datetime.time(20,0,0),
+                    period_type = 'intermedio'
+                )
+                e_resto_v_02.save()
+
+                #(33,1,3,3,4,'22:00:00','23:59:59','intermedio'),
+                e_resto_v_03 = ElectricRatesPeriods(
+                    electric_rate = electric_rate,
+                    region = region_r,
+                    date_interval = dint,
+                    groupdays = l_v,
+                    time_init = datetime.time(22,0,0),
+                    time_end = datetime.time(23,59,59),
+                    period_type = 'intermedio'
+                )
+                e_resto_v_03.save()
+
+                #(34,1,3,3,4,'20:00:00','22:00:00','punta'),
+                e_resto_v_04 = ElectricRatesPeriods(
+                    electric_rate = electric_rate,
+                    region = region_r,
+                    date_interval = dint,
+                    groupdays = l_v,
+                    time_init = datetime.time(20,0,0),
+                    time_end = datetime.time(22,0,0),
+                    period_type = 'punta'
+                )
+                e_resto_v_04.save()
+
+                #(35,1,3,3,5,'00:00:00','07:00:00','base'),
+                e_resto_v_05 = ElectricRatesPeriods(
+                    electric_rate = electric_rate,
+                    region = region_r,
+                    date_interval = dint,
+                    groupdays = sab,
+                    time_init = datetime.time(0,0,0),
+                    time_end = datetime.time(7,0,0),
+                    period_type = 'base'
+                )
+                e_resto_v_05.save()
+
+                #(36,1,3,3,5,'07:00:00','23:59:59','intermedio'),
+                e_resto_v_06 = ElectricRatesPeriods(
+                    electric_rate = electric_rate,
+                    region = region_r,
+                    date_interval = dint,
+                    groupdays = sab,
+                    time_init = datetime.time(7,0,0),
+                    time_end = datetime.time(23,59,59),
+                    period_type = 'intermedio'
+                )
+                e_resto_v_06.save()
+
+                #(37,1,3,3,6,'00:00:00','19:00:00','base'),
+                e_resto_v_07 = ElectricRatesPeriods(
+                    electric_rate = electric_rate,
+                    region = region_r,
+                    date_interval = dint,
+                    groupdays = dom_f,
+                    time_init = datetime.time(0,0,0),
+                    time_end = datetime.time(19,0,0),
+                    period_type = 'base'
+                )
+                e_resto_v_07.save()
+
+                #(38,1,3,3,6,'19:00:00','23:59:59','intermedio'),
+                e_resto_v_08 = ElectricRatesPeriods(
+                    electric_rate = electric_rate,
+                    region = region_r,
+                    date_interval = dint,
+                    groupdays = dom_f,
+                    time_init = datetime.time(19,0,0),
+                    time_end = datetime.time(23,59, 59),
+                    period_type = 'intermedio'
+                )
+                e_resto_v_08.save()
+
+            for i_bcs_i in intervalos_bcs_invierno:
+
+                dint = DateIntervals.objects.get(pk=i_bcs_i)
+
+                #Invierno
+                #(39,1,3,4,4,'00:00:00','06:00:00','base'),
+                e_resto_i_01 = ElectricRatesPeriods(
+                    electric_rate = electric_rate,
+                    region = region_r,
+                    date_interval = dint,
+                    groupdays = l_v,
+                    time_init = datetime.time(0,0,0),
+                    time_end = datetime.time(6,0,0),
+                    period_type = 'base'
+                )
+                e_resto_i_01.save()
+
+            #(40,1,3,4,4,'06:00:00','18:00:00','intermedio'),
+                e_resto_i_02 = ElectricRatesPeriods(
+                    electric_rate = electric_rate,
+                    region = region_r,
+                    date_interval = dint,
+                    groupdays = l_v,
+                    time_init = datetime.time(6,0,0),
+                    time_end = datetime.time(18,0,0),
+                    period_type = 'intermedio'
+                )
+                e_resto_i_02.save()
+
+            #(41,1,3,4,4,'22:00:00','23:59:59','intermedio'),
+                e_resto_i_03 = ElectricRatesPeriods(
+                    electric_rate = electric_rate,
+                    region = region_r,
+                    date_interval = dint,
+                    groupdays = l_v,
+                    time_init = datetime.time(22,0,0),
+                    time_end = datetime.time(23,59, 59),
+                    period_type = 'intermedio'
+                )
+                e_resto_i_03.save()
+
+            #(42,1,3,4,4,'18:00:00','22:00:00','punta'),
+                e_resto_i_04 = ElectricRatesPeriods(
+                    electric_rate = electric_rate,
+                    region = region_r,
+                    date_interval = dint,
+                    groupdays = l_v,
+                    time_init = datetime.time(18,0,0),
+                    time_end = datetime.time(22,0,0),
+                    period_type = 'punta'
+                )
+                e_resto_i_04.save()
+
+            #(43,1,3,4,5,'00:00:00','08:00:00','base'),
+                e_resto_i_05 = ElectricRatesPeriods(
+                    electric_rate = electric_rate,
+                    region = region_r,
+                    date_interval = dint,
+                    groupdays = sab,
+                    time_init = datetime.time(0,0,0),
+                    time_end = datetime.time(8,0,0),
+                    period_type = 'base'
+                )
+                e_resto_i_05.save()
+
+            #(44,1,3,4,5,'08:00:00','19:00:00','intermedio'),
+                e_resto_i_06 = ElectricRatesPeriods(
+                    electric_rate = electric_rate,
+                    region = region_r,
+                    date_interval = dint,
+                    groupdays = sab,
+                    time_init = datetime.time(8,0,0),
+                    time_end = datetime.time(19,0,0),
+                    period_type = 'intermedio'
+                )
+                e_resto_i_06.save()
+
+            #(45,1,3,4,5,'21:00:00','23:59:59','intermedio'),
+                e_resto_i_07 = ElectricRatesPeriods(
+                    electric_rate = electric_rate,
+                    region = region_r,
+                    date_interval = dint,
+                    groupdays = sab,
+                    time_init = datetime.time(21,0,0),
+                    time_end = datetime.time(23,59,59),
+                    period_type = 'intermedio'
+                )
+                e_resto_i_07.save()
+
+            #(46,1,3,4,5,'19:00:00','21:00:00','punta'),
+                e_resto_i_08 = ElectricRatesPeriods(
+                    electric_rate = electric_rate,
+                    region = region_r,
+                    date_interval = dint,
+                    groupdays = sab,
+                    time_init = datetime.time(19,0,0),
+                    time_end = datetime.time(21,0,0),
+                    period_type = 'punta'
+                )
+                e_resto_i_08.save()
+
+            #(47,1,3,4,6,'00:00:00','18:00:00','base'),
+                e_resto_i_09 = ElectricRatesPeriods(
+                    electric_rate = electric_rate,
+                    region = region_r,
+                    date_interval = dint,
+                    groupdays = dom_f,
+                    time_init = datetime.time(0,0,0),
+                    time_end = datetime.time(18,0,0),
+                    period_type = 'base'
+                )
+                e_resto_i_09.save()
+
+            #(48,1,3,4,6,'18:00:00','23:59:59','intermedio'),
+                e_resto_i_10 = ElectricRatesPeriods(
+                    electric_rate = electric_rate,
+                    region = region_r,
+                    date_interval = dint,
+                    groupdays = dom_f,
+                    time_init = datetime.time(18,0,0),
+                    time_end = datetime.time(23,59, 59),
+                    period_type = 'intermedio'
+                )
+                e_resto_i_10.save()
+
+    print "Intervals DONE"
+
+    return True
+
+
+
+
+
+
+
+
