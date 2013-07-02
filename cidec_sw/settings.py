@@ -8,8 +8,9 @@ BROKER_USER = "cidec_user"
 BROKER_PASSWORD = "a8d32e08"
 BROKER_VHOST = 'cidec_vhost'
 
-PROJECT_PATH = os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(__file__)), os.path.pardir))
-
+PROJECT_PATH = os.path.abspath(
+    os.path.join(os.path.abspath(os.path.dirname(__file__)), os.path.pardir))
+SERVER_URL = "http://auditem.mx"
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -28,7 +29,7 @@ DATABASES = {
         'HOST': 'audiwime.wimelabs.com',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     },
-    'production': {
+    'default': {
         'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
         'NAME': 'satest_cidec',                      # Or path to database file if using sqlite3.
         'USER': 'satest_cidec',                      # Not used with sqlite3.
@@ -36,7 +37,7 @@ DATABASES = {
         'HOST': 'auditem.mx',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     },
-    'default': {
+    'local': {
         'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
         'NAME': 'satest_cidec',                      # Or path to database file if using sqlite3.
         'USER': 'root',                      # Not used with sqlite3.
@@ -45,7 +46,7 @@ DATABASES = {
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     }
 }
-
+DATABASE_ENGINE = 'django.db.backends.mysql'
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
@@ -119,6 +120,7 @@ TEMPLATE_LOADERS = (
 TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.request',
     'django.contrib.auth.context_processors.auth',
+    'cidec_sw.context_processors.extra_template_vars'
 )
 
 MIDDLEWARE_CLASSES = (
@@ -127,7 +129,8 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'cidec_sw.middleware.timezones.TimezoneMiddleware'
+    'cidec_sw.middleware.timezones.TimezoneMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware'
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
@@ -164,7 +167,16 @@ INSTALLED_APPS = (
     'plupload',
     'djcelery',
     'tareas',
+    'debug_toolbar'
 )
+
+
+def show_toolbar(request):
+    return True
+DEBUG_TOOLBAR_CONFIG = {
+    'SHOW_TOOLBAR_CALLBACK': show_toolbar,
+    'INTERCEPT_REDIRECTS': False
+}
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
@@ -241,5 +253,19 @@ LOGGING = {
 }
 
 GRAPPELLI_ADMIN_TITLE = 'CIDEC'
-ADMIN_MEDIA_PREFIX=""
+ADMIN_MEDIA_PREFIX = ""
 
+SESSION_ENGINE = 'redis_sessions.session'
+SESSION_REDIS_HOST = 'localhost'
+SESSION_REDIS_PORT = 6379
+SESSION_REDIS_DB = 0
+
+CACHES = {
+    'default': {
+        'BACKEND': 'redis_cache.RedisCache',
+        'LOCATION': 'localhost:6379',
+        'OPTIONS': {
+            'DB': 1,
+        },
+    },
+}

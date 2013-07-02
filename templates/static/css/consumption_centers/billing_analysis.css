@@ -1,5 +1,5 @@
 iframe{
-    height: 890px;
+    height: 1090px;
     background: #fff !important;
 }
 iframe body{overflow: hidden;}
@@ -13,7 +13,7 @@ iframe body{overflow: hidden;}
 }
 
 #analisis_container{
-    height: 990px;
+    height: 1090px;
 }
 
 #reporte_title h1{

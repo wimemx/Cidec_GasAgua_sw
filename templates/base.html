@@ -5,14 +5,12 @@
     <title>{% block titulo%}{% endblock %}</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <link rel="stylesheet" href="/static/css/theme.css"/>
-    <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"/>
     <link rel="stylesheet" href="/static/js/external/jqueryUniform/css/uniform.default.css" type="text/css" media="screen" charset="utf-8" />
     {% block externalcss %}{% endblock %}
 
     <script type="text/javascript" src="/static/js/external/jquery.tools.min.js"></script>
     <script type="text/javascript" src="/static/js/external/jquery.effects.core.js"></script>
     <script type="text/javascript" src="/static/js/external/jquery.effects.slide.js"></script>
-    <script type="text/javascript" src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
 
     <!-- Loading JS Files this way is not recommended! Merge them but keep their order -->
     <!-- some basic functions -->
@@ -23,11 +21,44 @@
     <script type="text/javascript" src="/static/js/external/labels.js"></script>
     <script type="text/javascript" src="/static/js/external/jqueryUniform/jquery.uniform.min.js"></script>
     <script type="text/javascript" src="/static/js/socket.io.js"></script>
-    {% block externaljs %}{% endblock %}
+</head>
+<body>
+<div class="wrapper">
+<div class="subwrapper">
+    <div id="header">
+        <div id="breadcumbs">
+            {% block breadcumbs %}{% endblock %}
+        </div>
+        <div id="header-container">
+            <div class="main_logo fl" id="auditem">
+                <a href="/"></a>
+            </div>
+            <div class="main_logo fr" id="myrios">
+                <a href="/"></a>
+            </div>
+        </div>
+    </div>
+    <table id="table_container">
+        <tbody>
+        <tr id="tr_menu">
+             <td>
+                {% include "top_menu.html"  %}
+            </td>
+        </tr>
+        <tr id='container_content'>
+            <td id="content">
+                {% block contenido %}{% endblock %}
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</div>
+{% block externaljs %}{% endblock %}
     <script type="text/javascript">
 
         {% if request.user %}
-        var server = io.connect("http://166.78.139.234:9999");
+        var server = io.connect("{{ SERVER_URL }}:9999");
         server.on("connect", function(data){
             server.emit("join", {{ request.user.pk }});
         });
@@ -143,8 +174,7 @@
         }
         $(document).ready(function(){
 
-            $(".settings a").attr("title","Panel de control")
-            $(".settings a").tooltip();
+            $(".settings a").attr("title","Panel de control").tooltip({effect: 'slide'}).dynamic({ bottom: { direction: 'down', bounce: true } });
 
             $("#main_menu").find(".alarmas").live("click", function(){
                if ($("#notif_container").is(":visible")){
@@ -255,38 +285,5 @@
         });
 
     </script>
-</head>
-<body>
-<div class="wrapper">
-<div class="subwrapper">
-    <div id="header">
-        <div id="breadcumbs">
-            {% block breadcumbs %}{% endblock %}
-        </div>
-        <div id="header-container">
-            <div class="main_logo fl" id="auditem">
-                <a href="/"></a>
-            </div>
-            <div class="main_logo fr" id="myrios">
-                <a href="/"></a>
-            </div>
-        </div>
-    </div>
-    <table id="table_container">
-        <tbody>
-        <tr id="tr_menu">
-             <td>
-                {% include "top_menu.html"  %}
-            </td>
-        </tr>
-        <tr id='container_content'>
-            <td id="content">
-                {% block contenido %}{% endblock %}
-            </td>
-        </tr>
-        </tbody>
-    </table>
-</div>
-</div>
 </body>
 </html>

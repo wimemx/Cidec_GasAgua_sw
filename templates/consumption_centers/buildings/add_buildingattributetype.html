@@ -75,13 +75,14 @@
     <ul>
         <li><a href="/main/">Inicio</a></li>
         <li><a href="/panel_de_control/">Panel de Control</a></li>
-        <li><a href="/buildings/tipos_atributos_edificios/">Tipos de Atributos de Edificio</a></li>
+    <li><a href="/panel_de_control/?cat=3">Panel Índices Energéticos</a></li>
+        <li><a href="/buildings/tipos_atributos_edificios/">Tipos de Índices Energéticos</a></li>
         {% if operation == "edit" %}
         <li>
-            Edici&oacute;n de tipo de atributo de edificio
+            Edici&oacute;n de tipos de índices energéticos
         </li>
         {% else %}
-        <li>Alta de tipo de atributo de edificio</li>
+        <li>Alta de tipos de índices energéticos</li>
         {% endif %}
 
     </ul>
@@ -95,7 +96,7 @@
 <div id="page_content">
 <div id="contenido_interno">
     <h2 id="titulo_form" class="building_attr">
-        {% if operation == "edit" %}Edici&oacute;n de{% else %}Alta de{% endif %} tipo de atributo de edificio
+        {% if operation == "edit" %}Edici&oacute;n de{% else %}Alta de{% endif %} tipos de índices energéticos
     </h2>
 
 
@@ -114,7 +115,7 @@
         </p>
         <form method="post" action=".">
             {% csrf_token %}
-            <h3 class="g12">Informaci&oacute;n del Tipo de Atributo de Edificio</h3>
+            <h3 class="g12">Informaci&oacute;n del tipo de índice energético</h3>
             <div id="cluster_fields">
                 <div class="fields_row g9">
                     <label for="b_attr_type_name" class="g2">Nombre<span class="required">*</span></label>

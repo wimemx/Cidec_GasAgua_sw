@@ -70,24 +70,24 @@ CREATE = Operation.objects.get(operation_name="Crear")
 DELETE = Operation.objects.get(operation_name="Eliminar")
 UPDATE = Operation.objects.get(operation_name="Modificar")
 
-GRAPHS_ENERGY = [ob.object for ob in GroupObject.objects.filter(
-    group__group_name="Energía")]
-GRAPHS_I = [ob.object for ob in GroupObject.objects.filter(
-    group__group_name="Corriente")]
-GRAPHS_V = [ob.object for ob in GroupObject.objects.filter(
-    group__group_name="Voltaje")]
-GRAPHS_PF = [ob.object for ob in GroupObject.objects.filter(
-    group__group_name="Perfil de carga")]
-GRAPHS_F1 = [ob.object for ob in GroupObject.objects.filter(
-    group__group_name="Fase 1")]
-GRAPHS_F2 = [ob.object for ob in GroupObject.objects.filter(
-    group__group_name="Fase 2")]
-GRAPHS_F3 = [ob.object for ob in GroupObject.objects.filter(
-    group__group_name="Fase 3")]
-GRAPHS_CACUM = [ob.object for ob in GroupObject.objects.filter(
-    group__group_name="Consumo Acumulado")]
-GRAPHS_CONS = [ob.object for ob in GroupObject.objects.filter(
-    group__group_name="Consumo")]
+GRAPHS_ENERGY = GroupObject.objects.filter(
+    group__group_name="Energía").values_list("object__pk", flat=True)
+GRAPHS_I = GroupObject.objects.filter(
+    group__group_name="Corriente").values_list("object__pk", flat=True)
+GRAPHS_V = GroupObject.objects.filter(
+    group__group_name="Voltaje").values_list("object__pk", flat=True)
+GRAPHS_PF = GroupObject.objects.filter(
+    group__group_name="Perfil de carga").values_list("object__pk", flat=True)
+GRAPHS_F1 = GroupObject.objects.filter(
+    group__group_name="Fase 1").values_list("object__pk", flat=True)
+GRAPHS_F2 = GroupObject.objects.filter(
+    group__group_name="Fase 2").values_list("object__pk", flat=True)
+GRAPHS_F3 = GroupObject.objects.filter(
+    group__group_name="Fase 3").values_list("object__pk", flat=True)
+GRAPHS_CACUM = GroupObject.objects.filter(
+    group__group_name="Consumo Acumulado").values_list("object__pk", flat=True)
+GRAPHS_CONS = GroupObject.objects.filter(
+    group__group_name="Consumo").values_list("object__pk", flat=True)
 GRAPHS = dict(energia=GRAPHS_ENERGY, corriente=GRAPHS_I, voltaje=GRAPHS_V,
               perfil_carga=GRAPHS_PF, perfil_carga_mes=GRAPHS_PF,
               fase1=GRAPHS_F1, fase2=GRAPHS_F2,
@@ -670,10 +670,6 @@ def cfe_calculations(request):
             template_vars['resultados'] = resultado_mensual
             template_vars['tipo_tarifa'] = tipo_tarifa
 
-            monthly_cutdate = MonthlyCutDates.objects.filter(
-                building=request.session['main_building']).order_by(
-                "-billing_month")
-
             template_vars['historico'] = obtenerHistorico_r(resultado_mensual)
             template_vars_template = RequestContext(request, template_vars)
             return render_to_response(
@@ -721,6 +717,7 @@ def getStartEndDateUTC(building, month, year):
 
     return s_date, e_date
 
+
 # noinspection PyArgumentList
 def getMonthlyCutDate(building, month, year):
     billing_month = datetime.date(year=year, month=month, day=1)
@@ -736,6 +733,7 @@ def getMonthlyCutDate(building, month, year):
         month_cut_dates = month_all_cut_dates[0]
 
     return month_cut_dates
+
 
 # noinspection PyArgumentList
 def inMonthlyCutdates(building, month, year):
@@ -1016,7 +1014,7 @@ def add_building_attr(request):
         message = ""
         attributes = BuildingAttributesType.objects.all().order_by(
             "building_attributes_type_sequence")
-        template_vars = dict(datacontext=datacontext, empresa=empresa,
+        template_vars = dict(datacontext=datacontext,
                              company=company,
                              type=_type,
                              message=message,
@@ -1153,7 +1151,7 @@ def b_attr_list(request):
         paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
         template_vars = dict(roles=paginator, order_attrname=order_attrname,
                              order_type=order_type, order_units=order_units,
-                             order_sequence=order_sequence, empresa=empresa,
+                             order_sequence=order_sequence,
                              order_status=order_status, company=company,
                              datacontext=datacontext,
                              sidebar=request.session['sidebar'])
@@ -1236,7 +1234,7 @@ def editar_b_attr(request, id_b_attr):
         _type = ''
         attributes = BuildingAttributesType.objects.all().order_by(
             "building_attributes_type_sequence")
-        template_vars = dict(datacontext=datacontext, empresa=empresa,
+        template_vars = dict(datacontext=datacontext,
                              message=message, post=post, type=_type,
                              operation="edit", company=company,
                              attributes=attributes,
@@ -1416,9 +1414,9 @@ def add_cluster(request):
                 _type = "n_notif"
                 continuar = False
 
-
             #Valida por si le da muchos clics al boton
-            clusterValidate = Cluster.objects.filter(cluster_name=clustername)
+            clusterValidate = Cluster.objects.filter(
+                cluster_name=clustername).count()
             if clusterValidate:
                 message = "Ya existe un cluster con ese nombre"
                 _type = "n_notif"
@@ -1661,7 +1659,7 @@ def edit_cluster(request, id_cluster):
             if cluster.cluster_name != clustername:
                 #Valida por si le da muchos clics al boton
                 clusterValidate = Cluster.objects.filter(
-                    cluster_name=clustername)
+                    cluster_name=clustername).count()
                 if clusterValidate:
                     message = "Ya existe un cluster con ese nombre"
                     _type = "n_notif"
@@ -1718,7 +1716,7 @@ def see_cluster(request, id_cluster):
         empresa = request.session['main_building']
 
         cluster = Cluster.objects.get(pk=id_cluster)
-        cluster_companies = ClusterCompany.objects.filter(cluster=cluster)
+        cluster_companies = ClusterCompany.objects.filter(cluster__pk=id_cluster)
 
         template_vars = dict(
             datacontext=datacontext,
@@ -4363,7 +4361,6 @@ def add_partbuildingtype(request):
         post = ''
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              company=company,
                              post=post, sidebar=request.session['sidebar']
         )
@@ -4504,7 +4501,6 @@ def edit_partbuildingtype(request, id_pbtype):
                         "&ntype=n_success")
 
         template_vars = dict(datacontext=datacontext,
-                             empresa=empresa,
                              company=company,
                              post=post,
                              operation="edit",
@@ -5224,14 +5220,15 @@ def search_buildings(request):
 
         buildings = get_all_buildings_for_operation(perm, op, request.user)
         b_pks = [b.pk for b in buildings]
-        buildings = Building.objects.filter(building_name__icontains=term,
-                                            pk__in=b_pks).exclude(
-            building_status=0)
+        buildings = Building.objects.filter(
+            building_name__icontains=term,
+            pk__in=b_pks).exclude(building_status=0).values(
+                "pk", "building_name")
         buildings_arr = []
         for building in buildings:
             buildings_arr.append(
-                dict(value=building.building_name, pk=building.pk,
-                     label=building.building_name))
+                dict(value=building['building_name'], pk=building['pk'],
+                     label=building['building_name']))
 
         data = simplejson.dumps(buildings_arr)
         return HttpResponse(content=data, content_type="application/json")
@@ -5579,7 +5576,7 @@ def edit_building(request, id_bld):
         #Se obtienen los tipos de atributos de edificios
         tipos_atributos = BuildingAttributesType.objects.filter(
             building_attributes_type_status=1).order_by(
-            'building_attributes_type_name')
+                'building_attributes_type_name')
 
         #Se obtiene la información del edificio
         buildingObj = get_object_or_404(Building, pk=id_bld)
@@ -5588,12 +5585,12 @@ def edit_building(request, id_bld):
         companyBld = CompanyBuilding.objects.filter(building=buildingObj)
 
         #Se obtienen los tipos de edificio
-        b_types = BuildingTypeForBuilding.objects.filter(building=buildingObj)
-        b_type_arr = [b_tp.building_type.pk for b_tp in b_types]
+        b_type_arr = BuildingTypeForBuilding.objects.filter(
+            building=buildingObj).values_list("building_type__pk", flat=True)
 
         #Se obtienen todos los atributos
         building_attributes = BuildingAttributesForBuilding.objects.filter(
-            building=buildingObj)
+            building=buildingObj).defer("building")
         string_attributes = ''
         if building_attributes:
             for bp_att in building_attributes:
@@ -5930,12 +5927,13 @@ def info_building(request):
         companyBld = CompanyBuilding.objects.filter(building=buildingObj)
 
         #Se obtienen los tipos de edificio
-        b_types = BuildingTypeForBuilding.objects.filter(building=buildingObj)
-        b_type_arr_names = [b_tp.building_type.building_type_name for b_tp in b_types]
+        b_type_arr_names = BuildingTypeForBuilding.objects.filter(
+            building=buildingObj).values_list(
+                "building_type__building_type_name", flat=True)
 
         #Se obtienen todos los atributos
         building_attributes = BuildingAttributesForBuilding.objects.filter(
-            building=buildingObj)
+            building=buildingObj).defer("building")
         string_attributes = ''
         if building_attributes:
             for bp_att in building_attributes:
@@ -6183,7 +6181,6 @@ def add_ie(request):
         template_vars["datacontext"] = datacontext
 
     template_vars["sidebar"] = request.session['sidebar']
-    template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
     permission = "Alta de equipos industriales"
     if has_permission(request.user, CREATE,
@@ -6237,7 +6234,6 @@ def edit_ie(request, id_ie):
         template_vars["datacontext"] = datacontext
 
     template_vars["sidebar"] = request.session['sidebar']
-    template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
     template_vars["operation"] = "edit"
     industrial_eq = get_object_or_404(IndustrialEquipment, pk=int(id_ie))
@@ -6293,7 +6289,8 @@ def edit_ie(request, id_ie):
                         order_status = "asc"
 
             lista = PowermeterForIndustrialEquipment.objects.filter(
-                industrial_equipment=industrial_eq).order_by(order)
+                industrial_equipment=industrial_eq
+            ).order_by(order)
             template_vars['order_alias'] = order_alias
             template_vars['order_model'] = order_model
             template_vars['order_serial'] = order_serial
@@ -6522,7 +6519,6 @@ def view_ie(request):
         template_vars["datacontext"] = datacontext
 
     template_vars["sidebar"] = request.session['sidebar']
-    template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
 
     if has_permission(request.user, VIEW,
@@ -6606,19 +6602,19 @@ def search_pm(request):
     """
     if "term" in request.GET:
         term = request.GET['term']
-        ie_pm = PowermeterForIndustrialEquipment.objects.all()
-        pm_in_ie = [ip.powermeter.pk for ip in ie_pm]
-        powermeters = Powermeter.objects.exclude(
-            pk__in=pm_in_ie
-        ).filter(
+        pm_in_ie = PowermeterForIndustrialEquipment.objects.all().values_list(
+            "powermeter__pk", flat=True)
+        powermeters = Powermeter.objects.filter(
             Q(powermeter_anotation__icontains=term) |
             Q(powermeter_serial__icontains=term)
-        ).filter(status=1)
+        ).filter(status=1).exclude(pk__in=pm_in_ie).exclude(
+            powermeter_anotation="Medidor Virtual").values(
+                "pk", "powermeter_anotation", "powermeter_serial")
         medidores = []
         for medidor in powermeters:
-            texto = medidor.powermeter_anotation + " - " + \
-                    medidor.powermeter_serial
-            medidores.append(dict(value=texto, pk=medidor.pk, label=texto))
+            texto = medidor['powermeter_anotation'] + " - " + \
+                    medidor['powermeter_serial']
+            medidores.append(dict(value=texto, pk=medidor['pk'], label=texto))
         data = simplejson.dumps(medidores)
         return HttpResponse(content=data, content_type="application/json")
     else:
@@ -6706,14 +6702,12 @@ def configure_ie(request, id_ie):
         ie = get_object_or_404(IndustrialEquipment, pk=id_ie)
         template_vars['ie'] = ie
         template_vars['last_changed'] = ie.last_changed
-        ie_pm = PowermeterForIndustrialEquipment.objects.filter(
-            industrial_equipment=ie)
-        pms = [pm.powermeter.pk for pm in ie_pm]
+        pms = PowermeterForIndustrialEquipment.objects.filter(
+            industrial_equipment=ie).values_list("powermeter__pk", flat=True)
         powermeters = ProfilePowermeter.objects.filter(
             pk__in=pms)
         tz = timezone.get_current_timezone()
         if request.method == "POST":
-            settings_pm = []
             template_vars['powermeters'] = []
             for pm in powermeters:
                 read_time_rate = request.POST['read_time_rate_' + str(pm.pk)]
@@ -6776,13 +6770,12 @@ def create_hierarchy(request, id_building):
         template_vars['list'] = _list
         template_vars['building'] = building
 
-        cus = ConsumerUnit.objects.all()
-        ids_prof = [cu.profile_powermeter.pk for cu in cus]
+        ids_prof = ConsumerUnit.objects.all().values_list(
+            "profile_powermeter__pk", flat=True)
         profs = ProfilePowermeter.objects.exclude(
             pk__in=ids_prof).exclude(
-            powermeter__powermeter_anotation="No Registrado").exclude(
-            powermeter__powermeter_anotation="Medidor Virtual"
-        )
+                powermeter__powermeter_anotation="No Registrado").exclude(
+                    powermeter__powermeter_anotation="Medidor Virtual")
         template_vars['electric_devices'] = ElectricDeviceType.objects.all()
         template_vars['prof_pwmeters'] = profs
         template_vars_template = RequestContext(request, template_vars)
@@ -7447,7 +7440,7 @@ def view_cutdates(request):
 
         paginator = Paginator(contenedorMonthly, 12) # muestra 10 resultados por pagina
         template_vars = dict(order_billing=order_billing,
-                             datacontext=datacontext, empresa=empresa,
+                             datacontext=datacontext,
                              company=request.session['company'],
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
@@ -8146,7 +8139,8 @@ def month_analitics_day(request):
             request.session['consumer_unit'].building.electric_rate_id
         try:
             day_data = DailyData.objects.get(
-                consumer_unit=request.session['consumer_unit'], data_day=fecha)
+                consumer_unit=request.session['consumer_unit'],
+                data_day=fecha)
         except ObjectDoesNotExist:
             diccionario = dict(empty="true")
         else:
@@ -8264,13 +8258,13 @@ def power_performance_header(request):
 
         if tipo_tarifa.pk == 1:
             years = [__date.year for __date in HMHistoricData.objects.all().
-            dates('monthly_cut_dates__billing_month','year')]
+                dates('monthly_cut_dates__billing_month','year')]
         elif tipo_tarifa.pk == 2:
             years = [__date.year for __date in DacHistoricData.objects.all().
-            dates('monthly_cut_dates__billing_month','year')]
+                dates('monthly_cut_dates__billing_month','year')]
         elif tipo_tarifa.pk == 3:
             years = [__date.year for __date in T3HistoricData.objects.all().
-            dates('monthly_cut_dates__billing_month','year')]
+                dates('monthly_cut_dates__billing_month','year')]
         template_vars['years'] = years[::-1]
 
         template_vars_template = RequestContext(request, template_vars)
@@ -8422,8 +8416,6 @@ def billing_analisis(request):
 
                     graph_kwh_arr.append(datos_kwh)
                     graph_money_arr.append(datos_money)
-
-
                 template_vars['kwh_data'] = graph_kwh_arr
                 template_vars['money_data'] = graph_money_arr
 
@@ -8484,8 +8476,8 @@ def billing_analisis(request):
                     template_vars['kwh_total'] = y01_kwh
                     template_vars['money_total'] = y01_money
 
-
-            else: #Si el tipo de reporte es mensual
+            else:
+                #Si el tipo de reporte es mensual
                 template_vars['tipo_reporte'] = 2
 
                 month_01 = int(request.GET['month_01'])
@@ -8510,18 +8502,18 @@ def billing_analisis(request):
                         monthly_cut_dates__billing_month__year = year_02)
 
                     if m01_data:
-
-                        template_vars['m01_kwh'] = m01_data[0].KWH_total
-                        template_vars['m01_money'] = m01_data[0].total
-                        template_vars['m01_kw'] = m01_data[0].KW_base +\
-                                                  m01_data[0].KW_intermedio + \
-                                                  m01_data[0].KW_punta
-                        template_vars['m01_base'] = m01_data[0].KWH_base
-                        template_vars['m01_intermedio'] = m01_data[0].KWH_intermedio
-                        template_vars['m01_punta'] = m01_data[0].KWH_punta
-                        template_vars['m01_t_base'] = m01_data[0].KWH_base_rate
-                        template_vars['m01_t_intermedio'] = m01_data[0].KWH_intermedio_rate
-                        template_vars['m01_t_punta'] = m01_data[0].KWH_punta_rate
+                        m01 = m01_data[0]
+                        template_vars['m01_kwh'] = m01.KWH_total
+                        template_vars['m01_money'] = m01.total
+                        template_vars['m01_kw'] = m01.KW_base +\
+                                                  m01.KW_intermedio + \
+                                                  m01.KW_punta
+                        template_vars['m01_base'] = m01.KWH_base
+                        template_vars['m01_intermedio'] = m01.KWH_intermedio
+                        template_vars['m01_punta'] = m01.KWH_punta
+                        template_vars['m01_t_base'] = m01.KWH_base_rate
+                        template_vars['m01_t_intermedio'] = m01.KWH_intermedio_rate
+                        template_vars['m01_t_punta'] = m01.KWH_punta_rate
                     else:
                         template_vars['m01_kwh'] = 0
                         template_vars['m01_money'] = 0
@@ -8535,26 +8527,28 @@ def billing_analisis(request):
                             electric_rate=1, region=building.region,
                             date_init__month=month_01, date_init__year=year_01)
                         if tarifasObj:
-                            template_vars['m01_t_base'] = tarifasObj[0].KWHB
-                            template_vars['m01_t_intermedio'] = tarifasObj[0].KWHI
-                            template_vars['m01_t_punta'] = tarifasObj[0].KWHP
+                            tarifas = tarifasObj[0]
+                            template_vars['m01_t_base'] = tarifas.KWHB
+                            template_vars['m01_t_intermedio'] = tarifas.KWHI
+                            template_vars['m01_t_punta'] = tarifas.KWHP
                         else:
                             template_vars['m01_t_base'] = 0
                             template_vars['m01_t_intermedio'] = 0
                             template_vars['m01_t_punta'] = 0
 
                     if m02_data:
-                        template_vars['m02_kwh'] = m02_data[0].KWH_total
-                        template_vars['m02_money'] = m02_data[0].total
-                        template_vars['m02_kw'] = m02_data[0].KW_base\
-                                                  + m02_data[0].KW_intermedio \
-                                                  + m02_data[0].KW_punta
-                        template_vars['m02_base'] = m02_data[0].KWH_base
-                        template_vars['m02_intermedio'] = m02_data[0].KWH_intermedio
-                        template_vars['m02_punta'] = m02_data[0].KWH_punta
-                        template_vars['m02_t_base'] = m02_data[0].KWH_base_rate
-                        template_vars['m02_t_intermedio'] = m02_data[0].KWH_intermedio_rate
-                        template_vars['m02_t_punta'] = m02_data[0].KWH_punta_rate
+                        m02 = m02_data[0]
+                        template_vars['m02_kwh'] = m02.KWH_total
+                        template_vars['m02_money'] = m02.total
+                        template_vars['m02_kw'] = m02.KW_base\
+                                                  + m02.KW_intermedio \
+                                                  + m02.KW_punta
+                        template_vars['m02_base'] = m02.KWH_base
+                        template_vars['m02_intermedio'] = m02.KWH_intermedio
+                        template_vars['m02_punta'] = m02.KWH_punta
+                        template_vars['m02_t_base'] = m02.KWH_base_rate
+                        template_vars['m02_t_intermedio'] = m02.KWH_intermedio_rate
+                        template_vars['m02_t_punta'] = m02.KWH_punta_rate
                     else:
                         template_vars['m02_kwh'] = 0
                         template_vars['m02_money'] = 0
@@ -8568,9 +8562,10 @@ def billing_analisis(request):
                             electric_rate=1, region=building.region,
                             date_init__month=month_02, date_init__year=year_02)
                         if tarifasObj:
-                            template_vars['m02_t_base'] = tarifasObj[0].KWHB
-                            template_vars['m02_t_intermedio'] = tarifasObj[0].KWHI
-                            template_vars['m02_t_punta'] = tarifasObj[0].KWHP
+                            tarifas = tarifasObj[0]
+                            template_vars['m02_t_base'] = tarifas.KWHB
+                            template_vars['m02_t_intermedio'] = tarifas.KWHI
+                            template_vars['m02_t_punta'] = tarifas.KWHP
                         else:
                             template_vars['m02_t_base'] = 0
                             template_vars['m02_t_intermedio'] = 0
@@ -8669,35 +8664,35 @@ def billing_analisis(request):
                     else:
                         template_vars['diff_tpunta'] = 0
 
-
                 elif tipo_tarifa.pk == 2:
 
                     template_vars['tarifa'] = 2
                     m01_data = DacHistoricData.objects.filter(
-                        monthly_cut_dates__building = building,
-                        monthly_cut_dates__billing_month__month = month_01,
-                        monthly_cut_dates__billing_month__year = year_01)
+                        monthly_cut_dates__building=building,
+                        monthly_cut_dates__billing_month__month=month_01,
+                        monthly_cut_dates__billing_month__year=year_01)
                     m02_data = DacHistoricData.objects.filter(
-                        monthly_cut_dates__building = building,
-                        monthly_cut_dates__billing_month__month = month_02,
-                        monthly_cut_dates__billing_month__year = year_02)
+                        monthly_cut_dates__building=building,
+                        monthly_cut_dates__billing_month__month=month_02,
+                        monthly_cut_dates__billing_month__year=year_02)
                     if m01_data:
-                        template_vars['m01_kwh'] = m01_data[0].KWH_total
-                        template_vars['m01_money'] = m01_data[0].total
-                        template_vars['m01_t_kwh'] = m01_data[0].KWH_rate
-                        template_vars['m01_t_month'] = m01_data[0].monthly_rate
+                        m01 = m01_data[0]
+                        template_vars['m01_kwh'] = m01.KWH_total
+                        template_vars['m01_money'] = m01.total
+                        template_vars['m01_t_kwh'] = m01.KWH_rate
+                        template_vars['m01_t_month'] = m01.monthly_rate
                     else:
                         template_vars['m01_kwh'] = 0
                         template_vars['m01_money'] = 0
                         template_vars['m01_t_kwh'] = 0
                         template_vars['m01_t_month'] = 0
 
-
                     if m02_data:
-                        template_vars['m02_kwh'] = m02_data[0].KWH_total
-                        template_vars['m02_money'] = m02_data[0].total
-                        template_vars['m02_t_kwh'] = m02_data[0].KWH_rate
-                        template_vars['m02_t_month'] = m02_data[0].monthly_rate
+                        m02 = m02_data
+                        template_vars['m02_kwh'] = m02.KWH_total
+                        template_vars['m02_money'] = m02.total
+                        template_vars['m02_t_kwh'] = m02.KWH_rate
+                        template_vars['m02_t_month'] = m02.monthly_rate
                     else:
                         template_vars['m02_kwh'] = 0
                         template_vars['m02_money'] = 0
@@ -8753,24 +8748,24 @@ def billing_analisis(request):
                     else:
                         template_vars['diff_t_month'] = 0
 
-
                 elif tipo_tarifa.pk == 3:
 
                     template_vars['tarifa'] = 3
                     m01_data = T3HistoricData.objects.filter(
-                        monthly_cut_dates__building = building,
-                        monthly_cut_dates__billing_month__month = month_01,
-                        monthly_cut_dates__billing_month__year = year_01)
+                        monthly_cut_dates__building=building,
+                        monthly_cut_dates__billing_month__month=month_01,
+                        monthly_cut_dates__billing_month__year=year_01)
                     m02_data = T3HistoricData.objects.filter(
                         monthly_cut_dates__building = building,
-                        monthly_cut_dates__billing_month__month = month_02,
-                        monthly_cut_dates__billing_month__year = year_02)
+                        monthly_cut_dates__billing_month__month=month_02,
+                        monthly_cut_dates__billing_month__year=year_02)
                     if m01_data:
-                        template_vars['m01_kwh'] = m01_data[0].KWH_total
-                        template_vars['m01_money'] = m01_data[0].total
-                        template_vars['m01_kw'] = m01_data[0].max_demand
-                        template_vars['m01_t_kwh'] = m01_data[0].KWH_rate
-                        template_vars['m01_t_kw'] = m01_data[0].demand_rate
+                        m01 = m01_data[0]
+                        template_vars['m01_kwh'] = m01.KWH_total
+                        template_vars['m01_money'] = m01.total
+                        template_vars['m01_kw'] = m01.max_demand
+                        template_vars['m01_t_kwh'] = m01.KWH_rate
+                        template_vars['m01_t_kw'] = m01.demand_rate
                     else:
                         template_vars['m01_kwh'] = 0
                         template_vars['m01_money'] = 0
@@ -8779,11 +8774,12 @@ def billing_analisis(request):
                         template_vars['m01_t_kw'] = 0
 
                     if m02_data:
-                        template_vars['m02_kwh'] = m02_data[0].KWH_total
-                        template_vars['m02_money'] = m02_data[0].total
-                        template_vars['m02_kw'] = m02_data[0].max_demand
-                        template_vars['m02_t_kwh'] = m02_data[0].KWH_rate
-                        template_vars['m02_t_kw'] = m02_data[0].demand_rate
+                        m02 = m02_data[0]
+                        template_vars['m02_kwh'] = m02.KWH_total
+                        template_vars['m02_money'] = m02.total
+                        template_vars['m02_kw'] = m02.max_demand
+                        template_vars['m02_t_kwh'] = m02.KWH_rate
+                        template_vars['m02_t_kw'] = m02.demand_rate
                     else:
                         template_vars['m02_kwh'] = 0
                         template_vars['m02_money'] = 0
@@ -9363,12 +9359,13 @@ def parse_csv(request):
                 files = os.listdir(dir_path+todays_dir)
             except OSError:
                 message = "No se ha subido ningún archivo"
-            dir_path += todays_dir
-            for _file in files:
-                restore_data.delay(_file, dir_path)
             else:
-                message = "Las tareas de recuperación se han registrado " \
-                          "exitosamente"
+                dir_path += todays_dir
+                for _file in files:
+                    restore_data.delay(_file, dir_path)
+                else:
+                    message = "Las tareas de recuperación se han registrado " \
+                              "exitosamente"
 
         delete_file_url = "/del_file/"+todays_date
         media_folder = "/static/media/csv_files/"+todays_dir
@@ -9488,6 +9485,7 @@ def view_tags(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+
 def retag_ajax(request):
     if "s_date" in request.GET and "e_date" in request.GET:
         consumer_unit = request.session['consumer_unit']
@@ -9518,10 +9516,10 @@ def retag_ajax(request):
     else:
         raise Http404
 
+
 def daily_ajax(request):
     if "s_date" in request.GET and "e_date" in request.GET:
         consumer_unit = request.session['consumer_unit']
-        profile_powermeter = consumer_unit.profile_powermeter
 
         init_str = request.GET['s_date']
         end_str = request.GET['e_date']
@@ -9538,7 +9536,6 @@ def daily_ajax(request):
                                    month=e_date_utc_tuple[1],
                                    day=e_date_utc_tuple[2])
 
-
         daily_report_period.delay(consumer_unit.building,
                                   consumer_unit, s_date, e_date)
 
@@ -9548,6 +9545,7 @@ def daily_ajax(request):
         return HttpResponse(content=data, content_type="application/json")
     else:
         raise Http404
+
 
 def monthly_ajax(request):
     if "month" in request.GET and "year" in request.GET:
@@ -9564,6 +9562,7 @@ def monthly_ajax(request):
         return HttpResponse(content=data, content_type="application/json")
     else:
         raise Http404
+
 
 @login_required(login_url='/')
 def wizard(request):
@@ -10112,13 +10111,12 @@ def create_hierarchy_pop(request, id_building):
         template_vars['list'] = _list
         template_vars['building'] = building
 
-        cus = ConsumerUnit.objects.all()
-        ids_prof = [cu.profile_powermeter.pk for cu in cus]
+        ids_prof = ConsumerUnit.objects.all().values_list(
+            "profile_powermeter__pk", flat=True)
         profs = ProfilePowermeter.objects.exclude(
             pk__in=ids_prof).exclude(
-            powermeter__powermeter_anotation="No Registrado").exclude(
-            powermeter__powermeter_anotation="Medidor Virtual"
-        )
+                powermeter__powermeter_anotation="No Registrado").exclude(
+                    powermeter__powermeter_anotation="Medidor Virtual")
         template_vars['electric_devices'] = ElectricDeviceType.objects.all()
         template_vars['prof_pwmeters'] = profs
         template_vars_template = RequestContext(request, template_vars)
