@@ -365,7 +365,7 @@ h2 span{
     max-height: 313px;
     overflow: auto;
     position: absolute;
-    right: -244px;
+    left: 222px;
     top: 57px;
     width: 215px;
     border: solid 1px #2b87a3;
@@ -424,6 +424,11 @@ h2 span{
     top: 10px;
     font-weight: 100;
     padding-top: 5px;
+}
+#main_menu li.first_level.dashboard a{
+    width: 100%;
+    height: 100%;
+    display: block;
 }
 #main_menu li.first_level.analisis{
     width: 62px !important;
@@ -535,7 +540,7 @@ ul#main_menu ul ul li:hover{
     font-size:12px;
     height:45px;
     width:129px;
-    padding-top:25px;
+    padding-top:11px;
     color:#eee;
     text-align: center;
 }
@@ -921,16 +926,18 @@ a.aqua_btn:hover, a.grey_btn:hover{
 }
 
 .element_row .element{
+    height: 55px;
     display: block;
     float: left;
     margin-right: 30px;
-    padding-bottom: 10px;
 }
 .element_row .element a{
+    padding-top: 50px;
+    height: 100%;
     display: block;
-    margin-top: 5px;
+    margin-top: 3px;
     width: 80px;
-    color:#636363;
+    color: #636363;
     text-align: center;
 }
 .element a img{

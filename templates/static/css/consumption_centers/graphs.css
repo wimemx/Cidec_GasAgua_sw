@@ -93,6 +93,7 @@ ol, ul {
     cursor: pointer;
 }
 #compare_interval1 li, #compare_interval2 li{
+    cursor: pointer;
     float: left;
     height: 23px;
     /*border: solid 1px #bdbdbf;

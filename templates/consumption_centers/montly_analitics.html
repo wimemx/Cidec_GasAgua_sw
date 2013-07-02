@@ -42,9 +42,9 @@
                         div += "<span class='consumo'>-</span>";
                         div += "</div>";
                     }else{
-                        div += "<span class='demanda_max "+class_d+"' id='demand_"+i+"'>"+ dato.max_demand +" kW</span>";
+                        div += "<span class='demanda_max "+class_d+"' id='demand_"+i+"'>"+ addCommas(dato.max_demand) +" kW</span>";
                         div += "<span class='title_inner'>&nbsp;</span>";
-                        div += "<span class='consumo "+class_k+"' id='cons_"+i+"'>"+ dato.KWH_total +" kWh</span>";
+                        div += "<span class='consumo "+class_k+"' id='cons_"+i+"'>"+ addCommas(dato.KWH_total) +" kWh</span>";
                         div += "</div>";
 
                         var mes = parseInt(dato.fecha.split("-")[1], 10);
@@ -123,7 +123,7 @@
 
                 var texto_emit = '-';
                 if(data[0].emisiones != undefined){
-                    texto_emit = addCommas(parseInt(data[0].emisiones)) + " TON";
+                    texto_emit = addCommas(data[0].emisiones.toFixed(2)) + " TON";
                 }
                 $("#pp_total").text(texto_emit);
 
@@ -370,23 +370,23 @@
                 <li>Calidad de Energía</li>
                 <li>Emisiones de CO2</li>
             </ul>
-            <div style='width:100%;overflow:hidden;'>
-                <div style='margin-left:-20px'  id='icon_first' class="icon_sumary consumo_t">
+            <div style='width:100%;overflow:hidden;' id="monthly_container">
+                <div class="icon_sumary consumo_t">
                     <span id="cons_total">
                         -
                     </span>
                 </div>
-                <div style='margin-left:10px' class="icon_sumary demanda">
+                <div class="icon_sumary demanda">
                     <span id="dem_total">
                         -
                     </span>
                 </div>
-                <div style='margin-left:4px' class="icon_sumary emisiones">
+                <div class="icon_sumary emisiones">
                     <span id="emit_total">
                         404 TON
                     </span>
                 </div>
-                <div style='margin-left:0px' class="icon_sumary potencia">
+                <div class="icon_sumary potencia">
                     <span id="pp_total">
                         -
                     </span>

@@ -11,6 +11,7 @@ import sys
 # Django imports
 import django.core.exceptions
 import django.utils.timezone
+from django.db import connection, transaction
 
 # Data Warehouse Extended imports
 import data_warehouse_extended.globals
@@ -18,6 +19,8 @@ import data_warehouse_extended.models
 
 # CCenter imports
 import c_center.models
+
+import variety
 
 logger = logging.getLogger("data_warehouse")
 
@@ -295,6 +298,7 @@ def build_instants_groups(
     return instants_groups
 
 
+@variety.timed
 def process_consumer_unit_electrical_parameter(
         consumer_unit,
         datetime_from,
@@ -365,7 +369,7 @@ def process_consumer_unit_electrical_parameter(
             instant_datetime__lte=datetime_to_utc
         ).order_by(
             'instant_datetime'
-        )
+        ).values("pk", "instant_delta__delta_seconds", "instant_datetime")
 
     #
     # Divide instants into fixed-size groups.
@@ -421,10 +425,10 @@ def process_consumer_unit_electrical_parameter_instant_group(
     #
     # Get all the data based on the first and last Instants in the list.
     #
-    instant_delta = instants_group[0].instant_delta
-    timedelta = datetime.timedelta(seconds=instant_delta.delta_seconds)
-    datetime_from = instants_group[0].instant_datetime - timedelta
-    datetime_to = instants_group[-1].instant_datetime + timedelta
+    timedelta = datetime.timedelta(
+        seconds=instants_group[0]['instant_delta__delta_seconds'])
+    datetime_from = instants_group[0]['instant_datetime'] - timedelta
+    datetime_to = instants_group[-1]['instant_datetime'] + timedelta
     try:
         electric_data_raw_dictionaries_list =\
             c_center.models.ElectricDataTemp.objects.filter(
@@ -506,7 +510,7 @@ def process_consumer_unit_electrical_parameter_instant_group(
     # result in the Data Warehouse Extended.
     #
     for instant in instants_group:
-        instant_timedelta_current = instant.instant_datetime - datetime_from
+        instant_timedelta_current = instant['instant_datetime'] - datetime_from
         instant_timedelta_current_seconds =\
             instant_timedelta_current.seconds + \
             (instant_timedelta_current.days * 24 * 3600)
@@ -520,45 +524,69 @@ def process_consumer_unit_electrical_parameter_instant_group(
             curve_fit_function_evaluation =\
                 curve_fit_function(instant_timedelta_current_seconds)
 
-        consumer_unit_instant_electric_data, created = \
-            data_warehouse_extended.models.\
-                ConsumerUnitInstantElectricalData.objects.get_or_create(
-                    consumer_unit_profile=consumer_unit_profile,
-                    instant=instant,
-                    electrical_parameter=electrical_parameter)
-
-        consumer_unit_instant_electric_data.value =\
-            curve_fit_function_evaluation
-
-        if curve_fit_function_evaluation is not None:
+        try:
+            consumer_unit_instant_electric_data = \
+                data_warehouse_extended.models.\
+                    ConsumerUnitInstantElectricalData.objects.get(
+                        consumer_unit_profile=consumer_unit_profile,
+                        instant__pk=instant["pk"],
+                        electrical_parameter=electrical_parameter)
+        except data_warehouse_extended.models.\
+                ConsumerUnitInstantElectricalData.DoesNotExist:
+            if curve_fit_function_evaluation is not None:
+                try:
+                    curve_fit_function_evaluation =\
+                        decimal.Decimal(str(curve_fit_function_evaluation))
+                except decimal.InvalidOperation:
+                    curve_fit_function_evaluation = None
+            cursor = connection.cursor()
+            sql = "INSERT INTO " \
+                  "data_warehouse_extended_consumerunitinstantelectricaldata " \
+                  "(`consumer_unit_profile_id`, `instant_id`, " \
+                  "electrical_parameter_id, `value`) VALUES (%s, %s, %s, %s)"
+            cursor.execute(sql, [consumer_unit_profile.pk,
+                                 instant["pk"],
+                                 electrical_parameter.pk,
+                                 curve_fit_function_evaluation])
+            transaction.commit_unless_managed()
+            logger.info(data_warehouse_extended.globals.SystemInfo.
+                        CONSUMER_UNIT_INSTANT_ELECTRIC_DATA_SAVED + " - " +\
+                        "RAW SQL SAVED" + str(instant['instant_datetime']) + \
+                        electrical_parameter.name_transactional + \
+                        str(curve_fit_function_evaluation))
+        else:
             consumer_unit_instant_electric_data.value =\
-                decimal.Decimal(str(curve_fit_function_evaluation))
+                curve_fit_function_evaluation
 
-        try:
-            consumer_unit_instant_electric_data.full_clean()
+            if curve_fit_function_evaluation is not None:
+                consumer_unit_instant_electric_data.value =\
+                    decimal.Decimal(str(curve_fit_function_evaluation))
 
-        except django.core.exceptions.ValidationError:
-            logger.error(
-                data_warehouse_extended.globals.SystemError.
-                CONSUMER_UNIT_INSTANT_ELECTRIC_DATA_VALIDATION_ERROR + " - " +
-                str(consumer_unit_instant_electric_data))
+            try:
+                consumer_unit_instant_electric_data.full_clean()
 
-            continue
-
-        try:
-            consumer_unit_instant_electric_data.save()
-
-        except decimal.InvalidOperation:
-            consumer_unit_instant_electric_data.value = None
-            logger.error(
-                data_warehouse_extended.globals.SystemError.
-                CONSUMER_UNIT_INSTANT_ELECTRIC_DATA_DECIMAL_ERROR + " - " +
-                str(consumer_unit_instant_electric_data))
-
-        consumer_unit_instant_electric_data.save()
-        logger.info(data_warehouse_extended.globals.SystemInfo.
-                    CONSUMER_UNIT_INSTANT_ELECTRIC_DATA_SAVED + " - " +\
+            except django.core.exceptions.ValidationError:
+                logger.error(
+                    data_warehouse_extended.globals.SystemError.
+                    CONSUMER_UNIT_INSTANT_ELECTRIC_DATA_VALIDATION_ERROR + " - " +
                     str(consumer_unit_instant_electric_data))
+
+                continue
+
+            try:
+                consumer_unit_instant_electric_data.save()
+
+            except decimal.InvalidOperation:
+                consumer_unit_instant_electric_data.value = None
+                logger.error(
+                    data_warehouse_extended.globals.SystemError.
+                    CONSUMER_UNIT_INSTANT_ELECTRIC_DATA_DECIMAL_ERROR + " - " +
+                    str(consumer_unit_instant_electric_data))
+
+            consumer_unit_instant_electric_data.save()
+            logger.info(data_warehouse_extended.globals.SystemInfo.
+                        CONSUMER_UNIT_INSTANT_ELECTRIC_DATA_SAVED + " - " +\
+                        str(consumer_unit_instant_electric_data))
 
     return
 
@@ -569,7 +597,7 @@ def process_consumer_unit_electrical_parameter_instant_group(
 #
 ################################################################################
 
-def get_consumer_unit_electrical_parameter_data_list (
+def get_consumer_unit_electrical_parameter_data_list(
         consumer_unit_profile,
         datetime_from,
         datetime_to,
@@ -627,7 +655,7 @@ def get_consumer_unit_electrical_parameter_data_list (
                 electrical_parameter=electrical_parameter
             ).order_by(
                 "instant__instant_datetime"
-            )
+            ).values("instant__instant_datetime", "value")
 
     return consumer_unit_data_list
 
@@ -768,7 +796,7 @@ def get_instant_delta_all():
     return data_warehouse_extended.models.InstantDelta.objects.all()
 
 
-def get_instants_list (
+def get_instants_list(
         datetime_from,
         datetime_to,
         instant_delta
@@ -818,8 +846,7 @@ def get_instants_list (
             instant_delta=instant_delta
         ).order_by(
             "instant_delta"
-        )
-
+        ).values("instant_datetime")
     return instants
 
 

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block titulo %}Ver Atributos{% endblock %}
+{% block titulo %}Ver &Iacute;ndices Energ&eacute;ticos{% endblock %}
 {% block externalcss %}
     <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
     <link rel="stylesheet" href="/static/css/forms/rbac_general.css" type="text/css" />
@@ -56,8 +56,8 @@
                 event.preventDefault();
                 var url="/buildings/eliminar_b_attr/"+$(this).attr("rel")+"/";
                 var action = $(this).attr("title");
-                new Messi('&iquest;Est&aacute; seguro de que desea '+action+' el atributo?',
-                    {title: action+' atributo', modal: true, buttons: [{id: 0,
+                new Messi('&iquest;Est&aacute; seguro de que desea '+action+' el índice?',
+                    {title: action+' índice', modal: true, buttons: [{id: 0,
                     label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
                     }],
                     callback: function(val) {
@@ -77,9 +77,9 @@
                     });
                     if(check){
                     var action = $("#actions option:selected").text().toLowerCase();
-                    new Messi('&iquest;Est&aacute; seguro de que desea '+action+' los atributos' +
+                    new Messi('&iquest;Est&aacute; seguro de que desea '+action+' los índice' +
                             'seleccionados?',
-                            {title: action+' atributos', modal: true, buttons: [{id: 0,
+                            {title: action+' índice', modal: true, buttons: [{id: 0,
                                 label: 'Cancelar', val: 'N'},{id: 1, label: 'Aceptar', val: 'Y'
                             }],
                                 callback: function(val) {
@@ -133,7 +133,7 @@
             <li><a href="/main/">Inicio</a></li>
             <li><a href="/panel_de_control/">Panel de Control</a></li>
             <li><a href="/panel_de_control/?cat=1">Panel Edificios</a></li>
-            <li>Atributos de edificio</li>
+            <li>&Iacute;ndices Energ&eacute;ticos</li>
         </ul>
       <a href="/logout" id="userLogOut">Cerrar sesión</a>
 
@@ -147,7 +147,7 @@
 
     <div id="page_content">
     <div id="contenido_interno">
-        <h2 id="titulo_form" class="building_attr">Atributos de edificio</h2>
+        <h2 id="titulo_form" class="building_attr">&Iacute;ndices Energ&eacute;ticos</h2>
 
 
         <div class="divider" id="divider_top">&nbsp;</div>
@@ -169,7 +169,7 @@
                 <div id="user_actions">
 
                     <a href="/buildings/agregar_atributo/"><span class="plus"></span>
-                        Nuevo atributo de edificio
+                        Nuevo &iacute;ndice energ&eacute;tico
                     </a>
                     <span class="hz_divider"></span>
                     <form method="get" action=".">
@@ -196,7 +196,7 @@
                                 </th>
                                 <th style="width: 20%;">
                                     <a href="#" id="order_type" rel="{{ order_type }}">
-                                        Tipo de atributo
+                                        Tipo de índice
                                         <span class="sort"></span>
                                     </a>
                                 </th>
@@ -258,7 +258,7 @@
                                         </a>
                                     </td>
                                     <td class="c">
-                                        <a class="edit" title="Editar atributo"
+                                        <a class="edit" title="Editar índice"
                                            href="/buildings/editar_b_attr/{{ attr.pk }}/"></a>
                                     </td>
                                 </tr>
