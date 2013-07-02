@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 import datetime
 import hashlib
 import variety
-from location.models import Pais, Estado, Municipio, Colonia, Calle, Region
+from location.models import Pais, Estado, Municipio, Colonia, Calle, Region, Timezones
 from electric_rates.models import ElectricRates, ElectricRatesPeriods
 
 STATUS = (
@@ -12,7 +12,6 @@ STATUS = (
     (0, 'Inactivo'),
     (2, 'Eliminado')
 )
-
 
 class SectoralType(models.Model):
     """ Sector Type Catalog
@@ -986,3 +985,11 @@ class MonthlyData(models.Model):
                    str(self.month) + " - " + str(self.year)
         else:
             return "Mes: " + str(self.month) + " - " + str(self.year)
+
+class TimezonesBuildings(models.Model):
+    building = models.ForeignKey(Building, on_delete=models.PROTECT)
+    time_zone = models.ForeignKey(Timezones, on_delete=models.PROTECT)
+
+    def __unicode__(self):
+        return self.building.building_name + " - " + self.time_zone.name
+

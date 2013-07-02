@@ -161,6 +161,20 @@
                     <span id="sel_region"></span>
 
                 </div>
+
+                <div class="fields_row g12">
+                    <label for="b_electric_rate" class="g3">Tarifa:<span class="required">*</span></label>
+                    <select name="b_electric_rate" id="b_electric_rate" class="g8">
+                        <option value="">Selecciona un tipo de tarifa</option>
+                        {% if tarifas %}
+                        {% for tarifa in tarifas %}
+                        <option value="{{tarifa.id}}" {% if post.b_electric_rate_id == tarifa.id %} selected {% endif %}>{{ tarifa.electric_rate_name }}</option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+                    <span id="sel_electric"></span>
+                </div>
+
                 <div class="fields_row g12">
                     <label for="see_reg" class="g3"></label>
                     <span id="see_reg" class="g8" style="padding: 0px"><a id="see_regions" href="#">Ver Regiones</a></span>
