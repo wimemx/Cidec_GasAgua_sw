@@ -23,11 +23,7 @@ import reports.globals
 from c_center.models import ConsumerUnit
 from reports.models import DataStoreMonthlyGraphs
 from django.contrib.auth.decorators import login_required
-from reports.views import get_data_cluster_consumed_normalized, \
-    rates_for_data_cluster, get_request_data_list_normalized,\
-    get_column_strings_electrical_parameter, get_column_units_list,\
-    get_data_clusters_list, normalize_data_clusters_list,get_data_clusters_json,\
-    get_data_statistics
+
 
 # Other imports
 import variety

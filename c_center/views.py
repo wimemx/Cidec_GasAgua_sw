@@ -1189,7 +1189,8 @@ def b_attr_list(request):
 @login_required(login_url='/')
 def delete_b_attr(request, id_b_attr):
     datacontext = get_buildings_context(request.user)[0]
-    if has_permission(request.user, DELETE, "Eliminar atributos de edificios") \
+    if has_permission(request.user, DELETE, "Eliminar atributos de edificios") or\
+        has_permission(request.user, UPDATE, "Modificar atributos de edificios")\
         or request.user.is_superuser:
         b_attr = get_object_or_404(BuildingAttributes, pk=id_b_attr)
 
@@ -1441,7 +1442,7 @@ def add_cluster(request):
                                            "exitosamente"
                 template_vars["type"] = "n_success"
 
-                if has_permission(request.user, VIEW, "Ver clusters") or \
+                if has_permission(request.user, VIEW, "Ver grupos de empresas") or \
                         request.user.is_superuser:
                     return HttpResponseRedirect("/buildings/clusters?msj=" +
                                                 template_vars["message"] +
@@ -3235,7 +3236,8 @@ def view_companies(request):
 @login_required(login_url='/')
 def status_batch_companies(request):
     if has_permission(request.user, DELETE,
-                      "Baja de empresas") or request.user.is_superuser:
+                      "Baja de empresas"
+                      or "Modificar empresas") or request.user.is_superuser:
         if request.method == "GET":
             raise Http404
         if request.POST['actions'] == 'status':
@@ -3708,7 +3710,7 @@ def status_buildingtype(request, id_btype):
 @login_required(login_url='/')
 def add_sectoraltype(request):
     if has_permission(request.user, CREATE,
-                      "Alta de sectores") or request.user.is_superuser:
+                      "Alta de tipos sectores") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
@@ -7072,8 +7074,7 @@ def save_add_electric_device_popup(request):
 
 @login_required(login_url='/')
 def add_cu(request):
-    if (has_permission(request.user, UPDATE,
-                       "Modificar unidades de consumo") or has_permission(
+    if (has_permission(
             request.user, CREATE, "Alta de unidades de consumo") or
             request.user.is_superuser) and request.method == "POST":
         post = request.POST
@@ -7115,9 +7116,9 @@ def add_cu(request):
 
 @login_required(login_url='/')
 def del_cu(request, id_cu):
-    if (has_permission(request.user, DELETE,
-                       "Eliminar unidades de consumo") or
-            request.user.is_superuser):
+    if (has_permission(request.user, DELETE,"Eliminar unidades de consumo") or\
+        has_permission(request.user, UPDATE,"Modificar unidades de consumo")\
+        or request.user.is_superuser):
         cu = get_object_or_404(ConsumerUnit, pk=int(id_cu))
         HierarchyOfPart.objects.filter(consumer_unit_composite=cu).delete()
         HierarchyOfPart.objects.filter(consumer_unit_leaf=cu).delete()

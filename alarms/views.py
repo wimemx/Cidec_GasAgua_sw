@@ -457,7 +457,7 @@ def status_alarm(request, id_alarm):
 def mostrar_alarma(request, id_alarm):
     datacontext = get_buildings_context(request.user)[0]
     template_vars = {}
-    permission = "Ver suscripciones a alarmas"
+    permission = "Ver alarmas"
     if has_permission(request.user, VIEW,
                       permission) or \
             request.user.is_superuser:
@@ -652,7 +652,7 @@ def add_alarm_suscription(request):
     template_vars["sidebar"] = request.session['sidebar']
     template_vars["company"] = request.session['company']
 
-    permission = "Alta suscripción de alarma"
+    permission = "Suscripción a alarmas"
     #Operación es CREATE
     if has_permission(request.user, CREATE,
                       permission) or \
@@ -705,7 +705,7 @@ def edit_alarm_suscription(request, id_alarm):
     suscripcion=get_object_or_404(UserNotificationSettings, pk=id_alarm)
     template_vars['edit_suscription'] = suscripcion
     template_vars['operation'] = 'edit'
-    permission = "Modificar suscripcion a alarma"
+    permission = "Modificar suscripción a alarmas"
     if has_permission(request.user, UPDATE,
                       permission) or \
             request.user.is_superuser:

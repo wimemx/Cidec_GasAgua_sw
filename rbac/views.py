@@ -702,7 +702,8 @@ def view_roles(request):
 @login_required(login_url='/')
 def delete_role(request, id_role):
     if has_permission(request.user, DELETE, "Eliminar rol") or \
-            request.user.is_superuser:
+            has_permission(request.user, UPDATE, "Modificar rol")\
+            or request.user.is_superuser:
         rol = get_object_or_404(Role, pk=id_role)
         if rol.status:
             rol.status = False
@@ -726,8 +727,9 @@ def delete_role(request, id_role):
 
 @login_required(login_url='/')
 def delete_batch(request):
-    if has_permission(request.user, DELETE, "Eliminar rol") or \
-            request.user.is_superuser:
+    if has_permission(request.user, DELETE, "Eliminar rol")or \
+        has_permission(request.user, UPDATE,"Modificar unidades de consumo")\
+        or request.user.is_superuser:
         mensaje = ''
         if request.method == "GET":
             raise Http404
@@ -1025,7 +1027,7 @@ def delete_user(request, id_user):
 def edit_user(request, id_user):
     if has_permission(request.user,
                       UPDATE,
-                      "Actualizar informacion de usuarios") or \
+                      "Actualizar información de usuarios") or \
             request.user.is_superuser:
         user = get_object_or_404(User, pk=id_user)
         profile = UserProfile.objects.get(user=user)
