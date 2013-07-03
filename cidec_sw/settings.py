@@ -130,7 +130,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'cidec_sw.middleware.timezones.TimezoneMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware'
+    #'debug_toolbar.middleware.DebugToolbarMiddleware'
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
@@ -167,7 +167,7 @@ INSTALLED_APPS = (
     'plupload',
     'djcelery',
     'tareas',
-    'debug_toolbar'
+    #'debug_toolbar'
 )
 
 
@@ -254,7 +254,7 @@ LOGGING = {
 
 GRAPPELLI_ADMIN_TITLE = 'CIDEC'
 ADMIN_MEDIA_PREFIX = ""
-
+"""
 SESSION_ENGINE = 'redis_sessions.session'
 SESSION_REDIS_HOST = 'localhost'
 SESSION_REDIS_PORT = 6379
@@ -269,3 +269,4 @@ CACHES = {
         },
     },
 }
+"""

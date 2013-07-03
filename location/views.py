@@ -1646,6 +1646,8 @@ def region_municipalities(request, id_region, id_state):
 def regions_list(request):
     return render_to_response("location/regions_list.html")
 
+def time_zone_list(request):
+    return render_to_response("location/time_zone_list.html")
 
 @login_required(login_url='/')
 def get_select_municipalities(request, id_state, id_region):
