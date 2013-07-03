@@ -24,7 +24,6 @@ from c_center.models import ConsumerUnit
 from reports.models import DataStoreMonthlyGraphs
 from django.contrib.auth.decorators import login_required
 
-
 # Other imports
 import variety
 
