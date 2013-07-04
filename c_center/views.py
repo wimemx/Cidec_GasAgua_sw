@@ -1189,7 +1189,8 @@ def b_attr_list(request):
 @login_required(login_url='/')
 def delete_b_attr(request, id_b_attr):
     datacontext = get_buildings_context(request.user)[0]
-    if has_permission(request.user, DELETE, "Eliminar atributos de edificios") \
+    if has_permission(request.user, DELETE, "Eliminar atributos de edificios") or\
+        has_permission(request.user, UPDATE, "Modificar atributos de edificios")\
         or request.user.is_superuser:
         b_attr = get_object_or_404(BuildingAttributes, pk=id_b_attr)
 
@@ -1441,7 +1442,7 @@ def add_cluster(request):
                                            "exitosamente"
                 template_vars["type"] = "n_success"
 
-                if has_permission(request.user, VIEW, "Ver clusters") or \
+                if has_permission(request.user, VIEW, "Ver grupos de empresas") or \
                         request.user.is_superuser:
                     return HttpResponseRedirect("/buildings/clusters?msj=" +
                                                 template_vars["message"] +
@@ -3235,7 +3236,8 @@ def view_companies(request):
 @login_required(login_url='/')
 def status_batch_companies(request):
     if has_permission(request.user, DELETE,
-                      "Baja de empresas") or request.user.is_superuser:
+                      "Baja de empresas"
+                      or "Modificar empresas") or request.user.is_superuser:
         if request.method == "GET":
             raise Http404
         if request.POST['actions'] == 'status':
@@ -3708,7 +3710,7 @@ def status_buildingtype(request, id_btype):
 @login_required(login_url='/')
 def add_sectoraltype(request):
     if has_permission(request.user, CREATE,
-                      "Alta de sectores") or request.user.is_superuser:
+                      "Alta de tipos sectores") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
@@ -5280,6 +5282,9 @@ def add_building(request):
         #Se obtienen las regiones
         regiones_lst = Region.objects.all()
 
+        #Se obtienen las regiones
+        zonas_lst = Timezones.objects.all()
+
         #Se obtienen los tipos de atributos de edificios
         tipos_atributos = BuildingAttributesType.objects.filter(
             building_attributes_type_status=1).order_by(
@@ -5292,6 +5297,7 @@ def add_building(request):
                              tipos_edificio_lst=tipos_edificio_lst,
                              tarifas=tarifas,
                              regiones_lst=regiones_lst,
+                             zonas_lst=zonas_lst,
                              tipos_atributos=tipos_atributos,
                              sidebar=request.session['sidebar']
         )
@@ -5320,6 +5326,7 @@ def add_building(request):
             b_long = request.POST.get('b_longitude')
             b_lat = request.POST.get('b_latitude')
             b_region_id = request.POST.get('b_region')
+            b_time_zone = request.POST.get('b_time_zone')
 
             if not bool(b_int):
                 b_int = '0'
@@ -5405,7 +5412,8 @@ def add_building(request):
                 'b_zip': b_zip,
                 'b_long': b_long,
                 'b_lat': b_lat,
-                'b_region_id': int(b_region_id)
+                'b_region_id': int(b_region_id),
+                'b_time_zone': b_time_zone
             }
 
             if continuar:
@@ -5458,6 +5466,14 @@ def add_building(request):
                 newBuilding.save()
                 IndustrialEquipment(alias="SA de "+b_name,
                                     building=newBuilding).save()
+
+                #Se da de alta la zona horaria del edificio
+                print ("prueba")
+                timeZone = Timezones.objects.get(id=b_time_zone)
+                newTimeZone = TimezonesBuildings(
+                    building = newBuilding,
+                    time_zone = timeZone)
+                newTimeZone.save()
                 #Se da de alta la fecha de corte
 
                 date_init = datetime.datetime.today().utcnow().replace(
@@ -5566,6 +5582,10 @@ def edit_building(request, id_bld):
         #Se obtienen las tarifas
         tarifas = ElectricRates.objects.all()
 
+        #Se obtiene la zona horaria
+        t_zone = Timezones.objects.all()
+        t_zone_id = TimezonesBuildings.objects.get(building=id_bld)
+
         #Se obtienen los tipos de edificios
         tipos_edificio_lst = BuildingType.objects.filter(
             building_type_status=1).order_by('building_type_name')
@@ -5655,7 +5675,9 @@ def edit_building(request, id_bld):
             'b_long': buildingObj.building_long_address,
             'b_lat': buildingObj.building_lat_address,
             'b_region_id': buildingObj.region_id,
-            'b_attributes': string_attributes
+            'b_attributes': string_attributes,
+            'b_time_zone_id' : t_zone_id.time_zone.id
+
         }
 
         if request.method == "POST":
@@ -5676,6 +5698,7 @@ def edit_building(request, id_bld):
             b_long = request.POST.get('b_longitude')
             b_lat = request.POST.get('b_latitude')
             b_region_id = request.POST.get('b_region')
+            b_time_zone = request.POST.get('b_time_zone')
 
             continuar = True
             if b_name == '':
@@ -5754,7 +5777,8 @@ def edit_building(request, id_bld):
                 'b_zip': buildingObj.building_code_zone,
                 'b_long': buildingObj.building_long_address,
                 'b_lat': buildingObj.building_lat_address,
-                'b_region_id': buildingObj.region_id
+                'b_region_id': buildingObj.region_id,
+                'b_time_zone_id' : t_zone_id.time_zone.id
             }
 
             if continuar:
@@ -5857,6 +5881,10 @@ def edit_building(request, id_bld):
                             building_attributes_value=atr_value_arr[2]
                         )
                         newBldAtt.save()
+                # Se actualiza zona horaria
+                hour_type = Timezones.objects.get(id=b_time_zone)
+                t_zone_id.time_zone = hour_type
+                t_zone_id.save()
 
                 message = "Edificio editado exitosamente"
                 _type = "n_success"
@@ -5873,6 +5901,7 @@ def edit_building(request, id_bld):
                              tipos_edificio_lst=tipos_edificio_lst,
                              tarifas=tarifas,
                              regiones_lst=regiones_lst,
+                             zonas_lst=t_zone,
                              tipos_atributos=tipos_atributos,
                              operation="edit",
                              message=message,
@@ -7045,8 +7074,7 @@ def save_add_electric_device_popup(request):
 
 @login_required(login_url='/')
 def add_cu(request):
-    if (has_permission(request.user, UPDATE,
-                       "Modificar unidades de consumo") or has_permission(
+    if (has_permission(
             request.user, CREATE, "Alta de unidades de consumo") or
             request.user.is_superuser) and request.method == "POST":
         post = request.POST
@@ -7088,9 +7116,9 @@ def add_cu(request):
 
 @login_required(login_url='/')
 def del_cu(request, id_cu):
-    if (has_permission(request.user, DELETE,
-                       "Eliminar unidades de consumo") or
-            request.user.is_superuser):
+    if (has_permission(request.user, DELETE,"Eliminar unidades de consumo") or\
+        has_permission(request.user, UPDATE,"Modificar unidades de consumo")\
+        or request.user.is_superuser):
         cu = get_object_or_404(ConsumerUnit, pk=int(id_cu))
         HierarchyOfPart.objects.filter(consumer_unit_composite=cu).delete()
         HierarchyOfPart.objects.filter(consumer_unit_leaf=cu).delete()

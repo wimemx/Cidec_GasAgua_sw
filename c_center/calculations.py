@@ -418,7 +418,7 @@ def obtenerTipoPeriodoObj(fecha, region):
         region=region,
         date_interval__in=horario_ver_inv,
         groupdays=grupo_id, time_init__lte=fecha, time_end__gt=fecha).values(
-            "period_type")[:1]
+            "pk", "period_type")[:1]
 
     return electric_type[0]
 
@@ -725,8 +725,10 @@ def daytag_reading(reading_id):
                     tag = 1
 
                 #Guarda el registro etiquetado
+                period_type = ElectricRatesPeriods.objects.get(
+                    pk=reading_period_type["pk"])
                 newTaggedReading = ElectricDataTags(
-                    electric_rates_periods=reading_period_type,
+                    electric_rates_periods=period_type,
                     electric_data=readingObj,
                     identifier=str(tag)
                 )

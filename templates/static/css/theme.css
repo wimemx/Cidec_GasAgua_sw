@@ -1012,4 +1012,10 @@ table .bolder{
     top: 550px !important;
     left: 800px !important;
 }
-
+#grid_container{
+    padding: 1px;
+    border: solid 1px #5692a5;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+}

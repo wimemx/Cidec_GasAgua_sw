@@ -16,8 +16,8 @@
 <script type="text/javascript" src="/static/js/external/maskedinput.js"></script>
 <script type="text/javascript" src="/static/js/external/autoNumeric-1.7.4.js"></script>
 <script type="text/javascript" src="/static/js/external/jquery.metadata.js"></script>
-<script type="text/javascript" src="/static/js/external/maps_api_js.js"></script>
-    <script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
+<script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
 <script type="text/javascript">
     var form_valid = true;
     var send_form = 0;
@@ -27,6 +27,26 @@
     var marker;
 
     var link_state = '';
+
+    function geolocate(){
+        var address = $("#b_street").val()+" "
+                +$("#b_ext").val()+" "
+                +$("#b_neighborhood").val()+" "
+                +$("#b_municipality").val()+" "
+                +$("#b_state").val()+" "
+                +$("#b_country").val();
+        geocoder.geocode( { 'address': address}, function(results, status) {
+        if (status == google.maps.GeocoderStatus.OK) {
+          mapBusiness.setCenter(results[0].geometry.location);
+          marker.setPosition(results[0].geometry.location);
+        } else {
+          //alert('Geocode was not successful for the following reason: ' + status);
+        }
+      });
+
+
+    }
+
     $(document).ready(function(){
 
 
@@ -41,6 +61,27 @@
                 height		: '70%'
             });
         });
+
+        $('a#see_time_zone').click(function(e) {
+            e.preventDefault();
+            window.parent.$.fancybox({
+                href        :'/location/zonas_horarias/',
+                type        :'iframe',
+                maxWidth	: 1000,
+                maxHeight	: 700,
+                width		: '70%',
+                height		: '70%'
+            });
+        });
+
+
+        $("#b_country").blur(function(){geolocate();});
+        $("#b_state").blur(function(){geolocate();});
+        $("#b_municipality").blur(function(){geolocate();});
+        $("#b_neighborhood").blur(function(){geolocate();});
+        $("#b_street").blur(function(){geolocate();});
+        $("#b_ext").blur(function(){geolocate();});
+
 
         $('#b_mt2').autoNumeric({asep:',', vMin: "0.00", vMax: "9999.99"});
 
@@ -457,10 +498,25 @@
             draggable: true
         });
 
-
         if($('#b_latitude').val() != '0' && $('#b_longitude').val() != '0' ){
             marker.setPosition(new google.maps.LatLng($('#b_latitude').val(), $('#b_longitude').val()));
             mapBusiness.setCenter(marker.getPosition());
+        }else{
+           // Try HTML5 geolocation
+            if(navigator.geolocation) {
+
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    latlng = new google.maps.LatLng(position.coords.latitude,
+                            position.coords.longitude);
+
+                    mapBusiness.setCenter(latlng);
+                    mapBusiness.setZoom(14);
+                    marker.setPosition(latlng);
+                }, function() {
+                    mapBusiness.setCenter(latlng);
+                    marker.position= latlng;
+                });
+            }
         }
     }
 

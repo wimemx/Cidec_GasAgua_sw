@@ -457,7 +457,7 @@ def status_alarm(request, id_alarm):
 def mostrar_alarma(request, id_alarm):
     datacontext = get_buildings_context(request.user)[0]
     template_vars = {}
-    permission = "Ver suscripciones a alarmas"
+    permission = "Ver alarmas"
     if has_permission(request.user, VIEW,
                       permission) or \
             request.user.is_superuser:
@@ -470,7 +470,8 @@ def mostrar_alarma(request, id_alarm):
         template_vars['building'] = get_building_siblings(
             alarm.consumer_unit.building)
         template_vars['compania'] = template_vars['building'][0].company
-        template_vars['company'] = get_company_siblings(template_vars['compania'])
+        template_vars['company'] = get_company_siblings(
+            template_vars['compania'])
         template_vars['curr_cluster'] = template_vars['company'][0].cluster
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("alarms/alarm_detail.html",
@@ -493,7 +494,8 @@ def mostrar_suscripcion_alarma(request, id_alarm):
         alarm = get_object_or_404(UserNotificationSettings, id=id_alarm)
 
         template_vars["usuario"] = alarm.user
-        template_vars['building'] = alarm.alarm.consumer_unit.building.building_name
+        template_vars['building'] = alarm.alarm.consumer_unit.building.\
+            building_name
         template_vars['parameter'] = alarm.alarm.electric_parameter.name
 
         if alarm.notification_type == 1:
@@ -577,8 +579,6 @@ def alarm_suscription_list(request):
                 order = "-status"
                 order_status = "asc"
 
-
-
         if "search" in request.GET:
             search = request.GET["search"]
             if request.user.is_superuser:
@@ -605,7 +605,8 @@ def alarm_suscription_list(request):
             if request.user.is_superuser:
                 lista = UserNotificationSettings.objects.all().order_by(order)
             else:
-                lista = UserNotificationSettings.objects.filter(user=request.user)
+                lista = UserNotificationSettings.objects.filter(
+                    user=request.user)
 
         # If page request (9999) is out of range, deliver last page of results.
         order_consumer = 'asc'
@@ -651,7 +652,7 @@ def add_alarm_suscription(request):
     template_vars["sidebar"] = request.session['sidebar']
     template_vars["company"] = request.session['company']
 
-    permission = "Alta suscripción de alarma"
+    permission = "Suscripción a alarmas"
     #Operación es CREATE
     if has_permission(request.user, CREATE,
                       permission) or \
@@ -704,7 +705,7 @@ def edit_alarm_suscription(request, id_alarm):
     suscripcion=get_object_or_404(UserNotificationSettings, pk=id_alarm)
     template_vars['edit_suscription'] = suscripcion
     template_vars['operation'] = 'edit'
-    permission = "Modificar suscripcion a alarma"
+    permission = "Modificar suscripción a alarmas"
     if has_permission(request.user, UPDATE,
                       permission) or \
             request.user.is_superuser:
@@ -717,13 +718,9 @@ def edit_alarm_suscription(request, id_alarm):
         template_vars["lista"] = lista
 
     if request.POST:
-
-
             alarma = Alarms.objects.get(pk=request.POST['alarmselector'])
             notificacion = request.POST['notiselect']
             usuario = request.user
-
-
             usernoti = UserNotificationSettings.objects.get(pk=id_alarm)
             usernoti.alarm = alarma
             usernoti.user = usuario
@@ -920,6 +917,7 @@ def user_notifications(request):
                             alarm_event__alarm__consumer_unit__building__pk
                             =buildings).order_by("-alarm_event__triggered_time")
 
+
         arr_day_notif = {}
 
         today_str = str(datetime.date.today())
@@ -957,8 +955,6 @@ def user_notifications(request):
         template_vars['notifications'] = arr_day_notif
         template_vars['today_str'] = today_str
         template_vars['super_user']= request.user.is_superuser
-
-
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("alarms/notification_list.html",
                                   template_vars_template)

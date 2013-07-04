@@ -208,6 +208,8 @@ def render_instant_measurements(
                                             "Reporte no disponible para la "
                                             "unidad de consumo seleccionada "
                                             "</h1>")
+    else:
+        template_variables['rows_len'] = len(data_clusters_json)
 
     template_variables['rows'] = data_clusters_json
 
@@ -503,6 +505,8 @@ def render_report_powerprofile_by_month(
                                             "o verifique que el sistema de adquisición"
                                             "se encuentra funcionando correctamente"
                                             "</h2>")
+    else:
+        template_variables['rows_len'] = len(data_clusters_json)
 
     template_variables['rows'] = data_clusters_json
 

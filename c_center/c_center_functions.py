@@ -1247,6 +1247,7 @@ def dailyReportAll():
     print "Done dailyReportAll"
 
 
+def dailyReport(building, consumer_unit, today):
     #Inicializacion de variables
     kwh_totales = 0
     kwh_punta = 0
@@ -3542,25 +3543,36 @@ def get_google_timezone(building):
     bld_lat = building.building_lat_address
     bld_long = building.building_long_address
 
-    #Si el edificio no tiene coordenadas. Se toman las coordenadas por default
-    if not bld_lat and not bld_long:
-        #Obtener la zona seleccionada
-        #Obtener las coordenadas por default
-        pass
-
-    now_timestamp = int(time.time())
-
+    #Se obtiene el Timezone del edificio
     try:
-        timezone_json = urllib2.urlopen('https://maps.googleapis.com/maps/api/'
-                                        'timezone/json?location='+str(bld_lat)+
-                                        ','+str(bld_long)+'&timestamp='+
-                                        str(now_timestamp)+'&sensor=false')
-    except IOError:
-        print "URL Error. No Connection"
+        bld_timezone = TimezonesBuildings.objects.get(building = building)
+    except ObjectDoesNotExist:
+        print "Building with no Timezone"
         return False
     else:
-        print simplejson.load(timezone_json)
-        return 0
+        #Si el edificio no tiene coordenadas. Se toman las coordenadas por default
+        if not bld_lat and not bld_long:
+            #Obtener las coordenadas por default
+            bld_lat = bld_timezone.time_zone.latitude
+            bld_long = bld_timezone.time_zone.longitude
+
+        now_timestamp = int(time.time())
+
+        try:
+            timezone_json = urllib2.urlopen('https://maps.googleapis.com/maps/api/'
+                                            'timezone/json?location='+str(bld_lat)+
+                                            ','+str(bld_long)+'&timestamp='+
+                                            str(now_timestamp)+'&sensor=false')
+        except IOError:
+            print "URL Error. No Connection"
+            return False
+        else:
+            json_t = simplejson.load(timezone_json)
+            if json_t['dstOffset'] == 0:
+                return bld_timezone.time_zone.raw_offset
+            else:
+                return bld_timezone.time_zone.dst_offset
+
 
 
 

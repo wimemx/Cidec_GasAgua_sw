@@ -17,13 +17,13 @@
         History.forward();
         window.onbeforeunload = function () {
             History.forward();
-        }
+        };
         $(document).ready(function(){
             $("input").uniform();
             $('#password').attr("autocomplete", "off");
-            setTimeout('$("#password").val("");', 150);
+            setTimeout('$("#password").val("");', 250);
             $('#username').attr("autocomplete", "off");
-            setTimeout('$("#username").val("");', 150);
+            setTimeout('$("#username").val("");', 250);
         });
     </script>
 </head>

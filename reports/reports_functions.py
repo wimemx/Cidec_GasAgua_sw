@@ -21,9 +21,7 @@ import c_center
 import reports.globals
 
 from c_center.models import ConsumerUnit
-
 from reports.models import DataStoreMonthlyGraphs
-
 from django.contrib.auth.decorators import login_required
 
 # Other imports
@@ -962,12 +960,15 @@ def get_consumer_unit_electrical_parameter_data_clustered(
             if certainty_current:
                 value_current = instant_dictionary_current['value']
                 if value_current is None:
-                    value_current = consumer_unit_data['value']
+                    value_current = abs(consumer_unit_data['value'])
 
                 else:
-                    value_current += consumer_unit_data['value']
+                    value_current += abs(consumer_unit_data['value'])
 
-                instant_dictionary_current['value'] = value_current
+                if electrical_parameter_name == "PF" and value_current > 1:
+                    instant_dictionary_current['value'] = 1
+                else:
+                    instant_dictionary_current['value'] = value_current
             else:
                 instant_dictionary_current['value'] = None
             instants_dictionary[instant_key_current] =\
@@ -1176,8 +1177,8 @@ def data_store_monthly_graphs(consumer_unit_id,month, year):
                     break
                 else:
                     continue
-        for i in range(0, len(month_array)):
 
+        for i in range(0, len(month_array)):
             if month_array[i]:
                 month_array[i] = get_data_statistics(month_array[i])
 
@@ -1189,8 +1190,8 @@ def data_store_monthly_graphs(consumer_unit_id,month, year):
 def calculate_month_graphs(cu, m, y):
     data_clusters_json, statistics, data_cluster_consumed = \
         Data_Store_Monthly_Graphs(cu, m, y)
-    month_data, created = DataStoreMonthlyGraphs.objects.get_or_create\
-            (year=y, month=m, consumer_unit=cu)
+    month_data, created = DataStoreMonthlyGraphs.objects.get_or_create(
+        year=y, month=m, consumer_unit=cu)
     month_data.instant_data = data_clusters_json
     month_data.data_consumed = data_cluster_consumed
     month_data.statistics = statistics
@@ -1207,11 +1208,11 @@ def insert_data_Graph_To_Model():
 def insert_rest_months(initial_month, initial_year, end_month, end_year):
     consumer_unit = ConsumerUnit.objects.all()
     for cu in consumer_unit:
-        ym_start= 12*initial_year + initial_month - 1
-        ym_end= 12*end_year + end_month
+        ym_start = 12*initial_year + initial_month - 1
+        ym_end = 12*end_year + end_month
         for ym in range( ym_start, ym_end ):
-                y, m = divmod( ym, 12 )
-                calculate_month_graphs(cu, m+1, y)
+            y, m = divmod( ym, 12 )
+            calculate_month_graphs(cu, m+1, y)
 
 
 

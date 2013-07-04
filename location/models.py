@@ -4,7 +4,12 @@ from django.db import models
 
 class Timezones(models.Model):
     name = models.CharField(max_length=140)
-    raw_offset = models.SmallIntegerField(max_length=2)
+    raw_offset = models.SmallIntegerField(max_length=2, default=-6)
+    dst_offset = models.IntegerField(max_length=2, default=-5)
+    longitude = models.DecimalField("Longitud", max_digits=10,
+                                                decimal_places=6, default=0)
+    latitude = models.DecimalField("Latitud", max_digits=10,
+                                               decimal_places=6, default=0)
 
     def __unicode__(self):
         return self.name
@@ -37,10 +42,6 @@ class Estado(models.Model):
 
 class Municipio(models.Model):
     municipio_name = models.CharField(max_length=128)
-    raw_offset = models.IntegerField(max_length=2)
-    dst_offset = models.IntegerField(max_length=2)
-    border = models.BooleanField(default=False)
-    timezone = models.ForeignKey(Timezones, on_delete=models.PROTECT, blank=True, null=True)
 
     def __unicode__(self):
         return self.municipio_name
