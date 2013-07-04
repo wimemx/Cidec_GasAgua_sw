@@ -1247,6 +1247,7 @@ def dailyReportAll():
     print "Done dailyReportAll"
 
 
+def dailyReport(building, consumer_unit, today):
     #Inicializacion de variables
     kwh_totales = 0
     kwh_punta = 0
