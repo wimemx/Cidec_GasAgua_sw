@@ -147,24 +147,25 @@ function drawVisualization() {
     var True = true;
     var False = false;
     var rows_data = {% autoescape off %}{{ rows }}{% endautoescape %};
-    for(var row_index = 0; row_index < rows_data.length; row_index++){
+
+    fech_ini = new Date();
+    fech_ini.setTime((rows_data[0][0]['datetime']*1000));
+    for(var row_index = 0; row_index < {{ rows_len }}; row_index++){
         var row_data = rows_data[row_index];
         var row_array = [];
-        for(var data_index = 0; data_index < row_data.length; data_index++){
+        var len_rd = row_data.length;
+        for(var data_index = 0; data_index < len_rd; data_index++){
             var data_object = row_data[data_index];
             var object_datetime = new Date();
             object_datetime.setTime((data_object['datetime']*1000));
-            if(fech_ini == ''){
-                fech_ini = object_datetime;
-            }
+            //if(fech_ini == ''){
+            //    fech_ini = object_datetime;
+            //}
             fech_fin = object_datetime;
             row_array.push(object_datetime);
             var object_electric_data;
-            if(data_index == pf_index && Math.abs(data_object['value']) > 1){
-                object_electric_data = 1;
-            }else{
-                object_electric_data = Math.abs(data_object['value']);
-            }
+            object_electric_data = data_object['value'];
+
             row_array.push(object_electric_data);
             var object_certainty = data_object['certainty'];
             row_array.push(object_certainty);

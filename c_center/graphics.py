@@ -125,7 +125,10 @@ def get_consumer_unit_electric_data_raw(
                          certainty=False))
             else:
                 #print "data"
-                electric_data = electric_data_values[cont][electric_data_name]
+                electric_data = abs(
+                    electric_data_values[cont][electric_data_name])
+                if electric_data_name == "PF" and electric_data > 1:
+                    electric_data = 1
                 medition_date = electric_data_values[cont]['medition_date']
                 electric_data_raw.append(
                     dict(datetime=int(time.mktime(
