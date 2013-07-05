@@ -960,12 +960,15 @@ def get_consumer_unit_electrical_parameter_data_clustered(
             if certainty_current:
                 value_current = instant_dictionary_current['value']
                 if value_current is None:
-                    value_current = consumer_unit_data['value']
+                    value_current = abs(consumer_unit_data['value'])
 
                 else:
-                    value_current += consumer_unit_data['value']
+                    value_current += abs(consumer_unit_data['value'])
 
-                instant_dictionary_current['value'] = value_current
+                if electrical_parameter_name == "PF" and value_current > 1:
+                    instant_dictionary_current['value'] = 1
+                else:
+                    instant_dictionary_current['value'] = value_current
             else:
                 instant_dictionary_current['value'] = None
             instants_dictionary[instant_key_current] =\

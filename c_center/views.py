@@ -198,6 +198,8 @@ def dw_specific(request):
 def set_default_building(request, id_building):
     """Sets the default building for reports"""
     request.session['main_building'] = Building.objects.get(pk=id_building)
+    request.session['timezone'] = get_google_timezone(
+        request.session['main_building'])
     c_b = CompanyBuilding.objects.get(building=request.session['main_building'])
     request.session['company'] = c_b.company
     request.session['consumer_unit'] = \
