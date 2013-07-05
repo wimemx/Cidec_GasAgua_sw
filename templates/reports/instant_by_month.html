@@ -502,7 +502,7 @@ $(document).on("ready", function(){
                     <td>{{ forloop.counter }}</td>
                     <td class="table_value">{% if data.mean %}{{ data.mean|floatformat:2 }}{% else %}-{% endif %}</td>
                     <td class="table_value">{% if data.maximum %}{{ data.maximum|floatformat:2 }}{% else %}-{% endif %}</td>
-                    <td class="table_value">{% if data.minimum %}{{ data.minimum|floatformat:2 }}{% else %}-{% endif %}</td>
+                    <td class="table_value">{% if data.minimum >= 0 %}{{ data.minimum|floatformat:2 }}{% else %}-{% endif %}</td>
                 </tr>
                 {% endfor %}
                 </tbody>
