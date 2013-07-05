@@ -324,6 +324,19 @@
             $("#sel_region").removeClass("incorrect");
             $("#sel_region").removeClass("correct");
             $("#sel_region").addClass(_span);
+
+            var region = $("#b_time_zone");
+            if(region.val()==''){
+                _span = "incorrect";
+                form_valid = false;
+            }else{
+                _span = "correct";
+            }
+            $("#sel_time_zone").removeClass("incorrect");
+            $("#sel_time_zone").removeClass("correct");
+            $("#sel_time_zone").addClass(_span);
+
+
         }
         if (form_valid){
             send_form++;
