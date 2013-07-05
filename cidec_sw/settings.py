@@ -143,7 +143,7 @@ WSGI_APPLICATION = 'cidec_sw.wsgi.application'
 TEMPLATE_DIRS = (os.path.join(PROJECT_PATH, 'templates'))#'/Users/wime/Dev/wime_dev/cidec_sw/templates',)
 
 INSTALLED_APPS = (
-    #'grappelli',
+    'grappelli',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -254,6 +254,7 @@ LOGGING = {
 
 GRAPPELLI_ADMIN_TITLE = 'CIDEC'
 ADMIN_MEDIA_PREFIX = ""
+
 """
 SESSION_ENGINE = 'redis_sessions.session'
 SESSION_REDIS_HOST = 'localhost'

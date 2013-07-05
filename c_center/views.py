@@ -198,6 +198,8 @@ def dw_specific(request):
 def set_default_building(request, id_building):
     """Sets the default building for reports"""
     request.session['main_building'] = Building.objects.get(pk=id_building)
+    request.session['timezone'] = get_google_timezone(
+        request.session['main_building'])
     c_b = CompanyBuilding.objects.get(building=request.session['main_building'])
     request.session['company'] = c_b.company
     request.session['consumer_unit'] = \
@@ -7469,6 +7471,7 @@ def view_cutdates(request):
         paginator = Paginator(contenedorMonthly, 12) # muestra 10 resultados por pagina
         template_vars = dict(order_billing=order_billing,
                              datacontext=datacontext,
+                             empresa=empresa,
                              company=request.session['company'],
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
