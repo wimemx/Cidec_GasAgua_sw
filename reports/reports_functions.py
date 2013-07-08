@@ -581,7 +581,7 @@ def get_data_statistics(
         "median": data_cluster_median,
         "standard_deviation": data_cluster_standard_deviation
     }
-
+    print statistics
     return statistics
 
 

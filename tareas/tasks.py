@@ -47,10 +47,10 @@ def restore_data(_file, dir_path):
             f_i = fi
             while f_i < ff:
                 getMonthlyReport(cu, f_i.month, f_i.year)
-
+                month = datetime.datetime(f_i.year, f_i.month, 1)
                 cut = c_center.models.MonthlyCutDates.objects.get(
                     building=cu.building,
-                    billing_month=f_i.month
+                    billing_month=month
                 )
                 if cut.date_end:
                     save_historic_delay.delay(cut, cu.building)
@@ -468,9 +468,15 @@ def last_data_received():
 
     for cu in cus:
         profile = cu.profile_powermeter
+        print profile
         last_data = c_center.models.ElectricDataTemp.objects.filter(
-            profile_powermeter=profile).order_by("-medition_date")[0]
-        date_last = last_data.medition_date
+            profile_powermeter=profile).order_by("-medition_date").values(
+                "medition_date")
+        if last_data:
+            last_data = last_data[0]
+        else:
+            continue
+        date_last = last_data["medition_date"]
         now_dt = datetime.datetime.now(tz=pytz.utc)
         try:
             alarm_cu = alarms.models.Alarms.objects.get(
