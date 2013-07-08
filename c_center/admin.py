@@ -434,3 +434,5 @@ admin.site.register(c_center.models.MonthlyData, MonthlyDataAdmin)
 admin.site.register(c_center.models.HMHistoricData)
 
 admin.site.register(c_center.models.TimezonesBuildings)
+
+admin.site.register(c_center.models.DaySavingDates)

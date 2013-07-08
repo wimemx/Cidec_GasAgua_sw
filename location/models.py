@@ -42,6 +42,7 @@ class Estado(models.Model):
 
 class Municipio(models.Model):
     municipio_name = models.CharField(max_length=128)
+    border = models.BooleanField(default=False)
 
     def __unicode__(self):
         return self.municipio_name
