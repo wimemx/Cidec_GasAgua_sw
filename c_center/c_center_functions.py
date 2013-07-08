@@ -3574,6 +3574,81 @@ def get_google_timezone(building):
                 return bld_timezone.time_zone.dst_offset
 
 
+def replace_accents(with_accents):
+
+    accents = {
+        'á':'a',
+        'é':'e',
+        'í':'i',
+        'ó':'o',
+        'ú':'u',
+        'Á':'A',
+        'É':'E',
+        'Í':'I',
+        'Ó':'O',
+        'Ú':'U'
+    }
+
+    for key in accents.keys():
+        with_accents = with_accents.replace(key,accents[key])
+
+
+    return with_accents
+
+
+def crawler_get_municipalities():
+    states = Estado.objects.all()
+    cont_total = 0
+    for state in states:
+        safe_name = replace_accents(state.estado_name.lower().replace(" ","-").encode('UTF-8'))
+        if safe_name == 'estado-de-mexico':
+            safe_name = 'mexico'
+        try:
+            page = urllib2.urlopen("http://municipios.com.mx/"+safe_name+"/")
+        except IOError:
+            print "URL Error. No Connection"
+            return False
+        else:
+            soup = BeautifulSoup(page.read())
+
+            tablasTarifa = soup.find_all('table', {'width':'381'})
+
+            for tabla in tablasTarifa:
+                header_t = tabla.find('tr').find_all('td')
+                if len(header_t) > 1:
+                    if str(header_t[1].find(text=True)).replace(
+                        '\n','').replace('\t','').strip() == 'Nombre del Municipio':
+                        renglones_tarifa = tabla.find_all('tr')
+                        del renglones_tarifa[0]
+                        print "Estado:",safe_name
+                        print len(renglones_tarifa)
+                        cont_total += len(renglones_tarifa)
+                        for chld in renglones_tarifa:
+                            tds = chld.find_all('td')
+                            print tds[1].find(text=True).encode('UTF-8')
+
+                            mun = Municipio(
+                                municipio_name = tds[1].find(text=True).encode('UTF-8'),
+                                border = False
+                            )
+                            mun.save()
+
+                            estado_mun = EstadoMunicipio(
+                                estado = state,
+                                municipio = mun
+                            )
+                            estado_mun.save()
+
+                        print "------------------"
+                    else:
+                        continue
+    print "Total: ", cont_total
+
+    print "Finished"
+    return True
+
+
+
 
 
 

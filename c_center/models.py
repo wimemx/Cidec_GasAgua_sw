@@ -986,10 +986,20 @@ class MonthlyData(models.Model):
         else:
             return "Mes: " + str(self.month) + " - " + str(self.year)
 
+class DaySavingDates(models.Model):
+    identifier = models.CharField("Identificador", max_length=128)
+    summer_date = models.DateTimeField()
+    winter_date = models.DateTimeField()
+    border = models.BooleanField(default=False)
+
+    def __unicode__(self):
+        return self.identifier
+
 class TimezonesBuildings(models.Model):
     building = models.ForeignKey(Building, on_delete=models.PROTECT)
     time_zone = models.ForeignKey(Timezones, on_delete=models.PROTECT)
+    day_saving_date = models.ForeignKey(DaySavingDates, on_delete=models.PROTECT
+        , default=None)
 
     def __unicode__(self):
         return self.building.building_name + " - " + self.time_zone.name
-
