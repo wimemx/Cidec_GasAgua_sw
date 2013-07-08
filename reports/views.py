@@ -9,6 +9,7 @@ import sys
 import csv
 import decimal
 import ast
+import json
 
 # Django imports
 import django.http
@@ -580,9 +581,7 @@ def render_report_consumed_by_month_new(
     month = int(request.GET['month'])
     year = int(request.GET['year'])
 
-
-
-    electrical_parameter_name ="TotalkWhIMPORT"
+    electrical_parameter_name = "TotalkWhIMPORT"
     days = variety.getMonthDays(month, year)
     first_week_start_datetime = days[0] + datetime.timedelta(days=1)
     last_week_end_datetime = days[-1] + datetime.timedelta(days=2)
@@ -591,16 +590,12 @@ def render_report_consumed_by_month_new(
     # For the purposes of this report, the granularity is an hour but this is
     # intended to be extended, it should be retrieved as GET parameter.
     #
-    granularity_seconds = 300
-    data_cluster_consumed =\
-        get_data_cluster_consumed_normalized(
-            consumer_unit_id,
-            first_week_start_datetime,
-            last_week_end_datetime,
-            electrical_parameter_name,
-            granularity_seconds)
+    month_graphs = DataStoreMonthlyGraphs.objects.get(
+        consumer_unit_id=consumer_unit_id, year=year, month=month)
+    data_cluster_consumed = month_graphs.data_consumed
     template_variables['rows'] = data_cluster_consumed
-    maximun, minimun = get_data_cluster_limits(data_cluster_consumed)
+    dc_object = json.loads(data_cluster_consumed)
+    maximun, minimun = get_data_cluster_limits(dc_object)
 
     if maximun <= minimun:
         minimun = maximun - 1
@@ -675,10 +670,6 @@ def render_report_consumed_by_month_new(
 
     if cu.building.electric_rate.electric_rate_name == "H-M":
         template_variables['periods'] = True
-
-
-    template_variables['rows'] = DataStoreMonthlyGraphs.objects.get(
-        consumer_unit_id=consumer_unit_id, year=year, month=month).data_consumed
 
     template_context =\
         django.template.context.RequestContext(request, template_variables)

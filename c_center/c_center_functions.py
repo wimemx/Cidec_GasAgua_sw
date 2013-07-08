@@ -1700,19 +1700,17 @@ def calculateMonthlyReport(consumer_u, month, year):
 
 
 def save_historic(monthly_cutdate, building):
-    try:
-        if building.electric_rate.pk == 1:
-            exist_historic = HMHistoricData.objects.get(
-                monthly_cut_dates=monthly_cutdate)
-        elif building.electric_rate.pk == 2:
-            exist_historic = DacHistoricData.objects.get(
-                monthly_cut_dates=monthly_cutdate)
-        else:#if building.electric_rate.pk == 3:
-            exist_historic = T3HistoricData.objects.get(
-                monthly_cut_dates=monthly_cutdate)
-    except ObjectDoesNotExist:
-        pass
-    else:
+
+    if building.electric_rate.pk == 1:
+        exist_historic = HMHistoricData.objects.filter(
+            monthly_cut_dates=monthly_cutdate)
+    elif building.electric_rate.pk == 2:
+        exist_historic = DacHistoricData.objects.filter(
+            monthly_cut_dates=monthly_cutdate)
+    else:#if building.electric_rate.pk == 3:
+        exist_historic = T3HistoricData.objects.filter(
+            monthly_cut_dates=monthly_cutdate)
+    if exist_historic:
         exist_historic.delete()
 
     month = monthly_cutdate.billing_month.month
@@ -3484,6 +3482,17 @@ def parse_file(_file):
             consumer_units.append(
                 ConsumerUnit.objects.get(profile_powermeter=powerp))
         dates_arr.append(medition_date)
+        elec_data = ElectricDataTemp.objects.filter(
+            profile_powermeter=powerp,
+            medition_date=medition_date
+        )
+        if elec_data:
+            elec_pks = [elec.pk for elec in elec_data]
+            tags = ElectricDataTags.objects.filter(
+                electric_data__pk__in=elec_pks)
+            tags.delete()
+            elec_data.delete()
+
         elec_data = ElectricDataTemp(
             profile_powermeter=powerp,
             medition_date=medition_date,

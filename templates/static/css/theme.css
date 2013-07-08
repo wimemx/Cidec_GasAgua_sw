@@ -616,6 +616,14 @@ a.aqua_btn:hover, a.grey_btn:hover{
     padding: 6px 11px;
 }
 
+#add_node{
+    margin-left: 50px;
+    margin-top: 10px;
+}
+#edit_node{
+    margin-left: 30px;
+    margin-top: 10px;
+}
 
 /*------Notification Bars------*/
 .notif{
@@ -1019,3 +1027,4 @@ table .bolder{
     -moz-border-radius: 5px;
     -webkit-border-radius: 5px;
 }
+

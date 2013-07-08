@@ -15,8 +15,14 @@ import django.utils.timezone
 import django.template.context
 
 import alarms
-import data_warehouse_extended
-import c_center
+from data_warehouse_extended.models import ElectricalParameter
+from data_warehouse_extended.views import get_electrical_parameter, \
+    get_consumer_unit_electrical_parameter_data_list, get_instant_delta_all, \
+    get_consumer_unit_profile,get_instant_delta,get_instants_list
+from c_center.c_center_functions import get_consumer_units
+from c_center.graphics import get_consumer_unit_electric_data_raw
+from c_center.calculations import obtenerTipoPeriodoObj
+import reports
 
 import reports.globals
 
@@ -138,7 +144,7 @@ def get_column_units_list(
         in request_data_list_normalized:
 
         try:
-            nm = data_warehouse_extended.models.ElectricalParameter.objects.get(
+            nm = ElectricalParameter.objects.get(
                 name=electrical_parameter_name
             )
             nm = nm.name_transactional
@@ -162,7 +168,6 @@ def get_data_cluster_consumed_normalized(
         electrical_parameter_name,
         granularity_seconds
 ):
-
     #
     # Localize datetimes (if neccesary) and convert to UTC
     #
@@ -184,7 +189,7 @@ def get_data_cluster_consumed_normalized(
     # Get the Electrical Parameter
     #
     electrical_parameter =\
-        data_warehouse_extended.views.get_electrical_parameter(
+        get_electrical_parameter(
             electrical_parameter_name=electrical_parameter_name)
 
     if electrical_parameter is None:
@@ -194,7 +199,7 @@ def get_data_cluster_consumed_normalized(
         return None
 
     if electrical_parameter.type !=\
-        data_warehouse_extended.models.ElectricalParameter.CUMULATIVE:
+        ElectricalParameter.CUMULATIVE:
 
         logger.error(
             reports.globals.SystemError.GET_DATA_CLUSTER_CONSUMED_JSON_ERROR)
@@ -203,9 +208,9 @@ def get_data_cluster_consumed_normalized(
 
     try:
         consumer_unit =\
-            c_center.models.ConsumerUnit.objects.get(pk=consumer_unit_id)
+            ConsumerUnit.objects.get(pk=consumer_unit_id)
 
-    except c_center.models.ConsumerUnit.DoesNotExist:
+    except ConsumerUnit.DoesNotExist:
         logger.error(
             reports.globals.SystemError.GET_DATA_CLUSTER_CONSUMED_JSON_ERROR)
 
@@ -331,9 +336,9 @@ def get_data_clusters_list(
 
         try:
             consumer_unit =\
-                c_center.models.ConsumerUnit.objects.get(pk=consumer_unit_id)
+                ConsumerUnit.objects.get(pk=consumer_unit_id)
 
-        except c_center.models.ConsumerUnit.DoesNotExist:
+        except ConsumerUnit.DoesNotExist:
             logger.error(
                 reports.globals.SystemError.GET_DATA_CLUSTERS_LIST_ERROR)
 
@@ -342,7 +347,7 @@ def get_data_clusters_list(
             and consumer_unit.profile_powermeter\
                 .powermeter.powermeter_anotation != "Medidor Virtual":
             data_cluster = \
-                c_center.graphics.get_consumer_unit_electric_data_raw(
+                get_consumer_unit_electric_data_raw(
                     electrical_parameter_name,
                     consumer_unit_id,
                     datetime_from,
@@ -416,7 +421,7 @@ def get_instant_delta_from_timedelta(
     """
 
     timedelta_seconds = timedelta.seconds + (timedelta.days * 24 * 3600)
-    instant_deltas = data_warehouse_extended.views.get_instant_delta_all()
+    instant_deltas = get_instant_delta_all()
     if len(instant_deltas) < 1:
         logger.error(
             reports.globals.SystemError.GET_INSTANT_DELTA_FROM_TIMEDELTA_ERROR)
@@ -576,7 +581,7 @@ def get_data_statistics(
         "median": data_cluster_median,
         "standard_deviation": data_cluster_standard_deviation
     }
-
+    print statistics
     return statistics
 
 
@@ -851,7 +856,7 @@ def get_consumer_unit_electrical_parameter_data_clustered(
     # Get the Electrical Parameter
     #
     electrical_parameter =\
-        data_warehouse_extended.views.get_electrical_parameter(
+        get_electrical_parameter(
             electrical_parameter_name=electrical_parameter_name)
 
     if electrical_parameter is None:
@@ -871,7 +876,7 @@ def get_consumer_unit_electrical_parameter_data_clustered(
 
     else:
         instant_delta =\
-            data_warehouse_extended.views.get_instant_delta(
+            get_instant_delta(
                 delta_seconds=granularity_seconds)
 
 
@@ -910,14 +915,14 @@ def get_consumer_unit_electrical_parameter_data_clustered(
     # Get the dependent Consumer Units List and retrieve their data.
     #
     consumer_units_list =\
-        c_center.c_center_functions.get_consumer_units(consumer_unit)
+        get_consumer_units(consumer_unit)
 
     for consumer_unit_item in consumer_units_list:
         #
         # Get a Consumer Unit Profile (from the app Data Warehouse Extended)
         #
         consumer_unit_profile =\
-            data_warehouse_extended.views.get_consumer_unit_profile(
+            get_consumer_unit_profile(
                 consumer_unit_item.pk)
 
         if consumer_unit_profile is None:
@@ -928,8 +933,7 @@ def get_consumer_unit_electrical_parameter_data_clustered(
             return None
 
         consumer_unit_data_list =\
-            data_warehouse_extended.views.\
-                get_consumer_unit_electrical_parameter_data_list(
+            get_consumer_unit_electrical_parameter_data_list(
                     consumer_unit_profile,
                     datetime_from_utc,
                     datetime_to_utc,
@@ -1010,7 +1014,7 @@ def set_instants(datetime_from_utc, datetime_to_utc, instant_delta):
     global DATETIME_FROM_UTC
     DATETIME_FROM_UTC = datetime_from_utc
     global INSTANTS
-    INSTANTS = data_warehouse_extended.views.get_instants_list(
+    INSTANTS = get_instants_list(
         datetime_from_utc,
         datetime_to_utc,
         instant_delta)
@@ -1019,12 +1023,10 @@ def set_instants(datetime_from_utc, datetime_to_utc, instant_delta):
 
 
 def rates_for_data_cluster(data_cluster_consumed, region):
-
     data_cluster_cons = []
     for data_cluster in data_cluster_consumed:
-
         date_time = datetime.datetime.fromtimestamp(data_cluster["datetime"])
-        periodo = c_center.calculations.obtenerTipoPeriodoObj(
+        periodo = obtenerTipoPeriodoObj(
             date_time, region)['period_type']
 
         if periodo == "base":
@@ -1062,7 +1064,7 @@ def data_store_monthly_graphs(consumer_unit_id,month, year):
     days = variety.getMonthDays(month, year)
     first_week_start_datetime = days[0] + datetime.timedelta(days=1)
     last_week_end_datetime = days[-1] + datetime.timedelta(days=2)
-    electrical_parameter_name = "TotalkWhIMPORT"
+    electrical_parameter_name = "kWh"
     #
     # For the purposes of this report, the granularity is an hour but this is
     # intended to be extended, it should be retrieved as GET parameter.
@@ -1075,6 +1077,8 @@ def data_store_monthly_graphs(consumer_unit_id,month, year):
             last_week_end_datetime,
             electrical_parameter_name,
             granularity_seconds)
+
+
 
     if consumer_unit_id.building.electric_rate.electric_rate_name == "H-M":
         #parse data_cluster_consumed
@@ -1189,7 +1193,7 @@ def data_store_monthly_graphs(consumer_unit_id,month, year):
 
 def calculate_month_graphs(cu, m, y):
     data_clusters_json, statistics, data_cluster_consumed = \
-        Data_Store_Monthly_Graphs(cu, m, y)
+        data_store_monthly_graphs(cu, m, y)
     month_data, created = DataStoreMonthlyGraphs.objects.get_or_create(
         year=y, month=m, consumer_unit=cu)
     month_data.instant_data = data_clusters_json

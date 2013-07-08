@@ -7471,6 +7471,7 @@ def view_cutdates(request):
         paginator = Paginator(contenedorMonthly, 12) # muestra 10 resultados por pagina
         template_vars = dict(order_billing=order_billing,
                              datacontext=datacontext,
+                             empresa=empresa,
                              company=request.session['company'],
                              sidebar=request.session['sidebar'])
         # Make sure page request is an int. If not, deliver first page.
