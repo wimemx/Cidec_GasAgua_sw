@@ -194,7 +194,7 @@ def get_data_cluster_consumed_normalized(
         return None
 
     if electrical_parameter.type !=\
-        data_warehouse_extended.models.ElectricalParameter.CUMULATIVE:
+            data_warehouse_extended.models.ElectricalParameter.CUMULATIVE:
 
         logger.error(
             reports.globals.SystemError.GET_DATA_CLUSTER_CONSUMED_JSON_ERROR)
@@ -1158,6 +1158,8 @@ def data_store_monthly_graphs(consumer_unit_id,month, year):
 
     cont = 0
     statistics = []
+    month_array = []
+    param = None
     for day_data in data_clusters_list:
         #day_data = todos los datos de un parámetro para el mes
         param = column_strings[cont]
@@ -1184,7 +1186,7 @@ def data_store_monthly_graphs(consumer_unit_id,month, year):
 
     statistics.append(dict(param=param, month_data=month_array))
 
-    return data_clusters_json,statistics, data_cluster_consumed
+    return data_clusters_json, statistics, data_cluster_consumed
 
 
 def calculate_month_graphs(cu, m, y):

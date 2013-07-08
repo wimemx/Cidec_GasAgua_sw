@@ -25,7 +25,6 @@
 
 <script type="text/javascript">
 var fech_ini = '', fech_fin = '';
-var current_interval_end = new Date("{{ ff|date:"F d, Y" }}");
 var year_s, month_s, day_s;
 var year_e, month_e, day_e;
 year_s={{ fi|date:"Y" }};
@@ -34,7 +33,7 @@ month_s={{ fi|date:"n" }}-1;
 month_e={{ ff|date:"n" }}-1;
 day_s={{ fi|date:"j" }};
 day_e={{ ff|date:"j" }};
-
+var current_interval_end = new Date(year_e, month_e, day_e);
 
 var view;
 var colors = ["#3466cc", "#fd9827", "#dc3919",

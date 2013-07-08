@@ -267,7 +267,7 @@ def render_report_consumed_by_month(
     #
     granularity_seconds = 300
     data_cluster_consumed =\
-        get_data_cluster_consumed_normalized (
+        get_data_cluster_consumed_normalized(
             consumer_unit_id,
             first_week_start_datetime,
             last_week_end_datetime,
@@ -769,13 +769,11 @@ def render_report_powerprofile_by_month_new(
     #
     # Build and normalize the data clusters list.
     #
-    granularity = "raw"
+    dataMonth = DataStoreMonthlyGraphs.objects.get(
+        consumer_unit_id=consumer_unit_id, year=year, month=month)
 
-    data_clusters_list = get_data_clusters_list(request_data_list_normalized,
-                                                granularity)
+    data_clusters_list = json.loads(data_cluster_consumed.instant_data)
     normalize_data_clusters_list(data_clusters_list)
-
-
 
     #data_clusters_list para csv
 
@@ -795,9 +793,9 @@ def render_report_powerprofile_by_month_new(
     #
     # Make a query to retrieve the json for instant_data
     #
-
-    template_variables['rows'] = DataStoreMonthlyGraphs.objects.get(
-        consumer_unit_id=consumer_unit_id, year=year, month=month).instant_data
+    dataMonth = DataStoreMonthlyGraphs.objects.get(
+        consumer_unit_id=consumer_unit_id, year=year, month=month)
+    template_variables['rows'] = dataMonth.instant_data
 
 
     #
@@ -809,8 +807,7 @@ def render_report_powerprofile_by_month_new(
     template_variables['min'] = minimum
 
     template_variables['columns_statistics'] = ast.literal_eval(
-        DataStoreMonthlyGraphs.objects.get(consumer_unit_id=consumer_unit_id,
-                                           year=year, month=month).statistics)
+        dataMonth.statistics)
 
     template_context =\
         django.template.context.RequestContext(request, template_variables)
