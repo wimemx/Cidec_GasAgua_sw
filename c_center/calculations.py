@@ -288,7 +288,7 @@ def obtenerFestivos(year):
                 if int(hday['day']) == 1 and int(hday['month']) == 12:
                     if (actual_year - 1946) % 6 == 0:
                         st_time = time.strptime(
-                            "%02d" % int(hday.day) + " " + "%02d" % int(
+                            "%02d" % int(hday['day']) + " " + "%02d" % int(
                                 hday['month']) + " " + str(actual_year),
                             "%d %m %Y")
                         lista_festivos.append(strftime("%d %m %Y", st_time))
