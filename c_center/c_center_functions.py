@@ -2513,10 +2513,10 @@ def tarifa_3(building, s_date, e_date, month, year):
             lectura_max = ElectricDataTemp.objects.filter(
                 profile_powermeter=profile_powermeter,
                 medition_date__gte=s_date,
-                medition__date__lt=e_date).\
+                medition_date__lt=e_date).\
             aggregate(Max('kW_import_sliding_window_demand'))
 
-            demanda_max = lectura_max['kW_import_sliding_window_demand']
+            demanda_max = lectura_max['kW_import_sliding_window_demand__max']
 
 
         for c_unit in consumer_units:
