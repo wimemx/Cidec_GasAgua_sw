@@ -6,6 +6,7 @@ import logging
 import numpy
 import sys
 import time
+import json
 
 
 # Django imports
@@ -580,7 +581,6 @@ def get_data_statistics(
         "median": data_cluster_median,
         "standard_deviation": data_cluster_standard_deviation
     }
-    print statistics
     return statistics
 
 
@@ -1059,7 +1059,7 @@ def rates_for_data_cluster(data_cluster_consumed, region):
     return data_cluster_cons
 
 
-def data_store_monthly_graphs(consumer_unit_id,month, year):
+def data_store_monthly_graphs(consumer_unit_id, month, year):
     days = variety.getMonthDays(month, year)
     first_week_start_datetime = days[0] + datetime.timedelta(days=1)
     last_week_end_datetime = days[-1] + datetime.timedelta(days=2)
@@ -1082,7 +1082,11 @@ def data_store_monthly_graphs(consumer_unit_id,month, year):
         data_cluster_consumed = rates_for_data_cluster(
             data_cluster_consumed, consumer_unit_id.building.region)
 
-#
+    if not data_cluster_consumed:
+        data_cluster_consumed = None
+    else:
+        data_cluster_consumed = json.dumps(data_cluster_consumed)
+
     request_data_list = []
 
     days = variety.getMonthDays(month, year)
@@ -1109,8 +1113,6 @@ def data_store_monthly_graphs(consumer_unit_id,month, year):
              "PF")
     request_data_list.append(request_data_list_item)
 
-
-
     #
     # Normalize the data list.
     #
@@ -1123,9 +1125,6 @@ def data_store_monthly_graphs(consumer_unit_id,month, year):
     column_strings =\
         get_column_strings_electrical_parameter(request_data_list_normalized)
 
-
-    columns_units_list = get_column_units_list(request_data_list_normalized)
-
     #
     # Build and normalize the data clusters list.
     #
@@ -1135,13 +1134,15 @@ def data_store_monthly_graphs(consumer_unit_id,month, year):
                                                 granularity)
     normalize_data_clusters_list(data_clusters_list)
 
-
-
     #
     # Create the json using the data clusters list normalized
     #
     data_clusters_json = get_data_clusters_json(data_clusters_list)
-
+    if not data_clusters_json:
+        #si es None o vacío
+        data_clusters_json = None
+    else:
+        data_clusters_json = json.dumps(data_clusters_json)
     #
     # Get statistical values
     #
@@ -1186,6 +1187,7 @@ def data_store_monthly_graphs(consumer_unit_id,month, year):
                 month_array[i] = get_data_statistics(month_array[i])
 
     statistics.append(dict(param=param, month_data=month_array))
+    statistics = json.dumps(statistics)
 
     return data_clusters_json, statistics, data_cluster_consumed
 
@@ -1199,6 +1201,7 @@ def calculate_month_graphs(cu, m, y):
     month_data.data_consumed = data_cluster_consumed
     month_data.statistics = statistics
     month_data.save()
+    return "saved!"
 
 
 def insert_data_Graph_To_Model():
@@ -1216,12 +1219,3 @@ def insert_rest_months(initial_month, initial_year, end_month, end_year):
         for ym in range( ym_start, ym_end ):
             y, m = divmod( ym, 12 )
             calculate_month_graphs(cu, m+1, y)
-
-
-
-
-
-
-
-
-

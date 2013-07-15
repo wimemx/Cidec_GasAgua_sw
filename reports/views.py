@@ -235,7 +235,7 @@ def render_instant_measurements(
 
 
 @login_required(login_url="/")
-def render_report_consumed_by_month(
+def render_report_consumed_by_month_orig(
         request
 ):
     template_variables = {
@@ -361,7 +361,7 @@ def render_report_consumed_by_month(
 
 
 @login_required(login_url="/")
-def render_report_powerprofile_by_month(
+def render_report_powerprofile_by_month_orig(
         request
 ):
     template_variables = {
@@ -566,7 +566,7 @@ def render_report_powerprofile_by_month(
 
 
 @login_required(login_url="/")
-def render_report_consumed_by_month_new(
+def render_report_consumed_by_month(
         request
 ):
     template_variables = {
@@ -590,9 +590,23 @@ def render_report_consumed_by_month_new(
     # For the purposes of this report, the granularity is an hour but this is
     # intended to be extended, it should be retrieved as GET parameter.
     #
-    month_graphs = DataStoreMonthlyGraphs.objects.get(
-        consumer_unit_id=consumer_unit_id, year=year, month=month)
+    try:
+        month_graphs = DataStoreMonthlyGraphs.objects.get(
+            consumer_unit_id=consumer_unit_id, year=year, month=month)
+    except DataStoreMonthlyGraphs.DoesNotExist:
+        return django.http.HttpResponse("<h2 style='font-family: helvetica;"
+                                            "text-align: center;display: block;"
+                                            " margin: 0 auto;color: #666;'> "
+                                            "No se han encontrado datos para el "
+                                            "reporte, Por favor espere unos minutos,"
+                                            "o verifique que el sistema de adquisición"
+                                            "se encuentra funcionando correctamente"
+                                            "</h2>")
+
     data_cluster_consumed = month_graphs.data_consumed
+
+    print data_cluster_consumed
+
     template_variables['rows'] = data_cluster_consumed
     dc_object = json.loads(data_cluster_consumed)
     maximun, minimun = get_data_cluster_limits(dc_object)
@@ -679,7 +693,7 @@ def render_report_consumed_by_month_new(
 
 
 @login_required(login_url="/")
-def render_report_powerprofile_by_month_new(
+def render_report_powerprofile_by_month(
         request
 ):
     template_variables = {
@@ -769,10 +783,32 @@ def render_report_powerprofile_by_month_new(
     #
     # Build and normalize the data clusters list.
     #
-    dataMonth = DataStoreMonthlyGraphs.objects.get(
-        consumer_unit_id=consumer_unit_id, year=year, month=month)
+    try:
+        dataMonth = DataStoreMonthlyGraphs.objects.get(
+            consumer_unit_id=consumer_unit_id, year=year, month=month)
+    except DataStoreMonthlyGraphs.DoesNotExist:
+        return django.http.HttpResponse("<h2 style='font-family: helvetica;"
+                                        "text-align: center;display: block;"
+                                        " margin: 0 auto;color: #666;'> "
+                                        "No se han encontrado datos para el "
+                                        "reporte, Por favor espere unos minutos,"
+                                        "o verifique que el sistema de adquisición"
+                                        "se encuentra funcionando correctamente"
+                                        "</h2>")
+    else:
+        if dataMonth.instant_data is None:
+            return django.http.HttpResponse(
+                "<h2 style='font-family: helvetica;"
+                "text-align: center;display: block;"
+                " margin: 0 auto;color: #666;'> "
+                "No se han encontrado datos para el "
+                "reporte, Por favor espere unos minutos,"
+                "o verifique que el sistema de adquisición"
+                "se encuentra funcionando correctamente"
+                "</h2>")
 
-    data_clusters_list = json.loads(data_cluster_consumed.instant_data)
+    print dataMonth.instant_data
+    data_clusters_list = json.loads(dataMonth.instant_data)
     normalize_data_clusters_list(data_clusters_list)
 
     #data_clusters_list para csv
