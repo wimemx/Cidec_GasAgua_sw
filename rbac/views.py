@@ -1519,8 +1519,8 @@ def forgot_password(request):
                 html_content = "<p>Su nueva contraseña es: "+password+ ". Ingrese a la siguiente liga para cambiar por" \
                                                                     "una contraseña de su eleccion. " \
                                                                     "<a href='http://127.0.0.1:8000/panel_de_control/editar_usuario/"+str(id)+"'>Cambio de contraseña(Click Aqui)</a>/</p>"
-                print text_content
-                msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
+
+                msg = EmailMultiAlternatives(subject, text_content, from_email, mail)
                 msg.attach_alternative(html_content, "text/html")
                 msg.send()
                 mensaje = "Se te ha enviado un correo a tu cuenta con tu nueva contraseña temporal"

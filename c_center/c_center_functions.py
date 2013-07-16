@@ -1932,9 +1932,9 @@ def tarifaHM_2(building, s_date, e_date, month, year):
 
         if diccionario_final_cfe["kw_base"] > demanda_max:
             demanda_max = diccionario_final_cfe["kw_base"]
-        elif diccionario_final_cfe["kw_intermedio"] > demanda_max:
+        if diccionario_final_cfe["kw_intermedio"] > demanda_max:
             demanda_max = diccionario_final_cfe["kw_intermedio"]
-        elif diccionario_final_cfe["kw_punta"] > demanda_max:
+        if diccionario_final_cfe["kw_punta"] > demanda_max:
             demanda_max = diccionario_final_cfe["kw_punta"]
 
         for c_unit in consumer_units:
