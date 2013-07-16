@@ -587,38 +587,39 @@
                 </thead>
 
                 <tbody>
+                {% load humanize %}
                     <tr class="row2">
                         <td>Promedio</td>
                         {% for column_statistics in columns_statistics %}
-                            <td class="table_value">{{ column_statistics.mean|floatformat:2 }}</td>
+                            <td class="table_value">{{ column_statistics.mean|floatformat:2|intcomma }}</td>
                         {% endfor %}
                     </tr>
 
                     <tr class="row1">
                         <td>Máximo</td>
                         {% for column_statistics in columns_statistics %}
-                            <td class="table_value">{{ column_statistics.maximum|floatformat:2 }}</td>
+                            <td class="table_value">{{ column_statistics.maximum|floatformat:2|intcomma }}</td>
                         {% endfor %}
                     </tr>
 
                     <tr class="row2">
                         <td>Mínimo</td>
                         {% for column_statistics in columns_statistics %}
-                            <td class="table_value">{{ column_statistics.minimum|floatformat:2 }}</td>
+                            <td class="table_value">{{ column_statistics.minimum|floatformat:2|intcomma }}</td>
                         {% endfor %}
                     </tr>
 
                     <tr class="row1">
                         <td>Mediana</td>
                         {% for column_statistics in columns_statistics %}
-                            <td class="table_value">{{ column_statistics.median|floatformat:2 }}</td>
+                            <td class="table_value">{{ column_statistics.median|floatformat:2|intcomma }}</td>
                         {% endfor %}
                     </tr>
 
                     <tr class="row2">
                         <td>Desviación Estándar</td>
                         {% for column_statistics in columns_statistics %}
-                            <td class="table_value">{{ column_statistics.standard_deviation|floatformat:2 }}</td>
+                            <td class="table_value">{{ column_statistics.standard_deviation|floatformat:2|intcomma }}</td>
                         {% endfor %}
                     </tr>
                 </tbody>

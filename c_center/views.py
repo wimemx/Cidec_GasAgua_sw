@@ -6661,7 +6661,7 @@ def asign_pm(request, id_ie):
             request.user.is_superuser) and "pm" in request.GET:
         ie = get_object_or_404(IndustrialEquipment, pk=int(id_ie))
 
-        permission="Asignación de medidores eléctricos a equipos industriales"
+        permission = "Asignación de medidores eléctricos a equipos industriales"
         buildings = get_all_buildings_for_operation(permission, CREATE,
                                                     request.user)
 
@@ -6790,7 +6790,7 @@ def create_hierarchy(request, id_building):
         template_vars["datacontext"] = datacontext
 
     template_vars["sidebar"] = request.session['sidebar']
-    template_vars["empresa"] = request.session['main_building']
+    #template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
 
     if has_permission(request.user, CREATE,

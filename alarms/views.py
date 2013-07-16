@@ -818,7 +818,6 @@ def user_notifications(request):
     if datacontext:
         template_vars = {"datacontext": datacontext}
     template_vars["sidebar"] = request.session['sidebar']
-    template_vars["empresa"] = request.session['main_building']
     template_vars["company"] = request.session['company']
     template_vars['building'] = request.session['main_building']
     if has_permission(request.user,
