@@ -1626,7 +1626,6 @@ def calculateMonthlyReport(consumer_u, month, year):
 
     #Se obtiene el profile_powermeter
     try:
-
         profile_powermeter = consumer_u.profile_powermeter
 
     except ObjectDoesNotExist:
@@ -1640,8 +1639,9 @@ def calculateMonthlyReport(consumer_u, month, year):
         mes['consumo_desviacion'] = 0
         mes['emisiones'] = 0
     else:
+
         #Obtener consumo acumulado
-        mes['consumo_acumulado'] = consumoAcumuladoKWH(consumer_u,
+        mes['consumo_acumulado'] += consumoAcumuladoKWH(consumer_u,
                                                        fecha_inicio,
                                                        fecha_final)
 
@@ -1660,9 +1660,10 @@ def calculateMonthlyReport(consumer_u, month, year):
         #Obtener factor de potencia.
         #Para obtener el factor potencia son necesarios los KWH Totales
         # (consumo acumulado) y los KVARH
-        kvarh = float(obtenerKVARH_total(profile_powermeter.powermeter,
-                                         fecha_inicio,
-                                         fecha_final))
+
+        kvarh = kvarhDiariosPeriodo(consumer_u, fecha_inicio, fecha_final)
+
+        print "Kvarh", kvarh
 
         mes['factor_potencia'] = float(
             factorpotencia(float(mes['consumo_acumulado']),kvarh))
@@ -3578,9 +3579,9 @@ def get_google_timezone(building):
         else:
             json_t = simplejson.load(timezone_json)
             if json_t['dstOffset'] == 0:
-                return bld_timezone.time_zone.raw_offset
+                return int(bld_timezone.time_zone.raw_offset)
             else:
-                return bld_timezone.time_zone.dst_offset
+                return int(bld_timezone.time_zone.dst_offset)
 
 
 def replace_accents(with_accents):
@@ -3657,8 +3658,21 @@ def crawler_get_municipalities():
     return True
 
 
+def set_localtime(request, date):
+    #Se obtiene el edificio
+    #Se obtiene el raw offset o el dst offset
+
+    #Se obtiene el delta
+    #Se suma y se regresa la fecha actual
+    return 0
 
 
+def set_utctime(request, date):
+    #Se obtiene
+
+    #Se crea un delta
+    #Se suma y se regresa la fecha actual
+    return 0
 
 
 
