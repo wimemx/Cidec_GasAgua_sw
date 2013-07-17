@@ -7581,6 +7581,8 @@ def set_cutdate(request, id_cutdate):
             cd_after_flag = False
             continue_flag = True
 
+
+            #TODO: Cambiar por las nuevas funciones de zonas horarias (De Local a UTC)
             time_str = init_str + " " + init_hour + ":" + init_minutes + \
                        " " + init_ampm
             s_date_str = time.strptime(time_str, "%Y-%m-%d  %I:%M %p")

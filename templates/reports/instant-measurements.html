@@ -24,6 +24,7 @@
         </script>
 
         <script type="text/javascript">
+            var rangeban = 0
             var fech_ini = '', fech_fin = '';
             var view;
             var colors = ["#3466cc", "#fd9827", "#dc3919",
@@ -167,7 +168,19 @@
                 var data = new google.visualization.DataTable();
                 //var columns_display = new Array();
                 //var default_colors = new Array();
+
                 var columns = [{% for column in columns %}"{{ column }}",{% endfor %}null]
+
+                if (columns.length == 4)
+                {
+                    if((columns[0].charAt(0) == 'V' && columns[1].charAt(0) == 'I') || (columns[0]== 'kW' && columns[1]== 'kVAr'))
+                    {
+                        $("#up").hide();
+                        $("#down").hide();
+                        rangeban = 1
+                    }
+                }
+
                 var pf_index = [];
                 {% for column in columns %}
                     data.addColumn({type:'datetime', role:'domain'});
@@ -373,8 +386,10 @@
                      if($(".column-checkbox:checked").size()==1){
                         $('#up').fadeIn("fast");
                         $('#down').fadeIn("fast");
-
-
+                    }
+                    if($(".column-checkbox:checked").size()>1 && rangeban == 1){
+                        $('#up').fadeOut("fast");
+                        $('#down').fadeOut("fast");
                     }
                 });
 
@@ -422,8 +437,7 @@
                             chart.draw();
                         });
 
-                //$("#up").hide();
-                //$("#down").hide();
+
             }
 
             google.setOnLoadCallback(drawVisualization);
