@@ -409,6 +409,7 @@ def cfe_calculations(request):
                 content=MSG_PERMIT_ERROR)
 
         set_default_session_vars(request, datacontext)
+        print "Offset", request.session['timezone']
 
         template_vars = dict(type="cfe", datacontext=datacontext,
                              empresa=request.session['main_building'])

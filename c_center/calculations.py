@@ -37,6 +37,15 @@ def consumoAcumuladoKWH(consumer, fecha_inicio, fecha_fin):
         suma_lecturas = lecturas['KWH_total__sum']
     return suma_lecturas
 
+def kvarhDiariosPeriodo(consumer, fecha_inicio, fecha_fin):
+    kvarh = 0
+    lecturas = DailyData.objects.filter(consumer_unit=consumer,
+                data_day__gte=fecha_inicio,
+                data_day__lte=fecha_fin).aggregate(
+                Sum('KVARH'))
+    if lecturas:
+        kvarh = lecturas['KVARH__sum']
+    return kvarh
 
 def demandaMaxima(consumer, fecha_inicio, fecha_fin):
     demanda_max = 0
@@ -472,8 +481,6 @@ def obtenerKWhNetosTarifa(pr_powermeter, tarifa_id):
         kwh_netos = kwh_final - kwh_inicial
 
     return kwh_netos
-
-
 
 def obtenerKVARH_total(pr_powermeter, start_date, end_date):
     kvarh_netos = 0
