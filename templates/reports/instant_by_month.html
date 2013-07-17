@@ -25,7 +25,6 @@
 
 <script type="text/javascript">
 var fech_ini = '', fech_fin = '';
-var current_interval_end = new Date("{{ ff|date:"F d, Y" }}");
 var year_s, month_s, day_s;
 var year_e, month_e, day_e;
 year_s={{ fi|date:"Y" }};
@@ -34,7 +33,7 @@ month_s={{ fi|date:"n" }}-1;
 month_e={{ ff|date:"n" }}-1;
 day_s={{ fi|date:"j" }};
 day_e={{ ff|date:"j" }};
-
+var current_interval_end = new Date(year_e, month_e, day_e);
 
 var view;
 var colors = ["#3466cc", "#fd9827", "#dc3919",
@@ -150,7 +149,8 @@ function drawVisualization() {
 
     fech_ini = new Date();
     fech_ini.setTime((rows_data[0][0]['datetime']*1000));
-    for(var row_index = 0; row_index < {{ rows_len }}; row_index++){
+    console.time("matrix construction");
+    for(var row_index = 0; row_index < {{ rows_len }}; row_index+=3){
         var row_data = rows_data[row_index];
         var row_array = [];
         var len_rd = row_data.length;
@@ -172,11 +172,13 @@ function drawVisualization() {
         }
         data.addRow(row_array);
     }
+    console.timeEnd("matrix construction");
+    console.time("draw graph");
     view = new google.visualization.DataView(data);
 
     dashboard.bind(control, chart);
     dashboard.draw(view);
-
+    console.timeEnd("draw graph");
     $(".column-checkbox").click(function(){
 
         if($(":checkbox").filter(':checked').length == 0 && !$(this).is(":checked")){
