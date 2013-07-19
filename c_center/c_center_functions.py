@@ -1938,9 +1938,9 @@ def tarifaHM_2(building, s_date, e_date, month, year):
 
         if diccionario_final_cfe["kw_base"] > demanda_max:
             demanda_max = diccionario_final_cfe["kw_base"]
-        elif diccionario_final_cfe["kw_intermedio"] > demanda_max:
+        if diccionario_final_cfe["kw_intermedio"] > demanda_max:
             demanda_max = diccionario_final_cfe["kw_intermedio"]
-        elif diccionario_final_cfe["kw_punta"] > demanda_max:
+        if diccionario_final_cfe["kw_punta"] > demanda_max:
             demanda_max = diccionario_final_cfe["kw_punta"]
 
         for c_unit in consumer_units:
@@ -3572,7 +3572,6 @@ def get_google_timezone(building):
             bld_long = bld_timezone.time_zone.longitude
 
         now_timestamp = int(time.time())
-
         try:
             timezone_json = urllib2.urlopen('https://maps.googleapis.com/maps/api/'
                                             'timezone/json?location='+str(bld_lat)+
@@ -3582,11 +3581,10 @@ def get_google_timezone(building):
             print "URL Error. No Connection"
             return False
         else:
+
             json_t = simplejson.load(timezone_json)
-            if json_t['dstOffset'] == 0:
-                return int(bld_timezone.time_zone.raw_offset)
-            else:
-                return int(bld_timezone.time_zone.dst_offset)
+            return json_t['timeZoneId']
+
 
 
 def replace_accents(with_accents):
