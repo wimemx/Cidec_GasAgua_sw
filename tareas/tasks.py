@@ -530,9 +530,13 @@ def last_data_received():
                 msg.attach_alternative(html_content, "text/html")
                 msg.send()
 
-
+@periodic_task(run_every=crontab(month_of_year='10', day_of_month='25-31'),
+               day_of_week='0', hour='2', minute='0')
 def cambioHorarioNormal():
     setBuildingDST(False)
 
+
+@periodic_task(run_every=crontab(month_of_year='11', day_of_month='1-7'),
+               day_of_week='0', hour='2', minute='0')
 def cambioHorarioFrontera():
     setBuildingDST(True)
