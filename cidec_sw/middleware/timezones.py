@@ -5,3 +5,4 @@ class TimezoneMiddleware(object):
         tz = request.session.get('timezone')
         if tz:
             timezone.activate(tz)
+

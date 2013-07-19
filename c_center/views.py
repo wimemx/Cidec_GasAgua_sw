@@ -198,7 +198,7 @@ def dw_specific(request):
 def set_default_building(request, id_building):
     """Sets the default building for reports"""
     request.session['main_building'] = Building.objects.get(pk=id_building)
-    request.session['timezone'] = get_google_timezone(
+    request.session['timezone']= get_google_timezone(
         request.session['main_building'])
     tz = pytz.timezone(request.session.get('timezone'))
     if tz:
@@ -5892,6 +5892,15 @@ def edit_building(request, id_bld):
                 t_zone_id.time_zone = hour_type
                 t_zone_id.save()
 
+                #Se actualiza el edificio para hacer el cambio de horario en caso de que sea el edificio en uso
+                if request.session['main_building'].id == long(id_bld):
+                    request.session['timezone']= get_google_timezone(
+                                request.session['main_building'])
+                    tz = pytz.timezone(request.session.get('timezone'))
+                    if tz:
+                        timezone.activate(tz)
+
+
                 message = "Edificio editado exitosamente"
                 _type = "n_success"
                 if has_permission(request.user, VIEW,
@@ -5915,6 +5924,7 @@ def edit_building(request, id_bld):
         )
 
         template_vars_template = RequestContext(request, template_vars)
+
         return render_to_response(
             "consumption_centers/buildings/add_building.html",
             template_vars_template)

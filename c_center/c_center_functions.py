@@ -620,7 +620,11 @@ def set_default_session_vars(request, datacontext):
             #print "186"
             request.session['consumer_unit'] = None
 
-
+    request.session['timezone']= get_google_timezone(
+        request.session['main_building'])
+    tz = pytz.timezone(request.session.get('timezone'))
+    if tz:
+        timezone.activate(tz)
     return True
 
 def get_hierarchy_list(building, user):
@@ -641,7 +645,6 @@ def get_hierarchy_list(building, user):
     #sacar el padre(partes de edificios que no son hijos de nadie)
     parents = PartOfBuilding.objects.filter(building=building).exclude(
         pk__in=ids_hierarchy, part_of_building_status=False)
-    print parents
     main_cu = ConsumerUnit.objects.get(
         building=building,
         electric_device_type__electric_device_type_name="Total Edificio")
@@ -3548,7 +3551,6 @@ def parse_file(_file):
 
 
 def get_google_timezone(building):
-
     #Se obtienen las coordenadas del edificio
     bld_lat = building.building_lat_address
     bld_long = building.building_long_address
@@ -3576,9 +3578,10 @@ def get_google_timezone(building):
             print "URL Error. No Connection"
             return False
         else:
-
             json_t = simplejson.load(timezone_json)
+
             return json_t['timeZoneId']
+
 
 
 
