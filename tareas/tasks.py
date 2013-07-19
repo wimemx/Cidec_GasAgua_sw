@@ -27,7 +27,7 @@ from data_warehouse.views import populate_data_warehouse, \
 from c_center.c_center_functions import save_historic, dailyReportAll, \
     asign_electric_data_to_pw, calculateMonthlyReport_all, all_dailyreportAll,\
     getRatesCurrentMonth, dailyReportPeriodofTime, dailyReportAll_Period, \
-    parse_file, getMonthlyReport
+    parse_file, getMonthlyReport, setBuildingDST
 from c_center.calculations import daytag_period_allProfilePowermeters, \
     daytag_period
 from tareas.models import *
@@ -529,3 +529,10 @@ def last_data_received():
                                              to_mail)
                 msg.attach_alternative(html_content, "text/html")
                 msg.send()
+
+
+def cambioHorarioNormal():
+    setBuildingDST(False)
+
+def cambioHorarioFrontera():
+    setBuildingDST(True)

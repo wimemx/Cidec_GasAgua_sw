@@ -1374,10 +1374,15 @@ def dailyReport(building, consumer_unit, today):
                            kwh_dia_dic['punta']
 
             #Se obtienen los kvarhs por medidor
+            kvarh_totales += obtenerKVARH(profile_powermeter,
+                         today_s_utc,
+                         today_e_utc)
+            """
             kvarh_totales += obtenerKVARH_dia(profile_powermeter,
                                               today_s_utc,
                                               today_e_utc,
                                               kvarhs_anterior)
+            """
     #Si es tarifa HM
     if electric_rate.pk == 1:
         #Obtiene el id de la tarifa correspondiente para el mes en cuestion
@@ -3657,28 +3662,48 @@ def crawler_get_municipalities():
     print "Finished"
     return True
 
+def setBuildingDST(border):
+    """
 
-def set_localtime(request, date):
-    #Se obtiene el edificio
-    #Se obtiene el raw offset o el dst offset
+    :param - Border: Booleano para indicar si modifica los fronterizos o no.
+    """
+    bld_timezones = TimezonesBuildings.objects.\
+                    filter(building__municipio__border = border)
+    if bld_timezones:
+        for bld_tz in bld_timezones:
+            next_dst = DaySavingDates.objects.filter(
+                summer_date__gt = bld_tz.day_saving_date.summer_date,
+                border = border).order_by("summer_date")[:1]
 
-    #Se obtiene el delta
-    #Se suma y se regresa la fecha actual
-    return 0
+            if next_dst:
+                bld_tz.day_saving_date = next_dst[0]
+                bld_tz.save()
+
+            #Se actualiza el JSON del Equipo Industrial para cada edificio
+            try:
+                industrial_equip = IndustrialEquipment.objects.get(building =
+                bld_tz.building)
+            except ObjectDoesNotExist:
+                print "setBuildingDST - No Industrial Equipment for building: "+\
+                      str(bld_tz.building.building_name)
+            except MultipleObjectsReturned:
+                print "setBuildingDST - Multiple Industrial Equipments: "+\
+                      str(bld_tz.building.building_name)
+            else:
+                json_dic = {"raw_offset":bld_tz.time_zone.raw_offset,
+                            "dst_offset":bld_tz.time_zone.dst_offset,
+                            "daysaving_id":next_dst[0].pk}
+
+                industrial_equip.timezone_dst = json.dumps(json_dic)
+                industrial_equip.save()
+
+    print "setBuildingDST Done"
 
 
-def set_utctime(request, date):
-    #Se obtiene
-
-    #Se crea un delta
-    #Se suma y se regresa la fecha actual
-    return 0
 
 
 
-
-
-
+3
 
 
 
