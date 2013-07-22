@@ -42,7 +42,7 @@ from reports.reports_functions import get_data_cluster_consumed_normalized, \
     get_data_clusters_json, get_data_statistics, get_data_clusters_list_limits,\
     get_axis_dictionary, get_axis_dictionaries_list, \
     get_column_units_axis_indexes, get_data_cluster_limits, \
-    get_data_clusters_statistics
+    get_data_clusters_statistics, get_axis_dictionary_stored
 
 # Other imports
 import variety
@@ -175,7 +175,7 @@ def render_instant_measurements(
 
     axis_dictionary = \
         get_axis_dictionary(data_clusters_list, columns_units_list)
-
+    print axis_dictionary
     axis_dictionaries_list = get_axis_dictionaries_list(axis_dictionary)
     template_variables['axis_list'] = axis_dictionaries_list
 
@@ -475,13 +475,9 @@ def render_report_powerprofile_by_month_orig(
                                                 granularity)
     normalize_data_clusters_list(data_clusters_list)
 
-
-
     #data_clusters_list para csv
-
     axis_dictionary = \
         get_axis_dictionary(data_clusters_list, columns_units_list)
-
     axis_dictionaries_list = get_axis_dictionaries_list(axis_dictionary)
     template_variables['axis_list'] = axis_dictionaries_list
 
@@ -602,10 +598,12 @@ def render_report_consumed_by_month(
                                             "o verifique que el sistema de adquisición"
                                             "se encuentra funcionando correctamente"
                                             "</h2>")
+    else:
+        template_variables['rows_len'] = len(month_graphs.data_consumed)
 
     data_cluster_consumed = month_graphs.data_consumed
 
-    print data_cluster_consumed
+    #print data_cluster_consumed
 
     template_variables['rows'] = data_cluster_consumed
     dc_object = json.loads(data_cluster_consumed)
@@ -778,6 +776,7 @@ def render_report_powerprofile_by_month(
     template_variables['columns'] = column_strings
 
     columns_units_list = get_column_units_list(request_data_list_normalized)
+
     template_variables['column_units'] = zip(columns_units_list, column_strings)
 
     #
@@ -807,14 +806,15 @@ def render_report_powerprofile_by_month(
                 "se encuentra funcionando correctamente"
                 "</h2>")
 
-    print dataMonth.instant_data
+    #print dataMonth.instant_data
+    template_variables['rows_len'] = len(json.loads(dataMonth.instant_data))
     data_clusters_list = json.loads(dataMonth.instant_data)
     normalize_data_clusters_list(data_clusters_list)
 
     #data_clusters_list para csv
 
     axis_dictionary = \
-        get_axis_dictionary(data_clusters_list, columns_units_list)
+        get_axis_dictionary_stored(data_clusters_list, columns_units_list)
 
     axis_dictionaries_list = get_axis_dictionaries_list(axis_dictionary)
     template_variables['axis_list'] = axis_dictionaries_list
@@ -842,6 +842,7 @@ def render_report_powerprofile_by_month(
     template_variables['max'] = maximum
     template_variables['min'] = minimum
 
+    print dataMonth.statistics
     template_variables['columns_statistics'] = ast.literal_eval(
         dataMonth.statistics)
 

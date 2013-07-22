@@ -22,8 +22,6 @@ import data_warehouse_extended.views
 
 import variety
 
-from data_warehouse.views import populate_data_warehouse, \
-    data_warehouse_update
 from c_center.c_center_functions import save_historic, dailyReportAll, \
     asign_electric_data_to_pw, calculateMonthlyReport_all, all_dailyreportAll,\
     getRatesCurrentMonth, dailyReportPeriodofTime, dailyReportAll_Period, \
@@ -300,11 +298,6 @@ def tag_n_daily_report(
     cu = c_center.models.ConsumerUnit.objects.get(pk=cu_pk)
     daytag_period(fi, ff, cu.profile_powermeter)
     dailyReportPeriodofTime(cu.building, cu, fi, ff)
-
-
-@task(ignore_result=True)
-def calculate_dw(granularity):
-    data_warehouse_update(granularity)
 
 
 @task(ignore_resulset=True)
