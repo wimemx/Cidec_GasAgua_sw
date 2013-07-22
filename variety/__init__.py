@@ -430,6 +430,24 @@ def convert_from_utc(time, tz):
     dest_dt = dt.astimezone(dest)
     return dest_dt.time()
 
+def date_to_utc(date, offset):
+    """ Convert a local date to UTC
+
+    :param date: the date to be converted
+    :param offset: the offset in hours
+    :return: the converted date
+    """
+    return date + relativedelta(hours=-offset)
+
+def date_from_utc(date, offset):
+    """ Convert a UTC date to local date
+
+    :param date: the date to be converted
+    :param offset: the offset in hours
+    :return: the converted date
+    """
+
+    return date + relativedelta(hours=offset)
 
 def timed(f):
     """Measures the time(seconds) a f function takes to return a result

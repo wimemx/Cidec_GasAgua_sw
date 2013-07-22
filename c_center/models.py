@@ -1001,7 +1001,7 @@ class TimezonesBuildings(models.Model):
     building = models.ForeignKey(Building, on_delete=models.PROTECT)
     time_zone = models.ForeignKey(Timezones, on_delete=models.PROTECT)
     day_saving_date = models.ForeignKey(DaySavingDates, on_delete=models.PROTECT
-        , default=None , null=True)
+        , default=None, null=True)
 
     def __unicode__(self):
         return self.building.building_name + " - " + self.time_zone.name

@@ -916,6 +916,10 @@ def user_notifications(request):
                             alarm_event__alarm__consumer_unit__building__pk
                             =buildings).order_by("-alarm_event__triggered_time")
 
+        else:
+            usr_ntfs = UserNotifications.objects.filter(user=request.user, read=False)
+            notifs = usr_ntfs.order_by("-alarm_event__triggered_time")
+            template_vars['all'] = False
 
         arr_day_notif = {}
 

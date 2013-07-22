@@ -197,8 +197,11 @@ def dw_specific(request):
 def set_default_building(request, id_building):
     """Sets the default building for reports"""
     request.session['main_building'] = Building.objects.get(pk=id_building)
-    request.session['timezone'] = get_google_timezone(
+    request.session['timezone']= get_google_timezone(
         request.session['main_building'])
+    tz = pytz.timezone(request.session.get('timezone'))
+    if tz:
+        timezone.activate(tz)
     c_b = CompanyBuilding.objects.get(building=request.session['main_building'])
     request.session['company'] = c_b.company
     request.session['consumer_unit'] = \
@@ -408,6 +411,7 @@ def cfe_calculations(request):
                 content=MSG_PERMIT_ERROR)
 
         set_default_session_vars(request, datacontext)
+        print "Offset", request.session['timezone']
 
         template_vars = dict(type="cfe", datacontext=datacontext,
                              empresa=request.session['main_building'])
@@ -5886,6 +5890,15 @@ def edit_building(request, id_bld):
                 t_zone_id.time_zone = hour_type
                 t_zone_id.save()
 
+                #Se actualiza el edificio para hacer el cambio de horario en caso de que sea el edificio en uso
+                if request.session['main_building'].id == long(id_bld):
+                    request.session['timezone']= get_google_timezone(
+                                request.session['main_building'])
+                    tz = pytz.timezone(request.session.get('timezone'))
+                    if tz:
+                        timezone.activate(tz)
+
+
                 message = "Edificio editado exitosamente"
                 _type = "n_success"
                 if has_permission(request.user, VIEW,
@@ -5909,6 +5922,7 @@ def edit_building(request, id_bld):
         )
 
         template_vars_template = RequestContext(request, template_vars)
+
         return render_to_response(
             "consumption_centers/buildings/add_building.html",
             template_vars_template)
@@ -7579,6 +7593,8 @@ def set_cutdate(request, id_cutdate):
             cd_after_flag = False
             continue_flag = True
 
+
+            #TODO: Cambiar por las nuevas funciones de zonas horarias (De Local a UTC)
             time_str = init_str + " " + init_hour + ":" + init_minutes + \
                        " " + init_ampm
             s_date_str = time.strptime(time_str, "%Y-%m-%d  %I:%M %p")
