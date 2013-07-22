@@ -621,7 +621,7 @@ def set_default_session_vars(request, datacontext):
             request.session['consumer_unit'] = None
 
     request.session['timezone']= get_google_timezone(
-        request.session['main_building'])
+        request.session['main_building'])[0]
     tz = pytz.timezone(request.session.get('timezone'))
     if tz:
         timezone.activate(tz)
@@ -3584,8 +3584,7 @@ def get_google_timezone(building):
             return False
         else:
             json_t = simplejson.load(timezone_json)
-
-            return json_t['timeZoneId']
+            return json_t['timeZoneId'], int(json_t['dstOffset'])
 
 
 
