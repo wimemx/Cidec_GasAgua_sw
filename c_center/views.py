@@ -5474,7 +5474,6 @@ def add_building(request):
                                     building=newBuilding).save()
 
                 #Se da de alta la zona horaria del edificio
-                print ("prueba")
                 timeZone = Timezones.objects.get(id=b_time_zone)
                 newTimeZone = TimezonesBuildings(
                     building = newBuilding,
