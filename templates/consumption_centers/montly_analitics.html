@@ -104,26 +104,26 @@
                 var texto_kwh = '-';
                 //console.log(data[0])
                 if(data[0].consumo_acumulado != undefined){
-                    texto_kwh = addCommas(data[0].consumo_acumulado) + "kWh";
+                    texto_kwh = addCommas(data[0].consumo_acumulado);
                 }
                 $("#cons_total").html(texto_kwh);
 
                 var texto_dt = '-';
                 if(data[0].demanda_max != undefined){
-                    texto_dt = addCommas(data[0].demanda_max) + "kW";
+                    texto_dt = addCommas(data[0].demanda_max);
                 }
                 $("#dem_total").text(texto_dt);
 
                 var texto_pf = '-';
                 if(data[0].factor_potencia != undefined){
                     //console.log(data[0].factor_potencia)
-                    texto_pf = String(data[0].factor_potencia.toFixed(2)) + "%";
+                    texto_pf = String(data[0].factor_potencia.toFixed(2));
                 }
                 $("#emit_total").text(texto_pf);
 
                 var texto_emit = '-';
                 if(data[0].emisiones != undefined){
-                    texto_emit = addCommas(data[0].emisiones.toFixed(2)) + " TON";
+                    texto_emit = addCommas(data[0].emisiones.toFixed(2));
                 }
                 $("#pp_total").text(texto_emit);
 
@@ -364,11 +364,23 @@
 
 
         <div id="month_sumary">
-            <ul>
-                <li>Consumo Acomulado</li>
-                <li>Demanda</li>
-                <li>Calidad de Energía</li>
-                <li>Emisiones de CO2</li>
+            <ul id="headers_mr">
+                <li>
+                    Consumo Acomulado
+                    <span id="kwh">kWh</span>
+                </li>
+                <li>
+                    Demanda
+                    <span id="kw">kW</span>
+                </li>
+                <li>
+                    Calidad de Energía
+                    <span id="pc">%</span>
+                </li>
+                <li>
+                    Emisiones de CO2
+                    <span id="ton"">TON</span>
+                </li>
             </ul>
             <div style='width:100%;overflow:hidden;' id="monthly_container">
                 <div class="icon_sumary consumo_t">
@@ -410,6 +422,9 @@
         <div id="widgetCal">
             <span class="ringl"></span>
             <span class="ringr"></span>
+            <div id="week_s">
+                Resumen Semanal
+            </div>
             <div id="week_consumed">
                 Consumo
             </div>

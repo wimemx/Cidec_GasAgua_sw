@@ -2,11 +2,17 @@
 import djcelery
 djcelery.setup_loader()
 import os
-BROKER_HOST = "myhost"
-BROKER_PORT = "5672"
-BROKER_USER = "cidec_user"
-BROKER_PASSWORD = "a8d32e08"
-BROKER_VHOST = 'cidec_vhost'
+CELERY_RESULT_BACKEND = "amqp"
+
+BROKER_URL = 'amqp://guest:guest@localhost:5672//'
+#BROKER_HOST = "one.cloudwime.com"
+#BROKER_PORT = "5672"
+#BROKER_USER = "guest"
+#BROKER_PASSWORD = "guest"
+#BROKER_VHOST = '/'
+
+CELERY_IMPORTS = ('tareas',)
+CELERY_TASK_TIME_LIMIT = 86400
 
 PROJECT_PATH = os.path.abspath(
     os.path.join(os.path.abspath(os.path.dirname(__file__)), os.path.pardir))
@@ -29,7 +35,7 @@ DATABASES = {
         'HOST': 'audiwime.wimelabs.com',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     },
-    'production': {
+    'default': {
         'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
         'NAME': 'satest_cidec',                      # Or path to database file if using sqlite3.
         'USER': 'satest_cidec',                      # Not used with sqlite3.
@@ -37,7 +43,7 @@ DATABASES = {
         'HOST': 'auditem.mx',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     },
-    'default': {
+    'local': {
         'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
         'NAME': 'satest_cidec',                      # Or path to database file if using sqlite3.
         'USER': 'root',                      # Not used with sqlite3.

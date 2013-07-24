@@ -3,9 +3,8 @@ from django.contrib import admin
 
 
 class SectoralTypeAdmin(admin.ModelAdmin):
-    list_display = ['sectorial_type_name', 'sectoral_type_status',
-                    'sectoral_type_sequence']
-    list_filter = ['sectoral_type_status', 'sectoral_type_sequence']
+
+
     actions = ["make_active", "make_inactive", "mark_deleted"]
 
     def make_active(self, request, queryset):

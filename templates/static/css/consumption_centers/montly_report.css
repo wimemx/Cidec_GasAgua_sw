@@ -501,10 +501,9 @@ h3.titulo_reporte{
 }
 .icon_sumary{
     float: left;
-    height: 100%;
+    height: 100px;
     text-align: left;
-    width: 23%;
-    margin-left: 12px;
+    width: 25%;
     text-indent: 5px;
 }
 
@@ -512,9 +511,7 @@ h3.titulo_reporte{
     float: left;
     width: 209px;
 }
-.month_totals, .icon_sumary{
-    height: 100px;
-}
+
 
 .icon_sumary span{
     display: block;
@@ -526,7 +523,8 @@ h3.titulo_reporte{
 
 .icon_sumary #cons_total{
     background: url(../images/imgs_icns/consumo_mensual.png) left center no-repeat;
-    padding-left: 30px;
+    padding-left: 78px;
+
 }
 .icon_sumary #dem_total{
     background: url(../images/imgs_icns/demanda_semanal.png) left center no-repeat;
@@ -593,4 +591,28 @@ h3.titulo_reporte{
 }
 .datepickerContainer table table{
     width:597px !important;
+}
+#headers_mr li{
+    position: relative;
+}
+#headers_mr li span{
+    padding-top: 17px;
+    font-weight: 700;
+    position: absolute;
+    height: 115px;
+    width: 33px;
+    top: 19px;
+    right: 0;
+}
+#headers_mr li span#kwh{
+    background-color: #ff9bbd;
+}
+#headers_mr li span#kw{
+    background-color: #bc99dd;
+}
+#headers_mr li span#pc{
+    background-color: #84d68e;
+}
+#headers_mr li span#ton{
+    background-color: #95c1e6;
 }

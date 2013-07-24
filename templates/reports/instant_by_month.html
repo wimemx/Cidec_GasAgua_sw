@@ -24,7 +24,7 @@
 </script>
 
 <script type="text/javascript">
-var fech_ini = '', fech_fin = '';
+
 var year_s, month_s, day_s;
 var year_e, month_e, day_e;
 year_s={{ fi|date:"Y" }};
@@ -147,32 +147,25 @@ function drawVisualization() {
     var False = false;
     var rows_data = {% autoescape off %}{{ rows }}{% endautoescape %};
 
-    fech_ini = new Date();
-    fech_ini.setTime((rows_data[0][0]['datetime']*1000));
-    console.time("matrix construction");
+    console.time("matrix construction outer");
     for(var row_index = 0; row_index < {{ rows_len }}; row_index+=3){
+        console.time("matrix construction inner");
         var row_data = rows_data[row_index];
         var row_array = [];
         var len_rd = row_data.length;
+
         for(var data_index = 0; data_index < len_rd; data_index++){
             var data_object = row_data[data_index];
             var object_datetime = new Date();
             object_datetime.setTime((data_object['datetime']*1000));
-            //if(fech_ini == ''){
-            //    fech_ini = object_datetime;
-            //}
-            fech_fin = object_datetime;
             row_array.push(object_datetime);
-            var object_electric_data;
-            object_electric_data = data_object['value'];
-
-            row_array.push(object_electric_data);
-            var object_certainty = data_object['certainty'];
-            row_array.push(object_certainty);
+            row_array.push(data_object['value']);
+            row_array.push(data_object['certainty']);
         }
         data.addRow(row_array);
+        console.timeEnd("matrix construction inner");
     }
-    console.timeEnd("matrix construction");
+    console.timeEnd("matrix construction outer");
     console.time("draw graph");
     view = new google.visualization.DataView(data);
 
