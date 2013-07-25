@@ -6748,7 +6748,7 @@ def configure_ie(request, id_ie):
         pms = PowermeterForIndustrialEquipment.objects.filter(
             industrial_equipment=ie).values_list("powermeter__pk", flat=True)
         powermeters = ProfilePowermeter.objects.filter(
-            pk__in=pms)
+            powermeter__pk__in=pms)
         tz = timezone.get_current_timezone()
         if request.method == "POST":
             template_vars['powermeters'] = []

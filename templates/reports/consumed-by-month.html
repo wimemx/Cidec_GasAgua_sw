@@ -21,8 +21,134 @@
 <!-- Google Chart -->
 <script type="text/javascript">
     google.load('visualization', '1.1', {packages: ['corechart', 'controls']});
+    var True = true;
+    var False = false;
+    var None = null;
+    var rows_data = {% autoescape off %}{{ rows }}{% endautoescape %};
 </script>
+</head>
 
+<body>
+
+<div id="dashboard" class="fl">
+    <!-- chart start -->
+    <p id="showing_week"><span class="left-nav left_legend"></span><span class="sem_count">Semana #</span><span class="date_range">(- al -)</span><span class="right-nav right_legend"></span></p>
+    <div id="dias">
+        <span class="fl">Lunes</span>
+        <span class="fl">Martes</span>
+        <span class="fl">Mi&eacute;rcoles</span>
+        <span class="fl">Jueves</span>
+        <span class="fl">Viernes</span>
+        <span class="fl">S&aacute;bado</span>
+        <span class="fl">Domingo</span>
+    </div>
+    <div id="chart">
+        <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
+    </div>
+    <!-- chart end -->
+
+    <!-- control start -->
+    <div id="control_container" class="auto">
+        <div id="control"></div>
+        <span class="left-nav left_grip"></span>
+        <span class="right-nav right_grip"></span>
+    </div>
+
+    <!-- control end -->
+
+    <!-- slider-range start -->
+    <div id="slider-range">
+        <div id="up">
+            <input type="text" class="integer" id="upper_limit" step="0.5"/>
+        </div>
+
+        <div id="down">
+            <input type="text" class="integer" id="lower_limit" step="0.5"/>
+        </div>
+    </div>
+    <!-- slider-range end -->
+
+</div>
+<!-- dashboard end -->
+
+<!-- statistics-table start -->
+<div class="vacio"></div>
+
+<div id="moth_data" class="g12">
+    <div class="fl g4" id="parameter_details">
+        <div class="month_param g12" id="consumo">
+            <div class="g4">
+                <span class="title_tile">Consumo</span>
+                <span class="units_tile">kWh</span>
+            </div>
+            <div class="g8">
+                <p class="g12">
+                    Mensual:<span class="param_value"> {{ month_data.consumo_acumulado }}</span>
+                </p>
+                <p class="g12">
+                    Promedio diario:<span class="param_value"> {{ month_data.consumo_promedio }}</span>
+                </p>
+                <p class="g12">
+                    M&aacute;ximo:<span class="param_value"> {{ month_data.consumo_maximo }}</span>
+                </p>
+                <p class="g12">
+                    M&iacute;nimo:<span class="param_value"> {{ month_data.consumo_minimo }}</span>
+                </p>
+            </div>
+        </div>
+        <div class="vacio"></div>
+        <div class="month_param g12" id="demanda">
+            <div class="g4">
+                <span class="title_tile">Demanda</span>
+                <span class="units_tile">kW</span>
+            </div>
+            <div class="g8">
+                <p class="g12">
+                    Promedio diario:<span class="param_value"> {{ month_data.demanda_promedio }}</span>
+                </p>
+                <p class="g12">
+                    M&aacute;ximo:<span class="param_value"> {{ month_data.demanda_max }} </span>
+                </p>
+                <p class="g12">
+                    M&iacute;nimo:<span class="param_value"> {{ month_data.demanda_min }} </span>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="g8 grid_container">
+        <table>
+            <thead>
+            <tr>
+                <th colspan="9">Resumen Semanal (KWh)</th>
+            </tr>
+
+            <tr class="row1">
+                <th width="4%">S</th>
+                <th width="12%">Total</th>
+                <th width="12%">Lunes</th>
+                <th width="12%">Martes</th>
+                <th width="12%">Mi&eacute;rcoles</th>
+                <th width="12%">Jueves</th>
+                <th width="12%">Viernes</th>
+                <th width="12%">S&aacute;bado</th>
+                <th width="12%">Domingo</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            {% for day in day_data %}
+            <tr class="{% cycle row1 row2 %}">
+                <td>{{ forloop.counter }}</td>
+                <td class="table_value green">{% if day.0.week_total %}{{ day.0.week_total }}{% else %}-{% endif %}</td>
+                {% for d_d in day %}
+                    <td class="table_value">{% if d_d.KWH_total %}{{ d_d.KWH_total }}{% else %}-{% endif %}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+<!-- statistics-table end -->
 <script type="text/javascript">
 var fech_ini = '', fech_fin = '';
 var year_s, month_s, day_s;
@@ -130,11 +256,6 @@ function drawVisualization() {
     data.addColumn('number', "kWh");
     data.addColumn({type:'boolean', role:'certainty'});
     {% endif %}
-
-    var True = true;
-    var False = false;
-    var None = null;
-    var rows_data = {% autoescape off %}{{ rows }}{% endautoescape %};
     //console.log(rows_data);
     {% if periods %}
         for(var row_index = 0; row_index < rows_data.length; row_index++){
@@ -391,128 +512,5 @@ function update_bars_color(){
     });
 }
 </script>
-</head>
-
-<body>
-
-<div id="dashboard" class="fl">
-    <!-- chart start -->
-    <p id="showing_week"><span class="left-nav left_legend"></span><span class="sem_count">Semana #</span><span class="date_range">(- al -)</span><span class="right-nav right_legend"></span></p>
-    <div id="dias">
-        <span class="fl">Lunes</span>
-        <span class="fl">Martes</span>
-        <span class="fl">Mi&eacute;rcoles</span>
-        <span class="fl">Jueves</span>
-        <span class="fl">Viernes</span>
-        <span class="fl">S&aacute;bado</span>
-        <span class="fl">Domingo</span>
-    </div>
-    <div id="chart">
-        <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
-    </div>
-    <!-- chart end -->
-
-    <!-- control start -->
-    <div id="control_container" class="auto">
-        <div id="control"></div>
-        <span class="left-nav left_grip"></span>
-        <span class="right-nav right_grip"></span>
-    </div>
-
-    <!-- control end -->
-
-    <!-- slider-range start -->
-    <div id="slider-range">
-        <div id="up">
-            <input type="text" class="integer" id="upper_limit" step="0.5"/>
-        </div>
-
-        <div id="down">
-            <input type="text" class="integer" id="lower_limit" step="0.5"/>
-        </div>
-    </div>
-    <!-- slider-range end -->
-
-</div>
-<!-- dashboard end -->
-
-<!-- statistics-table start -->
-<div class="vacio"></div>
-
-<div id="moth_data" class="g12">
-    <div class="fl g4" id="parameter_details">
-        <div class="month_param g12" id="consumo">
-            <div class="g4">
-                <span class="title_tile">Consumo</span>
-                <span class="units_tile">kWh</span>
-            </div>
-            <div class="g8">
-                <p class="g12">
-                    Mensual:<span class="param_value"> {{ month_data.consumo_acumulado }}</span>
-                </p>
-                <p class="g12">
-                    Promedio diario:<span class="param_value"> {{ month_data.consumo_promedio }}</span>
-                </p>
-                <p class="g12">
-                    M&aacute;ximo:<span class="param_value"> {{ month_data.consumo_maximo }}</span>
-                </p>
-                <p class="g12">
-                    M&iacute;nimo:<span class="param_value"> {{ month_data.consumo_minimo }}</span>
-                </p>
-            </div>
-        </div>
-        <div class="vacio"></div>
-        <div class="month_param g12" id="demanda">
-            <div class="g4">
-                <span class="title_tile">Demanda</span>
-                <span class="units_tile">kW</span>
-            </div>
-            <div class="g8">
-                <p class="g12">
-                    Promedio diario:<span class="param_value"> {{ month_data.demanda_promedio }}</span>
-                </p>
-                <p class="g12">
-                    M&aacute;ximo:<span class="param_value"> {{ month_data.demanda_max }} </span>
-                </p>
-                <p class="g12">
-                    M&iacute;nimo:<span class="param_value"> {{ month_data.demanda_min }} </span>
-                </p>
-            </div>
-        </div>
-    </div>
-    <div class="g8 grid_container">
-        <table>
-            <thead>
-            <tr>
-                <th colspan="9">Resumen Semanal (KWh)</th>
-            </tr>
-
-            <tr class="row1">
-                <th width="4%">S</th>
-                <th width="12%">Total</th>
-                <th width="12%">Lunes</th>
-                <th width="12%">Martes</th>
-                <th width="12%">Mi&eacute;rcoles</th>
-                <th width="12%">Jueves</th>
-                <th width="12%">Viernes</th>
-                <th width="12%">S&aacute;bado</th>
-                <th width="12%">Domingo</th>
-            </tr>
-            </thead>
-
-            <tbody>
-            {% for day in day_data %}
-            <tr class="{% cycle row1 row2 %}">
-                <td>{{ forloop.counter }}</td>
-                <td class="table_value green">{% if day.0.week_total %}{{ day.0.week_total }}{% else %}-{% endif %}</td>
-                {% for d_d in day %}
-                    <td class="table_value">{% if d_d.KWH_total %}{{ d_d.KWH_total }}{% else %}-{% endif %}</td>
-                {% endfor %}
-            </tr>
-            {% endfor %}
-        </table>
-    </div>
-</div>
-<!-- statistics-table end -->
 </body>
 </html>

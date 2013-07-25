@@ -72,7 +72,7 @@ table.datepickerViewYears th.datepickerMonth a span{
     font-family: helvetica,sans-serif;
     font-weight: bold !important;
     text-shadow: -1px -1px #666;
-    font-size: 18px !important;
+    font-size: 17px !important;
     line-height: 36px !important;
 }
 
@@ -184,16 +184,16 @@ table.datepickerViewYears td a span{
     color: #666666;
 }
 .inner_day .red{
-    color: #fff !important;
-    background: #c30000;
+    color: #c30000 !important;
+    font-weight: 700 !important;
     display: block;
     margin: 0 auto !important;
     padding: 0 !important;
     text-align: center !important;
 }
 .inner_day .green{
-    color: #FFF !important;;
-    background: #58b11d;
+    color: #58b11d !important;;
+    font-weight: 700 !important;
     display: block;
     margin: 0 auto !important;
     padding: 0 !important;
@@ -305,10 +305,14 @@ h3.titulo_reporte{
     top: 91px;
     right: -264px;
     position: absolute;
+    padding-right: 4px;
+}
+#lateral div.vacio{
+    border-top: solid 1px #CCCCCC;
 }
 #lateral h2{
     float: none;
-    color: #898989;
+    color: #393b46;
     font-weight: 700;
     font-size: 14px;
     text-align: center;
@@ -344,80 +348,52 @@ h3.titulo_reporte{
     position: absolute;
 }
 /*--------BARRA LATERAL DIA------*/
-#lateral .energia_semanal {
-    background: url(../images/imgs_icns/energia_semanal.png) left 3px no-repeat !important;
-    height: 40px;
+#lateral .energia_semanal, #lateral .demanda_semanal,
+#lateral .costo_promedio_semanal, #lateral .factor_potencia{
+    font-weight: 700;
+    height: 16px;
     margin-left: 10px;
     text-align: left !important;
-    text-indent: 35px;
-    font-weight: 100 !important;
-    color: #ff9000;
+    text-indent: 0px;
+    color: #444651;
     display: block;
-    font-size: 15px;
+    font-size: 12px;
     margin-top: 10px;
     padding-top: 5px;
 }
 .no_bolder{
  font-weight: 100 !important;
 }
-#lat_consumo .m_value{
+
+#lat_consumo .m_value, #lat_demanda .m_value, #lat_costo .m_value,
+#potencia_semanal .m_value{
+    text-align: right;
+    padding-top: 5px;
+    height: 34px;
     margin-bottom: 5px;
-    display:block;
-    font-size: 15px;
-}
-#lateral .demanda_semanal {
-    background: url(../images/imgs_icns/demanda_semanal.png) left 3px no-repeat !important;
-    height: 40px;
-    margin-left: 10px;
-    text-align: left !important;
-    text-indent: 35px;
-    font-weight: 100 !important;
-    color: #9441e5;
     display: block;
-    font-size: 15px;
-    margin-top: 10px;
-    padding-top: 8px;
-}
-#lateral .costo_promedio_semanal{
-    background: url(../images/imgs_icns/costo_semanal.png) left 3px no-repeat !important;
-    height: 40px;
-    margin-left: 10px;
-    text-align: left !important;
-    text-indent: 35px;
-    font-weight: 100 !important;
-    color: #cc0044;
-    display: block;
-    font-size: 15px;
-    margin-top: 10px;
-    padding-top: 8px;
-}
-#lateral .factor_potencia{
-    background: url(../images/imgs_icns/fp_semanal.png) left 3px no-repeat !important;
-    height: 40px;
-    margin-left: 10px;
-    text-align: left !important;
-    text-indent: 35px;
-    font-weight: 100 !important;
-    color: #207b2b;
-    display: block;
-    font-size: 16px;
-    margin-top: 10px;
-    padding-top: 8px;
-    clear: both;
 }
 
-#lat_costo .m_value{
-    float: left !important;
-    margin-bottom: 20px;
+#lat_consumo .m_value{
+    background: url(../images/imgs_icns/energia_semanal.png) left top no-repeat !important;
 }
-#lat_costo .s_value{
+#lat_demanda .m_value {
+    background: url(../images/imgs_icns/demanda_semanal.png) left 3px no-repeat !important;
+}
+#lat_costo .m_value{
+    background: url(../images/imgs_icns/costo_semanal.png) left 3px no-repeat !important;
+}
+#potencia_semanal .m_value{
+    background: url(../images/imgs_icns/fp_semanal.png) left 3px no-repeat !important;
+}
+.s_value{
     display: block;
     padding-top: 3px;
     float: left;
 }
 .m_value{
-    color: #595959;
-    font-size: 18px;
+    color: #393b46;
+    font-size: 20px;
     font-weight: 700;
     margin-left: 10px;
 }
@@ -447,27 +423,92 @@ h3.titulo_reporte{
     margin-left: 40px;
     line-height: 125%;
 }
+
+.val_unit{
+    font-weight: 700;
+    text-align: center;
+    margin-left: 10px;
+}
+
+.s_unit{
+    font-weight: 100;
+}
+.val_unit, .s_unit{
+    padding: 4px 2px 0 2px;
+    display: block;
+    width: 25px;
+    height: 15px;
+    float: right;
+    color: #fff;
+    margin-bottom: 0 !important;
+    text-align: center;
+}
+#lat_consumo .s_unit{
+    background-color: #ffb95f;
+}
+
+#lat_consumo .val_unit{
+    background-color: #ff9000;
+}
+
+#lat_demanda .s_unit{
+    background-color: #9441e5;
+}
+
+#lat_demanda .val_unit{
+    background-color: #bb84f0;
+}
+#potencia_semanal .val_unit{
+    background-color: #33943e;
+}
+
+.s_label, .s_value{
+    color: #595959;
+    float: left;
+    margin: 0 !important;
+}
+.s_label{
+    text-indent: 10px;
+    width: 50px;
+}
+.s_value{
+    text-align: right;
+    width: 75px;
+}
+#lat_demanda .s_value{
+    width: 140px;
+}
+
+.link{
+    font-size: 10px;
+}
 /*--------BARRA LATERAL SEMANA------*/
 .semana_cont{
-    height: 80px;
+    height: 70px;
     margin: 5px 0;
 }
 .week_num{
     color: #a8a8a8;
-    font-size: 32px;
+    font-size: 14px;
     font-weight: 700;
     text-shadow: -1px -1px 0 #999,0 1px 0 #fefefe;
-    line-height: 75px;
-    margin-left: 7px;
+    margin-left: 10px;
     width: 55px;
 }
 .week_values_cont{
     color: #595959;
     font-size: 12px;
-    margin-left: 8px;
+    margin-left: 10px;
+    width: 166px;
+}
+.label_wvalue{
+    font-weight: 700;
+    font-size: 11px;
+    float: left;
 }
 .wvalue{
-    font-weight: 700;
+    font-weight: 100;
+    float: right;
 }
 /*-------TOP-------*/
 #monthly_container{
@@ -478,11 +519,11 @@ h3.titulo_reporte{
 #month_sumary{
     display: block;
     margin: 30px auto 0 auto;
-    width: 641px;
+    width: 891px;
     height: 140px;
     clear: both;
     overflow: hidden;
-    background: url(../images/imgs_icns/resumen_header.png) top no-repeat !important;
+    background: url(../images/bgs/month_bg.png) top no-repeat !important;
 }
 
 #month_sumary ul{
@@ -509,7 +550,7 @@ h3.titulo_reporte{
 
 .month_totals{
     float: left;
-    width: 209px;
+    width: 222px;
 }
 
 
@@ -517,31 +558,64 @@ h3.titulo_reporte{
     display: block;
     color: #898989;
     font-weight: 700;
-    font-size: 12px;
+    font-size: 10px;
 }
 
 
 .icon_sumary #cons_total{
-    background: url(../images/imgs_icns/consumo_mensual.png) left center no-repeat;
-    padding-left: 78px;
-
+    background: url(../images/imgs_icns/consumo_mensual.png) 5px center no-repeat;
+    padding-left: 28px;
+    padding-right: 37px;
+    text-align: right;
 }
 .icon_sumary #dem_total{
-    background: url(../images/imgs_icns/demanda_semanal.png) left center no-repeat;
-    padding-left: 40px;
+    background: url(../images/imgs_icns/demanda_semanal.png) 5px center no-repeat;
+    padding-left: 28px;
+    padding-right: 37px;
+    text-align: right;
 }
 .icon_sumary #emit_total{
-    background: url(../images/imgs_icns/fp_semanal.png) left center no-repeat;
-    padding-left: 35px;
+    background: url(../images/imgs_icns/fp_semanal.png) 5px center no-repeat;
+    padding-left: 28px;
+    padding-right: 37px;
+    text-align: right;
 }
 .icon_sumary #pp_total{
-    background: url(../images/imgs_icns/co2_mensual.png) left center no-repeat;
-    padding-left: 30px;
+    background: url(../images/imgs_icns/co2_mensual.png) 5px center no-repeat;
+    padding-left: 28px;
+    padding-right: 37px;
+    text-align: right;
 }
+
+.consumo_t .label_icon{
+    color: #fe0054;
+}
+
+.demanda .label_icon{
+    color: #9441e5;
+}
+
+.emisiones .label_icon{
+    color: #207b2b;
+}
+
+.potencia .label_icon{
+    color: #1a89e7;
+    left: 2px;
+}
+
+.label_icon{
+    position: relative;
+    top: -13px;
+    font-size: 12px;
+    text-align: left;
+    left: -5px;
+}
+
 #cons_total, #dem_total, #emit_total, #pp_total{
-    font-size: 17px !important;
+    font-size: 22px !important;
     font-weight: 300 !important;
-    height: 55px;
+    height: 53px;
     line-height: 55px;
 }
 .month_totals span{
@@ -551,43 +625,42 @@ h3.titulo_reporte{
     margin: 3px 0;
 }
 .month_totals .label_tot{
-    width: 85px;
+    width: 64px;
 }
 .month_totals .value_tot{
+    text-align: right;
+    width: 117px;
     font-weight: 100;
 }
 /*--------boton lateral - semana---------*/
-#week_consumed {
+#week_consumed, #week_demand, #week_s{
     position: absolute;
     color: #ffe9ed;
     font-size: 12px;
-    background: #fe0054;
+    font-weight: 700;
     display: block;
-    width: 50px;
-    height: 13px;
+    width: 60px;
+    height: 12px;
     line-height: 14px;
     border: none;
     cursor: default;
     text-align: center;
-    top: 172px;
-    left: -50px;
+    left: -60px;
     padding: 3px 5px;
 }
+#week_consumed {
+    background: #fe0054;
+    top: 174px;
+}
 #week_demand {
-    position: absolute;
-    color: #fff;
-    font-size: 12px;
     background: #9441e5;
-    display: block;
-    width: 50px;
-    height: 13px;
-    line-height: 14px;
-    border: none;
-    cursor: default;
-    text-align: center;
-    top: 147px;
-    left: -50px;
-    padding: 3px 5px;
+    top: 150px;
+}
+#week_s{
+    background: #95c1e6;
+    top: 90px;
+    height: 27px;
+    cursor: pointer;
 }
 .datepickerContainer table table{
     width:597px !important;

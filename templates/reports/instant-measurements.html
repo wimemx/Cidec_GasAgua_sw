@@ -21,9 +21,124 @@
         <!-- Google Chart -->
         <script type="text/javascript">
             google.load('visualization', '1.1', {packages: ['corechart', 'controls']});
+            var True = true;
+            var False = false;
+            var rows_data = {% autoescape off %}{{ rows }}{% endautoescape %};
         </script>
+    </head>
 
-        <script type="text/javascript">
+    <body>
+
+    <ul id="compare_interval" class="fr">
+        <li id="hour">1 H</li>
+        <li id="day" >1 D</li>
+        <li id="week">1 Sem</li>
+    </ul>
+    <ul id="compare_interval1" class="fr">
+        {% if granularity == "raw_data" %}
+            <li id="raw_data"  class="active">Mediciones</li>
+            <li id="dw">Calculados</li>
+        {% else %}
+            <li id="raw_data">Mediciones</li>
+            <li id="dw" class="active" >Calculados</li>
+        {% endif %}
+    </ul>
+
+    <a id="export_csv" class="fr" href="">Exportar datos en CSV</a>
+
+
+        <div id="parameter_controls">
+
+        </div>
+
+        <!-- dashboard start -->
+        <div id="dashboard" class="fl">
+
+            <!-- chart start -->
+            <div id="chart">
+                <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
+            </div>
+            <!-- chart end -->
+
+            <!-- control start -->
+            <div id="control"></div>
+            <!-- control end -->
+            <div id="control1"></div>
+
+            <!-- slider-range start -->
+
+            <div id="slider-range">
+                <div id="up">
+                    <input type="text" class="integer" id="upper_limit" step="0.5"/>
+                </div>
+
+                <div id="down">
+                    <input type="text" class="integer" id="lower_limit" step="0.5"/>
+                </div>
+            </div>
+            <!-- slider-range end -->
+
+        </div>
+        <!-- dashboard end -->
+
+        <!-- statistics-table start -->
+        <div class="vacio"></div>
+        <div class="grid_container">
+            <table>
+                <thead>
+                    <tr>
+                        <th colspan="4">Resumen del Periodo</th>
+                    </tr>
+
+                    <tr class="row1">
+                        <th width="25%"></th>
+                        {% for column in columns %}
+                            <th width="25%">{{ column }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+
+                <tbody>
+                {% load humanize %}
+                    <tr class="row2">
+                        <td>Promedio</td>
+                        {% for column_statistics in columns_statistics %}
+                            <td class="table_value">{{ column_statistics.mean|floatformat:2|intcomma }}</td>
+                        {% endfor %}
+                    </tr>
+
+                    <tr class="row1">
+                        <td>Máximo</td>
+                        {% for column_statistics in columns_statistics %}
+                            <td class="table_value">{{ column_statistics.maximum|floatformat:2|intcomma }}</td>
+                        {% endfor %}
+                    </tr>
+
+                    <tr class="row2">
+                        <td>Mínimo</td>
+                        {% for column_statistics in columns_statistics %}
+                            <td class="table_value">{{ column_statistics.minimum|floatformat:2|intcomma }}</td>
+                        {% endfor %}
+                    </tr>
+
+                    <tr class="row1">
+                        <td>Mediana</td>
+                        {% for column_statistics in columns_statistics %}
+                            <td class="table_value">{{ column_statistics.median|floatformat:2|intcomma }}</td>
+                        {% endfor %}
+                    </tr>
+
+                    <tr class="row2">
+                        <td>Desviación Estándar</td>
+                        {% for column_statistics in columns_statistics %}
+                            <td class="table_value">{{ column_statistics.standard_deviation|floatformat:2|intcomma }}</td>
+                        {% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <!-- statistics-table end -->
+    <script type="text/javascript">
             var rangeban = 0
             var fech_ini = '', fech_fin = '';
             var view;
@@ -190,10 +305,6 @@
                         pf_index.push({{ forloop.counter0 }});
                     {% endif %}
                 {% endfor %}
-                var True = true;
-                var False = false;
-                var rows_data = {% autoescape off %}{{ rows }}{% endautoescape %};
-
                 fech_ini = new Date();
                 fech_ini.setTime((rows_data[0][0]['datetime']*1000));
 
@@ -527,118 +638,5 @@
 
             });
         </script>
-    </head>
-
-    <body>
-
-    <ul id="compare_interval" class="fr">
-        <li id="hour">1 H</li>
-        <li id="day" >1 D</li>
-        <li id="week">1 Sem</li>
-    </ul>
-    <ul id="compare_interval1" class="fr">
-        {% if granularity == "raw_data" %}
-            <li id="raw_data"  class="active">Mediciones</li>
-            <li id="dw">Calculados</li>
-        {% else %}
-            <li id="raw_data">Mediciones</li>
-            <li id="dw" class="active" >Calculados</li>
-        {% endif %}
-    </ul>
-
-    <a id="export_csv" class="fr" href="">Exportar datos en CSV</a>
-
-
-        <div id="parameter_controls">
-
-        </div>
-
-        <!-- dashboard start -->
-        <div id="dashboard" class="fl">
-
-            <!-- chart start -->
-            <div id="chart">
-                <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
-            </div>
-            <!-- chart end -->
-
-            <!-- control start -->
-            <div id="control"></div>
-            <!-- control end -->
-            <div id="control1"></div>
-
-            <!-- slider-range start -->
-
-            <div id="slider-range">
-                <div id="up">
-                    <input type="text" class="integer" id="upper_limit" step="0.5"/>
-                </div>
-
-                <div id="down">
-                    <input type="text" class="integer" id="lower_limit" step="0.5"/>
-                </div>
-            </div>
-            <!-- slider-range end -->
-
-        </div>
-        <!-- dashboard end -->
-
-        <!-- statistics-table start -->
-        <div class="vacio"></div>
-        <div class="grid_container">
-            <table>
-                <thead>
-                    <tr>
-                        <th colspan="4">Resumen del Periodo</th>
-                    </tr>
-
-                    <tr class="row1">
-                        <th width="25%"></th>
-                        {% for column in columns %}
-                            <th width="25%">{{ column }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-
-                <tbody>
-                {% load humanize %}
-                    <tr class="row2">
-                        <td>Promedio</td>
-                        {% for column_statistics in columns_statistics %}
-                            <td class="table_value">{{ column_statistics.mean|floatformat:2|intcomma }}</td>
-                        {% endfor %}
-                    </tr>
-
-                    <tr class="row1">
-                        <td>Máximo</td>
-                        {% for column_statistics in columns_statistics %}
-                            <td class="table_value">{{ column_statistics.maximum|floatformat:2|intcomma }}</td>
-                        {% endfor %}
-                    </tr>
-
-                    <tr class="row2">
-                        <td>Mínimo</td>
-                        {% for column_statistics in columns_statistics %}
-                            <td class="table_value">{{ column_statistics.minimum|floatformat:2|intcomma }}</td>
-                        {% endfor %}
-                    </tr>
-
-                    <tr class="row1">
-                        <td>Mediana</td>
-                        {% for column_statistics in columns_statistics %}
-                            <td class="table_value">{{ column_statistics.median|floatformat:2|intcomma }}</td>
-                        {% endfor %}
-                    </tr>
-
-                    <tr class="row2">
-                        <td>Desviación Estándar</td>
-                        {% for column_statistics in columns_statistics %}
-                            <td class="table_value">{{ column_statistics.standard_deviation|floatformat:2|intcomma }}</td>
-                        {% endfor %}
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <!-- statistics-table end -->
     </body>
 </html>
