@@ -5895,8 +5895,9 @@ def edit_building(request, id_bld):
 
                 #Se actualiza el edificio para hacer el cambio de horario en caso de que sea el edificio en uso
                 if request.session['main_building'].id == long(id_bld):
+                    bld = Building.objects.get(pk=id_bld)
                     request.session['timezone'] = get_google_timezone(
-                                request.session['main_building'])[0]
+                                bld)[0]
                     tz = pytz.timezone(request.session.get('timezone'))
                     if tz:
                         timezone.activate(tz)
