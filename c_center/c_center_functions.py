@@ -620,7 +620,7 @@ def set_default_session_vars(request, datacontext):
             #print "186"
             request.session['consumer_unit'] = None
 
-    request.session['timezone']= get_google_timezone(
+    request.session['timezone'] = get_google_timezone(
         request.session['main_building'])[0]
     tz = pytz.timezone(request.session.get('timezone'))
     if tz:

@@ -5901,7 +5901,7 @@ def edit_building(request, id_bld):
                     tz = pytz.timezone(request.session.get('timezone'))
                     if tz:
                         timezone.activate(tz)
-
+                    request.session['main_building'] = bld
                 message = "Edificio editado exitosamente"
                 _type = "n_success"
                 if has_permission(request.user, VIEW,
