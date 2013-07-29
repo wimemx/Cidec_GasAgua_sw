@@ -621,7 +621,7 @@ def set_default_session_vars(request, datacontext):
             request.session['consumer_unit'] = None
 
     request.session['timezone'] = get_google_timezone(
-        request.session['main_building'])
+        request.session['main_building'])[0]
     tz = pytz.timezone(request.session.get('timezone'))
     if tz:
         timezone.activate(tz)
@@ -3173,7 +3173,6 @@ def parse_file(_file):
         fecha = item['Fecha']
         medition_date = datetime.datetime.strptime(
             fecha, "%a %b %d %H:%M:%S %Z %Y")
-
         try:
             powerp = ProfilePowermeter.objects.get(
                 powermeter__powermeter_serial=item["Id medidor"])
@@ -3288,8 +3287,7 @@ def get_google_timezone(building):
             return False
         else:
             json_t = simplejson.load(timezone_json)
-
-            return json_t['timeZoneId']
+            return json_t['timeZoneId'], int(json_t['dstOffset'])
 
 
 

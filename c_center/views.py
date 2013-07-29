@@ -196,9 +196,11 @@ def dw_specific(request):
 @login_required(login_url='/')
 def set_default_building(request, id_building):
     """Sets the default building for reports"""
+
     request.session['main_building'] = Building.objects.get(pk=id_building)
+
     request.session['timezone']= get_google_timezone(
-        request.session['main_building'])
+        request.session['main_building'])[0]
     tz = pytz.timezone(request.session.get('timezone'))
     if tz:
         timezone.activate(tz)
@@ -411,7 +413,7 @@ def cfe_calculations(request):
                 content=MSG_PERMIT_ERROR)
 
         set_default_session_vars(request, datacontext)
-        print "Offset", request.session['timezone']
+
 
         template_vars = dict(type="cfe", datacontext=datacontext,
                              empresa=request.session['main_building'])
@@ -485,6 +487,8 @@ def cfe_calculations(request):
                 fecha_fin = cfe_historico[0].monthly_cut_dates.date_end.\
                     astimezone(timezone.get_current_timezone()).\
                     strftime('%d/%m/%Y %I:%M %p')
+
+
 
                 periodo = fecha_ini + " - " + fecha_fin
 
@@ -5472,7 +5476,6 @@ def add_building(request):
                                     building=newBuilding).save()
 
                 #Se da de alta la zona horaria del edificio
-                print ("prueba")
                 timeZone = Timezones.objects.get(id=b_time_zone)
                 newTimeZone = TimezonesBuildings(
                     building = newBuilding,
@@ -5668,7 +5671,7 @@ def edit_building(request, id_bld):
             'b_state': buildingObj.estado.estado_name,
             'b_municipality_id': buildingObj.municipio_id,
             'b_municipality': buildingObj.municipio.municipio_name,
-            #'b_timezone': buildingObj.municipio.municipio_name,
+            'b_timezone': buildingObj.municipio.municipio_name,
             'b_neighborhood_id': buildingObj.colonia_id,
             'b_neighborhood': buildingObj.colonia.colonia_name,
             'b_street_id': buildingObj.calle_id,
@@ -5885,20 +5888,20 @@ def edit_building(request, id_bld):
                             building_attributes_value=atr_value_arr[2]
                         )
                         newBldAtt.save()
-                # Se actualiza zona horaria
+                #Se actualiza zona horaria
                 hour_type = Timezones.objects.get(id=b_time_zone)
                 t_zone_id.time_zone = hour_type
                 t_zone_id.save()
 
                 #Se actualiza el edificio para hacer el cambio de horario en caso de que sea el edificio en uso
                 if request.session['main_building'].id == long(id_bld):
-                    request.session['timezone']= get_google_timezone(
-                                request.session['main_building'])
+                    bld = Building.objects.get(pk=id_bld)
+                    request.session['timezone'] = get_google_timezone(
+                                bld)[0]
                     tz = pytz.timezone(request.session.get('timezone'))
                     if tz:
                         timezone.activate(tz)
-
-
+                    request.session['main_building'] = bld
                 message = "Edificio editado exitosamente"
                 _type = "n_success"
                 if has_permission(request.user, VIEW,

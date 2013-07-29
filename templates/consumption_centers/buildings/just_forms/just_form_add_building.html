@@ -173,9 +173,9 @@
                     <label for="b_time_zone" class="g3">Zona Horaria:<span class="required">*</span></label>
                     <select name="b_time_zone" id="b_time_zone" class="g8">
                         <option value="">Selecciona una zona horaria</option>
-                        {% if zonas_lst %}
+                     {% if zonas_lst %}
                             {% for zn in zonas_lst %}
-                                <option value="{{zn.id}}"{% if post.b_time_zone_id == zn.id %} selected {% endif %}> {{ zn.name }}</option>
+                              <option value="{{zn.id}}"{% if post.b_time_zone_id == zn.id %} selected {% endif %}> {{ zn.name }}</option>
                             {% endfor %}
                         {% endif %}
 
