@@ -1383,7 +1383,7 @@ def dailyReport(building, consumer_unit, today):
                     astimezone(timezone.get_current_timezone()).time()
                 if demanda_min_temp < demanda_min:
                     demanda_min = demanda_min_temp
-                    dem_min_time = demanda_min_obj[0].mtarifaHM_2edition_date.\
+                    dem_min_time = demanda_min_obj[0].medition_date.\
                     astimezone(timezone.get_current_timezone()).time()
 
         for c_unit in consumer_units:
@@ -3173,8 +3173,6 @@ def parse_file(_file):
         fecha = item['Fecha']
         medition_date = datetime.datetime.strptime(
             fecha, "%a %b %d %H:%M:%S %Z %Y")
-        timezone_ = pytz.timezone("US/Central")
-        medition_date.replace(tzinfo=timezone_)
         try:
             powerp = ProfilePowermeter.objects.get(
                 powermeter__powermeter_serial=item["Id medidor"])
@@ -3182,9 +3180,17 @@ def parse_file(_file):
             powerp = ProfilePowermeter.objects.get(
                 powermeter__powermeter_anotation="No Registrado"
             )
+            timezone_ = pytz.timezone("US/Central")
+            medition_date.replace(tzinfo=timezone_)
         else:
-            consumer_units.append(
-                ConsumerUnit.objects.get(profile_powermeter=powerp))
+            cu = ConsumerUnit.objects.get(profile_powermeter=powerp)
+            consumer_units.append(cu)
+
+            time_zone, offset = get_google_timezone(cu.building)
+            timezone_ = pytz.timezone(time_zone)
+            medition_date.replace(tzinfo=timezone_)
+            medition_date = medition_date - datetime.timedelta(seconds=offset)
+
         dates_arr.append(medition_date)
         elec_data = ElectricDataTemp.objects.filter(
             profile_powermeter=powerp,
@@ -3257,12 +3263,13 @@ def get_google_timezone(building):
 
     #Se obtiene el Timezone del edificio
     try:
-        bld_timezone = TimezonesBuildings.objects.get(building= building)
+        bld_timezone = TimezonesBuildings.objects.get(building=building)
     except ObjectDoesNotExist:
         print "Building with no Timezone"
-        return False
+        return "America/Mexico_City"
     else:
-        #Si el edificio no tiene coordenadas. Se toman las coordenadas por default
+        #Si el edificio no tiene coordenadas.
+        # Se toman las coordenadas por default
         if not bld_lat and not bld_long:
             #Obtener las coordenadas por default
             bld_lat = bld_timezone.time_zone.latitude
@@ -3270,10 +3277,11 @@ def get_google_timezone(building):
 
         now_timestamp = int(time.time())
         try:
-            timezone_json = urllib2.urlopen('https://maps.googleapis.com/maps/api/'
-                                            'timezone/json?location='+str(bld_lat)+
-                                            ','+str(bld_long)+'&timestamp='+
-                                            str(now_timestamp)+'&sensor=false')
+            timezone_json = urllib2.urlopen(
+                'https://maps.googleapis.com/maps/api/'
+                'timezone/json?location=' + str(bld_lat) +
+                ',' + str(bld_long) + '&timestamp=' +
+                str(now_timestamp)+'&sensor=false')
         except IOError:
             print "URL Error. No Connection"
             return False

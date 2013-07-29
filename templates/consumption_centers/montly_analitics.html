@@ -104,26 +104,32 @@
                 var texto_kwh = '-';
                 //console.log(data[0])
                 if(data[0].consumo_acumulado != undefined){
-                    texto_kwh = addCommas(data[0].consumo_acumulado) + "kWh";
+                    texto_kwh = addCommas(data[0].consumo_acumulado);
                 }
                 $("#cons_total").html(texto_kwh);
 
                 var texto_dt = '-';
                 if(data[0].demanda_max != undefined){
-                    texto_dt = addCommas(data[0].demanda_max) + "kW";
+                    texto_dt = addCommas(data[0].demanda_max);
                 }
                 $("#dem_total").text(texto_dt);
+
+                var texto_dm = '-';
+                if(data[0].demanda_min != undefined){
+                    texto_dm = addCommas(data[0].demanda_min);
+                }
+                $("#month_dem_min").text(texto_dm);
 
                 var texto_pf = '-';
                 if(data[0].factor_potencia != undefined){
                     //console.log(data[0].factor_potencia)
-                    texto_pf = String(data[0].factor_potencia.toFixed(2)) + "%";
+                    texto_pf = String(data[0].factor_potencia.toFixed(2));
                 }
                 $("#emit_total").text(texto_pf);
 
                 var texto_emit = '-';
                 if(data[0].emisiones != undefined){
-                    texto_emit = addCommas(data[0].emisiones.toFixed(2)) + " TON";
+                    texto_emit = addCommas(data[0].emisiones.toFixed(2));
                 }
                 $("#pp_total").text(texto_emit);
 
@@ -135,7 +141,7 @@
                 var month_cons_med = '-';
                 var month_cons_des = '-';
                 if(data[0].demanda_min != undefined){
-                    month_dem_min = addCommas(data[0].demanda_min) + "kW";
+                    month_dem_min = addCommas(data[0].demanda_min);
                 }
                 if(data[0].consumo_promedio != undefined){
                     month_cons_prom = addCommas(data[0].consumo_promedio.toFixed(2));
@@ -170,32 +176,35 @@
                 if(data.empty == "true"){
                     lateral_content +=     '<span class="no_data">No hay informaci&oacute;n para este d&iacute;a</span>';
                 }else{
-                    lateral_content +=     '<span class="no_bolder energia_semanal">Energía</span>';
+                    lateral_content +=     '<span class="energia_semanal">ENERG&Iacute;A</span>';
                     lateral_content +=     '<div id="lat_consumo">';
-                    lateral_content +=     '<span class="m_value">'+ addCommas(data.c_tot)+' kWh</span>';
+                    lateral_content +=     '<span class="m_value">'+ addCommas(data.c_tot)+'<span class="val_unit">kWh</span></span>';
 
                     if(data.electric_rate == '1'){
-                        lateral_content +=     '<span class="s_value">'+ addCommas(data.c_base)+'kWh base</span>';
-                        lateral_content +=     '<span class="s_value">'+ addCommas(data.c_int)+'kWh intermedia</span>';
-                        lateral_content +=     '<span class="s_value">'+ addCommas(data.c_punta)+'kWh punta</span>';
+                        lateral_content +=     '<span class="s_label">Base</span><span class="s_value">' + addCommas(data.c_base)+'</span><span class="s_unit">kWh</span>';
+                        lateral_content +=     '<div class="vacio"></div>';
+                        lateral_content +=     '<span class="s_label">Intermedia</span><span class="s_value">'+ addCommas(data.c_int)+'</span><span class="s_unit">kWh</span>';
+                        lateral_content +=     '<div class="vacio"></div>';
+                        lateral_content +=     '<span class="s_label">Punta</span><span class="s_value">'+ addCommas(data.c_punta)+'</span><span class="s_unit">kWh</span>';
+                        lateral_content +=     '<div class="vacio"></div>';
                     }
+                    lateral_content +=     '</div>';
+                    lateral_content +=     '<a href="/main/?g_type=consumo&fechaGrafica=' + day + '" class ="link">Ver en una gr&aacute;fica</a>';
 
-                    lateral_content +=     '</div>';
-                    lateral_content +=     '<a href="/main/?g_type=consumo&fechaGrafica=' + day + '">Ver en una gr&aacute;fica</a>';
-                    lateral_content +=     '<span class="no_bolder demanda_semanal">Demanda M&aacute;xima</span>';
+                    lateral_content +=     '<span class="demanda_semanal">DEMANDA M&Aacute;XIMA</span>';
                     lateral_content +=     '<div id="lat_demanda">';
-                    lateral_content +=     '<span class="m_value">'+ addCommas(data.d_max)+' kW</span>';
-                    lateral_content +=     '<span class="s_value">'+ addCommas(data.d_max_time)+'</span>';
+                    lateral_content +=     '<span class="m_value">'+ addCommas(data.d_max)+' <span class="val_unit">kW</span></span>';
+                    lateral_content +=     '<div class="vacio"></div>';
+                    lateral_content +=     '<span class="s_value">'+ addCommas(data.d_max_time)+'</span><span class="s_unit">hrs</span>';
                     lateral_content +=     '</div>';
-                    lateral_content +=     '<a href="/main/?g_type=energia&fi=' + day + '&ff=' + day + '">Ver en una gr&aacute;fica</a>';
-                    lateral_content +=     '<span class="no_bolder costo_promedio_semanal">Costo Promedio</span>';
+                    lateral_content +=     '<a href="/main/?g_type=energia&fi=' + day + '&ff=' + day + '" class ="link">Ver en una gr&aacute;fica</a>';
+                    lateral_content +=     '<span class="costo_promedio_semanal">COSTO PROMEDIO</span>';
                     lateral_content +=     '<div id="lat_costo">';
                     lateral_content +=     '<span class="m_value">$'+ addCommas(data.cost_p)+'</span>';
-                    lateral_content +=     '<span class="s_value">MXN</span>';
                     lateral_content +=     '</div>';
-                    lateral_content +=     '<span class="no_bolder factor_potencia">Factor potencia</span>';
+                    lateral_content +=     '<span class="factor_potencia">FACTOR DE POTENCIA</span>';
                     lateral_content +=     '<div id="potencia_semanal">';
-                    lateral_content +=     '<span class="m_value">'+ data.pf+'%</span>';
+                    lateral_content +=     '<span class="m_value">'+ data.pf+'<span class="val_unit">%</span></span>';
                     lateral_content +=     '</div>';
                     //lateral_content +=     '<span class="aditional">kVArh: '+ addCommas(data.kvarh) +' KVar</span>';
                 }
@@ -231,7 +240,7 @@
             type: "GET",
             success: function(data){
 
-                lateral.html('<span id="close"></span><h2>Reporte Semanal</h2><span class="lat_sep"></span>');
+                lateral.html('<span id="close"></span><h2>Resumen Semanal</h2><span class="lat_sep"></span>');
                 var cont = 0;
                 $(".datepickerWeek a span").each(function(){
                     valor = $(this).text();
@@ -245,18 +254,17 @@
                         var div = "<div class='semana_cont'>";
                         div += "<span class='week_num fl'>S"+ String(semana) +"</span>";
                         div += "<div class='week_values_cont fl'>";
-                        div += "<span class='label_wvalue'>Consumo Acumulado:";
-                        div += "<span class='wvalue'> "+acum+" kWh</span></span>";
-                        div += "<span class='label_wvalue'>Demanda M&aacute;x:";
-                        div += "<span class='wvalue'> "+data[cont].demanda_max+" kW</span></span>";
-                        div += "<span class='label_wvalue'>Demanda Mínima:";
-                        div += "<span class='wvalue'> "+data[cont].demanda_min+" kW</span></span>";
-                        div += "<span class='label_wvalue'>Consumo Promedio:";
-                        div += "<span class='wvalue'> "+data[cont].consumo_promedio.toFixed(2)+" kWh</span></span>";
-                        div += "<span class='label_wvalue'>Consumo Mediana:";
-                        div += "<span class='wvalue'> "+data[cont].consumo_mediana.toFixed(2)+" kWh</span></span>";
-                        div += "<span class='label_wvalue'>Consumo Desviación:";
-                        div += "<span class='wvalue'>"+data[cont].consumo_desviacion.toFixed(2)+" kWh</span></span>";
+                        div += "<span class='label_wvalue'>kWh Semana:</span>";
+                        div += "<span class='wvalue'> "+acum+" kWh</span>";
+                        div += "<span class='vacio'></span>";
+                        div += "<span class='label_wvalue'>kWh Promedio:</span>";
+                        div += "<span class='wvalue'> "+data[cont].consumo_promedio.toFixed(2)+" kWh</span>";
+                        div += "<span class='vacio'></span>";
+                        div += "<span class='label_wvalue'>Demanda M&aacute;xima:</span>";
+                        div += "<span class='wvalue'> "+data[cont].demanda_max+" kW</span>";
+                        div += "<span class='vacio'></span>";
+                        div += "<span class='label_wvalue'>Demanda Mínima:</span>";
+                        div += "<span class='wvalue'> "+data[cont].demanda_min+" kW</span>";
                         div += "</div>";
                         lateral.append(div);
                         cont++;
@@ -364,37 +372,62 @@
 
 
         <div id="month_sumary">
-            <ul>
-                <li>Consumo Acomulado</li>
-                <li>Demanda</li>
-                <li>Calidad de Energía</li>
-                <li>Emisiones de CO2</li>
+            <ul id="headers_mr">
+                <li>
+                    Consumo Acomulado
+                    <span id="kwh">kWh</span>
+                </li>
+                <li>
+                    Demanda
+                    <span id="kw">kW</span>
+                </li>
+                <li>
+                    Calidad de Energía
+                    <span id="pc">%</span>
+                </li>
+                <li>
+                    Emisiones de CO2
+                    <span id="ton"">TON</span>
+                </li>
             </ul>
             <div style='width:100%;overflow:hidden;' id="monthly_container">
                 <div class="icon_sumary consumo_t">
                     <span id="cons_total">
                         -
                     </span>
+                    <span class="label_icon">
+                        Acumulado
+                    </span>
                 </div>
                 <div class="icon_sumary demanda">
                     <span id="dem_total">
                         -
+                    </span>
+                    <span class="label_icon">
+                        M&aacute;xima
                     </span>
                 </div>
                 <div class="icon_sumary emisiones">
                     <span id="emit_total">
                         404 TON
                     </span>
+                    <span class="label_icon">
+                        Factor de Potencia
+                    </span>
                 </div>
                 <div class="icon_sumary potencia">
                     <span id="pp_total">
                         -
                     </span>
+                    <span class="label_icon">
+                        CO2
+                    </span>
                 </div>
             </div>
             <div class="month_totals">
-                <span class="label_tot" style="display:none;">Demanda Mínima</span>
+                <!--<span class="label_tot" style="display:none;">Demanda Mínima</span>
                 <span class="value_tot" style="display:none;"id="month_dem_min">-</span><br>
+                -->
 
                 <span class="label_tot">Promedio</span>
                 <span class="value_tot" id="month_cons_prom">-</span><br>
@@ -405,11 +438,18 @@
                 <span class="label_tot" style="clear:left;">Desviación</span>
                 <span class="value_tot"  id="month_cons_des">-</span><br>
             </div>
+            <div class="month_totals">
+                <span class="label_tot">M&iacute;nima</span>
+                <span class="value_tot" id="month_dem_min">-</span><br>
+            </div>
         </div>
 
         <div id="widgetCal">
             <span class="ringl"></span>
             <span class="ringr"></span>
+            <div id="week_s">
+                Resumen Semanal
+            </div>
             <div id="week_consumed">
                 Consumo
             </div>

@@ -36,11 +36,9 @@ from c_center.calculations import *
 from alarms.models import Alarms, AlarmEvents, ElectricParameters
 from c_center.models import *
 from location.models import *
-from data_warehouse_extended.models import InstantDelta, ConsumerUnitProfile
 from electric_rates.models import ElectricRatesDetail, DACElectricRateDetail, \
     ThreeElectricRateDetail
-from rbac.models import Operation, DataContextPermission, UserRole, Object, \
-    PermissionAsigment, GroupObject
+from rbac.models import Operation, Object, GroupObject
 from rbac.rbac_functions import has_permission, get_buildings_context, \
     default_consumerUnit
 from c_center_functions import *
@@ -104,6 +102,7 @@ MSG_PERMIT_ERROR = "<h2 style='font-family: helvetica; color: #878787; " \
                    "remediar esta situaci&oacute;n</h2>"
 
 FILE_FOLDER = "templates/static/media/csv_files/"
+
 
 @login_required(login_url='/')
 def call_celery_delay(request):
@@ -849,7 +848,7 @@ def grafica_datoscsv(request):
                     consumer_unit_id)
 
             except DataWarehouseInformationRetrieveException as \
-                consumer_unit_information_exception:
+                    consumer_unit_information_exception:
                 print str(consumer_unit_information_exception)
                 continue
 
@@ -1101,7 +1100,6 @@ def b_attr_list(request):
     datacontext = get_buildings_context(request.user)[0]
     if has_permission(request.user, VIEW, "Ver atributos de edificios") or \
             request.user.is_superuser:
-        empresa = request.session['main_building']
         company = request.session['company']
         if "search" in request.GET:
             search = request.GET["search"]
@@ -6752,7 +6750,7 @@ def configure_ie(request, id_ie):
         pms = PowermeterForIndustrialEquipment.objects.filter(
             industrial_equipment=ie).values_list("powermeter__pk", flat=True)
         powermeters = ProfilePowermeter.objects.filter(
-            pk__in=pms)
+            powermeter__pk__in=pms)
         tz = timezone.get_current_timezone()
         if request.method == "POST":
             template_vars['powermeters'] = []

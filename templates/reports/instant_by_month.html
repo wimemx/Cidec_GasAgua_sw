@@ -21,10 +21,103 @@
 <!-- Google Chart -->
 <script type="text/javascript">
     google.load('visualization', '1.1', {packages: ['corechart', 'controls']});
+    var False = false;
+    var True = true;
+    var rows_data = {% autoescape off %}{{ rows }}{% endautoescape %};
 </script>
 
+</head>
+
+<body>
+<div id="parameter_controls">
+    <form id="column-controls">
+        {% for column in columns %}
+            <input type="checkbox" class="column-checkbox" name="column-control" value="{{ column }}" checked="checked"/>
+            <label>{{ column }}</label>
+        {% endfor %}
+    </form>
+</div>
+<div id="dashboard" class="fl">
+    <!-- chart start -->
+    <p id="showing_week"><span class="left-nav left_legend"></span><span class="sem_count">Semana #</span><span class="date_range">(- al -)</span><span class="right-nav right_legend"></span></p>
+    <div id="dias_profile">
+        <span class="fl">Lunes</span>
+        <span class="fl">Martes</span>
+        <span class="fl">Mi&eacute;rcoles</span>
+        <span class="fl">Jueves</span>
+        <span class="fl">Viernes</span>
+        <span class="fl">S&aacute;bado</span>
+        <span class="fl">Domingo</span>
+    </div>
+    <div id="chart" class="pp">
+        <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
+    </div>
+    <!-- chart end -->
+
+    <!-- control start -->
+    <div id="control_container" class="auto">
+        <div id="control"></div>
+        <span class="left-nav left_grip"></span>
+        <span class="right-nav right_grip"></span>
+    </div>
+
+    <!-- control end -->
+
+    <!-- slider-range start -->
+
+        <div id="slider-range">
+            <div id="up">
+                <input type="text" class="integer" id="upper_limit" step="0.5"/>
+            </div>
+
+            <div id="down">
+                <input type="text" class="integer" id="lower_limit" step="0.5"/>
+            </div>
+        </div>
+        <!-- slider-range end -->
+
+    <!-- slider-range end -->
+
+</div>
+<!-- dashboard end -->
+
+<!-- statistics-table start -->
+<div class="vacio"></div>
+<div class="g12" id="statistic_tables">
+    {% for param_data in columns_statistics %}
+        <div class="g4 statistics_power_profile">
+        <div class="grid_container">
+            <table>
+                <thead>
+                <tr>
+                    <th colspan="4">Resumen Semanal ({{ param_data.param }})</th>
+                </tr>
+
+                <tr class="row1">
+                    <th width="7%">S</th>
+                    <th width="31%">Promedio</th>
+                    <th width="31%">M&aacute;ximo</th>
+                    <th width="31%">M&iacute;nimo</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                {% for data in param_data.month_data %}
+                <tr class="{% cycle 'row1' 'row1' %}">
+                    <td>{{ forloop.counter }}</td>
+                    <td class="table_value">{% if data.mean %}{{ data.mean|floatformat:2 }}{% else %}-{% endif %}</td>
+                    <td class="table_value">{% if data.maximum %}{{ data.maximum|floatformat:2 }}{% else %}-{% endif %}</td>
+                    <td class="table_value">{% if data.minimum >= 0 %}{{ data.minimum|floatformat:2 }}{% else %}-{% endif %}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endfor %}
+</div>
 <script type="text/javascript">
-var fech_ini = '', fech_fin = '';
+
 var year_s, month_s, day_s;
 var year_e, month_e, day_e;
 year_s={{ fi|date:"Y" }};
@@ -97,12 +190,30 @@ var arr_pos = [];
 var chart;
 var vaxes = {
 {% for axis in axis_list  %}
-    {{ forloop.counter0 }}: {logScale: false, title: '{{ axis.name }}', titleTextStyle:{color: colors[arr_pos[{{ forloop.counter0 }}]], fontSize: 11, italic: false}, textStyle:{color: colors[arr_pos[{{ forloop.counter0 }}]], fontSize: 11, italic: false}, {% if axis.name == "PF" %}minValue: 0, maxValue: 1, {% endif %}textPosition: "{% cycle 'out' 'in' %}"},
+    {{ forloop.counter0 }}: {
+        logScale: false,
+        title: '{{ axis.name }}',
+        titleTextStyle:{
+            color: colors[arr_pos[{{ forloop.counter0 }}]],
+            fontSize: 11,
+            italic: false
+            },
+        textStyle:{
+            color: colors[arr_pos[{{ forloop.counter0 }}]],
+            fontSize: 11,
+            italic: false
+            },
+        {% if axis.name == "PF" %}
+        minValue: 0,
+        maxValue: 1,
+        {% endif %}
+        textPosition: "{% cycle 'out' 'in' %}"}{% if not forloop.last %},{% endif %}
+
 {% endfor %}
 };
 var vseries = {
 {% for index in column_unit_axis_indexes %}
-    {{ forloop.counter0 }}:{targetAxisIndex:{{ index }}},
+    {{ forloop.counter0 }}:{targetAxisIndex:{{ index }}}{% if not forloop.last %},{% endif %}
 {% endfor %}
 };
 var column_units = [];
@@ -143,42 +254,35 @@ function drawVisualization() {
             pf_index = {{ forloop.counter0 }};
         {% endif %}
     {% endfor %}
-    var True = true;
-    var False = false;
-    var rows_data = {% autoescape off %}{{ rows }}{% endautoescape %};
 
-    fech_ini = new Date();
-    fech_ini.setTime((rows_data[0][0]['datetime']*1000));
-    console.time("matrix construction");
-    for(var row_index = 0; row_index < {{ rows_len }}; row_index+=3){
+
+    var len = {{ rows_len }};
+    var object_datetime;
+    var row_index = 0;
+    while(row_index < len){
         var row_data = rows_data[row_index];
         var row_array = [];
         var len_rd = row_data.length;
-        for(var data_index = 0; data_index < len_rd; data_index++){
+        object_datetime = new Date();
+        var data_index = 0;
+        while(data_index < len_rd){
             var data_object = row_data[data_index];
-            var object_datetime = new Date();
             object_datetime.setTime((data_object['datetime']*1000));
-            //if(fech_ini == ''){
-            //    fech_ini = object_datetime;
-            //}
-            fech_fin = object_datetime;
-            row_array.push(object_datetime);
-            var object_electric_data;
-            object_electric_data = data_object['value'];
 
-            row_array.push(object_electric_data);
-            var object_certainty = data_object['certainty'];
-            row_array.push(object_certainty);
+            row_array.push(object_datetime);
+            row_array.push(data_object['value']);
+            row_array.push(data_object['certainty']);
+            data_index++;
         }
         data.addRow(row_array);
+        row_index += 3
     }
-    console.timeEnd("matrix construction");
-    console.time("draw graph");
+    //console.time("draw graph");
     view = new google.visualization.DataView(data);
 
     dashboard.bind(control, chart);
     dashboard.draw(view);
-    console.timeEnd("draw graph");
+    //console.timeEnd("draw graph");
     $(".column-checkbox").click(function(){
 
         if($(":checkbox").filter(':checked').length == 0 && !$(this).is(":checked")){
@@ -423,97 +527,6 @@ $(document).on("ready", function(){
     setTimeout("mouseevents()", 2000);
 });
 </script>
-</head>
-
-<body>
-<div id="parameter_controls">
-    <form id="column-controls">
-        {% for column in columns %}
-            <input type="checkbox" class="column-checkbox" name="column-control" value="{{ column }}" checked="checked"/>
-            <label>{{ column }}</label>
-        {% endfor %}
-    </form>
-</div>
-<div id="dashboard" class="fl">
-    <!-- chart start -->
-    <p id="showing_week"><span class="left-nav left_legend"></span><span class="sem_count">Semana #</span><span class="date_range">(- al -)</span><span class="right-nav right_legend"></span></p>
-    <div id="dias_profile">
-        <span class="fl">Lunes</span>
-        <span class="fl">Martes</span>
-        <span class="fl">Mi&eacute;rcoles</span>
-        <span class="fl">Jueves</span>
-        <span class="fl">Viernes</span>
-        <span class="fl">S&aacute;bado</span>
-        <span class="fl">Domingo</span>
-    </div>
-    <div id="chart" class="pp">
-        <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
-    </div>
-    <!-- chart end -->
-
-    <!-- control start -->
-    <div id="control_container" class="auto">
-        <div id="control"></div>
-        <span class="left-nav left_grip"></span>
-        <span class="right-nav right_grip"></span>
-    </div>
-
-    <!-- control end -->
-
-    <!-- slider-range start -->
-
-        <div id="slider-range">
-            <div id="up">
-                <input type="text" class="integer" id="upper_limit" step="0.5"/>
-            </div>
-
-            <div id="down">
-                <input type="text" class="integer" id="lower_limit" step="0.5"/>
-            </div>
-        </div>
-        <!-- slider-range end -->
-
-    <!-- slider-range end -->
-
-</div>
-<!-- dashboard end -->
-
-<!-- statistics-table start -->
-<div class="vacio"></div>
-<div class="g12" id="statistic_tables">
-    {% for param_data in columns_statistics %}
-        <div class="g4 statistics_power_profile">
-        <div class="grid_container">
-            <table>
-                <thead>
-                <tr>
-                    <th colspan="4">Resumen Semanal ({{ param_data.param }})</th>
-                </tr>
-
-                <tr class="row1">
-                    <th width="7%">S</th>
-                    <th width="31%">Promedio</th>
-                    <th width="31%">M&aacute;ximo</th>
-                    <th width="31%">M&iacute;nimo</th>
-                </tr>
-                </thead>
-
-                <tbody>
-                {% for data in param_data.month_data %}
-                <tr class="{% cycle 'row1' 'row1' %}">
-                    <td>{{ forloop.counter }}</td>
-                    <td class="table_value">{% if data.mean %}{{ data.mean|floatformat:2 }}{% else %}-{% endif %}</td>
-                    <td class="table_value">{% if data.maximum %}{{ data.maximum|floatformat:2 }}{% else %}-{% endif %}</td>
-                    <td class="table_value">{% if data.minimum >= 0 %}{{ data.minimum|floatformat:2 }}{% else %}-{% endif %}</td>
-                </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-    {% endfor %}
-</div>
-
 <!-- statistics-table end -->
 </body>
 </html>

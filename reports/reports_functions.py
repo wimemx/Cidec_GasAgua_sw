@@ -1,6 +1,7 @@
 #coding:utf-8
 
 # Python imports
+import pdb
 import datetime
 import logging
 import numpy
@@ -21,6 +22,7 @@ from data_warehouse_extended.views import get_electrical_parameter, \
     get_consumer_unit_electrical_parameter_data_list, get_instant_delta_all, \
     get_consumer_unit_profile,get_instant_delta,get_instants_list
 from c_center.c_center_functions import get_consumer_units
+from c_center.calculations import factorpotencia
 from c_center.graphics import get_consumer_unit_electric_data_raw
 from c_center.calculations import obtenerTipoPeriodoObj
 
@@ -42,7 +44,49 @@ logger = logging.getLogger("reports")
 ################################################################################
 
 
-def get_axis_dictionary (
+def get_axis_dictionary_stored(
+        data_clusters_list_normalized,
+        column_units_list
+):
+
+    data_clusters_list_length = len(data_clusters_list_normalized[0])
+    column_units_list_length = len(column_units_list)
+    if data_clusters_list_length != column_units_list_length:
+        return None
+
+    axis_dictionary = dict()
+    for data_cluster_index in range(0, data_clusters_list_length):
+        column_units = column_units_list[data_cluster_index]
+        data_cluster = data_clusters_list_normalized[data_cluster_index]
+        data_cluster_values_list =\
+            [float(data_dictionary['value']) for data_dictionary in data_cluster]
+
+        if data_cluster_values_list:
+            data_cluster_max_value = max(data_cluster_values_list)
+            data_cluster_min_value = min(data_cluster_values_list)
+            if axis_dictionary.has_key(column_units):
+                axis_dictionary_value = axis_dictionary[column_units]
+                axis_max_value = axis_dictionary_value['max']
+                axis_dictionary_value['max'] = \
+                    max(axis_max_value, data_cluster_max_value)
+
+                axis_min_value = axis_dictionary_value['min']
+                axis_dictionary_value['min'] = \
+                    min(axis_min_value, data_cluster_min_value)
+
+                axis_dictionary[column_units] = axis_dictionary_value
+
+            else:
+                axis_dictionary[column_units] = {
+                    'name': column_units,
+                    'max': data_cluster_max_value,
+                    'min': data_cluster_min_value
+                }
+
+    return axis_dictionary
+
+
+def get_axis_dictionary(
         data_clusters_list_normalized,
         column_units_list
 ):
@@ -89,8 +133,9 @@ def get_axis_dictionaries_list (
 ):
 
     axis_dictionaries_list = []
-    for _, value in axis_dictionary.items():
-        axis_dictionaries_list.append(value)
+    if axis_dictionary:
+        for _, value in axis_dictionary.items():
+            axis_dictionaries_list.append(value)
 
     return axis_dictionaries_list
 
@@ -265,7 +310,10 @@ def get_data_cluster_limits(
     minimum = sys.float_info.max
 
     for data_dictionary in data_cluster_normalized:
-        data_dictionary_value = float(data_dictionary['value'])
+        if data_dictionary[0]['value'] is None:
+            data_dictionary_value = float(0)
+        else:
+            data_dictionary_value = float(data_dictionary[0]['value'])
         maximum = max(data_dictionary_value, maximum)
         minimum = min(data_dictionary_value, minimum)
 
@@ -357,7 +405,7 @@ def get_data_clusters_list(
                     .powermeter_anotation == "Medidor Virtual":
                 seconds = 300
                 data_cluster = \
-                    get_consumer_unit_electrical_parameter_data_clustered(
+                    get_consumer_unit_electrical_parameter_data_virtual(
                         consumer_unit,
                         datetime_from,
                         datetime_to,
@@ -806,6 +854,375 @@ DATETIME_TO_UTC = None
 INSTANTS = None
 
 
+def get_consumer_unit_electrical_parameter_data_virtual(
+        consumer_unit,
+        datetime_from,
+        datetime_to,
+        electrical_parameter_name,
+        granularity_seconds=None
+):
+    """
+        Description:
+            To-Do
+
+        Arguments:
+            consumer_unit - A Consumer Unit object.
+
+            datetime_from - A Datetime object.
+
+            datetime_to - A Datetime object.
+
+            electrical_parameter - A String that represents the name of the
+                electrical parameter.
+
+            granularity_seconds - An Integer that represents the number of
+                seconds between the points to be retrieved.
+
+        Return:
+            A list of dictionaries.
+    """
+
+    #
+    # Localize datetimes (if neccesary) and convert to UTC
+    #
+    timezone_current = django.utils.timezone.get_current_timezone()
+    datetime_from_local = datetime_from
+    if datetime_from_local.tzinfo is None:
+        datetime_from_local = timezone_current.localize(datetime_from)
+
+    datetime_from_utc =\
+        datetime_from_local.astimezone(django.utils.timezone.utc)
+
+    datetime_to_local = datetime_to
+    if datetime_to_local.tzinfo is None:
+        datetime_to_local = timezone_current.localize(datetime_to)
+
+    datetime_to_utc = datetime_to_local.astimezone(django.utils.timezone.utc)
+
+    #
+    # Get the Electrical Parameter
+    #
+    electrical_parameter =\
+        get_electrical_parameter(
+            electrical_parameter_name=electrical_parameter_name)
+
+    if electrical_parameter is None:
+        logger.error(
+            reports.globals.SystemError.
+            GET_CONSUMER_UNIT_ELECTRICAL_PARAMETER_DATA_CLUSTERED_ERROR)
+
+        return None
+
+    #
+    # Get the Instants between the from and to datetime according to the Instant
+    # Delta and create a dictionary with them.
+    #
+    if granularity_seconds is None:
+        instant_delta =\
+            get_instant_delta_from_timedelta(datetime_to - datetime_from)
+
+    else:
+        instant_delta =\
+            get_instant_delta(
+                delta_seconds=granularity_seconds)
+
+
+    if instant_delta is None:
+        logger.error(
+            reports.globals.SystemError.
+            GET_CONSUMER_UNIT_ELECTRICAL_PARAMETER_DATA_CLUSTERED_ERROR)
+
+        return None
+    if DATETIME_FROM_UTC is None and DATETIME_TO_UTC is None:
+        instants = set_instants(datetime_from_utc,
+                                datetime_to_utc,
+                                instant_delta)
+    elif datetime_from_utc == DATETIME_FROM_UTC and \
+            datetime_to_utc == DATETIME_TO_UTC:
+        instants = INSTANTS
+    else:
+        instants = set_instants(datetime_from_utc,
+                                datetime_to_utc,
+                                instant_delta)
+
+    instants_dictionary = dict()
+    instants_kwh = dict()
+    instants_kvarh = dict()
+
+    instant_dictionary_generic_value = {
+        'certainty': True,
+        'value': None
+    }
+
+    for instant in instants:
+        key_current = instant['instant_datetime'].strftime(
+            reports.globals.Constant.DATETIME_STRING_KEY_FORMAT)
+
+        instants_dictionary[key_current] =\
+            instant_dictionary_generic_value.copy()
+        if electrical_parameter_name == "PF":
+            instants_kwh[key_current] =\
+                instant_dictionary_generic_value.copy()
+            instants_kvarh[key_current] =\
+                instant_dictionary_generic_value.copy()
+    #
+    # Get the dependent Consumer Units List and retrieve their data.
+    #
+    consumer_units_list =\
+        get_consumer_units(consumer_unit)
+
+    if len(consumer_units_list) > 1 and electrical_parameter_name == "PF":
+        #calcula factor potencia de medidor virtual
+        kwh = get_electrical_parameter(electrical_parameter_name="kWh")
+
+        kvarh = get_electrical_parameter(electrical_parameter_name="kVArh")
+
+        for consumer_unit_item in consumer_units_list:
+            consumer_unit_profile =\
+                get_consumer_unit_profile(
+                    consumer_unit_item.pk)
+
+            #obtains the kwh electrical data for the cu
+            cu_data_list_kwh = \
+                get_consumer_unit_electrical_parameter_data_list(
+                    consumer_unit_profile,
+                    datetime_from_utc,
+                    datetime_to_utc,
+                    kwh,
+                    instant_delta)
+            #sums the kwh data for each CU
+            for consumer_unit_data in cu_data_list_kwh:
+                instant_key_current =\
+                    consumer_unit_data['instant__instant_datetime'].strftime(
+                        reports.globals.Constant.DATETIME_STRING_KEY_FORMAT)
+
+                try:
+                    instant_dictionary_current =\
+                        instants_kwh[instant_key_current]
+
+                except KeyError:
+                    instant_dictionary_current = instant_dictionary_generic_value
+
+                certainty_current = instant_dictionary_current['certainty']
+                certainty_current =\
+                    certainty_current and consumer_unit_data['value'] is not None
+
+                instant_dictionary_current['certainty'] = certainty_current
+
+                if certainty_current:
+                    value_current = instant_dictionary_current['value']
+                    if value_current is None:
+                        value_current = abs(consumer_unit_data['value'])
+
+                    else:
+                        value_current += abs(consumer_unit_data['value'])
+
+                    instant_dictionary_current['value'] = value_current
+                else:
+                    instant_dictionary_current['value'] = None
+                instants_kwh[instant_key_current] =\
+                    instant_dictionary_current.copy()
+
+            #obtains the kvarh electrical data for the cu
+            cu_data_list_kvarh = \
+                get_consumer_unit_electrical_parameter_data_list(
+                    consumer_unit_profile,
+                    datetime_from_utc,
+                    datetime_to_utc,
+                    kvarh,
+                    instant_delta)
+
+            #sums the kvarh data for each CU
+
+            for consumer_unit_data in cu_data_list_kvarh:
+                instant_key_current =\
+                    consumer_unit_data['instant__instant_datetime'].strftime(
+                        reports.globals.Constant.DATETIME_STRING_KEY_FORMAT)
+
+                try:
+                    instant_dictionary_current =\
+                        instants_kvarh[instant_key_current]
+
+                except KeyError:
+                    instant_dictionary_current = instant_dictionary_generic_value
+
+                certainty_current = instant_dictionary_current['certainty']
+                certainty_current =\
+                    certainty_current and consumer_unit_data['value'] is not None
+
+                instant_dictionary_current['certainty'] = certainty_current
+
+                if certainty_current:
+                    value_current = instant_dictionary_current['value']
+                    if value_current is None:
+                        value_current = abs(consumer_unit_data['value'])
+                    else:
+                        value_current += abs(consumer_unit_data['value'])
+
+                    instant_dictionary_current['value'] = value_current
+                else:
+                    instant_dictionary_current['value'] = None
+                instants_kvarh[instant_key_current] =\
+                    instant_dictionary_current.copy()
+
+        cont = 0
+        keys = instants_kwh.keys()
+        keys.sort()
+        for key in keys:
+            if instants_kwh[key]["value"] and \
+                    instants_kvarh[key]["value"]:
+                if cont == 0:
+                    ini_kwh = float(instants_kwh[key]["value"])
+                    ini_kvarh = float(instants_kvarh[key]["value"])
+                    cont += 1
+                else:
+                    new_kwh = float(instants_kwh[key]["value"])
+                    new_kvarh = float(instants_kvarh[key]["value"])
+
+                    if new_kwh > ini_kwh:
+                        kwh_dif = new_kwh - ini_kwh
+                    else:
+                        kwh_dif = ini_kwh - new_kwh
+
+                    print new_kvarh, " - ", ini_kvarh, " = "
+                    if new_kvarh > ini_kvarh:
+                        kvarh_dif = new_kvarh - ini_kvarh
+                    else:
+                        kvarh_dif = ini_kvarh - new_kvarh
+
+                    instants_dictionary[key]["value"] = factorpotencia(
+                        kwh_dif,
+                        kvarh_dif
+                    )
+                    ini_kwh = new_kwh
+                    ini_kvarh = new_kvarh
+            else:
+                instants_dictionary[key] = instant_dictionary_generic_value
+        #
+        # Build the list of dictionaries that is to be retrieved.
+        #
+        consumer_units_data_dictionaries_list = []
+        for instant in instants:
+            key_current = instant['instant_datetime'].strftime(
+                reports.globals.Constant.DATETIME_STRING_KEY_FORMAT)
+
+            try:
+                instant_dictionary_current = instants_dictionary[key_current]
+                dict_kwh_current = instants_kwh[key_current]
+                dict_kvarh_current = instants_kvarh[key_current]
+
+            except KeyError:
+                instant_dictionary_current = instant_dictionary_generic_value
+                dict_kwh_current = instant_dictionary_generic_value
+                dict_kvarh_current = instant_dictionary_generic_value
+
+            data_dictionary_current = instant_dictionary_current
+
+            datetime_localtime_timetuple =\
+                django.utils.timezone.localtime(
+                    instant['instant_datetime']
+                ).timetuple()
+
+            data_dictionary_current['datetime'] =\
+                    int(time.mktime(datetime_localtime_timetuple))
+
+            consumer_units_data_dictionaries_list.append(
+                data_dictionary_current.copy())
+
+        return consumer_units_data_dictionaries_list
+
+    else:
+        for consumer_unit_item in consumer_units_list:
+            #
+            # Get a Consumer Unit Profile (from the app Data Warehouse Extended)
+            #
+            consumer_unit_profile =\
+                get_consumer_unit_profile(
+                    consumer_unit_item.pk)
+
+            if consumer_unit_profile is None:
+                logger.error(
+                    reports.globals.SystemError.
+                    GET_CONSUMER_UNIT_ELECTRICAL_PARAMETER_DATA_CLUSTERED_ERROR)
+
+                return None
+
+            consumer_unit_data_list =\
+                get_consumer_unit_electrical_parameter_data_list(
+                        consumer_unit_profile,
+                        datetime_from_utc,
+                        datetime_to_utc,
+                        electrical_parameter,
+                        instant_delta)
+
+            #
+            # Update the information in the Instants dictionary
+            #
+            for consumer_unit_data in consumer_unit_data_list:
+                instant_key_current =\
+                    consumer_unit_data['instant__instant_datetime'].strftime(
+                        reports.globals.Constant.DATETIME_STRING_KEY_FORMAT)
+
+                try:
+                    instant_dictionary_current =\
+                        instants_dictionary[instant_key_current]
+
+                except KeyError:
+                    instant_dictionary_current = instant_dictionary_generic_value
+
+                certainty_current = instant_dictionary_current['certainty']
+                certainty_current =\
+                    certainty_current and consumer_unit_data['value'] is not None
+
+                instant_dictionary_current['certainty'] = certainty_current
+
+                if certainty_current:
+                    value_current = instant_dictionary_current['value']
+                    if value_current is None:
+                        value_current = abs(consumer_unit_data['value'])
+
+                    else:
+                        value_current += abs(consumer_unit_data['value'])
+
+                    if electrical_parameter_name == "PF" and value_current > 1:
+                        instant_dictionary_current['value'] = 1
+                    else:
+                        instant_dictionary_current['value'] = value_current
+                else:
+                    instant_dictionary_current['value'] = None
+                instants_dictionary[instant_key_current] =\
+                    instant_dictionary_current.copy()
+
+        #
+        # Build the list of dictionaries that is to be retrieved.
+        #
+        consumer_units_data_dictionaries_list = []
+        for instant in instants:
+            key_current = instant['instant_datetime'].strftime(
+                reports.globals.Constant.DATETIME_STRING_KEY_FORMAT)
+
+            try:
+                instant_dictionary_current = instants_dictionary[key_current]
+
+            except KeyError:
+                instant_dictionary_current = instant_dictionary_generic_value
+
+            data_dictionary_current = instant_dictionary_current
+
+            datetime_localtime_timetuple =\
+                django.utils.timezone.localtime(
+                    instant['instant_datetime']
+                ).timetuple()
+
+            data_dictionary_current['datetime'] =\
+                    int(time.mktime(datetime_localtime_timetuple))
+
+            consumer_units_data_dictionaries_list.append(
+                data_dictionary_current.copy())
+
+        return consumer_units_data_dictionaries_list
+
+
 def get_consumer_unit_electrical_parameter_data_clustered(
         consumer_unit,
         datetime_from,
@@ -1160,8 +1577,6 @@ def data_store_monthly_graphs(consumer_unit_id, month, year):
 
     cont = 0
     statistics = []
-    month_array = []
-    param = None
     for day_data in data_clusters_list:
         #day_data = todos los datos de un parámetro para el mes
         param = column_strings[cont]
@@ -1186,7 +1601,7 @@ def data_store_monthly_graphs(consumer_unit_id, month, year):
             if month_array[i]:
                 month_array[i] = get_data_statistics(month_array[i])
 
-    statistics.append(dict(param=param, month_data=month_array))
+        statistics.append(dict(param=param, month_data=month_array))
     statistics = json.dumps(statistics)
 
     return data_clusters_json, statistics, data_cluster_consumed
