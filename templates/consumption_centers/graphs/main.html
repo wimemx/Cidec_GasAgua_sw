@@ -88,10 +88,13 @@
         setTimeout("parent.document.getElementById('graphFrame').height = 1200;", 1000);
     }
     function makeIframe(source){
+        var container = $("#graph_container");
         var graphFrame = document.createElement("IFRAME");
         graphFrame.id = "graphFrame";
         graphFrame.src = source;
-        $("#graph_container").html(graphFrame);
+        var loader = '<img id="loader" src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">';
+        container.html(loader);
+        container.append(graphFrame);
         refresh_iframe_height();
     }
 

@@ -235,7 +235,7 @@ def render_instant_measurements(
 
 
 @login_required(login_url="/")
-def render_report_consumed_by_month_orig(
+def render_report_consumed_by_month(
         request
 ):
     template_variables = {
@@ -361,7 +361,7 @@ def render_report_consumed_by_month_orig(
 
 
 @login_required(login_url="/")
-def render_report_powerprofile_by_month_orig(
+def render_report_powerprofile_by_month(
         request
 ):
     template_variables = {
@@ -423,13 +423,14 @@ def render_report_powerprofile_by_month_orig(
     while request.GET.has_key(parameter_get_key):
         electrical_parameter_name_get_key =\
             "electrical-parameter-name%02d" % parameter_counter
-
+        """
         if virtual == "Medidor Virtual":
             if request.GET[electrical_parameter_name_get_key] == "PF":
                 parameter_counter += 1
                 parameter_get_key = "electrical-parameter-name%02d" % \
                                     parameter_counter
                 continue
+        """
         try:
             electrical_parameter_name =\
                 request.GET[electrical_parameter_name_get_key]
@@ -562,7 +563,7 @@ def render_report_powerprofile_by_month_orig(
 
 
 @login_required(login_url="/")
-def render_report_consumed_by_month(
+def render_report_consumed_by_month_new(
         request
 ):
     template_variables = {
@@ -691,7 +692,7 @@ def render_report_consumed_by_month(
 
 
 @login_required(login_url="/")
-def render_report_powerprofile_by_month(
+def render_report_powerprofile_by_month_new(
         request
 ):
     template_variables = {

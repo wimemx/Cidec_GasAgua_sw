@@ -56,7 +56,7 @@ def upload_file(request):
 
         for _file in request.FILES:
             handle_uploaded_file(request.FILES[_file],
-                                 request.POST['chunk'],
+                                 request.POST.get("chunk", 0),
                                  request.POST['filename'])
         os.close(dir_fd)
         #response only to notify plUpload that the upload was successful
