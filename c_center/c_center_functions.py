@@ -1383,7 +1383,7 @@ def dailyReport(building, consumer_unit, today):
                     astimezone(timezone.get_current_timezone()).time()
                 if demanda_min_temp < demanda_min:
                     demanda_min = demanda_min_temp
-                    dem_min_time = demanda_min_obj[0].medition_date.\
+                    dem_min_time = demanda_min_obj[0].mtarifaHM_2edition_date.\
                     astimezone(timezone.get_current_timezone()).time()
 
         for c_unit in consumer_units:
@@ -3257,7 +3257,7 @@ def get_google_timezone(building):
 
     #Se obtiene el Timezone del edificio
     try:
-        bld_timezone = TimezonesBuildings.objects.get(building = building)
+        bld_timezone = TimezonesBuildings.objects.get(building= building)
     except ObjectDoesNotExist:
         print "Building with no Timezone"
         return False

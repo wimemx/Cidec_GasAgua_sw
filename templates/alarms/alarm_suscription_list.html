@@ -146,7 +146,14 @@
         window.location = base_url;
     });
 
-
+   $('#probar').click(function(){
+        $.ajax({
+            url: "/buildings/medition_rate/",
+            type: "POST",
+            data:{id_reading:1729887},
+            success:function(){alert("good");},
+            fail: function(){alert("fail");}})
+    });
 
 {% endblock %}
 {% block breadcumbs %}
@@ -323,4 +330,7 @@
             </div>
         </div>
     </div>
+    <button class="aqua_btn" id='probar'>
+                            Buscar
+                        </button>
 {% endblock %}
