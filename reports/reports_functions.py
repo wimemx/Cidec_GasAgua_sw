@@ -273,7 +273,6 @@ def get_data_cluster_consumed_normalized(
             granularity_seconds)
 
     normalize_data_cluster(data_cluster)
-
     #
     # Build the json.
     #
@@ -293,7 +292,7 @@ def get_data_cluster_consumed_normalized(
 
         data_dictionary_json = {
             'datetime': datetime_current,
-            'value': float(value_current),
+            'value': round(float(value_current), 2),
             'certainty': certainty_current
         }
 
@@ -310,16 +309,16 @@ def get_data_cluster_limits(
     minimum = sys.float_info.max
 
     for data_dictionary in data_cluster_normalized:
-        if data_dictionary[0]['value'] is None:
+        if data_dictionary['value'] is None:
             data_dictionary_value = float(0)
         else:
-            data_dictionary_value = float(data_dictionary[0]['value'])
+            data_dictionary_value = round(float(data_dictionary['value']), 2)
         maximum = max(data_dictionary_value, maximum)
         minimum = min(data_dictionary_value, minimum)
 
     if maximum == sys.float_info.min or minimum == sys.float_info.max:
         maximum = 1
-        minimum =0
+        minimum = 0
 
     return maximum, minimum
 
@@ -1295,7 +1294,6 @@ def get_consumer_unit_electrical_parameter_data_clustered(
             get_instant_delta(
                 delta_seconds=granularity_seconds)
 
-
     if instant_delta is None:
         logger.error(
             reports.globals.SystemError.
@@ -1420,7 +1418,6 @@ def get_consumer_unit_electrical_parameter_data_clustered(
 
         consumer_units_data_dictionaries_list.append(
             data_dictionary_current.copy())
-
     return consumer_units_data_dictionaries_list
 
 
@@ -1510,7 +1507,6 @@ def data_store_monthly_graphs(consumer_unit_id, month, year):
     datetime_from = days[0] + datetime.timedelta(days=1)
     datetime_to = days[-1] + datetime.timedelta(days=2)
 
-
     request_data_list_item =\
             (consumer_unit_id.id,
              datetime_from,
@@ -1546,7 +1542,6 @@ def data_store_monthly_graphs(consumer_unit_id, month, year):
     # Build and normalize the data clusters list.
     #
     granularity = "raw"
-
     data_clusters_list = get_data_clusters_list(request_data_list_normalized,
                                                 granularity)
     normalize_data_clusters_list(data_clusters_list)
@@ -1603,7 +1598,6 @@ def data_store_monthly_graphs(consumer_unit_id, month, year):
 
         statistics.append(dict(param=param, month_data=month_array))
     statistics = json.dumps(statistics)
-
     return data_clusters_json, statistics, data_cluster_consumed
 
 
@@ -1612,10 +1606,21 @@ def calculate_month_graphs(cu, m, y):
         data_store_monthly_graphs(cu, m, y)
     month_data, created = DataStoreMonthlyGraphs.objects.get_or_create(
         year=y, month=m, consumer_unit=cu)
+    print "created", created
     month_data.instant_data = data_clusters_json
+    try:
+        month_data.save()
+    except:
+        from django.db import connection
+        print connection.queries[-1]
+
+    print "instant_data"
     month_data.data_consumed = data_cluster_consumed
+    month_data.save()
+    print "data_consumed"
     month_data.statistics = statistics
     month_data.save()
+    print "statistics"
     return "saved!"
 
 
@@ -1629,8 +1634,9 @@ def insert_data_Graph_To_Model():
 def insert_rest_months(initial_month, initial_year, end_month, end_year):
     consumer_unit = ConsumerUnit.objects.all()
     for cu in consumer_unit:
-        ym_start = 12*initial_year + initial_month - 1
-        ym_end = 12*end_year + end_month
-        for ym in range( ym_start, ym_end ):
-            y, m = divmod( ym, 12 )
+        ym_start = 12 * initial_year + initial_month - 1
+        ym_end = 12 * end_year + end_month
+        for ym in range(ym_start, ym_end):
+            y, m = divmod(ym, 12)
+            print "calculate_month_graphs", cu, m+1, y
             calculate_month_graphs(cu, m+1, y)

@@ -50,7 +50,7 @@
         <span class="fl">Domingo</span>
     </div>
     <div id="chart" class="pp">
-        <img src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">
+
     </div>
     <!-- chart end -->
 
@@ -222,6 +222,7 @@ var column_units = [];
 {% endfor %}
 
 function drawVisualization() {
+    parent.jQuery("#loader").remove();
     var dashboard = new google.visualization.Dashboard(
             document.getElementById('dashboard'));
 

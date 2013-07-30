@@ -13,6 +13,7 @@ STATUS = (
     (2, 'Eliminado')
 )
 
+
 class SectoralType(models.Model):
     """ Sector Type Catalog
 

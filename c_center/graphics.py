@@ -97,15 +97,26 @@ def get_consumer_unit_electric_data_raw(
         electric_data_name
     )
 
+    def get_first_two(electric_data_values):
+        cont = 0
+        first_m = electric_data_values[cont]['medition_date']
+        second_m = electric_data_values[cont + 1]['medition_date']
+        while first_m == second_m:
+            cont += 1
+            second_m = electric_data_values[cont]['medition_date']
+        return first_m, second_m
+
     if electric_data_values:
-        first_m = electric_data_values[0]['medition_date']
-        second_m = electric_data_values[1]['medition_date']
+        first_m, second_m = get_first_two(electric_data_values)
+        #first_m = electric_data_values[0]['medition_date']
+        #second_m = electric_data_values[1]['medition_date']
 
         delta_m = second_m - first_m
 
         time_m = start_localtime
         cont = 0
         while time_m < end_localtime:
+            #print time_m, end_localtime
             #difference between readings default to delta_m
             adj_time = delta_m
             try:
