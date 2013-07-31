@@ -540,7 +540,7 @@ def last_data_received():
 def cambioHorarioNormal():
     setBuildingDST(False)
 
-@periodic_task(run_every=crontab(hour='13', minute='15'))
+#@periodic_task(run_every=crontab(hour='13', minute='15'))
 def cambioHorarioNormal_TEST():
     setBuildingTest()
 
