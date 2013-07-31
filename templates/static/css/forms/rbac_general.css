@@ -335,12 +335,19 @@ label.input span.incorrect,label.input span.correct
 {
 	height: 40px;
 }
+#user_actions #search_priviligies
+{
+    width:auto
+
+}
 
 #user_actions form
 {
 
 	width: 595px;
 }
+
+
 
 .attr_list .hz_divider
 {

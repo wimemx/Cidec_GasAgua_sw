@@ -44,7 +44,8 @@ def has_permission(user, operation, object_name):
     returns True if the user has permission, False if not
 
     """
-    user_role = UserRole.objects.filter(user=user)
+    user_role = UserRole.objects.filter(user=user,
+                                        role__status=True).exclude(status=False)
     for u_role in user_role:
         permission = PermissionAsigment.objects.filter(
             object__object_name=object_name,
