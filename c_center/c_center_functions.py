@@ -1246,6 +1246,7 @@ def dailyReportPeriodofTime(building, consumer_unit, start_date, end_date):
 
     print "Done dailyReportPeriodofTime"
 
+
 def dailyReportAll():
     """Calculate the daily report for all the consumer units in all the buildings
     for the day before
@@ -1254,7 +1255,8 @@ def dailyReportAll():
     for buil in buildings:
 
         # ----- iterative daily report for all consumer units
-        cus = ConsumerUnit.objects.filter(building=buil)
+        cus = ConsumerUnit.objects.filter(building=buil).exclude(
+            profile_powermeter__powermeter__status=False)
         #19 - kW - Instant
         #24 - kWhIMPORT
         #26 - kvarhIMPORT
@@ -1615,7 +1617,8 @@ def calculateMonthlyReport_all(month, year):
     :param month: number 1-12 number of the month
     :param year: number 4 digits number of the year
     """
-    consumer_units = ConsumerUnit.objects.all()
+    consumer_units = ConsumerUnit.objects.all().exclude(
+        profile_powermeter__powermeter__status=False)
     today = datetime.date.today()
     for consumer_u in consumer_units:
         if year == today.year and month >= today.month:
@@ -3365,18 +3368,19 @@ def crawler_get_municipalities():
     print "Finished"
     return True
 
+
 def setBuildingDST(border):
     """
 
     :param - Border: Booleano para indicar si modifica los fronterizos o no.
     """
-    bld_timezones = TimezonesBuildings.objects.\
-                    filter(building__municipio__border = border)
+    bld_timezones = TimezonesBuildings.objects.filter(
+        building__municipio__border=border)
     if bld_timezones:
         for bld_tz in bld_timezones:
             next_dst = DaySavingDates.objects.filter(
-                summer_date__gt = bld_tz.day_saving_date.summer_date,
-                border = border).order_by("summer_date")[:1]
+                summer_date__gt=bld_tz.day_saving_date.summer_date,
+                border=border).order_by("summer_date")[:1]
 
             if next_dst:
                 bld_tz.day_saving_date = next_dst[0]
@@ -3403,11 +3407,42 @@ def setBuildingDST(border):
     print "setBuildingDST Done"
 
 
+def setBuildingTest():
+    """
 
+    :param - Border: Booleano para indicar si modifica los fronterizos o no.
+    """
+    bld_timezones = TimezonesBuildings.objects.filter(
+        building__pk=25)
+    if bld_timezones:
+        for bld_tz in bld_timezones:
+            print bld_tz.building
+            next_dst = DaySavingDates.objects.filter(
+                summer_date__gt=bld_tz.day_saving_date.summer_date,
+                border=False
+            ).order_by("summer_date")[:1]
+            print "next_dst", next_dst
+            if next_dst:
+                bld_tz.day_saving_date = next_dst[0]
+                bld_tz.save()
 
+            #Se actualiza el JSON del Equipo Industrial para cada edificio
+            try:
+                industrial_equip = IndustrialEquipment.objects.get(building =
+                bld_tz.building)
+            except ObjectDoesNotExist:
+                print "setBuildingDST - No Industrial Equipment for building: "+\
+                      str(bld_tz.building.building_name)
+            except MultipleObjectsReturned:
+                print "setBuildingDST - Multiple Industrial Equipments: "+\
+                      str(bld_tz.building.building_name)
+            else:
+                json_dic = {"raw_offset": bld_tz.time_zone.raw_offset,
+                            "dst_offset": bld_tz.time_zone.dst_offset,
+                            "daysaving_id": next_dst[0].pk}
 
-3
+                industrial_equip.timezone_dst = json.dumps(json_dic)
+                print json_dic
+                industrial_equip.save()
 
-
-
-
+    print "setBuildingDST Done"

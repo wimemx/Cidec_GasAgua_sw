@@ -2258,8 +2258,8 @@ def edit_powermeter(request, id_powermeter):
                 else:
                     ie = IndustrialEquipment.objects.get(
                         building=cons_unit.building)
-                    set_alarm_json(ie.building, user)
-                    regenerate_ie_config(ie.pk, user)
+                    set_alarm_json(ie.building, request.user)
+                    regenerate_ie_config(ie.pk, request.user)
 
                 message = "Medidor editado exitosamente"
                 _type = "n_success"
