@@ -409,6 +409,15 @@ function drawVisualization() {
             dashboard.draw(view);
             control.draw();
         }
+         if($(".column-checkbox:checked").size()==1){
+                        $('#up').fadeIn("fast");
+                        $('#down').fadeIn("fast");
+                    }
+                    if($(".column-checkbox:checked").size()>1){
+                        $('#up').fadeOut("fast");
+                        $('#down').fadeOut("fast");
+                    }
+
     });
 
 
@@ -528,6 +537,8 @@ $(document).on("ready", function(){
     setTimeout("mouseevents()", 2000);
 });
 
+$('#up').fadeOut("fast");
+$('#down').fadeOut("fast");
 
 
 </script>
