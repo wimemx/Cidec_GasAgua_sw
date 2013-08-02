@@ -578,7 +578,7 @@ def get_intervals_2(get):
 
 def set_default_session_vars(request, datacontext):
     """Sets the default building and consumer unit """
-    #todo: revisar bien estos callbacks, seguramente cambiaran cuando haya un landing page
+
     if not datacontext:
         request.session['main_building'] = None
         request.session['company'] = None
@@ -619,13 +619,14 @@ def set_default_session_vars(request, datacontext):
                'consumer_unit'] or 'consumer_unit' not in request.session:
             #print "186"
             request.session['consumer_unit'] = None
-
-    request.session['timezone'] = get_google_timezone(
-        request.session['main_building'])[0]
-    tz = pytz.timezone(request.session.get('timezone'))
-    if tz:
-        timezone.activate(tz)
+    if request.session['main_building'] is not None:
+        request.session['timezone'] = get_google_timezone(
+            request.session['main_building'])[0]
+        tz = pytz.timezone(request.session.get('timezone'))
+        if tz:
+            timezone.activate(tz)
     return True
+
 
 def get_hierarchy_list(building, user):
     """ Obtains an unordered-nested list representing the building hierarchy
@@ -649,7 +650,8 @@ def get_hierarchy_list(building, user):
         building=building,
         electric_device_type__electric_device_type_name="Total Edificio")
     clase_parent = "class='raiz"
-    if main_cu.profile_powermeter.powermeter.powermeter_anotation == "Medidor Virtual":
+    if main_cu.profile_powermeter.powermeter.powermeter_anotation == \
+            "Medidor Virtual":
         clase_parent += " virtual"
     clase_parent += "'"
     hierarchy_list = "<ul id='org'>"\
@@ -676,7 +678,8 @@ def get_hierarchy_list(building, user):
             clase = "class='part_of_building "
             clase += "disabled" if not parent.part_of_building_status else ""
             cu_part = ConsumerUnit.objects.get(part_of_building=parent)
-            if cu_part.profile_powermeter.powermeter.powermeter_anotation == "Medidor Virtual":
+            if cu_part.profile_powermeter.powermeter.powermeter_anotation == \
+                    "Medidor Virtual":
                 clase += " " + str(node_cont) + " virtual'"
             else:
                 clase += " " + str(node_cont) + "'"
@@ -711,11 +714,10 @@ def get_hierarchy_list(building, user):
     #sacar el padre(ConsumerUnits que no son hijos de nadie)
     parents = ConsumerUnit.objects.filter(
         building=building, part_of_building=None).exclude(
-        Q(pk__in=ids_hierarchy) |
-        Q(electric_device_type__electric_device_type_name="Total Edificio")
+            Q(pk__in=ids_hierarchy) |
+            Q(electric_device_type__electric_device_type_name="Total Edificio")
         ).exclude(
-        profile_powermeter__profile_powermeter_status=False
-    )
+            profile_powermeter__profile_powermeter_status=False)
     try:
         parents[0]
     except IndexError:
@@ -729,7 +731,8 @@ def get_hierarchy_list(building, user):
                 clase += 'disabled'
             else:
                 clase += ""
-            if parent.profile_powermeter.powermeter.powermeter_anotation == "Medidor Virtual":
+            if parent.profile_powermeter.powermeter.powermeter_anotation == \
+                    "Medidor Virtual":
                 clase += " " + str(node_cont) + " virtual'"
             else:
                 clase += " " + str(node_cont) + "'"
@@ -1833,7 +1836,8 @@ def save_historic(monthly_cutdate, building):
                                                              'kwh_totales']
         aver_rate = str(aver_rate)
 
-        resultado_mensual['costo_energia'] = str(resultado_mensual['costo_energia'])
+        resultado_mensual['costo_energia'] = str(
+            resultado_mensual['costo_energia'])
         resultado_mensual['costo_energia'] = str(resultado_mensual[
                                                  'costo_energia'])
         resultado_mensual['iva'] = str(resultado_mensual['iva'])
@@ -1961,9 +1965,10 @@ def tarifaHM_2(building, s_date, e_date, month, year):
 
             for vcu in virtual_cu:
                 if vcu['value']:
-                    kw_date =  datetime.datetime.utcfromtimestamp(vcu['datetime']).\
-                    replace(tzinfo=pytz.utc).\
-                    astimezone(timezone.get_current_timezone())
+                    kw_date =  datetime.datetime.utcfromtimestamp(
+                        vcu['datetime']
+                    ).replace(tzinfo=pytz.utc).astimezone(
+                        timezone.get_current_timezone())
 
                     periodo_mv = obtenerTipoPeriodoObj(kw_date, region)
                     if periodo_mv['period_type'] == 'base':
@@ -1987,11 +1992,15 @@ def tarifaHM_2(building, s_date, e_date, month, year):
             tupleDays_arr = tupleDays_global
 
             for tupleDay in tupleDays_arr:
-                kw_dia_dic = getKWperDay(tupleDay[0], tupleDay[1], consumer_units[0].profile_powermeter)
+                kw_dia_dic = getKWperDay(tupleDay[0],
+                                         tupleDay[1],
+                                         consumer_units[0].profile_powermeter)
                 if kw_dia_dic['base'] > diccionario_final_cfe["kw_base"]:
                     diccionario_final_cfe["kw_base"] = kw_dia_dic['base']
-                if kw_dia_dic['intermedio'] > diccionario_final_cfe["kw_intermedio"]:
-                    diccionario_final_cfe["kw_intermedio"] = kw_dia_dic['intermedio']
+                if kw_dia_dic['intermedio'] > \
+                        diccionario_final_cfe["kw_intermedio"]:
+                    diccionario_final_cfe["kw_intermedio"] = \
+                        kw_dia_dic['intermedio']
                 if kw_dia_dic['punta'] > diccionario_final_cfe["kw_punta"]:
                     diccionario_final_cfe["kw_punta"] = kw_dia_dic['punta']
 
@@ -2010,20 +2019,28 @@ def tarifaHM_2(building, s_date, e_date, month, year):
             tupleDays_arr = tupleDays_global
             #Se obtiene y calcula el día de inicio
             tuple_first = tupleDays_arr[0]
-            kwh_dia_dic = getKWHperDay(tuple_first[0], tuple_first[1], profile_powermeter)
+            kwh_dia_dic = getKWHperDay(tuple_first[0],
+                                       tuple_first[1],
+                                       profile_powermeter)
             diccionario_final_cfe["kwh_base"] += kwh_dia_dic['base']
             diccionario_final_cfe["kwh_intermedio"] += kwh_dia_dic['intermedio']
             diccionario_final_cfe["kwh_punta"] += kwh_dia_dic['punta']
-            diccionario_final_cfe["kwh_totales"] += kwh_dia_dic['base'] + kwh_dia_dic['intermedio'] + kwh_dia_dic['punta']
+            diccionario_final_cfe["kwh_totales"] += kwh_dia_dic['base'] + \
+                                                    kwh_dia_dic['intermedio'] + \
+                                                    kwh_dia_dic['punta']
 
 
             #Se obtiene y calcula el día final
             tuple_last = tupleDays_arr[len(tupleDays_arr)-1]
-            kwh_dia_dic = getKWHperDay(tuple_last[0], tuple_last[1], profile_powermeter)
+            kwh_dia_dic = getKWHperDay(tuple_last[0],
+                                       tuple_last[1],
+                                       profile_powermeter)
             diccionario_final_cfe["kwh_base"] += kwh_dia_dic['base']
             diccionario_final_cfe["kwh_intermedio"] += kwh_dia_dic['intermedio']
             diccionario_final_cfe["kwh_punta"] += kwh_dia_dic['punta']
-            diccionario_final_cfe["kwh_totales"] += kwh_dia_dic['base'] + kwh_dia_dic['intermedio'] + kwh_dia_dic['punta']
+            diccionario_final_cfe["kwh_totales"] += kwh_dia_dic['base'] + \
+                                                    kwh_dia_dic['intermedio'] + \
+                                                    kwh_dia_dic['punta']
 
 
             tupleDays_arr = tupleDays_arr[1:-1]
@@ -2031,19 +2048,29 @@ def tarifaHM_2(building, s_date, e_date, month, year):
             for tupleDay in tupleDays_arr:
 
                 try:
-                    a_day = datetime.date(tupleDay[0].year,tupleDay[0].month,tupleDay[0].day)
-                    daily_info = DailyData.objects.get(consumer_unit = c_unit, data_day = a_day)
+                    a_day = datetime.date(tupleDay[0].year,
+                                          tupleDay[0].month,
+                                          tupleDay[0].day)
+                    daily_info = DailyData.objects.get(consumer_unit=c_unit,
+                                                       data_day=a_day)
                 except ObjectDoesNotExist:
-                    kwh_dia_dic = getKWHperDay(tupleDay[0], tupleDay[1], profile_powermeter)
+                    kwh_dia_dic = getKWHperDay(tupleDay[0], tupleDay[1],
+                                               profile_powermeter)
                     diccionario_final_cfe["kwh_base"] += kwh_dia_dic['base']
-                    diccionario_final_cfe["kwh_intermedio"] += kwh_dia_dic['intermedio']
+                    diccionario_final_cfe["kwh_intermedio"] += \
+                        kwh_dia_dic['intermedio']
                     diccionario_final_cfe["kwh_punta"] += kwh_dia_dic['punta']
-                    diccionario_final_cfe["kwh_totales"] += kwh_dia_dic['base'] + kwh_dia_dic['intermedio'] + kwh_dia_dic['punta']
+                    tot = kwh_dia_dic['base'] + kwh_dia_dic['intermedio'] + \
+                          kwh_dia_dic['punta']
+                    diccionario_final_cfe["kwh_totales"] += tot
                 else:
                     diccionario_final_cfe["kwh_base"] += daily_info.KWH_base
-                    diccionario_final_cfe["kwh_intermedio"] += daily_info.KWH_intermedio
+                    diccionario_final_cfe["kwh_intermedio"] += \
+                        daily_info.KWH_intermedio
                     diccionario_final_cfe["kwh_punta"] += daily_info.KWH_punta
-                    diccionario_final_cfe["kwh_totales"] += daily_info.KWH_base + daily_info.KWH_intermedio + daily_info.KWH_punta
+                    tot = daily_info.KWH_base + daily_info.KWH_intermedio + \
+                          daily_info.KWH_punta
+                    diccionario_final_cfe["kwh_totales"] += tot
 
 
             #Se obtienen los kvarhs por medidor
@@ -2182,26 +2209,6 @@ def tarifaDAC_2(building, s_date, e_date, month, year):
     if consumer_units:
         for c_unit in consumer_units:
             profile_powermeter = c_unit.profile_powermeter
-            """
-            #Se obtiene y calcula el día de inicio
-            tuple_first = tupleDays_arr[0]
-            kwh_netos += getKWHSimplePerDay(tuple_first[0], tuple_first[1], profile_powermeter)
-
-            #Se obtiene y calcula el día final
-            tuple_last = tupleDays_arr[len(tupleDays_arr)-1]
-            kwh_netos += getKWHSimplePerDay(tuple_last[0], tuple_last[1], profile_powermeter)
-
-            tupleDays_arr = tupleDays_arr[1:-1]
-
-            for tupleDay in tupleDays_arr:
-                try:
-                    a_day = datetime.date(tupleDay[0].year,tupleDay[0].month,tupleDay[0].day)
-                    daily_info = DailyData.objects.get(consumer_unit = c_unit, data_day = a_day)
-                except ObjectDoesNotExist:
-                    kwh_netos += getKWHSimplePerDay(tupleDay[0], tupleDay[1], profile_powermeter)
-                else:
-                    kwh_netos += daily_info.KWH_total
-            """
 
             #Se obtienen los kwh de ese periodo de tiempo.
             kwh_lecturas = ElectricDataTemp.objects.filter(
@@ -2315,28 +2322,6 @@ def tarifa_3(building, s_date, e_date, month, year):
 
         for c_unit in consumer_units:
             profile_powermeter = c_unit.profile_powermeter
-
-            """
-            #Se obtiene y calcula el día de inicio
-            tuple_first = tupleDays_arr[0]
-            kwh_netos += getKWHSimplePerDay(tuple_first[0], tuple_first[1], profile_powermeter)
-
-            #Se obtiene y calcula el día final
-            tuple_last = tupleDays_arr[len(tupleDays_arr)-1]
-            kwh_netos += getKWHSimplePerDay(tuple_last[0], tuple_last[1], profile_powermeter)
-
-            tupleDays_arr = tupleDays_arr[1:-1]
-
-            for tupleDay in tupleDays_arr:
-                try:
-                    a_day = datetime.date(tupleDay[0].year,tupleDay[0].month,tupleDay[0].day)
-                    daily_info = DailyData.objects.get(consumer_unit = c_unit, data_day = a_day)
-                except ObjectDoesNotExist:
-                    kwh_netos += getKWHSimplePerDay(tupleDay[0], tupleDay[1], profile_powermeter)
-                else:
-                    kwh_netos += daily_info.KWH_total
-            """
-
             #Se obtienen los kwh de ese periodo de tiempo.
             kwh_lecturas = ElectricDataTemp.objects.filter(
                 profile_powermeter=profile_powermeter).\
@@ -3013,9 +2998,12 @@ def crawler_t3_rate(year, month):
                     if renglon:
                         try:
                             if renglon.string == u'2.1 Cargo por demanda máxima':
-                                tarifa_demanda = rows[idx+1].td.b.string.replace('$ ','')
-                            elif renglon.string == u'2.2 Cargo adicional por la energía consumida':
-                                tarifa_kwh = rows[idx+1].td.b.string.replace('$ ','')
+                                tarifa_demanda = \
+                                    rows[idx+1].td.b.string.replace('$ ','')
+                            elif renglon.string == \
+                                    u'2.2 Cargo adicional por la energía consumida':
+                                tarifa_kwh = rows[idx+1].td.b.string.replace(
+                                    '$ ', '')
                         except IndexError:
                             print "Error: Error al parsear tabla - Index Error"
                             continue

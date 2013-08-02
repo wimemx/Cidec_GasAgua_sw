@@ -1040,7 +1040,7 @@ def edit_user(request, id_user):
     if has_permission(request.user,
                       UPDATE,
                       "Actualizar información de usuarios") or \
-            request.user.is_superuser:
+            request.user.is_superuser or int(id_user) == int(request.user.id):
         user = get_object_or_404(User, pk=id_user)
         profile = UserProfile.objects.get(user=user)
         post = {'username': user.username, 'name': user.first_name,
@@ -1507,7 +1507,6 @@ def search_users(request):
         raise Http404
 
 
-
 def forgot_password(request):
     template_vars={}
     if 'msj' in request.GET:
@@ -1515,42 +1514,48 @@ def forgot_password(request):
         template_vars['msg_type'] = request.GET['ntype']
 
     if request.POST:
-        mail= request.POST['mail']
+        mail = request.POST['mail']
         if is_valid_email(mail):
-            correo_existente = django.contrib.auth.models.User.objects.filter(email=mail)
+            correo_existente = User.objects.filter(email=mail)
             if correo_existente:
-                usuario= django.contrib.auth.models.User.objects.get(email=mail)
+                usuario = correo_existente[0]
                 password = random_string_generator(8)
-                id= usuario.id
+                id_ = usuario.id
                 usuario.set_password(password)
                 usuario.save()
-                subject, from_email= 'Cambio de contraseña', 'noreply@auidtem.mx'
-                text_content = "Su nueva contraseña es: "+password+ ". Ingrese a la siguiente liga para cambiar por" \
-                                                                    "una contraseña de su eleccion. " \
-                                                                    "http://127.0.0.1:8000/panel_de_control/editar_usuario/"+str(id)+"/"
-                html_content = "<p>Su nueva contraseña es: "+password+ ". Ingrese a la siguiente liga para cambiar por" \
-                                                                    "una contraseña de su eleccion. " \
-                                                                    "<a href='http://127.0.0.1:8000/panel_de_control/editar_usuario/"+str(id)+"'>Cambio de contraseña(Click Aqui)</a>/</p>"
+                to_mail = (usuario.email,)
+                subject, from_email = 'Cambio de contraseña', \
+                                      'noreply@auditem.mx'
+                text_content = "Su nueva contraseña es: "+ password + \
+                               ". Ingrese a la siguiente liga para cambiar por" + \
+                               "una contraseña de su eleccion. " + \
+                               settings.SERVER_URL + \
+                               "/panel_de_control/editar_usuario/" + str(id_) + "/"
+                html_content = "<p>Su nueva contraseña es: " + password + \
+                               ". Ingrese a la siguiente liga para cambiar por" \
+                               "una contraseña de su eleccion. " \
+                               "<a href='" + settings.SERVER_URL + \
+                               "/panel_de_control/editar_usuario/" + str(id_) + \
+                               "'>Cambio de contraseña(Click Aqui)</a>/</p>"
 
-                to_mail = tuple(mail)
-                msg = EmailMultiAlternatives(subject, text_content, from_email, to_mail)
+                msg = EmailMultiAlternatives(
+                    subject=subject,
+                    body=text_content,
+                    from_email=from_email,
+                    bcc=to_mail)
                 msg.attach_alternative(html_content, "text/html")
                 msg.send()
-                mensaje = "Se te ha enviado un correo a tu cuenta con tu nueva contraseña temporal"
-                template_vars['message']= mensaje
-                template_vars['msg_type']="n_success"
-                template_vars_template = RequestContext(request, template_vars)
+                mensaje = "Se te ha enviado un correo a tu cuenta con tu " \
+                          "nueva contraseña temporal"
+
                 return HttpResponseRedirect(
                 "/forgot_password/?msj=" + mensaje+
                 "&ntype=n_success")
             else:
                 mensaje = "No se encontro ningun usuario con esa cuenta de correo"
                 template_vars['message']= mensaje
-                template_vars['msg_type']="n_error"
-                template_vars_template = RequestContext(request, template_vars)
                 return HttpResponseRedirect(
-                "/forgot_password/?msj=" + mensaje+
-                "&ntype=n_error")
+                    "/forgot_password/?msj=" + mensaje + "&ntype=n_error")
 
         else:
             mensaje = "No has ingresado un correo electronico valido"
