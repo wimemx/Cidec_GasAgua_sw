@@ -58,7 +58,7 @@
 
         });
     function validate_form(){
-
+        alert("check");
         var _span;
 
             var attr_name = $("#attr_name");
@@ -84,6 +84,7 @@
             attr_type.parent().next().removeClass("incorrect");
             attr_type.parent().next().removeClass("correct");
             attr_type.parent().next().addClass(_span);
+
 
 
             var value_b = $("#value_t");
@@ -210,6 +211,9 @@
                                             checked="checked"
                                         {% endif %}
                                         {% if not post %}
+                                            checked="checked"
+                                        {% endif %}
+                                        {% if post %}
                                             checked="checked"
                                         {% endif %}
                                         />

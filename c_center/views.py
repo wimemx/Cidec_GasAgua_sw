@@ -1046,7 +1046,8 @@ def add_building_attr(request):
                     valid = False
                     template_vars['message'] = \
                         "Por favor solo ingrese caracteres v&aacute;lidos"
-
+            print "booleano"
+            print int(template_vars['post']['value_boolean'])
             if int(template_vars['post']['value_boolean']) == 1:
                 _bool = True
                 unidades = template_vars['post']['unidades']
@@ -4478,6 +4479,7 @@ def edit_partbuildingtype(request, id_pbtype):
             #Valida el nombre (para el caso de los repetidos)
             if building_part_type.part_of_building_type_name != \
                     b_part_type_name:
+                print "entro"
                 #Valida por si le da muchos clics al boton
                 partTypeValidate = PartOfBuildingType.objects.filter(
                     part_of_building_type_name=b_part_type_name)
@@ -4486,9 +4488,7 @@ def edit_partbuildingtype(request, id_pbtype):
                               "ese nombre"
                     _type = "n_notif"
                     continuar = False
-            b_part_type_name = building_part_type.part_of_building_type_name
-            b_part_type_description = building_part_type.\
-                part_of_building_type_description
+
             post = {
                 'b_part_type_name': b_part_type_name,
                 'b_part_type_description': b_part_type_description}
@@ -4497,6 +4497,7 @@ def edit_partbuildingtype(request, id_pbtype):
                 building_part_type.part_of_building_type_name = b_part_type_name
                 building_part_type.part_of_building_type_description = \
                     b_part_type_description
+
                 building_part_type.save()
 
                 message = "Tipo de Parte de Edificio editado exitosamente"
