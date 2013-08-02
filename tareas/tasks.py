@@ -528,10 +528,10 @@ def last_data_received():
                 </span>,la última lectura fue tomada a las %s</p>
                 <p>Por favor revise el estado del sistema de
                 adquisición</p>""".decode("utf-8") % str_data
-                msg = EmailMultiAlternatives(subject,
-                                             text_content,
-                                             from_email,
-                                             to_mail)
+                msg = EmailMultiAlternatives(subject=subject,
+                                             body=text_content,
+                                             from_email=from_email,
+                                             bcc=to_mail)
                 msg.attach_alternative(html_content, "text/html")
                 msg.send()
 

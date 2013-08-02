@@ -7,9 +7,11 @@ class Timezones(models.Model):
     raw_offset = models.SmallIntegerField(max_length=2, default=-6)
     dst_offset = models.IntegerField(max_length=2, default=-5)
     longitude = models.DecimalField("Longitud", max_digits=10,
-                                                decimal_places=6, default=0)
+                                    decimal_places=6, default=0)
     latitude = models.DecimalField("Latitud", max_digits=10,
-                                               decimal_places=6, default=0)
+                                   decimal_places=6, default=0)
+
+    zone_id = models.CharField(null=True, blank=True, max_length=32)
 
     def __unicode__(self):
         return self.name

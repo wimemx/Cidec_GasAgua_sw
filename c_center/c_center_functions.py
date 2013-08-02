@@ -3122,6 +3122,7 @@ def getTupleDays(s_date_utc, e_date_utc):
 
     return zip(arr_b_days,arr_e_days)
 
+
 def regenerate_ie_config(ie_id, user):
     ie = IndustrialEquipment.objects.get(pk=ie_id)
     json_dic = dict(eDevicesConfigList=[])
@@ -3269,7 +3270,7 @@ def get_google_timezone(building):
         bld_timezone = TimezonesBuildings.objects.get(building=building)
     except ObjectDoesNotExist:
         print "Building with no Timezone"
-        return "America/Mexico_City"
+        return "America/Mexico_City", 0
     else:
         #Si el edificio no tiene coordenadas.
         # Se toman las coordenadas por default
@@ -3287,27 +3288,41 @@ def get_google_timezone(building):
                 str(now_timestamp)+'&sensor=false')
         except IOError:
             print "URL Error. No Connection"
-            return False
+            #vemos si la fecha está en DST o DCT
+            ie = IndustrialEquipment.objects.get(building=building)
+            dsid = simplejson.loads(ie.timezone_dst)
+            dsid = int(dsid["daysaving_id"])
+            current_t = DaySavingDates.objects.get(id=dsid)
+            now = datetime.datetime.now()
+            now = now.replace(tzinfo=None)
+            summer = current_t.summer_date
+            summer = summer.replace(tzinfo=None)
+            winter = current_t.winter_date
+            winter = winter.replace(tzinfo=None)
+            if summer < now < winter:
+                #horario de verano
+                return bld_timezone.time_zone.zone_id, 3600
+            else:
+                return bld_timezone.time_zone.zone_id, 0
         else:
             json_t = simplejson.load(timezone_json)
+            print "Timezone set to:", json_t['timeZoneId']
             return json_t['timeZoneId'], int(json_t['dstOffset'])
-
-
 
 
 def replace_accents(with_accents):
 
     accents = {
-        'á':'a',
-        'é':'e',
-        'í':'i',
-        'ó':'o',
-        'ú':'u',
-        'Á':'A',
-        'É':'E',
-        'Í':'I',
-        'Ó':'O',
-        'Ú':'U'
+        'á': 'a',
+        'é': 'e',
+        'í': 'i',
+        'ó': 'o',
+        'ú': 'u',
+        'Á': 'A',
+        'É': 'E',
+        'Í': 'I',
+        'Ó': 'O',
+        'Ú': 'U'
     }
 
     for key in accents.keys():
@@ -3321,7 +3336,8 @@ def crawler_get_municipalities():
     states = Estado.objects.all()
     cont_total = 0
     for state in states:
-        safe_name = replace_accents(state.estado_name.lower().replace(" ","-").encode('UTF-8'))
+        safe_name = replace_accents(state.estado_name.lower().replace(
+            " ", "-").encode('UTF-8'))
         if safe_name == 'estado-de-mexico':
             safe_name = 'mexico'
         try:
@@ -3338,7 +3354,9 @@ def crawler_get_municipalities():
                 header_t = tabla.find('tr').find_all('td')
                 if len(header_t) > 1:
                     if str(header_t[1].find(text=True)).replace(
-                        '\n','').replace('\t','').strip() == 'Nombre del Municipio':
+                            '\n',
+                            '').replace(
+                                '\t', '').strip() == 'Nombre del Municipio':
                         renglones_tarifa = tabla.find_all('tr')
                         del renglones_tarifa[0]
                         print "Estado:",safe_name
@@ -3349,14 +3367,15 @@ def crawler_get_municipalities():
                             print tds[1].find(text=True).encode('UTF-8')
 
                             mun = Municipio(
-                                municipio_name = tds[1].find(text=True).encode('UTF-8'),
-                                border = False
+                                municipio_name=tds[1].find(
+                                    text=True).encode('UTF-8'),
+                                border=False
                             )
                             mun.save()
 
                             estado_mun = EstadoMunicipio(
-                                estado = state,
-                                municipio = mun
+                                estado=state,
+                                municipio=mun
                             )
                             estado_mun.save()
 
@@ -3388,18 +3407,18 @@ def setBuildingDST(border):
 
             #Se actualiza el JSON del Equipo Industrial para cada edificio
             try:
-                industrial_equip = IndustrialEquipment.objects.get(building =
-                bld_tz.building)
+                industrial_equip = IndustrialEquipment.objects.get(
+                    building=bld_tz.building)
             except ObjectDoesNotExist:
-                print "setBuildingDST - No Industrial Equipment for building: "+\
+                print "setBuildingDST - No Industrial Equipment for building: " + \
                       str(bld_tz.building.building_name)
             except MultipleObjectsReturned:
-                print "setBuildingDST - Multiple Industrial Equipments: "+\
+                print "setBuildingDST - Multiple Industrial Equipments:" + \
                       str(bld_tz.building.building_name)
             else:
-                json_dic = {"raw_offset":bld_tz.time_zone.raw_offset,
-                            "dst_offset":bld_tz.time_zone.dst_offset,
-                            "daysaving_id":next_dst[0].pk}
+                json_dic = {"raw_offset": bld_tz.time_zone.raw_offset,
+                            "dst_offset": bld_tz.time_zone.dst_offset,
+                            "daysaving_id": next_dst[0].pk}
 
                 industrial_equip.timezone_dst = json.dumps(json_dic)
                 industrial_equip.save()
@@ -3408,7 +3427,7 @@ def setBuildingDST(border):
 
 
 def setBuildingTest():
-    """
+    """ Función para probar el seteo remoto de cambio de horario
 
     :param - Border: Booleano para indicar si modifica los fronterizos o no.
     """
@@ -3428,13 +3447,13 @@ def setBuildingTest():
 
             #Se actualiza el JSON del Equipo Industrial para cada edificio
             try:
-                industrial_equip = IndustrialEquipment.objects.get(building =
-                bld_tz.building)
+                industrial_equip = IndustrialEquipment.objects.get(
+                    building=bld_tz.building)
             except ObjectDoesNotExist:
-                print "setBuildingDST - No Industrial Equipment for building: "+\
+                print "setBuildingDST - No Industrial Equipment for building: " + \
                       str(bld_tz.building.building_name)
             except MultipleObjectsReturned:
-                print "setBuildingDST - Multiple Industrial Equipments: "+\
+                print "setBuildingDST - Multiple Industrial Equipments: " + \
                       str(bld_tz.building.building_name)
             else:
                 json_dic = {"raw_offset": bld_tz.time_zone.raw_offset,

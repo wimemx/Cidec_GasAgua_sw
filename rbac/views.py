@@ -823,6 +823,12 @@ def add_user(request):
             template_vars["post"] = post
             valid = validate_user(post)
 
+            if User.objects.filter(email=valid['mail']):
+                valid = False
+                exists_mail = True
+            else:
+                exists_mail = False
+
             if valid:
                 age = int((date.today() - valid['fnac']).days / 365.25)
 
@@ -879,10 +885,16 @@ def add_user(request):
                                            "&ntype=n_success"
                             return HttpResponseRedirect(url_response)
             else:
-                template_vars["message"] = "Ha ocurrido un error al validar " \
+                template_vars["type"] = "n_notif"
+                if exists_mail:
+                    template_vars["message"] = "Ya existe un usuario con ese " \
+                                           "correo, por favor elija una " \
+                                           "dirección de correo diferente"
+                else:
+                    template_vars["message"] = "Ha ocurrido un error al validar " \
                                            "los datos por favor revise que no" \
                                            " haya caracteres inv&aacute;lidos"
-                template_vars["type"] = "n_notif"
+
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("rbac/add_user.html", template_vars_template)

@@ -184,7 +184,8 @@ table.datepickerViewYears td a span{
     color: #666666;
 }
 .inner_day .red{
-    color: #c30000 !important;
+    color: #FFF !important;
+    background-color: #c30000;
     font-weight: 700 !important;
     display: block;
     margin: 0 auto !important;
@@ -192,7 +193,8 @@ table.datepickerViewYears td a span{
     text-align: center !important;
 }
 .inner_day .green{
-    color: #58b11d !important;;
+    color: #FFF !important;;
+    background-color: #58b11d;
     font-weight: 700 !important;
     display: block;
     margin: 0 auto !important;
@@ -518,12 +520,19 @@ h3.titulo_reporte{
 }
 #month_sumary{
     display: block;
-    margin: 30px auto 0 auto;
+    margin: 15px auto 0 auto;
     width: 891px;
     height: 140px;
     clear: both;
     overflow: hidden;
     background: url(../images/bgs/month_bg.png) top no-repeat !important;
+}
+
+.subtitle{
+    margin-left: 47px;
+    text-transform: uppercase;
+    color: #666;
+    font-size: 17px;
 }
 
 #month_sumary ul{
@@ -541,16 +550,18 @@ h3.titulo_reporte{
     line-height: 18px;
 }
 .icon_sumary{
+    margin-left: 8px;
     float: left;
     height: 100px;
     text-align: left;
-    width: 25%;
+    width: 24%;
     text-indent: 5px;
 }
 
 .month_totals{
     float: left;
     width: 222px;
+    margin-top: 5px;
 }
 
 
@@ -567,24 +578,28 @@ h3.titulo_reporte{
     padding-left: 28px;
     padding-right: 37px;
     text-align: right;
+    color: #fe0054;
 }
 .icon_sumary #dem_total{
     background: url(../images/imgs_icns/demanda_semanal.png) 5px center no-repeat;
     padding-left: 28px;
     padding-right: 37px;
     text-align: right;
+    color: #9441e5;
 }
 .icon_sumary #emit_total{
     background: url(../images/imgs_icns/fp_semanal.png) 5px center no-repeat;
     padding-left: 28px;
     padding-right: 37px;
     text-align: right;
+    color: #207b2b;
 }
 .icon_sumary #pp_total{
     background: url(../images/imgs_icns/co2_mensual.png) 5px center no-repeat;
     padding-left: 28px;
     padding-right: 37px;
     text-align: right;
+    color: #1a89e7;
 }
 
 .consumo_t .label_icon{
@@ -622,10 +637,10 @@ h3.titulo_reporte{
     float: left;
     color: #898989;
     font-size: 13px;
-    margin: 3px 0;
+    margin: 3px 0 0 8px;
 }
 .month_totals .label_tot{
-    width: 64px;
+    width: 49px;
 }
 .month_totals .value_tot{
     text-align: right;
@@ -672,20 +687,23 @@ h3.titulo_reporte{
     padding-top: 17px;
     font-weight: 700;
     position: absolute;
-    height: 115px;
     width: 33px;
     top: 19px;
     right: 0;
 }
 #headers_mr li span#kwh{
     background-color: #ff9bbd;
+    height: 115px;
 }
 #headers_mr li span#kw{
     background-color: #bc99dd;
+    height: 56px;
 }
 #headers_mr li span#pc{
     background-color: #84d68e;
+    height: 56px;
 }
 #headers_mr li span#ton{
     background-color: #95c1e6;
+    height: 56px;
 }

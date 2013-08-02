@@ -5472,15 +5472,28 @@ def add_building(request):
                     mts2_built=b_mt2,
                 )
                 newBuilding.save()
-                IndustrialEquipment(alias="SA de "+b_name,
-                                    building=newBuilding).save()
 
                 #Se da de alta la zona horaria del edificio
                 timeZone = Timezones.objects.get(id=b_time_zone)
                 newTimeZone = TimezonesBuildings(
-                    building = newBuilding,
-                    time_zone = timeZone)
+                    building=newBuilding,
+                    time_zone=timeZone)
                 newTimeZone.save()
+
+                days_s = newTimeZone.day_saving_date.pk
+                raw = newTimeZone.time_zone.raw_offset
+                dst = newTimeZone.time_zone.dst_offset
+
+                json_dic = {"raw_offset": raw,
+                            "dst_offset": dst,
+                            "daysaving_id": days_s}
+                dts = json.dumps(json_dic)
+
+                ie = IndustrialEquipment(
+                    alias="SA de "+b_name,
+                    building=newBuilding,
+                    timezone_dst=dts)
+                ie.save()
                 #Se da de alta la fecha de corte
 
                 date_init = datetime.datetime.today().utcnow().replace(
@@ -5494,7 +5507,6 @@ def add_building(request):
                     date_init=date_init,
                 )
                 new_cut.save()
-
 
                 #Se relaciona la compania con el edificio
                 newBldComp = CompanyBuilding(
@@ -5545,7 +5557,7 @@ def add_building(request):
                     populate_instants=None,
                     populate_consumer_unit_profiles=True,
                     populate_data=None)
-
+                regenerate_ie_config(ie.pk, request.user)
                 template_vars["message"] = "Edificio creado exitosamente"
                 template_vars["type"] = "n_success"
 
@@ -6240,13 +6252,26 @@ def add_ie(request):
             template_vars["post"] = request.POST.copy()
             template_vars["post"]['ie_building'] = int(
                 template_vars["post"]['ie_building'])
+
             building = Building.objects.get(pk=int(request.POST['ie_building']))
+
+            bld_timezones = TimezonesBuildings.objects.get(building=building)
+
+            days_s = bld_timezones.day_saving_date.pk
+            raw = bld_timezones.time_zone.raw_offset
+            dst = bld_timezones.time_zone.dst_offset
+
+            json_dic = {"raw_offset": raw,
+                        "dst_offset": dst,
+                        "daysaving_id": days_s}
+            dts = json.dumps(json_dic)
             ie = IndustrialEquipment(
                 alias=request.POST['ie_alias'].strip(),
                 description=request.POST['ie_desc'].strip(),
                 server=request.POST['ie_server'].strip(),
                 building=building,
-                modified_by=request.user
+                modified_by=request.user,
+                timezone_dst=dts
             )
             ie.save()
             regenerate_ie_config(ie.pk, request.user)
@@ -6353,11 +6378,23 @@ def edit_ie(request, id_ie):
 
         if request.method == 'POST':
             building = Building.objects.get(pk=int(request.POST['ie_building']))
+
+            bld_timezones = TimezonesBuildings.objects.get(building=building)
+
+            days_s = bld_timezones.day_saving_date.pk
+            raw = bld_timezones.time_zone.raw_offset
+            dst = bld_timezones.time_zone.dst_offset
+
+            json_dic = {"raw_offset": raw,
+                        "dst_offset": dst,
+                        "daysaving_id": days_s}
+            dts = json.dumps(json_dic)
             industrial_eq.alias = request.POST['ie_alias'].strip()
             industrial_eq.description = request.POST['ie_desc'].strip()
             industrial_eq.server = request.POST['ie_server'].strip()
             industrial_eq.building = building
             industrial_eq.modified_by = request.user
+            industrial_eq.timezone_dst = dts
             industrial_eq.save()
             regenerate_ie_config(industrial_eq.pk, request.user)
             message = "El equipo industrial se ha actualizado exitosamente"
@@ -9933,6 +9970,7 @@ def save_add_building_popup(request):
         b_long = request.POST.get('b_longitude')
         b_lat = request.POST.get('b_latitude')
         b_region_id = request.POST.get('b_region')
+        b_time_zone = request.POST.get('b_time_zone')
 
         if not bool(b_int):
             b_int = '0'
@@ -10018,7 +10056,8 @@ def save_add_building_popup(request):
             'b_zip': b_zip,
             'b_long': b_long,
             'b_lat': b_lat,
-            'b_region_id': int(b_region_id)
+            'b_region_id': int(b_region_id),
+            'b_time_zone': b_time_zone
         }
 
         if continuar:
@@ -10069,8 +10108,29 @@ def save_add_building_popup(request):
                 mts2_built=b_mt2,
             )
             newBuilding.save()
-            IndustrialEquipment(alias="SA de "+b_name,
-                                building=newBuilding).save()
+
+            #Se da de alta la zona horaria del edificio
+            timeZone = Timezones.objects.get(id=b_time_zone)
+            newTimeZone = TimezonesBuildings(
+                building=newBuilding,
+                time_zone=timeZone)
+            newTimeZone.save()
+
+            days_s = newTimeZone.day_saving_date.pk
+            raw = newTimeZone.time_zone.raw_offset
+            dst = newTimeZone.time_zone.dst_offset
+
+            json_dic = {"raw_offset": raw,
+                        "dst_offset": dst,
+                        "daysaving_id": days_s}
+            dts = json.dumps(json_dic)
+
+            ie = IndustrialEquipment(
+                alias="SA de "+b_name,
+                building=newBuilding,
+                timezone_dst=dts)
+            ie.save()
+
             template_vars["building"] = newBuilding.pk
             #Se da de alta la fecha de corte
 

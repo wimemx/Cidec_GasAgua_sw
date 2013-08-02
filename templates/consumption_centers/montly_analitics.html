@@ -349,7 +349,7 @@
     <a href="/profile/{{ request.user.pk }}/" class="fl username">{{ request.user.first_name }} {{ request.user.last_name }}</a>
         <ul>
             <li><a href="/main/">Inicio</a></li>
-            <li><a href="/reportes/analisis_mensual/">An&aacute;lisis de Consumo El&eacute;ctrico Mensual</a></li>
+            <li><a href="/reportes/analisis_mensual/">An&aacute;lisis de Consumo Energ&eacute;tico Mensual</a></li>
         </ul>
     <a href="/logout" id="userLogOut">Cerrar sesión</a>
     </div>
@@ -370,11 +370,12 @@
         <h2 id="titulo_reporte" class="titulo_reporte report_icon">An&aacute;lisis de Consumo El&eacute;ctrico Mensual</h2>
         <div class="divider" id="divider_top">&nbsp;</div>
 
+        <span class="subtitle">Resumen Mensual</span>
 
         <div id="month_sumary">
             <ul id="headers_mr">
                 <li>
-                    Consumo Acomulado
+                    Consumo Acumulado
                     <span id="kwh">kWh</span>
                 </li>
                 <li>
