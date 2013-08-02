@@ -6236,6 +6236,14 @@ def add_ie(request):
 
         buildings = get_all_buildings_for_operation(
             permission, CREATE, request.user)
+        pks_occupied_b = IndustrialEquipment.objects.all().values_list(
+            "building__pk", flat=True)
+
+        for buil in buildings:
+            if buil.pk in pks_occupied_b:
+                buildings.remove(buil)
+
+
         template_vars['buildings'] = buildings
         if request.method == 'POST':
             template_vars["post"] = request.POST.copy()
