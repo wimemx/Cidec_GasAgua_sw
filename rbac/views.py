@@ -1512,7 +1512,7 @@ def forgot_password(request):
                 id= usuario.id
                 usuario.set_password(password)
                 usuario.save()
-                subject, from_email, to = 'Cambio de contraseña', 'noreply@auidtem.mx', mail
+                subject, from_email= 'Cambio de contraseña', 'noreply@auidtem.mx'
                 text_content = "Su nueva contraseña es: "+password+ ". Ingrese a la siguiente liga para cambiar por" \
                                                                     "una contraseña de su eleccion. " \
                                                                     "http://127.0.0.1:8000/panel_de_control/editar_usuario/"+str(id)+"/"
@@ -1520,7 +1520,8 @@ def forgot_password(request):
                                                                     "una contraseña de su eleccion. " \
                                                                     "<a href='http://127.0.0.1:8000/panel_de_control/editar_usuario/"+str(id)+"'>Cambio de contraseña(Click Aqui)</a>/</p>"
 
-                msg = EmailMultiAlternatives(subject, text_content, from_email, mail)
+                to_mail = tuple(mail)
+                msg = EmailMultiAlternatives(subject, text_content, from_email, to_mail)
                 msg.attach_alternative(html_content, "text/html")
                 msg.send()
                 mensaje = "Se te ha enviado un correo a tu cuenta con tu nueva contraseña temporal"
