@@ -25,7 +25,7 @@ import variety
 from c_center.c_center_functions import save_historic, dailyReportAll, \
     asign_electric_data_to_pw, calculateMonthlyReport_all, all_dailyreportAll,\
     getRatesCurrentMonth, dailyReportPeriodofTime, dailyReportAll_Period, \
-    parse_file, getMonthlyReport, setBuildingDST
+    parse_file, getMonthlyReport, setBuildingDST, setBuildingTest
 from c_center.calculations import daytag_period_allProfilePowermeters, \
     daytag_period
 
@@ -213,6 +213,10 @@ def populate_data_warehouse_specific(
     except c_center.models.ConsumerUnit.DoesNotExist:
         print "Unidad de consumo no encontrada", consumer_unit
         return
+    else:
+        status = consumer_unit.profile_powermeter.powermeter.status
+        if not status:
+            return
     #
     # Generate data for Instant Delta.
     # Generate data for each Electrical Parameter.
@@ -362,6 +366,10 @@ def update_data_dw_delta(end, start, delta_name):
         except c_center.models.ConsumerUnit.DoesNotExist:
             print "unidad de consumo no encontrada", consumer_unit_profile
             continue
+        else:
+            status = consumer_unit.profile_powermeter.powermeter.status
+            if not status:
+                continue
 
         #
         # Generate data for each Instant Delta.
@@ -456,7 +464,8 @@ def data_warehouse_day():
 def last_data_received():
     delta_t = datetime.timedelta(hours=12)
     cus = c_center.models.ConsumerUnit.objects.exclude(
-        profile_powermeter__powermeter__powermeter_anotation="Medidor Virtual")
+        profile_powermeter__powermeter__powermeter_anotation="Medidor Virtual"
+    ).exclude(profile_powermeter__powermeter__status=False)
 
     subject = "Interrupción en la adquisición de datos"
     from_email = "noreply@auditem.mx"
@@ -526,18 +535,17 @@ def last_data_received():
                 msg.attach_alternative(html_content, "text/html")
                 msg.send()
 
-@periodic_task(run_every=crontab(month_of_year='10', day_of_month='25-31'),
-               day_of_week='0', hour='1', minute='59')
+@periodic_task(run_every=crontab(month_of_year='10', day_of_month='25-31',
+               day_of_week='0', hour='1', minute='30'))
 def cambioHorarioNormal():
     setBuildingDST(False)
 
+#@periodic_task(run_every=crontab(hour='13', minute='15'))
+def cambioHorarioNormal_TEST():
+    setBuildingTest()
 
-@periodic_task(run_every=crontab(month_of_year='11', day_of_month='1-7'),
-               day_of_week='0', hour='1', minute='59')
+
+@periodic_task(run_every=crontab(month_of_year='11', day_of_month='1-7',
+               day_of_week='0', hour='1', minute='30'))
 def cambioHorarioFrontera():
     setBuildingDST(True)
-
-
-@periodic_task(run_every=crontab(minute='*/20'))
-def save_month_reports():
-    insert_data_Graph_To_Model()
