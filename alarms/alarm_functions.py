@@ -130,14 +130,19 @@ def get_alarm_from_building(id_bld):
 
     alarma = Alarms.objects.filter(
         consumer_unit__building__pk=id_bld,
-        status=True).values("pk",
-                            "consumer_unit__building__building_name",
-                            "electric_parameter__name")
+        status=True).values(
+            "pk",
+            "consumer_unit__building__building_name",
+            "electric_parameter__name",
+            "consumer_unit__electric_device_type__electric_device_type_name",
+            "consumer_unit__profile_powermeter__powermeter__powermeter_anotation")
     serie = []
     for res in alarma:
         serie.append(dict(
             param=res['electric_parameter__name'],
             id=res['pk'],
+            device=res['consumer_unit__electric_device_type__electric_device_type_name'],
+            pm=res['consumer_unit__profile_powermeter__powermeter__powermeter_anotation'],
             edificio=res['consumer_unit__building__building_name']))
     return serie
 
