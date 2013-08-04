@@ -30,9 +30,9 @@ class Alarms(models.Model):
     status = models.BooleanField(default=True)
 
     def __unicode__(self):
-        return self.alarm_identifier + "-" +\
-               self.consumer_unit.profile_powermeter.powermeter\
-               .powermeter_anotation
+        s = self.alarm_identifier + "-" + \
+            self.consumer_unit.profile_powermeter.powermeter.powermeter_anotation
+        return s
 
 
 class AlarmEvents(models.Model):

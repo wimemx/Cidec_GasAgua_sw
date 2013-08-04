@@ -11,7 +11,7 @@ from celery.task.schedules import crontab
 from celery.decorators import periodic_task
 
 import django.utils.timezone
-from django.core.mail import send_mail, EmailMultiAlternatives
+from django.core.mail import mail_admins, EmailMultiAlternatives
 
 #local application/library specific imports
 import data_warehouse_extended.globals
@@ -462,6 +462,10 @@ def data_warehouse_day():
 
 @periodic_task(run_every=crontab(hour='*/12'))
 def last_data_received():
+    subject = "disparo de last_data_received"
+    message = "de disparó el evento a las: " + str(datetime.datetime.now())
+    mail_admins(subject=subject,
+                message=message)
     delta_t = datetime.timedelta(hours=12)
     cus = c_center.models.ConsumerUnit.objects.exclude(
         profile_powermeter__powermeter__powermeter_anotation="Medidor Virtual"
@@ -549,3 +553,12 @@ def cambioHorarioNormal_TEST():
                day_of_week='0', hour='1', minute='30'))
 def cambioHorarioFrontera():
     setBuildingDST(True)
+
+
+def test_alarm_trigger():
+    alarm = alarms.models.Alarms.objects.get(pk=62)
+    ae = alarms.models.AlarmEvents(alarm=alarm, value=0)
+    ae.save()
+    socketIO = SocketIO('localhost', 9999)
+    socketIO.emit('alarm_trigger', {'alarm_event': ae.pk})
+    print "alarm sent, pk=", ae.pk, "time:", datetime.datetime.now()
