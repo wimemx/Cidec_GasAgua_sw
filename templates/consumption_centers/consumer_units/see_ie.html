@@ -68,7 +68,7 @@
 {% block breadcumbs %}
 
     <div id="bread_crumbs">
-    <a href="/profile/{{ request.user.pk }}/" class="fl username">{{ request.user.first_name }} {{ request.user.last_name }}</a>
+    <a href="/panel_de_control/ver_usuario/{{ request.user.pk }}/" class="fl username">{{ request.user.first_name }} {{ request.user.last_name }}</a>
     <ul>
         <li><a href="/main/">Inicio</a></li>
         <li><a href="/panel_de_control/">Panel de Contol</a></li>

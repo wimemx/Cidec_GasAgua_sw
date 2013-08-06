@@ -1173,7 +1173,8 @@ def delete_batch_user(request):
 @login_required(login_url='/')
 def see_user(request, id_user):
     if has_permission(request.user, VIEW,
-                      "Ver usuarios") or request.user.is_superuser:
+                      "Ver usuarios") or request.user.is_superuser or \
+            int(id_user) == request.user.id:
         user1 = get_object_or_404(User, pk=id_user)
         datacontext = get_buildings_context(request.user)[0]
 

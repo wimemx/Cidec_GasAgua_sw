@@ -184,7 +184,7 @@ def set_default_building(request, id_building):
 
     request.session['main_building'] = Building.objects.get(pk=id_building)
 
-    request.session['timezone']= get_google_timezone(
+    request.session['timezone'] = get_google_timezone(
         request.session['main_building'])[0]
     tz = pytz.timezone(request.session.get('timezone'))
     if tz:
@@ -5044,7 +5044,7 @@ def add_building(request):
         #Se obtienen las regiones
         regiones_lst = Region.objects.all()
 
-        #Se obtienen las regiones
+        #Se obtienen las zonas horarias
         zonas_lst = Timezones.objects.all()
 
         #Se obtienen los tipos de atributos de edificios
@@ -5234,6 +5234,26 @@ def add_building(request):
                     time_zone=timeZone)
                 newTimeZone.save()
 
+                today = datetime.datetime.now()
+                today = today.replace(tzinfo=None)
+                border = municipalityObj.border
+
+                dsd = DaySavingDates.objects.filter(border=bool(border))
+                for ds in dsd:
+                    winter = ds.winter_date
+                    winter = winter.replace(tzinfo=None)
+                    summer = ds.summer_date
+                    summer = summer.replace(tzinfo=None)
+                    if summer < today < winter:
+                        newTimeZone.day_saving_date = ds
+                        break
+                else:
+                    dsd2 = DaySavingDates.objects.filter(
+                        border=bool(border), winter_date__lte=today)[0]
+                    newTimeZone.day_saving_date = dsd2
+
+                newTimeZone.save()
+
                 days_s = newTimeZone.day_saving_date.pk
                 raw = newTimeZone.time_zone.raw_offset
                 dst = newTimeZone.time_zone.dst_offset
@@ -5316,7 +5336,7 @@ def add_building(request):
                 template_vars["type"] = "n_success"
 
                 if has_permission(request.user, VIEW,
-                                  "Ver edificios") or request.user.is_superuser:
+                                  "Ver edificios de empresas") or request.user.is_superuser:
                     return HttpResponseRedirect("/buildings/edificios?msj=" +
                                                 template_vars["message"] +
                                                 "&ntype=n_success")
@@ -5659,19 +5679,22 @@ def edit_building(request, id_bld):
                 t_zone_id.time_zone = hour_type
                 t_zone_id.save()
 
-                #Se actualiza el edificio para hacer el cambio de horario en caso de que sea el edificio en uso
-                if request.session['main_building'].id == long(id_bld):
-                    bld = Building.objects.get(pk=id_bld)
-                    request.session['timezone'] = get_google_timezone(
-                                bld)[0]
-                    tz = pytz.timezone(request.session.get('timezone'))
-                    if tz:
-                        timezone.activate(tz)
-                    request.session['main_building'] = bld
+                #Se actualiza el edificio para hacer el cambio de horario en
+                # caso de que sea el edificio en uso
+                b = request.session['main_building']
+                if b is not None:
+                    if b.id == long(id_bld):
+                        bld = Building.objects.get(pk=id_bld)
+                        request.session['timezone'] = get_google_timezone(
+                            bld)[0]
+                        tz = pytz.timezone(request.session.get('timezone'))
+                        if tz:
+                            timezone.activate(tz)
+                        request.session['main_building'] = bld
                 message = "Edificio editado exitosamente"
                 _type = "n_success"
                 if has_permission(request.user, VIEW,
-                                  "Ver edificios") or request.user.is_superuser:
+                                  "Ver edificios de empresas") or request.user.is_superuser:
                     return HttpResponseRedirect("/buildings/edificios?msj=" +
                                                 message +
                                                 "&ntype=n_success")
@@ -5707,10 +5730,21 @@ def edit_building(request, id_bld):
 
 @login_required(login_url='/')
 def info_building(request):
-    if has_permission(request.user, UPDATE,
-                      "Ver edificios") or request.user.is_superuser:
+    if has_permission(request.user, VIEW,
+                      "Ver edificios de empresas") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
+        template_vars = dict()
+        if empresa is None:
+            template_vars["message"] = "No hay edificios dados de alta, " \
+                                      "por favor revisa esta situación con tu " \
+                                      "administrador"
+            template_vars["datacontext"] = datacontext
+            template_vars["sidebar"] = request.session['sidebar'],
+            template_vars_template = RequestContext(request, template_vars)
+            return render_to_response(
+                "consumption_centers/buildings/see_building.html",
+                template_vars_template)
         company = request.session['company']
         message = ''
         _type = ''
@@ -5719,14 +5753,12 @@ def info_building(request):
         tipos_edificio_lst = BuildingType.objects.filter(
             building_type_status=1).order_by('building_type_name')
 
-
         #Se obtiene la información del edificio
         buildingObj = get_object_or_404(Building, pk=empresa.pk)
 
-
         #Dirección Concatenada
-        address = buildingObj.calle.calle_name+" "+\
-                  buildingObj.building_external_number
+        address = buildingObj.calle.calle_name + " " + \
+                    buildingObj.building_external_number
         if buildingObj.building_internal_number:
             address += "-"+buildingObj.building_internal_number
         address += ". "+buildingObj.colonia.colonia_name+", "+\
@@ -5768,7 +5800,6 @@ def info_building(request):
         #Se obtiene el equipo industrial
         industrial_eq = IndustrialEquipment.objects.filter(building = buildingObj)
 
-        #TODO regresar la zona horaria
         post = {
             'b_name': buildingObj.building_name,
             'b_description': buildingObj.building_description,
@@ -5786,12 +5817,13 @@ def info_building(request):
         }
 
         template_vars = dict(datacontext=datacontext,
+                             sidebar=request.session['sidebar'],
                              company=company,
                              empresa=empresa,
                              post=post,
                              tipos_edificio_lst=tipos_edificio_lst,
                              message=message,
-                             type=_type, sidebar=request.session['sidebar']
+                             type=_type
         )
 
         template_vars_template = RequestContext(request, template_vars)
@@ -5810,7 +5842,7 @@ def info_building(request):
 @login_required(login_url='/')
 def view_building(request):
     if has_permission(request.user, VIEW,
-                      "Ver edificios") or request.user.is_superuser:
+                      "Ver edificios de empresas") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
 
         if "search" in request.GET:
@@ -7876,20 +7908,27 @@ def billing_analisis_header(request):
         set_default_session_vars(request, datacontext)
 
         building = request.session['main_building']
-        #Se obtiene el tipo de tarifa del edificio
-        tipo_tarifa = building.electric_rate
+        if building is None:
+            template_vars["message"] = "No hay unidades de consumo asignadas, " \
+                                       "por favor ponte en contacto " \
+                                       "con tu administrador para remediar " \
+                                       "esta situación"
 
-        if tipo_tarifa.pk == 1:
-            years = [__date.year for __date in HMHistoricData.objects.all().
-                    dates('monthly_cut_dates__billing_month','year')]
-        elif tipo_tarifa.pk == 2:
-            years = [__date.year for __date in DacHistoricData.objects.all().
-                    dates('monthly_cut_dates__billing_month','year')]
-        elif tipo_tarifa.pk == 3:
-            years = [__date.year for __date in T3HistoricData.objects.all().
-                    dates('monthly_cut_dates__billing_month','year')]
+        else:
+            #Se obtiene el tipo de tarifa del edificio
+            tipo_tarifa = building.electric_rate
 
-        template_vars['years'] = years[::-1]
+            if tipo_tarifa.pk == 1:
+                years = [__date.year for __date in HMHistoricData.objects.all().
+                        dates('monthly_cut_dates__billing_month','year')]
+            elif tipo_tarifa.pk == 2:
+                years = [__date.year for __date in DacHistoricData.objects.all().
+                        dates('monthly_cut_dates__billing_month','year')]
+            elif tipo_tarifa.pk == 3:
+                years = [__date.year for __date in T3HistoricData.objects.all().
+                        dates('monthly_cut_dates__billing_month','year')]
+
+            template_vars['years'] = years[::-1]
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -7943,29 +7982,36 @@ def billing_c_analisis_header(request):
 @login_required(login_url='/')
 def power_performance_header(request):
     datacontext = get_buildings_context(request.user)[0]
-    template_vars = {"type": "cfe", "datacontext": datacontext,
-                         'empresa': request.session['main_building'],
-                         'company': request.session['company'],
-                         'sidebar': request.session['sidebar'],
-                         'user':request.user }
+    template_vars = {"type": "cfe",
+                     "datacontext": datacontext,
+                     "empresa": request.session['main_building'],
+                     "company": request.session['company'],
+                     "sidebar": request.session['sidebar'],
+                     "user": request.user }
     if has_permission(request.user, VIEW, "Desempeño energético") or \
             request.user.is_superuser:
         set_default_session_vars(request, datacontext)
 
         building = request.session['main_building']
-        #Se obtiene el tipo de tarifa del edificio
-        tipo_tarifa = building.electric_rate
+        if building is None:
+            template_vars["message"] = "No hay unidades de consumo asignadas, " \
+                                       "por favor ponte en contacto " \
+                                       "con tu administrador para remediar " \
+                                       "esta situación"
+        else:
+            #Se obtiene el tipo de tarifa del edificio
+            tipo_tarifa = building.electric_rate
 
-        if tipo_tarifa.pk == 1:
-            years = [__date.year for __date in HMHistoricData.objects.all().
-                dates('monthly_cut_dates__billing_month','year')]
-        elif tipo_tarifa.pk == 2:
-            years = [__date.year for __date in DacHistoricData.objects.all().
-                dates('monthly_cut_dates__billing_month','year')]
-        elif tipo_tarifa.pk == 3:
-            years = [__date.year for __date in T3HistoricData.objects.all().
-                dates('monthly_cut_dates__billing_month','year')]
-        template_vars['years'] = years[::-1]
+            if tipo_tarifa.pk == 1:
+                years = [__date.year for __date in HMHistoricData.objects.all().
+                    dates('monthly_cut_dates__billing_month','year')]
+            elif tipo_tarifa.pk == 2:
+                years = [__date.year for __date in DacHistoricData.objects.all().
+                    dates('monthly_cut_dates__billing_month','year')]
+            elif tipo_tarifa.pk == 3:
+                years = [__date.year for __date in T3HistoricData.objects.all().
+                    dates('monthly_cut_dates__billing_month','year')]
+            template_vars['years'] = years[::-1]
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -9522,6 +9568,9 @@ def add_building_pop(request):
         #Se obtienen las regiones
         regiones_lst = Region.objects.all()
 
+        #Se obtienen las zonas horarias
+        zonas_lst = Timezones.objects.all()
+
         #Se obtienen los tipos de atributos de edificios
         tipos_atributos = BuildingAttributesType.objects.filter(
             building_attributes_type_status=1).order_by(
@@ -9531,6 +9580,7 @@ def add_building_pop(request):
                              tipos_edificio_lst=tipos_edificio_lst,
                              tarifas=tarifas,
                              regiones_lst=regiones_lst,
+                             zonas_lst=zonas_lst,
                              tipos_atributos=tipos_atributos,
                              empresa=empresa
         )
@@ -9671,6 +9721,9 @@ def save_add_building_popup(request):
             'b_time_zone': b_time_zone
         }
 
+        template_vars["message"] = message
+        template_vars["type"] = _type
+
         if continuar:
             #se obtiene el objeto de la tarifa
             tarifaObj = get_object_or_404(ElectricRates,
@@ -9725,6 +9778,25 @@ def save_add_building_popup(request):
             newTimeZone = TimezonesBuildings(
                 building=newBuilding,
                 time_zone=timeZone)
+            newTimeZone.save()
+            today = datetime.datetime.now()
+            today = today.replace(tzinfo=None)
+            border = municipalityObj.border
+
+            dsd = DaySavingDates.objects.filter(border=bool(border))
+            for ds in dsd:
+                winter = ds.winter_date
+                winter = winter.replace(tzinfo=None)
+                summer = ds.summer_date
+                summer = summer.replace(tzinfo=None)
+                if summer < today < winter:
+                    newTimeZone.day_saving_date = ds
+                    break
+            else:
+                dsd2 = DaySavingDates.objects.filter(
+                    border=bool(border), winter_date__lte=today)[0]
+                newTimeZone.day_saving_date = dsd2
+
             newTimeZone.save()
 
             days_s = newTimeZone.day_saving_date.pk

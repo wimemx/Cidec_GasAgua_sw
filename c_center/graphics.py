@@ -1,5 +1,4 @@
-#coding:utf-8
-
+# -*- coding: utf-8 -*-
 #
 # Python imports
 #
@@ -26,12 +25,29 @@ import data_warehouse_extended.models
 import variety
 
 
+def render_graphics(request):
+    """ Serves a placeholder for graphs
+
+    :param request: request object
+    :return:
+    """
+    return django.http.HttpResponse("")
+
 def get_consumer_unit_electric_data_raw(
         electric_data_name,
         cu_id,
         start,
         end
 ):
+    """Gets the electric data info for a consumer unit, for a parameter in
+    a given time frame, formated to display in graphs
+
+    :param electric_data_name:Electrical Parameter name
+    :param cu_id: int ConsumerUnit id
+    :param start: datetime
+    :param end: datetime
+    :return: Array of electrical parameter data
+    """
     electric_data_raw = []
     try:
         consumer_unit = c_center.models.ConsumerUnit.objects.get(pk=cu_id)
@@ -80,7 +96,6 @@ def get_consumer_unit_electric_data_raw(
         time_m = start_localtime
         cont = 0
         while time_m < end_localtime:
-            #print time_m, end_localtime
             #difference between readings default to delta_m
             adj_time = delta_m
             try:
@@ -99,7 +114,6 @@ def get_consumer_unit_electric_data_raw(
                          value=None,
                          certainty=False))
             else:
-                #print "data"
                 electric_data = abs(
                     electric_data_values[cont][electric_data_name])
                 if electric_data_name == "PF" and electric_data > 1:
@@ -120,6 +134,15 @@ def get_consumer_unit_electric_data_interval_raw_optimized(
         start,
         end
 ):
+    """Gets an array of dicts containing electrical data for a consumer_unit
+    used in the index page graph
+
+    :param electric_data_name: Electrical parameter name
+    :param cu_id: int consumer unit id
+    :param start:datetime
+    :param end:datetime
+    :return:array od dicts
+    """
     electric_data_raw = []
     try:
         electric_data_name_local =\
@@ -240,6 +263,15 @@ def get_consumer_unit_week_report_cumulative(
         week,
         electric_data_name
 ):
+    """Gets an array of electrical data for a given week of month
+
+    :param consumer_unit: ConsumerUnit object
+    :param year: int, the year of the week
+    :param month: int, the month of the week
+    :param week: int, the week number of the month
+    :param electric_data_name:string, electrical parameter name
+    :return: tuple containing data to graph and for display
+    """
     week_start_datetime, week_end_datetime =\
         variety.get_week_start_datetime_end_datetime_tuple(year, month, week)
 
@@ -319,11 +351,22 @@ def get_consumer_unit_week_report_cumulative(
 
     return electric_data_days_tuple_list, electric_data_days_cumulative_total_tuple_list
 
+
 def get_default_datetime_end():
+    """ Return a new datetime object whose date components are equal to the
+    given date object’s, and whose time components and tzinfo attributes are
+    equal to the given time object’s
+
+    :return: datetime, the first time instant of today
+    """
     return datetime.datetime.combine(
         datetime.date.today() - datetime.timedelta(days=1),
         datetime.time(0))
 
 
 def get_default_datetime_start():
+    """ gets the first time instant of yesterday
+
+    :return: datetime
+    """
     return get_default_datetime_end() - datetime.timedelta(days=1)

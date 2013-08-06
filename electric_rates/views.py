@@ -123,7 +123,6 @@ def edit_tarifa3(request, id_t3):
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         company = request.session['company']
-        post = ''
 
         #Se obtiene la tarifa seleccionada
         t3_obj = get_object_or_404(ThreeElectricRateDetail, pk = id_t3)
@@ -131,7 +130,8 @@ def edit_tarifa3(request, id_t3):
         month_str = str(t3_obj.date_init.month)+'/'+str(t3_obj.date_init.year)
         post = {'month': month_str, 'kw_rate':t3_obj.kw_rate, 'kwh_rate':t3_obj.kwh_rate }
 
-        template_vars = dict(datacontext=datacontext,
+        template_vars = dict(
+            datacontext=datacontext,
             empresa=empresa,
             company=company,
             post=post,
@@ -996,8 +996,9 @@ def getHM_table(year):
     regiones = Region.objects.all().order_by('region_name')
     for region in regiones:
         #Se obtienen las tarifas para ese año
-        tarifasHM = ElectricRatesDetail.objects.filter(region = region,
-                    date_init__year = year)
+        tarifasHM = ElectricRatesDetail.objects.filter(
+            region=region,
+            date_init__year=year)
         if tarifasHM:
             arregloDemanda = [None] * 12
             arregloKWHP = [None] * 12
@@ -1094,12 +1095,3 @@ def getMonthRate(request):
 
     data = simplejson.dumps(status)
     return HttpResponse(content=data, content_type="application/json")
-
-
-
-
-
-
-
-
-

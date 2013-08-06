@@ -549,11 +549,6 @@ def process_consumer_unit_electrical_parameter_instant_group(
                                  electrical_parameter.pk,
                                  curve_fit_function_evaluation])
             transaction.commit_unless_managed()
-            logger.info(data_warehouse_extended.globals.SystemInfo.
-                        CONSUMER_UNIT_INSTANT_ELECTRIC_DATA_SAVED + " - " +\
-                        "RAW SQL SAVED" + str(instant['instant_datetime']) + \
-                        electrical_parameter.name_transactional + \
-                        str(curve_fit_function_evaluation))
         else:
             consumer_unit_instant_electric_data.value =\
                 curve_fit_function_evaluation

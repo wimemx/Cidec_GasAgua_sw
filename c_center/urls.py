@@ -4,6 +4,7 @@ from django.views.generic.simple import direct_to_template
 urlpatterns = patterns('',
                        url(r'^celery/', 'c_center.views.call_celery_delay'),
                        url(r'^dw_specific/', 'c_center.views.dw_specific'),
+                       url(r'^graficas/', 'c_center.graphics.render_graphics'),
                        url(r'^medition_rate/',
                            'c_center.calculations.tag_reading'),
                        url(r'^profile_for_serial/',
@@ -21,11 +22,6 @@ urlpatterns = patterns('',
                        url(r'^set_c_u/(?P<id_c_u>\d+)/',
                            'c_center.views.set_default_consumer_unit'),
 
-                       #url(r'^weekly_summary_kwh/',
-                       # 'c_center.views.get_weekly_summary_comparison_kwh'),
-                       url(r'^week_comparison/',
-                           'c_center.views'
-                           '.render_cumulative_comparison_in_week'),
                        url(r'^cfe_calculos/',
                            'c_center.views.cfe_calculations'),
 

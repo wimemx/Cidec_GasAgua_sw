@@ -216,7 +216,7 @@ def validate_string(string):
     True
 
     """
-    if not isinstance(string, str):
+    if not isinstance(string, str) and not isinstance(string, unicode):
         return False
     arePat = re.compile(r'[^\w\s\-\'"]', re.UNICODE)
     string_arr = string.split(" ")

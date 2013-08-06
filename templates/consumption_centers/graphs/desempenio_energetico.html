@@ -139,6 +139,11 @@
             </div>
 
             <div class="divider" id="divider_top">&nbsp;</div>
+        {% if message %}
+            <h2 style="font-family: helvetica; color: #878787; font-size:14px; text-align: center">
+                {{ message }}
+            </h2>
+        {% else %}
             <div id="datepicker_component">
                 <div id="widgetField">
                     <span>Fecha Inicio &ndash; Fecha Fin</span>
@@ -185,6 +190,7 @@
                 </div>
 
             </div>
+        {% endif %}
 
 
         </div>

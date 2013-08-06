@@ -203,14 +203,14 @@ def medianaKWH(consumer, fecha_inicio, fecha_fin):
 
 
 def demandafacturable(kwbase, kwintermedio, kwpunta, fri, frb):
-    """
+    """Gets the facturable demand given the following parameters
 
-    :param kwbase:
-    :param kwintermedio:
-    :param kwpunta:
-    :param fri:
-    :param frb:
-    :return:
+    :param kwbase: float
+    :param kwintermedio: float
+    :param kwpunta: float
+    :param fri: float
+    :param frb: float
+    :return: int
     """
     primermax = kwintermedio - kwpunta
     if primermax < 0:
@@ -227,6 +227,16 @@ def demandafacturable(kwbase, kwintermedio, kwpunta, fri, frb):
 
 def costoenergia(kwbase, kwintermedio, kwpunta, tarifa_kwhb, tarifa_kwhi,
                  tarifa_kwhp):
+    """Gets and returns the energy cost
+
+    :param kwbase: number
+    :param kwintermedio: number
+    :param kwpunta:  number
+    :param tarifa_kwhb: number
+    :param tarifa_kwhi: number
+    :param tarifa_kwhp: number
+    :return: number
+    """
     costo_energia = kwbase * tarifa_kwhb + kwintermedio * tarifa_kwhi +\
                     kwpunta * tarifa_kwhp
 
@@ -234,10 +244,21 @@ def costoenergia(kwbase, kwintermedio, kwpunta, tarifa_kwhb, tarifa_kwhi,
 
 
 def costodemandafacturable(demandaf, tarifa_demanda):
+    """calculates the cost of the facturable demand
+
+    :param demandaf: number
+    :param tarifa_demanda: number
+    :return: number
+    """
     return demandaf * tarifa_demanda
 
 
 def fpbonificacionrecargo(fp):
+    """Calculates the bonifications for the power factor
+
+    :param fp: float power factor
+    :return: float
+    """
     fp_valor = 0
     if fp != 0:
         if fp < 90:
@@ -251,6 +272,13 @@ def fpbonificacionrecargo(fp):
 
 
 def costofactorpotencia(fp, costo_energia, costo_df):
+    """Returns the cost per power factor
+
+    :param fp: float
+    :param costo_energia: float
+    :param costo_df:float
+    :return: float
+    """
     if fp < 90:
         costo_fp = float(
             (costo_energia + costo_df) / 100) * fpbonificacionrecargo(fp)
@@ -262,20 +290,45 @@ def costofactorpotencia(fp, costo_energia, costo_df):
 
 
 def obtenerSubtotal(costo_energia, costo_df, costo_fp):
+    """Gets the subtotal for costo_energia, costo_df, costo_fp
+
+    :param costo_energia: number
+    :param costo_df: number
+    :param costo_fp: number
+    :return: float
+    """
     return float(costo_energia) + float(costo_df) + float(costo_fp)
 
 
 def obtenerIva(c_subtotal, iva):
+    """Calculates the IVA
+
+    :param c_subtotal: number
+    :param iva: number
+    :return: float
+    """
     iva /= 100.0
     return float(c_subtotal) * float(iva)
 
 
 def obtenerTotal(c_subtotal, iva):
+    """Sums the total for c_subtotal, iva
+
+    :param c_subtotal: number
+    :param iva: number
+    :return: number
+    """
     iva = iva / 100.0 + 1
     return float(c_subtotal) * float(iva)
 
 
 def factorpotencia(kwh, kvarh):
+    """Calculates the powerfactor from the kwh and kvarh
+
+    :param kwh: number
+    :param kvarh: number
+    :return: float
+    """
     fp = 0
     if kwh is None:
         kwh = 0
@@ -290,6 +343,11 @@ def factorpotencia(kwh, kvarh):
 
 
 def obtenerDemanda(arr_kw):
+    """Obtains the demand
+
+    :param arr_kw: number
+    :return: int
+    """
     demanda_maxima = 0
     if arr_kw:
         try:
@@ -317,10 +375,10 @@ def obtenerDemanda(arr_kw):
 
 
 def obtenerFestivos(year):
-    """
-    Obtiene los dias festivos almacenados en la tabla Holidays.
+    """Obtiene los dias festivos almacenados en la tabla Holidays.
     Regresa una lista con las fechas exactas de los dias festivos para este año
 
+    :param year: The year of the holydays we want to obtain
     Ejemplo:
     1, 01 -> 1 de enero de 2012
     1-Lun, 02 = 1er Lunes de Febrero 2012 -> 6 de febrero de 2012
@@ -383,11 +441,8 @@ def obtenerFestivos(year):
 
 
 def obtenerCatalogoGrupos():
-    """
-
-    Se regresa un catálogo que indica a qué grupo pertenece cada día de la
+    """Se regresa un catálogo que indica a qué grupo pertenece cada día de la
     semana.
-
     """
     group_days_bd = Groupdays.objects.all().values(
         "pk",
@@ -424,10 +479,10 @@ def obtenerCatalogoGrupos():
 
 
 def obtenerGrupo(catalogo_grupos, fecha):
-    """
-    A partir de una fecha, se obtiene a qué grupo de días pertenece: Lun a
+    """A partir de una fecha, se obtiene a qué grupo de días pertenece: Lun a
     Vie, Sab o Dom y Festivos
-
+    :param catalogo_grupos: array of days
+    :param fecha: date
     """
     if HOLYDAYS is None:
         global HOLYDAYS
@@ -452,6 +507,10 @@ def obtenerTipoPeriodo(fecha, region, tarifa, catalogo_grupos):
     Se obtiene el tipo de periodo de una lectura, en base a la fecha y hora
     en que fue tomada, región y tarifa.
 
+    :param fecha: Datetime
+    :param region: Region object
+    :param tarifa: Tarifa Object
+    :param catalogo_grupos: array
     """
 
     grupo_id = obtenerGrupo(catalogo_grupos, fecha)
@@ -479,6 +538,8 @@ def obtenerTipoPeriodoObj(fecha, region):
     Se obtiene el tipo de periodo de una lectura, en base a la fecha y hora
     en que fue tomada, región y tarifa.
 
+    :param fecha: Datetime
+    :param region: Region Object
     """
     if CATALOGO_GRUPOS is None:
         global CATALOGO_GRUPOS
@@ -505,6 +566,12 @@ def obtenerTipoPeriodoObj(fecha, region):
 
 
 def obtenerHorarioVeranoInvierno(fecha, tarifa_id):
+    """Checks if the date is DST for a electric rate
+
+    :param fecha: datetime
+    :param tarifa_id: Tarifa Object
+    :return:
+    """
     horario = DateIntervals.objects.filter(
         date_init__lte=datetime.date(fecha.year, fecha.month,
             fecha.day)).filter(
@@ -514,6 +581,11 @@ def obtenerHorarioVeranoInvierno(fecha, tarifa_id):
 
 
 def get_time_saving_type(request):
+    """Returns a JSON containing DST info
+
+    :param request: request object with ie_id key in GET
+    :return:HttpResponse a JSON :raise: Http404
+    """
     if "ie_id" in request.GET:
         try:
             ie_id = request.GET['ie_id']
@@ -537,6 +609,12 @@ def get_time_saving_type(request):
 
 
 def obtenerKWhNetosTarifa(pr_powermeter, tarifa_id):
+    """Obtains total kWh
+
+    :param pr_powermeter: ProfilePowermeter object
+    :param tarifa_id: int Tarifa id
+    :return: float kwh_netos
+    """
     tarifaObj = ElectricRatesDetail.objects.get(id=tarifa_id)
     fecha_inicio = str(tarifaObj.date_init) + " 00:00:00"
     fecha_fin = str(tarifaObj.date_end) + " 23:59:59"
@@ -554,7 +632,15 @@ def obtenerKWhNetosTarifa(pr_powermeter, tarifa_id):
 
     return kwh_netos
 
+
 def obtenerKVARH_total(pr_powermeter, start_date, end_date):
+    """Obtains total kVAh
+
+    :param pr_powermeter: ProfilePowermeter object
+    :param start_date: datetime
+    :param end_date: datetime
+    :return: float kVAh
+    """
     kvarh_netos = 0
     lecturasObj = ElectricDataTemp.objects.filter(
         profile_powermeter__powermeter=pr_powermeter,
@@ -571,6 +657,13 @@ def obtenerKVARH_total(pr_powermeter, start_date, end_date):
 
 
 def obtenerKVARH(profile_powermeter, start_date, end_date):
+    """Obtains kVArh in a given timeframe for a profile_powermeter
+
+    :param profile_powermeter: ProfilePowermeter object
+    :param start_date: datetime
+    :param end_date: datetime
+    :return: float
+    """
     kvarh_netos = 0
     lecturasObj = ElectricDataTemp.objects.filter(
         profile_powermeter=profile_powermeter,
@@ -602,6 +695,14 @@ def obtenerKVARH(profile_powermeter, start_date, end_date):
 
 
 def obtenerKVARH_dia(profile_powermeter, start_date, end_date, kvarh_anterior):
+    """Obtains the total kVArh for a day
+
+    :param profile_powermeter:
+    :param start_date:
+    :param end_date:
+    :param kvarh_anterior:
+    :return:
+    """
     kvarh_netos = 0
     lecturasObj = ElectricDataTemp.objects.filter(
         profile_powermeter=profile_powermeter,
@@ -622,17 +723,19 @@ def obtenerKVARH_dia(profile_powermeter, start_date, end_date, kvarh_anterior):
                 profile_powermeter=profile_powermeter, pk__gt=last_id
             ).order_by('medition_date').values("TotalkvarhIMPORT")[:1]
             if siguiente_lectura:
-                #print "Id:", siguiente_lectura[0].id
                 kvarh_final = siguiente_lectura[0]['TotalkvarhIMPORT']
 
-        #print "1er KVARH", kvarh_inicial
-        #print "2da KVARH", kvarh_final
         kvarh_netos = kvarh_final - kvarh_inicial
 
     return int(ceil(kvarh_netos))
 
 
 def obtenerDemanda_kw_valores(valores_kw):
+    """ Obtains the max emand from triplets of values
+
+    :param valores_kw: values
+    :return: int max demand
+    """
     demanda_maxima = 0
     if valores_kw:
         try:
@@ -660,35 +763,12 @@ def obtenerDemanda_kw_valores(valores_kw):
     return int(ceil(demanda_maxima))
 
 
-def obtenerDemanda_kw(lecturas_kw):
-    demanda_maxima = 0
-    if lecturas_kw:
-        try:
-            longitud = len(lecturas_kw)
-            if longitud >= 3:
-                low = lecturas_kw[0].electric_data.kW
-                middle = lecturas_kw[1].electric_data.kW
-                high = lecturas_kw[2].electric_data.kW
-                demanda_maxima = (low + middle + high) / 3
-                for indice in range(3, longitud):
-                    low, middle = middle, high
-                    high = lecturas_kw[indice].electric_data.kW
-                    prom = (low + middle + high) / 3
-                    if prom > demanda_maxima:
-                        demanda_maxima = prom
-            else:
-                demanda_maxima = 0
-
-        except IndexError:
-            print "IndexError"
-            demanda_maxima = 0
-        except TypeError:
-            print "TypeError"
-            demanda_maxima = 0
-    return int(ceil(demanda_maxima))
-
-
 def obtenerDemandaMin_kw(lecturas_kw):
+    """Obtains the min emand from triplets of values
+
+    :param lecturas_kw: values
+    :return: int min demand
+    """
     demanda_min = 0
     if lecturas_kw:
         try:
@@ -715,8 +795,14 @@ def obtenerDemandaMin_kw(lecturas_kw):
             demanda_min = 0
     return int(ceil(demanda_min))
 
+
 @csrf_exempt
 def tag_reading(request):
+    """Service to tag electric data
+
+    :param request: request object via POST with id_reading key
+    :return:
+    """
     if request.method == 'POST':
         #Obtiene el Id de la medicion
         reading_id = request.REQUEST.get("id_reading", "")
@@ -727,8 +813,8 @@ def tag_reading(request):
 
 
 def daytag_reading(reading_id):
-    """
-        Tag the readings. Separate days
+    """Tag the readings. Separate days
+    :param reading_id: id of ElectricDataTemp
     """
     try:
         readingObj = ElectricDataTemp.objects.get(id=reading_id)
@@ -820,12 +906,16 @@ def daytag_reading(reading_id):
 
 
 def daytag_day(day, profile_powermeter):
+    """Tags a whole day
 
+    :param day: Date
+    :param profile_powermeter: Profile Powermeter Object
+    """
     next_day = day + datetime.timedelta(days=1)
 
     #Se obtienen todas las lecturas para ese profile powermeter
 
-    readings =  ElectricDataTemp.objects.filter(
+    readings = ElectricDataTemp.objects.filter(
         profile_powermeter=profile_powermeter, medition_date__gte=day,
         medition_date__lt=next_day).order_by('pk')
 
@@ -836,9 +926,15 @@ def daytag_day(day, profile_powermeter):
 
 
 def daytag_month(month, year, profile_powermeter):
+    """Tags a whole month
+
+    :param month: the month to tag
+    :param year: the year of the month
+    :param profile_powermeter: ProfilePowermeter object
+    """
     num_days_arr = monthrange(year, month)
 
-    actual_day = datetime.datetime(year,month,1)
+    actual_day = datetime.datetime(year, month, 1)
 
     day_delta = datetime.timedelta(days=1)
 
@@ -848,11 +944,16 @@ def daytag_month(month, year, profile_powermeter):
         actual_day = actual_day + day_delta
         no_dia += 1
 
-    print "Tags month: " + str(month) +" - Done"
+    print "Tags month: " + str(month) + " - Done"
 
 
 def daytag_period(actual_day, end_day, profile_powermeter):
+    """generates and save tags for a period
 
+    :param actual_day: date
+    :param end_day: date
+    :param profile_powermeter: ProfilePowermeter object
+    """
     ElectricDataTags.objects.filter(
         electric_data__profile_powermeter=profile_powermeter,
         electric_data__medition_date__gte=actual_day,
@@ -863,11 +964,15 @@ def daytag_period(actual_day, end_day, profile_powermeter):
         daytag_day(actual_day,profile_powermeter)
         actual_day = actual_day + day_delta
 
-
     print "Tags for Period - Done"
 
 
 def daytag_period_allProfilePowermeters(start_day, end_day):
+    """tags all the meditions for a given interval
+
+    :param start_day: date
+    :param end_day: date
+    """
     #Se obtienen los perfiles
     all_profiles = ProfilePowermeter.objects.all()
     for profile in all_profiles:
@@ -877,6 +982,13 @@ def daytag_period_allProfilePowermeters(start_day, end_day):
 
 
 def getKWHSimplePerDay(s_date, e_date, profile_powermeter):
+    """Gets the kWh for a profile_powermeter in a time frame
+
+    :param s_date: datetime
+    :param e_date: datetime
+    :param profile_powermeter: ProfilePowermeter object
+    :return: int total kWh
+    """
     kwh_netos = 0
 
     #Se obtienen los kwh de ese periodo de tiempo.
@@ -888,12 +1000,6 @@ def getKWHSimplePerDay(s_date, e_date, profile_powermeter):
     total_lecturas = kwh_lecturas.count()
 
     if kwh_lecturas:
-        #print "Profile",
-        # kwh_lecturas[0].profile_powermeter_id
-        #print "Primer Lectura",
-        # kwh_lecturas[0].id, "-", kwh_lecturas[0].medition_date
-        #print "Ultima Lectura", kwh_lecturas[total_lecturas - 1].id,
-        # "-", kwh_lecturas[total_lecturas - 1].medition_date
         kwh_inicial = kwh_lecturas[0]['TotalkWhIMPORT']
         kwh_final = kwh_lecturas[total_lecturas - 1]['TotalkWhIMPORT']
 
@@ -903,7 +1009,13 @@ def getKWHSimplePerDay(s_date, e_date, profile_powermeter):
 
 
 def getKWHperDay(s_date, e_date, profile_powermeter):
+    """ get the kWh for a day, for a profile_powermeter
 
+    :param s_date: Date
+    :param e_date: Date
+    :param profile_powermeter: ProfilePowermeter object
+    :return: int
+    """
     kwh_container = dict()
     kwh_container['base'] = 0
     kwh_container['intermedio'] = 0
@@ -974,7 +1086,6 @@ def getKWHperDay(s_date, e_date, profile_powermeter):
         kwh_punta = 0
 
         for idx, kwh_p in enumerate(kwh_por_periodo):
-            #print "Lectura:", kwh_p[0], "-:",kwh_p[1]
             inicial = kwh_p[0]
             periodo_t = kwh_p[1]
             if idx + 1 <= kwh_periodo_long - 1:
@@ -984,7 +1095,6 @@ def getKWHperDay(s_date, e_date, profile_powermeter):
                 final = ultima_lectura
 
             kwh_netos = final - inicial
-            #print "Inicial:",inicial,"Final:",final, "Netos:",kwh_netos
 
             if periodo_t == 'base':
                 kwh_base += kwh_netos
@@ -1001,7 +1111,13 @@ def getKWHperDay(s_date, e_date, profile_powermeter):
 
 
 def getKWperDay(s_date, e_date, profile_powermeter):
+    """Gets all the kWh in base, intermediate, and peak
 
+    :param s_date: Datetime
+    :param e_date: Datetime
+    :param profile_powermeter: ProfilePowermeter object
+    :return: dict kw_container
+    """
     kw_container = dict()
     kw_container['base'] = 0
     kw_container['intermedio'] = 0

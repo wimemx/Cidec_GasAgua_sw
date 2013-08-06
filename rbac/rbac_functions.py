@@ -186,7 +186,6 @@ def get_buildings_context(user):
     """
     datacontext = DataContextPermission.objects.filter(user_role__user=user)
     buildings = []
-    context_for_user = {'clusters': [], 'companies': [], 'buildings': []}
     for dcontext in datacontext:
         try:
             if dcontext.building:

@@ -63,6 +63,4 @@ class RegionEstadoAdmin(admin.ModelAdmin):
 
 admin.site.register(location.models.RegionEstado, RegionEstadoAdmin)
 
-admin.site.register(location.models.DateSavingTimes)
-
 admin.site.register(location.models.Timezones)

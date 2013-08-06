@@ -25,7 +25,7 @@ import variety
 from c_center.c_center_functions import save_historic, dailyReportAll, \
     asign_electric_data_to_pw, calculateMonthlyReport_all, all_dailyreportAll,\
     getRatesCurrentMonth, dailyReportPeriodofTime, dailyReportAll_Period, \
-    parse_file, getMonthlyReport, setBuildingDST, setBuildingTest
+    parse_file, getMonthlyReport, setBuildingDST
 from c_center.calculations import daytag_period_allProfilePowermeters, \
     daytag_period
 
@@ -542,21 +542,8 @@ def last_data_received():
 def cambioHorarioNormal():
     setBuildingDST(False)
 
-#@periodic_task(run_every=crontab(hour='13', minute='15'))
-def cambioHorarioNormal_TEST():
-    setBuildingTest()
-
 
 @periodic_task(run_every=crontab(month_of_year='11', day_of_month='1-7',
                day_of_week='0', hour='1', minute='30'))
 def cambioHorarioFrontera():
     setBuildingDST(True)
-
-
-def test_alarm_trigger():
-    alarm = alarms.models.Alarms.objects.get(pk=62)
-    ae = alarms.models.AlarmEvents(alarm=alarm, value=0)
-    ae.save()
-    socketIO = SocketIO('localhost', 9999)
-    socketIO.emit('alarm_trigger', {'alarm_event': ae.pk})
-    print "alarm sent, pk=", ae.pk, "time:", datetime.datetime.now()

@@ -657,7 +657,7 @@ def add_alarm_suscription(request):
     if has_permission(request.user, CREATE,
                       permission) or \
             request.user.is_superuser:
-        permission = "Ver edificios"
+        permission = "Ver edificios de empresas"
         edificios = get_all_buildings_for_operation(permission,
                                                     VIEW,
                                                     request.user)
@@ -709,11 +709,15 @@ def edit_alarm_suscription(request, id_alarm):
     if has_permission(request.user, UPDATE,
                       permission) or \
             request.user.is_superuser:
-        permission = "Ver edificios"
+        permission = "Ver edificios de empresas"
         edificios = get_all_buildings_for_operation(permission,
                                                     VIEW,
                                                     request.user)
-        template_vars["edificios"] = edificios
+        if len(edificios) == 0:
+            template_vars["edificios"] = \
+                [suscripcion.alarm.consumer_unit.building]
+        else:
+            template_vars["edificios"] = edificios
         lista = UserNotificationSettings.objects.all()
         template_vars["lista"] = lista
 
@@ -830,7 +834,7 @@ def user_notifications(request):
         template_vars['electricParameters'] = electricParameters
         #get all buildings
         buildings = get_all_buildings_for_operation\
-                ("Ver edificios", VIEW, request.user)
+                ("Ver edificios de empresas", VIEW, request.user)
         template_vars['buildings'] = buildings
 
         usr_ntfs = UserNotifications.objects.filter(user=request.user).exclude(
@@ -1034,7 +1038,8 @@ def get_latest_notifs(request):
                      ))
         return HttpResponse(content=json.dumps(arr_notif),
                             mimetype="application/json")
-
+    else:
+        return HttpResponse("")
 
 @csrf_exempt
 def refresh_ie_config(request):

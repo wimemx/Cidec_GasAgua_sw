@@ -130,7 +130,8 @@ def get_alarm_from_building(id_bld):
 
     alarma = Alarms.objects.filter(
         consumer_unit__building__pk=id_bld,
-        status=True).values(
+        status=True).exclude(alarm_identifier="Interrupcion de datos").\
+        values(
             "pk",
             "consumer_unit__building__building_name",
             "electric_parameter__name",

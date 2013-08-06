@@ -18,9 +18,6 @@ import django.utils.timezone
 import django.template.context
 from django.contrib.auth.decorators import login_required
 
-# Alarms imports
-import alarms.models
-
 # Reports imports
 import reports.globals
 

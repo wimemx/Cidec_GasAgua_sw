@@ -151,6 +151,9 @@
                             parent.jQuery("#building option[value='"+data.building+"']").attr("selected", "selected");
                             parent.building_set(data.building);
                             parent.jQuery.fancybox.close();
+                        }else{
+                            send_form = 0;
+                            $("#form_container").prepend('<span class="notif n_notif">' + data.message +'<a href="#" onclick="$(this).parent().remove();">X</a></span>');
                         }
                     }
                 });
@@ -653,7 +656,7 @@ $("a.back").click(function(e){e.preventDefault(); History.back();});
 
 {% block breadcumbs %}
     <div id="bread_crumbs">
-    <a href="/profile/{{ request.user.pk }}/" class="fl username">{{ request.user.first_name }} {{ request.user.last_name }}</a>
+    <a href="/panel_de_control/ver_usuario/{{ request.user.pk }}/" class="fl username">{{ request.user.first_name }} {{ request.user.last_name }}</a>
     <ul>
         <li><a href="/main/">Inicio</a></li>
         <li><a href="/buildings/edificios/">Edificios</a></li>
