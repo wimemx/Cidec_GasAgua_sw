@@ -25,7 +25,7 @@ import variety
 from c_center.c_center_functions import save_historic, dailyReportAll, \
     asign_electric_data_to_pw, calculateMonthlyReport_all, all_dailyreportAll,\
     getRatesCurrentMonth, dailyReportPeriodofTime, dailyReportAll_Period, \
-    parse_file, getMonthlyReport, setBuildingDST, setBuildingTest
+    parse_file, getMonthlyReport, setBuildingDST #setBuildingTest
 from c_center.calculations import daytag_period_allProfilePowermeters, \
     daytag_period
 
@@ -544,7 +544,8 @@ def cambioHorarioNormal():
 
 #@periodic_task(run_every=crontab(hour='13', minute='15'))
 def cambioHorarioNormal_TEST():
-    setBuildingTest()
+    #setBuildingTest()
+    pass
 
 
 @periodic_task(run_every=crontab(month_of_year='11', day_of_month='1-7',

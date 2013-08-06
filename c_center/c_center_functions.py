@@ -633,7 +633,6 @@ def set_default_session_vars(request, datacontext):
         request.session['consumer_unit'] = None
 
     if 'main_building' not in request.session:
-        #print "144"
         #sets the default building (the first in DataContextPermission)
         try:
             building = Building.objects.get(pk=datacontext[0]['building_pk'])
@@ -651,13 +650,11 @@ def set_default_session_vars(request, datacontext):
             building=request.session['main_building'])
         request.session['company'] = c_b.company
     else:
-        #print "177"
         request.session['company'] = None
     if ('consumer_unit' not in request.session and request.session[
                                                    'main_building']) or\
        (not request.session['consumer_unit'] and request.session[
                                                  'main_building']):
-        #print "181"
         #sets the default ConsumerUnit
         # (the first in ConsumerUnit for the main building)
         request.session['consumer_unit'] = default_consumerUnit(
@@ -665,7 +662,6 @@ def set_default_session_vars(request, datacontext):
     else:
         if not request.session[
                'consumer_unit'] or 'consumer_unit' not in request.session:
-            #print "186"
             request.session['consumer_unit'] = None
     if request.session['main_building'] is not None:
         request.session['timezone'] = get_google_timezone(
@@ -1484,9 +1480,7 @@ def dailyReport(building, consumer_unit, today):
                     astimezone(timezone.get_current_timezone()).time()
 
         for c_unit in consumer_units:
-            #print c_unit
             profile_powermeter =  c_unit.profile_powermeter
-            #print "Profile Powermeter:", profile_powermeter.pk
 
             kwh_dia_dic = getKWHperDay(today_s_utc, today_e_utc, profile_powermeter)
 
@@ -1800,7 +1794,7 @@ def calculateMonthlyReport(consumer_u, month, year):
 
         kvarh = kvarhDiariosPeriodo(consumer_u, fecha_inicio, fecha_final)
 
-        print "Kvarh", kvarh
+
 
         mes['factor_potencia'] = float(
             factorpotencia(float(mes['consumo_acumulado']),kvarh))
@@ -1861,7 +1855,6 @@ def save_historic(monthly_cutdate, building):
     year = monthly_cutdate.billing_month.year
 
     #Se obtiene el tipo de tarifa del edificio (HM o DAC)
-    print "tarifa", building.electric_rate.pk
     if building.electric_rate.pk == 1: #Tarifa HM
         resultado_mensual = tarifaHM_2(building,
             monthly_cutdate.date_init,
@@ -3458,12 +3451,10 @@ def crawler_get_municipalities():
                                 '\t', '').strip() == 'Nombre del Municipio':
                         renglones_tarifa = tabla.find_all('tr')
                         del renglones_tarifa[0]
-                        print "Estado:",safe_name
-                        print len(renglones_tarifa)
+
                         cont_total += len(renglones_tarifa)
                         for chld in renglones_tarifa:
                             tds = chld.find_all('td')
-                            print tds[1].find(text=True).encode('UTF-8')
 
                             mun = Municipio(
                                 municipio_name=tds[1].find(
@@ -3478,7 +3469,6 @@ def crawler_get_municipalities():
                             )
                             estado_mun.save()
 
-                        print "------------------"
                     else:
                         continue
     print "Total: ", cont_total

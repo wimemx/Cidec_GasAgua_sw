@@ -52,7 +52,6 @@ def set_alarm_json(building, user):
         dict(eAlarmsPerEDevices=eAlarmsPerEDevices))
     i_eq.modified_by = user
     i_eq.save()
-    print i_eq.new_alarm_config
 
 
 def update_alarm_config(new_alarm_config, ie_pk):
@@ -68,7 +67,6 @@ def update_alarm_config(new_alarm_config, ie_pk):
         else:
             Alarms.objects.filter(consumer_unit=cu).update(status=False)
             for alarm in device['EDeviceAlarms']:
-                print "alarm: ", alarm
                 param = ElectricParameters.objects.get(
                     pk=alarm['electric_parameter_id'])
                 try:

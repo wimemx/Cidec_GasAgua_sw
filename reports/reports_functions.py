@@ -43,7 +43,14 @@ def get_axis_dictionary_stored(
         data_clusters_list_normalized,
         column_units_list
 ):
+    """
+    It generate a dicitonary with the axis, based in the data and
+    the units
 
+    :param data_clusters_list_normalized: A list of the data cluster
+    :param column_units_list: A list of the units
+    :return: A dictionary with the axis
+    """
     data_clusters_list_length = len(data_clusters_list_normalized[0])
     column_units_list_length = len(column_units_list)
     if data_clusters_list_length != column_units_list_length:
@@ -85,7 +92,14 @@ def get_axis_dictionary(
         data_clusters_list_normalized,
         column_units_list
 ):
+    """
+    It generate a dicitonary with the axis, based in the data and
+    the units
 
+    :param data_clusters_list_normalized: A list of the data cluster
+    :param column_units_list: A list of the units
+    :return: A dictionary with the axis
+    """
     data_clusters_list_length = len(data_clusters_list_normalized)
     column_units_list_length = len(column_units_list)
     if data_clusters_list_length != column_units_list_length:
@@ -126,6 +140,12 @@ def get_axis_dictionary(
 def get_axis_dictionaries_list (
         axis_dictionary
 ):
+    """
+    It change the dicitonary of axis to a list of axis
+
+    :param axis_dictionary: A dictionary with the axis
+    :return: A list with the axis
+    """
 
     axis_dictionaries_list = []
     if axis_dictionary:
@@ -139,14 +159,10 @@ def get_column_strings_electrical_parameter(
         request_data_list_normalized,
 ):
     """
-        Description:
+    Returns a list with the electrical parameters name
 
-
-        Arguments:
-
-
-        Return:
-
+    :param request_data_list_normalized: A list with data
+    :return A list with the electrical parameters name
     """
 
     column_strings_list = []
@@ -162,7 +178,13 @@ def get_column_units_axis_indexes(
         column_units_list,
         axis_dictionaries_list
 ):
+    """
+    It make a list with the units and the axis
 
+    :param column_units_list: A list with the column units
+    :param axis_dictionaries_list: A dictionary with the axis
+    :return: A list with the unit and the indexes
+    """
     column_units_axis_indexes = []
     for column_unit in column_units_list:
         for axis_dictionary_index in range(0, len(axis_dictionaries_list)):
@@ -179,6 +201,12 @@ def get_column_units_axis_indexes(
 def get_column_units_list(
         request_data_list_normalized
 ):
+    """
+    Gets the column units if the data
+
+    :param request_data_list_normalized: A list of data
+    :return: a list of the units of the column
+    """
     column_units_list = []
     for _, _, _, electrical_parameter_name\
         in request_data_list_normalized:
@@ -208,6 +236,17 @@ def get_data_cluster_consumed_normalized(
         electrical_parameter_name,
         granularity_seconds
 ):
+    """
+    It make a JSON with the data cluster consumed normalized
+
+    :param consumer_unit_id: An int with the id of the consumer unit
+    :param datetime_from: A Datetime object
+    :param datetime_to: A Datetime object
+    :param electrical_parameter_name: An string with the name of the ep
+    :param granularity_seconds: An Integer that represents the number of
+                seconds between the points to be retrieved.
+    :return: A JSON with the Data Cluster
+    """
     #
     # Localize datetimes (if neccesary) and convert to UTC
     #
@@ -322,14 +361,10 @@ def get_data_clusters_json(
         data_clusters_list_normalized
 ):
     """
-        Description:
+    Change the list of data clusters to a JSON.
 
-
-        Arguments:
-            data_clusters_list_normalized -
-
-        Return:
-
+    :param data_clusters_list_normalized: A list of data
+    :return: A json of data clusters
     """
 
     data_clusters_length = len(data_clusters_list_normalized)
@@ -362,14 +397,13 @@ def get_data_clusters_list(
         granularity
 ):
     """
-        Description:
+    Based on the granularity and the data normalized it made a
+    list of data with the clusters
 
-
-        Arguments:
-            request_data_list_normalized -
-            granularity
-        Return:
-
+    :param request_data_list_normalized: A list of data
+    :param granularity: An Integer that represents the number of
+                seconds between the points to be retrieved.
+    :return a list of data with the clusters
     """
 
     data_clusters_list = []
@@ -427,14 +461,12 @@ def get_data_clusters_list(
 def get_data_clusters_list_limits(
         data_clusters_list_normalized
 ):
+
     """
-        Description:
+    It returns the maximum and minimum value of the list
 
-
-        Arguments:
-            data_clusters_list_normalized -
-
-        Return:
+    :param data_clusters_list_normalized: A list of data
+    :return 2 Floats, , maximum, minimum
 
     """
     maximum = sys.float_info.min
@@ -452,14 +484,15 @@ def get_instant_delta_from_timedelta(
         timedelta
 ):
     """
-        Description:
-            To-Do
+    Returns a list for generate the number of points. If the Instant Delta
+    that generates the number of points closest to the
+    ideal number of points generates a number of points between the maximum
+    and the minimum number of points, return the Instant Delta, Otherwise,
+    return the Instant Delta which generates the number of points
+    closest to the minimum number of points or the maximum number of points.
 
-        Arguments:
-            timedelta -
-
-        Return:
-
+    :param timedelta: A Datetime object.
+    :return a list that generates the number of points
     """
 
     timedelta_seconds = timedelta.seconds + (timedelta.days * 24 * 3600)
@@ -549,16 +582,12 @@ def get_request_data_list_normalized(
         request_data_list
 ):
     """
-        Description:
-            To-Do
+    It sets all the deltas to the minimum delta, it normalized
+    the data in the list
 
-        Arguments:
-            request_data_list
-
-        Return:
-
+    :param request_data_list: A lis with the request data
+    :return: A lis with the data normalized
     """
-
     #
     # Get the minimum time delta.
     #
@@ -599,13 +628,10 @@ def get_data_statistics(
         data_list
 ):
     """
-        Description:
+    Obtains all the statistics for that data list
 
-
-        Arguments:
-            data_list - array of values
-
-        Return:
+    :param data_list: An Array of values
+    :return A dictionary with the statistics
 
     """
     data_cluster_values_array = numpy.array(data_list)
@@ -630,13 +656,10 @@ def get_data_clusters_statistics(
         data_clusters_list_normalized
 ):
     """
-        Description:
+    Obtains all the statistics for that cluster data list
 
-
-        Arguments:
-            data_clusters_list_normalized -
-
-        Return:
+    :param data_clusters_list_normalized: A list of data
+    :return A dictionary with the statistics of that data
 
     """
     data_clusters_statistics = []
@@ -676,14 +699,10 @@ def get_timedelta_from_normalized_request_data_list(
         request_data_list_normalized
 ):
     """
-        Description:
-            To-Do
+    It returns a delta datetime object of the data list
 
-        Arguments:
-            request_data_list
-
-        Return:
-
+    :param request_data_list_normalized: A list with data
+    _:return A datetime object, delta of two dates
     """
     if not len(request_data_list_normalized) > 0:
         logger.error(
@@ -702,14 +721,10 @@ def normalize_data_cluster(
         data_cluster
 ):
     """
-        Description:
+    Normalize the data cluster
 
-
-        Arguments:
-            data_cluster -
-
-        Return:
-
+    :param data_cluster: A list with the data cluster
+    :return: A normalize list of the data cluster
     """
 
     #
@@ -823,14 +838,10 @@ def normalize_data_clusters_list(
         data_clusters_list
 ):
     """
-        Description:
+    It normalize the data in the data cluster list
 
-
-        Arguments:
-            data_clusters_list -
-
-        Return:
-
+    :param data_clusters_list: A list of the data clusters
+    :return:
     """
 
     for data_cluster in data_clusters_list:
@@ -856,24 +867,17 @@ def get_consumer_unit_electrical_parameter_data_virtual(
         granularity_seconds=None
 ):
     """
-        Description:
-            To-Do
+    Get the data for the consumer unit, and the electrical parameter
 
-        Arguments:
-            consumer_unit - A Consumer Unit object.
+    :param consumer_unit: A Consumer Unit object.
+    :param datetime_from: A Datetime object
+    :param datetime_to: A Datetime object
+    :param electrical_parameter_name: A String that represents the name
+    of the electrical parameter.
+    :param granularity_seconds: An Integer that represents the number of
+    seconds between the points to be retrieved.
+    :return A list of dictionaries
 
-            datetime_from - A Datetime object.
-
-            datetime_to - A Datetime object.
-
-            electrical_parameter - A String that represents the name of the
-                electrical parameter.
-
-            granularity_seconds - An Integer that represents the number of
-                seconds between the points to be retrieved.
-
-        Return:
-            A list of dictionaries.
     """
 
     #
@@ -1221,24 +1225,14 @@ def get_consumer_unit_electrical_parameter_data_clustered(
         granularity_seconds=None
 ):
     """
-        Description:
-            To-Do
 
-        Arguments:
-            consumer_unit - A Consumer Unit object.
+    :param consumer_unit: A Consumer Unit object
+    :param datetime_from: A Datetime object
+    :param datetime_to: A Datetime object
+    :param electrical_parameter_name: A String that represent the name of the electrical parameter.
+    :param granularity_seconds: An Integer that represents the number of seconds between the points to be retrieved.
+    :return A list of dictionaries
 
-            datetime_from - A Datetime object.
-
-            datetime_to - A Datetime object.
-
-            electrical_parameter - A String that represents the name of the
-                electrical parameter.
-
-            granularity_seconds - An Integer that represents the number of
-                seconds between the points to be retrieved.
-
-        Return:
-            A list of dictionaries.
     """
 
     #
@@ -1413,6 +1407,14 @@ def get_consumer_unit_electrical_parameter_data_clustered(
 
 
 def set_instants(datetime_from_utc, datetime_to_utc, instant_delta):
+    """
+    It obtains a list with the instants order by instant datetime.
+
+    :param datetime_from_utc: A datetime object
+    :param datetime_to_utc:  A datetime object
+    :param instant_delta:  An Instant Delta object
+    :return: A list of Instants ordered by instant datetime.
+    """
     global DATETIME_TO_UTC
     DATETIME_TO_UTC = datetime_to_utc
     global DATETIME_FROM_UTC
@@ -1427,6 +1429,14 @@ def set_instants(datetime_from_utc, datetime_to_utc, instant_delta):
 
 
 def rates_for_data_cluster(data_cluster_consumed, region):
+    """
+    It generates a dictionary that have the id of the rates of
+    the data.
+
+    :param data_cluster_consumed: A list of data
+    :param region: A string with the region
+    :return: A list of dictionaries with the rates
+    """
     data_cluster_cons = []
     for data_cluster in data_cluster_consumed:
         date_time = datetime.datetime.fromtimestamp(data_cluster["datetime"])

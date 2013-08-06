@@ -5,7 +5,6 @@ import json
 from django.utils import simplejson
 import re
 import locale
-import pprint
 
 import variety
 
@@ -1059,13 +1058,10 @@ def refresh_ie_config(request):
                 content += " Default Config "
             else:
                 content += " Configuration update successful "
-            #print "content:", content
         else:
-            #print "IE not found"
             raise Http404("IE not found")
         return HttpResponse(content=content, status=status_conf)
     else:
-        #print "POST required"
         raise Http404("POST required")
 
 

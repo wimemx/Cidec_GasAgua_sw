@@ -148,9 +148,7 @@ def regenerate_dw_from_date(date_time):
     instant_deltas = InstantDelta.objects.all()
     cus = ConsumerUnitProfile.objects.all()
     for instant in instant_deltas:
-        print instant.name
         for cu in cus:
-            print cu.building_name, cu.electric_device_type_name
             populate_data_warehouse_specific(
                 cu,
                 instant,
