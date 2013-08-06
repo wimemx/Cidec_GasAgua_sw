@@ -52,7 +52,7 @@
                     n_span.addClass(_span);
                 });
             }else if ($(this).parent().next()[0].nodeName.toLowerCase() == 'select'){
-                var id_select = $(this).parent().next().attr('id')
+                var id_select = $(this).parent().next().attr('id');
                 $("#"+id_select).change(function(e){
                     if($.trim(e.delegateTarget.value)==''){
                         _span = "incorrect";
@@ -100,7 +100,7 @@
                         }
                         else
                         {
-                            $('#alarmselector').append("<option value='0'>Selecciona una opci&oacute;n: </option>")
+                            $('#alarmselector').append("<option value='0'>Selecciona una opci&oacute;n: </option>");
                             for(var i=0; i<data.length; i++)
                             {
 

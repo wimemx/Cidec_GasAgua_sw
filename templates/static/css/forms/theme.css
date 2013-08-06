@@ -1,6 +1,6 @@
 #contenido_interno{
     padding: 10px;
-    margin: 0px auto !important;
+    margin: 0 auto !important;
 }
 form{
     overflow: auto;
@@ -12,11 +12,11 @@ label span{
     padding: 0 !important;
 }
 input[type="text"], input[type="password"], input[type="email"]{
-    background: url('../images/bgs/input_inner_shadow.png') #fff repeat-x 0px 0px !important;
+    background: url('../images/bgs/input_inner_shadow.png') #fff repeat-x 0 0 !important;
 }
 textarea{
     width: 465px;
-    background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px !important;
+    background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0 0 !important;
 }
 .fields_row.g12{
     margin: 0;
@@ -46,8 +46,8 @@ textarea{
     overflow-y: auto !important;
 }
 .attribute_value_text_row {
-    margin: 0px;
-    padding: 0px;
+    margin: 0;
+    padding: 0;
     width: 235px;
     float: left;
 }

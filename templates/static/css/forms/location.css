@@ -284,17 +284,16 @@ label.input span.incorrect,label.input span.correct{
 }
 
 .region_mun_select{
-    background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
+    background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0 0;
     height: 260px;
     font-size: 12px;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-weight: normal;
     padding: 3px;
     color: #777;
-    border-top: solid 1px #AAA;
-    border-left: solid 1px #AAA;
-    border-bottom: solid 1px #CCC;
-    border-right: solid 1px #CCC;
+    border: 1px solid #AAA;
+    border-right-color: #CCC;
+    border-bottom-color: #CCC;
     -webkit-border-radius: 3px;
     -moz-border-radius: 3px;
     border-radius: 3px;
@@ -309,8 +308,7 @@ label.input span.incorrect,label.input span.correct{
     background-color: #DEDEDE;
     height: 19px;
     width: 150px;
-    margin: 0 auto;
-    margin-top: 5px;
+    margin: 5px auto 0;
     -webkit-border-radius: 15px;
     -moz-border-radius: 15px;
     padding-top: 6px;
@@ -335,7 +333,7 @@ label.input span.incorrect,label.input span.correct{
 .del_icn{
     position: absolute;
     top: -3px;
-    right: 0px;
+    right: 0;
 }
 
 #reg_mun_cont{

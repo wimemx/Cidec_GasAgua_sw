@@ -580,7 +580,7 @@ def alarm_suscription_list(request):
                 order_status = "asc"
 
         if "search" in request.GET:
-            search = request.GET["search"]
+
             if request.user.is_superuser:
                 lista = UserNotificationSettings.objects.filter(
                     Q(user__username__icontains=request.GET['search']) |
@@ -609,7 +609,7 @@ def alarm_suscription_list(request):
                     user=request.user)
 
         # If page request (9999) is out of range, deliver last page of results.
-        order_consumer = 'asc'
+
         #La lista es el queryset de la busqueda
 
         paginator = Paginator(lista, 10)
@@ -825,7 +825,6 @@ def user_notifications(request):
                       "Ver suscripciones a alarmas") or \
             request.user.is_superuser:
         #get the last week notifications
-        date_notif = datetime.date.today() - datetime.timedelta(days=7)
         # get all electric parameters
         electricParameters = ElectricParameters.objects.all()
         template_vars['electricParameters'] = electricParameters

@@ -13,14 +13,14 @@
 
 
         function set_date(){
-            event.preventDefault()
+            event.preventDefault();
 
             var e_date = $("#date_end").val();
             var e_hour = $("#end_hour").val();
             var e_minute = $("#end_minutes").val();
             var e_ampm = $("#end_ampm").val();
 
-            var url = '/reportes/set_cutdate_ajax/'
+            var url = '/reportes/set_cutdate_ajax/';
             url += '?date='+e_date+" "+e_hour+":"+e_minute+" "+e_ampm+"&cutdate={{ cutdate.pk }}";
 
             $.ajax({
@@ -59,7 +59,7 @@
 <form method="post" action=".">
     {% csrf_token %}
     <div id="corte_container">
-        <div id="corte_title" style="margin: 10px 0px;">
+        <div id="corte_title" style="margin: 10px 0;">
             Selecciona la fecha de corte
         </div>
 

@@ -58,7 +58,7 @@ iframe body{overflow: hidden;}
 }
 
 #temp_container{
-    margin: 10px 0px;
+    margin: 10px 0;
 }
 
 #temp_container span{
@@ -66,7 +66,7 @@ iframe body{overflow: hidden;}
 }
 
 .selects_container{
-    margin: 5px 0px;
+    margin: 5px 0;
 }
 
 .selects_short .selector{
@@ -96,13 +96,13 @@ iframe body{overflow: hidden;}
 .label_title_graph{
     color: #1b6b84;
     font-size: 18px;
-    padding: 10px 0px;
+    padding: 10px 0;
 }
 
 .graph_title{
     text-align: center;
     font-size: 20px;
-    padding: 10px 0px;
+    padding: 10px 0;
     color: #1b6b84;
     margin-top: 40px;
 }
@@ -126,7 +126,7 @@ iframe body{overflow: hidden;}
 }
 
 .label_data{
-    padding: 5px 0px;
+    padding: 5px 0;
     font-size: 12px;
     color: #4d5b65;
 }
@@ -227,7 +227,7 @@ iframe body{overflow: hidden;}
 #periodo_container{
     height: 140px;
     width: 500px;
-    margin: 0px auto;
+    margin: 0 auto;
 }
 
 

@@ -51,7 +51,7 @@
                     n_span.addClass(_span);
                 });
             }else if ($(this).parent().next()[0].nodeName.toLowerCase() == 'select'){
-                var id_select = $(this).parent().next().attr('id')
+                var id_select = $(this).parent().next().attr('id');
                 $("#"+id_select).change(function(e){
                     if($.trim(e.delegateTarget.value)==''){
                         _span = "incorrect";
@@ -78,7 +78,7 @@
         $('#month').monthpicker();
 
         $('#month').monthpicker().bind('monthpicker-hide', function () {
-            var sp = ''
+            var sp = '';
             if($('#month').val() == ''){
                 sp = "incorrect";
             }else{

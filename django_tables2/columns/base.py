@@ -499,9 +499,9 @@ class BoundColumn(object):
 
     @property
     def localize(self):
-        '''
+        """
         Returns `True`, `False` or `None` as described in ``Column.localize``
-        '''
+        """
         return self.column.localize
 
 

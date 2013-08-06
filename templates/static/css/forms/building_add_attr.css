@@ -6,7 +6,7 @@
     color: red;
 }
 .fields_row input[type="text"], .fields_row textarea{
-    background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px !important;
+    background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0 0 !important;
     resize: none;
 }
 .fields_row .selector{

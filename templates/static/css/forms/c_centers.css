@@ -1,5 +1,5 @@
 input, textarea{
-    background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px !important;
+    background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0 0 !important;
 }
 form {
     color: #6C6C6C;
@@ -25,7 +25,7 @@ width: 465px;
 
 #cluster_fields textarea{
 width: 465px;
-background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
+background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0 0;
     }
 
 #part_bld_fields div.selector{
@@ -41,12 +41,12 @@ background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
 }
 
 #part_bld_fields textarea{
-    background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
+    background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0 0;
 }
 
 .del, .delete, .edit{
     margin-right: 10px;
-    margin-left: 0px;
+    margin-left: 0;
 }
 
 .active_status{
@@ -128,7 +128,7 @@ background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
 
 
 .hrchy_cluster{
-    margin:20px 0px;
+    margin:20px 0;
 }
 
 .hrchy_company{
@@ -186,7 +186,7 @@ background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
 }
 
 .field_seebld{
-    padding: 0px 0px !important;
+    padding: 0 0 !important;
 }
 
 .tip_attribute_part{
@@ -227,8 +227,8 @@ background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
 }
 
 .attribute_value_text_row{
-    margin: 0px;
-    padding: 0px;
+    margin: 0;
+    padding: 0;
     width: 235px;
     float: left;
 }
@@ -247,7 +247,7 @@ background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
 }
 
 #seebld_address{
-    padding: 8px 0px;
+    padding: 8px 0;
 }
 
 .building_info_top{
@@ -285,7 +285,7 @@ background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
 }
 
 .building_column textarea{
-    background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
+    background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0 0;
 }
 
 .building_column textarea:focus{
@@ -305,17 +305,16 @@ background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
 }
 
 #b_type{
-    background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0px 0px;
+    background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0 0;
     height: 170px;
     font-size: 12px;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-weight: normal;
     padding: 3px;
     color: #777;
-    border-top: solid 1px #AAA;
-    border-left: solid 1px #AAA;
-    border-bottom: solid 1px #CCC;
-    border-right: solid 1px #CCC;
+    border: 1px solid #AAA;
+    border-right-color: #CCC;
+    border-bottom-color: #CCC;
     -webkit-border-radius: 3px;
     -moz-border-radius: 3px;
     border-radius: 3px;

@@ -9,7 +9,6 @@ import cStringIO
 import Image
 import hashlib
 import pytz
-import threading
 from math import ceil
 import urllib2
 import csv
@@ -30,16 +29,14 @@ from c_center.calculations import *
 from c_center.models import Cluster, ClusterCompany, Company, CompanyBuilding, \
     Building, PartOfBuilding, HierarchyOfPart, ConsumerUnit, \
     ProfilePowermeter, ElectricDataTemp, DailyData, DacHistoricData, \
-    HMHistoricData, T3HistoricData, ElectricRateForElectricData
-from rbac.models import PermissionAsigment, DataContextPermission, Role,\
-    UserRole, Object, Operation
+    HMHistoricData, T3HistoricData
+from rbac.models import PermissionAsigment, DataContextPermission, UserRole, \
+    Object, Operation
 from location.models import *
 from electric_rates.models import ElectricRatesDetail
 from data_warehouse_extended.views import get_electrical_parameter, \
     get_instant_delta, get_instants_list, get_consumer_unit_profile, \
     get_consumer_unit_electrical_parameter_data_list
-from data_warehouse_extended.models import ConsumerUnitInstantElectricalData,\
-    data_warehouse_extended
 
 from rbac.rbac_functions import is_allowed_operation_for_object,\
     default_consumerUnit
@@ -54,6 +51,7 @@ VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
 DELETE = Operation.objects.get(operation_name="Eliminar")
 UPDATE = Operation.objects.get(operation_name="Modificar")
+
 
 def get_clusters_for_operation(permission, operation, user):
     """Obtains a queryset for all the clusters that exists in a datacontext
@@ -134,6 +132,13 @@ def get_companies_for_operation(permission, operation, user, cluster):
 
 
 def get_all_companies_for_operation(permission, operation, user):
+    """Gets an array of Company objects allowed for 'operation' by 'user'
+
+    :param permission: String the name of the operation
+    :param operation: one of VIEW, UPDATE, CREATE, DELETE
+    :param user: djanjo.contrib.auth.models.User object
+    :return: array of companies
+    """
     clusters = get_clusters_for_operation(permission, operation, user)
     companies_array = []
     for cluster in clusters:
@@ -145,6 +150,11 @@ def get_all_companies_for_operation(permission, operation, user):
 
 
 def get_all_active_buildings_for_company(company):
+    """Get all active buildings for company
+
+    :param company: Company object
+    :return: Query Set of the active buildings
+    """
     c_buildings = CompanyBuilding.objects.filter(
         company=company).values_list("building__pk", flat=True)
     return Building.objects.filter(pk__in=c_buildings, building_status=1)
@@ -160,10 +170,11 @@ def get_buildings_for_operation(permission, operation, user, company):
     returns a tuple containing the queryset, and a boolean,
     indicating if returns all the objects
 
-    permission.- string, the name of the permission object
-    operation.- operation object, (VIEW, CREATE, etc)
-    user.- django.contrib.auth.models.User instance
-    company.- Company instance
+    :param permission: string, the name of the permission object
+    :param operation: operation object, (VIEW, CREATE, etc)
+    :param user: django.contrib.auth.models.User instance
+    :param company: Company instance
+    :return: Query Set of the active buildings
     """
     if user.is_superuser:
         return get_all_active_buildings_for_company(company), True
@@ -215,6 +226,11 @@ def get_all_buildings_for_operation(permission, operation, user):
 
 
 def get_all_active_parts_for_building(building):
+    """Get all active parts for a building
+
+    :param building: Building object
+    :return: Query Set of active PartOfBuilding for building
+    """
     return PartOfBuilding.objects.filter(building=building,
                                          part_of_building_status=True)
 
@@ -228,10 +244,11 @@ def get_partsofbuilding_for_operation(permission, operation, user, building):
     returns a tuple containing the queryset, and a boolean,
     indicating if returns all the objects
 
-    permission.- string, the name of the permission object
-    operation.- operation object, (VIEW, CREATE, etc)
-    user.- django.contrib.auth.models.User instance
-    building.- Building instance
+    :param permission: string, the name of the permission object
+    :param operation: operation object, (VIEW, CREATE, etc)
+    :param user: django.contrib.auth.models.User instance
+    :param building Building instance
+    :return: QuerySet of active PartOfBuilding
     """
     if user.is_superuser:
         return get_all_active_parts_for_building(building), True
@@ -271,7 +288,8 @@ def get_partsofbuilding_for_operation(permission, operation, user, building):
 
 def get_all_consumer_units_for_building(building):
     """ Returns all the non virtual consumer units
-     :param building: Object Building instance
+    :rtype : QuerySet
+    :param building: Object Building instance
     """
     return ConsumerUnit.objects.filter(building=building).exclude(
         profile_powermeter__powermeter__powermeter_anotation="Medidor Virtual"
@@ -287,10 +305,12 @@ def get_c_unitsforbuilding_for_operation(permission, operation, user, building):
     returns a tuple containing the queryset, and a boolean,
     indicating if returns all the objects
 
+    :rtype : QuerySet
     :param permission: string, the name of the permission object
     :param operation: operation object, (VIEW, CREATE, etc)
     :param user: django.contrib.auth.models.User instance
     :param building: Building instance
+    :return: ConsumerUnits for operation for building
     """
     if user.is_superuser:
         return get_all_consumer_units_for_building(building), True
@@ -331,10 +351,12 @@ def get_c_unitsforbuilding_for_operation(permission, operation, user, building):
                 profile_powermeter__powermeter__powermeter_anotation="Medidor Virtual"
             ).exclude(profile_powermeter__powermeter__status=0), False
 
-def get_cluster_companies(request, id_cluster):
-    """
-    returns a json with all the comanies in the cluster with id = id_cluster,
 
+def get_cluster_companies(request, id_cluster):
+    """returns a json with all the comanies in the cluster with id = id_cluster,
+
+    :param request: Request object
+    :param id_cluster: int id of cluster
     """
     if "op" in request.GET:
         operation = Object.objects.get(id=request.GET['op'])
@@ -360,12 +382,18 @@ def get_cluster_companies(request, id_cluster):
 
 
 def get_company_buildings(request, id_company):
+    """Get all the buildings that belongs to a company
+
+    :param request: request object, containing the operation id and user
+    :param id_company: int id of the company
+    :return: HttpResponse JSON of buildings
+    """
     company = get_object_or_404(Company, pk=id_company)
     if "op" in request.GET:
         operation = Object.objects.get(id=request.GET['op'])
         operation = operation.object_name
     else:
-        operation="Asignar roles a usuarios"
+        operation = "Asignar roles a usuarios"
     buildings_for_user, all_company = get_buildings_for_operation(
         operation, CREATE, request.user, company)
     buildings = []
@@ -386,6 +414,8 @@ def get_parts_of_building(request, id_building):
     """ Get all the parts of a building in wich the user has permission to do
     something
 
+    :param request: request object, containing the operation id and user
+    :param id_building: int
     """
     building = get_object_or_404(Building, pk=id_building)
     if "op" in request.GET:
@@ -413,6 +443,8 @@ def get_cus_of_building(request, id_building):
     """ Get all the consumer units of a building in wich the user has
     permission to do something
 
+    :param request: request object, containing the operation id and user
+    :param id_building: int
     """
     building = get_object_or_404(Building, pk=id_building)
     if "op" in request.GET:
@@ -443,6 +475,7 @@ def get_cu_siblings(consumerUnit):
     """ Returns a queryset of all the active physical consumer units in a
      consumerUnit building
 
+    :rtype : QuerySet
     :param consumerUnit: Object - ConsumerUnit instance.
     """
     return ConsumerUnit.objects.filter(
@@ -454,6 +487,7 @@ def get_cu_siblings(consumerUnit):
 def get_building_siblings(building):
     """ Returns a queryset of the CompanyBuildings in wich the building is part
 
+    :rtype : QuerySet
     :param building: Object - Building instance.
     """
     company = CompanyBuilding.objects.get(building=building)
@@ -462,9 +496,11 @@ def get_building_siblings(building):
         company=company.company,
         building__building_status=1)
 
+
 def get_company_siblings(company):
     """ Returns a queryset of the ClusterCompany in wich the company is part
 
+    :rtype : QuerySet
     :param company: Object - Company instance.
     """
     cluster = ClusterCompany.objects.get(company=company)
@@ -472,6 +508,7 @@ def get_company_siblings(company):
     return ClusterCompany.objects.filter(
         cluster=cluster.cluster,
         company__company_status=1)
+
 
 def get_pw_profiles(request):
     """ Get all the ProfilePowermeters that are available for use in a
@@ -526,9 +563,11 @@ def get_all_profiles_for_user(user, permission, operation):
 
 
 def get_intervals_1(get):
-    """get the interval for the graphs
-    by default we get the data from the last month
-    returns f1_init, f1_end as datetime objects
+    """get the interval for the graphs by default we get the data from
+    the last month. Returns f1_init, f1_end as datetime objects
+
+    :rtype : tuple
+    :param get: dictionary
     """
     f1_init = datetime.datetime.today() - relativedelta(months=1)
     f1_end = datetime.datetime.today()
@@ -547,9 +586,11 @@ def get_intervals_1(get):
 
 
 def get_intervals_fecha(get):
-    """get the interval for the graphs
-    by default we get the data from the last month
-    returns f1_init, f1_end as formated strings
+    """get the interval for the graphs by default we get the data from
+    the last month. Returns f1_init, f1_end as formated strings
+
+    :rtype : tuple
+    :param get: dictionary
     """
     f1_init = datetime.datetime.today() - relativedelta(months=1)
     f1_init = str(f1_init.year) + "-" + str(f1_init.month) + "-" + str(
@@ -571,13 +612,20 @@ def get_intervals_fecha(get):
 
 
 def get_intervals_2(get):
-    """gets the second date interval """
+    """gets the second date interval
+
+    :rtype : tuple
+    :param get: dictionary
+    """
     get2 = dict(f1_init=get['f2_init'], f1_end=get['f2_end'])
     return get_intervals_1(get2)
 
 
 def set_default_session_vars(request, datacontext):
-    """Sets the default building and consumer unit """
+    """Sets the default building and consumer unit
+    :param request: request object, for session saving
+    :param datacontext: array of buildings pks
+    """
 
     if not datacontext:
         request.session['main_building'] = None
@@ -631,6 +679,8 @@ def set_default_session_vars(request, datacontext):
 def get_hierarchy_list(building, user):
     """ Obtains an unordered-nested list representing the building hierarchy
 
+    :param building: The building we want to get his hierarchy
+    :param user: django.contrib.auth.models.User object
     """
     hierarchy = HierarchyOfPart.objects.filter(
         part_of_building_composite__building=building).exclude(
@@ -754,14 +804,18 @@ def get_hierarchy_list(building, user):
 
     hierarchy_list += "</ul>"
 
-
     hierarchy_list += "</li></ul>"
     return hierarchy_list
 
+
 def get_sons(parent, part, user, building, node_index):
     """ Gets a list of the direct sons of a given part, or consumer unit
-    parent = instance of PartOfBuilding, or ConsumerUnit
-    part = string, is the type of the parent
+
+    :param parent: instance of PartOfBuilding, or ConsumerUnit
+    :param part: string, is the type of the parent
+    :param user: django.contrib.auth.models.User object
+    :param building:  Building Object
+    :param node_index: int
     """
     node_index = str(node_index)
     node_number = 1
@@ -782,16 +836,19 @@ def get_sons(parent, part, user, building, node_index):
                 cu = ConsumerUnit.objects.get(
                     part_of_building=son.part_of_building_leaf)
                 _class = "part_of_building"
-                if cu.profile_powermeter.powermeter.powermeter_anotation == "Medidor Virtual":
+                if cu.profile_powermeter.powermeter.powermeter_anotation == \
+                        "Medidor Virtual":
                     _class += " virtual"
 
             else:
-                tag = son.consumer_unit_leaf.electric_device_type.electric_device_type_name
+                tag = son.consumer_unit_leaf.electric_device_type\
+                    .electric_device_type_name
                 sons = get_sons(son.consumer_unit_leaf, "consumer", user,
                                 building, node_number)
                 cu = son.consumer_unit_leaf
                 _class = "consumer_unit"
-                if cu.profile_powermeter.powermeter.powermeter_anotation == "Medidor Virtual":
+                if cu.profile_powermeter.powermeter.powermeter_anotation == \
+                        "Medidor Virtual":
                     _class += " virtual"
             if allowed_cu(cu, user, building):
                 _list += '<li class="' + _class + ' ' + node_index + "_" + \
@@ -810,7 +867,11 @@ def get_sons(parent, part, user, building, node_index):
 
 
 def get_total_consumer_unit(consumerUnit, total):
-    """gets the (physical)sons of a cu"""
+    """gets the (physical)sons of a cu
+
+    :param consumerUnit: The parent ConsumerUnit
+    :param total: boolean, indicates if the consumerUnit is total
+    """
     c_units = []
     if not total:
         if consumerUnit.part_of_building:
@@ -891,9 +952,10 @@ def get_consumer_units(consumerUnit):
 def allowed_cu(consumerUnit, user, building):
     """returns true or false if the user has permission over the
     consumerUnit or not
-    consumerUnit = ConsumerUnit instance
-    user = auth.User instance
-    building = Building instance
+
+    :param consumerUnit: ConsumerUnit instance
+    :param user: django.contrib.auth.models.User object
+    :param building: Building instance
     """
     if user.is_superuser:
         return True
@@ -941,6 +1003,7 @@ def allowed_cu(consumerUnit, user, building):
 def is_in_part_of_building(consumerUnit, part_of_building):
     """checks if consumerUnit is part of the part_of_building
     returns True if consumerUnit is inside the part
+
     :param consumerUnit: ConsumerUnit instance *without part_of_building*
     :param part_of_building: PartOfBuilding instance
     """
@@ -968,10 +1031,12 @@ def is_in_part_of_building(consumerUnit, part_of_building):
 
 def is_in_consumer_unit(cunit, cuParent):
     """ checks if consumerUnit is part of an electric system (another consumer
-    unit)
-    returns True if consumerUnit is inside the system
-    cunit = ConsumerUnit instance *without part_of_building*
-    cuParent = ConsumerUnit instance
+    unit) returns True if consumerUnit is inside the system
+
+
+    :rtype : bool
+    :param cunit: ConsumerUnit instance *without part_of_building*
+    :param cuParent: ConsumerUnit instance
     """
     part_parent = HierarchyOfPart.objects.filter(
         consumer_unit_composite=cuParent)
@@ -989,12 +1054,12 @@ def is_in_consumer_unit(cunit, cuParent):
 
 def graphs_permission(user, consumer_unit, graphs_type):
     """ Checks what kind of graphs can a user see for a consumer_unit
-    user.- django auth user object
-    consumer_unit.- ConsumerUnit object
-
     returns an array of objects of permission, False if user is not allowed
     to see graphs
 
+    :param user: django.contrib.auth.models.User object
+    :param consumer_unit: ConsumerUnit instance
+    :param graphs_type: type of graphs to check
     """
 
     operation = VIEW
@@ -1040,6 +1105,13 @@ def graphs_permission(user, consumer_unit, graphs_type):
 
 
 def handle_company_logo(i, company, is_new):
+    """Handles a image file upload
+
+    :param i: image object
+    :param company: Company Object
+    :param is_new: bool
+    :return: bool, True if saved successfully
+    """
     dir_fd = os.open(os.path.join(settings.PROJECT_PATH,
                                   "templates/static/media/logotipos/"),
                      os.O_RDONLY)
@@ -1091,6 +1163,20 @@ def handle_company_logo(i, company, is_new):
 def location_objects(country_id, country_name, state_id, state_name,
                      municipality_id, municipality_name, neighborhood_id,
                      neighborhood_name, street_id, street_name):
+    """Sets or gets all the geo info for a building
+
+    :param country_id: int
+    :param country_name: string
+    :param state_id: int
+    :param state_name: string
+    :param municipality_id: int
+    :param municipality_name: string
+    :param neighborhood_id: int
+    :param neighborhood_name: string
+    :param street_id: int
+    :param street_name: string
+    :return: tuple of location objects
+    """
     #Se obtiene el objeto de Pais, sino esta Pais, se da de alta un pais nuevo.
     if country_id:
         countryObj = get_object_or_404(Pais, pk=country_id)
@@ -1170,8 +1256,14 @@ def location_objects(country_id, country_name, state_id, state_name,
 
     return countryObj, stateObj, municipalityObj, neighborhoodObj, streetObj
 
+
 @csrf_exempt
 def get_profile(request):
+    """Web service to obtain consumer unit ids via device serials
+
+    :param request: request object with a "serials" key
+    :return: HttpResponse :raise: Http404
+    """
     if request.method == 'POST':
         if "serials" in request.POST:
             serials = request.POST['serials'].split("-")
@@ -1194,8 +1286,9 @@ def get_profile(request):
         raise Http404
 
 def all_dailyreportAll(from_date):
-    """Calculate the daily report for all the consumer units in all the buildings
-    It starts from a given date to today
+    """Calculate the daily report for all the consumer units in all the
+    buildings. It starts from a given date to today
+
     :param from_date: Datetime, the start date
     """
     buildings = Building.objects.all()
@@ -1290,7 +1383,6 @@ def dailyReport(building, consumer_unit, today):
     demanda_min = 0
     dem_min_time = '00:00:00'
     kvarh_totales = 0
-    kvarhs_anterior = False
 
     tarifa_kwh = 0
     tarifa_kwh_base = 0
@@ -1409,12 +1501,6 @@ def dailyReport(building, consumer_unit, today):
             kvarh_totales += obtenerKVARH(profile_powermeter,
                          today_s_utc,
                          today_e_utc)
-            """
-            kvarh_totales += obtenerKVARH_dia(profile_powermeter,
-                                              today_s_utc,
-                                              today_e_utc,
-                                              kvarhs_anterior)
-            """
     #Si es tarifa HM
     if electric_rate.pk == 1:
         #Obtiene el id de la tarifa correspondiente para el mes en cuestion
@@ -1426,7 +1512,6 @@ def dailyReport(building, consumer_unit, today):
             tarifa_kwh_base = tarifasObj[0].KWHB
             tarifa_kwh_intermedio = tarifasObj[0].KWHI
             tarifa_kwh_punta = tarifasObj[0].KWHP
-
 
         #Se obtiene costo de energía
         costo_energia_total = costoenergia(kwh_base, kwh_intermedio,
@@ -1485,6 +1570,7 @@ def dailyReport(building, consumer_unit, today):
     new_daily.save()
 
     return 'OK'
+
 
 def getDailyReports(consumer, month, year, days_offset=None):
     """ Returns an array of dicts with the daily data for the year-month
@@ -1663,13 +1749,10 @@ def calculateMonthlyReport(consumer_u, month, year):
 
     :param consumer_u: ConsumerUnit object
     :param month: int month number
-    :param year: int year umber
+    :param year: int year number
     :return mes: dictionary
     """
     mes = {}
-
-    #Se obtiene el tipo de tarifa del edificio.
-    tipo_tarifa = consumer_u.building.electric_rate
 
     #Se obtienen las fechas de inicio y de fin
     diasmes_arr = monthrange(year, month)
@@ -2148,6 +2231,7 @@ def tarifaHM_2(building, s_date, e_date, month, year):
 
     return diccionario_final_cfe
 
+
 # noinspection PyArgumentList
 def tarifaDAC_2(building, s_date, e_date, month, year):
     """ Calculates the Electric Bill DAC
@@ -2376,10 +2460,11 @@ def tarifa_3(building, s_date, e_date, month, year):
 
     return diccionario_final_cfe
 
+
 def asign_electric_data_to_pw(serials):
     """ change the profile_powermeter of all the meditions with an specific
     power_meter_serial and unregistered powermeter
-    serials: an array containing strings: powermeter_serials
+    :param serials: array containing strings: powermeter_serials
     """
     for serial in serials:
         profile = ProfilePowermeter.objects.get(
@@ -2403,24 +2488,15 @@ def c_functions_get_consumer_unit_electrical_parameter_data_clustered(
         granularity_seconds=None
 ):
     """
-        Description:
-            To-Do
 
-        Arguments:
-            consumer_unit - A Consumer Unit object.
-
-            datetime_from - A Datetime object.
-
-            datetime_to - A Datetime object.
-
-            electrical_parameter - A String that represents the name of the
+    :param consumer_unit: A Consumer Unit object.
+    :param datetime_from: A Datetime object.
+    :param datetime_to: A Datetime object.
+    :param electrical_parameter_name: A String that represents the name of the
                 electrical parameter.
-
-            granularity_seconds - An Integer that represents the number of
+    :param granularity_seconds: An Integer that represents the number of
                 seconds between the points to be retrieved.
-
-        Return:
-            A list of dictionaries.
+    :return: A list of dictionaries.
     """
     #
     # Localize datetimes (if neccesary) and convert to UTC
@@ -3037,7 +3113,8 @@ def crawler_t3_rate(year, month):
 
 
 def getRatesCurrentMonth():
-
+    """calls the crawler for all the electric rates for the current month
+    """
     now = datetime.datetime.now()
 
     crawler_hm_rate(now.year, now.month)
@@ -3046,7 +3123,10 @@ def getRatesCurrentMonth():
 
     print "Current Month Crawlers - Done"
 
+
 def getAllRates():
+    """calls the crawler for all the electric rates since the beggining of time
+    """
 
     crawler_hm_rate(2012, 1)
     crawler_DAC_rate(2012, 1)
@@ -3054,7 +3134,14 @@ def getAllRates():
 
     print "All Rates Crawlers - Done"
 
+
 def getPlainDays(s_date_utc, e_date_utc):
+    """
+
+    :param s_date_utc: Date
+    :param e_date_utc: Date
+    :return: array of days in between s_ and e_ dates
+    """
     arr_b_days = []
     s_date = s_date_utc.astimezone(timezone.get_current_timezone())
     e_date = e_date_utc.astimezone(timezone.get_current_timezone())
@@ -3080,6 +3167,12 @@ def getPlainDays(s_date_utc, e_date_utc):
 
 
 def getTupleDays(s_date_utc, e_date_utc):
+    """ Gets a tuple of days contained between s_date_utc and e_date_utc dates
+
+    :param s_date_utc: Date
+    :param e_date_utc: Date
+    :return: tuple of days
+    """
     arr_b_days = []
     arr_e_days = []
 
@@ -3112,6 +3205,12 @@ def getTupleDays(s_date_utc, e_date_utc):
 
 
 def regenerate_ie_config(ie_id, user):
+    """Regenerates the IE config settings, for config update
+
+    :param ie_id: IndustrialEquipment id
+    :param user: django.contrib.auth.models.User object
+    :return: True
+    """
     ie = IndustrialEquipment.objects.get(pk=ie_id)
     json_dic = dict(eDevicesConfigList=[])
     ie_pm = PowermeterForIndustrialEquipment.objects.filter(
@@ -3139,7 +3238,7 @@ def regenerate_ie_config(ie_id, user):
     ie.new_config = simplejson.dumps(json_dic)
     ie.modified_by = user
     ie.save()
-    return
+    return True
 
 
 def parse_file(_file):
@@ -3249,6 +3348,11 @@ def parse_file(_file):
 
 
 def get_google_timezone(building):
+    """Calls the google timezone api for the building location
+
+    :param building: Building object
+    :return: tuple containing the timezone id plus dst offset
+    """
     #Se obtienen las coordenadas del edificio
     bld_lat = building.building_lat_address
     bld_long = building.building_long_address
@@ -3299,7 +3403,11 @@ def get_google_timezone(building):
 
 
 def replace_accents(with_accents):
+    """Replace accents
 
+    :param with_accents:
+    :return: replaced string
+    """
     accents = {
         'á': 'a',
         'é': 'e',
@@ -3316,11 +3424,14 @@ def replace_accents(with_accents):
     for key in accents.keys():
         with_accents = with_accents.replace(key,accents[key])
 
-
     return with_accents
 
 
 def crawler_get_municipalities():
+    """Crawls and get all the municipalities
+
+    :return: True
+    """
     states = Estado.objects.all()
     cont_total = 0
     for state in states:
@@ -3377,7 +3488,7 @@ def crawler_get_municipalities():
 
 
 def setBuildingDST(border):
-    """
+    """ Updates the DST dates
 
     :param - Border: Booleano para indicar si modifica los fronterizos o no.
     """
@@ -3409,47 +3520,6 @@ def setBuildingDST(border):
                             "daysaving_id": next_dst[0].pk}
 
                 industrial_equip.timezone_dst = json.dumps(json_dic)
-                industrial_equip.save()
-
-    print "setBuildingDST Done"
-
-
-def setBuildingTest():
-    """ Función para probar el seteo remoto de cambio de horario
-
-    :param - Border: Booleano para indicar si modifica los fronterizos o no.
-    """
-    bld_timezones = TimezonesBuildings.objects.filter(
-        building__pk=25)
-    if bld_timezones:
-        for bld_tz in bld_timezones:
-            print bld_tz.building
-            next_dst = DaySavingDates.objects.filter(
-                summer_date__gt=bld_tz.day_saving_date.summer_date,
-                border=False
-            ).order_by("summer_date")[:1]
-            print "next_dst", next_dst
-            if next_dst:
-                bld_tz.day_saving_date = next_dst[0]
-                bld_tz.save()
-
-            #Se actualiza el JSON del Equipo Industrial para cada edificio
-            try:
-                industrial_equip = IndustrialEquipment.objects.get(
-                    building=bld_tz.building)
-            except ObjectDoesNotExist:
-                print "setBuildingDST - No Industrial Equipment for building: " + \
-                      str(bld_tz.building.building_name)
-            except MultipleObjectsReturned:
-                print "setBuildingDST - Multiple Industrial Equipments: " + \
-                      str(bld_tz.building.building_name)
-            else:
-                json_dic = {"raw_offset": bld_tz.time_zone.raw_offset,
-                            "dst_offset": bld_tz.time_zone.dst_offset,
-                            "daysaving_id": next_dst[0].pk}
-
-                industrial_equip.timezone_dst = json.dumps(json_dic)
-                print json_dic
                 industrial_equip.save()
 
     print "setBuildingDST Done"

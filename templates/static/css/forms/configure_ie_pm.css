@@ -2,7 +2,7 @@
     width: 900px;
 }
 .ui-spinner {position: relative; }
-.ui-spinner-buttons {position: absolute; top: 0px !important;}
+.ui-spinner-buttons {position: absolute; top: 0 !important;}
 .ui-spinner-button {overflow: hidden}
 .ui-spinner-button{
     height: 12px !important;

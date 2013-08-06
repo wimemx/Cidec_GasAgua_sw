@@ -55,8 +55,8 @@ textarea.uniform {
   font-weight: normal;
   padding: 3px;
   color: #777;
-  background: url('../images/bg-input-focus.png') #fff repeat-x 0px 0px;
-  background: url('../images/bg-input.png') #fff repeat-x 0px 0px;
+  background: url('../images/bg-input-focus.png') #fff repeat-x 0 0;
+  background: url('../images/bg-input.png') #fff repeat-x 0 0;
   border-top: solid 1px #aaa;
   border-left: solid 1px #aaa;
   border-bottom: solid 1px #ccc;
@@ -71,11 +71,11 @@ input.text:focus,
 input.email:focus,
 input.password:focus,
 textarea.uniform:focus {
-  -webkit-box-shadow: 0px 0px 4px rgba(0,0,0,0.3);
-  -moz-box-shadow: 0px 0px 4px rgba(0,0,0,0.3);
-  box-shadow: 0px 0px 4px rgba(0,0,0,0.3);
+  -webkit-box-shadow: 0 0 4px rgba(0,0,0,0.3);
+  -moz-box-shadow: 0 0 4px rgba(0,0,0,0.3);
+  box-shadow: 0 0 4px rgba(0,0,0,0.3);
   border-color: #999;
-  background: url('../images/bg-input-focus.png') repeat-x 0px 0px;
+  background: url('../images/bg-input-focus.png') repeat-x 0 0;
 }
 
 /* SPRITES */
@@ -89,15 +89,15 @@ div.selector {
 }
 
 div.selector span {
-  background-position: right 0px;
+  background-position: right 0;
   height: 26px;
   line-height: 26px;
 }
 
 div.selector select {
   /* change these to adjust positioning of select element */
-  top: 0px;
-  left: 0px;
+  top: 0;
+  left: 0;
 }
 
 div.selector:active, 
@@ -153,7 +153,7 @@ div.checker input {
 }
 
 div.checker span {
-  background-position: 0px -260px;
+  background-position: 0 -260px;
   height: 19px;
   width: 19px;
 }
@@ -223,7 +223,7 @@ div.radio input {
 div.radio span {
   height: 18px;
   width: 18px;
-  background-position: 0px -279px;
+  background-position: 0 -279px;
 }
 
 div.radio:active span, 
@@ -278,7 +278,7 @@ div.radio.disabled.active span.checked {
 /* Uploader */
 
 div.uploader {
-  background-position: 0px -297px;
+  background-position: 0 -297px;
   height: 28px;
 }
 
@@ -291,14 +291,14 @@ div.uploader span.action {
 div.uploader span.filename {
   height: 24px;
   /* change this line to adjust positioning of filename area */
-  margin: 2px 0px 2px 2px;
+  margin: 2px 0 2px 2px;
   line-height: 24px;
 }
 
 div.uploader.focus,
 div.uploader.hover,
 div.uploader:hover {
-  background-position: 0px -353px;
+  background-position: 0 -353px;
 }
 
 div.uploader.focus span.action,
@@ -320,7 +320,7 @@ div.uploader:focus:active span.action {
 }
 
 div.uploader.disabled {
-  background-position: 0px -325px;
+  background-position: 0 -325px;
 }
 
 div.uploader.disabled span.action {
@@ -328,7 +328,7 @@ div.uploader.disabled span.action {
 }
 
 div.button {
-  background-position: 0px -523px;
+  background-position: 0 -523px;
 }
 
 div.button span {
@@ -339,7 +339,7 @@ div.button.focus,
 div.button:focus,
 div.button:hover,
 div.button.hover {
-  background-position: 0px -553px;
+  background-position: 0 -553px;
 }
 
 div.button.focus span,
@@ -351,7 +351,7 @@ div.button.hover span {
 
 div.button.active,
 div.button:active {
-  background-position: 0px -583px;
+  background-position: 0 -583px;
 }
 
 div.button.active span,
@@ -362,7 +362,7 @@ div.button:active span {
 
 div.button.disabled,
 div.button:disabled {
-  background-position: 0px -613px;
+  background-position: 0 -613px;
 }
 
 div.button.disabled span,
@@ -407,7 +407,7 @@ div.selector select {
 }
 
 div.selector span {
-  padding: 0px 25px 0px 2px;
+  padding: 0 25px 0 2px;
   cursor: pointer;
 }
 
@@ -440,7 +440,7 @@ div.uploader {
 div.uploader span.action {
   width: 85px;
   text-align: center;
-  text-shadow: #fff 0px 1px 0px;
+  text-shadow: #fff 0 1px 0;
   background-color: #fff;
   font-size: 11px;
   font-weight: bold;
@@ -583,13 +583,13 @@ div.uploader {
 div.uploader span.action {
   float: left;
   display: inline;
-  padding: 2px 0px;
+  padding: 2px 0;
   overflow: hidden;
   cursor: pointer;
 }
 
 div.uploader span.filename {
-  padding: 0px 10px;
+  padding: 0 10px;
   float: left;
   display: block;
   overflow: hidden;

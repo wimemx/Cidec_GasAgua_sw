@@ -180,9 +180,9 @@
 					tblCal.find('thead tr:first th:eq(1) span').text(dow);
 					dow = date.getFullYear()-6;
 					data = {
-						data: [],
-						className: 'datepickerYears'
-					}
+                        data: [],
+                        className: 'datepickerYears'
+                    };
 					for ( var j = 0; j < 12; j++) {
 						data.data.push(dow + j);
 					}

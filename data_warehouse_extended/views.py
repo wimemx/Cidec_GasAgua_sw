@@ -515,9 +515,9 @@ def process_consumer_unit_electrical_parameter_instant_group(
             instant_timedelta_current.seconds + \
             (instant_timedelta_current.days * 24 * 3600)
 
-        is_instant_between_limits =\
-            instant_timedelta_current_seconds >= independent_data_lower_limit and\
-            instant_timedelta_current_seconds <= independent_data_upper_limit
+        is_instant_between_limits = \
+            independent_data_lower_limit <= \
+                instant_timedelta_current_seconds <= independent_data_upper_limit
 
         curve_fit_function_evaluation = None
         if curve_fit_function is not None and is_instant_between_limits:

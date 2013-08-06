@@ -26,7 +26,7 @@
         };
         $(document).ready(function(){
             var csv_url = window.location.href.slice(window.location.href.indexOf('?') + 1);
-            csv_url = "/reportes/grafica_datos_csv/?"+csv_url
+            csv_url = "/reportes/grafica_datos_csv/?" + csv_url;
             $("#export_csv").attr("href",csv_url);
 
             var text = $("#weekly_summary h1").text();

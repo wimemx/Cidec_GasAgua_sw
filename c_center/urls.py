@@ -4,18 +4,6 @@ from django.views.generic.simple import direct_to_template
 urlpatterns = patterns('',
                        url(r'^celery/', 'c_center.views.call_celery_delay'),
                        url(r'^dw_specific/', 'c_center.views.dw_specific'),
-                       url(r'^graficas/', 'c_center.graphics.render_graphics'),
-                       url(r'^graficas_extendidas/',
-                           'c_center.graphics.render_graphics_extended'),
-                       url(r'^grafica_datos_csv/',
-                           'c_center.views.grafica_datoscsv'),
-                       url(r'^grafica_tendencia_consumo_mensual/',
-                           'c_center.graphics'
-                           '.render_graphics_month_consumption_trend'),
-                       url(r'^verificar_graficas_intervalos/',
-                           'c_center.graphics'
-                           '.render_graphics_interval_verification'),
-
                        url(r'^medition_rate/',
                            'c_center.calculations.tag_reading'),
                        url(r'^profile_for_serial/',
@@ -270,10 +258,6 @@ urlpatterns = patterns('',
                        url(r'^fechas_corte/', 'c_center.views.view_cutdates'),
                        url(r'^establecer_fecha/(?P<id_cutdate>\d+)/',
                            'c_center.views.set_cutdate'),
-
-                       url(r'^desglose/', 'c_center.views.cfe_desglose'),
-                       url(r'^desglose_calculos/',
-                           'c_center.views.cfe_desglose_calcs'),
 
                        url(r'^corte_recibo/(?P<id_cutdate>\d+)/',
                            'c_center.views.set_cutdate_bill_show'),

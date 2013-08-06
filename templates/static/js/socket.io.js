@@ -2360,8 +2360,8 @@ var io = ('undefined' === typeof module ? {} : module.exports);
 
   WS.prototype.open = function () {
     var query = io.util.query(this.socket.options.query)
-      , self = this
-      , Socket
+        , self = this
+        , Socket;
 
 
     if (!Socket) {

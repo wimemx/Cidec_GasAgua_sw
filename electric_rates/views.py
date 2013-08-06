@@ -19,9 +19,6 @@ from django.contrib.auth.decorators import login_required
 from c_center.c_center_functions import set_default_session_vars, \
     crawler_hm_rate, crawler_DAC_rate, crawler_t3_rate
 
-
-
-
 #"""
 #Tarifa 3
 #"""
@@ -36,7 +33,8 @@ def add_tarifa3(request):
         company = request.session['company']
         post = ''
 
-        template_vars = dict(datacontext=datacontext,
+        template_vars = dict(
+            datacontext=datacontext,
             empresa=empresa,
             company=company,
             post=post,
@@ -49,22 +47,22 @@ def add_tarifa3(request):
             t3_kw = request.POST.get('kw_rate').strip()
             t3_kwh = request.POST.get('kwh_rate').strip()
             message = ""
-            type = ""
+            _type = ""
 
             continuar = True
             if t3_month == '':
                 message = "Se debe seleccionar el mes"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if t3_kw == '':
                 message = "La tarifa de Demanda Máxima no puede quedar vacía"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if t3_kwh == '':
                 message = "La tarifa de KWH no puede quedar vacía"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             #Se parsea el mes para ponerlo en el formato debido
@@ -78,7 +76,7 @@ def add_tarifa3(request):
             filter(date_end__gte = billing_month)
             if bmonth_exists:
                 message = "Ya hay una tarifa registrada para este mes"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
                 t3_month = ''
 
@@ -104,7 +102,7 @@ def add_tarifa3(request):
 
             template_vars["post"] = post
             template_vars["message"] = message
-            template_vars["type"] = type
+            template_vars["type"] = _type
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("electric_rates/add_tarifa3.html", template_vars_template)
@@ -116,6 +114,7 @@ def add_tarifa3(request):
         template_vars["sidebar"] = request.session['sidebar']
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
+
 
 def edit_tarifa3(request, id_t3):
     if not request.user.is_authenticated():
@@ -145,37 +144,18 @@ def edit_tarifa3(request, id_t3):
             t3_kw = request.POST.get('kw_rate').strip()
             t3_kwh = request.POST.get('kwh_rate').strip()
             message = ""
-            type = ""
+            _type = ""
 
             continuar = True
             if t3_kw == '':
                 message = "La tarifa de Demanda Máxima no puede quedar vacía"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if t3_kwh == '':
                 message = "La tarifa de KWH no puede quedar vacía"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
-
-            """
-            #Se parsea el mes para ponerlo en el formato debido
-            arr_month = t3_month.split('/')
-            billing_month = datetime.date(year=int(arr_month[1]), month=int(arr_month[0]), day=1)
-            last_day = monthrange(int(arr_month[1]),int(arr_month[0]))
-            billing_end = datetime.date(year=int(arr_month[1]), month=int(arr_month[0]), day=last_day[1])
-
-
-            if t3_obj.date_init != billing_month:
-                #Se verifica que no haya una tarifa ya registrada para ese mes
-                bmonth_exists = ThreeElectricRateDetail.objects.filter(date_init__lte = billing_month).\
-                filter(date_end__gte = billing_month)
-                if bmonth_exists:
-                    message = "Ya hay una tarifa registrada para este mes"
-                    type = "n_notif"
-                    continuar = False
-                    t3_month = month_str
-            """
 
             post = {'kw_rate':t3_kw, 'kwh_rate':t3_kwh }
 
@@ -192,7 +172,7 @@ def edit_tarifa3(request, id_t3):
 
             template_vars["post"] = post
             template_vars["message"] = message
-            template_vars["type"] = type
+            template_vars["type"] = _type
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("electric_rates/add_tarifa3.html", template_vars_template)
@@ -265,9 +245,9 @@ def view_tarifa_3(request):
         return render_to_response("generic_error.html", template_vars_template)
 
 
-"""
-Tarifa HM
-"""
+#"""
+#Tarifa HM
+#"""
 
 def add_tarifaHM(request):
     if not request.user.is_authenticated():
@@ -303,48 +283,48 @@ def add_tarifaHM(request):
             hm_frb = request.POST.get('frb').strip()
 
             message = ""
-            type = ""
+            _type = ""
 
             continuar = True
             if hm_month == '':
                 message = "Se debe seleccionar el mes"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if hm_region == '':
                 message = "Se debe seleccionar una región"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
                 hm_region = 0
 
             if hm_demanda == '':
                 message = "El cargo de Demanda Facturable no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if hm_kwhp == '':
                 message = "El cargo de KWH Punta no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if hm_kwhi == '':
                 message = "El cargo de KWH Intermedio no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if hm_kwhb == '':
                 message = "El cargo de KWH Base no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if hm_fri == '':
                 message = "El cargo de FRI no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if hm_frb == '':
                 message = "El cargo de FRB no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             #Se parsea el mes para ponerlo en el formato debido
@@ -364,19 +344,19 @@ def add_tarifaHM(request):
 
                 if bmonth_exists:
                     message = "Ya hay una tarifa registrada para este mes"
-                    type = "n_notif"
+                    _type = "n_notif"
                     continuar = False
                     hm_month = ''
 
             post = {
-                'month':hm_month,
-                'region':int(hm_region),
-                'demand_rate':hm_demanda,
-                'kwh_punta':hm_kwhp,
-                'kwh_int':hm_kwhi,
-                'kwh_base':hm_kwhb,
-                'fri':hm_fri,
-                'frb':hm_frb
+                'month': hm_month,
+                'region': int(hm_region),
+                'demand_rate': hm_demanda,
+                'kwh_punta': hm_kwhp,
+                'kwh_int': hm_kwhi,
+                'kwh_base': hm_kwhb,
+                'fri': hm_fri,
+                'frb': hm_frb
             }
 
             if continuar:
@@ -386,18 +366,18 @@ def add_tarifaHM(request):
 
                 #Se da de alta la nueva cuota
                 newHM = ElectricRatesDetail(
-                    electric_rate = HM_erate,
-                    KDF = hm_demanda,
-                    KWHP = hm_kwhp,
-                    KWHI = hm_kwhi,
-                    KWHB = hm_kwhb,
-                    FRI = hm_fri,
-                    FRB = hm_frb,
-                    KWDMM = 0,
-                    KWHEC = 0,
-                    date_init = billing_month,
-                    date_end = billing_end,
-                    region = regionObj
+                    electric_rate=HM_erate,
+                    KDF=hm_demanda,
+                    KWHP=hm_kwhp,
+                    KWHI=hm_kwhi,
+                    KWHB=hm_kwhb,
+                    FRI=hm_fri,
+                    FRB=hm_frb,
+                    KWDMM=0,
+                    KWHEC=0,
+                    date_init=billing_month,
+                    date_end=billing_end,
+                    region=regionObj
                 )
                 newHM.save()
 
@@ -410,7 +390,7 @@ def add_tarifaHM(request):
                                                 "&ntype=n_success")
             template_vars["post"] = post
             template_vars["message"] = message
-            template_vars["type"] = type
+            template_vars["type"] = _type
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("electric_rates/add_tarifaHM.html", template_vars_template)
@@ -432,8 +412,6 @@ def edit_tarifaHM(request, id_hm):
         datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         company = request.session['company']
-        post = ''
-        message = ''
 
         #Se obtiene la tarifa seleccionada
         hm_obj = get_object_or_404(ElectricRatesDetail, pk = id_hm)
@@ -474,49 +452,49 @@ def edit_tarifaHM(request, id_hm):
             hm_frb = request.POST.get('frb').strip()
 
             message = ""
-            type = ""
+            _type = ""
 
             continuar = True
 
             if hm_demanda == '':
                 message = "El cargo de Demanda Facturable no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if hm_kwhp == '':
                 message = "El cargo de KWH Punta no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if hm_kwhi == '':
                 message = "El cargo de KWH Intermedio no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if hm_kwhb == '':
                 message = "El cargo de KWH Base no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if hm_fri == '':
                 message = "El cargo de FRI no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if hm_frb == '':
                 message = "El cargo de FRB no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             post = {
-                'month':month_str,
-                'region':int(hm_obj.region_id),
-                'demand_rate':hm_demanda,
-                'kwh_punta':hm_kwhp,
-                'kwh_int':hm_kwhi,
-                'kwh_base':hm_kwhb,
-                'fri':hm_fri,
-                'frb':hm_frb
+                'month': month_str,
+                'region': int(hm_obj.region_id),
+                'demand_rate': hm_demanda,
+                'kwh_punta': hm_kwhp,
+                'kwh_int': hm_kwhi,
+                'kwh_base': hm_kwhb,
+                'fri': hm_fri,
+                'frb': hm_frb
             }
 
             if continuar:
@@ -537,7 +515,7 @@ def edit_tarifaHM(request, id_hm):
 
             template_vars["post"] = post
             template_vars["message"] = message
-            template_vars["type"] = type
+            template_vars["type"] = _type
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("electric_rates/add_tarifaHM.html", template_vars_template)
@@ -612,9 +590,10 @@ def view_tarifa_HM(request):
 
 
 
-"""
-Tarifa DAC
-"""
+#"""
+#Tarifa DAC
+#"""
+
 
 def add_tarifaDac(request):
     if not request.user.is_authenticated():
@@ -624,7 +603,6 @@ def add_tarifaDac(request):
         empresa = request.session['main_building']
         company = request.session['company']
         post = ''
-        message = ''
 
         #Se obtienen las regiones
         regiones_lst = Region.objects.all()
@@ -649,17 +627,17 @@ def add_tarifaDac(request):
             dac_m_rate = request.POST.get('monthly_rate').strip()
             dac_kwh = request.POST.get('kwh_rate').strip()
             message = ""
-            type = ""
+            _type = ""
 
             continuar = True
             if dac_month == '':
                 message = "Se debe seleccionar el mes"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if dac_region == '':
                 message = "Se debe seleccionar una región"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
                 dac_region = 0
 
@@ -668,12 +646,12 @@ def add_tarifaDac(request):
 
             if dac_m_rate == '':
                 message = "El cargo mensual no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if dac_kwh == '':
                 message = "La tarifa de KWH no puede quedar vacía"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             #Se parsea el mes para ponerlo en el formato debido
@@ -697,29 +675,29 @@ def add_tarifaDac(request):
 
                 if bmonth_exists:
                     message = "Ya hay una tarifa registrada para este mes"
-                    type = "n_notif"
+                    _type = "n_notif"
                     continuar = False
                     dac_month = ''
 
 
             post = {
-                'month':dac_month,
-                'region':int(dac_region),
-                'periodo':int(dac_periodo),
-                'monthly_rate':dac_m_rate,
-                'kwh_rate':dac_kwh
+                'month': dac_month,
+                'region': int(dac_region),
+                'periodo': int(dac_periodo),
+                'monthly_rate': dac_m_rate,
+                'kwh_rate': dac_kwh
             }
 
             if continuar:
 
                 #Se da de alta la nueva cuota
                 newDac = DACElectricRateDetail(
-                    region = regionObj,
-                    date_interval = periodoObj,
-                    month_rate = dac_m_rate,
-                    kwh_rate = dac_kwh,
-                    date_init = billing_month,
-                    date_end = billing_end,
+                    region=regionObj,
+                    date_interval=periodoObj,
+                    month_rate=dac_m_rate,
+                    kwh_rate=dac_kwh,
+                    date_init=billing_month,
+                    date_end=billing_end,
                 )
                 newDac.save()
 
@@ -732,7 +710,7 @@ def add_tarifaDac(request):
                                                 "&ntype=n_success")
             template_vars["post"] = post
             template_vars["message"] = message
-            template_vars["type"] = type
+            template_vars["type"] = _type
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("electric_rates/add_tarifaDac.html", template_vars_template)
@@ -754,8 +732,6 @@ def edit_tarifaDac(request, id_dac):
         datacontext = get_buildings_context(request.user)
         empresa = request.session['main_building']
         company = request.session['company']
-        post = ''
-        message = ''
 
         #Se obtienen las regiones
         regiones_lst = Region.objects.all()
@@ -773,21 +749,23 @@ def edit_tarifaDac(request, id_dac):
         else:
             d_interval = 0
         post = {
-            'month':month_str,
-            'region':int(dac_obj.region_id),
+            'month': month_str,
+            'region': int(dac_obj.region_id),
             'region_name': dac_obj.region.region_name,
             'periodo': d_interval,
-            'monthly_rate':dac_obj.month_rate,
-            'kwh_rate':dac_obj.kwh_rate
+            'monthly_rate': dac_obj.month_rate,
+            'kwh_rate': dac_obj.kwh_rate
         }
 
-        template_vars = dict(datacontext=datacontext,
+        template_vars = dict(
+            datacontext=datacontext,
             empresa=empresa,
             company=company,
             post=post,
             operation="edit",
             regiones_lst=regiones_lst,
-            periodos_lst=periodos_lst, sidebar=request.session['sidebar']
+            periodos_lst=periodos_lst,
+            sidebar=request.session['sidebar']
         )
 
         if request.method == "POST":
@@ -796,48 +774,19 @@ def edit_tarifaDac(request, id_dac):
             dac_m_rate = request.POST.get('monthly_rate').strip()
             dac_kwh = request.POST.get('kwh_rate').strip()
             message = ""
-            type = ""
+            _type = ""
 
             continuar = True
 
             if dac_m_rate == '':
                 message = "El cargo mensual no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             if dac_kwh == '':
                 message = "La tarifa de KWH no puede quedar vacía"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
-
-            """
-            #Se parsea el mes para ponerlo en el formato debido
-            arr_month = dac_month.split('/')
-            billing_month = datetime.date(year=int(arr_month[1]), month=int(arr_month[0]), day=1)
-            last_day = monthrange(int(arr_month[1]),int(arr_month[0]))
-            billing_end = datetime.date(year=int(arr_month[1]), month=int(arr_month[0]), day=last_day[1])
-
-            if continuar:
-                #Si se selecciono periodo, se obtiene el objeto.
-                periodoObj = None
-                if dac_periodo != 0:
-                    periodoObj = get_object_or_404(DateIntervals, pk = dac_periodo)
-
-                #Se obtiene el objeto de la region
-                regionObj = get_object_or_404(Region, pk=dac_region)
-
-                #Se verifica que no haya una tarifa ya registrada para ese mes
-                if dac_obj.date_init != billing_month or dac_obj.region != regionObj or dac_obj.date_interval != periodoObj:
-                    bmonth_exists = DACElectricRateDetail.objects.filter(date_init__lte = billing_month).\
-                    filter(date_end__gte = billing_month).filter(region=regionObj).filter(date_interval=periodoObj)
-
-                    if bmonth_exists:
-                        message = "Ya hay una tarifa registrada para este mes"
-                        type = "n_notif"
-                        continuar = False
-                        dac_month = month_str
-                        dac_region = dac_obj.region_id
-            """
 
             post = {
                 'monthly_rate':dac_m_rate,
@@ -859,7 +808,7 @@ def edit_tarifaDac(request, id_dac):
 
             template_vars["post"] = post
             template_vars["message"] = message
-            template_vars["type"] = type
+            template_vars["type"] = _type
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("electric_rates/add_tarifaDac.html", template_vars_template)
@@ -1066,14 +1015,9 @@ def getHM_table(year):
                 arregloFRB[tf.date_init.month-1] = tf.FRB
                 arregloIds[tf.date_init.month-1] = tf.pk
 
-            arregloContenedor = []
-            arregloContenedor.append(arregloDemanda)
-            arregloContenedor.append(arregloKWHP)
-            arregloContenedor.append(arregloKWHI)
-            arregloContenedor.append(arregloKWHB)
-            arregloContenedor.append(arregloFRI)
-            arregloContenedor.append(arregloFRB)
-            arregloContenedor.append(arregloIds)
+            arregloContenedor = [arregloDemanda, arregloKWHP, arregloKWHI,
+                                 arregloKWHB, arregloFRI, arregloFRB,
+                                 arregloIds]
             regions_dict[region.region_name] = arregloContenedor
 
     return regions_dict
@@ -1098,10 +1042,7 @@ def getDAC_table(year):
                 arregloKWH[tf.date_init.month-1] = tf.kwh_rate
                 arregloIds[tf.date_init.month-1] = tf.pk
 
-            arregloContenedor = []
-            arregloContenedor.append(arregloMes)
-            arregloContenedor.append(arregloKWH)
-            arregloContenedor.append(arregloIds)
+            arregloContenedor = [arregloMes, arregloKWH, arregloIds]
             regions_dict[region.region_name] = arregloContenedor
 
     return regions_dict
@@ -1115,10 +1056,7 @@ def getT3_table(year):
         arregloKWH[t3.date_init.month-1] = t3.kwh_rate
         arregloKW[t3.date_init.month-1] = t3.kw_rate
         arregloIds[t3.date_init.month-1] = t3.pk
-    arregloContenedor = []
-    arregloContenedor.append(arregloKWH)
-    arregloContenedor.append(arregloKW)
-    arregloContenedor.append(arregloIds)
+    arregloContenedor = [arregloKWH, arregloKW, arregloIds]
 
     return arregloContenedor
 

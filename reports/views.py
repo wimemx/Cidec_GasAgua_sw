@@ -23,11 +23,6 @@ import alarms.models
 
 # Reports imports
 import reports.globals
-from reports.models import DataStoreMonthlyGraphs
-
-# Data Warehouse Extended imports
-import data_warehouse_extended.models
-import data_warehouse_extended.views
 
 # CCenter imports
 import c_center.models
@@ -42,7 +37,7 @@ from reports.reports_functions import get_data_cluster_consumed_normalized, \
     get_data_clusters_json, get_data_statistics, get_data_clusters_list_limits,\
     get_axis_dictionary, get_axis_dictionaries_list, \
     get_column_units_axis_indexes, get_data_cluster_limits, \
-    get_data_clusters_statistics, get_axis_dictionary_stored
+    get_data_clusters_statistics
 
 # Other imports
 import variety
@@ -410,34 +405,21 @@ def render_report_powerprofile_by_month(
 
     else:
         template_variables['ff'] = datetime_to
-        template_variables['fi'] = datetime_to - \
-                                   datetime.timedelta(days=7)
+        template_variables['fi'] = datetime_to - datetime.timedelta(days=7)
     template_variables['consumer_unit_id'] = request.GET['consumer-unit-id']
     template_variables['years'] = request.session['years']
     template_variables['current_year'] = year
     template_variables['current_month'] = month
-    virtual = c_center.models.ConsumerUnit.objects.filter(
-        pk=int(request.GET['consumer-unit-id'])).values(
-            "profile_powermeter__powermeter__powermeter_anotation")
-    virtual = virtual[0]['profile_powermeter__powermeter__powermeter_anotation']
     while request.GET.has_key(parameter_get_key):
         electrical_parameter_name_get_key =\
             "electrical-parameter-name%02d" % parameter_counter
-        """
-        if virtual == "Medidor Virtual":
-            if request.GET[electrical_parameter_name_get_key] == "PF":
-                parameter_counter += 1
-                parameter_get_key = "electrical-parameter-name%02d" % \
-                                    parameter_counter
-                continue
-        """
         try:
             electrical_parameter_name =\
                 request.GET[electrical_parameter_name_get_key]
 
         except KeyError:
-            logger.error(
-                reports.globals.SystemError.RENDER_INSTANT_MEASUREMENTS_ERROR)
+            #logger.error(
+            #    reports.globals.SystemError.RENDER_INSTANT_MEASUREMENTS_ERROR)
             raise django.http.Http404
 
         request_data_list_item =\
@@ -555,298 +537,6 @@ def render_report_powerprofile_by_month(
     template_variables['max'] = maximum
     template_variables['min'] = minimum
     template_variables['columns_statistics'] = statistics
-    template_context =\
-        django.template.context.RequestContext(request, template_variables)
-
-    return django.shortcuts.render_to_response("reports/instant_by_month.html",
-                                               template_context)
-
-
-@login_required(login_url="/")
-def render_report_consumed_by_month_new(
-        request
-):
-    template_variables = {
-        'max': None,
-        'min': None,
-        'rows': None,
-    }
-
-    if not request.method == "GET":
-        raise django.http.Http404
-    consumer_unit_id = request.GET['consumer-unit-id']
-    month = int(request.GET['month'])
-    year = int(request.GET['year'])
-
-    electrical_parameter_name = "TotalkWhIMPORT"
-    days = variety.getMonthDays(month, year)
-    first_week_start_datetime = days[0] + datetime.timedelta(days=1)
-    last_week_end_datetime = days[-1] + datetime.timedelta(days=2)
-
-    #
-    # For the purposes of this report, the granularity is an hour but this is
-    # intended to be extended, it should be retrieved as GET parameter.
-    #
-    try:
-        month_graphs = DataStoreMonthlyGraphs.objects.get(
-            consumer_unit_id=consumer_unit_id, year=year, month=month)
-    except DataStoreMonthlyGraphs.DoesNotExist:
-        return django.http.HttpResponse("<h2 style='font-family: helvetica;"
-                                            "text-align: center;display: block;"
-                                            " margin: 0 auto;color: #666;'> "
-                                            "No se han encontrado datos para el "
-                                            "reporte, Por favor espere unos minutos,"
-                                            "o verifique que el sistema de adquisición"
-                                            "se encuentra funcionando correctamente"
-                                            "</h2>")
-    else:
-        template_variables['rows_len'] = len(month_graphs.data_consumed)
-
-    data_cluster_consumed = month_graphs.data_consumed
-
-    #print data_cluster_consumed
-
-    template_variables['rows'] = data_cluster_consumed
-    dc_object = json.loads(data_cluster_consumed)
-    maximun, minimun = get_data_cluster_limits(dc_object)
-
-    if maximun <= minimun:
-        minimun = maximun - 1
-
-    template_variables['max'] = maximun
-    template_variables['min'] = minimun
-    today = datetime.datetime.now()
-    if today.month == month and today.year == year:
-        current_week = variety.get_week_of_month_from_datetime(today)
-        template_variables['course_week'] = True
-        #number of weeks in month minus current_week = remaining weeks at
-        #                                              the start of month
-        template_variables['week'] = 6 - current_week
-        template_variables['fi'], template_variables['ff'] = \
-            variety.get_week_start_datetime_end_datetime_tuple(year,
-                                                               month,
-                                                               current_week)
-
-    else:
-        template_variables['ff'] = last_week_end_datetime
-        template_variables['fi'] = last_week_end_datetime - \
-                                   datetime.timedelta(days=7)
-    template_variables['consumer_unit_id'] = request.GET['consumer-unit-id']
-    template_variables['years'] = request.session['years']
-    template_variables['current_week'] = variety.\
-        get_week_of_month_from_datetime(first_week_start_datetime)
-    template_variables['current_year'] = year
-    template_variables['current_month'] = month
-
-    cu = c_center.models.ConsumerUnit.objects.get(pk=consumer_unit_id)
-    day_data = \
-        c_center.c_center_functions.getDailyReports(cu, month, year, 1)
-
-    formated_day_data = []
-    cont = 1
-    day_array = []
-    for data in day_data:
-        print data
-        day_array.append(data)
-        if cont % 7 == 0:
-            fecha1 = datetime.datetime.strptime(day_array[0]['fecha'],
-                                                "%Y-%m-%d %H:%M:%S")
-            fecha2 = datetime.datetime.strptime(day_array[-1]['fecha'],
-                                                "%Y-%m-%d %H:%M:%S")
-            week_total = c_center.c_center_functions.consumoAcumuladoKWH(
-                cu, fecha1, fecha2)
-            day_array[0]["week_total"] = week_total
-
-            for day in day_array:
-                for key in day:
-                    if day[key] and variety.is_number(day[key]):
-                        day[key] = variety.moneyfmt(
-                            decimal.Decimal(str(day[key])), 0, "", ",", "")
-
-            formated_day_data.append(day_array)
-
-            day_array = []
-
-        cont += 1
-
-    template_variables['day_data'] = formated_day_data
-
-    month_data = \
-        c_center.c_center_functions.getMonthlyReport(cu, month, year)
-
-    for key in month_data:
-        month_data[key] = variety.moneyfmt(
-            decimal.Decimal(str(month_data[key])))
-
-    template_variables['month_data'] = month_data
-    template_variables['electric_data'] = electrical_parameter_name
-
-    if cu.building.electric_rate.electric_rate_name == "H-M":
-        template_variables['periods'] = True
-
-    template_context =\
-        django.template.context.RequestContext(request, template_variables)
-
-    return django.shortcuts.render_to_response("reports/consumed-by-month.html",
-                                               template_context)
-
-
-@login_required(login_url="/")
-def render_report_powerprofile_by_month_new(
-        request
-):
-    template_variables = {
-        'axis_list': None,
-        'columns': None,
-        'columns_statistics': None,
-        'column_units': None,
-        'column_unit_axis_indexes': None,
-        'max': None,
-        'min': None,
-        'rows': None
-    }
-
-    if not request.method == "GET":
-        raise django.http.Http404
-
-    #
-    # Build a request data list in order to normalize it.
-    #
-    request_data_list = []
-    consumer_unit_id = request.GET['consumer-unit-id']
-
-    month = int(request.GET['month'])
-    year = int(request.GET['year'])
-
-    days = variety.getMonthDays(month, year)
-
-    datetime_from = days[0] + datetime.timedelta(days=1)
-    datetime_to = days[-1] + datetime.timedelta(days=2)
-
-    today = datetime.datetime.now()
-    if today.month == month and today.year == year:
-        current_week = variety.get_week_of_month_from_datetime(today)
-        template_variables['course_week'] = True
-        #number of weeks in month minus current_week = remaining weeks at
-        #                                              the start of month
-        template_variables['week'] = 6 - current_week
-        template_variables['fi'], template_variables['ff'] = \
-            variety.get_week_start_datetime_end_datetime_tuple(year,
-                                                               month,
-                                                               current_week)
-
-    else:
-        template_variables['ff'] = datetime_to
-        template_variables['fi'] = datetime_to - \
-                                   datetime.timedelta(days=7)
-    template_variables['consumer_unit_id'] = request.GET['consumer-unit-id']
-    template_variables['years'] = request.session['years']
-    template_variables['current_year'] = year
-    template_variables['current_month'] = month
-
-    request_data_list_item =\
-            (consumer_unit_id,
-             datetime_from,
-             datetime_to,
-             "kW")
-    request_data_list.append(request_data_list_item)
-    request_data_list_item =\
-            (consumer_unit_id,
-             datetime_from,
-             datetime_to,
-             "kVAr")
-    request_data_list.append(request_data_list_item)
-    request_data_list_item =\
-            (consumer_unit_id,
-             datetime_from,
-             datetime_to,
-             "PF")
-    request_data_list.append(request_data_list_item)
-    #
-    # Normalize the data list.
-    #
-    request_data_list_normalized =\
-        get_request_data_list_normalized(request_data_list)
-
-    #
-    # Build the columns list.
-    #
-    column_strings =\
-        get_column_strings_electrical_parameter(request_data_list_normalized)
-
-    template_variables['columns'] = column_strings
-
-    columns_units_list = get_column_units_list(request_data_list_normalized)
-
-    template_variables['column_units'] = zip(columns_units_list, column_strings)
-
-    #
-    # Build and normalize the data clusters list.
-    #
-    try:
-        dataMonth = DataStoreMonthlyGraphs.objects.get(
-            consumer_unit_id=consumer_unit_id, year=year, month=month)
-    except DataStoreMonthlyGraphs.DoesNotExist:
-        return django.http.HttpResponse("<h2 style='font-family: helvetica;"
-                                        "text-align: center;display: block;"
-                                        " margin: 0 auto;color: #666;'> "
-                                        "No se han encontrado datos para el "
-                                        "reporte, Por favor espere unos minutos,"
-                                        "o verifique que el sistema de adquisición"
-                                        "se encuentra funcionando correctamente"
-                                        "</h2>")
-    else:
-        if dataMonth.instant_data is None:
-            return django.http.HttpResponse(
-                "<h2 style='font-family: helvetica;"
-                "text-align: center;display: block;"
-                " margin: 0 auto;color: #666;'> "
-                "No se han encontrado datos para el "
-                "reporte, Por favor espere unos minutos,"
-                "o verifique que el sistema de adquisición"
-                "se encuentra funcionando correctamente"
-                "</h2>")
-
-    #print dataMonth.instant_data
-    template_variables['rows_len'] = len(json.loads(dataMonth.instant_data))
-    data_clusters_list = json.loads(dataMonth.instant_data)
-    normalize_data_clusters_list(data_clusters_list)
-
-    #data_clusters_list para csv
-
-    axis_dictionary = \
-        get_axis_dictionary_stored(data_clusters_list, columns_units_list)
-
-    axis_dictionaries_list = get_axis_dictionaries_list(axis_dictionary)
-    template_variables['axis_list'] = axis_dictionaries_list
-
-    column_units_axis_indexes =\
-        get_column_units_axis_indexes(
-            columns_units_list,
-            axis_dictionaries_list)
-
-    template_variables['column_unit_axis_indexes'] = column_units_axis_indexes
-
-    #
-    # Make a query to retrieve the json for instant_data
-    #
-    dataMonth = DataStoreMonthlyGraphs.objects.get(
-        consumer_unit_id=consumer_unit_id, year=year, month=month)
-    template_variables['rows'] = dataMonth.instant_data
-
-
-    #
-    #Get statistical values
-    #
-    maximum, minimum = get_data_clusters_list_limits(data_clusters_list)
-
-    template_variables['max'] = maximum
-    template_variables['min'] = minimum
-
-    print dataMonth.statistics
-    template_variables['columns_statistics'] = ast.literal_eval(
-        dataMonth.statistics)
-
     template_context =\
         django.template.context.RequestContext(request, template_variables)
 

@@ -212,7 +212,7 @@ def edit_role(request, id_role):
             and not request.user.is_superuser):
         rol = get_object_or_404(Role, pk=id_role)
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
+
         company = request.session['company']
         ntype = ""
         mensaje = ""
@@ -381,7 +381,7 @@ def see_role(request, id_role):
             request.user.is_superuser:
         rol = get_object_or_404(Role, pk=id_role)
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
+
         company = request.session['company']
         template_vars = dict(sidebar=request.session['sidebar'],
                              rol=rol,
@@ -619,7 +619,7 @@ def view_roles(request):
     if has_permission(request.user, VIEW, "Ver roles") or \
             request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
+
         company = request.session['company']
         if "search" in request.GET:
             search = request.GET["search"]
@@ -813,7 +813,7 @@ def add_user(request):
     if has_permission(request.user, CREATE, "Alta de usuarios") or \
             request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
+
         company = request.session['company']
         template_vars = dict(sidebar=request.session['sidebar'],
                              datacontext=datacontext,
@@ -913,8 +913,7 @@ def view_users(request):
     if has_permission(request.user, VIEW,
                       "Ver usuarios") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
-        company = request.session['company']
+
         if "search" in request.GET:
             search = request.GET["search"]
         else:
@@ -1052,7 +1051,7 @@ def edit_user(request, id_user):
                 'tel_m': profile.user_profile_mobile_phone}
 
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
+
         company = request.session['company']
         message = ''
         type_ = ''
@@ -1177,7 +1176,7 @@ def see_user(request, id_user):
                       "Ver usuarios") or request.user.is_superuser:
         user1 = get_object_or_404(User, pk=id_user)
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
+
         company = request.session['company']
         profile = UserProfile.objects.get(user=user1)
         age = int(
@@ -1335,7 +1334,7 @@ def added_data_context_permissions(request):
                       "Ver asignaciones de roles a usuarios") or \
             request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
+
         company = request.session['company']
 
         if "select_user" in request.GET:
@@ -1559,19 +1558,12 @@ def forgot_password(request):
 
         else:
             mensaje = "No has ingresado un correo electronico valido"
-            template_vars['message']= mensaje
-            template_vars['msg_type']="n_error"
-            template_vars_template = RequestContext(request, template_vars)
+
             return HttpResponseRedirect(
-                "/forgot_password/?msj=" + mensaje+
-                "&ntype=n_error")
-
-
-
+                "/forgot_password/?msj=" + mensaje + "&ntype=n_error")
 
     template_vars_template = RequestContext(request, template_vars)
-    return render_to_response("forgot_password.html",
-                                  template_vars_template)
+    return render_to_response("forgot_password.html", template_vars_template)
 
 
 @login_required(login_url="/")
@@ -1579,7 +1571,7 @@ def add_user_pop(request):
     if has_permission(request.user, CREATE, "Alta de usuarios") or \
             request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
+
         company = request.session['company']
         template_vars = dict(sidebar=request.session['sidebar'],
                              datacontext=datacontext,

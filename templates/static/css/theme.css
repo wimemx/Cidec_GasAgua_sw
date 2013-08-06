@@ -175,7 +175,7 @@ body{
     /*top: 107px;*/
     width: 1024px !important;
     display: block;
-    padding-top: 0px;
+    padding-top: 0;
     top:40px;
 }
 #table_container tr{
@@ -197,9 +197,8 @@ body{
 #contenido_interno{
     width: 986px;
     display: block;
-    margin: 0 auto;
     min-height: 800px;
-    margin-top: 10px;
+    margin: 10px auto 0;
     padding: 28px 18px;
     /*
     overflow-y: auto;
@@ -236,7 +235,7 @@ body{
 .main_logo#myrios a{
 
     background: url("images/imgs_icns/myrios_logo.png") -11.7px;
-    margin-top: 0px;
+    margin-top: 0;
 }
 .main_logo#auditem a{
     margin-top: -6px;
@@ -271,7 +270,7 @@ h2 span{
 }
 #container_content{
     position: relative;
-    top: 0px;
+    top: 0;
     display: block;
 }
 #top_menu{
@@ -418,7 +417,7 @@ h2 span{
 }
 #main_menu li.first_level.dashboard{
     width: 79px !important;
-    background: url(images/imgs_icns/menu_myrios.png) no-repeat 50px 0px;
+    background: url(images/imgs_icns/menu_myrios.png) no-repeat 50px 0;
     padding-left: 21px;
     position: relative;
     top: 10px;
@@ -432,7 +431,7 @@ h2 span{
 }
 #main_menu li.first_level.analisis{
     width: 62px !important;
-    background: url(images/imgs_icns/menu_bolt.png) no-repeat 41px 0px;
+    background: url(images/imgs_icns/menu_bolt.png) no-repeat 41px 0;
     padding-left: 15px;
     position: relative;
     top: 5px;
@@ -441,7 +440,7 @@ h2 span{
 }
 #main_menu li.first_level.consumo{
     width: 61px !important;
-    background: url(images/imgs_icns/menu_meter.png) no-repeat 50px 0px;
+    background: url(images/imgs_icns/menu_meter.png) no-repeat 50px 0;
     padding-left: 27px;
     position: relative;
     top: 10px;
@@ -450,7 +449,7 @@ h2 span{
 }
 #main_menu li.first_level.edificio{
     width: 55px !important;
-    background: url(images/imgs_icns/menu_building.png) no-repeat 43px 0px;
+    background: url(images/imgs_icns/menu_building.png) no-repeat 43px 0;
     padding-left: 28px;
     position: relative;
     top: 5px;
@@ -459,7 +458,7 @@ h2 span{
 }
 #main_menu li.first_level.alarmas{
     width: 59px !important;
-    background: url(images/imgs_icns/menu_alarm.png) no-repeat 43px 0px;
+    background: url(images/imgs_icns/menu_alarm.png) no-repeat 43px 0;
     padding-left: 23px;
     position: relative;
     top: 10px;
@@ -468,7 +467,7 @@ h2 span{
 }
 #main_menu li.first_level.settings{
     width: 59px !important;
-    background: url(images/imgs_icns/settings.png) no-repeat 18px 0px;
+    background: url(images/imgs_icns/settings.png) no-repeat 18px 0;
     padding-left: 23px;
     position: relative;
     top: 8px;
@@ -521,7 +520,7 @@ ul#main_menu ul ul li:hover{
 
 #main_menu li.sub_level{
     display: block;
-    padding: 8px 0px 8px 16px;
+    padding: 8px 0 8px 16px;
     height: 30px;
     font-weight: 300;
     text-align: left;
@@ -656,9 +655,9 @@ a.aqua_btn:hover, a.grey_btn:hover{
     margin-top: 10px;
     height: 32px;
     line-height: 32px;
-    -webkit-border-radius: 6px 6px 0px 0px;
-    -moz-border-radius: 6px 6px 0px 0px;
-    border-radius: 6px 6px 0px 0px;
+    -webkit-border-radius: 6px 6px 0 0;
+    -moz-border-radius: 6px 6px 0 0;
+    border-radius: 6px 6px 0 0;
 }
 #bread_crumbs ul{
     display: block;
@@ -907,9 +906,9 @@ a.aqua_btn:hover, a.grey_btn:hover{
     margin:30px auto 20px auto !important;
     padding-bottom: 20px;
     position: relative;
-    -webkit-box-shadow: 0px 0px 30px rgba(46, 46, 46, 0.55);
-    -moz-box-shadow:    0px 0px 30px rgba(46, 46, 46, 0.55);
-    box-shadow:         0px 0px 30px rgba(46, 46, 46, 0.55);
+    -webkit-box-shadow: 0 0 30px rgba(46, 46, 46, 0.55);
+    -moz-box-shadow:    0 0 30px rgba(46, 46, 46, 0.55);
+    box-shadow:         0 0 30px rgba(46, 46, 46, 0.55);
     -webkit-border-radius: 10px;
     -moz-border-radius: 10px;
     border-radius: 10px;
@@ -926,11 +925,10 @@ a.aqua_btn:hover, a.grey_btn:hover{
 }
 .element_row{
     display: block;
-    margin: 10px 0 !important;
     height: 90px;
     overflow: hidden;
     float:left;
-    margin-left: 15px !important;
+    margin: 10px 0 10px 15px;
 }
 
 .element_row .element{
@@ -991,7 +989,7 @@ ul .sub_list
     z-index: 999;
     position: relative;
     top: -20px;
-    left: 0px;
+    left: 0;
 }
 #header_report{
     display: block;

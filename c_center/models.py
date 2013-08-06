@@ -4,7 +4,8 @@ from django.contrib.auth.models import User
 import datetime
 import hashlib
 import variety
-from location.models import Pais, Estado, Municipio, Colonia, Calle, Region, Timezones
+from location.models import Pais, Estado, Municipio, Colonia, Calle, Region, \
+    Timezones
 from electric_rates.models import ElectricRates, ElectricRatesPeriods
 
 STATUS = (
@@ -510,118 +511,6 @@ class HierarchyOfPart(models.Model):
             'part_of_building_composite', 'part_of_building_leaf')
 
 
-class ElectricData(models.Model):
-    """ Historico de datos electricos
-
-    Almacena los datos historicos de las mediciones electricas de un medidor
-    segun su id interno
-
-    """
-    profile_powermeter = models.ForeignKey(ProfilePowermeter,
-                                           on_delete=models.PROTECT, null=True,
-                                           blank=True)
-    powermeter_serial = models.CharField(max_length=128)
-    medition_date = models.DateTimeField(default=datetime.datetime.now())
-    V1 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                             blank=True)
-    V2 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                             blank=True)
-    V3 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                             blank=True)
-    I1 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                             blank=True)
-    I2 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                             blank=True)
-    I3 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                             blank=True)
-    kWL1 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                               blank=True)
-    kWL2 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                               blank=True)
-    kWL3 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                               blank=True)
-    kvarL1 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                                 blank=True)
-    kvarL2 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                                 blank=True)
-    kvarL3 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                                 blank=True)
-    kVAL1 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                                blank=True)
-    kVAL2 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                                blank=True)
-    kVAL3 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                                blank=True)
-    PFL1 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                               blank=True)
-    PFL2 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                               blank=True)
-    PFL3 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                               blank=True)
-    kW = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                             blank=True)
-    kvar = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                               blank=True)
-    kVA = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                              blank=True)
-    PF = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                             blank=True)
-    FREQ = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                               blank=True)
-    kWhIMPORT = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                                    blank=True)
-    kvahTOTAL = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                                    blank=True)
-    kvarhIMPORT = models.DecimalField(max_digits=20, decimal_places=6,
-                                      null=True, blank=True)
-    V1THD = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                                blank=True)
-    V2THD = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                                blank=True)
-    V3THD = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                                blank=True)
-    I1THD = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                                blank=True)
-    I2THD = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                                blank=True)
-    I3THD = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                                blank=True)
-    kWhL1 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                                blank=True, default=0)
-    kWhL2 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                                blank=True, default=0)
-    kwhL3 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                                blank=True, default=0)
-    kvarhL1 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                                  blank=True, default=0)
-    kvarhL2 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                                  blank=True, default=0)
-    kvarhL3 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                                  blank=True, default=0)
-    kVAhL1 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                                 blank=True, default=0)
-    kVAhL2 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                                 blank=True, default=0)
-    kVAhL3 = models.DecimalField(max_digits=20, decimal_places=6, null=True,
-                                 blank=True, default=0)
-    kW_import_sliding_window_demand = models.DecimalField(max_digits=20,
-                                                          decimal_places=6,
-                                                          null=True, blank=True,
-                                                          default=0)
-    kvar_import_sliding_window_demand = models.DecimalField(max_digits=20,
-                                                            decimal_places=6,
-                                                            null=True,
-                                                            blank=True,
-                                                            default=0)
-    kVA_sliding_window_demand = models.DecimalField(max_digits=20,
-                                                    decimal_places=6, null=True,
-                                                    blank=True, default=0)
-
-    def __unicode__(self):
-        return self.profile_powermeter.powermeter.powermeter_anotation + \
-               " " + str(self.medition_date)
-
-
 class ElectricDataTemp(models.Model):
     profile_powermeter = models.ForeignKey(ProfilePowermeter,
                                            on_delete=models.PROTECT, null=True,
@@ -722,22 +611,6 @@ class ElectricDataTemp(models.Model):
 
     class Meta:
         verbose_name = "Electric Data"
-
-
-class ElectricRateForElectricData(models.Model):
-    electric_rates_periods = models.ForeignKey(ElectricRatesPeriods,
-                                               on_delete=models.PROTECT)
-    electric_data = models.ForeignKey(ElectricDataTemp,
-                                      on_delete=models.PROTECT)
-    identifier = models.CharField(max_length=128)
-
-    def __unicode__(self):
-        return "Electric Data: " + str(self.electric_data.pk) + " " + \
-               self.identifier + " - " + \
-               self.electric_rates_periods.electric_rate.electric_rate_name
-
-    class META:
-        unique_together = ('electric_rates_periods', 'electric_data')
 
 
 class ElectricDataTags(models.Model):

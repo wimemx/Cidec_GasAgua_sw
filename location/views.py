@@ -913,13 +913,13 @@ def delete_state_country(request, id_state_country):
                       "haya ningún dato asociado al estado ni a sus " \
                       "municipios, colonias o "\
                       "calles"
-            type = "error"
+            _type = "error"
         else:
             mensaje = "Se ha eliminado correctamente la asociación entre el " \
                       "país y el estado"
-            type = "success"
+            _type = "success"
         return HttpResponseRedirect("/location/ver_estados/?msj=" + mensaje +
-                                    "&ntype=" + type)
+                                    "&ntype=" + _type)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
@@ -938,14 +938,14 @@ def delete_municipality_state(request, id_edo_munip):
                       "por favor revisa que no "\
                       "haya ningún dato asociado al municipio ni a sus " \
                       "colonias o calles"
-            type = "error"
+            _type = "error"
         else:
             mensaje = "Se ha eliminado correctamente la asociación entre el " \
                       "estado y el "\
                       "municipio"
-            type = "success"
+            _type = "success"
         return HttpResponseRedirect(
-            "/location/ver_municipios?msj=" + mensaje + "&ntype=" + type)
+            "/location/ver_municipios?msj=" + mensaje + "&ntype=" + _type)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
@@ -963,14 +963,14 @@ def delete_neighboorhood_municipality(request, id_munip_col):
             mensaje = "Ha ocurrido un error de integridad de datos, " \
                       "por favor revisa que no "\
                       "haya ningún dato asociado a la colonia ni a sus calles"
-            type = "error"
+            _type = "error"
         else:
             mensaje = "Se ha eliminado correctamente la asociación entre el " \
                       "municipio y la "\
                       "colonia"
-            type = "success"
+            _type = "success"
         return HttpResponseRedirect(
-            "/location/ver_colonias?msj=" + mensaje + "&ntype=" + type)
+            "/location/ver_colonias?msj=" + mensaje + "&ntype=" + _type)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
@@ -988,15 +988,15 @@ def delete_street_neighboor(request, id_col_calle):
             mensaje = "Ha ocurrido un error de integridad de datos, " \
                       "por favor revisa que no "\
                       "haya ningún dato asociado a la calle"
-            type = "error"
+            _type = "error"
         else:
             mensaje = "Se ha eliminado correctamente la asociación entre el " \
                       "colonia y la "\
                       "calle"
-            type = "success"
+            _type = "success"
 
         return HttpResponseRedirect(
-            "/location/ver_calles?msj=" + mensaje + "&ntype=" + type)
+            "/location/ver_calles?msj=" + mensaje + "&ntype=" + _type)
     else:
         return render_to_response("generic_error.html", RequestContext(request))
 
@@ -1010,10 +1010,10 @@ def delete_state_country_batch(request):
             for key in request.POST:
                 if re.search('^estado_\w+', key):
                     r_id = int(key.replace("estado_", ""))
-                    object = get_object_or_404(PaisEstado, pk=r_id)
-                    estado = object.estado
-                    pais = object.pais
-                    object.delete()
+                    object_ = get_object_or_404(PaisEstado, pk=r_id)
+                    estado = object_.estado
+                    pais = object_.pais
+                    object_.delete()
                     try:
                         delete_municipalities(estado)
                     except ProtectedError:
@@ -1048,10 +1048,10 @@ def delete_municipality_state_batch(request):
             for key in request.POST:
                 if re.search('^municipio_\w+', key):
                     r_id = int(key.replace("municipio_", ""))
-                    object = get_object_or_404(EstadoMunicipio, pk=r_id)
-                    mun = object.municipio
-                    est = object.estado
-                    object.delete()
+                    object_ = get_object_or_404(EstadoMunicipio, pk=r_id)
+                    mun = object_.municipio
+                    est = object_.estado
+                    object_.delete()
                     try:
                         delete_neigboorhoods(mun)
                     except ProtectedError:
@@ -1086,10 +1086,10 @@ def delete_neighboorhood_municipality_batch(request):
             for key in request.POST:
                 if re.search('^colonia_\w+', key):
                     r_id = int(key.replace("colonia_", ""))
-                    object = get_object_or_404(MunicipioColonia, pk=r_id)
-                    colonia = object.colonia
-                    municipio = object.municipio
-                    object.delete()
+                    object_ = get_object_or_404(MunicipioColonia, pk=r_id)
+                    colonia = object_.colonia
+                    municipio = object_.municipio
+                    object_.delete()
                     try:
                         delete_streets(colonia)
                     except ProtectedError:
@@ -1125,9 +1125,9 @@ def delete_street_neighboor_batch(request):
             for key in request.POST:
                 if re.search('^calle_\w+', key):
                     r_id = int(key.replace("calle_", ""))
-                    object = get_object_or_404(ColoniaCalle, pk=r_id)
-                    calle = object.calle
-                    object.delete()#borro la relación
+                    object_ = get_object_or_404(ColoniaCalle, pk=r_id)
+                    calle = object_.calle
+                    object_.delete()#borro la relación
                     calle.delete()#borro la calle
             mensaje = "Las relaciones Colonia-calle han sido eliminadas"
             return HttpResponseRedirect("/location/ver_calles/?msj=" + mensaje +
@@ -1221,7 +1221,7 @@ def add_region(request):
 
         estados = Estado.objects.all().exclude(pk__in=estados_exc).order_by(
             'estado_name')
-        type = ''
+        _type = ''
         message = ''
         template_vars = dict(
             datacontext=get_buildings_context(request.user)[0],
@@ -1242,11 +1242,11 @@ def add_region(request):
             continuar = True
             if region_name == '':
                 message = "El nombre de la Región no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(region_name):
                 message = "El nombre de la Región contiene caracteres inválidos"
-                type = "n_notif"
+                _type = "n_notif"
                 region_name = ""
                 continuar = False
 
@@ -1255,7 +1255,7 @@ def add_region(request):
             regionValidate = Region.objects.filter(region_name=region_name)
             if regionValidate:
                 message = "Ya existe una Región con ese nombre"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
 
             post = {'region_name': region_name,
@@ -1310,7 +1310,7 @@ def add_region(request):
                                                 "&ntype=n_success")
 
             template_vars["message"] = message
-            template_vars["type"] = type
+            template_vars["type"] = _type
         template_vars["post"] = post
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("location/add_region.html",
@@ -1404,7 +1404,7 @@ def edit_region(request, id_region):
         datacontext = get_buildings_context(request.user)[0]
         empresa = request.session['main_building']
         message = ''
-        type = ''
+        _type = ''
 
         if request.method == "POST":
             region_name = request.POST.get('region_name').strip()
@@ -1413,11 +1413,11 @@ def edit_region(request, id_region):
             continuar = True
             if region_name == '':
                 message = "El nombre de la Región no puede quedar vacío"
-                type = "n_notif"
+                _type = "n_notif"
                 continuar = False
             elif not variety.validate_string(region_name):
                 message = "El nombre de la Región contiene caracteres inválidos"
-                type = "n_notif"
+                _type = "n_notif"
                 region_name = ""
                 continuar = False
 
@@ -1426,7 +1426,7 @@ def edit_region(request, id_region):
                 regionValidate = Region.objects.filter(region_name=region_name)
                 if regionValidate:
                     message = "Ya existe una Región con ese nombre"
-                    type = "n_notif"
+                    _type = "n_notif"
                     continuar = False
 
             if continuar:
@@ -1472,7 +1472,7 @@ def edit_region(request, id_region):
                             newRegionEstado.save()
 
                 message = "Región editada exitosamente"
-                type = "n_success"
+                _type = "n_success"
 
                 if request.user.is_superuser:
                     return HttpResponseRedirect("/location/ver_regiones?msj=" +
@@ -1486,7 +1486,7 @@ def edit_region(request, id_region):
                              sidebar=request.session['sidebar'],
                              operation="edit",
                              message=message,
-                             type=type,
+                             type=_type,
                              company=request.session['company']
         )
         template_vars_template = RequestContext(request, template_vars)

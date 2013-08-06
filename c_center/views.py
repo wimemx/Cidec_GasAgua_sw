@@ -3,16 +3,13 @@
 import datetime
 from dateutil.relativedelta import relativedelta
 from math import *
-import Image
-import cStringIO
+
 import os
-from django.core.files import File
-import hashlib
-import csv
+
 import re
 import time
 import pytz
-import locale
+
 #related third party imports
 import variety
 
@@ -33,7 +30,7 @@ from django_tables2 import RequestConfig
 
 from cidec_sw import settings
 from c_center.calculations import *
-from alarms.models import Alarms, AlarmEvents, ElectricParameters
+from alarms.models import Alarms, ElectricParameters
 from c_center.models import *
 from location.models import *
 from electric_rates.models import ElectricRatesDetail, DACElectricRateDetail, \
@@ -44,23 +41,17 @@ from rbac.rbac_functions import has_permission, get_buildings_context, \
 from c_center_functions import *
 
 from c_center.graphics import *
-from data_warehouse.views import get_consumer_unit_electric_data_csv, \
-    get_consumer_unit_electric_data_interval_csv, \
-    DataWarehouseInformationRetrieveException, \
-    get_consumer_unit_by_id as get_data_warehouse_consumer_unit_by_id, \
-    get_consumer_unit_electric_data_interval_tuple_list
 
 from alarms.alarm_functions import set_alarm_json
 
 import data_warehouse_extended.models
 
-from .tables import ElectricDataTempTable, ThemedElectricDataTempTable
+from .tables import ThemedElectricDataTempTable
 
 import json as simplejson
-import sys
 from tareas.tasks import save_historic_delay, \
     change_profile_electric_data, populate_data_warehouse_extended, \
-    populate_data_warehouse_specific, restore_data, tag_batch_cu, \
+    populate_data_warehouse_specific, restore_data, \
     daily_report_period, tag_n_daily_report, calculateMonthlyReportCU
 
 VIEW = Operation.objects.get(operation_name="Ver")
@@ -117,11 +108,8 @@ def call_celery_delay(request):
             else:
                 fill_instants = None
             if "intervalos" in request.POST:
-                fill_intervals = True
                 text += "intervalos<br/>"
                 almenosuno = True
-            else:
-                fill_intervals = None
             if "consumer_units" in request.POST:
                 _update_consumer_units = True
                 text += "consumer_units<br/>"
@@ -135,11 +123,8 @@ def call_celery_delay(request):
             else:
                 populate_instant_facts = None
             if "interval_facts" in request.POST:
-                populate_interval_facts = True
                 text += "interval_facts<br/>"
                 almenosuno = True
-            else:
-                populate_interval_facts = None
             if almenosuno:
                 populate_data_warehouse_extended(
                     fill_instants,
@@ -796,228 +781,12 @@ def getStartEndDate(building, month, year):
     return s_date, e_date
 
 
-def grafica_datoscsv(request):
-    if request.method == "GET":
-        #electric_data = ""
-        #granularity = "day"
-        try:
-            #electric_data = request.GET['graph']
-            granularity = request.GET['granularity']
-
-        except KeyError:
-            raise Http404
-
-        #suffix_consumed = "_consumido"
-        is_interval = False
-        #suffix_index = string.find(electric_data, suffix_consumed)
-        #if suffix_index >= 0:
-        #    electric_data = electric_data[:suffix_index]
-        #    is_interval = True
-
-        data = []
-        consumer_unit_counter = 1
-        consumer_unit_get_key = "consumer-unit%02d" % consumer_unit_counter
-        date_start_get_key = "date-from%02d" % consumer_unit_counter
-        date_end_get_key = "date-to%02d" % consumer_unit_counter
-        electric_param_key = "electrical-parameter-name%02d" % consumer_unit_counter
-        report_name = ""
-        while request.GET.has_key(consumer_unit_get_key):
-            consumer_unit_id = request.GET[consumer_unit_get_key]
-            electric_data = request.GET[electric_param_key]
-            report_name += electric_data + "_"
-            print "date_start_get_key", date_start_get_key
-            if request.GET.has_key(date_start_get_key) and \
-                    request.GET.has_key(date_end_get_key):
-                datetime_start = datetime.datetime.strptime(
-                    request.GET[date_start_get_key],
-                    "%Y-%m-%d")
-                datetime_end = \
-                    datetime.datetime.strptime(request.GET[date_end_get_key],
-                                               "%Y-%m-%d") + \
-                    datetime.timedelta(days=1)
-
-            else:
-                datetime_start = get_default_datetime_start()
-                datetime_end = get_default_datetime_end() + datetime.timedelta(
-                    days=1)
-            #print "consumer_unit_counter" + str(consumer_unit_counter)
-            #print "datetime_start", datetime_start
-            #print "datetime_end", datetime_end
-            try:
-                consumer_unit = get_data_warehouse_consumer_unit_by_id(
-                    consumer_unit_id)
-
-            except DataWarehouseInformationRetrieveException as \
-                    consumer_unit_information_exception:
-                print str(consumer_unit_information_exception)
-                continue
-
-            if is_interval:
-                electric_data_csv_rows = \
-                    get_consumer_unit_electric_data_interval_csv(
-                        electric_data,
-                        granularity,
-                        consumer_unit,
-                        datetime_start,
-                        datetime_end)
-            else:
-                electric_data_csv_rows = get_consumer_unit_electric_data_csv(
-                    electric_data,
-                    granularity,
-                    consumer_unit,
-                    datetime_start,
-                    datetime_end)
-
-            data.extend(electric_data_csv_rows)
-            consumer_unit_counter += 1
-            consumer_unit_get_key = "consumer-unit%02d" % consumer_unit_counter
-            date_start_get_key = "date-from%02d" % consumer_unit_counter
-            date_end_get_key = "date-to%02d" % consumer_unit_counter
-            electric_param_key = "electrical-parameter-name%02d" % consumer_unit_counter
-
-        response = HttpResponse(mimetype='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="datos_' + \
-                                          report_name + '.csv"'
-        writer = csv.writer(response)
-        for data_item in data:
-            writer.writerow(data_item)
-
-        return response
-
-    else:
-        return Http404
-
-
-def render_cumulative_comparison_in_week(request):
-    if request.GET:
-        try:
-            electric_data = request.GET['electric-data']
-            if electric_data == 'TotalkWhIMPORT':
-                electric_data = "kWh"
-        except KeyError:
-            return HttpResponse("")
-        else:
-            consumer_unit_counter = 1
-            consumer_units_data_tuple_list = []
-            consumer_unit_get_key = "consumer-unit%02d" % consumer_unit_counter
-            year_get_key = "year%02d" % consumer_unit_counter
-            month_get_key = "month%02d" % consumer_unit_counter
-            week_get_key = "week%02d" % consumer_unit_counter
-            while request.GET.has_key(consumer_unit_get_key):
-                consumer_unit_id_current = request.GET[consumer_unit_get_key]
-                if request.GET.has_key(year_get_key) and \
-                        request.GET.has_key(month_get_key) and \
-                        request.GET.has_key(week_get_key):
-                    year_current = int(request.GET[year_get_key])
-                    month_current = int(request.GET[month_get_key])
-                    week_current = int(request.GET[week_get_key])
-                    start_datetime, end_datetime = variety. \
-                        get_week_start_datetime_end_datetime_tuple(
-                        year_current,
-                        month_current,
-                        week_current)
-
-                    try:
-                        consumer_unit_current = \
-                            ConsumerUnit.objects.get(
-                                pk=consumer_unit_id_current)
-
-                    except ConsumerUnit.DoesNotExist:
-                        return HttpResponse("")
-
-                    (electric_data_days_tuple_list,
-                     consumer_unit_electric_data_tuple_list_current) = \
-                        get_consumer_unit_week_report_cumulative(
-                            consumer_unit_current,
-                            year_current,
-                            month_current,
-                            week_current,
-                            electric_data)
-
-                    week_day_date = start_datetime.date()
-                    for index in range(0, 7):
-                        week_day_name, electric_data_value = \
-                            consumer_unit_electric_data_tuple_list_current[index]
-
-                        consumer_unit_electric_data_tuple_list_current[index] \
-                            = \
-                            (week_day_date, electric_data_value)
-
-                        week_day_date += datetime.timedelta(days=1)
-
-                    consumer_units_data_tuple_list.append(
-                        (consumer_unit_current,
-                         consumer_unit_electric_data_tuple_list_current))
-
-                    consumer_unit_counter += 1
-                    consumer_unit_get_key = "consumer-unit%02d" % \
-                                            consumer_unit_counter
-                    year_get_key = "year%02d" % consumer_unit_counter
-                    month_get_key = "month%02d" % consumer_unit_counter
-                    week_get_key = "week%02d" % consumer_unit_counter
-
-            week_days_data_tuple_list = [("Lunes", []),
-                                         ("Martes", []),
-                                         ("Miercoles", []),
-                                         ("Jueves", []),
-                                         ("Viernes", []),
-                                         ("Sabado", []),
-                                         ("Domingo", [])]
-
-            consumer_unit_electric_data_total_tuple_list = []
-            all_meditions = True
-            for consumer_unit, electric_data_tuple_list in \
-                consumer_units_data_tuple_list:
-
-                consumer_unit_total = \
-                    reduce(lambda x, y: x + y,
-                           [electric_data_value for
-                            week_day_date, electric_data_value in
-                            electric_data_tuple_list])
-
-                consumer_unit_electric_data_total_tuple_list.append(
-                    (consumer_unit, consumer_unit_total))
-
-                week_day_index = 0
-                for week_day_date, \
-                        electric_data_value in electric_data_tuple_list:
-                    electric_data_percentage = \
-                        0 if consumer_unit_total == 0 else \
-                            electric_data_value / \
-                            consumer_unit_total \
-                            * 100
-
-                    week_days_data_tuple_list[week_day_index][1].append(
-                        (consumer_unit,
-                         week_day_date,
-                         electric_data_value,
-                         electric_data_percentage))
-                    if not electric_data_percentage:
-                        all_meditions = False
-                    week_day_index += 1
-
-            template_variables = dict()
-            template_variables["week_days_data_tuple_list"] = \
-                week_days_data_tuple_list
-
-            template_variables['all_meditions'] = all_meditions
-            template_variables["consumer_unit_electric_data_total_tuple_list"] \
-                = consumer_unit_electric_data_total_tuple_list
-
-            template_context = RequestContext(request, template_variables)
-            return render_to_response(
-                'consumption_centers/graphs/week_comparison.html',
-                template_context)
-    else:
-        return Http404
-
-
 @login_required(login_url='/')
 def add_building_attr(request):
     datacontext = get_buildings_context(request.user)[0]
     if has_permission(request.user, CREATE, "Alta de atributos de edificios") \
         or request.user.is_superuser:
-        empresa = request.session['main_building']
+
         company = request.session['company']
         _type = ""
         message = ""
@@ -1229,7 +998,7 @@ def editar_b_attr(request, id_b_attr):
     if has_permission(request.user, VIEW, "Ver atributos de edificios") or \
             request.user.is_superuser:
         b_attr = get_object_or_404(BuildingAttributes, pk=id_b_attr)
-        empresa = request.session['main_building']
+
         company = request.session['company']
         if b_attr.building_attributes_value_boolean:
             _bool = "1"
@@ -1314,7 +1083,7 @@ def ver_b_attr(request, id_b_attr):
     if has_permission(request.user, VIEW, "Ver atributos de edificios") or \
             request.user.is_superuser:
         b_attr = get_object_or_404(BuildingAttributes, pk=id_b_attr)
-        empresa = request.session['main_building']
+
         company = request.session['company']
         if b_attr.building_attributes_value_boolean:
             _bool = "1"
@@ -1392,7 +1161,7 @@ def add_cluster(request):
     datacontext = get_buildings_context(request.user)[0]
     if has_permission(request.user, CREATE, "Alta de grupos de empresas") or \
             request.user.is_superuser:
-        empresa = request.session['main_building']
+
         message = ''
         _type = ''
         #Se obtienen los sectores
@@ -1479,7 +1248,7 @@ def view_cluster(request):
     datacontext = get_buildings_context(request.user)[0]
     if has_permission(request.user, VIEW, "Ver grupos de empresas") or \
             request.user.is_superuser:
-        empresa = request.session['main_building']
+
         if "search" in request.GET:
             search = request.GET["search"]
         else:
@@ -1641,7 +1410,7 @@ def edit_cluster(request, id_cluster):
                 'clustersector': cluster.sectoral_type.pk}
 
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
+
         message = ''
         _type = ''
 
@@ -1723,7 +1492,7 @@ def see_cluster(request, id_cluster):
     datacontext = get_buildings_context(request.user)[0]
     if has_permission(request.user, VIEW, "Ver grupos de empresas") or \
             request.user.is_superuser:
-        empresa = request.session['main_building']
+
 
         cluster = Cluster.objects.get(pk=id_cluster)
         cluster_companies = ClusterCompany.objects.filter(cluster__pk=id_cluster)
@@ -1758,7 +1527,7 @@ def add_powermetermodel(request):
                       CREATE,
                       "Alta de modelos de medidores eléctricos") \
         or request.user.is_superuser:
-        empresa = request.session['main_building']
+
 
         template_vars = dict(datacontext=datacontext,
                              company=request.session['company'],
@@ -1855,7 +1624,7 @@ def edit_powermetermodel(request, id_powermetermodel):
                 'pw_model': powermetermodel.powermeter_model}
 
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
+
         message = ''
         _type = ''
 
@@ -1939,7 +1708,7 @@ def view_powermetermodels(request):
     if has_permission(request.user, VIEW,
                       "Ver modelos de medidores eléctricos") or \
             request.user.is_superuser:
-        empresa = request.session['main_building']
+
         company = request.session['company']
         if "search" in request.GET:
             search = request.GET["search"]
@@ -2089,7 +1858,7 @@ def add_powermeter(request):
     datacontext = get_buildings_context(request.user)[0]
     if has_permission(request.user, CREATE,
                       "Alta de medidor electrico") or request.user.is_superuser:
-        empresa = request.session['main_building']
+
         post = ''
         pw_models_list = PowermeterModel.objects.all().exclude(
             status=0).order_by("powermeter_brand")
@@ -2198,7 +1967,7 @@ def edit_powermeter(request, id_powermeter):
                 'pw_model': powermeter.powermeter_model.pk,
                 'pw_serial': powermeter.powermeter_serial}
 
-        empresa = request.session['main_building']
+
         message = ''
         _type = ''
 
@@ -2298,7 +2067,7 @@ def view_powermeter(request):
     datacontext = get_buildings_context(request.user)[0]
     if has_permission(request.user, VIEW,
                       "Ver medidores eléctricos") or request.user.is_superuser:
-        empresa = request.session['main_building']
+
         if "search" in request.GET:
             search = request.GET["search"]
         else:
@@ -2497,7 +2266,7 @@ def see_powermeter(request, id_powermeter):
     if has_permission(request.user, VIEW,
                       "Ver medidores eléctricos") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
+
 
         location = ''
         powermeter = Powermeter.objects.get(pk=id_powermeter)
@@ -2542,7 +2311,7 @@ def add_electric_device_type(request):
                       "Alta de dispositivos y sistemas eléctricos") or \
             request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
+
         post = ''
 
         template_vars = dict(datacontext=datacontext,
@@ -2630,7 +2399,7 @@ def edit_electric_device_type(request, id_edt):
                 'devicetypedescription': devicetypedescription}
 
         datacontext, b_list = get_buildings_context(request.user)
-        empresa = request.session['main_building']
+
         message = ''
         _type = ''
 
@@ -2709,7 +2478,7 @@ def view_electric_device_type(request):
                       "Ver dispositivos y sistemas eléctricos") or \
             request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
+
         if "search" in request.GET:
             search = request.GET["search"]
         else:
@@ -2902,7 +2671,7 @@ def add_company(request):
     if has_permission(request.user, CREATE,
                       "Alta de empresas") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
+
         post = ''
         message = ''
         _type = ''
@@ -2934,7 +2703,7 @@ def add_company(request):
                 message = "El nombre de la empresa no puede quedar vacío"
                 _type = "n_notif"
                 continuar = False
-            elif not variety.validate_string(cmp_name):
+            elif not variety.validate_string(str(cmp_name)):
                 message = "El nombre de la empresa contiene caracteres " \
                           "inválidos"
                 _type = "n_notif"
@@ -3035,7 +2804,7 @@ def edit_company(request, id_cpy):
         sectors = SectoralType.objects.filter(sectoral_type_status=1)
 
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
+
         message = ''
         _type = ''
 
@@ -3145,7 +2914,7 @@ def view_companies(request):
     if has_permission(request.user, VIEW,
                       "Ver empresas") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
+
         if "search" in request.GET:
             search = request.GET["search"]
         else:
@@ -3312,7 +3081,7 @@ def see_company(request, id_cpy):
     if has_permission(request.user, VIEW,
                       "Ver empresas") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
+
 
         company_cluster_objs = ClusterCompany.objects.filter(company__pk=id_cpy)
         company = company_cluster_objs[0]
@@ -3401,8 +3170,8 @@ def add_buildingtype(request):
                       "Alta de tipos de edificios") or \
             request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
-        company = request.session['company']
+
+
         post = ''
         message = ""
         _type = ""
@@ -3484,8 +3253,7 @@ def edit_buildingtype(request, id_btype):
                 'btype_description': building_type.building_type_description}
 
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
-        company = request.session['company']
+
         message = ''
         _type = ''
 
@@ -3558,8 +3326,6 @@ def view_buildingtypes(request):
     if has_permission(request.user, VIEW,
                       "Ver tipos de edificios") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
-        company = request.session['company']
 
         if "search" in request.GET:
             search = request.GET["search"]
@@ -3721,8 +3487,6 @@ def add_sectoraltype(request):
     if has_permission(request.user, CREATE,
                       "Alta de tipos sectores") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
-        company = request.session['company']
         post = ''
 
         template_vars = dict(datacontext=datacontext,
@@ -3806,8 +3570,7 @@ def edit_sectoraltype(request, id_stype):
                 'stype_description': sectoral_type.sectoral_type_description}
 
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
-        company = request.session['company']
+
         message = ''
         _type = ''
 
@@ -3881,8 +3644,6 @@ def view_sectoraltypes(request):
     if has_permission(request.user, VIEW,
                       "Ver tipos de sectores") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
-        company = request.session['company']
 
         if "search" in request.GET:
             search = request.GET["search"]
@@ -4044,8 +3805,6 @@ def add_b_attributes_type(request):
                       "Alta de tipos de atributos de edificios") or \
             request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
-        company = request.session['company']
         post = ''
 
         template_vars = dict(datacontext=datacontext,
@@ -4132,7 +3891,7 @@ def edit_b_attributes_type(request, id_batype):
                 'batype_description': batype_description}
 
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
+
         company = request.session['company']
         message = ''
         _type = ''
@@ -4210,8 +3969,6 @@ def view_b_attributes_type(request):
     if has_permission(request.user, VIEW,
                       "Ver tipos de atributos") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
-        company = request.session['company']
 
         if "search" in request.GET:
             search = request.GET["search"]
@@ -4367,7 +4124,6 @@ def add_partbuildingtype(request):
             CREATE,
             "Alta de tipos de partes de edificio") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
         company = request.session['company']
         post = ''
 
@@ -4459,7 +4215,6 @@ def edit_partbuildingtype(request, id_pbtype):
             'b_part_type_description': b_p_t_desc}
 
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
         company = request.session['company']
         message = ''
         _type = ''
@@ -4539,8 +4294,6 @@ def view_partbuildingtype(request):
             VIEW,
             "Ver tipos de partes de un edificio") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
-        company = request.session['company']
 
         if "search" in request.GET:
             search = request.GET["search"]
@@ -4710,7 +4463,7 @@ def add_partbuilding(request):
                       "Alta de partes de edificio") or \
             request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
+
         company = request.session['company']
         post = ''
 
@@ -4921,7 +4674,7 @@ def edit_partbuilding(request, id_bpart):
                 'b_part_attributes': string_attributes}
 
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
+
         company = request.session['company']
         message = ''
         _type = ''
@@ -5052,7 +4805,7 @@ def view_partbuilding(request):
     if has_permission(request.user, VIEW,
                       "Ver partes de un edificio") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
+
         company = request.session['company']
 
         if "search" in request.GET:
@@ -5273,7 +5026,7 @@ def add_building(request):
     if has_permission(request.user, CREATE,
                       "Alta de edificios") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
+
         company = request.session['company']
         post = ''
         message = ''
@@ -5590,7 +5343,7 @@ def edit_building(request, id_bld):
     if has_permission(request.user, UPDATE,
                       "Modificar edificios") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
+
         company = request.session['company']
         message = ''
         _type = ''
@@ -6059,8 +5812,6 @@ def view_building(request):
     if has_permission(request.user, VIEW,
                       "Ver edificios") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
-        empresa = request.session['main_building']
-        company = request.session['company']
 
         if "search" in request.GET:
             search = request.GET["search"]
@@ -7181,7 +6932,7 @@ def add_cu(request):
 def del_cu(request, id_cu):
     if (has_permission(request.user, DELETE,"Eliminar unidades de consumo") or\
         has_permission(request.user, UPDATE,"Modificar unidades de consumo")\
-        or request.user.is_superuser):
+            or request.user.is_superuser):
         cu = get_object_or_404(ConsumerUnit, pk=int(id_cu))
         HierarchyOfPart.objects.filter(consumer_unit_composite=cu).delete()
         HierarchyOfPart.objects.filter(consumer_unit_leaf=cu).delete()
@@ -7424,7 +7175,7 @@ def reset_hierarchy(request):
             param = ElectricParameters.objects.all()[0]
             if cu.profile_powermeter.powermeter.powermeter_anotation != \
                     "Medidor Virtual":
-                alarm_cu = Alarms.objects.get_or_create(
+                Alarms.objects.get_or_create(
                     alarm_identifier="Interrupción de Datos",
                     electric_parameter=param,
                     consumer_unit=cu)
@@ -7517,11 +7268,11 @@ def view_cutdates(request):
             mCutDateObj['pk'] = lst.pk
 
             if tipo_tarifa.pk == 1:
-                historico = HMHistoricData.objects.filter(monthly_cut_dates = lst )
+                historico = HMHistoricData.objects.filter(monthly_cut_dates=lst)
             elif tipo_tarifa.pk == 2:
-                historico = DacHistoricData.objects.filter(monthly_cut_dates = lst )
+                historico = DacHistoricData.objects.filter(monthly_cut_dates=lst)
             elif tipo_tarifa.pk == 3:
-                historico = T3HistoricData.objects.filter(monthly_cut_dates = lst )
+                historico = T3HistoricData.objects.filter(monthly_cut_dates=lst)
 
             if historico:
                 mCutDateObj['historico'] = True
@@ -8010,151 +7761,6 @@ def obtenerHistorico_r(actual_month_arr):
         ind -= 1
 
     return arr_historico
-
-
-# noinspection PyArgumentList
-@login_required(login_url='/')
-def cfe_desglose(request):
-    datacontext = get_buildings_context(request.user)[0]
-    if has_permission(request.user, VIEW,
-                      "Consultar recibo CFE") or request.user.is_superuser:
-        set_default_session_vars(request, datacontext)
-
-        today = datetime.datetime.today().replace(
-            hour=0, minute=0, second=0, tzinfo=timezone.get_current_timezone())
-        month = int(today.month)
-        year = int(today.year)
-        dict(one=1, two=2)
-        month_list = {1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
-                      5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
-                      9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre',
-                      12: 'Diciembre'}
-        year_list = {2010: 2010, 2011: 2011, 2012: 2012, 2013: 2013}
-
-        template_vars = {"type": "cfe", "datacontext": datacontext,
-                         'empresa': request.session['main_building'],
-                         'month': month, 'year': year, 'month_list': month_list,
-                         'year_list': year_list,
-                         'sidebar': request.session['sidebar']
-        }
-
-        template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("consumption_centers/cfe_desglose.html",
-                                  template_vars_template)
-    else:
-        return render_to_response("generic_error.html",
-                                  RequestContext(request,
-                                                 {"datacontext": datacontext}))
-
-
-# noinspection PyArgumentList
-@login_required(login_url='/')
-def cfe_desglose_calcs(request):
-    """Estoy en los calculos del desglose
-    Renders the cfe bill and the historic data chart
-    """
-    datacontext = get_buildings_context(request.user)[0]
-    if has_permission(request.user, VIEW,
-                      "Consultar recibo CFE") or request.user.is_superuser:
-        if not request.session['consumer_unit']:
-            return HttpResponse(
-                content=MSG_PERMIT_ERROR)
-
-        set_default_session_vars(request, datacontext)
-
-        template_vars = {"type": "cfe", "datacontext": datacontext,
-                         'empresa': request.session['main_building']
-        }
-
-        kwh_netos = 0
-        kvarh_netos = 0
-        demanda_max = 0
-        demanda_min = 1000000
-
-        if request.method == "GET":
-            s_date_str = request.GET['init_d']
-            e_date_str = request.GET['end_d']
-
-            s_date = datetime.datetime.strptime(s_date_str, "%Y-%m-%d")
-            e_date = datetime.datetime.strptime(e_date_str, "%Y-%m-%d")
-
-            #print "s_date", s_date
-            #print "e_date", e_date
-
-            #Se obtiene el edificio
-            building = request.session['main_building']
-
-            #Se obtiene la tarifa del edificio
-            # electric_rate = building.electric_rate_id
-
-            #Se obtiene el medidor padre del edificio
-            main_cu = ConsumerUnit.objects.get(
-                building=building,
-                electric_device_type__electric_device_type_name=
-                "Total Edificio")
-            #Se obtienen todos los medidores necesarios
-            consumer_units = get_consumer_units(main_cu)
-
-            if consumer_units:
-                for c_unit in consumer_units:
-                    pr_powermeter = c_unit.profile_powermeter.powermeter
-
-                    #Se obtienen los KW, para obtener la demanda maxima
-                    lecturas_totales = ElectricRateForElectricData.objects.\
-                        filter(
-                            electric_data__profile_powermeter__powermeter__pk=
-                            pr_powermeter.pk
-                        ).filter(
-                            electric_data__medition_date__range=(s_date, e_date)
-                        ).order_by('electric_data__medition_date')
-                    kw_t = obtenerDemanda_kw(lecturas_totales)
-                    kw_mt = obtenerDemandaMin_kw(lecturas_totales)
-
-                    if kw_t > demanda_max:
-                        demanda_max = kw_t
-
-                    if kw_mt < demanda_min:
-                        demanda_min = kw_mt
-
-                    #Se obtienen los kwh de ese periodo de tiempo.
-                    kwh_lecturas = ElectricDataTemp.objects.filter(
-                        profile_powermeter=pr_powermeter,
-                        medition_date__range=(s_date, e_date)
-                    ).order_by('medition_date')
-                    total_lecturas = len(kwh_lecturas)
-
-                    if kwh_lecturas:
-                        kwh_inicial = kwh_lecturas[0].TotalkWhIMPORT
-                        kwh_final = kwh_lecturas[total_lecturas - 1].\
-                            TotalkWhIMPORT
-
-                        kwh_netos += int(ceil(kwh_final - kwh_inicial))
-
-                    #Se obtienen los kvarhs por medidor
-                    kvarh_netos += obtenerKVARH_total(pr_powermeter, s_date,
-                                                      e_date)
-
-            #Factor de Potencia
-            factor_potencia_total = factorpotencia(kwh_netos, kvarh_netos)
-
-            resultado = dict(kwh=kwh_netos, kvarh=kvarh_netos,
-                             dem_max=demanda_max, dem_min=demanda_min,
-                             fpotencia=factor_potencia_total)
-
-            template_vars['resultados'] = resultado
-            template_vars_template = RequestContext(request, template_vars)
-            return render_to_response(
-                "consumption_centers/graphs/desglose.html",
-                template_vars_template)
-        else:
-            raise Http404
-    else:
-        template_vars = {}
-        if datacontext:
-            template_vars = {"datacontext": datacontext}
-        template_vars["sidebar"] = request.session['sidebar']
-        template_vars_template = RequestContext(request, template_vars)
-        return render_to_response("generic_error.html", template_vars_template)
 
 
 @login_required(login_url='/')
@@ -9488,10 +9094,6 @@ def view_tags(request):
     datacontext = get_buildings_context(request.user)[0]
     if request.user.is_superuser:
         empresa = request.session['main_building']
-        post = ''
-
-        message = ""
-        _type = ""
 
         #Se obtiene el dia actual
         today = datetime.datetime.now()
@@ -9547,12 +9149,14 @@ def view_tags(request):
                     electric_data__medition_date__lt = s_date+dia
                 ).order_by('electric_data__medition_date')
 
-
                 arr_tags = []
 
                 for tg in tags:
                     ar_val = []
-                    ar_val.append(tg.electric_data.medition_date.astimezone(timezone.get_current_timezone()).strftime('%d-%m-%Y %H:%M'))
+                    ar_val.append(
+                        tg.electric_data.medition_date.astimezone(
+                            timezone.get_current_timezone()).strftime(
+                                '%d-%m-%Y %H:%M'))
                     ar_val.append(tg.electric_rates_periods.period_type)
                     ar_val.append(tg.identifier)
                     arr_tags.append(ar_val)
@@ -9583,7 +9187,6 @@ def view_tags(request):
 def retag_ajax(request):
     if "s_date" in request.GET and "e_date" in request.GET:
         consumer_unit = request.session['consumer_unit']
-        profile_powermeter = consumer_unit.profile_powermeter
 
         init_str = request.GET['s_date']
         end_str = request.GET['e_date']
@@ -9692,8 +9295,7 @@ def add_cluster_pop(request):
     if has_permission(request.user, CREATE, "Alta de grupos de empresas") or \
             request.user.is_superuser:
         empresa = request.session['main_building']
-        message = ''
-        _type = ''
+
         #Se obtienen los sectores
         sectores = SectoralType.objects.filter(sectoral_type_status=1)
         template_vars = dict(datacontext=datacontext,
@@ -10210,8 +9812,9 @@ def save_add_building_popup(request):
 
         template_vars["post"] = post
 
-        return HttpResponse(content=simplejson.dumps(template_vars),
-                        content_type="application/json", status=200)
+        return HttpResponse(
+            content=simplejson.dumps(template_vars),
+            content_type="application/json", status=200)
     else:
         raise Http404
 

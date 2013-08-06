@@ -34,8 +34,6 @@ urlpatterns = patterns('',
     url(r'^configuracion/', include(alarms_urls)),
     url(r'^electric_rates/', include(electric_rates_urls)),
     url(r'^set_timezone/', 'cidec_sw.views.set_timezone', name="set_timezone"),
-    # Url used for prototypes
-    url(r'^prototype/', 'data_warehouse.prototype.render_prototype'),
 
     url(r'^reportes_extendidos/', 'reports.views.render_instant_measurements'),
     url(r'^consumido_por_mes/',

@@ -86,7 +86,7 @@
                     var start_date_g = new Date("{{ fi|date:"F d, Y" }}");
                     var end_date_g = new Date("{{ ff|date:"F d, Y" }}");
                     if(datos[0].pf1 != undefined){
-                        controlChartViewColumns=[0,1,2]
+                        controlChartViewColumns = [0, 1, 2];
                         chartViewColumns=[
                             {
                                 'calc': function(dataTable, rowIndex) {

@@ -274,13 +274,13 @@ iframe{
     background-image: url(../images/spinner.gif);
     background-size: 200px;
     background-repeat: no-repeat;
-    background-position: 50% 0%;
+    background-position: 50% 0;
 }
 
 .rates_spinner{
     background-image: url(../images/white-loader.gif);
     background-repeat: no-repeat;
-    background-position: 50% 0%;
+    background-position: 50% 0;
 }
 
 #date_cutdates{
@@ -324,7 +324,7 @@ iframe{
 }
 
 #corte_input{
-    padding: 10px 0px;
+    padding: 10px 0;
 }
 
 #corte_calendarios{
@@ -332,7 +332,7 @@ iframe{
 }
 
 #corte_selects{
-    padding: 15px 0px;
+    padding: 15px 0;
 }
 
 #recolector

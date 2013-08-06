@@ -142,7 +142,7 @@
 
         $(function() {
             var perm ="Alta de partes de edificio";
-            perm = encodeURIComponent(perm)
+            perm = encodeURIComponent(perm);
             $( "#b_building_name" ).autocomplete({
                 source: "/buildings/search_buildings/?perm="+perm+"&op=create",
                 minLength: 2,

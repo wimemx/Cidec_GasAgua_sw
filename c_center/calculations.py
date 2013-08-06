@@ -13,7 +13,6 @@ from calendar import monthrange
 #related third party imports
 from django.http import *
 from django.db.models.aggregates import *
-from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
@@ -28,26 +27,51 @@ HOLYDAYS = None
 
 
 def consumoAcumuladoKWH(consumer, fecha_inicio, fecha_fin):
+    """ Gets the sum of the daily kWh in an interval
+
+    :param consumer: ConsumerUnit Object
+    :param fecha_inicio: Datetime
+    :param fecha_fin: Datetime
+    :return: the sum of the daily kWh for the interval
+    """
     suma_lecturas = 0
-    lecturas = DailyData.objects.filter(consumer_unit=consumer,
+    lecturas = DailyData.objects.filter(
+        consumer_unit=consumer,
         data_day__gte=fecha_inicio,
         data_day__lte=fecha_fin).aggregate(
-        Sum('KWH_total'))
+            Sum('KWH_total'))
     if lecturas:
         suma_lecturas = lecturas['KWH_total__sum']
     return suma_lecturas
 
+
 def kvarhDiariosPeriodo(consumer, fecha_inicio, fecha_fin):
+    """ Gets the sum of the daily kVArh in an interval
+
+    :param consumer: ConsumerUnit Object
+    :param fecha_inicio: Datetime
+    :param fecha_fin: Datetime
+    :return: the sum of the daily kVArh for the interval
+    """
     kvarh = 0
-    lecturas = DailyData.objects.filter(consumer_unit=consumer,
-                data_day__gte=fecha_inicio,
-                data_day__lte=fecha_fin).aggregate(
-                Sum('KVARH'))
+    lecturas = DailyData.objects.filter(
+        consumer_unit=consumer,
+        data_day__gte=fecha_inicio,
+        data_day__lte=fecha_fin).aggregate(
+            Sum('KVARH'))
     if lecturas:
         kvarh = lecturas['KVARH__sum']
     return kvarh
 
+
 def demandaMaxima(consumer, fecha_inicio, fecha_fin):
+    """ Gets the max demand in a given interval
+
+    :param consumer: ConsumerUnit object
+    :param fecha_inicio: datetime
+    :param fecha_fin: datetime
+    :return: the max demand
+    """
     demanda_max = 0
     lecturas = DailyData.objects.filter(consumer_unit=consumer,
         data_day__gte=fecha_inicio,
@@ -58,6 +82,13 @@ def demandaMaxima(consumer, fecha_inicio, fecha_fin):
 
 
 def demandaMinima(consumer, fecha_inicio, fecha_fin):
+    """ Gets the min demand in a given interval
+
+    :param consumer: ConsumerUnit object
+    :param fecha_inicio: datetime
+    :param fecha_fin: datetime
+    :return: the min demand
+    """
     demanda_min = 0
     lecturas = DailyData.objects.filter(
         consumer_unit=consumer,
@@ -69,6 +100,13 @@ def demandaMinima(consumer, fecha_inicio, fecha_fin):
 
 
 def promedioKW(consumer, fecha_inicio, fecha_fin):
+    """ Gets the average demand in a given interval
+
+    :param consumer: ConsumerUnit object
+    :param fecha_inicio: datetime
+    :param fecha_fin: datetime
+    :return: average kW
+    """
     suma_lecturas = ElectricDataTemp.objects.filter(
         profile_powermeter=consumer.profile_powermeter,
         medition_date__gte=fecha_inicio,
@@ -82,7 +120,7 @@ def max_minKWH(consumer, fecha_inicio, fecha_fin, min_max):
     :param fecha_inicio: datetime|date initial date
     :param fecha_fin: datetime|date final date
     :param min_max: string "min" to return the min TotalkWhIMPORT value
-    :return:
+    :return: value
     """
     if min_max == "min":
         order = "KWH_total"
@@ -100,6 +138,13 @@ def max_minKWH(consumer, fecha_inicio, fecha_fin, min_max):
 
 
 def promedioKWH(consumer, fecha_inicio, fecha_fin):
+    """Gets the average kWh between dates
+
+    :param consumer: ConsumerUnit object
+    :param fecha_inicio: Date
+    :param fecha_fin: Date
+    :return: KWH_total__avg
+    """
     suma_lecturas = DailyData.objects.filter(
         consumer_unit=consumer,
         data_day__gte=fecha_inicio,
@@ -108,9 +153,17 @@ def promedioKWH(consumer, fecha_inicio, fecha_fin):
 
 
 def desviacionStandardKWH(consumer, fecha_inicio, fecha_fin):
+    """Returns the standard deviation for the kWh
+
+    :param consumer: ConsumerUnit object
+    :param fecha_inicio: date
+    :param fecha_fin: date
+    :return: float standard deviation
+    """
     suma = 0
     desviacion = 0
-    lecturas = DailyData.objects.filter(consumer_unit=consumer,
+    lecturas = DailyData.objects.filter(
+        consumer_unit=consumer,
         data_day__gte=fecha_inicio,
         data_day__lte=fecha_fin)
     if lecturas:
@@ -125,11 +178,18 @@ def desviacionStandardKWH(consumer, fecha_inicio, fecha_fin):
 
 
 def medianaKWH(consumer, fecha_inicio, fecha_fin):
+    """Gets and returns the kWh median in a period of time
+
+    :param consumer: ConsumerUnit
+    :param fecha_inicio: Date
+    :param fecha_fin: Date
+    :return: kWh median
+    """
     mediana = 0
-    lecturas = DailyData.objects.filter(consumer_unit=consumer,
+    lecturas = DailyData.objects.filter(
+        consumer_unit=consumer,
         data_day__gte=fecha_inicio,
-        data_day__lte=fecha_fin).order_by(
-        'KWH_total')
+        data_day__lte=fecha_fin).order_by('KWH_total')
     if lecturas:
         longitud = len(lecturas)
         if longitud % 2 is 0:
@@ -143,6 +203,15 @@ def medianaKWH(consumer, fecha_inicio, fecha_fin):
 
 
 def demandafacturable(kwbase, kwintermedio, kwpunta, fri, frb):
+    """
+
+    :param kwbase:
+    :param kwintermedio:
+    :param kwpunta:
+    :param fri:
+    :param frb:
+    :return:
+    """
     primermax = kwintermedio - kwpunta
     if primermax < 0:
         primermax = 0
@@ -208,7 +277,10 @@ def obtenerTotal(c_subtotal, iva):
 
 def factorpotencia(kwh, kvarh):
     fp = 0
-
+    if kwh is None:
+        kwh = 0
+    if kvarh is None:
+        kvarh = 0
     if kwh != 0 or kvarh != 0:
         square_kwh = Decimal(str(pow(kwh, 2)))
         square_kvarh = Decimal(str(pow(kvarh, 2)))

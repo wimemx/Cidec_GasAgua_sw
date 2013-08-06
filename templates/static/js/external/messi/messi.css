@@ -54,8 +54,8 @@
   background-image: -webkit-linear-gradient(bottom, #3b3b3b 25%, #575757 75%);
   background-image: -ms-linear-gradient(bottom, #3b3b3b 25%, #575757 75%);
   */
-  -webkit-border-radius: 5px 5px 0 0px;
-          border-radius: 5px 5px 0 0px;
+  -webkit-border-radius: 5px 5px 0 0;
+          border-radius: 5px 5px 0 0;
   -moz-border-radius-topright: 5px;
   -moz-border-radius-bottomright: 0;
   -moz-border-radius-bottomleft: 0;

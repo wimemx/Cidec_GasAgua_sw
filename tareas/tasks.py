@@ -29,8 +29,6 @@ from c_center.c_center_functions import save_historic, dailyReportAll, \
 from c_center.calculations import daytag_period_allProfilePowermeters, \
     daytag_period
 
-from reports.reports_functions import insert_data_Graph_To_Model
-
 from tareas.models import *
 
 

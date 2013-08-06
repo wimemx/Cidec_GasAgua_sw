@@ -72,7 +72,6 @@
             url: "/buildings/reset_hierarchy/",
             data: {csrfmiddlewaretoken: "{{ csrf_token }}", building:"{{ building.pk }}"},
             success: function(){
-                console.log("reset_hierarchy")
                 ul_lista.find("li:not(.temp)").each(function(){
                     var li = $(this);
                     var $this_cu = li.find("a:eq(0)").attr("rel");
