@@ -633,6 +633,7 @@ def set_default_session_vars(request, datacontext):
         request.session['consumer_unit'] = None
 
     if 'main_building' not in request.session:
+        #sets the default building (the first in DataContextPermission)
         try:
             building = Building.objects.get(pk=datacontext[0]['building_pk'])
             request.session['main_building'] = building
@@ -3449,12 +3450,10 @@ def crawler_get_municipalities():
                                 '\t', '').strip() == 'Nombre del Municipio':
                         renglones_tarifa = tabla.find_all('tr')
                         del renglones_tarifa[0]
-                        print "Estado:", safe_name
-                        print len(renglones_tarifa)
+
                         cont_total += len(renglones_tarifa)
                         for chld in renglones_tarifa:
                             tds = chld.find_all('td')
-                            print tds[1].find(text=True).encode('UTF-8')
 
                             mun = Municipio(
                                 municipio_name=tds[1].find(
@@ -3469,7 +3468,6 @@ def crawler_get_municipalities():
                             )
                             estado_mun.save()
 
-                        print "------------------"
                     else:
                         continue
     print "Total: ", cont_total

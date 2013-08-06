@@ -403,8 +403,6 @@ def cfe_calculations(request):
         template_vars = dict(type="cfe", datacontext=datacontext,
                              empresa=request.session['main_building'])
 
-        #print "Edifico", request.session['main_building']
-
         if request.GET:
             month = int(request.GET['month'])
             year = int(request.GET['year'])
@@ -424,22 +422,16 @@ def cfe_calculations(request):
         tipo_tarifa = request.session['main_building'].electric_rate
 
         if tipo_tarifa.pk == 1:
-        #Tarifa HM
-            #print "Historico HM"
             cfe_historico = HMHistoricData.objects.filter(
                 monthly_cut_dates__building=request.session['main_building']
             ).filter(
                 monthly_cut_dates__billing_month=billing_month)
         elif tipo_tarifa.pk == 2:
-        #Tarifa DAC
-            #print "Historico DAC"
             cfe_historico = DacHistoricData.objects.filter(
                 monthly_cut_dates__building=request.session['main_building']
             ).filter(
                 monthly_cut_dates__billing_month=billing_month)
         else:
-            #print "Historico T3"
-            #if tipo_tarifa.pk == 3: #Tarifa 3
             cfe_historico = T3HistoricData.objects.filter(
                 monthly_cut_dates__building=request.session['main_building']
             ).filter(
@@ -565,9 +557,7 @@ def cfe_calculations(request):
         #si no, hace el calculo al momento. NOTA: Se hace el calculo,
         # pero no se guarda
             #Se obtiene la fecha inicial y la fecha final
-            #print "Se calcula el recibe"
             building = request.session['main_building']
-            #print "Edificio", building
             hasDates = inMonthlyCutdates(building, month, year)
             if hasDates:
                 s_date, e_date = getStartEndDateUTC(building, month, year)
@@ -639,18 +629,15 @@ def cfe_calculations(request):
 
             #Se general el recibo.
             if tipo_tarifa.pk == 1: #Tarifa HM
-                #print "Calculo Tarifa HM"
                 resultado_mensual = tarifaHM_2(request.session['main_building'],
                                                s_date, e_date, month, year)
 
             elif tipo_tarifa.pk == 2: #Tarifa DAC
-                #print "Calculo Tarifa DAC"
                 resultado_mensual = tarifaDAC_2(
                     request.session['main_building'], s_date, e_date, month,
                     year)
 
             elif tipo_tarifa.pk == 3: #Tarifa 3
-                #print "Calculo Tarifa 3"
                 resultado_mensual = tarifa_3(
                     request.session['main_building'], s_date, e_date, month,
                     year)
@@ -815,8 +802,6 @@ def add_building_attr(request):
                     valid = False
                     template_vars['message'] = \
                         "Por favor solo ingrese caracteres v&aacute;lidos"
-            print "booleano"
-            print int(template_vars['post']['value_boolean'])
             if int(template_vars['post']['value_boolean']) == 1:
                 _bool = True
                 unidades = template_vars['post']['unidades']
@@ -2274,10 +2259,8 @@ def see_powermeter(request, id_powermeter):
             powermeter=powermeter).filter(profile_powermeter_status=1)
         if profile_powermeter_objs:
             profile = profile_powermeter_objs[0]
-            print profile
             consumer_unit_objs = ConsumerUnit.objects.filter(
                 profile_powermeter=profile)
-            print consumer_unit_objs
             c_unit = consumer_unit_objs[0]
             location = c_unit.building.building_name
 
@@ -4234,7 +4217,6 @@ def edit_partbuildingtype(request, id_pbtype):
             #Valida el nombre (para el caso de los repetidos)
             if building_part_type.part_of_building_type_name != \
                     b_part_type_name:
-                print "entro"
                 #Valida por si le da muchos clics al boton
                 partTypeValidate = PartOfBuildingType.objects.filter(
                     part_of_building_type_name=b_part_type_name)
@@ -8779,7 +8761,6 @@ def billing_cost_analisis(request):
                                 date_init__month = mes, date_init__year = year_02
                             ).order_by('date_interval')
 
-                            print "y2", year_02_data
 
                             if year_02_data:
                                 datos_monthrate['m_rate_02'] = year_02_data[0].month_rate

@@ -20,10 +20,8 @@ UPDATE = Operation.objects.get(operation_name="Modificar")
 
 def check_roles_permission(object_name):
     """ Check the roles that have an allowed operation over an object
-
-    object_name = string, the name of the object
-    returns an array with a dict with keys: role and operation
-
+    :param object_name: string, the name of the object
+    :return an array with a dict with keys: role and operation
     """
     permissions = PermissionAsigment.objects.filter(
         object__object_name=object_name)
@@ -37,12 +35,10 @@ def check_roles_permission(object_name):
 def has_permission(user, operation, object_name):
     """ Checks if a user has certain permission over an object
 
-    user.- django auth user object
-    operation.- rbac operation object
-    object_name.- string, the name of the subject
-
-    returns True if the user has permission, False if not
-
+    :param user: django auth user object
+    :param operation:  rbac opearion object
+    :param object_name: string, the name of the subject
+    :return Boolean, true if the user has permission, False if not
     """
     user_role = UserRole.objects.filter(user=user,
                                         role__status=True).exclude(status=False)
@@ -57,9 +53,11 @@ def has_permission(user, operation, object_name):
 
 def get_all_clusters_for_operation(operation, permission, user):
     """returns a list of clusters in wich the user has certain permission
-    operation.- Operation instance
-    permission.- Object name
-    user.- django.contrib.auth.models.User instance
+
+    :param operation: Operation instance
+    :param permission: Object name
+    :param user: django contrib.auth.models.User instance
+    :return a list of cluster in which the user has certain permission
     """
     if user.is_superuser:
         return Cluster.objects.filter(cluster_status=1)
@@ -80,10 +78,12 @@ def get_all_clusters_for_operation(operation, permission, user):
 
 
 def get_all_companies_for_operation(operation, permission, user):
-    """returns a list of clusters in wich the user has certain permission
-    operation.- Operation instance
-    permission.- Object name
-    user.- django.contrib.auth.models.User instance
+    """returns a list of clusters in which the user has certain permission
+
+    :param operation: Operation instance
+    :param permission: Onject name
+    :param user: django.contrib.auth.models.User instance
+    :return a list of cluster in which the user has certain permission
     """
     if user.is_superuser:
         return Company.objects.filter(company_status=1)
@@ -111,8 +111,7 @@ def get_all_companies_for_operation(operation, permission, user):
 
 def is_allowed_operation_for_object(operation, permission, user, _object,
                                     obj_type):
-    """returns true or false if the user has permission over the object or
-    not
+    """Checks if the user has permission for a operation for a object
 
     :param operation: Operation class instance (ver, crear, modificar, etc)
     :param permission: Object class instance ("crear usuarios",
@@ -120,6 +119,7 @@ def is_allowed_operation_for_object(operation, permission, user, _object,
     :param user: auth.User instance
     :param _object: Cluster, Company, Building or PartOfBuilding instance
     :param obj_type: string, the type of the object
+    :return boolean, true if the user has permission, false if the user don't have permission
     """
     #Get the data context(s) in wich the user has a role
     result = {
@@ -149,6 +149,13 @@ def is_allowed_operation_for_object(operation, permission, user, _object,
 
 
 def get_data_context_cluster(user, cluster):
+    """
+    Obtains all the cluster in which the user has permission
+
+    :param user: auth.User instance
+    :param cluster: Cluster class instance
+    :return: a query set with the cluster the user has permission
+    """
     dc = DataContextPermission.objects.filter(user_role__user=user,
                                               cluster=cluster,
                                               company=None,
@@ -158,6 +165,13 @@ def get_data_context_cluster(user, cluster):
 
 
 def get_data_context_company(user, company):
+    """
+    Obtains all the companies in which the user has permission
+
+    :param user: auth.User instance
+    :param company: Company class instance
+    :return: a query set with the companies the user has permission
+    """
     dc = DataContextPermission.objects.filter(user_role__user=user,
                                               company=company,
                                               building=None,
@@ -166,6 +180,13 @@ def get_data_context_company(user, company):
 
 
 def get_data_context_building(user, building):
+    """
+    Obtains all the buildings in which the user has permission
+
+    :param user: auth.User instance
+    :param building: Building class instance
+    :return: a query set with the buildings the user has permission
+    """
     dc = DataContextPermission.objects.filter(user_role__user=user,
                                               building=building,
                                               part_of_building=None)
@@ -173,16 +194,24 @@ def get_data_context_building(user, building):
 
 
 def get_data_context_part(user, part):
+    """
+    Obtains all the parts in which the user has permission
+    :param user: auth.User instance
+    :param part: PartOfBuilding class instance
+    :return: a query set with the parts of buildings the user has permission
+    """
     dc = DataContextPermission.objects.filter(user_role__user=user,
                                               part_of_building=part)
     return dc
 
 
 def get_buildings_context(user):
-    """Gets and return a JSON with the different buildings in the
-    DataContextPermission for the active user, AND a dict with the ids and
-    names of the buildings
+    """Obtains the buildings the user has permission
 
+
+    :param user: auth.User instance
+    :return JSON with the different buildings the active user has permission,
+     and a dictionary with the ids and name of buildings
     """
     datacontext = DataContextPermission.objects.filter(user_role__user=user)
     buildings = []
@@ -255,6 +284,12 @@ def get_buildings_context(user):
 
 
 def default_consumerUnit(building):
+    """
+    Set's the consumer unit
+
+    :param building: Building class instance
+    :return: a query set with the consumer unit of the building name Total Edificio
+    """
     cu = ConsumerUnit.objects.get(
         building=building,
         electric_device_type__electric_device_type_name="Total Edificio")
@@ -263,9 +298,11 @@ def default_consumerUnit(building):
 
 def save_perm(role, objs_ids, operation):
     """Add a PermissionAsigment for a given role
-    role = a Role instance
-    objs_ids = array with ids of objects
-    operation = string ["ver", "Crear", "Eliminar"], if neither, defaults UPDATE
+
+    :param role: a Role instance
+    :param objs_ids: array with he ids of objects
+    :param operation: string ["ver", "Crear", "Eliminar"], if neither, defaults UPDATE
+    :return boolean, True if the permission is save correctly, False if not
     """
     if operation == "Ver":
         operation = VIEW
@@ -292,6 +329,13 @@ def save_perm(role, objs_ids, operation):
 
 
 def validate_role(post):
+    """
+    Validate the role validating the string
+
+    :param post: a post with the id role or role_desc
+    :return: a diccionary name data with the string validated or
+    false if it`s not a valid string
+    """
     data = {}
 
     if variety.validate_string(post["role"]):
@@ -308,9 +352,11 @@ def validate_role(post):
 
 def update_role_privs(role, objs_ids, operation):
     """Update a  list of PermissionAsigments for a given role
-    role = a Role instance
-    objs_ids = array with ids of objects
-    operation = string ["Cer", "Crear", "Eliminar"], if neither, defaults UPDATE
+
+    :param role: a Role instance
+    :param objs_ids: array with ids of objects
+    :param operation: string ["Ver", "Crear", "Eliminar"], if neither, defaults UPDATE
+    :return a boolean , True if the rol is modify correctly or false if not
     """
     if operation == "Ver":
         operation = VIEW
@@ -339,9 +385,14 @@ def update_role_privs(role, objs_ids, operation):
 
 
 def validate_user(post):
-    """ Validates the post info for the add user form
+    """
+     Validates the post info for the add user form
     returns cleaned data if the user is valid
     else, returns false
+
+    :param post: a post dictionary with the info of the user
+    :return: a dictionary with the info if its validate correctly,
+    a boolean with false if not.
     """
     data = {}
     if variety.validate_string(post['username']):
@@ -411,11 +462,13 @@ def validate_user(post):
 
 def add_permission_to_parts(usuario, rol, cluster, company, building):
     """Asigns the role 'rol' for all the parts in the building 'building'
-     usuario = django UserAuth object
-     cluster =  Cluster object
-     company = Company object
-     building = Building object
-     only returns messages
+
+    :param usuario: django UserAuth object
+    :param rol: Rol class instance
+    :param cluster: Cluster class instance
+    :param company: Company class instance
+    :param building: Building class instance
+    :return a message and the type of the message
     """
     user_role, created = UserRole.objects.get_or_create(user=usuario,
                                                         role=rol)
@@ -434,10 +487,12 @@ def add_permission_to_parts(usuario, rol, cluster, company, building):
 
 def add_permission_to_buildings(usuario, rol, cluster, company_pk):
     """Asigns the role 'rol' for all the buildings in 'company_pk'
-     usuario = django UserAuth object
-     cluster =  Cluster object
-     company = Company object
-     only returns messages
+
+    :param usuario: django UserAuth object
+    :param rol:  Rol class instance
+    :param cluster: Cluster class instance
+    :param company_pk: int of the company id
+    :return a message and the type o the message
     """
     try:
         company = Company.objects.get(pk=int(company_pk))
@@ -463,10 +518,11 @@ def add_permission_to_buildings(usuario, rol, cluster, company_pk):
 
 def add_permission_to_companies(usuario, rol, cluster):
     """Asigns the role 'rol' for all the companies in the cluster 'cluster'
-     usuario = django UserAuth object
-     cluster =  Cluster object
-     company = Company object
-     only returns messages
+
+    :param usuario: django UserAuth object
+    :param rol: Rol class instance
+    :param cluster: Cluster class instance
+    :return a message and the type of the message
     """
     user_role, created = UserRole.objects.get_or_create(user=usuario,
                                                         role=rol)
