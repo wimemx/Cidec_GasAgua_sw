@@ -325,7 +325,7 @@ background: url('../images/bgs/input_inner_shadow.png') white repeat-x 0 0;
     float: left;
     display: inline-block;
     height: 27px;
-    margin: 4px 1.3em 0 1.3em;
+    margin: 4px 8px 0 1.3em;
     border-right: solid 1px #9EBFC7;
 }
 .required{

@@ -1,10 +1,12 @@
 # Django settings for cidec_sw project.
+from datetime import timedelta
 import djcelery
 djcelery.setup_loader()
 import os
+
 CELERY_RESULT_BACKEND = "amqp"
 
-BROKER_URL = 'amqp://guest:guest@localhost:5672//'
+BROKER_URL = 'amqp://guest:guest@166.78.139.234:5672//'
 #BROKER_HOST = "one.cloudwime.com"
 #BROKER_PORT = "5672"
 #BROKER_USER = "guest"
@@ -14,17 +16,18 @@ BROKER_URL = 'amqp://guest:guest@localhost:5672//'
 CELERY_IMPORTS = ('tareas',)
 CELERY_TASK_TIME_LIMIT = 86400
 
-PROJECT_PATH = os.path.abspath(
-    os.path.join(os.path.abspath(os.path.dirname(__file__)), os.path.pardir))
-SERVER_URL = "http://auditem.mx"
+PROJECT_PATH = os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(__file__)), os.path.pardir))
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
-    # ('Your Name', 'your_email@example.com'),
+     ('Hector Vela', 'hector@wime.com.mx')
 )
 
 MANAGERS = ADMINS
+
+SERVER_URL = "http://auditem.mx"
 
 DATABASES = {
     'test': {
@@ -41,18 +44,12 @@ DATABASES = {
         'USER': 'satest_cidec',                      # Not used with sqlite3.
         'PASSWORD': '5MnT)HXnm_pT',                  # Not used with sqlite3.
         'HOST': 'auditem.mx',                      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
-    },
-    'local': {
-        'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'satest_cidec',                      # Or path to database file if using sqlite3.
-        'USER': 'root',                      # Not used with sqlite3.
-        'PASSWORD': '',                  # Not used with sqlite3.
-        'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
+        'PORT': '',                      # Set to empty string for default. Not used with
+        # sqlite3.
     }
 }
-DATABASE_ENGINE = 'django.db.backends.mysql'
+
+
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
@@ -92,7 +89,7 @@ MEDIA_URL = '/static/media/'
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-#STATIC_ROOT = ''
+STATIC_ROOT = os.path.join(PROJECT_PATH, 'templates/static/')
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
@@ -103,7 +100,7 @@ STATICFILES_DIRS = (
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    os.path.join(PROJECT_PATH, 'templates/static/'),
+    #os.path.join(PROJECT_PATH, 'templates/static/'),
 )
 
 # List of finder classes that know how to find static files in
@@ -136,8 +133,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'cidec_sw.middleware.timezones.TimezoneMiddleware',
-    'cidec_sw.middleware.timezones.YearsMiddleware',
-    #'debug_toolbar.middleware.DebugToolbarMiddleware'
+    'cidec_sw.middleware.timezones.YearsMiddleware'
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
@@ -150,41 +146,32 @@ WSGI_APPLICATION = 'cidec_sw.wsgi.application'
 TEMPLATE_DIRS = (os.path.join(PROJECT_PATH, 'templates'))#'/Users/wime/Dev/wime_dev/cidec_sw/templates',)
 
 INSTALLED_APPS = (
-    #'grappelli',
+    'grappelli',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.humanize',
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     #'django.contrib.admindocs',
+    'django.contrib.humanize',
     'location',
     'c_center',
     'rbac',
     'electric_rates',
-    'south',
+    #'south',
     'data_warehouse',
-    'data_warehouse_extended',
-    'reports',
-    'alarms',
-    'django_tables2',
-    'plupload',
     'djcelery',
     'tareas',
-    #'debug_toolbar'
+    'django_tables2',
+    'alarms',
+    'plupload',
+    'reports',
+    'data_warehouse_extended'
 )
-
-
-def show_toolbar(request):
-    return True
-DEBUG_TOOLBAR_CONFIG = {
-    'SHOW_TOOLBAR_CALLBACK': show_toolbar,
-    'INTERCEPT_REDIRECTS': False
-}
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
@@ -199,61 +186,40 @@ LOGGING = {
             '()': 'django.utils.log.RequireDebugFalse'
         }
     },
-
     'formatters': {
         'verbose': {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
         },
-
         'simple': {
             'format': '%(levelname)s %(message)s'
         },
-
     },
-
     'handlers': {
         'mail_admins': {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler'
         },
-
-        'file_data_warehouse': {
-            'level': 'INFO',
+        'file': {
+            'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': PROJECT_PATH + '/log_data_warehouse.log',
+            'filename': PROJECT_PATH + '/error_log.log',
             'formatter': 'verbose'
         },
-
-        'file_reports': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': PROJECT_PATH + '/log_reports.log',
-            'formatter': 'verbose'
-        },
-
         'console':{
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'formatter': 'simple'
         },
     },
-
     'loggers': {
         'django.request': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
             'propagate': True,
         },
-
         'data_warehouse': {
-            'handlers': ['file_data_warehouse', 'console'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-
-        'reports': {
-            'handlers': ['file_reports', 'console'],
+            'handlers': ['file', 'console'],
             'level': 'INFO',
             'propagate': True,
         },
@@ -261,21 +227,3 @@ LOGGING = {
 }
 
 GRAPPELLI_ADMIN_TITLE = 'CIDEC'
-ADMIN_MEDIA_PREFIX = ""
-
-"""
-SESSION_ENGINE = 'redis_sessions.session'
-SESSION_REDIS_HOST = 'localhost'
-SESSION_REDIS_PORT = 6379
-SESSION_REDIS_DB = 0
-
-CACHES = {
-    'default': {
-        'BACKEND': 'redis_cache.RedisCache',
-        'LOCATION': 'localhost:6379',
-        'OPTIONS': {
-            'DB': 1,
-        },
-    },
-}
-"""
