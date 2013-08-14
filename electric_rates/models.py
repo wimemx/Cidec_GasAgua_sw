@@ -68,7 +68,7 @@ class Holydays(models.Model):
                                    null=True)
 
     def __unicode__(self):
-        return str(day) + "/" + str(month)
+        return str(self.day) + "/" + str(self.month)
 
     class Meta:
         verbose_name_plural = "Holydays"
