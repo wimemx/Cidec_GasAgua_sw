@@ -49,7 +49,11 @@
                 if(f2_end == ''){
                     f2_end = new Date().format("yyyy-mm-dd");
                 }
-                c_param = construct_params(params, f2_init, f2_end, Object.size(params_new)/params.length);
+                if(params.length == 1){
+                    c_param = construct_params(params, f2_init, f2_end, cont+2);
+                }else{
+                    c_param = construct_params(params, f2_init, f2_end, Object.size(params_new)/params.length);
+                }
 
                 params_new = merge_object(params_new, c_param);
 
@@ -61,8 +65,11 @@
                 if(f3_end == ''){
                     f3_end = new Date().format("yyyy-mm-dd");
                 }
-                c_param = construct_params(params, f3_init, f3_end, (Object.size(params_new)/params.length)-cont);
-
+                if(params.length == 1){
+                    c_param = construct_params(params, f3_init, f3_end, cont+2);
+                }else{
+                    c_param = construct_params(params, f3_init, f3_end, (Object.size(params_new)/params.length)-cont);
+                }
                 params_new = merge_object(params_new, c_param);
             }
 
@@ -73,7 +80,11 @@
                 if(f4_end == ''){
                     f4_end = new Date().format("yyyy-mm-dd");
                 }
-                c_param = construct_params(params, f4_init, f4_end, (Object.size(params_new)/params.length-cont));
+                if(params.length == 1){
+                    c_param = construct_params(params, f4_init, f4_end, cont+2);
+                }else{
+                    c_param = construct_params(params, f4_init, f4_end, (Object.size(params_new)/params.length-cont));
+                }
 
                 params_new = merge_object(params_new, c_param);
             }

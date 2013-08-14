@@ -7,11 +7,6 @@ import os
 CELERY_RESULT_BACKEND = "amqp"
 
 BROKER_URL = 'amqp://guest:guest@166.78.139.234:5672//'
-#BROKER_HOST = "one.cloudwime.com"
-#BROKER_PORT = "5672"
-#BROKER_USER = "guest"
-#BROKER_PASSWORD = "guest"
-#BROKER_VHOST = '/'
 
 CELERY_IMPORTS = ('tareas',)
 CELERY_TASK_TIME_LIMIT = 86400
@@ -22,7 +17,7 @@ DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
-     ('Hector Vela', 'hector@wime.com.mx')
+    ('Hector Vela', 'hector@wime.com.mx')
 )
 
 MANAGERS = ADMINS

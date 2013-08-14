@@ -92,7 +92,7 @@
 
                     <tr class="row1">
                         <th width="25%"></th>
-                        {% for column in columns %}
+                        {% for column in columns_labels %}
                             <th width="25%">{{ column }}</th>
                         {% endfor %}
                     </tr>
@@ -188,10 +188,14 @@
                     if(index == 3) index = 0;
                     columnas.push(i);//[0,1,4,7,10,...,n+3]
 
-                    cols_dic[cols_[index]].push(i-1);
-                    cols_dic[cols_[index]].push(i);
-                    cols_dic[cols_[index]].push(i+1);
-                    index++;
+                    console.log(cols_dic, cols_, index, i);
+                    if(index < cols_.length){
+                        cols_dic[cols_[index]].push(i-1);
+                        cols_dic[cols_[index]].push(i);
+                        cols_dic[cols_[index]].push(i+1);
+                        index++;
+                    }
+
                 }
 
             }
@@ -297,18 +301,15 @@
                     }
                 }
 
-                var pf_index = [];
-                {% for column in columns %}
+                {% for column in columns_labels %}
                     data.addColumn({type:'datetime', role:'domain'});
                     data.addColumn('number', "{{ column }}");
                     data.addColumn({type:'boolean', role:'certainty'});
-                    {% if column == "PF" %}
-                        pf_index.push({{ forloop.counter0 }});
-                    {% endif %}
                 {% endfor %}
                 fech_ini = new Date();
                 fech_ini.setTime((rows_data[0][0]['datetime']*1000));
-
+                fech_fin = new Date();
+                fech_fin.setTime(rows_data[{{ rows_len }}-1][0]["datetime"]*1000);
                 for(var row_index = 0; row_index < {{ rows_len }}; row_index++){ //rows_data.length = la cantidad de datos por parametro
 
                     var row_data = rows_data[row_index];
@@ -318,10 +319,7 @@
                         var data_object = row_data[data_index];
                         var object_datetime = new Date();
                         object_datetime.setTime((data_object['datetime']*1000));
-                        //if(fech_ini == ''){
-                        //    fech_ini = object_datetime;
-                        //}
-                        fech_fin = object_datetime;
+
                         row_array.push(object_datetime);
                         var object_electric_data;
                         object_electric_data = data_object['value'];

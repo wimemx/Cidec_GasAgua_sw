@@ -25,6 +25,7 @@ import data_warehouse_extended.models
 import variety
 
 
+
 def render_graphics(request):
     """ Serves a placeholder for graphs
 
@@ -32,6 +33,7 @@ def render_graphics(request):
     :return:
     """
     return django.http.HttpResponse("")
+
 
 def get_consumer_unit_electric_data_raw(
         electric_data_name,
@@ -87,6 +89,7 @@ def get_consumer_unit_electric_data_raw(
         return first_m, second_m
 
     if electric_data_values:
+        consumer_unit_data_len = len(electric_data_values)
         first_m, second_m = get_first_two(electric_data_values)
         #first_m = electric_data_values[0]['medition_date']
         #second_m = electric_data_values[1]['medition_date']
@@ -113,18 +116,23 @@ def get_consumer_unit_electric_data_raw(
                              django.utils.timezone.localtime(time_m).timetuple())),
                          value=None,
                          certainty=False))
-            else:
+            elif cont < consumer_unit_data_len:
                 electric_data = abs(
                     electric_data_values[cont][electric_data_name])
                 if electric_data_name == "PF" and electric_data > 1:
                     electric_data = 1
                 medition_date = electric_data_values[cont]['medition_date']
+
                 electric_data_raw.append(
-                    dict(datetime=int(time.mktime(
-                             django.utils.timezone.localtime(medition_date).timetuple())),
+                    dict(datetime=
+                         int(time.mktime(
+                             django.utils.timezone.localtime(
+                                 medition_date).timetuple())),
                          value=abs(electric_data),
                          certainty=True))
                 cont += 1
+            else:
+                break
     return electric_data_raw
 
 

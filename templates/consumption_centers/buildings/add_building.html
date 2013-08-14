@@ -99,7 +99,7 @@
                         form_valid = false;
                     }else{
                         if(e.delegateTarget.id == "b_country" || e.delegateTarget.id == "b_state" || e.delegateTarget.id == "b_municipality"){
-                            if(/^[A-Za-zÁÉÍÓÚáéíóuñÑ ]+$/.test(e.delegateTarget.value)){
+                            if(/^[A-Za-zÁÉÍÓÚáéíóuñÑ\. ]+$/.test(e.delegateTarget.value)){
                                 _span = "correct";
                                 form_valid = true;
                             }else{
@@ -107,7 +107,7 @@
                                 form_valid = false;
                             }
                         }else{
-                            if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ ]+$/.test(e.delegateTarget.value)){
+                            if(/^[A-Za-z0-9ÁÉÍÓÚáéíóuñÑ\.\- ]+$/.test(e.delegateTarget.value)){
                                 _span = "correct";
                                 form_valid = true;
                             }else{

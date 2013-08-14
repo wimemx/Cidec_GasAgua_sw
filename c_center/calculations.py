@@ -107,11 +107,12 @@ def promedioKW(consumer, fecha_inicio, fecha_fin):
     :param fecha_fin: datetime
     :return: average kW
     """
-    suma_lecturas = ElectricDataTemp.objects.filter(
-        profile_powermeter=consumer.profile_powermeter,
-        medition_date__gte=fecha_inicio,
-        medition_date__lte=fecha_fin).aggregate(Avg('kW'))
-    return suma_lecturas['kW__avg'] if suma_lecturas['kW__avg'] else 0
+    suma_lecturas = DailyData.objects.filter(
+        consumer_unit=consumer,
+        data_day__gte=fecha_inicio,
+        data_day__lte=fecha_fin).aggregate(Avg("max_demand"))
+
+    return suma_lecturas['max_demand__avg'] if suma_lecturas['max_demand__avg'] else 0
 
 
 def max_minKWH(consumer, fecha_inicio, fecha_fin, min_max):
@@ -365,10 +366,10 @@ def obtenerDemanda(arr_kw):
                 demanda_maxima = 0
 
         except IndexError:
-            print "IndexError"
+            print "obtenerDemanda - IndexError"
             demanda_maxima = 0
         except TypeError:
-            print "TypeError"
+            print "obtenerDemanda - TypeError"
             demanda_maxima = 0
 
     return demanda_maxima
@@ -755,10 +756,10 @@ def obtenerDemanda_kw_valores(valores_kw):
                 demanda_maxima = 0
 
         except IndexError:
-            print "IndexError"
+            print "obtenerDemanda_kw_valores - IndexError"
             demanda_maxima = 0
         except TypeError:
-            print "TypeError"
+            print "obtenerDemanda_kw_valores - TypeError"
             demanda_maxima = 0
     return int(ceil(demanda_maxima))
 
@@ -788,10 +789,10 @@ def obtenerDemandaMin_kw(lecturas_kw):
                 demanda_min = 0
 
         except IndexError:
-            print "IndexError"
+            print "obtenerDemandaMin_kw - IndexError"
             demanda_min = 0
         except TypeError:
-            print "TypeError"
+            print "obtenerDemandaMin_kw - TypeError"
             demanda_min = 0
     return int(ceil(demanda_min))
 

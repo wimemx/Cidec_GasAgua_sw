@@ -34,7 +34,7 @@ from reports.reports_functions import get_data_cluster_consumed_normalized, \
     get_data_clusters_json, get_data_statistics, get_data_clusters_list_limits,\
     get_axis_dictionary, get_axis_dictionaries_list, \
     get_column_units_axis_indexes, get_data_cluster_limits, \
-    get_data_clusters_statistics
+    get_data_clusters_statistics, get_series_legends
 
 # Other imports
 import variety
@@ -137,6 +137,11 @@ def render_instant_measurements(
 
     template_variables['columns'] = column_strings
 
+    column_strings2 =\
+        get_series_legends(request_data_list_normalized)
+
+    template_variables['columns_labels'] = column_strings2
+
     columns_units_list = get_column_units_list(request_data_list_normalized)
     template_variables['column_units'] = zip(columns_units_list, column_strings)
 
@@ -167,7 +172,7 @@ def render_instant_measurements(
 
     axis_dictionary = \
         get_axis_dictionary(data_clusters_list, columns_units_list)
-    print axis_dictionary
+
     axis_dictionaries_list = get_axis_dictionaries_list(axis_dictionary)
     template_variables['axis_list'] = axis_dictionaries_list
 
@@ -343,8 +348,6 @@ def render_report_consumed_by_month(
             data_cluster_consumed, cu.building.region)
         template_variables['periods'] = True
 
-
-
     template_context =\
         django.template.context.RequestContext(request, template_variables)
 
@@ -512,7 +515,6 @@ def render_report_powerprofile_by_month(
         cont += 1
         month_array = [[], [], [], [], [], []]
         for day in day_data:
-            #print day
             medition_date = datetime.datetime.fromtimestamp(day["datetime"])
             for i in range(0, len(weeks)):
                 if weeks[i][0] <= medition_date < weeks[i][1]:

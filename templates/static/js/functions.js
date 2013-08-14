@@ -1,292 +1,83 @@
-function addCommas(nStr){
-    /*
-    * Convierte una cadena a un formato numerico separado por comas
-    * addCommas("1450332")
-    * return 1,450,332
-    * */
-    nStr += '';
-    var x = nStr.split('.');
-    var x1 = x[0];
-    var x2 = x.length > 1 ? '.' + x[1] : '';
-    var rgx = /(\d+)(\d{3})/;
-    while (rgx.test(x1)) {
-        x1 = x1.replace(rgx, '$1' + ',' + '$2');
-    }
-    return x1 + x2;
-}
-
-function isValidString(cadena){
-    /*
-     * Prueba si una cadena dada es una cadena válida (solo letras y espacios en blanco)
-     * isValidString("cadena válida");
-     * return true
-     *
-     * isValidEmailAddress("1ra cadena #3");
-     * return false;
-     * */
-    var pattern= new RegExp(/^([0-9a-zA-ZáéíóúñÁÉÍÓÚÑ \-_'"]+)*$/);
-    return pattern.test(cadena);
-}
-
-function isValidEmailAddress(emailAddress) {
-    /*
-    * Prueba si una cadena dada es una dirección valida de correo electronico
-    * isValidEmailAddress("hector@wime.com");
-    * return true
-    *
-    * isValidEmailAddress("algo");
-    * return false;
-    * */
-    var pattern = new RegExp(/^(("[\w-\s]+")|([\w-]+(?:\.[\w-]+)*)|("[\w-\s]+")([\w-]+(?:\.[\w-]+)*))(@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$)|(@\[?(25[0-5]\.|2[0-4][0-9]\.|1[0-9]{2}\.|[0-9]{1,2}\.)((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){2}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\]?$)/i);
-    return pattern.test(emailAddress);
-}
-
-function getUrlVars()
-{
-    /*
-     * Obtiene las variables get de la página actual y regresa un arreglo asociativo
-     * URI= /?var1=1&var2=2
-     * get=getUrlVars();
-     *
-     * get['var1']=1
-     * get['var2']=2
-     * */
-    var vars = [], hash;
-    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
-
-    for(var i = 0; i < hashes.length; i++)
-    {
-        hash = hashes[i].split('=');
-        vars.push(hash[0]);
-        vars[hash[0]] = hash[1];
-    }
-
-    return vars;
-}
-function buildUrl(url, parameters){
-    /*
-     * Obtiene un arreglo asociativo representando variables get, y regresa
-     * una url formateada
-     * url= "http://localhost/";
-     * params = [];
-     * params["var1"]=val1;
-     * params["var2"]=val2;
-     * uri=buildUrl(url, params);
-     *
-     * return "http://localhost/?var1=val1&var2=val2"
-     * */
-    var qs = "";
-    for(var key in parameters) {
-        var value = parameters[key];
-        qs += encodeURIComponent(key) + "=" + encodeURIComponent(value) + "&";
-    }
-    if (qs.length > 0){
-        qs = qs.substring(0, qs.length-1); //chop off last "&"
-        url = url + "?" + qs;
-    }
-    return url;
-}
-/*
- * Date Format 1.2.3
- * (c) 2007-2009 Steven Levithan <stevenlevithan.com>
- * MIT license
- *
- * Includes enhancements by Scott Trenda <scott.trenda.net>
- * and Kris Kowal <cixar.com/~kris.kowal/>
- *
- * Accepts a date, a mask, or a date and a mask.
- * Returns a formatted version of the given date.
- * The date defaults to the current date/time.
- * The mask defaults to dateFormat.masks.default.
- */
-
-var dateFormat = function () {
-    var	token = /d{1,4}|m{1,4}|yy(?:yy)?|([HhMsTt])\1?|[LloSZ]|"[^"]*"|'[^']*'/g,
-        timezone = /\b(?:[PMCEA][SDP]T|(?:Pacific|Mountain|Central|Eastern|Atlantic) (?:Standard|Daylight|Prevailing) Time|(?:GMT|UTC)(?:[-+]\d{4})?)\b/g,
-        timezoneClip = /[^-+\dA-Z]/g,
-        pad = function (val, len) {
-            val = String(val);
-            len = len || 2;
-            while (val.length < len) val = "0" + val;
-            return val;
-        };
-
-    // Regexes and supporting functions are cached through closure
-    return function (date, mask, utc) {
-        var dF = dateFormat;
-
-        // You can't provide utc if you skip other args (use the "UTC:" mask prefix)
-        if (arguments.length == 1 && Object.prototype.toString.call(date) == "[object String]" && !/\d/.test(date)) {
-            mask = date;
-            date = undefined;
-        }
-
-        // Passing date through Date applies Date.parse, if necessary
-        date = date ? new Date(date) : new Date;
-        if (isNaN(date)) throw SyntaxError("invalid date");
-
-        mask = String(dF.masks[mask] || mask || dF.masks["default"]);
-
-        // Allow setting the utc argument via the mask
-        if (mask.slice(0, 4) == "UTC:") {
-            mask = mask.slice(4);
-            utc = true;
-        }
-
-        var	_ = utc ? "getUTC" : "get",
-            d = date[_ + "Date"](),
-            D = date[_ + "Day"](),
-            m = date[_ + "Month"](),
-            y = date[_ + "FullYear"](),
-            H = date[_ + "Hours"](),
-            M = date[_ + "Minutes"](),
-            s = date[_ + "Seconds"](),
-            L = date[_ + "Milliseconds"](),
-            o = utc ? 0 : date.getTimezoneOffset(),
-            flags = {
-                d:    d,
-                dd:   pad(d),
-                ddd:  dF.i18n.dayNames[D],
-                dddd: dF.i18n.dayNames[D + 7],
-                m:    m + 1,
-                mm:   pad(m + 1),
-                mmm:  dF.i18n.monthNames[m],
-                mmmm: dF.i18n.monthNames[m + 12],
-                yy:   String(y).slice(2),
-                yyyy: y,
-                h:    H % 12 || 12,
-                hh:   pad(H % 12 || 12),
-                H:    H,
-                HH:   pad(H),
-                M:    M,
-                MM:   pad(M),
-                s:    s,
-                ss:   pad(s),
-                l:    pad(L, 3),
-                L:    pad(L > 99 ? Math.round(L / 10) : L),
-                t:    H < 12 ? "a"  : "p",
-                tt:   H < 12 ? "am" : "pm",
-                T:    H < 12 ? "A"  : "P",
-                TT:   H < 12 ? "AM" : "PM",
-                Z:    utc ? "UTC" : (String(date).match(timezone) || [""]).pop().replace(timezoneClip, ""),
-                o:    (o > 0 ? "-" : "+") + pad(Math.floor(Math.abs(o) / 60) * 100 + Math.abs(o) % 60, 4),
-                S:    ["th", "st", "nd", "rd"][d % 10 > 3 ? 0 : (d % 100 - d % 10 != 10) * d % 10]
-            };
-
-        return mask.replace(token, function ($0) {
-            return $0 in flags ? flags[$0] : $0.slice(1, $0.length - 1);
-        });
-    };
+function addCommas(e){e+="";
+var a=e.split(".");
+var d=a[0];
+var b=a.length>1?"."+a[1]:"";
+var c=/(\d+)(\d{3})/;
+while(c.test(d)){d=d.replace(c,"$1,$2");
+}return d+b;
+}function isValidString(a){var b=new RegExp(/^([0-9a-zA-ZáéíóúñÁÉÍÓÚÑ \-_'"]+)*$/);
+return b.test(a);
+}function isValidEmailAddress(b){var a=new RegExp(/^(("[\w-\s]+")|([\w-]+(?:\.[\w-]+)*)|("[\w-\s]+")([\w-]+(?:\.[\w-]+)*))(@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$)|(@\[?(25[0-5]\.|2[0-4][0-9]\.|1[0-9]{2}\.|[0-9]{1,2}\.)((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){2}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\]?$)/i);
+return a.test(b);
+}function getUrlVars(){var d=[],c;
+var a=window.location.href.slice(window.location.href.indexOf("?")+1).split("&");
+for(var b=0;
+b<a.length;
+b++){c=a[b].split("=");
+d.push(c[0]);
+d[c[0]]=c[1];
+}return d;
+}function buildUrl(b,d){var a="";
+for(var c in d){var e=d[c];
+a+=encodeURIComponent(c)+"="+encodeURIComponent(e)+"&";
+}if(a.length>0){a=a.substring(0,a.length-1);
+b=b+"?"+a;
+}return b;
+}var dateFormat=function(){var a=/d{1,4}|m{1,4}|yy(?:yy)?|([HhMsTt])\1?|[LloSZ]|"[^"]*"|'[^']*'/g,b=/\b(?:[PMCEA][SDP]T|(?:Pacific|Mountain|Central|Eastern|Atlantic) (?:Standard|Daylight|Prevailing) Time|(?:GMT|UTC)(?:[-+]\d{4})?)\b/g,d=/[^-+\dA-Z]/g,c=function(f,e){f=String(f);
+e=e||2;
+while(f.length<e){f="0"+f;
+}return f;
+};
+return function(i,v,q){var g=dateFormat;
+if(arguments.length==1&&Object.prototype.toString.call(i)=="[object String]"&&!/\d/.test(i)){v=i;
+i=undefined;
+}i=i?new Date(i):new Date;
+if(isNaN(i)){throw SyntaxError("invalid date");
+}v=String(g.masks[v]||v||g.masks["default"]);
+if(v.slice(0,4)=="UTC:"){v=v.slice(4);
+q=true;
+}var t=q?"getUTC":"get",l=i[t+"Date"](),e=i[t+"Day"](),j=i[t+"Month"](),p=i[t+"FullYear"](),r=i[t+"Hours"](),k=i[t+"Minutes"](),u=i[t+"Seconds"](),n=i[t+"Milliseconds"](),f=q?0:i.getTimezoneOffset(),h={d:l,dd:c(l),ddd:g.i18n.dayNames[e],dddd:g.i18n.dayNames[e+7],m:j+1,mm:c(j+1),mmm:g.i18n.monthNames[j],mmmm:g.i18n.monthNames[j+12],yy:String(p).slice(2),yyyy:p,h:r%12||12,hh:c(r%12||12),H:r,HH:c(r),M:k,MM:c(k),s:u,ss:c(u),l:c(n,3),L:c(n>99?Math.round(n/10):n),t:r<12?"a":"p",tt:r<12?"am":"pm",T:r<12?"A":"P",TT:r<12?"AM":"PM",Z:q?"UTC":(String(i).match(b)||[""]).pop().replace(d,""),o:(f>0?"-":"+")+c(Math.floor(Math.abs(f)/60)*100+Math.abs(f)%60,4),S:["th","st","nd","rd"][l%10>3?0:(l%100-l%10!=10)*l%10]};
+return v.replace(a,function(m){return m in h?h[m]:m.slice(1,m.length-1);
+});
+};
 }();
-
-// Some common format strings
-dateFormat.masks = {
-    "default":      "ddd mmm dd yyyy HH:MM:ss",
-    shortDate:      "m/d/yy",
-    mediumDate:     "mmm d, yyyy",
-    longDate:       "mmmm d, yyyy",
-    fullDate:       "dddd, mmmm d, yyyy",
-    shortTime:      "h:MM TT",
-    mediumTime:     "h:MM:ss TT",
-    longTime:       "h:MM:ss TT Z",
-    isoDate:        "yyyy-mm-dd",
-    isoTime:        "HH:MM:ss",
-    isoDateTime:    "yyyy-mm-dd'T'HH:MM:ss",
-    isoUtcDateTime: "UTC:yyyy-mm-dd'T'HH:MM:ss'Z'"
+dateFormat.masks={"default":"ddd mmm dd yyyy HH:MM:ss",shortDate:"m/d/yy",mediumDate:"mmm d, yyyy",longDate:"mmmm d, yyyy",fullDate:"dddd, mmmm d, yyyy",shortTime:"h:MM TT",mediumTime:"h:MM:ss TT",longTime:"h:MM:ss TT Z",isoDate:"yyyy-mm-dd",isoTime:"HH:MM:ss",isoDateTime:"yyyy-mm-dd'T'HH:MM:ss",isoUtcDateTime:"UTC:yyyy-mm-dd'T'HH:MM:ss'Z'"};
+dateFormat.i18n={dayNames:["Dom","Lun","Mar","Mie","Jue","Vie","Sab","Domingo","Lunes","Martes","Mi&eacute;rcoles","Jueves","Viernes","S&aacute;bado"],monthNames:["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic","Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]};
+function cloneObject(a){return(JSON.parse(JSON.stringify(a)));
+}if(!Array.prototype.indexOf){(function(){Array.prototype.indexOf=a;
+function a(c){var b;
+for(b=0;
+b<this.length;
+++b){if(this[b]===c){return b;
+}}return -1;
+}})();
+}Date.prototype.format=function(a,b){return dateFormat(this,a,b);
 };
-
-// Internationalization strings
-dateFormat.i18n = {
-    dayNames: [
-        "Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab",
-        "Domingo", "Lunes", "Martes", "Mi&eacute;rcoles", "Jueves", "Viernes", "S&aacute;bado"
-    ],
-    monthNames: [
-        "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic",
-        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-    ]
+Date.prototype.addDays=function(a){this.setDate(this.getDate()+a);
+this.tempDate=this.getDate();
 };
-
-
-function cloneObject(object){
-    return (JSON.parse(JSON.stringify(object)));
-}
-
-//prototype functions
-
-//return the index of an element in an array
-if (!Array.prototype.indexOf) {
-    (function() {
-        Array.prototype.indexOf = Array_indexOf;
-        function Array_indexOf(elm) {
-            var index;
-            for (index = 0; index < this.length; ++index) {
-                if (this[index] === elm) {
-                    return index;
-                }
-            }
-            return -1;
-        }
-    })();
-}
-
-
-
-// For convenience...
-Date.prototype.format = function (mask, utc) {
-    return dateFormat(this, mask, utc);
+Date.prototype.addHours=function(a){this.setHours(this.getHours()+a);
+return this;
 };
-
-// Custom prototype functions for added operations on date objects
-Date.prototype.addDays = function (n) {
-    this.setDate(this.getDate() + n);
-    this.tempDate = this.getDate();
+String.prototype.format=function(){var a=arguments;
+return this.replace(/{(\d+)}/g,function(b,c){return typeof a[c]!="undefined"?a[c]:b;
+});
 };
-Date.prototype.addHours= function(h){
-    this.setHours(this.getHours()+h);
-    return this;
+jQuery.expr[":"].Contains=function(c,d,b){return jQuery(c).text().toUpperCase().indexOf(b[3].toUpperCase())>=0;
 };
-String.prototype.format = function() {
-    var args = arguments;
-    return this.replace(/{(\d+)}/g, function(match, number) {
-        return typeof args[number] != 'undefined'
-            ? args[number]
-            : match
-            ;
-    });
+Object.size=function(c){var b=0,a;
+for(a in c){if(c.hasOwnProperty(a)){b++;
+}}return b;
 };
-//makes a ":Contains" filter wich is case insensitive
-jQuery.expr[':'].Contains = function(a, i, m) {
-    return jQuery(a).text().toUpperCase().indexOf(m[3].toUpperCase()) >= 0;
-};
-
-Object.size = function(obj) {
-    var size = 0, key;
-    for (key in obj) {
-        if (obj.hasOwnProperty(key)) size++;
-    }
-    return size;
-};
-
-/**
- * Overwrites obj1's values with obj2's and adds obj2's if non existent in obj1
- * @param obj1
- * @param obj2
- * @returns obj3 a new object based on obj1 and obj2
- */
-function merge_object(obj1,obj2){
-    var obj3 = {};
-    for (var attrname in obj1) { obj3[attrname] = obj1[attrname]; }
-    for (var attrname in obj2) { obj3[attrname] = obj2[attrname]; }
-    return obj3;
-}
-
-function arrNoDupe(a) {
-    var temp = {};
-    for (var i = 0; i < a.length; i++)
-        temp[a[i]] = true;
-    var r = [];
-    for (var k in temp)
-        r.push(k);
-    return r;
+function merge_object(d,c){var b={};
+for(var a in d){b[a]=d[a];
+}for(var a in c){b[a]=c[a];
+}return b;
+}function arrNoDupe(b){var d={};
+for(var e=0;
+e<b.length;
+e++){d[b[e]]=true;
+}var f=[];
+for(var c in d){f.push(c);
+}return f;
 }

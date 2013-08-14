@@ -873,8 +873,8 @@ def get_total_consumer_unit(consumerUnit, total):
     if not total:
         if consumerUnit.part_of_building:
             #es el consumer_unit de una parte de un edificio, saco sus hijos
-            leafs = HierarchyOfPart.objects.filter(part_of_building_composite=
-            consumerUnit.part_of_building)
+            leafs = HierarchyOfPart.objects.filter(
+                part_of_building_composite=consumerUnit.part_of_building)
 
         else:
             #es un consumer unit de algún electric device, saco sus hijos
@@ -895,17 +895,19 @@ def get_total_consumer_unit(consumerUnit, total):
         return c_units
     else:
         hierarchy = HierarchyOfPart.objects.filter(
-            Q(part_of_building_composite__building=
-            consumerUnit.building)
-            | Q(consumer_unit_composite__building=
-            consumerUnit.building))
-        ids_hierarchy = [] #arreglo donde guardo los hijos
-        ids_hierarchy_cu = [] #arreglo donde guardo los hijos (consumerunits)
+            Q(part_of_building_composite__building=consumerUnit.building)
+            | Q(consumer_unit_composite__building=consumerUnit.building))
+        #arreglo donde guardo los hijos
+        ids_hierarchy = []
+        #arreglo donde guardo los hijos (consumerunits)
+        ids_hierarchy_cu = []
         if not hierarchy:
             cus = ConsumerUnit.objects.filter(
-                building=consumerUnit.building).exclude(
+                building=consumerUnit.building
+            ).exclude(
                 electric_device_type__electric_device_type_name="Total Edificio"
-            )
+            ).exclude(
+                profile_powermeter__profile_powermeter_status=False)
             c_units = [cu for cu in cus]
         else:
             for hy in hierarchy:
@@ -918,11 +920,18 @@ def get_total_consumer_unit(consumerUnit, total):
             # hijos de nadie)
             parents = PartOfBuilding.objects.filter(
                 building=consumerUnit.building).exclude(
-                pk__in=ids_hierarchy)
+                    pk__in=ids_hierarchy)
 
             for parent in parents:
-                par_cu = ConsumerUnit.objects.get(part_of_building=parent)
-                if par_cu.profile_powermeter.powermeter.powermeter_anotation == "Medidor Virtual":
+                par_cu = ConsumerUnit.objects.filter(
+                    part_of_building=parent).exclude(
+                        profile_powermeter__profile_powermeter_status=False)
+                if par_cu:
+                    par_cu = par_cu[0]
+                else:
+                    continue
+                if par_cu.profile_powermeter.powermeter.powermeter_anotation \
+                        == "Medidor Virtual":
                     c_units_leaf = get_total_consumer_unit(par_cu, False)
                     c_units.extend(c_units_leaf)
                 else:
@@ -935,8 +944,10 @@ def get_consumer_units(consumerUnit):
     consumerUnit
     :param consumerUnit: ConsumerUnit object
     """
-    if consumerUnit.profile_powermeter.powermeter.powermeter_anotation == "Medidor Virtual":
-        if consumerUnit.electric_device_type.electric_device_type_name == "Total Edificio":
+    if consumerUnit.profile_powermeter.powermeter.powermeter_anotation \
+            == "Medidor Virtual":
+        if consumerUnit.electric_device_type.electric_device_type_name \
+                == "Total Edificio":
             total = True
         else:
             total = False
@@ -970,7 +981,8 @@ def allowed_cu(consumerUnit, user, building):
         part_of_building=None).count()
     if context1 or context2:
         return True
-    if consumerUnit.electric_device_type.electric_device_type_name == "Total Edificio":
+    if consumerUnit.electric_device_type.electric_device_type_name == \
+            "Total Edificio":
         context = DataContextPermission.objects.filter(
             user_role__user=user,
             building=building,
@@ -1016,7 +1028,8 @@ def is_in_part_of_building(consumerUnit, part_of_building):
                                            parent_part.consumer_unit_leaf):
                         return True
             else:
-                if parent_part.part_of_building_leaf == consumerUnit.part_of_building:
+                if parent_part.part_of_building_leaf == \
+                        consumerUnit.part_of_building:
                     return True
                 elif is_in_part_of_building(consumerUnit,
                                             parent_part.part_of_building_leaf):
@@ -1306,8 +1319,8 @@ def all_dailyreportAll(from_date):
 
 
 def dailyReportAll_Period(start_date, end_date):
-    """Calculate the daily report for all the consumer units in all the buildings
-    for a given period
+    """Calculate the daily report for all the consumer units in all the
+    buildings for a given period
     :param start_date: Datetime, the start date
     :param end_date: Datetime, the end date
     """
@@ -1341,8 +1354,8 @@ def dailyReportPeriodofTime(building, consumer_unit, start_date, end_date):
 
 
 def dailyReportAll():
-    """Calculate the daily report for all the consumer units in all the buildings
-    for the day before
+    """Calculate the daily report for all the consumer units in all the
+    buildings for the day before
     """
     buildings = Building.objects.all()
     for buil in buildings:
@@ -1483,7 +1496,8 @@ def dailyReport(building, consumer_unit, today):
         for c_unit in consumer_units:
             profile_powermeter = c_unit.profile_powermeter
 
-            kwh_dia_dic = getKWHperDay(today_s_utc, today_e_utc, profile_powermeter)
+            kwh_dia_dic = getKWHperDay(today_s_utc, today_e_utc,
+                                       profile_powermeter)
 
             kwh_base += kwh_dia_dic['base']
             kwh_intermedio += kwh_dia_dic['intermedio']
@@ -1651,7 +1665,7 @@ def getMonthlyReport(consumer_u, month, year):
     If the requested report is of the current month, it is calculated so far and
     returned. (IT IS NOT SAVED).
     If the report is of a previous month, checks if the monthly report exists,
-    the object is returned. If not, the report is calculated, saved and returned.
+    the object is returned. If not, the report is calculated, saved and returned
 
     :param consumer_u: ConsumerUnit object
     :param month: number 1-12 number of the month
@@ -1753,8 +1767,9 @@ def calculateMonthlyReport(consumer_u, month, year):
     diasmes_arr = monthrange(year, month)
 
     #Se agregan las horas
-    fecha_inicio = datetime.datetime(year,month, 1)
+    fecha_inicio = datetime.datetime(year, month, 1)
     fecha_final = datetime.datetime(year, month, diasmes_arr[1])
+    fecha_final += datetime.timedelta(days=1)
 
     #Se obtiene el profile_powermeter
     try:
@@ -1771,7 +1786,7 @@ def calculateMonthlyReport(consumer_u, month, year):
         mes['consumo_desviacion'] = 0
         mes['emisiones'] = 0
     else:
-
+        cus = get_consumer_units(consumer_u)
         #Obtener consumo acumulado
         mes['consumo_acumulado'] = consumoAcumuladoKWH(consumer_u,
                                                        fecha_inicio,
@@ -1796,11 +1811,11 @@ def calculateMonthlyReport(consumer_u, month, year):
         kvarh = kvarhDiariosPeriodo(consumer_u, fecha_inicio, fecha_final)
 
         mes['factor_potencia'] = float(
-            factorpotencia(float(mes['consumo_acumulado']),kvarh))
+            factorpotencia(float(mes['consumo_acumulado']), kvarh))
 
         #Consumo minimo
         mes['consumo_minimo'] = float(max_minKWH(consumer_u, fecha_inicio,
-                                              fecha_final, "min"))
+                                                 fecha_final, "min"))
 
         #Consumo maximo
         mes['consumo_maximo'] = float(max_minKWH(consumer_u, fecha_inicio,

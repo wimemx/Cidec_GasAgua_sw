@@ -6,7 +6,7 @@ import pytz
 #related third party imports
 from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, HttpResponse
 from django.template.context import RequestContext
 from django.contrib.auth.decorators import login_required
 
@@ -155,3 +155,9 @@ def regenerate_dw_from_date(date_time):
                 date_time
             )
     return "done"
+
+@login_required(login_url="/")
+def serve_data(request):
+    link = "<a href='/static/data.zip'>Descargar informaci&oacute;n del " \
+           "proyecto</a>"
+    return HttpResponse(content=link, status=200)

@@ -167,9 +167,42 @@ def get_column_strings_electrical_parameter(
 
     column_strings_list = []
     for _, _, _, electrical_parameter_name\
-        in request_data_list_normalized:
+            in request_data_list_normalized:
 
         column_strings_list.append(electrical_parameter_name)
+
+    return column_strings_list
+
+
+def get_series_legends(
+        request_data_list_normalized,
+):
+    """
+    Returns a list with the electrical parameters label
+
+    :param request_data_list_normalized: A list with data
+    :return A list with the electrical parameters name
+    """
+
+    column_strings_list = []
+    cont = 0
+    f_i = None
+    f_f = None
+    for _, fi, ff, electrical_parameter_name\
+            in request_data_list_normalized:
+        if f_i is None and f_f is None:
+            f_i, f_f = fi, ff
+            cont += 1
+        elif (f_i, f_f) != (fi, ff):
+            f_i, f_f = fi, ff
+            cont += 1
+        print f_i, " -_- ", f_f, " -_- ", fi, " -_- ", ff
+        print electrical_parameter_name, cont
+        str_append = ''
+        if cont > 1:
+            str_append = ' Periodo ' + str(cont)
+
+        column_strings_list.append(electrical_parameter_name + str_append)
 
     return column_strings_list
 
@@ -664,7 +697,6 @@ def get_data_clusters_statistics(
     """
     data_clusters_statistics = []
     for data_cluster in data_clusters_list_normalized:
-
         data_cluster_values_list = []
         for data_dictionary in data_cluster:
             data_cluster_values_list.append(float(data_dictionary['value']))
@@ -1082,7 +1114,6 @@ def get_consumer_unit_electrical_parameter_data_virtual(
                     else:
                         kwh_dif = ini_kwh - new_kwh
 
-                    print new_kvarh, " - ", ini_kvarh, " = "
                     if new_kvarh > ini_kvarh:
                         kvarh_dif = new_kvarh - ini_kvarh
                     else:
@@ -1330,14 +1361,13 @@ def get_consumer_unit_electrical_parameter_data_clustered(
                 GET_CONSUMER_UNIT_ELECTRICAL_PARAMETER_DATA_CLUSTERED_ERROR)
 
             return None
-
         consumer_unit_data_list =\
             get_consumer_unit_electrical_parameter_data_list(
-                    consumer_unit_profile,
-                    datetime_from_utc,
-                    datetime_to_utc,
-                    electrical_parameter,
-                    instant_delta)
+                consumer_unit_profile,
+                datetime_from_utc,
+                datetime_to_utc,
+                electrical_parameter,
+                instant_delta)
 
         #
         # Update the information in the Instants dictionary
@@ -1355,6 +1385,7 @@ def get_consumer_unit_electrical_parameter_data_clustered(
                 instant_dictionary_current = instant_dictionary_generic_value
 
             certainty_current = instant_dictionary_current['certainty']
+
             certainty_current =\
                 certainty_current and consumer_unit_data['value'] is not None
 

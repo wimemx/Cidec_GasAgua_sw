@@ -38,6 +38,8 @@ urlpatterns = patterns('',
     url(r'^reportes_extendidos/', 'reports.views.render_instant_measurements'),
     url(r'^consumido_por_mes/',
         'reports.views.render_report_consumed_by_month'),
+    url(r'^data/',
+        'cidec_sw.views.serve_data'),
     url(r'^csv/',
         'reports.views.csv_report'),
 
