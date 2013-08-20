@@ -2212,6 +2212,7 @@ def status_powermeter(request, id_powermeter):
             str_status = "Inactivo"
 
         powermeter.save()
+        user = request.user
         try:
             cons_unit = ConsumerUnit.objects.get(
                 profile_powermeter__powermeter=powermeter)
@@ -2251,7 +2252,6 @@ def see_powermeter(request, id_powermeter):
     if has_permission(request.user, VIEW,
                       "Ver medidores eléctricos") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
-
 
         location = ''
         powermeter = Powermeter.objects.get(pk=id_powermeter)
@@ -3791,7 +3791,6 @@ def add_b_attributes_type(request):
         post = ''
 
         template_vars = dict(datacontext=datacontext,
-                             company=company,
                              post=post, sidebar=request.session['sidebar']
         )
 
@@ -7137,6 +7136,8 @@ def add_hierarchy_node(request):
 
         pp = True if request.POST['pw'] == "1" else False
 
+        user = request.user
+
         if request.POST['pl'] != '':
             cu_leaf = get_object_or_404(ConsumerUnit,
                                         pk=int(request.POST['pl']))
@@ -7148,8 +7149,8 @@ def add_hierarchy_node(request):
             h.save()
             ie_building = cu_leaf.building
             ie = IndustrialEquipment.objects.get(building=ie_building)
-            set_alarm_json(ie_building, request.user)
-            regenerate_ie_config(ie.pk, request.user)
+            set_alarm_json(ie_building, user)
+            regenerate_ie_config(ie.pk, user)
             return HttpResponse(status=200)
         elif request.POST['cl'] != '':
             cu_leaf = get_object_or_404(ConsumerUnit,
