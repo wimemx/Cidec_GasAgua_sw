@@ -8941,9 +8941,10 @@ def power_performance(request):
                             if year_01_data:
                                 dict_mensual['kwh_01'] = float(year_01_data[0].KWH_total) / valor_attr
                                 suma_kwh += dict_mensual['kwh_01']
-                                num_meses += 1
+
                             else:
                                 dict_mensual['kwh_01'] = 0
+                            num_meses += 1
 
                             if compare_years_flag:
                                 year_02_data = HMHistoricData.objects.filter(
@@ -8954,9 +8955,10 @@ def power_performance(request):
                                 if year_02_data:
                                     dict_mensual['kwh_02'] = float(year_02_data[0].KWH_total) / valor_attr
                                     suma_kwh2 += dict_mensual['kwh_02']
-                                    num_meses2 += 1
+
                                 else:
                                     dict_mensual['kwh_02'] = 0
+                                num_meses2 += 1
 
                             datos_mensuales.append(dict_mensual)
 
@@ -8978,9 +8980,10 @@ def power_performance(request):
                             if year_01_data:
                                 dict_mensual['kwh_01'] = float(year_01_data[0].KWH_total) / valor_attr
                                 suma_kwh += dict_mensual['kwh_01']
-                                num_meses += 1
+
                             else:
                                 dict_mensual['kwh_01'] = 0
+                            num_meses += 1
 
                             if compare_years_flag:
                                 year_02_data = DacHistoricData.objects.filter(
@@ -8991,9 +8994,10 @@ def power_performance(request):
                                 if year_02_data:
                                     dict_mensual['kwh_02'] = float(year_02_data[0].KWH_total) / valor_attr
                                     suma_kwh2 += dict_mensual['kwh_02']
-                                    num_meses2 += 1
+
                                 else:
                                     dict_mensual['kwh_02'] = 0
+                                num_meses2 += 1
 
                             datos_mensuales.append(dict_mensual)
 
@@ -9016,10 +9020,10 @@ def power_performance(request):
                             if year_01_data:
                                 dict_mensual['kwh_01'] = float(year_01_data[0].KWH_total) / valor_attr
                                 suma_kwh += dict_mensual['kwh_01']
-                                num_meses += 1
+
                             else:
                                 dict_mensual['kwh_01'] = 0
-
+                            num_meses += 1
                             if compare_years_flag:
                                 year_02_data = T3HistoricData.objects.filter(
                                     monthly_cut_dates__building = building,
@@ -9029,18 +9033,30 @@ def power_performance(request):
                                 if year_02_data:
                                     dict_mensual['kwh_02'] = float(year_02_data[0].KWH_total) / valor_attr
                                     suma_kwh2 += dict_mensual['kwh_02']
-                                    num_meses2 += 1
+
                                 else:
                                     dict_mensual['kwh_02'] = 0
-
+                                num_meses2 += 1
                             datos_mensuales.append(dict_mensual)
 
                     atributo_dic['valores'] = datos_mensuales
-                    atributo_dic['y01_promedio'] = float(suma_kwh)/float(num_meses)
+
+                    atributo_dic['y01_promedio'] = \
+                        float(suma_kwh)/float(num_meses)
+
+                    if atributo_dic['y01_promedio'] == 0:
+                        template_vars["zero_months"] = True
+
                     if compare_years_flag:
                         atributo_dic['y02_promedio'] = float(suma_kwh2)/float(num_meses2)
-                        diff_promedios = (float(atributo_dic['y01_promedio']) *
-                            100.0 / float(atributo_dic['y02_promedio'])) - 100.0
+                        if atributo_dic['y02_promedio']:
+                            diff_promedios = (float(
+                                atributo_dic['y01_promedio']
+                            ) * 100.0 / float(atributo_dic['y02_promedio'])) - \
+                                             100.0
+                        else:
+                            template_vars["zero_months"] = True
+                            diff_promedios = 0
 
                         if diff_promedios > 0:
                             atributo_dic['positive_b'] = 1

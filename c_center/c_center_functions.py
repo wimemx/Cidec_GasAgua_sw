@@ -1190,6 +1190,8 @@ def location_objects(country_id, country_name, state_id, state_name,
     #Se obtiene el objeto de Pais, sino esta Pais, se da de alta un pais nuevo.
     if country_id:
         countryObj = get_object_or_404(Pais, pk=country_id)
+        if countryObj.pais_name != country_name:
+            countryObj = Pais.objects.get_or_create(pais_name=country_name)[0]
     else:
         countryObj = Pais(
             pais_name=country_name
@@ -1200,6 +1202,15 @@ def location_objects(country_id, country_name, state_id, state_name,
     # nuevo.
     if state_id:
         stateObj = get_object_or_404(Estado, pk=state_id)
+        if stateObj.estado_name != state_name:
+            stateObj, created = Estado.objects.get_or_create(
+                estado_name=country_name)
+            if created:
+                country_stateObj = PaisEstado(
+                    pais=countryObj,
+                    estado=stateObj,
+                )
+                country_stateObj.save()
     else:
         stateObj = Estado(
             estado_name=state_name
@@ -1217,6 +1228,15 @@ def location_objects(country_id, country_name, state_id, state_name,
     # municipio nuevo.
     if municipality_id:
         municipalityObj = get_object_or_404(Municipio, pk=municipality_id)
+        if municipalityObj.municipio_name != municipality_name:
+            municipalityObj, created = Municipio.objects.get_or_create(
+                municipio_name=municipality_name)
+            if created:
+                state_munObj = EstadoMunicipio(
+                    estado=stateObj,
+                    municipio=municipalityObj,
+                )
+                state_munObj.save()
     else:
         municipalityObj = Municipio(
             municipio_name=municipality_name
@@ -1234,6 +1254,15 @@ def location_objects(country_id, country_name, state_id, state_name,
     # Colonia nueva.
     if neighborhood_id:
         neighborhoodObj = get_object_or_404(Colonia, pk=neighborhood_id)
+        if neighborhoodObj.colonia_name != neighborhood_name:
+            neighborhoodObj, created = Colonia.objects.get_or_create(
+                colonia_name=neighborhood_name)
+            if created:
+                mun_neighObj = MunicipioColonia(
+                    municipio=municipalityObj,
+                    colonia=neighborhoodObj,
+                )
+                mun_neighObj.save()
     else:
         neighborhoodObj = Colonia(
             colonia_name=neighborhood_name
@@ -1251,6 +1280,16 @@ def location_objects(country_id, country_name, state_id, state_name,
     # Calle nueva.
     if street_id:
         streetObj = get_object_or_404(Calle, pk=street_id)
+        if streetObj.calle_name != street_name:
+            streetObj, created = Calle.objects.get_or_create(
+                calle_name=street_name)
+            if created:
+                neigh_streetObj = ColoniaCalle(
+                    colonia=neighborhoodObj,
+                    calle=streetObj,
+                )
+                neigh_streetObj.save()
+
     else:
         streetObj = Calle(
             calle_name=street_name
