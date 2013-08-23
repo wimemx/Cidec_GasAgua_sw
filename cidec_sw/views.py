@@ -16,8 +16,6 @@ from c_center.views import main_page, week_report_kwh
 from c_center.c_center_functions import set_default_session_vars
 from rbac.models import GroupObject, MenuCategs, MenuHierarchy
 from rbac.rbac_functions import get_buildings_context
-from data_warehouse_extended.models import InstantDelta, ConsumerUnitProfile
-from tareas.tasks import populate_data_warehouse_specific
 
 from django.shortcuts import redirect, render
 GRAPHS = ['Potencia Activa (kW)', 'Potencia Reactiva (KVar)',
@@ -143,18 +141,6 @@ def logout_page(request):
     logout(request)
     return HttpResponseRedirect('/main/?logout')
 
-
-def regenerate_dw_from_date(date_time):
-    instant_deltas = InstantDelta.objects.all()
-    cus = ConsumerUnitProfile.objects.all()
-    for instant in instant_deltas:
-        for cu in cus:
-            populate_data_warehouse_specific(
-                cu,
-                instant,
-                date_time
-            )
-    return "done"
 
 @login_required(login_url="/")
 def serve_data(request):

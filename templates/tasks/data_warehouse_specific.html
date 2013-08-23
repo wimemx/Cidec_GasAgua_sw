@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block titulo %}Reportes{% endblock %}
+{% block titulo %}Restaurar Data Warehouse{% endblock %}
 {% block externalcss %}
     <link rel="stylesheet" href="/static/css/consumption_centers/main.css" type="text/css" />
     <link rel="stylesheet" href="/static/date_picker/css/datepicker_og.css" type="text/css" />
@@ -11,20 +11,27 @@
 {% endblock %}
 {% block document_ready %}
     $("#dw").validate();
-    $('#date_from').val(new Date().format("yyyy-m-d")).DatePicker({
-        format:'Y-m-d',
-        date: $('#date_from').val(),
-        current: $('#date_from').val(),
+    var now3 = new Date();
+    now3.addDays(-4);
+    var now4 = new Date();
+    var mul_date, mul_date3, mul_date4 = false;
+    $('#widgetCalendar').DatePicker({
+        flat: true,
+        format: 'Y-m-d',
+        date: [new Date(now3), new Date(now4)],
+        calendars: 2,
+        mode: 'range',
         starts: 1,
-        position: 'r',
-        onBeforeShow: function(){
-            $('#date_from').DatePickerSetDate($('#date_from').val(), true);
-        },
-        onChange: function(formated, dates){
-            $('#date_from').val(formated);
-            $('#date_from').DatePickerHide();
+        onChange: function(formated) {
+            $('#range1_init').val(formated[0]);
+            $('#range1_end').val(formated[1]);
+            if(!mul_date){
+                $('#widgetField span').css({'font-size':'16px', 'height':'26px'});
+            }
         }
     });
+    $('#widgetCalendar').DatePickerClear();
+
 {% endblock %}
 
 {% block breadcumbs %}
@@ -66,21 +73,18 @@
                             {% endfor %}
                         </select>
                     </p>
-                    <p class="g12">
-                        <label class="g2" for="intervalos">Intervalo
-                        </label>
-                        <select name="intervalos" id="intervalos" class="validate notnull">
-                            <option value="0">Intervalo</option>
-                            {% for delta in deltas %}
-                                <option value="{{ delta.pk }}">{{ delta.name }} - {{ delta.delta_seconds }}s</option>
-                            {% endfor %}
-                        </select>
-                    </p>
-                    <p class="g12">
-                        <label class="g2" for="date_from">A partir de:
-                        </label>
-                        <input type="text" name="date_from" id="date_from" class="validate notnull"/>
-                    </p>
+                    <div class="g12">
+                        <span class="g2">Selecciona un periodo</span>
+                        <div class="g3">
+                            <label for="range1_init">Desde</label>
+                            <input type="text" name="range1_init" id="range1_init" readonly="readonly" class="validate notnull"/>
+                        </div>
+                        <div class="g3">
+                            <label for="range1_end">Hasta</label>
+                            <input type="text" name="range1_end" id="range1_end" readonly="readonly" class="validate notnull"/>
+                        </div>
+                        <div id="widgetCalendar" class="g12"></div>
+                    </div>
                     <p class="g12">
                         <button type="submit" class="aqua_btn c">Actualizar DW</button>
                     </p>

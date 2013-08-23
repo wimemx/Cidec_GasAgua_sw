@@ -157,18 +157,19 @@ def dw_specific(request):
         template_vars['consumer_units'] = consumer_units
 
         if request.method == "POST":
-            fecha = datetime.datetime.strptime(
-                request.POST['date_from'], "%Y-%m-%d")
+            fecha1 = datetime.datetime.strptime(
+                request.POST['range1_init'], "%Y-%m-%d")
+            fecha2 = datetime.datetime.strptime(
+                request.POST['range1_end'], "%Y-%m-%d")
             cu = data_warehouse_extended.models.ConsumerUnitProfile.objects.get(
                 transactional_id=int(request.POST['consumer_unit'])
             )
-            delta = data_warehouse_extended.models.InstantDelta.objects.get(
-                pk=int(request.POST['intervalos'])
-            )
-            populate_data_warehouse_specific(cu, delta, fecha)
+            fecha2 = fecha2 + datetime.timedelta(days=1)
+            populate_data_warehouse_specific(cu, fecha1, fecha2)
             template_vars['text'] = "Tarea enviada, para " + cu.building_name \
-                                    + " - " + cu.electric_device_type_name + \
-                                    " con granularidad " + delta.name \
+                                    + " - " + cu.electric_device_type_name \
+                                    + " entre " + request.POST['range1_end'] \
+                                    + " y " + request.POST['range1_end'] \
                                     + ". Espera resultados"
 
         template_vars_template = RequestContext(request, template_vars)
