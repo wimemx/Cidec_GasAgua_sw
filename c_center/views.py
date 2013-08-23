@@ -2212,6 +2212,7 @@ def status_powermeter(request, id_powermeter):
             str_status = "Inactivo"
 
         powermeter.save()
+        user = request.user
         try:
             cons_unit = ConsumerUnit.objects.get(
                 profile_powermeter__powermeter=powermeter)
@@ -2251,7 +2252,6 @@ def see_powermeter(request, id_powermeter):
     if has_permission(request.user, VIEW,
                       "Ver medidores eléctricos") or request.user.is_superuser:
         datacontext = get_buildings_context(request.user)[0]
-
 
         location = ''
         powermeter = Powermeter.objects.get(pk=id_powermeter)
@@ -3438,7 +3438,8 @@ def status_buildingtype(request, id_btype):
         if building_type.building_type_status == 0:
             building_type.building_type_status = 1
             str_status = "Activo"
-        else: #if building_type.building_type_status == 1:
+        else:
+            #if building_type.building_type_status == 1:
             building_type.building_type_status = 0
             str_status = "Inactivo"
 
@@ -3791,7 +3792,6 @@ def add_b_attributes_type(request):
         post = ''
 
         template_vars = dict(datacontext=datacontext,
-                             company=company,
                              post=post, sidebar=request.session['sidebar']
         )
 
@@ -5002,6 +5002,8 @@ def get_select_attributes(request, id_attribute_type):
 ###########
 #EDIFICIOS#
 ###########
+from c_center.forms import BuildingForm, CompanyBuildingForm, \
+    BuildingTypeForBuildingForm, TimezonesBuildingsForm
 # noinspection PyArgumentList
 @login_required(login_url='/')
 def add_building(request):
@@ -5325,6 +5327,10 @@ def add_building(request):
             template_vars["post"] = post
             template_vars["message"] = message
             template_vars["type"] = _type
+        template_vars["form_b"] = BuildingForm
+        template_vars["form_bc"] = CompanyBuildingForm
+        template_vars["form_bt"] = BuildingTypeForBuildingForm
+        template_vars["form_btz"] = TimezonesBuildingsForm
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(
@@ -7137,6 +7143,8 @@ def add_hierarchy_node(request):
 
         pp = True if request.POST['pw'] == "1" else False
 
+        user = request.user
+
         if request.POST['pl'] != '':
             cu_leaf = get_object_or_404(ConsumerUnit,
                                         pk=int(request.POST['pl']))
@@ -7148,8 +7156,8 @@ def add_hierarchy_node(request):
             h.save()
             ie_building = cu_leaf.building
             ie = IndustrialEquipment.objects.get(building=ie_building)
-            set_alarm_json(ie_building, request.user)
-            regenerate_ie_config(ie.pk, request.user)
+            set_alarm_json(ie_building, user)
+            regenerate_ie_config(ie.pk, user)
             return HttpResponse(status=200)
         elif request.POST['cl'] != '':
             cu_leaf = get_object_or_404(ConsumerUnit,
@@ -8940,9 +8948,10 @@ def power_performance(request):
                             if year_01_data:
                                 dict_mensual['kwh_01'] = float(year_01_data[0].KWH_total) / valor_attr
                                 suma_kwh += dict_mensual['kwh_01']
-                                num_meses += 1
+
                             else:
                                 dict_mensual['kwh_01'] = 0
+                            num_meses += 1
 
                             if compare_years_flag:
                                 year_02_data = HMHistoricData.objects.filter(
@@ -8953,9 +8962,10 @@ def power_performance(request):
                                 if year_02_data:
                                     dict_mensual['kwh_02'] = float(year_02_data[0].KWH_total) / valor_attr
                                     suma_kwh2 += dict_mensual['kwh_02']
-                                    num_meses2 += 1
+
                                 else:
                                     dict_mensual['kwh_02'] = 0
+                                num_meses2 += 1
 
                             datos_mensuales.append(dict_mensual)
 
@@ -8977,9 +8987,10 @@ def power_performance(request):
                             if year_01_data:
                                 dict_mensual['kwh_01'] = float(year_01_data[0].KWH_total) / valor_attr
                                 suma_kwh += dict_mensual['kwh_01']
-                                num_meses += 1
+
                             else:
                                 dict_mensual['kwh_01'] = 0
+                            num_meses += 1
 
                             if compare_years_flag:
                                 year_02_data = DacHistoricData.objects.filter(
@@ -8990,9 +9001,10 @@ def power_performance(request):
                                 if year_02_data:
                                     dict_mensual['kwh_02'] = float(year_02_data[0].KWH_total) / valor_attr
                                     suma_kwh2 += dict_mensual['kwh_02']
-                                    num_meses2 += 1
+
                                 else:
                                     dict_mensual['kwh_02'] = 0
+                                num_meses2 += 1
 
                             datos_mensuales.append(dict_mensual)
 
@@ -9015,10 +9027,10 @@ def power_performance(request):
                             if year_01_data:
                                 dict_mensual['kwh_01'] = float(year_01_data[0].KWH_total) / valor_attr
                                 suma_kwh += dict_mensual['kwh_01']
-                                num_meses += 1
+
                             else:
                                 dict_mensual['kwh_01'] = 0
-
+                            num_meses += 1
                             if compare_years_flag:
                                 year_02_data = T3HistoricData.objects.filter(
                                     monthly_cut_dates__building = building,
@@ -9028,18 +9040,30 @@ def power_performance(request):
                                 if year_02_data:
                                     dict_mensual['kwh_02'] = float(year_02_data[0].KWH_total) / valor_attr
                                     suma_kwh2 += dict_mensual['kwh_02']
-                                    num_meses2 += 1
+
                                 else:
                                     dict_mensual['kwh_02'] = 0
-
+                                num_meses2 += 1
                             datos_mensuales.append(dict_mensual)
 
                     atributo_dic['valores'] = datos_mensuales
-                    atributo_dic['y01_promedio'] = float(suma_kwh)/float(num_meses)
+
+                    atributo_dic['y01_promedio'] = \
+                        float(suma_kwh)/float(num_meses)
+
+                    if atributo_dic['y01_promedio'] == 0:
+                        template_vars["zero_months"] = True
+
                     if compare_years_flag:
                         atributo_dic['y02_promedio'] = float(suma_kwh2)/float(num_meses2)
-                        diff_promedios = (float(atributo_dic['y01_promedio']) *
-                            100.0 / float(atributo_dic['y02_promedio'])) - 100.0
+                        if atributo_dic['y02_promedio']:
+                            diff_promedios = (float(
+                                atributo_dic['y01_promedio']
+                            ) * 100.0 / float(atributo_dic['y02_promedio'])) - \
+                                             100.0
+                        else:
+                            template_vars["zero_months"] = True
+                            diff_promedios = 0
 
                         if diff_promedios > 0:
                             atributo_dic['positive_b'] = 1

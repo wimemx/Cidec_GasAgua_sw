@@ -17,68 +17,47 @@
         Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
     </p>
     <form method="post" action="." id="building_form">
+    {% load custom_tags_n_filters %}
         {% csrf_token %}
         <div>
         <div class="building_info_top">
             <h3 class="g12">Informaci&oacute;n de Edificio</h3>
             <div class="building_column">
                 <div class="fields_row g12">
-                    <label for="b_name" class="g3">Nombre<span class="required">*</span></label>
-                    <input type="text" name="b_name" id="b_name" class="g8"
-                           value="{{ post.b_name }}"
-                            />
+                    {{ form_b.building_name.errors }}
+                    <label for="building_name" class="g3">Nombre<span class="required">*</span></label>
+                    {{ form_b.building_name|add_class:"g8" }}
                     <span></span>
                 </div>
                 <div class="fields_row g12">
-                    <label for="b_description" class="g3">Descripci&oacute;n</label>
-                    <textarea rows="5" name="b_description" id="b_description" class="g8">{{ post.b_description }}</textarea>
-
+                    {{ form_b.building_description.errors }}
+                    <label for="building_description" class="g3">Descripci&oacute;n</label>
+                    {{ form_b.building_description|add_class:"g8" }}
                     <span></span>
                 </div>
                 <div class="fields_row g12">
-                    <label for="b_company" class="g3">Empresa<span class="required">*</span></label>
-                    {% if empresa %}<input type="hidden" value="{{ empresa }}" name="b_company">{% endif %}
-                    <select name="b_company" id="b_company" class="g8" {% if empresa %}disabled="disabled" {% endif %}>
-                        <option value="">Selecciona una empresa</option>
-                        {% if empresas_lst %}
-                        {% for empr in empresas_lst %}
-                        <option value="{{empr.id}}" {% if post.b_company == empr.id or empr.id == empresa%} selected {% endif %}>{{ empr.company_name }}</option>
-                        {% endfor %}
-                        {% endif %}
+                    {{ form_bc.company.errors }}
+                    <label for="company" class="g3">Empresa<span class="required">*</span></label>
+                    {{ form_bc.company|add_class:"g8" }}
 
-                    </select>
                     <span id="sel_company"></span>
                 </div>
                 <div class="fields_row g12">
-                    <label for="b_mt2" class="g3">Superficie (m<sup>2</sup>)</label>
-                    <input type="text" name="b_mt2" id="b_mt2" class="g8" maxlength="3"
-                           value="{{ post.b_mt2 }}"
-                            />
+                    {{ form_b.mts2_built.errors }}
+                    <label for="mts2_built" class="g3">Superficie (m<sup>2</sup>)</label>
+                    {{ form_b.mts2_built|add_class:"g8" }}
                     <span></span>
                 </div>
                 <div class="fields_row g12">
-                    <label for="b_electric_rate" class="g3">Tarifa:<span class="required">*</span></label>
-                    <select name="b_electric_rate" id="b_electric_rate" class="g8">
-                        <option value="">Selecciona un tipo de tarifa</option>
-                        {% if tarifas %}
-                        {% for tarifa in tarifas %}
-                        <option value="{{tarifa.id}}" {% if post.b_electric_rate_id == tarifa.id %} selected {% endif %}>{{ tarifa.electric_rate_name }}</option>
-                        {% endfor %}
-                        {% endif %}
-                    </select>
+                    <label for="electric_rate" class="g3">Tarifa:<span class="required">*</span></label>
+                    {{ form_b.electric_rate|add_class:"g8" }}
                     <span id="sel_electric"></span>
                 </div>
             </div>
             <div class="building_column">
                 <div class="fields_row g12">
                     <label for="b_type" class="g3">Tipo de Edificio:<span class="required">*</span></label>
-                    <select multiple name="b_type" id="b_type" size="10" class="g8">
-                        {% if tipos_edificio_lst %}
-                        {% for tipo in tipos_edificio_lst %}
-                        <option value="{{tipo.id}}" {% for btype in post.b_type_arr %}{% if btype|slugify == tipo.id|slugify %} selected {% endif %}{% endfor %}>{{ tipo.building_type_name }}</option>
-                        {% endfor %}
-                        {% endif %}
-                    </select>
+                    {{ form_bt.building_type}}
                     <span id="sel_type"></span>
                 </div>
             </div>
@@ -92,7 +71,8 @@
                            value="{{ post.b_country }}"  autocomplete="off"
                             />
                     <span></span>
-                    <input type="hidden" name="b_country_id" id="b_country_id" value="{{post.b_country_id}}">
+                    {{ form_b.pais }}
+
                 </div>
                 <div class="fields_row g12">
                     <label for="b_state" class="g3">Estado<span class="required">*</span></label>
@@ -100,7 +80,7 @@
                            value="{{ post.b_state }}"  autocomplete="off"
                             />
                     <span></span>
-                    <input type="hidden" name="b_state_id" id="b_state_id" value="{{post.b_state_id}}">
+                    {{ form_b.estado }}
                 </div>
                 <div class="fields_row g12">
                     <label for="b_municipality" class="g3">Municipio<span class="required">*</span></label>
@@ -108,7 +88,7 @@
                            value="{{ post.b_municipality }}"  autocomplete="off"
                             />
                     <span></span>
-                    <input type="hidden" name="b_municipality_id" id="b_municipality_id" value="{{post.b_municipality_id}}">
+                    {{ form_b.municipio }}
                 </div>
                 <div class="fields_row g12">
                     <label for="b_neighborhood" class="g3">Colonia<span class="required">*</span></label>
@@ -116,7 +96,7 @@
                            value="{{ post.b_neighborhood }}"  autocomplete="off"
                             />
                     <span></span>
-                    <input type="hidden" name="b_neighborhood_id" id="b_neighborhood_id" value="{{post.b_neighborhood_id}}">
+                    {{ form_b.colonia }}
                 </div>
                 <div class="fields_row g12">
                     <label for="b_street" class="g3">Calle<span class="required">*</span></label>
@@ -124,44 +104,28 @@
                            value="{{ post.b_street }}"  autocomplete="off"
                             />
                     <span></span>
-                    <input type="hidden" name="b_street_id" id="b_street_id" value="{{post.b_street_id}}">
+                    {{ form_b.calle }}
                 </div>
                 <div class="fields_row g12">
                     <label for="b_ext" class="g3">Ext<span class="required">*</span></label>
-                    <input type="text" name="b_ext" id="b_ext" class="g8"
-                           value="{{ post.b_ext }}"
-                            />
+                    {{ form_b.building_external_number }}
                     <span></span>
                 </div>
                 <div class="fields_row g12">
                     <label for="b_int" class="g3">Int</label>
-                    <input type="text" name="b_int" id="b_int" class="g8"
-                           value="{{ post.b_int }}"
-                            />
+                    {{ form_b.building_internal_number }}
                     <span></span>
                 </div>
                 <div class="fields_row g12">
                     <label for="b_zip" class="g3">C&oacute;digo Postal<span class="required">*</span></label>
-                    <input type="text" name="b_zip" id="b_zip" class="g8"
-                           value="{{ post.b_zip }}"
-                            />
+                    {{ form_b.building_code_zone }}
                     <span></span>
                 </div>
                 <div class="fields_row g12">
                     <label for="b_region" class="g3">Regi&oacute;n<span class="required">*</span></label>
-                    <select name="b_region" id="b_region" class="g8">
-                        <option value="">Selecciona una región</option>
-                        {% if regiones_lst %}
-                        {% for rgn in regiones_lst %}
-                        <option value="{{rgn.id}}" {% if post.b_region_id == rgn.id %} selected {% endif %}>{{ rgn.region_name }}</option>
-                        {% endfor %}
-                        {% endif %}
-
-                    </select>
+                    {{ form_b.region }}
                     <span id="sel_region"></span>
-
                 </div>
-
 
                 <div class="fields_row g12">
                     <label for="see_reg" class="g3"></label>
@@ -169,18 +133,9 @@
 
                 </div>
 
-                  <div class="fields_row g12">
+                <div class="fields_row g12">
                     <label for="b_time_zone" class="g3">Zona Horaria:<span class="required">*</span></label>
-                    <select name="b_time_zone" id="b_time_zone" class="g8">
-                        <option value="">Selecciona una zona horaria</option>
-                     {% if zonas_lst %}
-                            {% for zn in zonas_lst %}
-                              <option value="{{zn.id}}"{% if post.b_time_zone_id == zn.id %} selected {% endif %}> {{ zn.name }}</option>
-                            {% endfor %}
-                        {% endif %}
-
-
-                    </select>
+                    {{ form_btz.time_zone }}
                     <span id="sel_time_zone"></span>
                 </div>
 
