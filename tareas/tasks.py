@@ -178,8 +178,8 @@ def populate_data_warehouse_extended(
 
 def populate_data_warehouse_specific(
         consumer_unit,
-        instant_delta,
-        date_from
+        date_from,
+        date_to
 ):
     """
         Description:
@@ -197,9 +197,6 @@ def populate_data_warehouse_specific(
             None.
     """
 
-    electrical_parameters = \
-        data_warehouse_extended.models.ElectricalParameter.objects.all()
-
     #
     # Generate data for each Consumer Unit Profile
     #
@@ -215,18 +212,7 @@ def populate_data_warehouse_specific(
         status = consumer_unit.profile_powermeter.powermeter.status
         if not status:
             return
-    #
-    # Generate data for Instant Delta.
-    # Generate data for each Electrical Parameter.
-    #
-    for electrical_parameter in electrical_parameters:
-        process_dw_consumerunit_electrical_parameter.delay(
-            consumer_unit,
-            date_from,
-            data_warehouse_extended.globals.Constant.
-            DATA_DATETIME_LAST,
-            electrical_parameter,
-            instant_delta)
+    regenerate_dw_in_interval(date_from, date_to, consumer_unit)
 
     return
 

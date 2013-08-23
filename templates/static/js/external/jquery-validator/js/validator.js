@@ -32,12 +32,15 @@
                back_ = back_incorrect;
                valid_form = false;
            }else{
-               if (regexp.test(element_value)) {
-                   back_ = back_correct;
-               } else {
-                   back_ = back_incorrect;
-                   valid_form = false;
+               if(regexp != undefined){
+                   if (regexp.test(element_value)) {
+                       back_ = back_correct;
+                   } else {
+                       back_ = back_incorrect;
+                       valid_form = false;
+                   }
                }
+
            }
        }else{
            if ($.trim(element_value) != '') {

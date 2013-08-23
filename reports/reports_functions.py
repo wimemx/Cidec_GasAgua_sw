@@ -196,8 +196,6 @@ def get_series_legends(
         elif (f_i, f_f) != (fi, ff):
             f_i, f_f = fi, ff
             cont += 1
-        print f_i, " -_- ", f_f, " -_- ", fi, " -_- ", ff
-        print electrical_parameter_name, cont
         str_append = ''
         if cont > 1:
             str_append = ' Periodo ' + str(cont)
