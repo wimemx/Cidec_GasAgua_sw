@@ -2107,6 +2107,8 @@ def tarifaHM_2(building, s_date, e_date, month, year):
                     elif periodo_mv['period_type'] == 'punta':
                         arr_kw_punta.append(vcu['value'])
 
+
+
             diccionario_final_cfe["kw_base"] =\
             obtenerDemanda_kw_valores(arr_kw_base)
 
@@ -2115,6 +2117,7 @@ def tarifaHM_2(building, s_date, e_date, month, year):
 
             diccionario_final_cfe["kw_punta"] =\
             obtenerDemanda_kw_valores(arr_kw_punta)
+
 
         else:
 

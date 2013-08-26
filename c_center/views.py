@@ -418,10 +418,10 @@ def cfe_calculations(request):
         #Se buscan los datos en el historico
         # noinspection PyArgumentList
         billing_month = datetime.date(year=year, month=month, day=1)
+        billing_month2 = datetime.date(year=2014, month=month, day=1)
 
         #Se obtiene el tipo de tarifa del edificio (HM o DAC)
         tipo_tarifa = request.session['main_building'].electric_rate
-
         if tipo_tarifa.pk == 1:
             cfe_historico = HMHistoricData.objects.filter(
                 monthly_cut_dates__building=request.session['main_building']
@@ -541,6 +541,7 @@ def cfe_calculations(request):
                 resultado_mensual['tarifa_kw'] = cfe_historico[0].demand_rate
                 resultado_mensual['factor_potencia'] = \
                     cfe_historico[0].power_factor
+                resultado_mensual['factor_carga'] = cfe_historico[0].charge_factor
                 resultado_mensual['costo_energia'] = \
                     cfe_historico[0].energy_cost
                 resultado_mensual['costo_demanda'] = \
