@@ -793,7 +793,7 @@ class T3HistoricData(models.Model):
     total = models.DecimalField(max_digits=20, decimal_places=2, default=0)
 
     def __unicode__(self):
-        return "CU: " + self.consumer_unit + " - Mes:" + str(self.billing_month)
+        return "Mes:" + str(self.monthly_cut_dates.billing_month)
 
     class Meta:
         verbose_name_plural = "Información Historica de Tarifa 3"
