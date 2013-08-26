@@ -51,7 +51,7 @@ def create_instant_instances(
             None.
     """
 
-    logger.info(create_instant_instances.__name__)
+    #logger.info(create_instant_instances.__name__)
     time_delta = datetime.timedelta(seconds=instant_delta.delta_seconds)
     timezone_utc = django.utils.timezone.utc
 
@@ -94,8 +94,8 @@ def create_instant_instances(
             continue
 
         instant_current.save()
-        logger.info(data_warehouse_extended.globals.SystemInfo.INSTANT_SAVED +\
-                    " " + str(instant_current))
+        #logger.info(data_warehouse_extended.globals.SystemInfo.INSTANT_SAVED +\
+        #            " " + str(instant_current))
 
         datetime_current_utc += time_delta
 
@@ -159,10 +159,10 @@ def update_consumer_units():
         # Save the Consumer Unit Profile with up-to-date information.
         #
         consumer_unit_profile.save()
-        logger.info(
-            data_warehouse_extended.globals.SystemInfo.
-                CONSUMER_UNIT_PROFILE_SAVED +\
-            " " + str(consumer_unit_profile))
+        #logger.info(
+        #    data_warehouse_extended.globals.SystemInfo.
+        #        CONSUMER_UNIT_PROFILE_SAVED +\
+        #    " " + str(consumer_unit_profile))
 
     return
 
@@ -206,7 +206,6 @@ def build_curve_fit_function_interpolation(
                 independent_data_list,
                 dependent_data_list,
                 'nearest')
-        print "nearest"
 
     except:
         logger.error(
@@ -579,9 +578,9 @@ def process_consumer_unit_electrical_parameter_instant_group(
                     str(consumer_unit_instant_electric_data))
 
             consumer_unit_instant_electric_data.save()
-            logger.info(data_warehouse_extended.globals.SystemInfo.
-                        CONSUMER_UNIT_INSTANT_ELECTRIC_DATA_SAVED + " - " +\
-                        str(consumer_unit_instant_electric_data))
+            #logger.info(data_warehouse_extended.globals.SystemInfo.
+            #            CONSUMER_UNIT_INSTANT_ELECTRIC_DATA_SAVED + " - " +\
+            #            str(consumer_unit_instant_electric_data))
 
     return
 

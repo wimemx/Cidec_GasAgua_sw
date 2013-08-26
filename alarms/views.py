@@ -842,7 +842,7 @@ def user_notifications(request):
         notifs = usr_ntfs.order_by("-alarm_event__triggered_time")
         template_vars['all'] = False
         template_vars['ncount'] = ''
-
+        events = None
         if "notificacionesPorGrupo" in request.GET:
             notifs = usr_ntfs.filter(read=False).order_by(
                 "notification_group")
@@ -873,6 +873,11 @@ def user_notifications(request):
                 template_vars['diccionario'] = diccionario
 
         elif "todas" in request.GET:
+            suscriptions = UserNotificationSettings.objects.filter(
+                user=request.user).values("alarm").annotate(Count("alarm"))
+            al_pks = [al["alarm"] for al in suscriptions]
+            events = AlarmEvents.objects.filter(alarm__pk__in=al_pks)
+
             usr_ntfs = UserNotifications.objects.filter(user=request.user)
             notifs = usr_ntfs.order_by("-alarm_event__triggered_time")
             template_vars['all'] = True
@@ -928,34 +933,61 @@ def user_notifications(request):
         today_str = str(datetime.date.today())
         #separate notifs by day
         tz = timezone.get_current_timezone()
-        for notif in notifs:
-            notif.read = True
-            notif.save()
-            #get localized time
-            local_triggered_time = variety.convert_from_utc(
-                notif.alarm_event.triggered_time.time(), tz)
-            #get localized datetime
-            notif.alarm_event.triggered_time = \
-                notif.alarm_event.triggered_time.astimezone(tz)
-            date_n = notif.alarm_event.triggered_time.date()
+        if template_vars['all'] and events:
+            for evt in events:
+                local_triggered_time = variety.convert_from_utc(
+                    evt.triggered_time.time(), tz)
+                #get localized datetime
+                evt.triggered_time = \
+                    evt.triggered_time.astimezone(tz)
+                date_n = evt.triggered_time.date()
 
-            #type of alarm (off limits, or under limits)
-            if notif.alarm_event.value > notif.alarm_event.alarm.max_value:
-                _type = "max"
-            elif notif.alarm_event.value < notif.alarm_event.alarm.min_value:
-                _type = "min"
-            else:
-                _type = "other"
+                #type of alarm (off limits, or under limits)
+                if evt.value > evt.alarm.max_value:
+                    _type = "max"
+                elif evt.value < evt.alarm.min_value:
+                    _type = "min"
+                else:
+                    _type = "other"
+                notif = {"alarm_event": evt}
+                n_dic = {"notif": notif,
+                         "triggered": local_triggered_time,
+                         "type": _type
+                         }
+                if str(date_n) in arr_day_notif:
+                    #arr_day_notif['2013-04-25']={}
+                    arr_day_notif[str(date_n)].append(n_dic)
+                else:
+                    arr_day_notif[str(date_n)] = [n_dic]
+        else:
+            for notif in notifs:
+                notif.read = True
+                notif.save()
+                #get localized time
+                local_triggered_time = variety.convert_from_utc(
+                    notif.alarm_event.triggered_time.time(), tz)
+                #get localized datetime
+                notif.alarm_event.triggered_time = \
+                    notif.alarm_event.triggered_time.astimezone(tz)
+                date_n = notif.alarm_event.triggered_time.date()
 
-            n_dic = {"notif": notif,
-                     "triggered": local_triggered_time,
-                     "type": _type
-                     }
-            if str(date_n) in arr_day_notif:
-                #arr_day_notif['2013-04-25']={}
-                arr_day_notif[str(date_n)].append(n_dic)
-            else:
-                arr_day_notif[str(date_n)] = [n_dic]
+                #type of alarm (off limits, or under limits)
+                if notif.alarm_event.value > notif.alarm_event.alarm.max_value:
+                    _type = "max"
+                elif notif.alarm_event.value < notif.alarm_event.alarm.min_value:
+                    _type = "min"
+                else:
+                    _type = "other"
+
+                n_dic = {"notif": notif,
+                         "triggered": local_triggered_time,
+                         "type": _type
+                         }
+                if str(date_n) in arr_day_notif:
+                    #arr_day_notif['2013-04-25']={}
+                    arr_day_notif[str(date_n)].append(n_dic)
+                else:
+                    arr_day_notif[str(date_n)] = [n_dic]
 
         template_vars['notifications'] = arr_day_notif
         template_vars['today_str'] = today_str
