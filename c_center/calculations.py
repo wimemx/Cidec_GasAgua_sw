@@ -266,9 +266,8 @@ def fpbonificacionrecargo(fp):
             fp_valor = Decimal(str(3.0 / 5.0)) * (
                 (Decimal(str(90.0)) / Decimal(str(fp))) - 1) * 100
         else:
-            fp_valor = Decimal(str(1.0 / 4.0)) * (
-                1 - (Decimal(str(90.0)) / Decimal(str(fp)))) * 100
-
+            fp_valor = Decimal(str(1.0 / 4.0)) * (1 - (Decimal(str(90.0)) / Decimal(str(fp)))) * 100
+    print "bonificacion", fp_valor
     return float(fp_valor)
 
 
@@ -286,7 +285,7 @@ def costofactorpotencia(fp, costo_energia, costo_df):
     else:
         costo_fp = float(
             (costo_energia + costo_df) / 100) * fpbonificacionrecargo(fp) * -1
-
+    print "costo factor potencia en funcion", costo_fp
     return costo_fp
 
 
@@ -340,6 +339,7 @@ def factorpotencia(kwh, kvarh):
         square_kvarh = Decimal(str(pow(kvarh, 2)))
         fp = (Decimal(str(kwh)) / Decimal(
             str(pow((square_kwh + square_kvarh), .5)))) * 100
+        print "fp funcion factorpotencia", fp
     return float(fp)
 
 

@@ -446,17 +446,24 @@ def data_warehouse_day():
 
 @periodic_task(run_every=crontab(hour='*/12'))
 def last_data_received():
+    from_email = "noreply@auditem.mx"
     subject = "disparo de last_data_received"
     message = "de disparó el evento a las: " + str(datetime.datetime.now())
     mail_admins(subject=subject,
                 message=message)
+    msg = EmailMultiAlternatives(subject=subject,
+                                 body=message,
+                                 from_email=from_email,
+                                 bcc="hector@wime.com.mx")
+    msg.attach_alternative(message, "text/html")
+    msg.send()
     delta_t = datetime.timedelta(hours=12)
     cus = c_center.models.ConsumerUnit.objects.exclude(
         profile_powermeter__powermeter__powermeter_anotation="Medidor Virtual"
     ).exclude(profile_powermeter__powermeter__status=False)
 
     subject = "Interrupción en la adquisición de datos"
-    from_email = "noreply@auditem.mx"
+
     to_mail = []
 
     for cu in cus:
