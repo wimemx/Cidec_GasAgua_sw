@@ -2460,20 +2460,25 @@ def tarifa_3(building, s_date, e_date, month, year):
                 profile_powermeter=profile_powermeter).\
             filter(medition_date__gte=s_date).filter(
                 medition_date__lt=e_date).\
-            order_by('pk')
+            order_by('medition_date')
             total_lecturas = kwh_lecturas.count()
 
             if kwh_lecturas:
                 kwh_inicial = kwh_lecturas[0].TotalkWhIMPORT
+                print "Kw Inicial",kwh_inicial
+
                 kwh_final = kwh_lecturas[total_lecturas - 1].TotalkWhIMPORT
+                print "Kw Final",kwh_final
 
                 kwh_netos += int(ceil(kwh_final - kwh_inicial))
-
+                print "Netos:", kwh_netos
             #Se obtienen los kvarhs por medidor
             kvarh_netos += obtenerKVARH(profile_powermeter, s_date, e_date)
-
+            print "Kvarh_netos", kvarh_netos
     #Factor de Potencia
     factor_potencia_total = factorpotencia(kwh_netos, kvarh_netos)
+
+    print "factor ptencia total return", factor_potencia_total
 
     #Factor de Carga
     if demanda_max == 0:
@@ -2483,9 +2488,13 @@ def tarifa_3(building, s_date, e_date, month, year):
             demanda_max * periodo_horas)) * 100
 
     costo_energia = kwh_netos * tarifa_kwh
+    print "costo_energia", costo_energia
     costo_demanda = demanda_max * tarifa_kw
+    print "costo demanda", costo_demanda
     costo_factor_potencia = costofactorpotencia(factor_potencia_total,
                                                 costo_energia, costo_demanda)
+
+    print "costo factor potencia", costo_factor_potencia
 
     subtotal = obtenerSubtotal(costo_energia, costo_demanda,
                                costo_factor_potencia)
