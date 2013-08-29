@@ -21,7 +21,19 @@ class UserNotificationSettingsClass(admin.ModelAdmin):
 admin.site.register(alarms.models.UserNotificationSettings,
                     UserNotificationSettingsClass)
 
-class UserNotificationSettingsClass(admin.ModelAdmin):
+
+class UserNotificationsClass(admin.ModelAdmin):
     list_filter = ['user', 'read']
     list_display = ['alarm_event', 'user', 'read']
-admin.site.register(alarms.models.UserNotifications, UserNotificationSettingsClass)
+    actions = ["mark_unread", "mark_readed"]
+
+    def mark_unread(self, request, queryset):
+        rows_updated = queryset.update(read=False)
+        message_bit = "%s(s) registros modificados" % rows_updated
+        self.message_user(request, message_bit)
+
+    def mark_readed(self, request, queryset):
+        rows_updated = queryset.update(read=True)
+        message_bit = "%s(s) registros modificados" % rows_updated
+        self.message_user(request, message_bit)
+admin.site.register(alarms.models.UserNotifications, UserNotificationsClass)

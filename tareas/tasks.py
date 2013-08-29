@@ -444,13 +444,11 @@ def data_warehouse_day():
         print "not firing:", str(delta1), "to fire"
 
 
-@periodic_task(run_every=crontab(hour='*/12'))
+@periodic_task(run_every=crontab(hour='*/12', minute=0))
 def last_data_received():
     from_email = "noreply@auditem.mx"
     subject = "disparo de last_data_received"
     message = "de disparó el evento a las: " + str(datetime.datetime.now())
-    mail_admins(subject=subject,
-                message=message)
     msg = EmailMultiAlternatives(subject=subject,
                                  body=message,
                                  from_email=from_email,
@@ -477,7 +475,7 @@ def last_data_received():
         else:
             continue
         date_last = last_data["medition_date"]
-        now_dt = datetime.datetime.now(tz=pytz.utc)
+        now_dt = datetime.datetime.now()
         try:
             alarm_cu = alarms.models.Alarms.objects.get(
                 alarm_identifier="Interrupción de Datos",

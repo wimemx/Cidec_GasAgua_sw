@@ -248,13 +248,8 @@ def get_consumer_unit_electric_data_interval_raw_optimized(
             medition_date_value_next, electric_data_value_next =\
                 electric_data_raw_hours_dictionary.get(datetime_next_utc_string)
 
-            print datetime_next_utc_string, electric_data_value_next
-            print datetime_current_utc_string, electric_data_value_current
-
             electric_data_value = \
                 electric_data_value_next - electric_data_value_current
-            print electric_data_value
-            print "-----------------------------------------------------"
 
         datetime_current_localtime = \
             datetime_current_utc.astimezone(current_timezone)
