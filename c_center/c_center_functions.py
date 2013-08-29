@@ -2452,15 +2452,13 @@ def tarifa_3(building, s_date, e_date, month, year):
 
             demanda_max = lectura_max['kW_import_sliding_window_demand__max']
 
-
         for c_unit in consumer_units:
             profile_powermeter = c_unit.profile_powermeter
             #Se obtienen los kwh de ese periodo de tiempo.
             kwh_lecturas = ElectricDataTemp.objects.filter(
-                profile_powermeter=profile_powermeter).\
-            filter(medition_date__gte=s_date).filter(
-                medition_date__lt=e_date).\
-            order_by('pk')
+                profile_powermeter=profile_powermeter,
+                medition_date__gte=s_date,
+                medition_date__lt=e_date).order_by('medition_date')
             total_lecturas = kwh_lecturas.count()
 
             if kwh_lecturas:
@@ -3429,26 +3427,42 @@ def get_google_timezone(building):
                 str(now_timestamp)+'&sensor=false')
         except IOError:
             print "URL Error. No Connection"
-            #vemos si la fecha está en DST o DCT
-            ie = IndustrialEquipment.objects.get(building=building)
-            dsid = simplejson.loads(ie.timezone_dst)
-            dsid = int(dsid["daysaving_id"])
-            current_t = DaySavingDates.objects.get(id=dsid)
-            now = datetime.datetime.now()
-            now = now.replace(tzinfo=None)
-            summer = current_t.summer_date
-            summer = summer.replace(tzinfo=None)
-            winter = current_t.winter_date
-            winter = winter.replace(tzinfo=None)
-            if summer < now < winter:
-                #horario de verano
-                return bld_timezone.time_zone.zone_id, 3600
-            else:
-                return bld_timezone.time_zone.zone_id, 0
+            return offline_timezone(building, bld_timezone)
         else:
-            json_t = simplejson.load(timezone_json)
-            print "Timezone set to:", json_t['timeZoneId']
-            return json_t['timeZoneId'], int(json_t['dstOffset'])
+            try:
+                json_t = simplejson.load(timezone_json)
+                tz_t = json_t['timeZoneId']
+                tzo_t = json_t['dstOffset']
+            except KeyError:
+                print "Error adquiriendo hora de google, se estableció "
+                return offline_timezone(building, bld_timezone)
+            else:
+                print "-------Google JSON START----------------"
+                print json_t
+                print "-------Google JSON END----------------"
+                if tzo_t is None or tz_t is None:
+                    print "Error reading Json"
+                    return offline_timezone(building, bld_timezone)
+                return tz_t, int(tzo_t)
+
+
+def offline_timezone(building, bld_timezone):
+    #vemos si la fecha está en DST o DCT
+    ie = IndustrialEquipment.objects.get(building=building)
+    dsid = simplejson.loads(ie.timezone_dst)
+    dsid = int(dsid["daysaving_id"])
+    current_t = DaySavingDates.objects.get(id=dsid)
+    now = datetime.datetime.now()
+    now = now.replace(tzinfo=None)
+    summer = current_t.summer_date
+    summer = summer.replace(tzinfo=None)
+    winter = current_t.winter_date
+    winter = winter.replace(tzinfo=None)
+    if summer < now < winter:
+        #horario de verano
+        return bld_timezone.time_zone.zone_id, 3600
+    else:
+        return bld_timezone.time_zone.zone_id, 0
 
 
 def replace_accents(with_accents):
