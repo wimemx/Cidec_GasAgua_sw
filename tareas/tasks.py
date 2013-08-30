@@ -352,7 +352,8 @@ def update_data_dw_delta(end, start, delta_name):
             continue
         else:
             status = consumer_unit.profile_powermeter.powermeter.status
-            if not status:
+            status2 = consumer_unit.profile_powermeter.profile_powermeter_status
+            if not status or not status2:
                 continue
 
         #

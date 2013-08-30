@@ -12,6 +12,7 @@ import pytz
 from math import ceil
 import urllib2
 import csv
+import locale
 
 #local application/library specific imports
 from django.shortcuts import HttpResponse, get_object_or_404
@@ -3286,8 +3287,13 @@ def parse_file(_file):
         for (name, value) in items:
             item[name.strip()] = value.strip()
         fecha = item['Fecha']
-        medition_date = datetime.datetime.strptime(
-            fecha, "%a %b %d %H:%M:%S %Z %Y")
+        try:
+            medition_date = datetime.datetime.strptime(
+                fecha, "%a %b %d %H:%M:%S %Z %Y")
+        except ValueError:
+            locale.setlocale(locale.LC_ALL, 'es_MX.utf8')
+            medition_date = datetime.datetime.strptime(fecha,
+                                                       "%d %B %Y %H:%M:%S")
         try:
             powerp = ProfilePowermeter.objects.get(
                 powermeter__powermeter_serial=item["Id medidor"])
@@ -3300,11 +3306,15 @@ def parse_file(_file):
         else:
             cu = ConsumerUnit.objects.get(profile_powermeter=powerp)
             consumer_units.append(cu)
-
+            #Gets the current timezone for the medition_date
             time_zone, offset = get_google_timezone(cu.building)
             timezone_ = pytz.timezone(time_zone)
             medition_date.replace(tzinfo=timezone_)
             medition_date = medition_date - datetime.timedelta(seconds=offset)
+            if "offset" in item:
+                #enforse positive offset
+                medition_date = medition_date + datetime.timedelta(
+                    seconds=int(item["offset"]))
 
         dates_arr.append(medition_date)
         elec_data = ElectricDataTemp.objects.filter(

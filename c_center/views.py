@@ -1954,7 +1954,6 @@ def edit_powermeter(request, id_powermeter):
                 'pw_model': powermeter.powermeter_model.pk,
                 'pw_serial': powermeter.powermeter_serial}
 
-
         message = ''
         _type = ''
 
@@ -1984,7 +1983,7 @@ def edit_powermeter(request, id_powermeter):
                 continuar = False
 
             #Valida el nombre (para el caso de los repetidos)
-            if powermeter.powermeter_model_id != pw_model and \
+            if powermeter.powermeter_model_id != pw_model or \
                             powermeter.powermeter_serial != pw_serial:
                 #Valida por si le da muchos clics al boton
                 pwValidate = Powermeter.objects.filter(
@@ -6908,6 +6907,7 @@ def add_cu(request):
             request.user, CREATE, "Alta de unidades de consumo") or
             request.user.is_superuser) and request.method == "POST":
         post = request.POST
+        profile = None
         if post['type_node'] == "1":
             cu = post["node_part"].split("_")
             consumer_unit = get_object_or_404(ConsumerUnit,
@@ -6930,12 +6930,18 @@ def add_cu(request):
                 profile_powermeter=profile
             )
             consumer_unit.save()
-            #Add the consumer_unit instance for the DW
-            populate_data_warehouse_extended(
-                    populate_instants=None,
-                    populate_consumer_unit_profiles=True,
-                    populate_data=None)
             c_type = "*consumer_unit"
+        #Add the consumer_unit instance for the DW
+        populate_data_warehouse_extended(
+            populate_instants=None,
+            populate_consumer_unit_profiles=True,
+            populate_data=None)
+        ind_eq = IndustrialEquipment.objects.get(
+            building=consumer_unit.building)
+        p_i = PowermeterForIndustrialEquipment(
+            powermeter=consumer_unit.profile_powermeter.powermeter,
+            industrial_equipment=ind_eq)
+        p_i.save()
         content = str(consumer_unit.pk) + c_type
         return HttpResponse(content=content,
                             content_type="text/plain",
@@ -6952,6 +6958,12 @@ def del_cu(request, id_cu):
         cu = get_object_or_404(ConsumerUnit, pk=int(id_cu))
         HierarchyOfPart.objects.filter(consumer_unit_composite=cu).delete()
         HierarchyOfPart.objects.filter(consumer_unit_leaf=cu).delete()
+        ind_eq = IndustrialEquipment.objects.get(
+            building=cu.building)
+        p_i = PowermeterForIndustrialEquipment.objects.get(
+            powermeter=cu.profile_powermeter.powermeter,
+            industrial_equipment=ind_eq)
+        p_i.delete()
         cu.profile_powermeter.profile_powermeter_status = False
         cu.profile_powermeter.save()
         return HttpResponse(content="",
