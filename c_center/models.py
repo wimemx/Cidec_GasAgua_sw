@@ -670,7 +670,7 @@ class PowermeterForIndustrialEquipment(models.Model):
 
     def __unicode__(self):
         return self.powermeter.powermeter_anotation + " - " + \
-               self.industrial_equipment.indistrial_equipment_identifier
+               self.industrial_equipment.alias
 
     class Meta:
         unique_together = ('powermeter', 'industrial_equipment')

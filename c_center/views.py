@@ -6630,6 +6630,9 @@ def create_hierarchy(request, id_building):
 
         ids_prof = ConsumerUnit.objects.all().values_list(
             "profile_powermeter__pk", flat=True)
+        pwrmtr_ind = PowermeterForIndustrialEquipment.objects.all().values_list(
+            "powermeter__pk", flat=True)
+        ids_prof = list(ids_prof) + list(pwrmtr_ind)
         profs = ProfilePowermeter.objects.exclude(
             pk__in=ids_prof).exclude(
                 powermeter__powermeter_anotation="No Registrado").exclude(
@@ -7123,6 +7126,9 @@ def edit_cu(request, cu_id):
         consumer_unit = get_object_or_404(ConsumerUnit, pk=int(cu_id))
 
         if post['prof_pwr_edit'] != "0":
+            pw_ie = PowermeterForIndustrialEquipment.objects.filter(
+                powermeter=consumer_unit.profile_powermeter.powermeter)
+            pw_ie.delete()
             if post['prof_pwr_edit'] == "del_pw":
                 profile = VIRTUAL_PROFILE
             else:
