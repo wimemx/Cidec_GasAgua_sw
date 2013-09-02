@@ -24,40 +24,46 @@
             <h3 class="g12">Informaci&oacute;n de Edificio</h3>
             <div class="building_column">
                 <div class="fields_row g12">
-                    {{ form_b.building_name.errors }}
+                    {% if post %}
+                        {{ form_b.building_name.errors }}
+                    {% endif %}
                     <label for="building_name" class="g3">Nombre<span class="required">*</span></label>
-                    {{ form_b.building_name|add_class:"g8" }}
+                    {{ form_b.building_name }}
                     <span></span>
                 </div>
                 <div class="fields_row g12">
-                    {{ form_b.building_description.errors }}
+                    {% if post %}
+                        {{ form_b.building_description.errors }}
+                    {% endif %}
                     <label for="building_description" class="g3">Descripci&oacute;n</label>
-                    {{ form_b.building_description|add_class:"g8" }}
+                    {{ form_b.building_description }}
                     <span></span>
                 </div>
                 <div class="fields_row g12">
-                    {{ form_bc.company.errors }}
+                    {{ form_b.company.errors }}
                     <label for="company" class="g3">Empresa<span class="required">*</span></label>
-                    {{ form_bc.company|add_class:"g8" }}
+                    {{ form_b.company }}
 
                     <span id="sel_company"></span>
                 </div>
                 <div class="fields_row g12">
                     {{ form_b.mts2_built.errors }}
                     <label for="mts2_built" class="g3">Superficie (m<sup>2</sup>)</label>
-                    {{ form_b.mts2_built|add_class:"g8" }}
+                    {{ form_b.mts2_built }}
                     <span></span>
                 </div>
                 <div class="fields_row g12">
+                    {{ form_b.electric_rate.errors }}
                     <label for="electric_rate" class="g3">Tarifa:<span class="required">*</span></label>
-                    {{ form_b.electric_rate|add_class:"g8" }}
+                    {{ form_b.electric_rate }}
                     <span id="sel_electric"></span>
                 </div>
             </div>
             <div class="building_column">
                 <div class="fields_row g12">
+                    {{ form_b.building_type.errors }}
                     <label for="b_type" class="g3">Tipo de Edificio:<span class="required">*</span></label>
-                    {{ form_bt.building_type}}
+                    {{ form_b.building_type }}
                     <span id="sel_type"></span>
                 </div>
             </div>
@@ -66,62 +72,60 @@
             <h3 class="g12">Ubicaci&oacute;n</h3>
             <div class="building_column">
                 <div class="fields_row g12">
+                    {{ form_b.pais_input.errors }}
                     <label for="b_country" class="g3">Pa&iacute;s<span class="required">*</span></label>
-                    <input type="text" name="b_country" id="b_country" class="g8"
-                           value="{{ post.b_country }}"  autocomplete="off"
-                            />
+                    {{ form_b.pais_input }}
                     <span></span>
                     {{ form_b.pais }}
 
                 </div>
                 <div class="fields_row g12">
+                    {{ form_b.estado_input.errors }}
                     <label for="b_state" class="g3">Estado<span class="required">*</span></label>
-                    <input type="text" name="b_state" id="b_state" class="g8"
-                           value="{{ post.b_state }}"  autocomplete="off"
-                            />
+                    {{ form_b.estado_input }}
                     <span></span>
                     {{ form_b.estado }}
                 </div>
                 <div class="fields_row g12">
+                    {{ form_b.municipio_input.errors }}
                     <label for="b_municipality" class="g3">Municipio<span class="required">*</span></label>
-                    <input type="text" name="b_municipality" id="b_municipality" class="g8"
-                           value="{{ post.b_municipality }}"  autocomplete="off"
-                            />
+                    {{ form_b.municipio_input }}
                     <span></span>
                     {{ form_b.municipio }}
                 </div>
                 <div class="fields_row g12">
+                    {{ form_b.colonia_input.errors }}
                     <label for="b_neighborhood" class="g3">Colonia<span class="required">*</span></label>
-                    <input type="text" name="b_neighborhood" id="b_neighborhood" class="g8"
-                           value="{{ post.b_neighborhood }}"  autocomplete="off"
-                            />
+                    {{ form_b.colonia_input }}
                     <span></span>
                     {{ form_b.colonia }}
                 </div>
                 <div class="fields_row g12">
+                    {{ form_b.calle_input.errors }}
                     <label for="b_street" class="g3">Calle<span class="required">*</span></label>
-                    <input type="text" name="b_street" id="b_street" class="g8"
-                           value="{{ post.b_street }}"  autocomplete="off"
-                            />
+                    {{ form_b.calle_input }}
                     <span></span>
                     {{ form_b.calle }}
                 </div>
                 <div class="fields_row g12">
+                    {{ form_b.external_number.errors }}
                     <label for="b_ext" class="g3">Ext<span class="required">*</span></label>
-                    {{ form_b.building_external_number }}
+                    {{ form_b.external_number }}
                     <span></span>
                 </div>
                 <div class="fields_row g12">
                     <label for="b_int" class="g3">Int</label>
-                    {{ form_b.building_internal_number }}
+                    {{ form_b.internal_number }}
                     <span></span>
                 </div>
                 <div class="fields_row g12">
+                    {{ form_b.code_zone.errors }}
                     <label for="b_zip" class="g3">C&oacute;digo Postal<span class="required">*</span></label>
-                    {{ form_b.building_code_zone }}
+                    {{ form_b.code_zone }}
                     <span></span>
                 </div>
                 <div class="fields_row g12">
+                    {{ form_b.region.errors }}
                     <label for="b_region" class="g3">Regi&oacute;n<span class="required">*</span></label>
                     {{ form_b.region }}
                     <span id="sel_region"></span>
@@ -134,8 +138,9 @@
                 </div>
 
                 <div class="fields_row g12">
+                    {{ form_b.time_zone.errors }}
                     <label for="b_time_zone" class="g3">Zona Horaria:<span class="required">*</span></label>
-                    {{ form_btz.time_zone }}
+                    {{ form_b.time_zone }}
                     <span id="sel_time_zone"></span>
                 </div>
 
@@ -147,8 +152,8 @@
 
             </div>
             <div class="building_column">
-                <input type="hidden" id="b_latitude" name="b_latitude" value="{% if post.b_lat %}{{post.b_lat}}{% else %}0{% endif %}"/>
-                <input type="hidden" id="b_longitude" name="b_longitude" value="{% if post.b_long %}{{post.b_long}}{% else %}0{% endif %}"/>
+                {{ form_b.long_addr }}
+                {{ form_b.lat_addr }}
                 <div id="map_container">
                     <div id="map_canvas" class="map_canvas"></div>
                 </div>

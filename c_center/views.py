@@ -5003,8 +5003,7 @@ def get_select_attributes(request, id_attribute_type):
 ###########
 #EDIFICIOS#
 ###########
-from c_center.forms import BuildingForm, CompanyBuildingForm, \
-    BuildingTypeForBuildingForm, TimezonesBuildingsForm
+from c_center.forms import BuildingForm
 # noinspection PyArgumentList
 @login_required(login_url='/')
 def add_building(request):
@@ -5019,37 +5018,27 @@ def add_building(request):
         #Se obtienen las empresas
         empresas_lst = get_all_companies_for_operation("Alta de edificios",
                                                        CREATE, request.user)
-        #Se obtienen las tarifas
-        tarifas = ElectricRates.objects.all()
-
-        #Se obtienen los tipos de edificios
-        tipos_edificio_lst = BuildingType.objects.filter(
-            building_type_status=1).order_by('building_type_name')
-
-        #Se obtienen las regiones
-        regiones_lst = Region.objects.all()
-
-        #Se obtienen las zonas horarias
-        zonas_lst = Timezones.objects.all()
-
+        companies = [(cm.pk, cm.company_name) for cm in empresas_lst]
+        companies.insert(0, (0, "Seleccione una empresa"))
         #Se obtienen los tipos de atributos de edificios
         tipos_atributos = BuildingAttributesType.objects.filter(
             building_attributes_type_status=1).order_by(
-            'building_attributes_type_name')
+                'building_attributes_type_name')
 
         template_vars = dict(datacontext=datacontext,
                              company=company,
                              post=post,
-                             empresas_lst=empresas_lst,
-                             tipos_edificio_lst=tipos_edificio_lst,
-                             tarifas=tarifas,
-                             regiones_lst=regiones_lst,
-                             zonas_lst=zonas_lst,
                              tipos_atributos=tipos_atributos,
                              sidebar=request.session['sidebar']
         )
-
+        form_b = BuildingForm(request.POST or {"lat_addr": "0",
+                                               "long_addr": "0",
+                                               }, empresas=companies)
+        template_vars["post"] = False
         if request.method == "POST":
+            template_vars["post"] = True
+        if form_b.is_valid():
+
             template_vars["post"] = request.POST
             b_name = request.POST.get('b_name').strip()
             b_description = request.POST.get('b_description').strip()
@@ -5328,10 +5317,7 @@ def add_building(request):
             template_vars["post"] = post
             template_vars["message"] = message
             template_vars["type"] = _type
-        template_vars["form_b"] = BuildingForm
-        template_vars["form_bc"] = CompanyBuildingForm
-        template_vars["form_bt"] = BuildingTypeForBuildingForm
-        template_vars["form_btz"] = TimezonesBuildingsForm
+        template_vars["form_b"] = form_b
 
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response(

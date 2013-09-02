@@ -2454,10 +2454,9 @@ def tarifa_3(building, s_date, e_date, month, year):
             profile_powermeter = c_unit.profile_powermeter
             #Se obtienen los kwh de ese periodo de tiempo.
             kwh_lecturas = ElectricDataTemp.objects.filter(
-                profile_powermeter=profile_powermeter).\
-            filter(medition_date__gte=s_date).filter(
-                medition_date__lt=e_date).\
-            order_by('pk')
+                profile_powermeter=profile_powermeter,
+                medition_date__gte=s_date,
+                medition_date__lt=e_date).order_by('medition_date')
             total_lecturas = kwh_lecturas.count()
 
             if kwh_lecturas:
@@ -3443,9 +3442,22 @@ def get_google_timezone(building):
             else:
                 return bld_timezone.time_zone.zone_id, 0
         else:
-            json_t = simplejson.load(timezone_json)
-            print "Timezone set to:", json_t['timeZoneId']
-            return json_t['timeZoneId'], int(json_t['dstOffset'])
+            try:
+                json_t = simplejson.load(timezone_json)
+                tz_t = json_t['timeZoneId']
+                tzo_t = json_t['dstOffset']
+            except KeyError:
+                print "Error adquiriendo hora de google, se estableció " \
+                      "America/Mexico_City con offset 0"
+                return "America/Mexico_City", 0
+            else:
+                if tzo_t is None:
+                    print "Error al obtener el desface horario desde Google"
+                    tzo_t = 0
+                if tz_t is None:
+                    print "Error al obtener el nombre de la zona horaria"
+                    tz_t = "America/Mexico_City"
+                return tz_t, int(tzo_t)
 
 
 def replace_accents(with_accents):
