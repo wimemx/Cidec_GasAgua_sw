@@ -53,6 +53,9 @@ CREATE = Operation.objects.get(operation_name="Crear")
 DELETE = Operation.objects.get(operation_name="Eliminar")
 UPDATE = Operation.objects.get(operation_name="Modificar")
 
+VIRTUAL_PROFILE = ProfilePowermeter.objects.get(
+    powermeter__powermeter_anotation="Medidor Virtual")
+
 
 def get_clusters_for_operation(permission, operation, user):
     """Obtains a queryset for all the clusters that exists in a datacontext
@@ -680,12 +683,25 @@ def get_hierarchy_list(building, user):
     :param building: The building we want to get his hierarchy
     :param user: django.contrib.auth.models.User object
     """
+    active_pwrmtrs = PowermeterForIndustrialEquipment.objects.filter(
+        industrial_equipment__building=building).values_list(
+            "powermeter__pk", flat=True)
     hierarchy = HierarchyOfPart.objects.filter(
-        part_of_building_composite__building=building).exclude(
-        part_of_building_composite__part_of_building_status=False,
-        part_of_building_leaf__part_of_building_status=False,
-        consumer_unit_composite__profile_powermeter__powermeter__status=False,
-        consumer_unit_leaf__profile_powermeter__powermeter__status=False)
+        part_of_building_composite__building=building
+    ).filter(
+        Q(consumer_unit_composite__profile_powermeter__powermeter__pk__in=
+            active_pwrmtrs) |
+        Q(consumer_unit_leaf__profile_powermeter__powermeter__status=
+            active_pwrmtrs)
+    ).exclude(
+        part_of_building_composite__part_of_building_status=False
+    ).exclude(
+        part_of_building_leaf__part_of_building_status=False
+    ).exclude(
+        consumer_unit_composite__profile_powermeter__powermeter__status=False
+    ).exclude(
+        consumer_unit_leaf__profile_powermeter__powermeter__status=False
+    )
     ids_hierarchy = []
     for hy in hierarchy:
         if hy.part_of_building_leaf:
@@ -747,7 +763,6 @@ def get_hierarchy_list(building, user):
             hierarchy_list += "</li>"
             node_cont += 1
 
-
     #revisa por dispositivos en el primer nivel
     #(dispositivos que no estén como hojas en el arbol de jerarquía)
     hierarchy = HierarchyOfPart.objects.filter(
@@ -761,7 +776,9 @@ def get_hierarchy_list(building, user):
             ids_hierarchy.append(hy.consumer_unit_leaf.pk)
     #sacar el padre(ConsumerUnits que no son hijos de nadie)
     parents = ConsumerUnit.objects.filter(
-        building=building, part_of_building=None).exclude(
+        building=building, part_of_building=None).filter(
+            profile_powermeter__powermeter__pk__in=active_pwrmtrs
+        ).exclude(
             Q(pk__in=ids_hierarchy) |
             Q(electric_device_type__electric_device_type_name="Total Edificio")
         ).exclude(
@@ -3567,3 +3584,31 @@ def setBuildingDST(border):
                 industrial_equip.save()
 
     print "setBuildingDST Done"
+
+
+def deactivate_cu(id_cu, user):
+    """ Detach a powermeter and deactivate his consumer unit
+
+    :param id_cu: consumer unit id
+    :param user: django.contrib.auth.models User object
+    :return: True
+    """
+    cu = get_object_or_404(ConsumerUnit, pk=int(id_cu))
+    HierarchyOfPart.objects.filter(consumer_unit_composite=cu).delete()
+    HierarchyOfPart.objects.filter(consumer_unit_leaf=cu).delete()
+    ind_eq = IndustrialEquipment.objects.get(
+        building=cu.building)
+    p_i = PowermeterForIndustrialEquipment.objects.get(
+        powermeter=cu.profile_powermeter.powermeter,
+        industrial_equipment=ind_eq)
+    p_i.delete()
+    cu.profile_powermeter.profile_powermeter_status = False
+    cu.profile_powermeter.powermeter.status = 0
+    cu.profile_powermeter.save()
+    ind_eq.modified_by = user
+    ind_eq.save()
+    if cu.electric_device_type.electric_device_type_name == "Total Edificio":
+        cu.profile_powermeter = VIRTUAL_PROFILE
+        cu.save()
+    regenerate_ie_config(ind_eq.pk, user)
+    return True

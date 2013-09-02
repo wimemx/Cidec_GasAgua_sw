@@ -1,3 +1,6 @@
+.remove{
+    cursor: pointer;
+}
 #add_permissions
 {
 	margin-left: 50px;

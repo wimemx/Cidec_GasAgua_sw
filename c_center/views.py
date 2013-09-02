@@ -2064,7 +2064,8 @@ def view_powermeter(request):
         order_model = 'asc'
         order_status = 'asc'
 
-        order = "powermeter_anotation" #default order
+        order = "powermeter_anotation"
+        #default order
         if "order_alias" in request.GET:
             if request.GET["order_alias"] == "desc":
                 order = "-powermeter_anotation"
@@ -2105,7 +2106,9 @@ def view_powermeter(request):
                     request.GET['search'])).order_by(order)
         else:
             lista = Powermeter.objects.all().order_by(order)
-
+        lista = lista.exclude(powermeter_anotation="Medidor Virtual").exclude(
+            powermeter_anotation="No Registrado"
+        )
         paginator = Paginator(lista, 10) # muestra 10 resultados por pagina
         template_vars = dict(order_alias=order_alias, order_model=order_model,
                              order_serial=order_serial,
@@ -2159,8 +2162,14 @@ def status_batch_powermeter(request):
                     powermeter = get_object_or_404(Powermeter, pk=r_id)
                     if powermeter.status == 0:
                         powermeter.status = 1
+                        profile = ProfilePowermeter.objects.filter(
+                            powermeter=powermeter)
+                        profile.update(profile_powermeter_status=1)
                     elif powermeter.status == 1:
                         powermeter.status = 0
+                        profile = ProfilePowermeter.objects.filter(
+                            powermeter=powermeter)
+                        profile.update(profile_powermeter_status=0)
                     powermeter.save()
 
                     try:
@@ -2207,10 +2216,14 @@ def status_powermeter(request, id_powermeter):
         powermeter = get_object_or_404(Powermeter, pk=id_powermeter)
         if powermeter.status == 0:
             powermeter.status = 1
+            profile = ProfilePowermeter.objects.filter(powermeter=powermeter)
+            profile.update(profile_powermeter_status=1)
             str_status = "Activo"
         else:
             powermeter.status = 0
             str_status = "Inactivo"
+            profile = ProfilePowermeter.objects.filter(powermeter=powermeter)
+            profile.update(profile_powermeter_status=0)
 
         powermeter.save()
         user = request.user
@@ -6500,6 +6513,14 @@ def asign_pm(request, id_ie):
                 pm_ie.save()
                 ie.modified_by = request.user
                 ie.save()
+                pm.status = 1
+                pm.save()
+                profile = ProfilePowermeter.objects.get(powermeter=pm)
+                profile.profile_powermeter_status = 1
+                profile.save()
+                cu = ConsumerUnit.objects.get(profile_powermeter__powermeter=pm)
+                cu.building = ie.building
+                cu.save()
                 regenerate_ie_config(ie.pk, request.user)
                 pm_data = dict(
                     pm=pm.pk,
@@ -6529,12 +6550,8 @@ def detach_pm(request, id_ie):
             "industriales") or
             request.user.is_superuser) and "pm" in request.GET:
         pm = get_object_or_404(Powermeter, pk=int(request.GET['pm']))
-        ie = get_object_or_404(IndustrialEquipment, pk=int(id_ie))
-        PowermeterForIndustrialEquipment.objects. \
-            filter(powermeter=pm, industrial_equipment=ie).delete()
-        ie.modified_by = request.user
-        ie.save()
-        regenerate_ie_config(ie.pk, request.user)
+        cu = ConsumerUnit.objects.get(profile_powermeter__powermeter=pm)
+        deactivate_cu(cu.pk, request.user)
         mensaje = "El medidor se ha desvinculado"
         return HttpResponseRedirect("/buildings/editar_ie/" +
                                     id_ie + "/?msj=" + mensaje +
@@ -6634,9 +6651,11 @@ def create_hierarchy(request, id_building):
             "powermeter__pk", flat=True)
         ids_prof = list(ids_prof) + list(pwrmtr_ind)
         profs = ProfilePowermeter.objects.exclude(
-            pk__in=ids_prof).exclude(
-                powermeter__powermeter_anotation="No Registrado").exclude(
-                    powermeter__powermeter_anotation="Medidor Virtual")
+            pk__in=ids_prof
+        ).exclude(
+            powermeter__powermeter_anotation="No Registrado"
+        ).exclude(
+            powermeter__powermeter_anotation="Medidor Virtual")
         template_vars['electric_devices'] = ElectricDeviceType.objects.all()
         template_vars['prof_pwmeters'] = profs
         template_vars_template = RequestContext(request, template_vars)
@@ -6955,20 +6974,10 @@ def add_cu(request):
 
 @login_required(login_url='/')
 def del_cu(request, id_cu):
-    if (has_permission(request.user, DELETE,"Eliminar unidades de consumo") or\
-        has_permission(request.user, UPDATE,"Modificar unidades de consumo")\
+    if (has_permission(request.user, DELETE, "Eliminar unidades de consumo") or\
+        has_permission(request.user, UPDATE, "Modificar unidades de consumo")\
             or request.user.is_superuser):
-        cu = get_object_or_404(ConsumerUnit, pk=int(id_cu))
-        HierarchyOfPart.objects.filter(consumer_unit_composite=cu).delete()
-        HierarchyOfPart.objects.filter(consumer_unit_leaf=cu).delete()
-        ind_eq = IndustrialEquipment.objects.get(
-            building=cu.building)
-        p_i = PowermeterForIndustrialEquipment.objects.get(
-            powermeter=cu.profile_powermeter.powermeter,
-            industrial_equipment=ind_eq)
-        p_i.delete()
-        cu.profile_powermeter.profile_powermeter_status = False
-        cu.profile_powermeter.save()
+        deactivate_cu(id_cu, request.user)
         return HttpResponse(content="",
                             content_type="text/plain",
                             status=200)
@@ -9924,10 +9933,15 @@ def create_hierarchy_pop(request, id_building):
 
         ids_prof = ConsumerUnit.objects.all().values_list(
             "profile_powermeter__pk", flat=True)
+        pwrmtr_ind = PowermeterForIndustrialEquipment.objects.all().values_list(
+            "powermeter__pk", flat=True)
+        ids_prof = list(ids_prof) + list(pwrmtr_ind)
         profs = ProfilePowermeter.objects.exclude(
-            pk__in=ids_prof).exclude(
-                powermeter__powermeter_anotation="No Registrado").exclude(
-                    powermeter__powermeter_anotation="Medidor Virtual")
+            pk__in=ids_prof
+        ).exclude(
+            powermeter__powermeter_anotation="No Registrado"
+        ).exclude(
+            powermeter__powermeter_anotation="Medidor Virtual")
         template_vars['electric_devices'] = ElectricDeviceType.objects.all()
         template_vars['prof_pwmeters'] = profs
         template_vars_template = RequestContext(request, template_vars)
