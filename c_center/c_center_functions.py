@@ -12,6 +12,7 @@ import pytz
 from math import ceil
 import urllib2
 import csv
+import locale
 
 #local application/library specific imports
 from django.shortcuts import HttpResponse, get_object_or_404
@@ -51,6 +52,9 @@ VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
 DELETE = Operation.objects.get(operation_name="Eliminar")
 UPDATE = Operation.objects.get(operation_name="Modificar")
+
+VIRTUAL_PROFILE = ProfilePowermeter.objects.get(
+    powermeter__powermeter_anotation="Medidor Virtual")
 
 
 def get_clusters_for_operation(permission, operation, user):
@@ -679,12 +683,25 @@ def get_hierarchy_list(building, user):
     :param building: The building we want to get his hierarchy
     :param user: django.contrib.auth.models.User object
     """
+    active_pwrmtrs = PowermeterForIndustrialEquipment.objects.filter(
+        industrial_equipment__building=building).values_list(
+            "powermeter__pk", flat=True)
     hierarchy = HierarchyOfPart.objects.filter(
-        part_of_building_composite__building=building).exclude(
-        part_of_building_composite__part_of_building_status=False,
-        part_of_building_leaf__part_of_building_status=False,
-        consumer_unit_composite__profile_powermeter__powermeter__status=False,
-        consumer_unit_leaf__profile_powermeter__powermeter__status=False)
+        part_of_building_composite__building=building
+    ).filter(
+        Q(consumer_unit_composite__profile_powermeter__powermeter__pk__in=
+            active_pwrmtrs) |
+        Q(consumer_unit_leaf__profile_powermeter__powermeter__status=
+            active_pwrmtrs)
+    ).exclude(
+        part_of_building_composite__part_of_building_status=False
+    ).exclude(
+        part_of_building_leaf__part_of_building_status=False
+    ).exclude(
+        consumer_unit_composite__profile_powermeter__powermeter__status=False
+    ).exclude(
+        consumer_unit_leaf__profile_powermeter__powermeter__status=False
+    )
     ids_hierarchy = []
     for hy in hierarchy:
         if hy.part_of_building_leaf:
@@ -746,7 +763,6 @@ def get_hierarchy_list(building, user):
             hierarchy_list += "</li>"
             node_cont += 1
 
-
     #revisa por dispositivos en el primer nivel
     #(dispositivos que no estén como hojas en el arbol de jerarquía)
     hierarchy = HierarchyOfPart.objects.filter(
@@ -760,7 +776,9 @@ def get_hierarchy_list(building, user):
             ids_hierarchy.append(hy.consumer_unit_leaf.pk)
     #sacar el padre(ConsumerUnits que no son hijos de nadie)
     parents = ConsumerUnit.objects.filter(
-        building=building, part_of_building=None).exclude(
+        building=building, part_of_building=None).filter(
+            profile_powermeter__powermeter__pk__in=active_pwrmtrs
+        ).exclude(
             Q(pk__in=ids_hierarchy) |
             Q(electric_device_type__electric_device_type_name="Total Edificio")
         ).exclude(
@@ -2107,6 +2125,8 @@ def tarifaHM_2(building, s_date, e_date, month, year):
                     elif periodo_mv['period_type'] == 'punta':
                         arr_kw_punta.append(vcu['value'])
 
+
+
             diccionario_final_cfe["kw_base"] =\
             obtenerDemanda_kw_valores(arr_kw_base)
 
@@ -2115,6 +2135,7 @@ def tarifaHM_2(building, s_date, e_date, month, year):
 
             diccionario_final_cfe["kw_punta"] =\
             obtenerDemanda_kw_valores(arr_kw_punta)
+
 
         else:
 
@@ -2339,21 +2360,7 @@ def tarifaDAC_2(building, s_date, e_date, month, year):
     if consumer_units:
         for c_unit in consumer_units:
             profile_powermeter = c_unit.profile_powermeter
-
-            #Se obtienen los kwh de ese periodo de tiempo.
-            kwh_lecturas = ElectricDataTemp.objects.filter(
-                profile_powermeter=profile_powermeter).\
-            filter(medition_date__gte=s_date).filter(
-                medition_date__lt=e_date).\
-            order_by('medition_date')
-            total_lecturas = kwh_lecturas.count()
-
-            if kwh_lecturas:
-                kwh_inicial = kwh_lecturas[0].TotalkWhIMPORT
-                kwh_final = kwh_lecturas[total_lecturas - 1].TotalkWhIMPORT
-
-                kwh_netos += int(ceil(kwh_final - kwh_inicial))
-
+            kwh_netos += obtenerKWH(profile_powermeter, s_date, e_date)
 
     importe = kwh_netos * tarifa_kwh
     costo_energia = importe + tarifa_mes
@@ -2449,22 +2456,10 @@ def tarifa_3(building, s_date, e_date, month, year):
 
             demanda_max = lectura_max['kW_import_sliding_window_demand__max']
 
-
         for c_unit in consumer_units:
             profile_powermeter = c_unit.profile_powermeter
-            #Se obtienen los kwh de ese periodo de tiempo.
-            kwh_lecturas = ElectricDataTemp.objects.filter(
-                profile_powermeter=profile_powermeter,
-                medition_date__gte=s_date,
-                medition_date__lt=e_date).order_by('medition_date')
-            total_lecturas = kwh_lecturas.count()
-
-            if kwh_lecturas:
-                kwh_inicial = kwh_lecturas[0].TotalkWhIMPORT
-                kwh_final = kwh_lecturas[total_lecturas - 1].TotalkWhIMPORT
-
-                kwh_netos += int(ceil(kwh_final - kwh_inicial))
-
+            #Se obtienen los kwhs por medidor
+            kwh_netos += obtenerKWH(profile_powermeter, s_date, e_date)
             #Se obtienen los kvarhs por medidor
             kvarh_netos += obtenerKVARH(profile_powermeter, s_date, e_date)
 
@@ -2479,7 +2474,9 @@ def tarifa_3(building, s_date, e_date, month, year):
             demanda_max * periodo_horas)) * 100
 
     costo_energia = kwh_netos * tarifa_kwh
+
     costo_demanda = demanda_max * tarifa_kw
+
     costo_factor_potencia = costofactorpotencia(factor_potencia_total,
                                                 costo_energia, costo_demanda)
 
@@ -3298,6 +3295,7 @@ def parse_file(_file):
     fields = data.next()
     consumer_units = []
     dates_arr = []
+    now = datetime.datetime.now()
     for row in data:
     # Zip together the field names and values
         #if row:
@@ -3307,8 +3305,13 @@ def parse_file(_file):
         for (name, value) in items:
             item[name.strip()] = value.strip()
         fecha = item['Fecha']
-        medition_date = datetime.datetime.strptime(
-            fecha, "%a %b %d %H:%M:%S %Z %Y")
+        try:
+            medition_date = datetime.datetime.strptime(
+                fecha, "%a %b %d %H:%M:%S %Z %Y")
+        except ValueError:
+            locale.setlocale(locale.LC_ALL, 'es_MX.utf8')
+            medition_date = datetime.datetime.strptime(fecha,
+                                                       "%d %B %Y %H:%M:%S")
         try:
             powerp = ProfilePowermeter.objects.get(
                 powermeter__powermeter_serial=item["Id medidor"])
@@ -3321,11 +3324,42 @@ def parse_file(_file):
         else:
             cu = ConsumerUnit.objects.get(profile_powermeter=powerp)
             consumer_units.append(cu)
-
+            #Gets the current timezone for the medition_date
             time_zone, offset = get_google_timezone(cu.building)
             timezone_ = pytz.timezone(time_zone)
             medition_date.replace(tzinfo=timezone_)
-            medition_date = medition_date - datetime.timedelta(seconds=offset)
+            now.replace(tzinfo=timezone_)
+            border = cu.building.municipio.border
+            try:
+                DaySavingDates.objects.get(
+                    summer_date__lte=now,
+                    winter_date__gte=now,
+                    border=border)
+            except ObjectDoesNotExist:
+                #now is winter
+                winter = 1
+            else:
+                #summer
+                winter = 0
+
+            try:
+                DaySavingDates.objects.get(
+                    summer_date__lte=medition_date,
+                    winter_date__gte=medition_date,
+                    border=border)
+            except ObjectDoesNotExist:
+                #medition is winter
+                winter1 = 1
+            else:
+                #medition is summer
+                winter1 = 0
+            if winter != winter1:
+                medition_date = medition_date - datetime.timedelta(
+                    seconds=offset)
+            if "offset" in item:
+                #enforse positive offset
+                medition_date = medition_date + datetime.timedelta(
+                    seconds=int(item["offset"]))
 
         dates_arr.append(medition_date)
         elec_data = ElectricDataTemp.objects.filter(
@@ -3425,39 +3459,44 @@ def get_google_timezone(building):
                 str(now_timestamp)+'&sensor=false')
         except IOError:
             print "URL Error. No Connection"
-            #vemos si la fecha está en DST o DCT
-            ie = IndustrialEquipment.objects.get(building=building)
-            dsid = simplejson.loads(ie.timezone_dst)
-            dsid = int(dsid["daysaving_id"])
-            current_t = DaySavingDates.objects.get(id=dsid)
-            now = datetime.datetime.now()
-            now = now.replace(tzinfo=None)
-            summer = current_t.summer_date
-            summer = summer.replace(tzinfo=None)
-            winter = current_t.winter_date
-            winter = winter.replace(tzinfo=None)
-            if summer < now < winter:
-                #horario de verano
-                return bld_timezone.time_zone.zone_id, 3600
-            else:
-                return bld_timezone.time_zone.zone_id, 0
+            return offline_timezone(building, bld_timezone)
         else:
             try:
                 json_t = simplejson.load(timezone_json)
                 tz_t = json_t['timeZoneId']
                 tzo_t = json_t['dstOffset']
             except KeyError:
-                print "Error adquiriendo hora de google, se estableció " \
-                      "America/Mexico_City con offset 0"
-                return "America/Mexico_City", 0
+                print "Error adquiriendo hora de google, se estableció "
+                return offline_timezone(building, bld_timezone)
             else:
-                if tzo_t is None:
-                    print "Error al obtener el desface horario desde Google"
-                    tzo_t = 0
-                if tz_t is None:
-                    print "Error al obtener el nombre de la zona horaria"
-                    tz_t = "America/Mexico_City"
+                print "-------Google JSON START----------------"
+                print json_t
+                print "-------Google JSON END----------------"
+                if tzo_t is None or tz_t is None:
+                    print "Error reading Json"
+                    return offline_timezone(building, bld_timezone)
                 return tz_t, int(tzo_t)
+
+
+def offline_timezone(building, bld_timezone):
+    #vemos si la fecha está en DST o DCT
+    ie = IndustrialEquipment.objects.get(building=building)
+    dsid = simplejson.loads(ie.timezone_dst)
+    dsid = int(dsid["daysaving_id"])
+    current_t = DaySavingDates.objects.get(id=dsid)
+    now = datetime.datetime.now()
+    now = now.replace(tzinfo=None)
+    summer = current_t.summer_date
+    summer = summer.replace(tzinfo=None)
+    winter = current_t.winter_date
+    winter = winter.replace(tzinfo=None)
+    if summer < now < winter:
+        #horario de verano
+        print "dst: 3600"
+        return bld_timezone.time_zone.zone_id, 3600
+    else:
+        print "offset:0"
+        return bld_timezone.time_zone.zone_id, 0
 
 
 def replace_accents(with_accents):
@@ -3536,9 +3575,6 @@ def crawler_get_municipalities():
 
                     else:
                         continue
-    print "Total: ", cont_total
-
-    print "Finished"
     return True
 
 
@@ -3578,3 +3614,31 @@ def setBuildingDST(border):
                 industrial_equip.save()
 
     print "setBuildingDST Done"
+
+
+def deactivate_cu(id_cu, user):
+    """ Detach a powermeter and deactivate his consumer unit
+
+    :param id_cu: consumer unit id
+    :param user: django.contrib.auth.models User object
+    :return: True
+    """
+    cu = get_object_or_404(ConsumerUnit, pk=int(id_cu))
+    HierarchyOfPart.objects.filter(consumer_unit_composite=cu).delete()
+    HierarchyOfPart.objects.filter(consumer_unit_leaf=cu).delete()
+    ind_eq = IndustrialEquipment.objects.get(
+        building=cu.building)
+    p_i = PowermeterForIndustrialEquipment.objects.get(
+        powermeter=cu.profile_powermeter.powermeter,
+        industrial_equipment=ind_eq)
+    p_i.delete()
+    cu.profile_powermeter.profile_powermeter_status = False
+    cu.profile_powermeter.powermeter.status = 0
+    cu.profile_powermeter.save()
+    ind_eq.modified_by = user
+    ind_eq.save()
+    if cu.electric_device_type.electric_device_type_name == "Total Edificio":
+        cu.profile_powermeter = VIRTUAL_PROFILE
+        cu.save()
+    regenerate_ie_config(ind_eq.pk, user)
+    return True

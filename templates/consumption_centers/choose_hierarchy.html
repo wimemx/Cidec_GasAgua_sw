@@ -27,7 +27,7 @@
 
                 var texto = $(this).text();
                 $.ajax({
-                    url: "/reportes/set_c_u/"+$(this).attr("rel"),
+                    url: "/reportes/set_c_u/"+$(this).attr("rel")+"/",
                     type: "GET",
                     dataType: 'json',
                     async: 'true',

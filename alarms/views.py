@@ -863,7 +863,7 @@ def user_notifications(request):
                     data = defaultdict(list)
 
                     for item2 in notifs_groups:
-                        locale.setlocale(locale.LC_ALL, 'es_ES')
+                        locale.setlocale(locale.LC_ALL, 'es_MX.utf8')
                         dict_key = item2.alarm_event.triggered_time.date()\
                             .strftime('%d de %B')
                         data[str(dict_key)].append(item2)
@@ -1007,7 +1007,7 @@ def get_unread_notifs_count(request):
             request.user.is_superuser:
         n_count = UserNotifications.objects.filter(
             user=request.user, read=False
-        ).values("notification_group").annotate(
+        ).values("notification_group", "alarm_event__alarm").annotate(
             Count("notification_group"))
 
         data = str(len(n_count))

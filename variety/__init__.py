@@ -12,6 +12,7 @@ import string
 import re
 from urlparse import urlparse
 from django.core.validators import email_re
+from django.utils import timezone
 from dateutil.relativedelta import relativedelta
 
 
@@ -122,7 +123,6 @@ def get_week_of_month_from_datetime(datetime_variable):
         datetime_next += week_delta
 
     return week_number
-
 
 def getMonthDays(month, year):
     """ returns an array with all the Date objects for the month

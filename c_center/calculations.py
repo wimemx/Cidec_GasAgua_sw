@@ -266,9 +266,7 @@ def fpbonificacionrecargo(fp):
             fp_valor = Decimal(str(3.0 / 5.0)) * (
                 (Decimal(str(90.0)) / Decimal(str(fp))) - 1) * 100
         else:
-            fp_valor = Decimal(str(1.0 / 4.0)) * (
-                1 - (Decimal(str(90.0)) / Decimal(str(fp)))) * 100
-
+            fp_valor = Decimal(str(1.0 / 4.0)) * (1 - (Decimal(str(90.0)) / Decimal(str(fp)))) * 100
     return float(fp_valor)
 
 
@@ -286,7 +284,6 @@ def costofactorpotencia(fp, costo_energia, costo_df):
     else:
         costo_fp = float(
             (costo_energia + costo_df) / 100) * fpbonificacionrecargo(fp) * -1
-
     return costo_fp
 
 
@@ -1007,6 +1004,43 @@ def getKWHSimplePerDay(s_date, e_date, profile_powermeter):
         kwh_netos = int(ceil(kwh_final - kwh_inicial))
 
     return kwh_netos
+
+def obtenerKWH(profile_powermeter, start_date, end_date):
+    """Obtains KWH in a given timeframe for a profile_powermeter
+
+    :param profile_powermeter: ProfilePowermeter object
+    :param start_date: datetime
+    :param end_date: datetime
+    :return: float
+    """
+    kwh_netos = 0
+    lecturasObj = ElectricDataTemp.objects.filter(
+        profile_powermeter=profile_powermeter,
+        medition_date__gte=start_date,
+        medition_date__lt=end_date).order_by('medition_date').values(
+            "TotalkWhIMPORT", "medition_date")
+    if lecturasObj:
+        total_lecturas = len(lecturasObj)
+        kwh_inicial = lecturasObj[0]['TotalkWhIMPORT']
+        kwh_final = lecturasObj[total_lecturas - 1]['TotalkWhIMPORT']
+        ultima_fecha = lecturasObj[total_lecturas - 1]['medition_date']
+
+        #Se obtiene la siguiente lectura
+        nextReading = ElectricDataTemp.objects.filter(
+            profile_powermeter=profile_powermeter,
+            medition_date__gt=ultima_fecha).order_by('medition_date').values(
+                "medition_date", "TotalkWhIMPORT")
+
+        #Se revisa que la siguiente lectura sea menor a 10 min.
+        tenmin_delta = datetime.timedelta(minutes=10)
+
+        if nextReading:
+            if nextReading[0]['medition_date'] < (ultima_fecha + tenmin_delta):
+                kwh_final = nextReading[0]['TotalkWhIMPORT']
+
+        kwh_netos = kwh_final - kwh_inicial
+
+    return int(ceil(kwh_netos))
 
 
 def getKWHperDay(s_date, e_date, profile_powermeter):

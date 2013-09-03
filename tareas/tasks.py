@@ -352,7 +352,8 @@ def update_data_dw_delta(end, start, delta_name):
             continue
         else:
             status = consumer_unit.profile_powermeter.powermeter.status
-            if not status:
+            status2 = consumer_unit.profile_powermeter.profile_powermeter_status
+            if not status or not status2:
                 continue
 
         #
@@ -444,19 +445,24 @@ def data_warehouse_day():
         print "not firing:", str(delta1), "to fire"
 
 
-@periodic_task(run_every=crontab(hour='*/12'))
+@periodic_task(run_every=crontab(hour='*/12', minute=0))
 def last_data_received():
+    from_email = "noreply@auditem.mx"
     subject = "disparo de last_data_received"
     message = "de disparó el evento a las: " + str(datetime.datetime.now())
-    mail_admins(subject=subject,
-                message=message)
+    msg = EmailMultiAlternatives(subject=subject,
+                                 body=message,
+                                 from_email=from_email,
+                                 bcc=["hector@wime.com.mx"])
+    msg.attach_alternative(message, "text/html")
+    msg.send()
     delta_t = datetime.timedelta(hours=12)
     cus = c_center.models.ConsumerUnit.objects.exclude(
         profile_powermeter__powermeter__powermeter_anotation="Medidor Virtual"
     ).exclude(profile_powermeter__powermeter__status=False)
 
     subject = "Interrupción en la adquisición de datos"
-    from_email = "noreply@auditem.mx"
+
     to_mail = []
 
     for cu in cus:
@@ -470,7 +476,7 @@ def last_data_received():
         else:
             continue
         date_last = last_data["medition_date"]
-        now_dt = datetime.datetime.now(tz=pytz.utc)
+        now_dt = datetime.datetime.now()
         try:
             alarm_cu = alarms.models.Alarms.objects.get(
                 alarm_identifier="Interrupción de Datos",

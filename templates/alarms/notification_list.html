@@ -112,11 +112,11 @@
                         {% for notif in value %}
 
                             <p class="notif_detail item{{ forloop.counter0 }}">
+                            <span class="t_hour">{{ notif.triggered|time:"f A" }}</span>
                             {% if notif.notif.alarm_event.alarm.alarm_identifier == "Interrupción de Datos" %}
-                              <span class="t_hour">{{ notif.triggered|time:"f A" }}</span>
+
                               El envío de datos ha cesado para la configuración de <span class="consumer_unit_alarm">{{ notif.notif.alarm_event.alarm.consumer_unit.building.building_name }} en {{ notif.notif.alarm_event.alarm.consumer_unit.electric_device_type.electric_device_type_name }}.</span> Por favor revise que el sistema de adquisici&oacute;n se encuentre funcionando.
                             {% else %}
-                                <span class="t_hour">{{ notif.triggered|time:"f A" }}</span>
                                 La lectura del par&aacute;metro <span class="parameter">{{ notif.notif.alarm_event.alarm.electric_parameter.name }}</span>
                                 ha sido de <span class="value {{ notif.type }}">{{ notif.notif.alarm_event.value|floatformat:2 }}{{ notif.notif.alarm_event.alarm.electric_parameter.param_units }}</span>
                                 sali&eacute;ndose del rango establecido entre <span class="range">{{ notif.notif.alarm_event.alarm.min_value|floatformat:2 }}{{ notif.notif.alarm_event.alarm.electric_parameter.param_units }}</span> y <span class="range">{{ notif.notif.alarm_event.alarm.max_value|floatformat:2 }}{{ notif.notif.alarm_event.alarm.electric_parameter.param_units }}</span>
@@ -154,7 +154,6 @@
                             {% if notif.alarm_event.alarm.alarm_identifier == "Interrupción de Datos" %}
                                 El envío de datos ha cesado para la configuración de <span class="consumer_unit_alarm">{{ notif.alarm_event.alarm.consumer_unit.building.building_name }} en {{ notif.alarm_event.alarm.consumer_unit.electric_device_type.electric_device_type_name }}.</span> Por favor revise que el sistema de adquisici&oacute;n se encuentre funcionando.
                             {% else %}
-                                <span class="t_hour">{{ notif.alarm_event.triggered_time|time:"f A" }}</span>
                                 La lectura del par&aacute;metro <span class="parameter">{{ notif.alarm_event.alarm.electric_parameter.name }}</span>
                                 ha sido de <span class="value {{ notif.type }}">{{ notif.alarm_event.value|floatformat:2 }}{{ notif.notif.alarm_event.alarm.electric_parameter.param_units }}</span>
                                 sali&eacute;ndose del rango establecido entre <span class="range">{{ notif.alarm_event.alarm.min_value|floatformat:2 }}{{ notif.alarm_event.alarm.electric_parameter.param_units }}</span> y <span class="range">{{ notif.alarm_event.alarm.max_value|floatformat:2 }}{{ notif.alarm_event.alarm.electric_parameter.param_units }}</span>

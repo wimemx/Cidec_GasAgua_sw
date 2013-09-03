@@ -17,53 +17,68 @@
         Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
     </p>
     <form method="post" action="." id="building_form">
-    {% load custom_tags_n_filters %}
         {% csrf_token %}
         <div>
         <div class="building_info_top">
             <h3 class="g12">Informaci&oacute;n de Edificio</h3>
             <div class="building_column">
                 <div class="fields_row g12">
-                    {% if post %}
-                        {{ form_b.building_name.errors }}
-                    {% endif %}
-                    <label for="building_name" class="g3">Nombre<span class="required">*</span></label>
-                    {{ form_b.building_name }}
+                    <label for="b_name" class="g3">Nombre<span class="required">*</span></label>
+                    <input type="text" name="b_name" id="b_name" class="g8"
+                           value="{{ post.b_name }}"
+                            />
                     <span></span>
                 </div>
                 <div class="fields_row g12">
-                    {% if post %}
-                        {{ form_b.building_description.errors }}
-                    {% endif %}
-                    <label for="building_description" class="g3">Descripci&oacute;n</label>
-                    {{ form_b.building_description }}
-                    <span></span>
-                </div>
-                <div class="fields_row g12">
-                    {{ form_b.company.errors }}
-                    <label for="company" class="g3">Empresa<span class="required">*</span></label>
-                    {{ form_b.company }}
+                    <label for="b_description" class="g3">Descripci&oacute;n</label>
+                    <textarea rows="5" name="b_description" id="b_description" class="g8">{{ post.b_description }}</textarea>
 
+                    <span></span>
+                </div>
+                <div class="fields_row g12">
+                    <label for="b_company" class="g3">Empresa<span class="required">*</span></label>
+                    {% if empresa %}<input type="hidden" value="{{ empresa }}" name="b_company">{% endif %}
+                    <select name="b_company" id="b_company" class="g8" {% if empresa %}disabled="disabled" {% endif %}>
+                        <option value="">Selecciona una empresa</option>
+                        {% if empresas_lst %}
+                        {% for empr in empresas_lst %}
+                        <option value="{{empr.id}}" {% if post.b_company == empr.id or empr.id == empresa%} selected {% endif %}>{{ empr.company_name }}</option>
+                        {% endfor %}
+                        {% endif %}
+
+                    </select>
                     <span id="sel_company"></span>
                 </div>
                 <div class="fields_row g12">
-                    {{ form_b.mts2_built.errors }}
-                    <label for="mts2_built" class="g3">Superficie (m<sup>2</sup>)</label>
-                    {{ form_b.mts2_built }}
+                    <label for="b_mt2" class="g3">Superficie (m<sup>2</sup>)</label>
+                    <input type="text" name="b_mt2" id="b_mt2" class="g8" maxlength="3"
+                           value="{{ post.b_mt2 }}"
+                            />
                     <span></span>
                 </div>
                 <div class="fields_row g12">
-                    {{ form_b.electric_rate.errors }}
-                    <label for="electric_rate" class="g3">Tarifa:<span class="required">*</span></label>
-                    {{ form_b.electric_rate }}
+                    <label for="b_electric_rate" class="g3">Tarifa:<span class="required">*</span></label>
+                    <select name="b_electric_rate" id="b_electric_rate" class="g8">
+                        <option value="">Selecciona un tipo de tarifa</option>
+                        {% if tarifas %}
+                        {% for tarifa in tarifas %}
+                        <option value="{{tarifa.id}}" {% if post.b_electric_rate_id == tarifa.id %} selected {% endif %}>{{ tarifa.electric_rate_name }}</option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
                     <span id="sel_electric"></span>
                 </div>
             </div>
             <div class="building_column">
                 <div class="fields_row g12">
-                    {{ form_b.building_type.errors }}
                     <label for="b_type" class="g3">Tipo de Edificio:<span class="required">*</span></label>
-                    {{ form_b.building_type }}
+                    <select multiple name="b_type" id="b_type" size="10" class="g8">
+                        {% if tipos_edificio_lst %}
+                        {% for tipo in tipos_edificio_lst %}
+                        <option value="{{tipo.id}}" {% for btype in post.b_type_arr %}{% if btype|slugify == tipo.id|slugify %} selected {% endif %}{% endfor %}>{{ tipo.building_type_name }}</option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
                     <span id="sel_type"></span>
                 </div>
             </div>
@@ -72,64 +87,81 @@
             <h3 class="g12">Ubicaci&oacute;n</h3>
             <div class="building_column">
                 <div class="fields_row g12">
-                    {{ form_b.pais_input.errors }}
                     <label for="b_country" class="g3">Pa&iacute;s<span class="required">*</span></label>
-                    {{ form_b.pais_input }}
+                    <input type="text" name="b_country" id="b_country" class="g8"
+                           value="{{ post.b_country }}"  autocomplete="off"
+                            />
                     <span></span>
-                    {{ form_b.pais }}
-
+                    <input type="hidden" name="b_country_id" id="b_country_id" value="{{post.b_country_id}}">
                 </div>
                 <div class="fields_row g12">
-                    {{ form_b.estado_input.errors }}
                     <label for="b_state" class="g3">Estado<span class="required">*</span></label>
-                    {{ form_b.estado_input }}
+                    <input type="text" name="b_state" id="b_state" class="g8"
+                           value="{{ post.b_state }}"  autocomplete="off"
+                            />
                     <span></span>
-                    {{ form_b.estado }}
+                    <input type="hidden" name="b_state_id" id="b_state_id" value="{{post.b_state_id}}">
                 </div>
                 <div class="fields_row g12">
-                    {{ form_b.municipio_input.errors }}
                     <label for="b_municipality" class="g3">Municipio<span class="required">*</span></label>
-                    {{ form_b.municipio_input }}
+                    <input type="text" name="b_municipality" id="b_municipality" class="g8"
+                           value="{{ post.b_municipality }}"  autocomplete="off"
+                            />
                     <span></span>
-                    {{ form_b.municipio }}
+                    <input type="hidden" name="b_municipality_id" id="b_municipality_id" value="{{post.b_municipality_id}}">
                 </div>
                 <div class="fields_row g12">
-                    {{ form_b.colonia_input.errors }}
                     <label for="b_neighborhood" class="g3">Colonia<span class="required">*</span></label>
-                    {{ form_b.colonia_input }}
+                    <input type="text" name="b_neighborhood" id="b_neighborhood" class="g8"
+                           value="{{ post.b_neighborhood }}"  autocomplete="off"
+                            />
                     <span></span>
-                    {{ form_b.colonia }}
+                    <input type="hidden" name="b_neighborhood_id" id="b_neighborhood_id" value="{{post.b_neighborhood_id}}">
                 </div>
                 <div class="fields_row g12">
-                    {{ form_b.calle_input.errors }}
                     <label for="b_street" class="g3">Calle<span class="required">*</span></label>
-                    {{ form_b.calle_input }}
+                    <input type="text" name="b_street" id="b_street" class="g8"
+                           value="{{ post.b_street }}"  autocomplete="off"
+                            />
                     <span></span>
-                    {{ form_b.calle }}
+                    <input type="hidden" name="b_street_id" id="b_street_id" value="{{post.b_street_id}}">
                 </div>
                 <div class="fields_row g12">
-                    {{ form_b.external_number.errors }}
                     <label for="b_ext" class="g3">Ext<span class="required">*</span></label>
-                    {{ form_b.external_number }}
+                    <input type="text" name="b_ext" id="b_ext" class="g8"
+                           value="{{ post.b_ext }}"
+                            />
                     <span></span>
                 </div>
                 <div class="fields_row g12">
                     <label for="b_int" class="g3">Int</label>
-                    {{ form_b.internal_number }}
+                    <input type="text" name="b_int" id="b_int" class="g8"
+                           value="{{ post.b_int }}"
+                            />
                     <span></span>
                 </div>
                 <div class="fields_row g12">
-                    {{ form_b.code_zone.errors }}
                     <label for="b_zip" class="g3">C&oacute;digo Postal<span class="required">*</span></label>
-                    {{ form_b.code_zone }}
+                    <input type="text" name="b_zip" id="b_zip" class="g8"
+                           value="{{ post.b_zip }}"
+                            />
                     <span></span>
                 </div>
                 <div class="fields_row g12">
-                    {{ form_b.region.errors }}
                     <label for="b_region" class="g3">Regi&oacute;n<span class="required">*</span></label>
-                    {{ form_b.region }}
+                    <select name="b_region" id="b_region" class="g8">
+                        <option value="">Selecciona una región</option>
+                        {% if regiones_lst %}
+                        {% for rgn in regiones_lst %}
+                        <option value="{{rgn.id}}" {% if post.b_region_id == rgn.id %} selected {% endif %}>{{ rgn.region_name }}</option>
+                        {% endfor %}
+                        {% endif %}
+
+                    </select>
                     <span id="sel_region"></span>
+
                 </div>
+
 
                 <div class="fields_row g12">
                     <label for="see_reg" class="g3"></label>
@@ -137,10 +169,18 @@
 
                 </div>
 
-                <div class="fields_row g12">
-                    {{ form_b.time_zone.errors }}
+                  <div class="fields_row g12">
                     <label for="b_time_zone" class="g3">Zona Horaria:<span class="required">*</span></label>
-                    {{ form_b.time_zone }}
+                    <select name="b_time_zone" id="b_time_zone" class="g8">
+                        <option value="">Selecciona una zona horaria</option>
+                     {% if zonas_lst %}
+                            {% for zn in zonas_lst %}
+                              <option value="{{zn.id}}"{% if post.b_time_zone_id == zn.id %} selected {% endif %}> {{ zn.name }}</option>
+                            {% endfor %}
+                        {% endif %}
+
+
+                    </select>
                     <span id="sel_time_zone"></span>
                 </div>
 
@@ -152,8 +192,8 @@
 
             </div>
             <div class="building_column">
-                {{ form_b.long_addr }}
-                {{ form_b.lat_addr }}
+                <input type="hidden" id="b_latitude" name="b_latitude" value="{% if post.b_lat %}{{post.b_lat}}{% else %}0{% endif %}"/>
+                <input type="hidden" id="b_longitude" name="b_longitude" value="{% if post.b_long %}{{post.b_long}}{% else %}0{% endif %}"/>
                 <div id="map_container">
                     <div id="map_canvas" class="map_canvas"></div>
                 </div>
