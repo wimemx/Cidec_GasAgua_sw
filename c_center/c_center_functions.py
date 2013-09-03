@@ -3295,6 +3295,7 @@ def parse_file(_file):
     fields = data.next()
     consumer_units = []
     dates_arr = []
+    now = datetime.datetime.now()
     for row in data:
     # Zip together the field names and values
         #if row:
@@ -3327,7 +3328,34 @@ def parse_file(_file):
             time_zone, offset = get_google_timezone(cu.building)
             timezone_ = pytz.timezone(time_zone)
             medition_date.replace(tzinfo=timezone_)
-            medition_date = medition_date - datetime.timedelta(seconds=offset)
+            now.replace(tzinfo=timezone_)
+            border = cu.building.municipio.border
+            try:
+                DaySavingDates.objects.get(
+                    summer_date__lte=now,
+                    winter_date__gte=now,
+                    border=border)
+            except ObjectDoesNotExist:
+                #now is winter
+                winter = 1
+            else:
+                #summer
+                winter = 0
+
+            try:
+                DaySavingDates.objects.get(
+                    summer_date__lte=medition_date,
+                    winter_date__gte=medition_date,
+                    border=border)
+            except ObjectDoesNotExist:
+                #medition is winter
+                winter1 = 1
+            else:
+                #medition is summer
+                winter1 = 0
+            if winter != winter1:
+                medition_date = medition_date - datetime.timedelta(
+                    seconds=offset)
             if "offset" in item:
                 #enforse positive offset
                 medition_date = medition_date + datetime.timedelta(
@@ -3464,8 +3492,10 @@ def offline_timezone(building, bld_timezone):
     winter = winter.replace(tzinfo=None)
     if summer < now < winter:
         #horario de verano
+        print "dst: 3600"
         return bld_timezone.time_zone.zone_id, 3600
     else:
+        print "offset:0"
         return bld_timezone.time_zone.zone_id, 0
 
 

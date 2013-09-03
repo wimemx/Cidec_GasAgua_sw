@@ -453,7 +453,7 @@ def last_data_received():
     msg = EmailMultiAlternatives(subject=subject,
                                  body=message,
                                  from_email=from_email,
-                                 bcc="hector@wime.com.mx")
+                                 bcc=["hector@wime.com.mx"])
     msg.attach_alternative(message, "text/html")
     msg.send()
     delta_t = datetime.timedelta(hours=12)
