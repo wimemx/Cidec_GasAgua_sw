@@ -250,7 +250,7 @@
                 $("#building_container").slideUp();
 
                 $.ajax({
-                    url: "/reportes/set_default_building/" + $(this).attr("rel"),
+                    url: "/reportes/set_default_building/" + $(this).attr("rel") + "/",
                     type: "GET",
                     dataType: 'json',
                     async: 'true',

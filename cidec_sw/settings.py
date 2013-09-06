@@ -170,6 +170,7 @@ INSTALLED_APPS = (
     'plupload',
     'djcelery',
     'tareas',
+    'gas_agua'
     #'debug_toolbar'
 )
 
