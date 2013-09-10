@@ -630,7 +630,6 @@ def set_default_session_vars(request, datacontext):
     :param request: request object, for session saving
     :param datacontext: array of buildings pks
     """
-
     if not datacontext:
         request.session['main_building'] = None
         request.session['company'] = None

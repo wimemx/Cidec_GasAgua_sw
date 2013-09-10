@@ -9097,7 +9097,10 @@ def power_performance(request):
                         atributo_dic['variacion'] = fabs(diff_promedios)
 
                     atributos_completos.append(atributo_dic)
-
+            print atributos_completos
+            for index in atributos_completos:
+                print index
+                print "\n"
             template_vars['contenedor_global'] = atributos_completos
 
             template_vars_template = RequestContext(request, template_vars)

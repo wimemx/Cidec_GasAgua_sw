@@ -49,6 +49,7 @@ body{background:url("images/bgs/bg.jpg") transparent repeat}
 .main_logo a{display:block;height:45px;width:150px}
 .main_logo#myrios a{background:url("images/imgs_icns/myrios_logo.png") -11.7px;margin-top:0}
 .main_logo#auditem a{margin-top:-6px;height:47px;background-position:right center;width:168px !important;background:url("images/imgs_icns/auditem_logo.png")}
+#ele_logo{margin-top:-4px;margin-left:15px;position: absolute; widht:350px; height:50px;}
 h2{line-height:22px;color:#4d5b65;font-weight:700;font-size:20px;float:left}
 h2 span{font-size:20px;font-weight:300 !important}
 .various{line-height:23px;color:#0278cf;float:left;margin-left:5px}

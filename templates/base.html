@@ -27,7 +27,16 @@
         </div>
         <div id="header-container">
             <div class="main_logo fl" id="auditem">
-                <a href="/"></a>
+                <a href="/medition_type_menu/"></a>
+            </div>
+            <div class="medition_logo" id="electricidad">
+                {% if tipo == 'water' %}
+                    <a href="#"><img id='ele_logo' src="/static/css/images/imgs_icns/agua.png"/></a>
+                {% elif tipo == 'gas' %}
+                    <a href="#"><img id='ele_logo' src="/static/css/images/imgs_icns/gas.png"/></a>
+                {% else %}
+                    <a href="/main/"><img id='ele_logo' src="/static/css/images/imgs_icns/elec.png"/></a>
+                {% endif %}
             </div>
             <div class="main_logo fr" id="myrios">
                 <a href="/"></a>

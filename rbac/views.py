@@ -22,6 +22,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 
 from rbac.models import *
+from rbac.forms import UserForm
 from c_center.models import Cluster, ClusterCompany, CompanyBuilding
 from c_center.c_center_functions import *
 from rbac.rbac_functions import has_permission, get_buildings_context, \
@@ -819,6 +820,11 @@ def add_user(request):
                              datacontext=datacontext,
                              company=company)
         if request.method == "POST":
+            form = UserForm(request.POST) # A form bound to the POST data
+            if form.is_valid():
+                print form.cleaned_data
+            else:
+                print
             post = variety.get_post_data(request.POST)
             template_vars["post"] = post
             valid = validate_user(post)
@@ -857,13 +863,15 @@ def add_user(request):
                         newUser.is_staff = False
                         newUser.is_active = True
                         newUser.is_superuser = False
-                        newUser.save()
+                        #newUser.save()
                         user_activation_key = variety.random_string_generator(
                             size=10)
+                        """
                         ExtendedUser(
                             user=newUser,
                             user_activation_key=user_activation_key
                         ).save()
+
                         UserProfile(
                             user=newUser,
                             user_profile_surname_mother=valid['surname'],
@@ -873,7 +881,7 @@ def add_user(request):
                             user_profile_mobile_phone=request.POST['tel_m'],
                             user_profile_contact_email=valid['mail']
                         ).save()
-
+                        """
                         template_vars["message"] = "Usuario creado exitosamente"
                         template_vars["type"] = "n_success"
                         if has_permission(request.user,
@@ -895,7 +903,7 @@ def add_user(request):
                                            "los datos por favor revise que no" \
                                            " haya caracteres inv&aacute;lidos"
 
-
+        template_vars['form_usr'] = UserForm()
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("rbac/add_user.html", template_vars_template)
     else:

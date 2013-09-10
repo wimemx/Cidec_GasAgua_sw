@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block titulo %}Medición de Agua{% endblock %}
+{% block externalcss %}
+    <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/forms/rbac_general.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/forms/rbac_user_list.css" type="text/css" />
+{% endblock %}
+
+{% block breadcumbs %}
+    <div id="bread_crumbs">
+    <a href="/panel_de_control/ver_usuario/{{ request.user.pk }}/" class="fl username">{{ request.user.first_name }} {{ request.user.last_name }}</a>
+        <ul>
+            <li><a href="/main/">Inicio</a></li>
+        </ul>
+        <a href="/logout" id="userLogOut">Cerrar sesión</a>
+
+    </div>
+
+{% endblock %}
+
+
+{% block contenido %}
+
+
+<div id="page_content">
+
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+
+a{
+    color: #666;
+}
+h1{
+    font-size: 60px;
+    text-align: center;
+    margin-top: 8%;
+}
+h2{
+    font-size: 60px;
+    text-align: center;
+    margin-top: 8%;
+}
+label{
+    width: 165px;
+    margin: 1em auto;
+}
+#menu
+{
+    margin-top: 140px;
+    text-align: center;
+
+}
+
+.myrios
+{
+    margin-top: 18%;
+}
+
+#elec
+{
+    margin-left: 150px;
+}
+
+#wat
+{
+    margin-right: 150px;
+}
+
+

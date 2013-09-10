@@ -61,7 +61,7 @@ def _login(request):
                 request.session['years'] = [__date.year for __date in
                                             ElectricDataTemp.objects.all().
                                             dates('medition_date', 'year')]
-                url = "/main/"
+                url = "/medition_type_menu/"
                 try:
                     ur_get = request.META['HTTP_REFERER']
                 except KeyError:
@@ -113,6 +113,11 @@ def index(request):
         return main_page(request)
     else:
         return week_report_kwh(request)
+
+@login_required(login_url='/')
+def medition_type_menu(request):
+    return render_to_response("medition_type_menu.html")
+
 
 
 def get_sub_categs_items(parent):
