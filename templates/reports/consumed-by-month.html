@@ -432,7 +432,7 @@ function mouseevents(){
     var range_legend = $("#showing_week");
     range_legend.find(".sem_count").text("Semana "+String(6-weekly_counter));
     var rangeinit = new Date(current_interval_end.getTime());
-    rangeinit.setDate(current_interval_end.getDate()-7);
+    rangeinit.setDate(current_interval_end.getDate()-6);
     range_legend.find(".date_range").text(" ("+rangeinit.format("dd")+" al "+ current_interval_end.format("dd 'de' mmmm")+")");
 }
 $(document).on("ready", function(){

@@ -6,7 +6,7 @@ import pytz
 #related third party imports
 from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response, HttpResponse
+from django.shortcuts import render_to_response, HttpResponse, Http404
 from django.template.context import RequestContext
 from django.contrib.auth.decorators import login_required
 
@@ -61,11 +61,15 @@ def _login(request):
                 request.session['years'] = [__date.year for __date in
                                             ElectricDataTemp.objects.all().
                                             dates('medition_date', 'year')]
-                ur_get = request.META['HTTP_REFERER']
-                ur_get = ur_get.split("next=")
                 url = "/main/"
-                if len(ur_get) > 1:
-                    url += "?next=" + ur_get[1]
+                try:
+                    ur_get = request.META['HTTP_REFERER']
+                except KeyError:
+                    pass
+                else:
+                    ur_get = ur_get.split("next=")
+                    if len(ur_get) > 1:
+                        url += "?next=" + ur_get[1]
                 return HttpResponseRedirect(url)
             else:
                 error = "Tu cuenta ha sido desactivada, por favor ponte en " \

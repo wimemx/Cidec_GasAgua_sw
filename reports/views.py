@@ -44,11 +44,10 @@ import variety
 # Render Scripts
 #
 ################################################################################
-@login_required(login_url="/")
+#@login_required(login_url="/")
 def render_instant_measurements(
         request
 ):
-
     template_variables = {
         'axis_list': None,
         'columns': None,
@@ -223,15 +222,12 @@ def render_instant_measurements(
     template_variables['columns_statistics'] = data_clusters_statistics
     template_context =\
         django.template.context.RequestContext(request, template_variables)
-
     return django.shortcuts.render_to_response(
                "reports/instant-measurements.html",
                template_context)
 
 
-
-
-@login_required(login_url="/")
+#@login_required(login_url="/")
 def render_report_consumed_by_month(
         request
 ):
@@ -355,7 +351,7 @@ def render_report_consumed_by_month(
                                                template_context)
 
 
-@login_required(login_url="/")
+#@login_required(login_url="/")
 def render_report_powerprofile_by_month(
         request
 ):

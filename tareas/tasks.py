@@ -11,7 +11,7 @@ from celery.task.schedules import crontab
 from celery.decorators import periodic_task
 
 import django.utils.timezone
-from django.core.mail import mail_admins, EmailMultiAlternatives
+from django.core.mail import EmailMultiAlternatives
 
 #local application/library specific imports
 import data_warehouse_extended.globals
@@ -528,6 +528,7 @@ def last_data_received():
                                              bcc=to_mail)
                 msg.attach_alternative(html_content, "text/html")
                 msg.send()
+
 
 @periodic_task(run_every=crontab(month_of_year='10', day_of_month='25-31',
                day_of_week='0', hour='1', minute='30'))

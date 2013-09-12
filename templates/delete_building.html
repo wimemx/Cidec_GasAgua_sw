@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block externaljs %}
+    <script type="text/javascript" src="/static/js/external/jquery-validator/js/validator.js"></script>
+{% endblock %}
+{% block document_ready %}
+    var div_button = $("#div_button");
+    div_button.hide();
+    var boton = $("#boton")
+    var edificio = $("#building");
+    edificio.on("change", function(evt){
+        if($(this).val()!="0"){
+            div_button.show();
+        }else{
+            div_button.hide()
+        }
+    });
+    boton.on("click", function(evt){
+        if(confirm('Está seguro de borrar TODOS los datos del edificio seleccionado')) {
+            if(confirm('REALMENTE está seguro de borrar los datos')) {
+                if(confirm('Una vez que de click no habrá vuelta atrás')) {
+                    $.ajax(
+                        {
+                            url: "/delete_building/"+edificio.val()+"/",
+                            type: "get",
+                            success:    function(){alert("Se han elimidado todos los datos");}
+                        }
+                    );
+                }else{
+                    // Do nothing!
+                }
+            }else{
+                // Do nothing!
+            }
+            // Save it!
+        } else {
+            // Do nothing!
+        }
+    });
+{% endblock %}
+{% block contenido %}
+    <div id="page_content">
+    <div id="contenido_interno">
+        <h2 id="titulo_form" class="powermeter">
+            Eliminar Edificio
+        </h2>
+        <div class="divider" id="divider_top">&nbsp;</div>
+        <div class="g12">
+            <label for="building" class="g6">Seleccione un edificio</label>
+            <select name="building" id="building" class="g6">
+                <option value="0">Seleccione un edificio</option>
+                {% for b in buildings %}
+                    <option value="{{ b.pk }}">{{ b.building_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="g12" id="div_button">
+            <img src="http://www.psdgraphics.com/file/blank-red-button.jpg" width="200" height="160" class="c" style="cursor: pointer; display: block; margin: 0 auto;" id="boton" title="Borrar"/>
+        </div>
+
+    </div>
+    </div>
+{% endblock %}
