@@ -42,6 +42,13 @@ urlpatterns = patterns('',
         'cidec_sw.views.serve_data'),
     url(r'^csv/',
         'reports.views.csv_report'),
+    url(r'^cu_generator/',
+        'cidec_sw.tests.consumer_unit_generator_2000'),
+    url(r'^borrar_edificio/$',
+        'cidec_sw.tests.delete_building'),
+    url(r'^delete_building/(?P<id_building>\d+)/$',
+        'cidec_sw.tests.delete_data_building'),
+
 
 
     # Uncomment the admin/doc line below to enable admin documentation:
