@@ -11,11 +11,9 @@
                 <a href="#" onclick="$(this).parent().remove();">X</a>
             </span>
     {% endif %}
-    <p class="description">
-        Pid nisi sed dictumst ac ultricies, vut velit pid, nascetur est ac nunc urna amet tempor cum in odio. Ultrices. Urna placerat in auctor, urna.
-        <br/>
-        Pid eu, nisi egestas. Enim in porttitor, sed nec tempor, cursus dictumst enim? Augue! Porttitor mid, risus cras! Non duis et turpis, adipiscing augue.
-    </p>
+     <p class="description">
+                    {% if operation == "edit" %}Realice los cambios correspondientes a la empresa y de click en guardar para aplicar los cambios.{% else %}Complete los siguientes campos para crear una nueva empresa en el sistema.{% endif %}
+        </p>
     <form method="post" action="." enctype="multipart/form-data" id="company_form">
         {% csrf_token %}
         <h3 class="g12">Informaci&oacute;n de la Empresa</h3>

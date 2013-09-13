@@ -742,6 +742,7 @@ def obtenerDemanda_kw_valores(valores_kw):
                 low = valores_kw[0]
                 middle = valores_kw[0]
                 high = valores_kw[0]
+                print low,middle,high
                 demanda_maxima = (low + middle + high) / 3
                 for indice in range(3, longitud):
                     low, middle = middle, high
