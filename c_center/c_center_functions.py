@@ -3451,31 +3451,32 @@ def get_google_timezone(building):
             bld_long = bld_timezone.time_zone.longitude
 
         now_timestamp = int(time.time())
-        try:
-            timezone_json = urllib2.urlopen(
-                'https://maps.googleapis.com/maps/api/'
-                'timezone/json?location=' + str(bld_lat) +
-                ',' + str(bld_long) + '&timestamp=' +
-                str(now_timestamp)+'&sensor=false')
-        except IOError:
-            print "URL Error. No Connection"
+        if settings.OFFLINE_TIMEZONE:
             return offline_timezone(building, bld_timezone)
         else:
             try:
-                json_t = simplejson.load(timezone_json)
-                tz_t = json_t['timeZoneId']
-                tzo_t = json_t['dstOffset']
-            except KeyError:
-                print "Error adquiriendo hora de google, se estableció "
+                timezone_json = urllib2.urlopen(
+                    'https://maps.googleapis.com/maps/api/'
+                    'timezone/json?location=' + str(bld_lat) +
+                    ',' + str(bld_long) + '&timestamp=' +
+                    str(now_timestamp)+'&sensor=false')
+            except IOError:
+                print "URL Error. No Connection"
                 return offline_timezone(building, bld_timezone)
             else:
-                print "-------Google JSON START----------------"
-                print json_t
-                print "-------Google JSON END----------------"
-                if tzo_t is None or tz_t is None:
-                    print "Error reading Json"
+                try:
+                    json_t = simplejson.load(timezone_json)
+                    tz_t = json_t['timeZoneId']
+                    tzo_t = json_t['dstOffset']
+                except KeyError:
+                    print "----Google API call failed, setting offline mode----"
                     return offline_timezone(building, bld_timezone)
-                return tz_t, int(tzo_t)
+                else:
+                    print "-------Google API call Successful----------------"
+                    if tzo_t is None or tz_t is None:
+                        print "Error reading Json"
+                        return offline_timezone(building, bld_timezone)
+                    return tz_t, int(tzo_t)
 
 
 def offline_timezone(building, bld_timezone):

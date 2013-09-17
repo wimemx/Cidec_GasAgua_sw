@@ -258,6 +258,9 @@ LOGGING = {
 GRAPPELLI_ADMIN_TITLE = 'CIDEC'
 ADMIN_MEDIA_PREFIX = ""
 
+
+OFFLINE_TIMEZONE = False
+
 """
 SESSION_ENGINE = 'redis_sessions.session'
 SESSION_REDIS_HOST = 'localhost'

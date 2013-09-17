@@ -8,7 +8,7 @@ CELERY_RESULT_BACKEND = "amqp"
 
 BROKER_URL = 'amqp://guest:guest@166.78.139.234:5672//'
 
-CELERY_IMPORTS = ('tareas',)
+CELERY_IMPORTS = ('tareas', 'cidec_sw.tests')
 CELERY_TASK_TIME_LIMIT = 86400
 
 PROJECT_PATH = os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(__file__)), os.path.pardir))
@@ -222,3 +222,5 @@ LOGGING = {
 }
 
 GRAPPELLI_ADMIN_TITLE = 'CIDEC'
+
+OFFLINE_TIMEZONE = False
