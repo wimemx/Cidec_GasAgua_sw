@@ -1,6 +1,7 @@
 
 <html>
 <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=9; IE=8;" >
     <link rel="stylesheet" href="/static/css/theme.css">
     <link rel="stylesheet" href="/static/css/consumption_centers/billing_analysis.css" type="text/css" />
     <script type="text/javascript" src="/static/js/external/jquery.tools.min.js"></script>
@@ -20,14 +21,23 @@
                         {% if kwh_data %}
                             ['Mes', 'kWh'],
                             {% for kwh_d in kwh_data %}
-                                ['{{ kwh_d.mes }}',{{ kwh_d.kwh_01 }}],
+                                {% if forloop.last %}
+                                    ['{{ kwh_d.mes }}',{{ kwh_d.kwh_01 }}]
+                                {% else %}
+                                    ['{{ kwh_d.mes }}',{{ kwh_d.kwh_01 }}],
+                                {% endif %}
                             {% endfor %}
                         {% endif %}
                     {% else %}
                         {% if kwh_data %}
                             ['Mes', 'kWh {{ year_01 }}', 'kWh {{ year_02 }}'],
                             {% for kwh_d in kwh_data %}
-                                ['{{ kwh_d.mes }}',{{ kwh_d.kwh_01 }},{{ kwh_d.kwh_02 }}],
+                                {% if forloop.last %}
+                                    ['{{ kwh_d.mes }}',{{ kwh_d.kwh_01 }},{{ kwh_d.kwh_02 }}]
+                                {% else %}
+                                    ['{{ kwh_d.mes }}',{{ kwh_d.kwh_01 }},{{ kwh_d.kwh_02 }}],
+                                {% endif %}
+
                             {% endfor %}
                         {% endif %}
                     {% endif %}
@@ -47,14 +57,23 @@
                         {% if money_data %}
                             ['Mes', 'Costo'],
                             {% for m_d in money_data %}
-                                ['{{ m_d.mes }}',{{ m_d.total_01 }}],
+                                {% if forloop.last %}
+                                    ['{{ m_d.mes }}',{{ m_d.total_01 }}]
+                                {% else %}
+                                    ['{{ m_d.mes }}',{{ m_d.total_01 }}],
+                                {% endif %}
+
                             {% endfor %}
                         {% endif %}
                     {% else %}
                         {% if money_data %}
                             ['Mes', 'Costo {{ year_01 }}', 'Costo {{ year_02 }}'],
                             {% for m_d in money_data %}
-                                ['{{ m_d.mes }}',{{ m_d.total_01 }},{{ m_d.total_02 }}],
+                                {% if forloop.last %}
+                                    ['{{ m_d.mes }}',{{ m_d.total_01 }},{{ m_d.total_02 }}]
+                                {% else %}
+                                    ['{{ m_d.mes }}',{{ m_d.total_01 }},{{ m_d.total_02 }}],
+                                {% endif %}
                             {% endfor %}
                         {% endif %}
                     {% endif %}
@@ -81,7 +100,7 @@
                 new google.visualization.ColumnChart(document.getElementById('m_kwh_graph')).
                         draw(data,
                         {
-                            width:370, height:400, vAxis: {title: "Consumo (kWh)", 'viewWindow': {'min': 0}, titleTextStyle: {italic: false }},'fontName':'Droid Sans', colors:['#5093c7'], legend:'none'
+                            width:295, height:400, vAxis: {title: "Consumo (kWh)", 'viewWindow': {'min': 0}, titleTextStyle: {italic: false }},'fontName':'Droid Sans', colors:['#5093c7'], legend:'none'
 
                         }
                 );
@@ -98,7 +117,7 @@
                 new google.visualization.ColumnChart(document.getElementById('m_money_graph')).
                         draw(data2,
                         {
-                            width:370, height:400, vAxis: {title: "Facturación CFE ($)", 'viewWindow': {'min': 0}, titleTextStyle: {italic: false }},'fontName':'Droid Sans', colors:['#5093c7'],legend:'none'
+                            width:295, height:400, vAxis: {title: "Facturación CFE ($)", 'viewWindow': {'min': 0}, titleTextStyle: {italic: false }},'fontName':'Droid Sans', colors:['#5093c7'],legend:'none'
 
                         }
                 );
@@ -116,7 +135,7 @@
                     new google.visualization.ColumnChart(document.getElementById('m_kw_graph')).
                             draw(data3,
                             {
-                                width:370, height:400, vAxis: {title: "Demanda (kW)", 'viewWindow': {'min': 0}, titleTextStyle: {italic: false }},'fontName':'Droid Sans', colors:['#5093c7'],legend:'none'
+                                width:295, height:400, vAxis: {title: "Demanda (kW)", 'viewWindow': {'min': 0}, titleTextStyle: {italic: false }},'fontName':'Droid Sans', colors:['#5093c7'],legend:'none'
 
                             }
                     );

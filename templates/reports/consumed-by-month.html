@@ -1,6 +1,6 @@
 <html>
 <head>
-
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8;" >
 <!-- Styles -->
 <link rel="stylesheet" href="/static/css/consumption_centers/graphs.css"/>
 <link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
@@ -20,7 +20,7 @@
 
 <!-- Google Chart -->
 <script type="text/javascript">
-    google.load('visualization', '1.1', {packages: ['corechart', 'controls']});
+    google.load('visualization', '1.0', {packages: ['corechart', 'controls']});
     var True = true;
     var False = false;
     var None = null;
@@ -174,9 +174,9 @@ var control = new google.visualization.ControlWrapper({
                 'chartArea': {'width': '90%'},
                 'hAxis': {'baselineColor': 'none'},
                 {% if periods %}
-                    'colors': ["#00FF00", "#fd9827", "#FF0000"],
+                    'colors': ["#00FF00", "#fd9827", "#FF0000"]
                 {% else %}
-                    'colors': ["#00A5FF", "#fd9827", "#FF0000"],
+                    'colors': ["#00A5FF", "#fd9827", "#FF0000"]
                 {% endif %}
             },
             // Display a single series that shows the closing value of the stock.
@@ -257,7 +257,7 @@ function drawVisualization() {
     data.addColumn('number', "kWh");
     data.addColumn({type:'boolean', role:'certainty'});
     {% endif %}
-    //console.log(rows_data);
+
     {% if periods %}
         for(var row_index = 0; row_index < rows_data.length; row_index++){
             var row_data = rows_data[row_index];
@@ -290,13 +290,12 @@ function drawVisualization() {
         }
         fech_fin = object_datetime;
 
-        //console.log(object_datetime);
         row_array.push(object_datetime);
         var object_electric_data = Math.abs(data_object['value']);
         row_array.push(object_electric_data);
         var object_certainty = data_object['certainty'];
         row_array.push(object_certainty);
-        //console.log(row_array);
+
         data.addRow(row_array);
     }
     {% endif %}

@@ -22,17 +22,29 @@
                 {% if tipo_tarifa.pk == 1 %}
                     ['Mes', 'Base', 'Media', 'Punta'],
                     {% for hist in  historico%}
-                        ['{{ hist.fecha }}', {{ hist.kw_base }}, {{ hist.kw_intermedio }}, {{ hist.kw_punta }}],
+                        {% if forloop.last %}
+                            ['{{ hist.fecha }}', {{ hist.kw_base }}, {{ hist.kw_intermedio }}, {{ hist.kw_punta }}]
+                        {% else %}
+                            ['{{ hist.fecha }}', {{ hist.kw_base }}, {{ hist.kw_intermedio }}, {{ hist.kw_punta }}],
+                        {% endif %}
                     {% endfor %}
                 {% elif tipo_tarifa.pk == 2 %}
                     ['Mes', 'kWh'],
                     {% for hist in  historico%}
-                    ['{{ hist.fecha }}', {{ hist.total_kwh }}],
+                        {% if forloop.last %}
+                            ['{{ hist.fecha }}', {{ hist.total_kwh }}]
+                        {% else %}
+                            ['{{ hist.fecha }}', {{ hist.total_kwh }}],
+                        {% endif %}
                     {% endfor %}
                 {% elif tipo_tarifa.pk == 3 %}
                     ['Mes', 'kWh'],
                     {% for hist in  historico%}
-                    ['{{ hist.fecha }}', {{ hist.total_kwh }}],
+                        {% if forloop.last %}
+                            ['{{ hist.fecha }}', {{ hist.total_kwh }}]
+                        {% else %}
+                            ['{{ hist.fecha }}', {{ hist.total_kwh }}],
+                        {% endif %}
                     {% endfor %}
                 {% endif %}
             ]);
