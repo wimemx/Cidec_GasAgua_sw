@@ -1,10 +1,22 @@
 # -*- coding: utf-8 -*-
+import random
+import variety
+import json
+import thread
+import time
+import httplib
+import urllib
+from decimal import Decimal
+
 from django.contrib.auth.decorators import login_required
 from django.template.context import RequestContext
 from django.shortcuts import render_to_response
 from django.core.mail import EmailMultiAlternatives
 from django.db import connection, transaction
 from django.db.models import Q
+
+from socketIO_client import SocketIO
+from celery import task
 
 from c_center.models import *
 from location.models import *
@@ -15,16 +27,6 @@ from tareas.tasks import *
 from c_center.c_center_functions import *
 from rbac.rbac_functions import *
 from alarms.alarm_functions import *
-from celery import task
-from decimal import Decimal
-
-import random
-import variety
-import json
-import thread
-import time
-import httplib
-import urllib
 
 from cidec_sw.forms import CUGenerator
 
@@ -264,13 +266,13 @@ def generate_cus(sa_number, pwrm_number, user):
     for building in generated_data:
         delay = random.randint(30, 60)
         try:
-            thread.start_new_thread(simulate_sas, (building, delay))
+            thread.start_new_thread(simulate_sas, (building, delay, 0))
         except:
             print "Error: unable to start thread"
     return None
 
 
-def simulate_sas(powermeters, delay):
+def simulate_sas(powermeters, delay, control):
     """Simulates a medition for an array of powermeters
 
     :param powermeters: dict containing an array of powermeters
@@ -279,12 +281,11 @@ def simulate_sas(powermeters, delay):
     """
     time.sleep(delay)
     pwermeters_copy = []
+    control += 1
     for pwermeter in powermeters["pms"]:
         kvahTOTAL = pwermeter.get("kvahTOTAL", 0)
         totalkvarhIMPORT = pwermeter.get("totalkvarhIMPORT", 0)
         totalkWhIMPORT = pwermeter.get("totalkWhIMPORT", 0)
-        control = pwermeter.get("control", 0)
-        control += 1
 
         _id, kvah, kvarh, kwh = simulate_medition(pwermeter["profile"],
                                                   pwermeter["serial"],
@@ -300,12 +301,11 @@ def simulate_sas(powermeters, delay):
         conn.close()
         pwermeters_copy.append(dict(profile=pwermeter["profile"],
                                     serial=pwermeter["serial"],
-                                    kvahTOTAL=kvahTOTAL,
-                                    totalkvarhIMPORT=totalkvarhIMPORT,
-                                    totalkWhIMPORT=totalkWhIMPORT,
-                                    control=control))
+                                    kvahTOTAL=kvah,
+                                    totalkvarhIMPORT=kvarh,
+                                    totalkWhIMPORT=kwh))
     if control < 288:
-        return simulate_sas(dict(pms=pwermeters_copy), 300)
+        return simulate_sas(dict(pms=pwermeters_copy), 300, control)
     else:
         print "Ending simulation for the following powermeters:", powermeters
         return True
@@ -568,3 +568,49 @@ def delete_data_building(request, id_building):
         return HttpResponse(status=200)
     else:
         raise Http404
+
+
+def alarm_raiser_4000(ind_eq):
+    """ Rimulates repeating alarm events for the industrial equipment array
+
+    :param ind_eq: array containing ids of industrial equipments
+    :return: True on completition
+    """
+
+    for ie in ind_eq:
+        ind_eq = IndustrialEquipment.objects.get(pk=ie)
+        alarm = Alarms.objects.filter(
+            consumer_unit__building=ind_eq.building
+        ).exclude(
+            alarm_identifier='Interrupción de Datos'
+        ).order_by("?")[0]
+        delay = random.randint(1, 30)
+        thread.start_new_thread(simulate_sa_alarm, (alarm, delay, 0))
+
+
+def simulate_sa_alarm(alarm, delay, cont):
+    cont += 1
+    time.sleep(delay)
+    cursor = connection.cursor()
+    sql = "insert into alarms_alarmevents (alarm_id, triggered_time, value) " \
+          "values (%s, %s, %s)"
+    triggered_time = str(datetime.datetime.utcnow())
+    cursor.execute(sql, [alarm.pk, str(triggered_time), 300])
+    transaction.commit_unless_managed()
+    cursor.execute("SELECT id FROM alarms_alarmevents WHERE "
+                   "triggered_time = %s AND alarm_id = %s",
+                   [triggered_time, alarm.pk])
+    row = cursor.fetchone()
+    alarm_event = row[0]
+
+    socket = SocketIO('auditem.mx', 9999)
+    socket.emit('alarm_trigger', {'alarm_event': alarm_event})
+    SocketIO.disconnect(socket)
+
+    print "alarm ", alarm.pk, "triggered at", triggered_time
+
+    if cont < 60:
+        simulate_sa_alarm(alarm, 30, cont)
+    else:
+        print "Simulation complete"
+        return

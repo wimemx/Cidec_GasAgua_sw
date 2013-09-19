@@ -476,7 +476,8 @@ def last_data_received():
         else:
             continue
         date_last = last_data["medition_date"]
-        now_dt = datetime.datetime.now()
+        now_dt = datetime.datetime.utcnow()
+        now_dt = now_dt.replace(tzinfo=date_last.tzinfo)
         try:
             alarm_cu = alarms.models.Alarms.objects.get(
                 alarm_identifier="Interrupción de Datos",

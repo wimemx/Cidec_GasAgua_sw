@@ -802,7 +802,6 @@ def tag_reading(request):
     :param request: request object via POST with id_reading key
     :return:
     """
-    print "request.REQUEST", request.REQUEST
     if request.method == 'POST':
         #Obtiene el Id de la medicion
         reading_id = request.REQUEST.get("id_reading", "")
