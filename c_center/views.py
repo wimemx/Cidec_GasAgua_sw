@@ -6478,7 +6478,7 @@ def search_pm(request):
         powermeters = Powermeter.objects.filter(
             Q(powermeter_anotation__icontains=term) |
             Q(powermeter_serial__icontains=term)
-        ).filter(status=1).exclude(pk__in=pm_in_ie).exclude(
+        ).exclude(pk__in=pm_in_ie).exclude(
             powermeter_anotation="Medidor Virtual").values(
                 "pk", "powermeter_anotation", "powermeter_serial")
         medidores = []
@@ -6937,12 +6937,20 @@ def add_cu(request):
             if cu[1] == "cu":
                 profile = get_object_or_404(ProfilePowermeter,
                                             pk=int(post['prof_pwr']))
+                profile.profile_powermeter_status = 1
+                profile.save()
+                profile.powermeter.status = True
+                profile.powermeter.save()
                 consumer_unit.profile_powermeter = profile
                 consumer_unit.save()
             c_type = "*part"
         else:
             profile = get_object_or_404(ProfilePowermeter,
                                         pk=int(post['prof_pwr']))
+            profile.profile_powermeter_status = 1
+            profile.save()
+            profile.powermeter.status = True
+            profile.powermeter.save()
             building = get_object_or_404(Building, pk=int(post['building']))
             electric_device_type = get_object_or_404(ElectricDeviceType,
                                                      pk=int(post['node_part']))

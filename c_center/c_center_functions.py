@@ -3635,11 +3635,12 @@ def deactivate_cu(id_cu, user):
     p_i.delete()
     cu.profile_powermeter.profile_powermeter_status = False
     cu.profile_powermeter.powermeter.status = 0
+    cu.profile_powermeter.powermeter.save()
     cu.profile_powermeter.save()
     ind_eq.modified_by = user
     ind_eq.save()
-    if cu.electric_device_type.electric_device_type_name == "Total Edificio":
-        cu.profile_powermeter = VIRTUAL_PROFILE
-        cu.save()
+
+    cu.profile_powermeter = VIRTUAL_PROFILE
+    cu.save()
     regenerate_ie_config(ind_eq.pk, user)
     return True
