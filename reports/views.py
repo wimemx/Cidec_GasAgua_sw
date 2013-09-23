@@ -38,7 +38,9 @@ from reports.reports_functions import get_data_cluster_consumed_normalized, \
 
 # Other imports
 import variety
-
+import random
+from time import mktime
+from datetime import timedelta
 ################################################################################
 #
 # Render Scripts
@@ -211,6 +213,8 @@ def render_instant_measurements(
 
     template_variables['rows'] = data_clusters_json
 
+
+
     #
     # Get statistical values
     #
@@ -229,7 +233,172 @@ def render_instant_measurements(
                template_context)
 
 
+def render_gas_consumed(
+        request
+):
+    template_variables = {}
+    rows = []
+    vals = []
+    if request.GET:
+        start_date = datetime.datetime.strptime(request.GET['init-date'], '%Y-%m-%d')
+        end_date = datetime.datetime.strptime(request.GET['end-date'], '%Y-%m-%d')
+        days = []
+        from_date = 0
+        to_date = 0
+        if end_date - start_date >= datetime.timedelta(days=30):
+            while start_date <= end_date:
+                days.append(start_date)
+                start_date = start_date + datetime.timedelta(days = 1)
+            template_variables['ff'] = end_date
+            template_variables['fi'] = end_date - datetime.timedelta(days = 7)
+        if end_date - start_date <= datetime.timedelta(days=2):
+            while start_date <= end_date:
+                days.append(start_date)
+                start_date = start_date + datetime.timedelta(minutes=5)
+            template_variables['ff'] = end_date
+            template_variables['fi'] = end_date - datetime.timedelta(days = 1)
+        else :
+            while start_date <= end_date:
+                days.append(start_date)
+                start_date = start_date + datetime.timedelta(minutes=60)
+            template_variables['ff'] = end_date
+            template_variables['fi'] = end_date - datetime.timedelta(days = 1)
 
+        for day in days:
+            val1 = random.uniform(0, 400)
+            val2 = random.uniform(0, 40)
+            vals.append(val1)
+            vals.append(val2)
+            date = mktime(day.timetuple())
+            data_dictionary_json = {
+            'datetime': str(date),
+            'value1': val1,
+            'value2': val2
+        }
+            rows.append(data_dictionary_json)
+
+        template_variables['rows'] = rows
+
+    else:
+        now = datetime.datetime.now()
+        month = now.month
+        year = now.year
+        days = variety.getMonthDays(month, year)
+        start_date = days[0]
+        end_date = days[-1]
+        template_variables['ff'] = now
+        template_variables['fi'] = now - \
+                                       datetime.timedelta(minutes=1440)
+        days = []
+        while start_date <= end_date:
+            days.append(start_date)
+            start_date = start_date + datetime.timedelta(minutes=60)
+        first_week_start_datetime = days[0] + datetime.timedelta(minutes=60)
+        last_week_end_datetime = datetime.datetime.now()
+        for day in days:
+            val1 = random.uniform(0, 400)
+            val2 = random.uniform(0, 40)
+            vals.append(val1)
+            vals.append(val2)
+            date = mktime(day.timetuple())
+            data_dictionary_json = {
+            'datetime': str(date),
+            'value1': val1,
+            'value2': val2
+        }
+
+
+            rows.append(data_dictionary_json)
+        template_variables['rows'] = rows
+    template_context =\
+        django.template.context.RequestContext(request, template_variables)
+    return django.shortcuts.render_to_response(
+               "reports/consumed_gas.html",template_context)
+
+def render_water_consumed(
+        request
+):
+    template_variables = {}
+    rows = []
+    vals = []
+    if request.GET:
+        start_date = datetime.datetime.strptime(request.GET['init-date'], '%Y-%m-%d')
+        end_date = datetime.datetime.strptime(request.GET['end-date'], '%Y-%m-%d')
+        days = []
+        from_date = 0
+        to_date = 0
+        if end_date - start_date >= datetime.timedelta(days=30):
+            while start_date <= end_date:
+                days.append(start_date)
+                start_date = start_date + datetime.timedelta(days = 1)
+            template_variables['ff'] = end_date
+            template_variables['fi'] = end_date - \
+                                       datetime.timedelta(days=7)
+        if end_date - start_date <= datetime.timedelta(days=2):
+            while start_date <= end_date:
+                days.append(start_date)
+                start_date = start_date + datetime.timedelta(minutes=5)
+            template_variables['ff'] = end_date
+            template_variables['fi'] = end_date - \
+                                       datetime.timedelta(minutes=30)
+        else :
+            while start_date <= end_date:
+                days.append(start_date)
+                start_date = start_date + datetime.timedelta(minutes=60)
+            template_variables['ff'] = end_date
+            template_variables['fi'] = end_date - \
+                                       datetime.timedelta(minutes=160)
+
+        for day in days:
+            val1 = random.uniform(0, 400)
+            val2 = random.uniform(0, 40)
+            vals.append(val1)
+            vals.append(val2)
+            date = mktime(day.timetuple())
+            data_dictionary_json = {
+            'datetime': str(date),
+            'value1': val1,
+            'value2': val2
+        }
+            rows.append(data_dictionary_json)
+
+        template_variables['rows'] = rows
+
+    else:
+        now = datetime.datetime.now()
+        month = now.month
+        year = now.year
+        days = variety.getMonthDays(month, year)
+        start_date = days[0]
+        end_date = days[-1]
+        template_variables['ff'] = now
+        template_variables['fi'] = now - \
+                                       datetime.timedelta(minutes=1440)
+        days = []
+        while start_date <= end_date:
+            days.append(start_date)
+            start_date = start_date + datetime.timedelta(minutes=60)
+        first_week_start_datetime = days[0] + datetime.timedelta(minutes=60)
+        last_week_end_datetime = datetime.datetime.now()
+        for day in days:
+            val1 = random.uniform(0, 400)
+            val2 = random.uniform(0, 40)
+            vals.append(val1)
+            vals.append(val2)
+            date = mktime(day.timetuple())
+            data_dictionary_json = {
+            'datetime': str(date),
+            'value1': val1,
+            'value2': val2
+        }
+
+
+            rows.append(data_dictionary_json)
+        template_variables['rows'] = rows
+    template_context =\
+        django.template.context.RequestContext(request, template_variables)
+    return django.shortcuts.render_to_response(
+               "reports/consumed_gas.html",template_context)
 
 @login_required(login_url="/")
 def render_report_consumed_by_month(
@@ -271,6 +440,7 @@ def render_report_consumed_by_month(
             electrical_parameter_name,
             granularity_seconds)
     template_variables['rows'] = data_cluster_consumed
+
     maximun, minimun = get_data_cluster_limits(data_cluster_consumed)
 
     if maximun <= minimun:

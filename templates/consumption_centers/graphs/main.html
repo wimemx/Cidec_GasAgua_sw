@@ -12,7 +12,6 @@
     <script type="text/javascript">
     var number_params = 0;
     var src = "{{ graph_type.object_access_point|safe }}";
-
     function graphsReload(){
         /* Takes the date in the range inputs and reloads the graph data */
         var get_string = src.split("?")[1];//electrical-parameters-names
@@ -89,7 +88,7 @@
                 params_new = merge_object(params_new, c_param);
             }
             var url = buildUrl(src.split("?")[0], params_new);
-
+            alert(url);
             makeIframe(url);
         }
 

@@ -8,7 +8,233 @@
         <link rel="stylesheet" href="/static/js/external/jqueryUniform/css/uniform.default.css" type="text/css" media="screen" charset="utf-8" />
         <link href="/static/js/external/messi/messi.css" rel="stylesheet" type="text/css" media="screen" />
         <link rel="stylesheet" href="/static/css/ui.spinner.css"/>
+        <link rel="stylesheet" href="/static/css/consumption_centers/main.css" type="text/css" />
+        <link rel="stylesheet" href="/static/date_picker/css/datepicker.css" type="text/css" />
+        <link rel="stylesheet" href="/static/js/external/fancybox/jquery.fancybox.css" type="text/css" />
+        <style type='text/css'>
+            iframe
+            {
+                height:500px;
+            }
+        </style>
 {% endblock %}
+
+{% block externaljs %}
+    <script type="text/javascript" src="/static/js/external/fancybox/jquery.fancybox.js"></script>
+    <script type="text/javascript" src="/static/date_picker/js/date_picker.js"></script>
+
+    <script type="text/javascript">
+    var number_params = 0;
+    var src = "/consumido_gas/";
+
+    function graphsReload()
+    {
+        src = "/consumido_gas/";
+        var f1_init = encodeURIComponent($("#range1_init").val());
+        var f1_end = encodeURIComponent($("#range1_end").val());
+        src = src + "?init-date="+f1_init+"&end-date="+f1_end
+        makeIframe(src);
+    }
+
+    function billingReload_consumed(){
+
+            makeIframe(src);
+        }
+
+        function refresh_iframe_height(){
+            // regresca el height del iframe para ajustarse a su conte
+            setTimeout("parent.document.getElementById('graphFrame').height = document['body'].offsetHeight;", 1000);
+        }
+        function makeIframe(src){
+            var container = $("#graph_container");
+            var graphFrame = document.createElement("IFRAME");
+            graphFrame.id = "graphFrame";
+            graphFrame.src = src;
+            var loader = '<img id="loader" src="/static/css/images/spinner.gif" alt="cargando" style="display: block; margin: 0 auto; width: 200px;">';
+            container.html(loader);
+            container.append(graphFrame)
+            refresh_iframe_height();
+        }
+    function billingReload(){
+
+            var etiqueta_periodo = '';
+            var url = '/reportes/gas_consumed_month/';
+            var b_continue = true;
+            makeIframe_month(url);
+        }
+
+        function refresh_iframe_height_month(){
+            // regresca el height del iframe para ajustarse a su conte
+            setTimeout("parent.document.getElementById('graphFrame').height = document['body'].offsetHeight;", 1000);
+        }
+        function makeIframe_month(src){
+            var graphFrame = document.createElement("IFRAME");
+            graphFrame.id = "graphFrame_month";
+            graphFrame.src = src;
+            $("#container_month").html(graphFrame);
+            refresh_iframe_height_month();
+        }
+
+    </script>
+
+{% endblock %}
+{% block document_ready %}
+    var url = window.location.href;
+    url = url.replace("#", '');
+    History.replaceState(url,"Reporte electrico", url);
+
+    var now3 = new Date();
+    now3.addDays(-4);
+    var now4 = new Date();
+    var mul_date, mul_date3, mul_date4 = false;
+    $('#widgetCalendar').DatePicker({
+        flat: true,
+        format: 'Y-m-d',
+        date: [new Date(now3), new Date(now4)],
+        calendars: 2,
+        mode: 'range',
+        starts: 1,
+        onChange: function(formated) {
+            $('#range1_init').val(formated[0]);
+            $('#range1_end').val(formated[1]);
+            if(!mul_date){
+                $('#widgetField span').css({'font-size':'16px', 'height':'26px'});
+                $('#widgetField span').get(0).innerHTML = formated.join(' &ndash; ');
+            }else{
+                $('#widgetField span').get(0).innerHTML = $('#range1_init').val() + " &ndash; " + $('#range1_end').val() + " contra: " + $('#range2_init').val() + " &ndash; " + $('#range2_end').val();
+            }
+        }
+    });
+    $('#widgetCalendar').DatePickerClear();
+    $('#widgetCalendar2').DatePicker({
+        flat: true,
+        format: 'Y-m-d',
+        date: [new Date(now3), new Date(now4)],
+        calendars: 2,
+        mode: 'range',
+        starts: 1,
+        onChange: function(formated) {
+            $('#range2_init').val(formated[0]);
+            $('#range2_end').val(formated[1]);
+            $('#widgetField span').get(0).innerHTML = $('#range1_init').val() + " &ndash; " + $('#range1_end').val();
+            $('#widgetField span').get(0).innerHTML = $('#widgetField span').html() + " contra: " + $('#range2_init').val() + " &ndash; " + $('#range2_end').val();
+            $('#widgetField span').css('font-size','11px');
+
+        }
+    });
+    $('#widgetCalendar2').DatePickerClear();
+
+    //-----3rd and 4th calendars-------
+    $('#widgetCalendar3').DatePicker({
+        flat: true,
+        format: 'Y-m-d',
+        date: [new Date(now3), new Date(now4)],
+        calendars: 2,
+        mode: 'range',
+        starts: 1,
+        onChange: function(formated) {
+            $('#range3_init').val(formated[0]);
+            $('#range3_end').val(formated[1]);
+
+            var inner_text='';
+            inner_text= $('#range1_init').val() + " &ndash; " + $('#range1_end').val() + " contra: " + $('#range2_init').val() + " &ndash; " + $('#range2_end').val();
+            inner_text+= " contra "+$('#range3_init').val() + " &ndash; " + $('#range3_end').val();
+            $('#widgetField span').get(0).innerHTML = inner_text;
+            $('#widgetField').css({'font-size':'11px', 'height': '52px' });
+    }
+    });
+    $('#widgetCalendar3').DatePickerClear();
+    $('#widgetCalendar4').DatePicker({
+        flat: true,
+        format: 'Y-m-d',
+        date: [new Date(now3), new Date(now4)],
+        calendars: 2,
+        mode: 'range',
+        starts: 1,
+        onChange: function(formated) {
+            $('#range4_init').val(formated[0]);
+            $('#range4_end').val(formated[1]);
+            var inner_text = '';
+            inner_text= $('#range1_init').val() + " &ndash; " + $('#range1_end').val() + " contra: " + $('#range2_init').val() + " &ndash; " + $('#range2_end').val();
+            inner_text+= " contra: "+$('#range3_init').val() + " &ndash; " + $('#range3_end').val() + " contra: " + $('#range4_init').val() + " &ndash; " + $('#range4_end').val();
+            $('#widgetField span').get(0).innerHTML = inner_text;
+            $('#widgetField').css({'font-size':'11px', 'height': '52px', 'width': '362px' });
+        }
+    });
+    $('#widgetCalendar4').DatePickerClear();
+
+    var state = false;
+    $('#widgetField').click(function(){
+        $('#datepicker').slideToggle();
+    });
+    $("#date_ranges .aqua_btn").click(function(e){
+        //aplicar el(los) rangos de fecha seleccionados
+        e.preventDefault();
+        $('#datepicker').slideUp();
+        graphsReload();
+    });
+    $("#prev_dates").click(function(){
+        //maneja la visibilidad del calendario del rango adicional
+        if($("#widgetCalendar2").is(":visible")){
+            mul_date = false;
+            $('#range2_init').val("");
+            $('#range2_end').val("");
+            $('#widgetField span').html($('#widgetField span').html().split(" contra: ")[0]);
+            $('#widgetCalendar2').DatePickerClear();
+        }else{
+            mul_date = true;
+        }
+        $("#widgetCalendar2").slideToggle();
+    });
+
+    $("#prev_dates3").click(function(){
+        //maneja la visibilidad del calendario del rango adicional
+        if($("#widgetCalendar3").is(":visible")){
+            mul_date3 = false;
+            $('#range3_init').val("");
+            $('#range3_end').val("");
+            var span_content=$('#widgetField span').html().split(" contra: ")
+            $('#widgetField span').html(span_content[0]+" contra: "+span_content[1]);
+            $('#widgetCalendar3').DatePickerClear();
+        }else{
+            mul_date = true;
+        }
+        $("#widgetCalendar3").slideToggle();
+    });
+
+    $("#prev_dates4").click(function(){
+        //maneja la visibilidad del calendario del rango adicional
+        if($("#widgetCalendar4").is(":visible")){
+            mul_date4 = false;
+            $('#range4_init').val("");
+            $('#range4_end').val("");
+            var span_content=$('#widgetField span').html().split(" contra: ")
+            $('#widgetField span').html(span_content[0]+" contra: "+span_content[1]+" contra: "+span_content[2]);
+            $('#widgetCalendar4').DatePickerClear();
+        }else{
+            mul_date = true;
+        }
+        $("#widgetCalendar4").slideToggle();
+    });
+    //--INITIAL IFRAME URL
+
+    $(".various").fancybox({
+        maxWidth	: 800,
+        maxHeight	: 800,
+        fitToView	: false,
+        width		: '70%',
+        height		: '70%',
+        autoSize	: false,
+        closeClick	: false,
+        openEffect	: 'none',
+        closeEffect	: 'none'
+    });
+
+    billingReload_consumed();
+    billingReload()
+    {% endblock %}
+
+
 
 {% block breadcumbs %}
     <div id="bread_crumbs">
@@ -27,8 +253,73 @@
 
 
 <div id="page_content">
-<body>
 
-</body>
-</div>
+<div id="contenido_interno">
+
+     <h3>
+        Reporte de consumo de Gas
+    </h3>
+
+    <div class="divider" id="divider_top">&nbsp;</div>
+    <div id="datepicker_component">
+        <span class="period_tag">Periodo</span>
+        <div id="widgetField">
+            <span>Fecha Inicio &ndash; Fecha Fin</span>
+            <a href="#">&nbsp;</a>
+        </div>
+
+        <div id="datepicker">
+            <div id="widgetCalendar">
+
+            </div>
+            <div id="date_ranges">
+                <span>Selecciona un periodo</span>
+                <div>
+                    <label for="range1_init">Desde</label>
+                    <input type="text" name="range1_init" id="range1_init" readonly="readonly"/>
+                </div>
+                <span>&ndash;</span>
+                <div>
+                    <label for="range1_end">Hasta</label>
+                    <input type="text" name="range1_end" id="range1_end" readonly="readonly"/>
+                </div>
+
+
+                <a href="#" class="aqua_btn">Aplicar</a>
+            </div>
+            <div id="widgetCalendar2">
+
+            </div>
+
+            <div id="widgetCalendar3">
+
+            </div>
+
+            <div id="widgetCalendar4">
+
+            </div>
+        </div>
+    </div>
+
+
+    <div style="margin-left: 30px;" id="graphs_container">
+        <div id="graph_container" style='height:500px; '>
+            <iframe style='height:500px;' src="/reportes_extendidos/" id="graphFrame" seamless="seamless"></iframe>
+        </div>
+    </div>
+
+
+    <div class='g12'>
+        <div class='g12'>
+            <h3>
+                Reporte Mensual de consumo de Gas
+            </h3>
+            <div style="margin-left: -60px;" id="container_month">
+                     <iframe style='height:500px;' src="/reportes/graficas/" id="graphFrame_month" seamless="seamless"></iframe>
+            </div>
+        </div>
+
+
+
+    </div>
 {% endblock %}

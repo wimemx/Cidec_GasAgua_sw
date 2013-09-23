@@ -54,6 +54,9 @@ from tareas.tasks import save_historic_delay, \
     populate_data_warehouse_specific, restore_data, \
     daily_report_period, tag_n_daily_report, calculateMonthlyReportCU
 
+import random
+from time import mktime
+
 VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
 DELETE = Operation.objects.get(operation_name="Eliminar")
@@ -8892,8 +8895,86 @@ def billing_cost_analisis(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+def gas_consumed_month(request):
+    template_variables = {}
+    rows = []
+    if request.GET:
+        vals = []
+        for r in range(0,6):
+            val1 = random.uniform(0, 400)
+            val2 = random.uniform(0, 400)
+            vals.append(val1)
+            vals.append(val2)
+            data_dictionary_json = {
+            'week' : "Semana "+str(r+1),
+            'value1': val1,
+            'value2': val2,
+            'value3': round((val1 / val2) * 100,2)
+            }
+            rows.append(data_dictionary_json)
+    else:
+        vals = []
+        for r in range(0,6):
+            val1 = random.uniform(0, 400)
+            val2 = random.uniform(0, 400)
+            vals.append(val1)
+            vals.append(val2)
+            data_dictionary_json = {
+            'week' : "Semana "+str(r+1),
+            'value1': val1,
+            'value2': val2,
+            'value3': round((val1 / val2) * 100,2)
+            }
+            rows.append(data_dictionary_json)
+    template_variables['rows'] = rows
+    template_variables['years'] = request.session['years']
+    template_context =\
+        django.template.context.RequestContext(request, template_variables)
+    return render_to_response(
+                "reports/monthly_gas.html",
+                template_context)
+
+def water_consumed_month(request):
+    template_variables = {}
+    rows = []
+    if request.GET:
+        vals = []
+        for r in range(0,6):
+            val1 = random.uniform(0, 400)
+            val2 = random.uniform(0, 400)
+            vals.append(val1)
+            vals.append(val2)
+            data_dictionary_json = {
+            'week' : "Semana "+str(r+1),
+            'value1': val1,
+            'value2': val2,
+            'value3': round((val1 / val2) * 100,2)
+            }
+            rows.append(data_dictionary_json)
+    else:
+        vals = []
+        for r in range(0,6):
+            val1 = random.uniform(0, 400)
+            val2 = random.uniform(0, 400)
+            vals.append(val1)
+            vals.append(val2)
+            data_dictionary_json = {
+            'week' : "Semana "+str(r+1),
+            'value1': val1,
+            'value2': val2,
+            'value3': round((val1 / val2) * 100,2)
+            }
+            rows.append(data_dictionary_json)
+    template_variables['rows'] = rows
+    template_variables['years'] = request.session['years']
+    template_context =\
+        django.template.context.RequestContext(request, template_variables)
+    return render_to_response(
+                "reports/monthly_gas.html",
+                template_context)
 
 def power_performance(request):
+
     """Renders the cfe bill and the historic data chart"""
     datacontext = get_buildings_context(request.user)[0]
     if has_permission(request.user, VIEW, "Desempeño energético") or \

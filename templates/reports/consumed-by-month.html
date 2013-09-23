@@ -257,7 +257,7 @@ function drawVisualization() {
     data.addColumn('number', "kWh");
     data.addColumn({type:'boolean', role:'certainty'});
     {% endif %}
-    //console.log(rows_data);
+    console.log(rows_data);
     {% if periods %}
         for(var row_index = 0; row_index < rows_data.length; row_index++){
             var row_data = rows_data[row_index];

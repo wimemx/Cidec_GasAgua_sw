@@ -1,0 +1,151 @@
+<html>
+<head>
+     <link rel="stylesheet" href="/static/css/theme.min.css"/>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <link rel="stylesheet" href="/static/css/consumption_centers/billing_analysis.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/forms/main.css" type="text/css" />
+    <link rel="stylesheet" href="/static/css/consumption_centers/graphs.css"/>
+    <link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/js/external/jqueryUniform/css/uniform.default.css" type="text/css" media="screen" charset="utf-8" />
+    <link href="/static/js/external/messi/messi.css" rel="stylesheet" type="text/css" media="screen" />
+    <link rel="stylesheet" href="/static/css/ui.spinner.css"/>
+    <link rel="stylesheet" href="/static/css/consumption_centers/main.css" type="text/css" />
+    <link rel="stylesheet" href="/static/date_picker/css/datepicker.css" type="text/css" />
+    <link rel="stylesheet" href="/static/js/external/fancybox/jquery.fancybox.css" type="text/css" />
+    <script type="text/javascript" src="/static/js/external/jquery.tools.min.js"></script>
+    <script type="text/javascript" src="/static/js/external/jqueryUniform/jquery.uniform.min.js"></script>
+    <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+
+    <script type="text/javascript">
+        google.load('visualization', '1', {packages: ['corechart']});
+    </script>
+    <script type="text/javascript">
+
+    function click_month_year()
+    {
+        var url = '/reportes/gas_consumed_month/';
+        var y01 = $(".years").val();
+        var m01 = $("#months").val();
+        if (y01 != '0' && m01 != '0')
+        {
+            url += '?month01='+m01+"&";
+            url += 'year01='+y01;
+            window.location.href = url;
+        }
+        else
+        {
+            if (y01 == 0 && m01 ==0)
+            {
+              alert("El campo de mes y año se encuentran vacíos");
+            }
+            else
+            {
+                if(y01 == 0)
+                {
+                    alert("El campo de año se encuentra vacío");
+                }
+                else
+                {
+                   alert("El campo de mes se encuentra vacío");
+                }
+            }
+        }
+
+    }
+    var rows_data = {% autoescape off %}{{ rows }}{% endautoescape %};
+    function drawVisualization() {
+        data = google.visualization.arrayToDataTable([
+                ["Semana",'Consumo','Consumido'],
+                {% for row in rows %}
+                    ['{{ row.week }}',{{ row.value1 }},{{ row.value2 }}],
+                {% endfor %}
+        ]);
+         // Create and draw the visualization.
+         new google.visualization.ColumnChart(document.getElementById('chart_div')).
+         draw(data,
+             {
+                width:550, height:400, vAxis: { titleTextStyle: {italic: false }},'fontName':'Droid Sans', colors:['#5093c7','#f78a3d'],legend:'none'
+
+             }
+            );
+        }
+        $(document).ready(function(){
+            $('select').uniform();
+        });
+
+        google.setOnLoadCallback(drawVisualization);
+    </script>
+
+</head>
+
+<body style="background: none !important; overflow: hidden;">
+
+<div class='g12'>
+    <div class='g6'>
+        <div class="iframe_container">
+            <div class="graph_container" id="chart_div">
+
+            </div>
+        </div>
+    </div>
+    <div class='g6'>
+        <div  class='selectorsformonth'>
+            <div  class='g12'>
+                <div class='g11'>
+                    <select id='months'>
+                        <option value='0'>Elija un Mes</option>
+                        <option>Enero</option>
+                        <option>Febrero</option>
+                        <option>Marzo</option>
+                        <option>Abril</option>
+                        <option>Mayo</option>
+                        <option>Junio</option>
+                        <option>Julio</option>
+                        <option>Agosto</option>
+                        <option>Septiembre</option>
+                        <option>Octubre</option>
+                        <option>Noviembre</option>
+                        <option>Diciembre</option>
+                    </select>
+                    <select id='year_month' class='years'>
+                    <option value="0">Elija un año</option>
+                    {% for year in years %}
+                        <option value='{{ year }}'>{{ year }}</option>
+                    {% endfor %}
+                    </select>
+                </div>
+                <div style="margin-top: 5px;" class='g1'>
+                    <a href="#" onClick='click_month_year()' class="aqua_btn">Aplicar</a>
+                </div>
+            </div>
+
+        </div>
+        <div class="grid_container" style="width:420px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th colspan="9">Resumen Semanal (kWh)</th>
+                    </tr>
+                    <tr class="row1">
+                        <th width="6%">S</th>
+                        <th width="12%">Consumo</th>
+                        <th width="12%">Carga</th>
+                        <th width="12%">%</th>
+                    </tr>
+                </thead>
+
+                {% for row in rows %}
+                    <tr>
+                        <td>{{ row.week }}</td>
+                        <td class="table_value">{{ row.value1 }}</td>
+                        <td class="table_value">{{ row.value2 }}</td>
+                        <td class="table_value green"> {{ row.value3}}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

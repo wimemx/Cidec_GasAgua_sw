@@ -127,7 +127,6 @@ urlpatterns = patterns('',
                            'c_center.views.status_batch_sectoraltypes'),
                        url(r'^status_tipo_sector/(?P<id_stype>\d+)',
                            'c_center.views.status_sectoraltype'),
-
                        url(r'^alta_tipo_atributo_edificio/',
                            'c_center.views.add_b_attributes_type'),
                        url(
@@ -274,6 +273,10 @@ urlpatterns = patterns('',
                            'c_center.views.power_performance_header'),
                        url(r'^desempenio_energetico_frame/',
                            'c_center.views.power_performance'),
+                       url(r'^gas_consumed_month/',
+                           'c_center.views.gas_consumed_month'),
+                       url(r'^water_consumed_month/',
+                           'c_center.views.water_consumed_month'),
 
                        url(r'^node/',
                            'django.views.generic.simple.direct_to_template',
