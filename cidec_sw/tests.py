@@ -605,6 +605,22 @@ def simulate_sa_alarm(alarm, delay, cont):
 
     socket = SocketIO('auditem.mx', 9999)
     socket.emit('alarm_trigger', {'alarm_event': alarm_event})
+
+    print "alarm ", alarm.pk, "triggered at", triggered_time
+
+    sql = "insert into alarms_alarmevents (alarm_id, triggered_time, value) " \
+          "values (%s, %s, %s)"
+    triggered_time = str(datetime.datetime.utcnow())
+    cursor.execute(sql, [alarm.pk, str(triggered_time), 300])
+    transaction.commit_unless_managed()
+    cursor.execute("SELECT id FROM alarms_alarmevents WHERE "
+                   "triggered_time = %s AND alarm_id = %s",
+                   [triggered_time, alarm.pk])
+    row = cursor.fetchone()
+    alarm_event = row[0]
+
+    socket.emit('alarm_trigger', {'alarm_event': alarm_event})
+
     SocketIO.disconnect(socket)
 
     print "alarm ", alarm.pk, "triggered at", triggered_time

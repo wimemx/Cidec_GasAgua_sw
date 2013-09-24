@@ -2,6 +2,10 @@ table.datepickerViewDays th{
     font-weight: lighter;
     text-transform: capitalize;
 }
+table.datepickerViewDays thead tr{
+    background-color: #353741;
+}
+
 .ringl, .ringr{
     top: 36px;
     background: url("../images/bgs/ring.png");
@@ -89,6 +93,7 @@ table.datepickerViewYears th.datepickerMonth a span{
     background: url("../images/bgs/calendar_arrow_r.png") no-repeat;
 }
 table.datepickerViewDays tr.datepickerDoW{
+    background-color: #DBE2E7;
     background-image: linear-gradient(bottom, #DBE2E7 11%, #F3F5F7 56%);
     background-image: -o-linear-gradient(bottom, #DBE2E7 11%, #F3F5F7 56%);
     background-image: -moz-linear-gradient(bottom, #DBE2E7 11%, #F3F5F7 56%);
@@ -123,6 +128,7 @@ table.datepickerViewDays td{
     height: 80px !important;
     border: solid 2px #e7e9ea;
     padding: 2px 7px;
+    background-color: #F2F6F8;
 }
 table.datepickerViewDays td.datepickerNotInMonth{
     background: rgba(230, 230, 230, 0.2);
@@ -282,6 +288,7 @@ h3.titulo_reporte{
     display: none !important;
 }
 #lateral{
+    background-color: #F0F4F7;
     background-image: linear-gradient(bottom, #F0F4F7 13%, #E0E2E3 57%);
     background-image: -o-linear-gradient(bottom, #F0F4F7 13%, #E0E2E3 57%);
     background-image: -moz-linear-gradient(bottom, #F0F4F7 13%, #E0E2E3 57%);
