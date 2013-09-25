@@ -46,6 +46,8 @@
     month_e={{ ff|date:"n" }}-1;
     day_s={{ fi|date:"j" }};
     day_e={{ ff|date:"j" }};
+    hour_s={{ fi|date:"H" }};
+    hour_e={{ ff|date:"H" }};
     var control;
     function drawVisualization() {
         parent.jQuery("#loader").remove();
@@ -67,14 +69,14 @@
          // Display a single series that shows the closing value of the stock.
          // Thus, this view has two columns: the date (axis) and the stock value (line series).
          'chartView': {
-           'columns': [0, 2]
+           'columns': [0, 1, 2]
          },
          // 1 day in milliseconds = 24 * 60 * 60 * 1000 = 86,400,000
          'minRangeSize': 3600000
        }
      },
      // Initial range: 2012-02-09 to 2012-03-20.
-     'state': {'range': {'start': new Date(year_s, month_s, day_s), 'end': new Date(year_e, month_e, day_e)}}
+     'state': {'range': {'start': new Date(year_s, month_s, day_s,hour_s), 'end': new Date(year_e, month_e, day_e,hour_e)}}
    });
 
    var chart = new google.visualization.ChartWrapper({
@@ -103,8 +105,8 @@
 
    var data = new google.visualization.DataTable();
    data.addColumn('datetime', 'Date');
-   data.addColumn('number', 'Stock low');
-   data.addColumn('number', 'Stock open');
+   data.addColumn('number', 'Lts de consumo');
+   data.addColumn('number', 'Lts de carga');
 
    for(var row_index = 0; row_index < rows_data.length; row_index++){
         var row_data = rows_data[row_index];

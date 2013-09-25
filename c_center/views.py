@@ -54,8 +54,8 @@ from tareas.tasks import save_historic_delay, \
     populate_data_warehouse_specific, restore_data, \
     daily_report_period, tag_n_daily_report, calculateMonthlyReportCU
 
-import random
 from time import mktime
+from gas_agua.models import WaterGasData
 
 VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
@@ -8895,37 +8895,79 @@ def billing_cost_analisis(request):
         template_vars_template = RequestContext(request, template_vars)
         return render_to_response("generic_error.html", template_vars_template)
 
+@login_required(login_url='/')
 def gas_consumed_month(request):
     template_variables = {}
     rows = []
+    building = request.session['main_building']
+    ie = IndustrialEquipment.objects.get(pk=building.pk)
     if request.GET:
-        vals = []
+
         for r in range(0,6):
-            val1 = random.uniform(0, 400)
-            val2 = random.uniform(0, 400)
-            vals.append(val1)
-            vals.append(val2)
-            data_dictionary_json = {
-            'week' : "Semana "+str(r+1),
-            'value1': val1,
-            'value2': val2,
-            'value3': round((val1 / val2) * 100,2)
-            }
-            rows.append(data_dictionary_json)
+            start,end = variety.get_week_start_datetime_end_datetime_tuple(
+                int(request.GET['year01']), int(request.GET['month01']), r+1)
+            obj = WaterGasData.objects.filter(industrial_equipment=ie,
+                                              medition_date__gte=start,
+                                              medition_date__lte=end +
+                                                                 datetime.timedelta(days=1))\
+                .order_by('medition_date')
+            entered = WaterGasData.objects.filter(industrial_equipment=ie,
+                                                  medition_date__gte=start,
+                                                  medition_date__lte=end +
+                                                                     datetime.timedelta(days=1))\
+                .aggregate(Sum('gas_entered'))
+            count_obj = obj.count()
+            if obj:
+                data_dictionary_json = {
+                'week' : "Semana "+str(r+1),
+                'value1': float(obj[count_obj-1].gas_consumed - obj[0].gas_consumed),
+                'value2': float(entered['gas_entered__sum']),
+                'value3': 0
+                }
+                rows.append(data_dictionary_json)
+            else:
+                data_dictionary_json = {
+                'week' : "Semana "+str(r+1),
+                'value1': 0,
+                'value2': 0,
+                'value3': 0
+                }
+                rows.append(data_dictionary_json)
+        template_variables['month'] = int(request.GET['month01'])
+        template_variables['year'] = int(request.GET['year01'])
     else:
-        vals = []
         for r in range(0,6):
-            val1 = random.uniform(0, 400)
-            val2 = random.uniform(0, 400)
-            vals.append(val1)
-            vals.append(val2)
-            data_dictionary_json = {
-            'week' : "Semana "+str(r+1),
-            'value1': val1,
-            'value2': val2,
-            'value3': round((val1 / val2) * 100,2)
-            }
-            rows.append(data_dictionary_json)
+            today = datetime.datetime.now()
+            start,end = variety.get_week_start_datetime_end_datetime_tuple(today.year, today.month, r+1)
+            obj = WaterGasData.objects.filter(industrial_equipment=ie,
+                                              medition_date__gte=start,
+                                              medition_date__lte=end
+                                                                 + datetime.timedelta(days=1))\
+                .order_by('medition_date')
+            entered = WaterGasData.objects.filter(industrial_equipment=ie,
+                                                  medition_date__gte=start,
+                                                  medition_date__lte=end +
+                                                                     datetime.timedelta(days=1)).\
+                aggregate(Sum('gas_entered'))
+            count_obj = obj.count()
+            if obj:
+                data_dictionary_json = {
+                'week' : "Semana "+str(r+1),
+                'value1': float(obj[count_obj-1].gas_consumed - obj[0].gas_consumed),
+                'value2': float(entered['gas_entered__sum']),
+                'value3': 0
+                }
+                rows.append(data_dictionary_json)
+            else:
+                data_dictionary_json = {
+                'week' : "Semana "+str(r+1),
+                'value1': 0,
+                'value2': 0,
+                'value3': 0
+                }
+                rows.append(data_dictionary_json)
+        template_variables['month'] = today.month
+        template_variables['year'] = today.year
     template_variables['rows'] = rows
     template_variables['years'] = request.session['years']
     template_context =\
@@ -8934,37 +8976,79 @@ def gas_consumed_month(request):
                 "reports/monthly_gas.html",
                 template_context)
 
+@login_required(login_url='/')
 def water_consumed_month(request):
     template_variables = {}
     rows = []
+    building = request.session['main_building']
+    ie = IndustrialEquipment.objects.get(pk=building.pk)
     if request.GET:
-        vals = []
+
         for r in range(0,6):
-            val1 = random.uniform(0, 400)
-            val2 = random.uniform(0, 400)
-            vals.append(val1)
-            vals.append(val2)
-            data_dictionary_json = {
-            'week' : "Semana "+str(r+1),
-            'value1': val1,
-            'value2': val2,
-            'value3': round((val1 / val2) * 100,2)
-            }
-            rows.append(data_dictionary_json)
+            start,end = variety.get_week_start_datetime_end_datetime_tuple(
+                int(request.GET['year01']), int(request.GET['month01']), r+1)
+            obj = WaterGasData.objects.filter(industrial_equipment=ie,
+                                              medition_date__gte=start,
+                                              medition_date__lte=end +
+                                                                 datetime.timedelta(days=1))\
+                .order_by('medition_date')
+            entered = WaterGasData.objects.filter(industrial_equipment=ie,
+                                                  medition_date__gte=start,
+                                                  medition_date__lte=end +
+                                                                     datetime.timedelta(days=1))\
+                .aggregate(Sum('water_entered'))
+            count_obj = obj.count()
+            if obj:
+                data_dictionary_json = {
+                'week' : "Semana "+str(r+1),
+                'value1': float(obj[count_obj-1].water_consumed - obj[0].water_consumed),
+                'value2': float(entered['water_entered__sum']),
+                'value3': 0
+                }
+                rows.append(data_dictionary_json)
+            else:
+                data_dictionary_json = {
+                'week' : "Semana "+str(r+1),
+                'value1': 0,
+                'value2': 0,
+                'value3': 0
+                }
+                rows.append(data_dictionary_json)
+        template_variables['month'] = int(request.GET['month01'])
+        template_variables['year'] = int(request.GET['year01'])
     else:
-        vals = []
         for r in range(0,6):
-            val1 = random.uniform(0, 400)
-            val2 = random.uniform(0, 400)
-            vals.append(val1)
-            vals.append(val2)
-            data_dictionary_json = {
-            'week' : "Semana "+str(r+1),
-            'value1': val1,
-            'value2': val2,
-            'value3': round((val1 / val2) * 100,2)
-            }
-            rows.append(data_dictionary_json)
+            today = datetime.datetime.now()
+            start,end = variety.get_week_start_datetime_end_datetime_tuple(today.year, today.month, r+1)
+            obj = WaterGasData.objects.filter(industrial_equipment=ie,
+                                              medition_date__gte=start,
+                                              medition_date__lte=end
+                                                                 + datetime.timedelta(days=1))\
+                .order_by('medition_date')
+            entered = WaterGasData.objects.filter(industrial_equipment=ie,
+                                                  medition_date__gte=start,
+                                                  medition_date__lte=end +
+                                                                     datetime.timedelta(days=1)).\
+                aggregate(Sum('water_entered'))
+            count_obj = obj.count()
+            if obj:
+                data_dictionary_json = {
+                'week' : "Semana "+str(r+1),
+                'value1': float(obj[count_obj-1].water_consumed - obj[0].water_consumed),
+                'value2': float(entered['water_entered__sum']),
+                'value3': 0
+                }
+                rows.append(data_dictionary_json)
+            else:
+                data_dictionary_json = {
+                'week' : "Semana "+str(r+1),
+                'value1': 0,
+                'value2': 0,
+                'value3': 0
+                }
+                rows.append(data_dictionary_json)
+        template_variables['month'] = today.month
+        template_variables['year'] = today.year
     template_variables['rows'] = rows
     template_variables['years'] = request.session['years']
     template_context =\
@@ -8972,6 +9056,7 @@ def water_consumed_month(request):
     return render_to_response(
                 "reports/monthly_gas.html",
                 template_context)
+
 
 def power_performance(request):
 

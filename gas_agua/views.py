@@ -1,8 +1,10 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response, HttpResponse, \
     HttpResponseRedirect, get_object_or_404
-from rbac.rbac_functions import get_buildings_context
+from rbac.rbac_functions import get_buildings_context_for_gaswater
 from rbac.models import *
+from c_center.models import IndustrialEquipment
+from gas_agua.models import WaterGasData
 from c_center.c_center_functions import set_default_session_vars
 
 VIEW = Operation.objects.get(operation_name="Ver")
@@ -12,7 +14,8 @@ UPDATE = Operation.objects.get(operation_name="Modificar")
 
 @login_required(login_url='/')
 def gas_medition(request):
-    datacontext, b_list = get_buildings_context(request.user)
+    builds = WaterGasData.objects.values('industrial_equipment__building').distinct()
+    datacontext, b_list = get_buildings_context_for_gaswater(request.user,builds)
     if not datacontext:
         request.session['consumer_unit'] = None
     set_default_session_vars(request, b_list)
@@ -32,7 +35,8 @@ def gas_medition(request):
 
 @login_required(login_url='/')
 def water_medition(request):
-    datacontext, b_list = get_buildings_context(request.user)
+    builds = WaterGasData.objects.values('industrial_equipment__building').distinct()
+    datacontext, b_list = get_buildings_context_for_gaswater(request.user,builds)
     if not datacontext:
         request.session['consumer_unit'] = None
     set_default_session_vars(request, b_list)

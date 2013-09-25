@@ -204,6 +204,85 @@ def get_data_context_part(user, part):
                                               part_of_building=part)
     return dc
 
+def get_buildings_context_for_gaswater(user,builds):
+    """Obtains the buildings the user has permission
+
+
+    :param user: auth.User instance
+    :return JSON with the different buildings the active user has permission,
+     and a dictionary with the ids and name of buildings
+    """
+    datacontext = DataContextPermission.objects.filter(user_role__user=user)
+    buildings = []
+    for dcontext in datacontext:
+        try:
+            if dcontext.building:
+                if dcontext.building.building_status == 1 and dcontext.building in builds:
+                    buildings.append(
+                        dict(building_pk=dcontext.building.pk,
+                             building_name=dcontext.building.building_name))
+            elif dcontext.company:
+                building_comp = CompanyBuilding.objects.filter(
+                    company=dcontext.company,building__in=builds
+                ).exclude(
+                    building__building_status=0)
+                for bc in building_comp:
+                    buildings.append(
+                        dict(building_pk=bc.building.pk,
+                             building_name=bc.building.building_name))
+            else:
+                clust_comp = ClusterCompany.objects.filter(
+                    cluster=dcontext.cluster)
+                for cc in clust_comp:
+                    building_comp = CompanyBuilding.objects.filter(
+                        company=cc.company, building__in=builds
+                    ).exclude(
+                        building__building_status=0
+                    )
+                    for bc in building_comp:
+                        buildings.append(
+                            dict(building_pk=bc.building.pk,
+                                 building_name=bc.building.building_name))
+        except ObjectDoesNotExist:
+            continue
+
+        else:
+            buildings = variety.unique_from_array(buildings)
+    companies_list = []
+    if buildings:
+        edificios_pk = [edif['building_pk'] for edif in buildings]
+        buil_comp = CompanyBuilding.objects.filter(
+            building__pk__in=edificios_pk
+        ).values("company__company_name", "company").annotate(Count("company"))
+        for company_building in buil_comp:
+            clust_comp = ClusterCompany.objects.filter(
+                company__pk=company_building['company']
+            ).values("cluster__cluster_name")
+            company_detail = dict(
+                company_name=company_building['company__company_name'],
+                cluster_company=clust_comp[0]['cluster__cluster_name'],
+                building_count=company_building['company__count'],
+                buildings=[])
+            comp_buildings = CompanyBuilding.objects.filter(
+                company__pk=company_building['company'],
+                building__pk__in=edificios_pk).values(
+                "building__building_name",
+                "building",
+                "building__estado__estado_name")
+            for com_buil in comp_buildings:
+                buil_detail = dict(
+                    building_name=com_buil['building__building_name'],
+                    building_city=com_buil[
+                        'building__estado__estado_name'],
+                    building_id=int(com_buil['building']))
+                company_detail['buildings'].append(buil_detail)
+            companies_list.append(company_detail)
+    # return buildings
+
+    return simplejson.dumps(companies_list), buildings
+
+
+
 
 def get_buildings_context(user):
     """Obtains the buildings the user has permission

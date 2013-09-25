@@ -17,6 +17,8 @@ import django.shortcuts
 import django.utils.timezone
 import django.template.context
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from django.db.models.aggregates import *
 
 # Reports imports
 import reports.globals
@@ -26,6 +28,11 @@ import c_center.models
 import c_center.c_center_functions
 import c_center.calculations
 import c_center.graphics
+
+from c_center.models import  IndustrialEquipment
+
+from gas_agua.models import WaterGasData
+
 
 from reports.reports_functions import get_data_cluster_consumed_normalized, \
     rates_for_data_cluster, get_request_data_list_normalized, \
@@ -38,7 +45,6 @@ from reports.reports_functions import get_data_cluster_consumed_normalized, \
 
 # Other imports
 import variety
-import random
 from time import mktime
 from datetime import timedelta
 ################################################################################
@@ -232,169 +238,283 @@ def render_instant_measurements(
                "reports/instant-measurements.html",
                template_context)
 
-
+@login_required(login_url='/')
 def render_gas_consumed(
         request
 ):
     template_variables = {}
     rows = []
-    vals = []
+    building = request.session['main_building']
+    ie = IndustrialEquipment.objects.get(pk=building.pk)
     if request.GET:
-        start_date = datetime.datetime.strptime(request.GET['init-date'], '%Y-%m-%d')
-        end_date = datetime.datetime.strptime(request.GET['end-date'], '%Y-%m-%d')
-        days = []
-        from_date = 0
-        to_date = 0
+        start_date = datetime.datetime.strptime(request.GET['init-date'],
+                                                '%Y-%m-%d')
+        end_date = datetime.datetime.strptime(request.GET['end-date'],
+                                              '%Y-%m-%d')
+
         if end_date - start_date >= datetime.timedelta(days=30):
-            while start_date <= end_date:
-                days.append(start_date)
-                start_date = start_date + datetime.timedelta(days = 1)
+
+            while start_date <= end_date + datetime.timedelta(days=1):
+                meditions = WaterGasData.objects.filter(industrial_equipment=ie,
+                                                  medition_date__gte=start_date,
+                                                  medition_date__lte=start_date +
+                                                                     datetime.timedelta(days = 1))\
+                    .order_by('medition_date').values('gas_consumed')
+                medition_number = meditions.count()
+                consumed = WaterGasData.objects.filter(industrial_equipment=ie,
+                                                       medition_date__gte=start_date,
+                                                       medition_date__lte=start_date +
+                                                                          datetime.timedelta(days = 1))\
+                    .aggregate(Sum('gas_entered'))
+                if medition_number > 0:
+                    data_dictionary_json = {
+                    'datetime': str(mktime(start_date.timetuple())),
+                    'value1': float(meditions[medition_number - 1]['gas_consumed'] - meditions[0]
+                    ['gas_consumed']),
+                    'value2': float(consumed['gas_entered__sum'])
+                    }
+                    rows.append(data_dictionary_json)
+                    start_date = start_date + datetime.timedelta(days = 1)
+                else:
+                    date = mktime(start_date.timetuple())
+                    data_dictionary_json = {
+                    'datetime': str(date),
+                    'value1': float(0),
+                    'value2': float(0)
+                    }
+                    rows.append(data_dictionary_json)
+                    start_date = start_date + datetime.timedelta(days = 1)
+
+            if end_date > datetime.datetime.now():
+                end_date = datetime.datetime.now()
+
+            template_variables['rows'] = rows
             template_variables['ff'] = end_date
             template_variables['fi'] = end_date - datetime.timedelta(days = 7)
-        if end_date - start_date <= datetime.timedelta(days=2):
-            while start_date <= end_date:
-                days.append(start_date)
-                start_date = start_date + datetime.timedelta(minutes=5)
-            template_variables['ff'] = end_date
-            template_variables['fi'] = end_date - datetime.timedelta(days = 1)
-        else :
-            while start_date <= end_date:
-                days.append(start_date)
-                start_date = start_date + datetime.timedelta(minutes=60)
-            template_variables['ff'] = end_date
-            template_variables['fi'] = end_date - datetime.timedelta(days = 1)
 
-        for day in days:
-            val1 = random.uniform(0, 400)
-            val2 = random.uniform(0, 40)
-            vals.append(val1)
-            vals.append(val2)
-            date = mktime(day.timetuple())
-            data_dictionary_json = {
-            'datetime': str(date),
-            'value1': val1,
-            'value2': val2
-        }
-            rows.append(data_dictionary_json)
+        elif end_date - start_date < datetime.timedelta(days=30):
 
-        template_variables['rows'] = rows
+            while start_date <= end_date + datetime.timedelta(days=1):
+                meditions = WaterGasData.objects.filter(industrial_equipment=ie,
+                                                  medition_date__gte=start_date,
+                                                  medition_date__lte=start_date +
+                                                                     datetime.timedelta(minutes = 60))\
+                    .order_by('medition_date')
+                medition_number = meditions.count()
+                consumed = WaterGasData.objects.filter(industrial_equipment=ie,
+                                                       medition_date__gte=start_date,
+                                                       medition_date__lte=start_date +
+                                                                          datetime.timedelta(minutes = 60))\
+                    .aggregate(Sum('gas_entered'))
+                if medition_number > 0:
+                    data_dictionary_json = {
+                    'datetime': str(mktime(start_date.timetuple())),
+                    'value1': float(meditions[medition_number - 1].gas_consumed - meditions[0]
+                    .gas_consumed),
+                    'value2': float(consumed['gas_entered__sum'])
+                    }
+                    rows.append(data_dictionary_json)
+                    start_date = start_date + datetime.timedelta(minutes = 60)
+                else:
+                    date = mktime(start_date.timetuple())
+                    data_dictionary_json = {
+                    'datetime': str(date),
+                    'value1': float(0),
+                    'value2': float(0)
+                    }
+                    rows.append(data_dictionary_json)
+                    start_date = start_date + datetime.timedelta(minutes = 60)
+
+            if end_date > datetime.datetime.now():
+                end_date = datetime.datetime.now()
+
+            template_variables['rows'] = rows
+            template_variables['ff'] = end_date
+            template_variables['fi'] = end_date - datetime.timedelta(minutes = 120)
 
     else:
         now = datetime.datetime.now()
-        month = now.month
-        year = now.year
-        days = variety.getMonthDays(month, year)
-        start_date = days[0]
-        end_date = days[-1]
-        template_variables['ff'] = now
-        template_variables['fi'] = now - \
-                                       datetime.timedelta(minutes=1440)
-        days = []
-        while start_date <= end_date:
-            days.append(start_date)
-            start_date = start_date + datetime.timedelta(minutes=60)
-        first_week_start_datetime = days[0] + datetime.timedelta(minutes=60)
-        last_week_end_datetime = datetime.datetime.now()
-        for day in days:
-            val1 = random.uniform(0, 400)
-            val2 = random.uniform(0, 40)
-            vals.append(val1)
-            vals.append(val2)
-            date = mktime(day.timetuple())
-            data_dictionary_json = {
-            'datetime': str(date),
-            'value1': val1,
-            'value2': val2
-        }
+        start_date = now - datetime.timedelta(days=7)
+        end_date = now
 
+        while start_date <= end_date + datetime.timedelta(days=1):
+            meditions = WaterGasData.objects.filter(industrial_equipment=ie,
+                                                  medition_date__gte=start_date,
+                                                  medition_date__lte=start_date +
+                                                                     datetime.timedelta(minutes = 60))\
+                    .order_by('medition_date')
+            medition_number = meditions.count()
+            consumed = WaterGasData.objects.filter(industrial_equipment=ie,
+                                                       medition_date__gte=start_date,
+                                                       medition_date__lte=start_date +
+                                                                          datetime.timedelta(minutes = 60))\
+                    .aggregate(Sum('gas_entered'))
+            if medition_number > 0:
+                data_dictionary_json = {
+                'datetime': str(mktime(start_date.timetuple())),
+                'value1': float(meditions[medition_number - 1].gas_consumed - meditions[0]
+                .gas_consumed),
+                'value2': float(consumed['gas_entered__sum'])
+                }
+                rows.append(data_dictionary_json)
+                start_date = start_date + datetime.timedelta(minutes = 60)
+            else:
+                date = mktime(start_date.timetuple())
+                data_dictionary_json = {
+                'datetime': str(date),
+                'value1': float(0),
+                'value2': float(0)
+                }
+                rows.append(data_dictionary_json)
+                start_date = start_date + datetime.timedelta(minutes = 60)
 
-            rows.append(data_dictionary_json)
-        template_variables['rows'] = rows
+            if end_date > datetime.datetime.now():
+                end_date = datetime.datetime.now()
+
+            template_variables['rows'] = rows
+            template_variables['ff'] = end_date
+            template_variables['fi'] = end_date - datetime.timedelta(minutes = 120)
     template_context =\
         django.template.context.RequestContext(request, template_variables)
     return django.shortcuts.render_to_response(
                "reports/consumed_gas.html",template_context)
 
+@login_required(login_url='/')
 def render_water_consumed(
         request
 ):
     template_variables = {}
     rows = []
-    vals = []
+    building = request.session['main_building']
+    ie = IndustrialEquipment.objects.get(pk=building.pk)
     if request.GET:
-        start_date = datetime.datetime.strptime(request.GET['init-date'], '%Y-%m-%d')
-        end_date = datetime.datetime.strptime(request.GET['end-date'], '%Y-%m-%d')
-        days = []
-        from_date = 0
-        to_date = 0
+        start_date = datetime.datetime.strptime(request.GET['init-date'],
+                                                '%Y-%m-%d')
+        end_date = datetime.datetime.strptime(request.GET['end-date'],
+                                              '%Y-%m-%d')
+
         if end_date - start_date >= datetime.timedelta(days=30):
-            while start_date <= end_date:
-                days.append(start_date)
-                start_date = start_date + datetime.timedelta(days = 1)
-            template_variables['ff'] = end_date
-            template_variables['fi'] = end_date - \
-                                       datetime.timedelta(days=7)
-        if end_date - start_date <= datetime.timedelta(days=2):
-            while start_date <= end_date:
-                days.append(start_date)
-                start_date = start_date + datetime.timedelta(minutes=5)
-            template_variables['ff'] = end_date
-            template_variables['fi'] = end_date - \
-                                       datetime.timedelta(minutes=30)
-        else :
-            while start_date <= end_date:
-                days.append(start_date)
-                start_date = start_date + datetime.timedelta(minutes=60)
-            template_variables['ff'] = end_date
-            template_variables['fi'] = end_date - \
-                                       datetime.timedelta(minutes=160)
 
-        for day in days:
-            val1 = random.uniform(0, 400)
-            val2 = random.uniform(0, 40)
-            vals.append(val1)
-            vals.append(val2)
-            date = mktime(day.timetuple())
-            data_dictionary_json = {
-            'datetime': str(date),
-            'value1': val1,
-            'value2': val2
-        }
-            rows.append(data_dictionary_json)
+            while start_date <= end_date + datetime.timedelta(days=1):
+                meditions = WaterGasData.objects.filter(industrial_equipment=ie,
+                                                  medition_date__gte=start_date,
+                                                  medition_date__lte=start_date +
+                                                                     datetime.timedelta(days = 1))\
+                    .order_by('medition_date')
+                medition_number = meditions.count()
+                consumed = WaterGasData.objects.filter(industrial_equipment=ie,
+                                                       medition_date__gte=start_date,
+                                                       medition_date__lte=start_date +
+                                                                          datetime.timedelta(days = 1))\
+                    .aggregate(Sum('water_entered'))
+                if medition_number > 0:
+                    data_dictionary_json = {
+                    'datetime': str(mktime(start_date.timetuple())),
+                    'value1': float(meditions[medition_number - 1].water_consumed - meditions[0]
+                    .water_consumed),
+                    'value2': float(consumed['water_entered__sum'])
+                    }
+                    rows.append(data_dictionary_json)
+                    start_date = start_date + datetime.timedelta(days = 1)
+                else:
+                    date = mktime(start_date.timetuple())
+                    data_dictionary_json = {
+                    'datetime': str(date),
+                    'value1': float(0),
+                    'value2': float(0)
+                    }
+                    rows.append(data_dictionary_json)
+                    start_date = start_date + datetime.timedelta(days = 1)
 
-        template_variables['rows'] = rows
+            if end_date > datetime.datetime.now():
+                end_date = datetime.datetime.now()
+
+            template_variables['rows'] = rows
+            template_variables['ff'] = end_date
+            template_variables['fi'] = end_date - datetime.timedelta(days = 7)
+
+        elif end_date - start_date < datetime.timedelta(days=30):
+
+            while start_date <= end_date + datetime.timedelta(days=1):
+                meditions = WaterGasData.objects.filter(industrial_equipment=ie,
+                                                  medition_date__gte=start_date,
+                                                  medition_date__lte=start_date +
+                                                                     datetime.timedelta(minutes = 60))\
+                    .order_by('medition_date')
+                medition_number = meditions.count()
+                consumed = WaterGasData.objects.filter(industrial_equipment=ie,
+                                                       medition_date__gte=start_date,
+                                                       medition_date__lte=start_date +
+                                                                          datetime.timedelta(minutes = 60))\
+                    .aggregate(Sum('water_entered'))
+                if medition_number > 0:
+                    data_dictionary_json = {
+                    'datetime': str(mktime(start_date.timetuple())),
+                    'value1': float(meditions[medition_number - 1].water_consumed - meditions[0]
+                    .water_consumed),
+                    'value2': float(consumed['water_entered__sum'])
+                    }
+                    rows.append(data_dictionary_json)
+                    start_date = start_date + datetime.timedelta(minutes = 60)
+                else:
+                    date = mktime(start_date.timetuple())
+                    data_dictionary_json = {
+                    'datetime': str(date),
+                    'value1': float(0),
+                    'value2': float(0)
+                    }
+                    rows.append(data_dictionary_json)
+                    start_date = start_date + datetime.timedelta(minutes = 60)
+
+            if end_date > datetime.datetime.now():
+                end_date = datetime.datetime.now()
+
+            template_variables['rows'] = rows
+            template_variables['ff'] = end_date
+            template_variables['fi'] = end_date - datetime.timedelta(minutes = 120)
 
     else:
         now = datetime.datetime.now()
-        month = now.month
-        year = now.year
-        days = variety.getMonthDays(month, year)
-        start_date = days[0]
-        end_date = days[-1]
-        template_variables['ff'] = now
-        template_variables['fi'] = now - \
-                                       datetime.timedelta(minutes=1440)
-        days = []
-        while start_date <= end_date:
-            days.append(start_date)
-            start_date = start_date + datetime.timedelta(minutes=60)
-        first_week_start_datetime = days[0] + datetime.timedelta(minutes=60)
-        last_week_end_datetime = datetime.datetime.now()
-        for day in days:
-            val1 = random.uniform(0, 400)
-            val2 = random.uniform(0, 40)
-            vals.append(val1)
-            vals.append(val2)
-            date = mktime(day.timetuple())
-            data_dictionary_json = {
-            'datetime': str(date),
-            'value1': val1,
-            'value2': val2
-        }
+        start_date = now - datetime.timedelta(days=7)
+        end_date = now
 
+        while start_date <= end_date + datetime.timedelta(days=1):
+            meditions = WaterGasData.objects.filter(industrial_equipment=ie,
+                                                  medition_date__gte=start_date,
+                                                  medition_date__lte=start_date +
+                                                                     datetime.timedelta(minutes = 60))\
+                    .order_by('medition_date')
+            medition_number = meditions.count()
+            consumed = WaterGasData.objects.filter(industrial_equipment=ie,
+                                                       medition_date__gte=start_date,
+                                                       medition_date__lte=start_date +
+                                                                          datetime.timedelta(minutes = 60))\
+                    .aggregate(Sum('water_entered'))
+            if medition_number > 0:
+                data_dictionary_json = {
+                'datetime': str(mktime(start_date.timetuple())),
+                'value1': float(meditions[medition_number - 1].water_consumed - meditions[0]
+                .water_consumed),
+                'value2': float(consumed['water_entered__sum'])
+                }
+                rows.append(data_dictionary_json)
+                start_date = start_date + datetime.timedelta(minutes = 60)
+            else:
+                date = mktime(start_date.timetuple())
+                data_dictionary_json = {
+                'datetime': str(date),
+                'value1': float(0),
+                'value2': float(0)
+                }
+                rows.append(data_dictionary_json)
+                start_date = start_date + datetime.timedelta(minutes = 60)
 
-            rows.append(data_dictionary_json)
-        template_variables['rows'] = rows
+            if end_date > datetime.datetime.now():
+                end_date = datetime.datetime.now()
+
+            template_variables['rows'] = rows
+            template_variables['ff'] = end_date
+            template_variables['fi'] = end_date - datetime.timedelta(minutes = 120)
     template_context =\
         django.template.context.RequestContext(request, template_variables)
     return django.shortcuts.render_to_response(

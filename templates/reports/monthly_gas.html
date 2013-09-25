@@ -55,7 +55,7 @@
     var rows_data = {% autoescape off %}{{ rows }}{% endautoescape %};
     function drawVisualization() {
         data = google.visualization.arrayToDataTable([
-                ["Semana",'Consumo','Consumido'],
+                ["Semana",'Lts de consumo','Lts de carga'],
                 {% for row in rows %}
                     ['{{ row.week }}',{{ row.value1 }},{{ row.value2 }}],
                 {% endfor %}
@@ -64,7 +64,7 @@
          new google.visualization.ColumnChart(document.getElementById('chart_div')).
          draw(data,
              {
-                width:550, height:400, vAxis: { titleTextStyle: {italic: false }},'fontName':'Droid Sans', colors:['#5093c7','#f78a3d'],legend:'none'
+                width:550, height:400, vAxis: { titleTextStyle: {italic: false }},'fontName':'Droid Sans', colors:['#5093c7','#f78a3d'], legend:{position:'bottom'}
 
              }
             );
@@ -88,29 +88,30 @@
             </div>
         </div>
     </div>
+
     <div class='g6'>
         <div  class='selectorsformonth'>
             <div  class='g12'>
                 <div class='g11'>
                     <select id='months'>
                         <option value='0'>Elija un Mes</option>
-                        <option>Enero</option>
-                        <option>Febrero</option>
-                        <option>Marzo</option>
-                        <option>Abril</option>
-                        <option>Mayo</option>
-                        <option>Junio</option>
-                        <option>Julio</option>
-                        <option>Agosto</option>
-                        <option>Septiembre</option>
-                        <option>Octubre</option>
-                        <option>Noviembre</option>
-                        <option>Diciembre</option>
+                        <option {% if month == 1 %} selected=selected {% endif %}  value='1'>Enero</option>
+                        <option {% if month == 2 %} selected=selected {% endif %}  value='2'>Febrero</option>
+                        <option {% if month == 3 %} selected=selected {% endif %}  value='3'>Marzo</option>
+                        <option {% if month == 4 %} selected=selected {% endif %}  value='4'>Abril</option>
+                        <option {% if month == 5 %} selected=selected {% endif %}  value='5'>Mayo</option>
+                        <option {% if month == 6 %} selected=selected {% endif %}  value='6'>Junio</option>
+                        <option {% if month == 7 %} selected=selected {% endif %}  value='7'>Julio</option>
+                        <option {% if month == 8 %} selected=selected {% endif %}  value='8'>Agosto</option>
+                        <option {% if month == 9 %} selected=selected {% endif %}  value='9'>Septiembre</option>
+                        <option {% if month == 10 %} selected=selected {% endif %}  value='10'>Octubre</option>
+                        <option {% if month == 11 %} selected=selected {% endif %}  value='11'>Noviembre</option>
+                        <option {% if month == 12 %} selected=selected {% endif %}  value='12'>Diciembre</option>
                     </select>
                     <select id='year_month' class='years'>
                     <option value="0">Elija un año</option>
-                    {% for year in years %}
-                        <option value='{{ year }}'>{{ year }}</option>
+                    {% for date_year in years %}
+                        <option {% if year == date_year %} selected=selected {% endif %}   value='{{ date_year }}'>{{ date_year }}</option>
                     {% endfor %}
                     </select>
                 </div>
@@ -124,7 +125,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th colspan="9">Resumen Semanal (kWh)</th>
+                        <th colspan="9">Resumen Semanal (Lts)</th>
                     </tr>
                     <tr class="row1">
                         <th width="6%">S</th>
