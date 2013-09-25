@@ -255,26 +255,20 @@ def render_gas_consumed(
         if end_date - start_date >= datetime.timedelta(days=30):
 
             while start_date <= end_date + datetime.timedelta(days=1):
-                meditions = WaterGasData.objects.filter(industrial_equipment=ie,
-                                                  medition_date__gte=start_date,
-                                                  medition_date__lte=start_date +
-                                                                     datetime.timedelta(days = 1))\
-                    .order_by('medition_date').values('gas_consumed')
-                medition_number = meditions.count()
-                consumed = WaterGasData.objects.filter(industrial_equipment=ie,
-                                                       medition_date__gte=start_date,
-                                                       medition_date__lte=start_date +
-                                                                          datetime.timedelta(days = 1))\
-                    .aggregate(Sum('gas_entered'))
+                meditions = WaterGasData.objects.filter(
+                    industrial_equipment=ie,
+                    medition_date__gte=start_date,
+                    medition_date__lte=start_date + datetime.timedelta(days=1)
+                ).order_by('medition_date').values('gas_consumed', 'gas_entered')
+                medition_number = len(meditions)
+                entered = sum(meditions["gas_entered"])
                 if medition_number > 0:
                     data_dictionary_json = {
                     'datetime': str(mktime(start_date.timetuple())),
                     'value1': float(meditions[medition_number - 1]['gas_consumed'] - meditions[0]
                     ['gas_consumed']),
-                    'value2': float(consumed['gas_entered__sum'])
+                    'value2': float(entered)
                     }
-                    rows.append(data_dictionary_json)
-                    start_date = start_date + datetime.timedelta(days = 1)
                 else:
                     date = mktime(start_date.timetuple())
                     data_dictionary_json = {
@@ -282,8 +276,8 @@ def render_gas_consumed(
                     'value1': float(0),
                     'value2': float(0)
                     }
-                    rows.append(data_dictionary_json)
-                    start_date = start_date + datetime.timedelta(days = 1)
+                rows.append(data_dictionary_json)
+                start_date = start_date + datetime.timedelta(days = 1)
 
             if end_date > datetime.datetime.now():
                 end_date = datetime.datetime.now()
