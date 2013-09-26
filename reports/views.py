@@ -242,6 +242,10 @@ def render_instant_measurements(
 def render_gas_consumed(
         request
 ):
+    """
+    Return an array of dictionaries with a datetime, gas_consumed,
+    and gas entered for the consumed gas chart.
+    """
     template_variables = {}
     rows = []
     building = request.session['main_building']
@@ -254,14 +258,33 @@ def render_gas_consumed(
 
         if end_date - start_date >= datetime.timedelta(days=30):
 
+            start_date = datetime.datetime(start_date.year,start_date.month,start_date.day,00,00)
+            end_date = datetime.datetime(end_date.year,end_date.month,end_date.day,00,00)
+            now_compare = datetime.datetime.now()
+
+            timezone_current = django.utils.timezone.get_current_timezone()
+
+            if start_date.tzinfo is None:
+                start_date = timezone_current.localize(start_date)
+
+            if end_date.tzinfo is None:
+                end_date = timezone_current.localize(end_date)
+
+            if now_compare.tzinfo is None:
+                now_compare = timezone_current.localize(now_compare)
+
             while start_date <= end_date + datetime.timedelta(days=1):
                 meditions = WaterGasData.objects.filter(
                     industrial_equipment=ie,
                     medition_date__gte=start_date,
                     medition_date__lte=start_date + datetime.timedelta(days=1)
-                ).order_by('medition_date').values('gas_consumed', 'gas_entered')
+                ).order_by('medition_date').values('gas_consumed', 'gas_entered', 'medition_date')
                 medition_number = len(meditions)
-                entered = sum(meditions["gas_entered"])
+                entered = 0
+                for number in meditions:
+                    if number['medition_date'] != start_date + datetime.timedelta(minutes = 60):
+                        x = number['gas_entered']
+                        entered += x
                 if medition_number > 0:
                     data_dictionary_json = {
                     'datetime': str(mktime(start_date.timetuple())),
@@ -279,36 +302,48 @@ def render_gas_consumed(
                 rows.append(data_dictionary_json)
                 start_date = start_date + datetime.timedelta(days = 1)
 
-            if end_date > datetime.datetime.now():
-                end_date = datetime.datetime.now()
+            if end_date > now_compare:
+                end_date = now_compare
 
             template_variables['rows'] = rows
             template_variables['ff'] = end_date
             template_variables['fi'] = end_date - datetime.timedelta(days = 7)
 
         elif end_date - start_date < datetime.timedelta(days=30):
+            start_date = datetime.datetime(start_date.year,start_date.month,start_date.day,00,00)
+            end_date = datetime.datetime(end_date.year,end_date.month,end_date.day,00,00)
+            now_compare = datetime.datetime.now()
+
+            timezone_current = django.utils.timezone.get_current_timezone()
+
+            if start_date.tzinfo is None:
+                start_date = timezone_current.localize(start_date)
+
+            if end_date.tzinfo is None:
+                end_date = timezone_current.localize(end_date)
+
+            if now_compare.tzinfo is None:
+                now_compare = timezone_current.localize(now_compare)
 
             while start_date <= end_date + datetime.timedelta(days=1):
-                meditions = WaterGasData.objects.filter(industrial_equipment=ie,
-                                                  medition_date__gte=start_date,
-                                                  medition_date__lte=start_date +
-                                                                     datetime.timedelta(minutes = 60))\
-                    .order_by('medition_date')
-                medition_number = meditions.count()
-                consumed = WaterGasData.objects.filter(industrial_equipment=ie,
-                                                       medition_date__gte=start_date,
-                                                       medition_date__lte=start_date +
-                                                                          datetime.timedelta(minutes = 60))\
-                    .aggregate(Sum('gas_entered'))
+                meditions = WaterGasData.objects.filter(
+                    industrial_equipment=ie,
+                    medition_date__gte=start_date,
+                    medition_date__lte=start_date + datetime.timedelta(minutes = 60)
+                ).order_by('medition_date').values('gas_consumed', 'gas_entered', 'medition_date')
+                medition_number = len(meditions)
+                entered = 0
+                for number in meditions:
+                    if number['medition_date'] != start_date + datetime.timedelta(minutes = 60):
+                        x = number['gas_entered']
+                        entered += x
                 if medition_number > 0:
                     data_dictionary_json = {
                     'datetime': str(mktime(start_date.timetuple())),
-                    'value1': float(meditions[medition_number - 1].gas_consumed - meditions[0]
-                    .gas_consumed),
-                    'value2': float(consumed['gas_entered__sum'])
+                    'value1': float(meditions[medition_number - 1]['gas_consumed'] - meditions[0]
+                    ['gas_consumed']),
+                    'value2': float(entered)
                     }
-                    rows.append(data_dictionary_json)
-                    start_date = start_date + datetime.timedelta(minutes = 60)
                 else:
                     date = mktime(start_date.timetuple())
                     data_dictionary_json = {
@@ -316,11 +351,11 @@ def render_gas_consumed(
                     'value1': float(0),
                     'value2': float(0)
                     }
-                    rows.append(data_dictionary_json)
-                    start_date = start_date + datetime.timedelta(minutes = 60)
+                rows.append(data_dictionary_json)
+                start_date = start_date + datetime.timedelta(minutes = 60)
 
-            if end_date > datetime.datetime.now():
-                end_date = datetime.datetime.now()
+            if end_date > now_compare:
+                end_date = now_compare
 
             template_variables['rows'] = rows
             template_variables['ff'] = end_date
@@ -328,30 +363,41 @@ def render_gas_consumed(
 
     else:
         now = datetime.datetime.now()
-        start_date = now - datetime.timedelta(days=7)
-        end_date = now
+        now_start = datetime.datetime(now.year,now.month,now.day,00,00)
+        start_date = now_start - datetime.timedelta(days=7)
+        end_date = now_start
+        now_compare = datetime.datetime.now()
+
+        timezone_current = django.utils.timezone.get_current_timezone()
+
+        if start_date.tzinfo is None:
+            start_date = timezone_current.localize(start_date)
+
+        if end_date.tzinfo is None:
+            end_date = timezone_current.localize(end_date)
+
+        if now_compare.tzinfo is None:
+            now_compare = timezone_current.localize(now_compare)
 
         while start_date <= end_date + datetime.timedelta(days=1):
-            meditions = WaterGasData.objects.filter(industrial_equipment=ie,
-                                                  medition_date__gte=start_date,
-                                                  medition_date__lte=start_date +
-                                                                     datetime.timedelta(minutes = 60))\
-                    .order_by('medition_date')
-            medition_number = meditions.count()
-            consumed = WaterGasData.objects.filter(industrial_equipment=ie,
-                                                       medition_date__gte=start_date,
-                                                       medition_date__lte=start_date +
-                                                                          datetime.timedelta(minutes = 60))\
-                    .aggregate(Sum('gas_entered'))
+            meditions = WaterGasData.objects.filter(
+                    industrial_equipment=ie,
+                    medition_date__gte=start_date,
+                    medition_date__lte=start_date + datetime.timedelta(minutes = 60)
+                ).order_by('medition_date').values('gas_consumed', 'gas_entered', 'medition_date')
+            medition_number = len(meditions)
+            entered = 0
+            for number in meditions:
+                if number['medition_date'] != start_date + datetime.timedelta(minutes = 60):
+                    x = number['gas_entered']
+                    entered += x
             if medition_number > 0:
                 data_dictionary_json = {
                 'datetime': str(mktime(start_date.timetuple())),
-                'value1': float(meditions[medition_number - 1].gas_consumed - meditions[0]
-                .gas_consumed),
-                'value2': float(consumed['gas_entered__sum'])
+                'value1': float(meditions[medition_number - 1]['gas_consumed'] - meditions[0]
+                ['gas_consumed']),
+                'value2': float(entered)
                 }
-                rows.append(data_dictionary_json)
-                start_date = start_date + datetime.timedelta(minutes = 60)
             else:
                 date = mktime(start_date.timetuple())
                 data_dictionary_json = {
@@ -359,11 +405,11 @@ def render_gas_consumed(
                 'value1': float(0),
                 'value2': float(0)
                 }
-                rows.append(data_dictionary_json)
-                start_date = start_date + datetime.timedelta(minutes = 60)
+            rows.append(data_dictionary_json)
+            start_date = start_date + datetime.timedelta(minutes = 60)
 
-            if end_date > datetime.datetime.now():
-                end_date = datetime.datetime.now()
+            if end_date > now_compare:
+                end_date = now_compare
 
             template_variables['rows'] = rows
             template_variables['ff'] = end_date
@@ -377,6 +423,10 @@ def render_gas_consumed(
 def render_water_consumed(
         request
 ):
+    """
+    Return an array of dictionaries with a datetime, water consumed,
+    and water entered for the consumed water chart.
+    """
     template_variables = {}
     rows = []
     building = request.session['main_building']
@@ -386,30 +436,42 @@ def render_water_consumed(
                                                 '%Y-%m-%d')
         end_date = datetime.datetime.strptime(request.GET['end-date'],
                                               '%Y-%m-%d')
+        start_date = datetime.datetime(start_date.year,start_date.month,start_date.day,00,00)
+        end_date = datetime.datetime(end_date.year,end_date.month,end_date.day,00,00)
+        now_compare = datetime.datetime.now()
+
+        timezone_current = django.utils.timezone.get_current_timezone()
+
+        if start_date.tzinfo is None:
+            start_date = timezone_current.localize(start_date)
+
+        if end_date.tzinfo is None:
+            end_date = timezone_current.localize(end_date)
+
+        if now_compare.tzinfo is None:
+            now_compare = timezone_current.localize(now_compare)
 
         if end_date - start_date >= datetime.timedelta(days=30):
 
             while start_date <= end_date + datetime.timedelta(days=1):
-                meditions = WaterGasData.objects.filter(industrial_equipment=ie,
-                                                  medition_date__gte=start_date,
-                                                  medition_date__lte=start_date +
-                                                                     datetime.timedelta(days = 1))\
-                    .order_by('medition_date')
-                medition_number = meditions.count()
-                consumed = WaterGasData.objects.filter(industrial_equipment=ie,
-                                                       medition_date__gte=start_date,
-                                                       medition_date__lte=start_date +
-                                                                          datetime.timedelta(days = 1))\
-                    .aggregate(Sum('water_entered'))
+                meditions = WaterGasData.objects.filter(
+                    industrial_equipment=ie,
+                    medition_date__gte=start_date,
+                    medition_date__lte=start_date + datetime.timedelta(days=1)
+                ).order_by('medition_date').values('water_consumed', 'water_entered', 'medition_date')
+                medition_number = len(meditions)
+                entered = 0
+                for number in meditions:
+                    if number['medition_date'] != start_date + datetime.timedelta(minutes = 60):
+                        x = number['water_entered']
+                        entered += x
                 if medition_number > 0:
                     data_dictionary_json = {
                     'datetime': str(mktime(start_date.timetuple())),
-                    'value1': float(meditions[medition_number - 1].water_consumed - meditions[0]
-                    .water_consumed),
-                    'value2': float(consumed['water_entered__sum'])
+                    'value1': float(meditions[medition_number - 1]['water_consumed'] - meditions[0]
+                    ['water_consumed']),
+                    'value2': float(entered)
                     }
-                    rows.append(data_dictionary_json)
-                    start_date = start_date + datetime.timedelta(days = 1)
                 else:
                     date = mktime(start_date.timetuple())
                     data_dictionary_json = {
@@ -417,11 +479,11 @@ def render_water_consumed(
                     'value1': float(0),
                     'value2': float(0)
                     }
-                    rows.append(data_dictionary_json)
-                    start_date = start_date + datetime.timedelta(days = 1)
+                rows.append(data_dictionary_json)
+                start_date = start_date + datetime.timedelta(days = 1)
 
-            if end_date > datetime.datetime.now():
-                end_date = datetime.datetime.now()
+            if end_date > now_compare:
+                end_date = now_compare
 
             template_variables['rows'] = rows
             template_variables['ff'] = end_date
@@ -430,26 +492,24 @@ def render_water_consumed(
         elif end_date - start_date < datetime.timedelta(days=30):
 
             while start_date <= end_date + datetime.timedelta(days=1):
-                meditions = WaterGasData.objects.filter(industrial_equipment=ie,
-                                                  medition_date__gte=start_date,
-                                                  medition_date__lte=start_date +
-                                                                     datetime.timedelta(minutes = 60))\
-                    .order_by('medition_date')
-                medition_number = meditions.count()
-                consumed = WaterGasData.objects.filter(industrial_equipment=ie,
-                                                       medition_date__gte=start_date,
-                                                       medition_date__lte=start_date +
-                                                                          datetime.timedelta(minutes = 60))\
-                    .aggregate(Sum('water_entered'))
+                meditions = WaterGasData.objects.filter(
+                    industrial_equipment=ie,
+                    medition_date__gte=start_date,
+                    medition_date__lte=start_date + datetime.timedelta(minutes = 60)
+                ).order_by('medition_date').values('water_consumed', 'water_entered', 'medition_date')
+                medition_number = len(meditions)
+                entered = 0
+                for number in meditions:
+                    if number['medition_date'] != start_date + datetime.timedelta(minutes = 60):
+                        x = number['water_entered']
+                        entered += x
                 if medition_number > 0:
                     data_dictionary_json = {
                     'datetime': str(mktime(start_date.timetuple())),
-                    'value1': float(meditions[medition_number - 1].water_consumed - meditions[0]
-                    .water_consumed),
-                    'value2': float(consumed['water_entered__sum'])
+                    'value1': float(meditions[medition_number - 1]['water_consumed'] - meditions[0]
+                    ['water_consumed']),
+                    'value2': float(entered)
                     }
-                    rows.append(data_dictionary_json)
-                    start_date = start_date + datetime.timedelta(minutes = 60)
                 else:
                     date = mktime(start_date.timetuple())
                     data_dictionary_json = {
@@ -457,11 +517,11 @@ def render_water_consumed(
                     'value1': float(0),
                     'value2': float(0)
                     }
-                    rows.append(data_dictionary_json)
-                    start_date = start_date + datetime.timedelta(minutes = 60)
+                rows.append(data_dictionary_json)
+                start_date = start_date + datetime.timedelta(minutes = 60)
 
-            if end_date > datetime.datetime.now():
-                end_date = datetime.datetime.now()
+            if end_date > now_compare:
+                end_date = now_compare
 
             template_variables['rows'] = rows
             template_variables['ff'] = end_date
@@ -469,30 +529,41 @@ def render_water_consumed(
 
     else:
         now = datetime.datetime.now()
-        start_date = now - datetime.timedelta(days=7)
-        end_date = now
+        now_start = datetime.datetime(now.year,now.month,now.day,00,00)
+        start_date = now_start - datetime.timedelta(days=7)
+        end_date = now_start
+        now_compare = datetime.datetime.now()
+
+        timezone_current = django.utils.timezone.get_current_timezone()
+
+        if start_date.tzinfo is None:
+            start_date = timezone_current.localize(start_date)
+
+        if end_date.tzinfo is None:
+            end_date = timezone_current.localize(end_date)
+
+        if now_compare.tzinfo is None:
+            now_compare = timezone_current.localize(now_compare)
 
         while start_date <= end_date + datetime.timedelta(days=1):
-            meditions = WaterGasData.objects.filter(industrial_equipment=ie,
-                                                  medition_date__gte=start_date,
-                                                  medition_date__lte=start_date +
-                                                                     datetime.timedelta(minutes = 60))\
-                    .order_by('medition_date')
-            medition_number = meditions.count()
-            consumed = WaterGasData.objects.filter(industrial_equipment=ie,
-                                                       medition_date__gte=start_date,
-                                                       medition_date__lte=start_date +
-                                                                          datetime.timedelta(minutes = 60))\
-                    .aggregate(Sum('water_entered'))
+            meditions = WaterGasData.objects.filter(
+                    industrial_equipment=ie,
+                    medition_date__gte=start_date,
+                    medition_date__lte=start_date + datetime.timedelta(minutes = 60)
+                ).order_by('medition_date').values('water_consumed', 'water_entered', 'medition_date')
+            medition_number = len(meditions)
+            entered = 0
+            for number in meditions:
+                if number['medition_date'] != start_date + datetime.timedelta(minutes = 60):
+                    x = number['water_entered']
+                    entered += x
             if medition_number > 0:
                 data_dictionary_json = {
                 'datetime': str(mktime(start_date.timetuple())),
-                'value1': float(meditions[medition_number - 1].water_consumed - meditions[0]
-                .water_consumed),
-                'value2': float(consumed['water_entered__sum'])
+                'value1': float(meditions[medition_number - 1]['water_consumed'] - meditions[0]
+                ['water_consumed']),
+                'value2': float(entered)
                 }
-                rows.append(data_dictionary_json)
-                start_date = start_date + datetime.timedelta(minutes = 60)
             else:
                 date = mktime(start_date.timetuple())
                 data_dictionary_json = {
@@ -500,11 +571,11 @@ def render_water_consumed(
                 'value1': float(0),
                 'value2': float(0)
                 }
-                rows.append(data_dictionary_json)
-                start_date = start_date + datetime.timedelta(minutes = 60)
+            rows.append(data_dictionary_json)
+            start_date = start_date + datetime.timedelta(minutes = 60)
 
-            if end_date > datetime.datetime.now():
-                end_date = datetime.datetime.now()
+            if end_date > now_compare:
+                end_date = now_compare
 
             template_variables['rows'] = rows
             template_variables['ff'] = end_date
@@ -513,6 +584,7 @@ def render_water_consumed(
         django.template.context.RequestContext(request, template_variables)
     return django.shortcuts.render_to_response(
                "reports/consumed_gas.html",template_context)
+
 
 @login_required(login_url="/")
 def render_report_consumed_by_month(

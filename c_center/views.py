@@ -8897,6 +8897,10 @@ def billing_cost_analisis(request):
 
 @login_required(login_url='/')
 def gas_consumed_month(request):
+    """
+    Return an array of dictionaries with a datetime(6 weeks), gas consumed,
+    and gas entered for the consumed gas chart.
+    """
     template_variables = {}
     rows = []
     building = request.session['main_building']
@@ -8978,6 +8982,10 @@ def gas_consumed_month(request):
 
 @login_required(login_url='/')
 def water_consumed_month(request):
+    """
+    Return an array of dictionaries with a datetime(6 weeks), water consumed,
+    and water entered for the consumed water chart.
+    """
     template_variables = {}
     rows = []
     building = request.session['main_building']

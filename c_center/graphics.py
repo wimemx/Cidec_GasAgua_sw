@@ -322,7 +322,6 @@ def get_consumer_unit_week_report_cumulative(
                 consumer_unit_item.pk,
                 week_start_datetime,
                 week_end_datetime)
-
         hours_in_week = 7 * 24
         if len(consumer_unit_electric_data_interval_raw) < hours_in_week:
             continue

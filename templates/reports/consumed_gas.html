@@ -86,9 +86,9 @@
        // Use the same chart area width as the control for axis alignment.
        'chartArea': {'height': '80%', 'width': '90%'},
        'hAxis': {'slantedText': false},
-       'vAxis': [{0:{title: "Cups"}},{1:{title: "Average"}}],
+       'vAxis': {title: "Lts", titleTextStyle:{color:'black'}},
        'seriesType':"bars",
-       'legend': {'position': 'none'},
+       'legend': {'position': 'top'},
        series: {1: {type: "line", targetAxisIndex:1}}
      },
      // Convert the first column from 'date' to 'string'.
