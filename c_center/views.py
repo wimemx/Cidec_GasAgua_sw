@@ -8912,20 +8912,20 @@ def gas_consumed_month(request):
                 int(request.GET['year01']), int(request.GET['month01']), r+1)
             obj = WaterGasData.objects.filter(industrial_equipment=ie,
                                               medition_date__gte=start,
-                                              medition_date__lte=end +
-                                                                 datetime.timedelta(days=1))\
-                .order_by('medition_date')
-            entered = WaterGasData.objects.filter(industrial_equipment=ie,
-                                                  medition_date__gte=start,
-                                                  medition_date__lte=end +
-                                                                     datetime.timedelta(days=1))\
-                .aggregate(Sum('gas_entered'))
-            count_obj = obj.count()
+                                              medition_date__lte=end
+                                                                 + datetime.timedelta(days=1))\
+                .order_by('medition_date').values('gas_consumed', 'gas_entered', 'medition_date')
+
+            obj_count = len(obj)
+            entered = 0
+            for number in obj:
+                x = number['gas_entered']
+                entered += x
             if obj:
                 data_dictionary_json = {
                 'week' : "Semana "+str(r+1),
-                'value1': float(obj[count_obj-1].gas_consumed - obj[0].gas_consumed),
-                'value2': float(entered['gas_entered__sum']),
+                'value1': float(obj[obj_count-1]['gas_consumed'] - obj[0]['gas_consumed']),
+                'value2': float(entered),
                 'value3': 0
                 }
                 rows.append(data_dictionary_json)
@@ -8947,18 +8947,18 @@ def gas_consumed_month(request):
                                               medition_date__gte=start,
                                               medition_date__lte=end
                                                                  + datetime.timedelta(days=1))\
-                .order_by('medition_date')
-            entered = WaterGasData.objects.filter(industrial_equipment=ie,
-                                                  medition_date__gte=start,
-                                                  medition_date__lte=end +
-                                                                     datetime.timedelta(days=1)).\
-                aggregate(Sum('gas_entered'))
-            count_obj = obj.count()
+                .order_by('medition_date').values('gas_consumed', 'gas_entered', 'medition_date')
+
+            obj_count = len(obj)
+            entered = 0
+            for number in obj:
+                x = number['gas_entered']
+                entered += x
             if obj:
                 data_dictionary_json = {
                 'week' : "Semana "+str(r+1),
-                'value1': float(obj[count_obj-1].gas_consumed - obj[0].gas_consumed),
-                'value2': float(entered['gas_entered__sum']),
+                'value1': float(obj[obj_count-1]['gas_consumed'] - obj[0]['gas_consumed']),
+                'value2': float(entered),
                 'value3': 0
                 }
                 rows.append(data_dictionary_json)
@@ -8997,20 +8997,20 @@ def water_consumed_month(request):
                 int(request.GET['year01']), int(request.GET['month01']), r+1)
             obj = WaterGasData.objects.filter(industrial_equipment=ie,
                                               medition_date__gte=start,
-                                              medition_date__lte=end +
-                                                                 datetime.timedelta(days=1))\
-                .order_by('medition_date')
-            entered = WaterGasData.objects.filter(industrial_equipment=ie,
-                                                  medition_date__gte=start,
-                                                  medition_date__lte=end +
-                                                                     datetime.timedelta(days=1))\
-                .aggregate(Sum('water_entered'))
-            count_obj = obj.count()
+                                              medition_date__lte=end
+                                                                 + datetime.timedelta(days=1))\
+                .order_by('medition_date').values('water_consumed', 'water_entered', 'medition_date')
+
+            obj_count = len(obj)
+            entered = 0
+            for number in obj:
+                x = number['water_entered']
+                entered += x
             if obj:
                 data_dictionary_json = {
                 'week' : "Semana "+str(r+1),
-                'value1': float(obj[count_obj-1].water_consumed - obj[0].water_consumed),
-                'value2': float(entered['water_entered__sum']),
+                'value1': float(obj[obj_count-1]['water_consumed'] - obj[0]['water_consumed']),
+                'value2': float(entered),
                 'value3': 0
                 }
                 rows.append(data_dictionary_json)
@@ -9032,18 +9032,19 @@ def water_consumed_month(request):
                                               medition_date__gte=start,
                                               medition_date__lte=end
                                                                  + datetime.timedelta(days=1))\
-                .order_by('medition_date')
-            entered = WaterGasData.objects.filter(industrial_equipment=ie,
-                                                  medition_date__gte=start,
-                                                  medition_date__lte=end +
-                                                                     datetime.timedelta(days=1)).\
-                aggregate(Sum('water_entered'))
-            count_obj = obj.count()
+                .order_by('medition_date').values('water_consumed', 'water_entered', 'medition_date')
+
+            obj_count = len(obj)
+            entered = 0
+            for number in obj:
+                x = number['water_entered']
+                entered += x
+
             if obj:
                 data_dictionary_json = {
                 'week' : "Semana "+str(r+1),
-                'value1': float(obj[count_obj-1].water_consumed - obj[0].water_consumed),
-                'value2': float(entered['water_entered__sum']),
+                'value1': float(obj[obj_count-1]['water_consumed'] - obj[0]['water_consumed']),
+                'value2': float(entered),
                 'value3': 0
                 }
                 rows.append(data_dictionary_json)
