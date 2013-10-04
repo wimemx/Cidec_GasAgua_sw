@@ -223,7 +223,10 @@ def demandafacturable(kwbase, kwintermedio, kwpunta, fri, frb):
         segundomax = 0
 
     df = kwpunta + fri * primermax + frb * segundomax
-
+    print "------------------------------------------"
+    print kwpunta,fri , primermax , frb , segundomax
+    print kwpunta + fri * primermax + frb * segundomax
+    print "------------------------------------------"
     return int(floor(df))
 
 
