@@ -668,12 +668,14 @@ def set_default_session_vars(request, datacontext):
         if not request.session[
                'consumer_unit'] or 'consumer_unit' not in request.session:
             request.session['consumer_unit'] = None
+
     if request.session['main_building'] is not None:
         request.session['timezone'] = get_google_timezone(
             request.session['main_building'])[0]
         tz = pytz.timezone(request.session.get('timezone'))
         if tz:
             timezone.activate(tz)
+
     return True
 
 
@@ -2102,7 +2104,7 @@ def tarifaHM_2(building, s_date, e_date, month, year):
                 main_cu,
                 s_date,
                 e_date,
-                'kW',
+                'kW_import_sliding_window_demand',
                 300
             )
 
@@ -2153,6 +2155,7 @@ def tarifaHM_2(building, s_date, e_date, month, year):
                         kw_dia_dic['intermedio']
                 if kw_dia_dic['punta'] > diccionario_final_cfe["kw_punta"]:
                     diccionario_final_cfe["kw_punta"] = kw_dia_dic['punta']
+
 
         if diccionario_final_cfe["kw_base"] > demanda_max:
             demanda_max = diccionario_final_cfe["kw_base"]
@@ -2448,13 +2451,17 @@ def tarifa_3(building, s_date, e_date, month, year):
 
             profile_powermeter = consumer_units[0].profile_powermeter
 
-            lectura_max = ElectricDataTemp.objects.filter(
+            lecturas = ElectricDataTemp.objects.filter(
                 profile_powermeter=profile_powermeter,
                 medition_date__gte=s_date,
                 medition_date__lt=e_date).\
-            aggregate(Max('kW_import_sliding_window_demand'))
+            values('kW_import_sliding_window_demand')
 
-            demanda_max = lectura_max['kW_import_sliding_window_demand__max']
+            kw = []
+            for dat in lecturas:
+                kw.append(float(dat['electric_data__kW_import_sliding_window_demand']))
+
+            demanda_max = obtenerDemanda_kw_valores(kw)
 
         for c_unit in consumer_units:
             profile_powermeter = c_unit.profile_powermeter
