@@ -16,6 +16,7 @@ from c_center.views import main_page, week_report_kwh
 from c_center.c_center_functions import set_default_session_vars
 from rbac.models import GroupObject, MenuCategs, MenuHierarchy
 from rbac.rbac_functions import get_buildings_context
+from gas_agua.models import WaterGasData
 
 from django.shortcuts import redirect, render
 GRAPHS = ['Potencia Activa (kW)', 'Potencia Reactiva (KVar)',
@@ -83,6 +84,9 @@ def _login(request):
 
 @login_required(login_url='/')
 def index(request):
+    if 'main_building' in request.session:
+        if WaterGasData.objects.filter(industrial_equipment__building=request.session['main_building']):
+            del request.session['main_building']
     menu_option_str = "<ul id='main_menu' class='fr'>"
     #------------------------------------------------------------
     categories = MenuCategs.objects.filter(main=True).order_by("order")

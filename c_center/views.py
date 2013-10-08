@@ -235,6 +235,7 @@ def week_report_kwh(request):
     """ Index page?
     shows a report of the consumed kwh in the current week
     """
+    builds = WaterGasData.objects.values('industrial_equipment__building').distinct()
     datacontext, buildings = get_buildings_context(request.user)
     if not datacontext:
         request.session['consumer_unit'] = None

@@ -11,6 +11,7 @@ from rbac.models import PermissionAsigment, UserRole, DataContextPermission, \
 from c_center.models import ConsumerUnit, Cluster, CompanyBuilding, Company, \
     ClusterCompany, Building
 import variety
+from gas_agua.models import WaterGasData
 
 VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
@@ -294,22 +295,29 @@ def get_buildings_context(user):
     """
     datacontext = DataContextPermission.objects.filter(user_role__user=user)
     buildings = []
+    gw_builds = WaterGasData.objects.values('industrial_equipment__building').distinct()
+
     for dcontext in datacontext:
         try:
             if dcontext.building:
-                if dcontext.building.building_status == 1:
+                ie = {'industrial_equipment__building':dcontext.building.pk}
+                if dcontext.building.building_status == 1 and ie not in gw_builds :
                     buildings.append(
                         dict(building_pk=dcontext.building.pk,
                              building_name=dcontext.building.building_name))
+                ie = {}
             elif dcontext.company:
                 building_comp = CompanyBuilding.objects.filter(
                     company=dcontext.company
                 ).exclude(
                     building__building_status=0)
                 for bc in building_comp:
-                    buildings.append(
-                        dict(building_pk=bc.building.pk,
-                             building_name=bc.building.building_name))
+                    ie = {'industrial_equipment__building':bc.building.pk}
+                    if ie not in gw_builds:
+                        buildings.append(
+                            dict(building_pk=bc.building.pk,
+                                 building_name=bc.building.building_name))
+                    ie = {}
             else:
                 clust_comp = ClusterCompany.objects.filter(
                     cluster=dcontext.cluster)
@@ -320,9 +328,12 @@ def get_buildings_context(user):
                         building__building_status=0
                     )
                     for bc in building_comp:
-                        buildings.append(
-                            dict(building_pk=bc.building.pk,
-                                 building_name=bc.building.building_name))
+                        ie = {'industrial_equipment__building':bc.building.pk}
+                        if ie not in gw_builds:
+                            buildings.append(
+                                dict(building_pk=bc.building.pk,
+                                     building_name=bc.building.building_name))
+                        ie = {}
         except ObjectDoesNotExist:
             continue
 
@@ -357,7 +368,6 @@ def get_buildings_context(user):
                     building_id=int(com_buil['building']))
                 company_detail['buildings'].append(buil_detail)
             companies_list.append(company_detail)
-    # return buildings
 
     return simplejson.dumps(companies_list), buildings
 
