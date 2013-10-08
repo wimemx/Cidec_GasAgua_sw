@@ -213,6 +213,7 @@ def demandafacturable(kwbase, kwintermedio, kwpunta, fri, frb):
     :param frb: float
     :return: int
     """
+
     primermax = kwintermedio - kwpunta
     if primermax < 0:
         primermax = 0
@@ -222,8 +223,11 @@ def demandafacturable(kwbase, kwintermedio, kwpunta, fri, frb):
         segundomax = 0
 
     df = kwpunta + fri * primermax + frb * segundomax
-
-    return int(ceil(df))
+    print "------------------------------------------"
+    print kwpunta,fri , primermax , frb , segundomax
+    print kwpunta + fri * primermax + frb * segundomax
+    print "------------------------------------------"
+    return int(floor(df))
 
 
 def costoenergia(kwbase, kwintermedio, kwpunta, tarifa_kwhb, tarifa_kwhi,
@@ -742,6 +746,7 @@ def obtenerDemanda_kw_valores(valores_kw):
                 low = valores_kw[0]
                 middle = valores_kw[0]
                 high = valores_kw[0]
+                print low,middle,high
                 demanda_maxima = (low + middle + high) / 3
                 for indice in range(3, longitud):
                     low, middle = middle, high
@@ -758,7 +763,7 @@ def obtenerDemanda_kw_valores(valores_kw):
         except TypeError:
             print "obtenerDemanda_kw_valores - TypeError"
             demanda_maxima = 0
-    return int(ceil(demanda_maxima))
+    return int(floor(demanda_maxima))
 
 
 def obtenerDemandaMin_kw(lecturas_kw):
@@ -807,6 +812,8 @@ def tag_reading(request):
         if reading_id:
             daytag_reading(reading_id)
         return HttpResponse(content='', content_type=None, status=200)
+    else:
+        print "NO POST", request.REQUEST.get("id_reading", "")
     return HttpResponse(content='', content_type=None, status=404)
 
 
@@ -1163,10 +1170,13 @@ def getKWperDay(s_date, e_date, profile_powermeter):
     filter(electric_data__medition_date__gte=s_date).filter(
         electric_data__medition_date__lt=e_date).\
     filter(electric_rates_periods__period_type='base').\
-    aggregate(Max('electric_data__kW_import_sliding_window_demand'))
+    values('electric_data__kW_import_sliding_window_demand')
 
-    kw_container['base'] = lecturas_base['electric_data__kW_import_sliding_window_demand__max']
+    kw_base = []
+    for dat in lecturas_base:
+        kw_base.append(float(dat['electric_data__kW_import_sliding_window_demand']))
 
+    kw_container['base'] = obtenerDemanda_kw_valores(kw_base)
 
     lecturas_intermedio = ElectricDataTags.objects.filter(
         electric_data__profile_powermeter=profile_powermeter).\
@@ -1174,17 +1184,28 @@ def getKWperDay(s_date, e_date, profile_powermeter):
         electric_data__medition_date__lt=e_date).\
     filter(
         electric_rates_periods__period_type='intermedio').\
-    aggregate(Max('electric_data__kW_import_sliding_window_demand'))
+    values('electric_data__kW_import_sliding_window_demand')
 
-    kw_container['intermedio'] = lecturas_intermedio['electric_data__kW_import_sliding_window_demand__max']
+    kw_intermedio = []
+    for dat in lecturas_intermedio:
+        kw_intermedio.append(float(dat['electric_data__kW_import_sliding_window_demand']))
+
+    kw_container['intermedio'] = obtenerDemanda_kw_valores(kw_intermedio)
+
 
     lecturas_punta = ElectricDataTags.objects.filter(
         electric_data__profile_powermeter=profile_powermeter).\
     filter(electric_data__medition_date__gte=s_date).filter(
         electric_data__medition_date__lt=e_date).\
     filter(electric_rates_periods__period_type='punta').\
-    aggregate(Max('electric_data__kW_import_sliding_window_demand'))
+    values('electric_data__kW_import_sliding_window_demand')
 
-    kw_container['punta'] = lecturas_punta['electric_data__kW_import_sliding_window_demand__max']
+    kw_punta = []
+    for dat in lecturas_punta:
+        kw_punta.append(float(dat['electric_data__kW_import_sliding_window_demand']))
+
+    kw_container['punta'] = obtenerDemanda_kw_valores(kw_punta)
 
     return kw_container
+
+

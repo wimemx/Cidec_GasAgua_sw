@@ -1,6 +1,6 @@
 .ui-spinner {position: relative; border: 0 solid white; left: -16px;}
 .ui-spinner-buttons {
-    position: absolute;
+    position: relative;
     top: -18px !important;
     left: 75px !important;
 }

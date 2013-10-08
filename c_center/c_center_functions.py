@@ -667,12 +667,14 @@ def set_default_session_vars(request, datacontext):
         if not request.session[
                'consumer_unit'] or 'consumer_unit' not in request.session:
             request.session['consumer_unit'] = None
+
     if request.session['main_building'] is not None:
         request.session['timezone'] = get_google_timezone(
             request.session['main_building'])[0]
         tz = pytz.timezone(request.session.get('timezone'))
         if tz:
             timezone.activate(tz)
+
     return True
 
 
@@ -2101,7 +2103,7 @@ def tarifaHM_2(building, s_date, e_date, month, year):
                 main_cu,
                 s_date,
                 e_date,
-                'kW',
+                'kW_import_sliding_window_demand',
                 300
             )
 
@@ -2124,8 +2126,6 @@ def tarifaHM_2(building, s_date, e_date, month, year):
                     elif periodo_mv['period_type'] == 'punta':
                         arr_kw_punta.append(vcu['value'])
 
-
-
             diccionario_final_cfe["kw_base"] =\
             obtenerDemanda_kw_valores(arr_kw_base)
 
@@ -2134,7 +2134,6 @@ def tarifaHM_2(building, s_date, e_date, month, year):
 
             diccionario_final_cfe["kw_punta"] =\
             obtenerDemanda_kw_valores(arr_kw_punta)
-
 
         else:
 
@@ -2447,13 +2446,17 @@ def tarifa_3(building, s_date, e_date, month, year):
 
             profile_powermeter = consumer_units[0].profile_powermeter
 
-            lectura_max = ElectricDataTemp.objects.filter(
+            lecturas = ElectricDataTemp.objects.filter(
                 profile_powermeter=profile_powermeter,
                 medition_date__gte=s_date,
                 medition_date__lt=e_date).\
-            aggregate(Max('kW_import_sliding_window_demand'))
+            values('kW_import_sliding_window_demand')
 
-            demanda_max = lectura_max['kW_import_sliding_window_demand__max']
+            kw = []
+            for dat in lecturas:
+                kw.append(float(dat['electric_data__kW_import_sliding_window_demand']))
+
+            demanda_max = obtenerDemanda_kw_valores(kw)
 
         for c_unit in consumer_units:
             profile_powermeter = c_unit.profile_powermeter
@@ -3450,31 +3453,32 @@ def get_google_timezone(building):
             bld_long = bld_timezone.time_zone.longitude
 
         now_timestamp = int(time.time())
-        try:
-            timezone_json = urllib2.urlopen(
-                'https://maps.googleapis.com/maps/api/'
-                'timezone/json?location=' + str(bld_lat) +
-                ',' + str(bld_long) + '&timestamp=' +
-                str(now_timestamp)+'&sensor=false')
-        except IOError:
-            print "URL Error. No Connection"
+        if settings.OFFLINE_TIMEZONE:
             return offline_timezone(building, bld_timezone)
         else:
             try:
-                json_t = simplejson.load(timezone_json)
-                tz_t = json_t['timeZoneId']
-                tzo_t = json_t['dstOffset']
-            except KeyError:
-                print "Error adquiriendo hora de google, se estableció "
+                timezone_json = urllib2.urlopen(
+                    'https://maps.googleapis.com/maps/api/'
+                    'timezone/json?location=' + str(bld_lat) +
+                    ',' + str(bld_long) + '&timestamp=' +
+                    str(now_timestamp)+'&sensor=false')
+            except IOError:
+                print "URL Error. No Connection"
                 return offline_timezone(building, bld_timezone)
             else:
-                print "-------Google JSON START----------------"
-                print json_t
-                print "-------Google JSON END----------------"
-                if tzo_t is None or tz_t is None:
-                    print "Error reading Json"
+                try:
+                    json_t = simplejson.load(timezone_json)
+                    tz_t = json_t['timeZoneId']
+                    tzo_t = json_t['dstOffset']
+                except KeyError:
+                    print "----Google API call failed, setting offline mode----"
                     return offline_timezone(building, bld_timezone)
-                return tz_t, int(tzo_t)
+                else:
+                    print "-------Google API call Successful----------------"
+                    if tzo_t is None or tz_t is None:
+                        print "Error reading Json"
+                        return offline_timezone(building, bld_timezone)
+                    return tz_t, int(tzo_t)
 
 
 def offline_timezone(building, bld_timezone):
@@ -3633,11 +3637,12 @@ def deactivate_cu(id_cu, user):
     p_i.delete()
     cu.profile_powermeter.profile_powermeter_status = False
     cu.profile_powermeter.powermeter.status = 0
+    cu.profile_powermeter.powermeter.save()
     cu.profile_powermeter.save()
     ind_eq.modified_by = user
     ind_eq.save()
-    if cu.electric_device_type.electric_device_type_name == "Total Edificio":
-        cu.profile_powermeter = VIRTUAL_PROFILE
-        cu.save()
+
+    cu.profile_powermeter = VIRTUAL_PROFILE
+    cu.save()
     regenerate_ie_config(ind_eq.pk, user)
     return True

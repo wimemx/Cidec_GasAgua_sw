@@ -1,5 +1,6 @@
 <html>
 <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=9; IE=8;" >
     <link rel="stylesheet" href="/static/css/theme.css">
     <link rel="stylesheet" href="/static/css/consumption_centers/billing_analysis.css" type="text/css" />
     <script type="text/javascript" src="/static/js/external/jquery.tools.min.js"></script>
@@ -20,14 +21,23 @@
                         {% if kdf_data %}
                             ['Mes', 'kW'],
                             {% for kdf_d in kdf_data %}
-                                ['{{ kdf_d.mes }}',{{ kdf_d.kdf_01 }}],
+                                {% if forloop.last %}
+                                    ['{{ kdf_d.mes }}',{{ kdf_d.kdf_01 }}]
+                                {% else %}
+                                    ['{{ kdf_d.mes }}',{{ kdf_d.kdf_01 }}],
+                                {% endif %}
                             {% endfor %}
                         {% endif %}
                     {% else %}
                         {% if kdf_data %}
                             ['Mes', 'kW {{ year_01 }}', 'kW {{ year_02 }}'],
                             {% for kdf_d in kdf_data %}
-                                ['{{ kdf_d.mes }}',{{ kdf_d.kdf_01 }},{{ kdf_d.kdf_02 }}],
+                                {% if forloop.last %}
+                                    ['{{ kdf_d.mes }}',{{ kdf_d.kdf_01 }},{{ kdf_d.kdf_02 }}]
+                                {% else %}
+                                    ['{{ kdf_d.mes }}',{{ kdf_d.kdf_01 }},{{ kdf_d.kdf_02 }}],
+                                {% endif %}
+
                             {% endfor %}
                         {% endif %}
                     {% endif %}
@@ -46,14 +56,23 @@
                         {% if kwhb_data %}
                             ['Mes', 'kWh Base'],
                             {% for kb_d in kwhb_data %}
+                                {% if forloop.last %}
+                                ['{{ kb_d.mes }}',{{ kb_d.kwhb_01 }}]
+                                {% else %}
                                 ['{{ kb_d.mes }}',{{ kb_d.kwhb_01 }}],
+                                {% endif %}
                             {% endfor %}
                         {% endif %}
                     {% else %}
                         {% if kwhb_data %}
                             ['Mes', 'kWh Base {{ year_01 }}', 'kWh Base {{ year_02 }}'],
                             {% for kb_d in kwhb_data %}
+                                {% if forloop.last %}
+                                ['{{ kb_d.mes }}',{{ kb_d.kwhb_01 }},{{ kb_d.kwhb_02 }}]
+                                {% else %}
                                 ['{{ kb_d.mes }}',{{ kb_d.kwhb_01 }},{{ kb_d.kwhb_02 }}],
+                                {% endif %}
+
                             {% endfor %}
                         {% endif %}
                     {% endif %}
@@ -72,14 +91,24 @@
                         {% if kwhi_data %}
                             ['Mes', 'kWh Intermedio'],
                             {% for ki_d in kwhi_data %}
+                                {% if forloop.last %}
+                                ['{{ ki_d.mes }}',{{ ki_d.kwhi_01 }}]
+                                {% else %}
                                 ['{{ ki_d.mes }}',{{ ki_d.kwhi_01 }}],
+                                {% endif %}
+
                             {% endfor %}
                         {% endif %}
                     {% else %}
                         {% if kwhi_data %}
                             ['Mes', 'kWh Intermedio {{ year_01 }}', 'kWh Intermedio {{ year_02 }}'],
                             {% for ki_d in kwhi_data %}
+                                {% if forloop.last %}
+                                ['{{ ki_d.mes }}',{{ ki_d.kwhi_01 }},{{ ki_d.kwhi_02 }}]
+                                {% else %}
                                 ['{{ ki_d.mes }}',{{ ki_d.kwhi_01 }},{{ ki_d.kwhi_02 }}],
+                                {% endif %}
+
                             {% endfor %}
                         {% endif %}
                     {% endif %}
@@ -98,14 +127,23 @@
                         {% if kwhp_data %}
                             ['Mes', 'kWh Punta'],
                             {% for kp_d in kwhp_data %}
+                                {% if forloop.last %}
+                                ['{{ kp_d.mes }}',{{ kp_d.kwhp_01 }}]
+                                {% else %}
                                 ['{{ kp_d.mes }}',{{ kp_d.kwhp_01 }}],
+                                {% endif %}
+
                             {% endfor %}
                         {% endif %}
                     {% else %}
                         {% if kwhp_data %}
                             ['Mes', 'kWh Punta {{ year_01 }}', 'kWh Punta {{ year_02 }}'],
                             {% for kp_d in kwhp_data %}
+                                {% if forloop.last %}
+                                ['{{ kp_d.mes }}',{{ kp_d.kwhp_01 }},{{ kp_d.kwhp_02 }}]
+                                {% else %}
                                 ['{{ kp_d.mes }}',{{ kp_d.kwhp_01 }},{{ kp_d.kwhp_02 }}],
+                                {% endif %}
                             {% endfor %}
                         {% endif %}
                     {% endif %}
@@ -127,14 +165,24 @@
                         {% if mrate_data %}
                             ['Mes', 'Tarifa Mensual'],
                             {% for mr_d in mrate_data %}
+                                {% if forloop.last %}
+                                ['{{ mr_d.mes }}',{{ mr_d.m_rate_01 }}]
+                                {% else %}
                                 ['{{ mr_d.mes }}',{{ mr_d.m_rate_01 }}],
+                                {% endif %}
+
                             {% endfor %}
                         {% endif %}
                     {% else %}
                         {% if mrate_data %}
                             ['Mes', 'Tarifa Mensual {{ year_01 }}', 'Tarifa Mensual {{ year_02 }}'],
                             {% for mr_d in mrate_data %}
+                                {% if forloop.last %}
+                                ['{{ mr_d.mes }}',{{ mr_d.m_rate_01 }},{{ mr_d.m_rate_02 }}]
+                                {% else %}
                                 ['{{ mr_d.mes }}',{{ mr_d.m_rate_01 }},{{ mr_d.m_rate_02 }}],
+                                {% endif %}
+
                             {% endfor %}
                         {% endif %}
                     {% endif %}
@@ -156,14 +204,24 @@
                             {% if p1_kwh %}
                                 ['Mes', 'kWh'],
                                 {% for pk1_d in p1_kwh %}
-                                    ['{{ pk1_d.mes }}',{{ pk1_d.kwh_01 }}],
+                                    {% if forloop.last %}
+                                ['{{ pk1_d.mes }}',{{ pk1_d.kwh_01 }}]
+                                {% else %}
+                                ['{{ pk1_d.mes }}',{{ pk1_d.kwh_01 }}],
+                                {% endif %}
+
                                 {% endfor %}
                             {% endif %}
                         {% else %}
                             {% if p1_kwh %}
                                 ['Mes', 'kWh {{ year_01 }}', 'kWh {{ year_02 }}'],
                                 {% for pk1_d in p1_kwh %}
-                                    ['{{ pk1_d.mes }}',{{ pk1_d.kwh_01 }},{{ pk1_d.kwh_02 }}],
+                                    {% if forloop.last %}
+                                ['{{ pk1_d.mes }}',{{ pk1_d.kwh_01 }},{{ pk1_d.kwh_02 }}]
+                                {% else %}
+                                ['{{ pk1_d.mes }}',{{ pk1_d.kwh_01 }},{{ pk1_d.kwh_02 }}],
+                                {% endif %}
+
                                 {% endfor %}
                             {% endif %}
                         {% endif %}
@@ -184,14 +242,24 @@
                             {% if p2_kwh %}
                                 ['Mes', 'Tarifa Mensual'],
                                 {% for pk2_d in p2_kwh %}
+                                    {% if forloop.last %}
+                                    ['{{ pk2_d.mes }}',{{ pk2_d.kwh_01 }}]
+                                    {% else %}
                                     ['{{ pk2_d.mes }}',{{ pk2_d.kwh_01 }}],
+                                    {% endif %}
+
                                 {% endfor %}
                             {% endif %}
                         {% else %}
                             {% if p2_kwh %}
                                 ['Mes', 'kWh {{ year_01 }}', 'kWh {{ year_02 }}'],
                                 {% for pk2_d in p2_kwh %}
+                                    {% if forloop.last %}
+                                    ['{{ pk2_d.mes }}',{{ pk2_d.kwh_01 }},{{ pk2_d.kwh_02 }}]
+                                    {% else %}
                                     ['{{ pk2_d.mes }}',{{ pk2_d.kwh_01 }},{{ pk2_d.kwh_02 }}],
+                                    {% endif %}
+
                                 {% endfor %}
                             {% endif %}
                         {% endif %}
@@ -214,14 +282,24 @@
                             {% if kwh_data %}
                                 ['Mes', 'Tarifa Mensual'],
                                 {% for kwh_d in kwh_data %}
+                                    {% if forloop.last %}
+                                    ['{{ kwh_d.mes }}',{{ kwh_d.kwh_01 }}]
+                                    {% else %}
                                     ['{{ kwh_d.mes }}',{{ kwh_d.kwh_01 }}],
+                                    {% endif %}
+
                                 {% endfor %}
                             {% endif %}
                         {% else %}
                             {% if kwh_data %}
                                 ['Mes', 'kWh {{ year_01 }}', 'kWh {{ year_02 }}'],
                                 {% for kwh_d in kwh_data %}
+                                    {% if forloop.last %}
+                                    ['{{ kwh_d.mes }}',{{ kwh_d.kwh_01 }},{{ kwh_d.kwh_02 }}]
+                                    {% else %}
                                     ['{{ kwh_d.mes }}',{{ kwh_d.kwh_01 }},{{ kwh_d.kwh_02 }}],
+                                    {% endif %}
+
                                 {% endfor %}
                             {% endif %}
                         {% endif %}
@@ -244,14 +322,24 @@
                         {% if kw_data %}
                             ['Mes', 'Cargo Mensual'],
                             {% for kw_d in kw_data %}
-                                ['{{ kw_d.mes }}',{{ kw_d.kw_01 }}],
+                                {% if forloop.last %}
+                                    ['{{ kw_d.mes }}',{{ kw_d.kw_01 }}]
+                                    {% else %}
+                                    ['{{ kw_d.mes }}',{{ kw_d.kw_01 }}],
+                                    {% endif %}
+
                             {% endfor %}
                         {% endif %}
                     {% else %}
                         {% if kw_data %}
                             ['Mes', 'Cargo Mensual {{ year_01 }}', 'Cargo Mensual {{ year_02 }}'],
                             {% for kw_d in kw_data %}
-                                ['{{ kw_d.mes }}',{{ kw_d.kw_01 }},{{ kw_d.kw_02 }}],
+                                {% if forloop.last %}
+                                    ['{{ kw_d.mes }}',{{ kw_d.kw_01 }},{{ kw_d.kw_02 }}]
+                                    {% else %}
+                                    ['{{ kw_d.mes }}',{{ kw_d.kw_01 }},{{ kw_d.kw_02 }}],
+                                    {% endif %}
+
                             {% endfor %}
                         {% endif %}
                     {% endif %}
@@ -270,14 +358,24 @@
                         {% if kwh_data %}
                             ['Mes', 'kWh'],
                             {% for kwh_d in kwh_data %}
-                                ['{{ kwh_d.mes }}',{{ kwh_d.kwh_01 }}],
+                                {% if forloop.last %}
+                                    ['{{ kwh_d.mes }}',{{ kwh_d.kwh_01 }}]
+                                    {% else %}
+                                    ['{{ kwh_d.mes }}',{{ kwh_d.kwh_01 }}],
+                                    {% endif %}
+
                             {% endfor %}
                         {% endif %}
                     {% else %}
                         {% if kwh_data %}
                             ['Mes', 'kWh {{ year_01 }}', 'kWh {{ year_02 }}'],
                             {% for kwh_d in kwh_data %}
-                                ['{{ kwh_d.mes }}',{{ kwh_d.kwh_01 }},{{ kwh_d.kwh_02 }}],
+                                {% if forloop.last %}
+                                    ['{{ kwh_d.mes }}',{{ kwh_d.kwh_01 }},{{ kwh_d.kwh_02 }}]
+                                    {% else %}
+                                    ['{{ kwh_d.mes }}',{{ kwh_d.kwh_01 }},{{ kwh_d.kwh_02 }}],
+                                    {% endif %}
+
                             {% endfor %}
                         {% endif %}
                     {% endif %}

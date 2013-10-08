@@ -20,12 +20,20 @@
                                 {% if not compare_years %}
                                     ['Mes', 'KWH'],
                                     {% for v in value %}
+                                        {% if forloop.last %}
+                                        ['{{ v.mes }}',{{ v.kwh_01 }}]
+                                        {% else %}
                                         ['{{ v.mes }}',{{ v.kwh_01 }}],
+                                        {% endif %}
                                     {% endfor %}
                                 {% else %}
                                     ['Mes', 'KWH {{ year_01 }}', 'KWH {{ year_02 }}'],
                                     {% for v in value %}
-                                        ['{{ v.mes }}',{{ v.kwh_01 }},{{ v.kwh_02 }}],
+                                        {% if forloop.last %}
+                                        ['{{ v.mes }}',{{ v.kwh_01 }},{{ v.kwh_02 }}]
+                                        {% else %}
+                                            ['{{ v.mes }}',{{ v.kwh_01 }},{{ v.kwh_02 }}],
+                                        {% endif %}
                                     {% endfor %}
                                 {% endif %}
                             ]);

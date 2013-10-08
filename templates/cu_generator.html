@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block externaljs %}
+    <script type="text/javascript" src="/static/js/external/jquery-validator/js/validator.js"></script>
+{% endblock %}
+
+{% block contenido %}
+    <div id="page_content">
+    <div id="contenido_interno">
+        <h2 id="titulo_form" class="powermeter">
+            Creación de unidades de consumo
+        </h2>
+        <div class="divider" id="divider_top">&nbsp;</div>
+        {% if message %}
+            <span class="notif n_notif">{{ message }}</span>
+        {% endif %}
+        <div id="form_container" class="g12">
+            <form action="." method="post">{% csrf_token %}
+            {{ form.as_p }}
+            <input type="submit" value="Submit" />
+        </div>
+    </div>
+    </div>
+{% endblock %}

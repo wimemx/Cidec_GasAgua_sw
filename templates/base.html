@@ -1,8 +1,9 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 
 <head>
     <title>{% block titulo%}{% endblock %}</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=9; IE=8;" >
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <link rel="stylesheet" href="/static/css/theme.min.css"/>
     {% block externalcss %}{% endblock %}
@@ -117,7 +118,8 @@
                             var lis = '';
                             var read_all = "<span class='see_all_n'><a href='/configuracion/user_notifications/?notificacionesPorGrupo=1'>Ver Todas</a></span>";
                             if(data2.length>0){
-                                data2.forEach(function(notif){
+                                for(var i=0; i<data2.length; i++){
+                                    var notif = data2[i];
                                     if(notif.identifier != "Interrupción de Datos"){
                                         lis += '<li class="readed_'+notif.readed+'" rel="'+notif.group+'"><div class="comp_img" style="background: url(/static/media/'+notif.image+') no-repeat 50% 50%; background-size: 100% auto;"></div>';
                                         var occurrency;
@@ -133,7 +135,7 @@
                                         lis += '<p>El envío de datos ha cesado para la configuración de <span class="consumer_unit_alarm">'+notif.building_name+' en ' + notif.electric_device + '</span></p>';
                                         lis += '</li>';
                                     }
-                                });
+                                }
 
                             }else{
                                 lis += '<li class="readed_true">';

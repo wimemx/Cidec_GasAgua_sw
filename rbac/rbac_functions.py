@@ -562,7 +562,13 @@ def add_permission_to_parts(usuario, rol, cluster, company, building):
     user_role, created = UserRole.objects.get_or_create(user=usuario,
                                                         role=rol)
     # noinspection PyUnusedLocal
-    data_context, created = DataContextPermission.objects.get_or_create(
+    DataContextPermission.objects.filter(
+        user_role=user_role,
+        cluster=cluster,
+        company=company,
+        building=building
+    ).delete()
+    DataContextPermission.objects.get_or_create(
         user_role=user_role,
         cluster=cluster,
         company=company,
@@ -593,7 +599,12 @@ def add_permission_to_buildings(usuario, rol, cluster, company_pk):
         user_role, created = UserRole.objects.get_or_create(user=usuario,
                                                             role=rol)
         # noinspection PyUnusedLocal
-        data_context, created = DataContextPermission.objects.get_or_create(
+        DataContextPermission.objects.filter(
+            user_role=user_role,
+            cluster=cluster,
+            company=company
+        ).delete()
+        DataContextPermission.objects.get_or_create(
             user_role=user_role,
             cluster=cluster,
             company=company
@@ -616,7 +627,11 @@ def add_permission_to_companies(usuario, rol, cluster):
     user_role, created = UserRole.objects.get_or_create(user=usuario,
                                                         role=rol)
     # noinspection PyUnusedLocal
-    data_context, created = DataContextPermission.objects.get_or_create(
+    DataContextPermission.objects.filter(
+        user_role=user_role,
+        cluster=cluster
+    ).delete()
+    DataContextPermission.objects.get_or_create(
         user_role=user_role,
         cluster=cluster
     )

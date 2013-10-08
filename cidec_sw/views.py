@@ -6,7 +6,7 @@ import pytz
 #related third party imports
 from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response, HttpResponse
+from django.shortcuts import render_to_response, HttpResponse, Http404
 from django.template.context import RequestContext
 from django.contrib.auth.decorators import login_required
 
@@ -62,7 +62,7 @@ def _login(request):
                 request.session['years'] = [__date.year for __date in
                                             ElectricDataTemp.objects.all().
                                             dates('medition_date', 'year')]
-                url = "/medition_type_menu/"
+                url = "/main/"
                 try:
                     ur_get = request.META['HTTP_REFERER']
                 except KeyError:
@@ -121,7 +121,6 @@ def index(request):
 @login_required(login_url='/')
 def medition_type_menu(request):
     return render_to_response("medition_type_menu.html")
-
 
 
 def get_sub_categs_items(parent):

@@ -1,6 +1,6 @@
 <html>
 <head>
-
+<meta http-equiv="X-UA-Compatible" content="IE=9; IE=8;" >
 <!-- Styles -->
 <link rel="stylesheet" href="/static/css/consumption_centers/graphs.css"/>
 <link type="text/css" href="/static/jquery-ui-1.8.23/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
@@ -20,7 +20,7 @@
 
 <!-- Google Chart -->
 <script type="text/javascript">
-    google.load('visualization', '1.1', {packages: ['corechart', 'controls']});
+    google.load('visualization', '1.0', {packages: ['corechart', 'controls']});
     var False = false;
     var True = true;
     var rows_data = {% autoescape off %}{{ rows }}{% endautoescape %};
@@ -225,7 +225,6 @@ function drawVisualization() {
     parent.jQuery("#loader").remove();
     var dashboard = new google.visualization.Dashboard(
             document.getElementById('dashboard'));
-
     chart = new google.visualization.ChartWrapper({
         'chartType': 'LineChart',
         'containerId': 'chart',
@@ -256,7 +255,6 @@ function drawVisualization() {
         {% endif %}
     {% endfor %}
 
-
     var len = {{ rows_len }};
     var object_datetime;
     var row_index = 0;
@@ -278,12 +276,12 @@ function drawVisualization() {
         data.addRow(row_array);
         row_index += 3
     }
-    //console.time("draw graph");
+
     view = new google.visualization.DataView(data);
 
     dashboard.bind(control, chart);
     dashboard.draw(view);
-    //console.timeEnd("draw graph");
+
     $(".column-checkbox").click(function(){
 
         if($(":checkbox").filter(':checked').length == 0 && !$(this).is(":checked")){
@@ -334,7 +332,6 @@ function drawVisualization() {
 
 
 
-            //console.log("colum_units a desactivar", colum_units_temp);
             //subset
             for (index = colum_units_copy.length - 1; index >= 0; --index) {
                 if (colum_units_temp.indexOf(colum_units_copy[index]) >= 0) {
@@ -356,7 +353,6 @@ function drawVisualization() {
                     u.push(x);
                 }
             }
-            //console.log("colum_units activas", colum_units_copy);
 
             var vaxes_new = {};
             var vaxis_index = {};
@@ -374,9 +370,6 @@ function drawVisualization() {
                 vaxes_new[index] = {logScale: false, title: unit, titleTextStyle:{color: colores[index], fontSize: 11, italic: false}, textStyle:{color: colores[index], fontSize: 11, italic: false}, minValue: 0, textPosition: pos}
             }
 
-            //console.log("vaxes_new", vaxes_new);
-            //console.log("vaxis_index", vaxis_index)
-
             var vseries_new = {};
             for(index=0; index<colum_units_copy.length;index++){
                 var eje;
@@ -384,10 +377,7 @@ function drawVisualization() {
                 for(var param in prop){
                     eje = prop[param];
                 }
-                //console.log("eje", eje);
                 for(var indice=0; indice<Object.size(vaxis_index);indice++){
-
-                    //console.log("vaxis_index[indice]", vaxis_index[indice]);
 
                     if(vaxis_index[indice]==eje){
                         vseries_new[index] = {targetAxisIndex:indice};
@@ -397,7 +387,7 @@ function drawVisualization() {
                 //var axis = vaxis_index.indexOf(eje);
                 //vseries_new[index] = {targetAxisIndex:axis};
             }
-            //console.log("vseries_new", vseries_new);
+
             control.setOption('ui.chartView.columns',control_cols);
             view.setColumns(totales);
 
@@ -467,7 +457,6 @@ function drawVisualization() {
                 chart.draw();
             });
 
-
 }
 
 google.setOnLoadCallback(drawVisualization);
@@ -523,9 +512,11 @@ function mouseevents(){
     var range_legend = $("#showing_week");
     range_legend.find(".sem_count").text("Semana "+String(6-weekly_counter));
     var rangeinit = new Date(current_interval_end.getTime());
-    rangeinit.setDate(current_interval_end.getDate()-7);
+    rangeinit.setDate(current_interval_end.getDate()-6);
     range_legend.find(".date_range").text(" ("+rangeinit.format("dd")+" al "+ current_interval_end.format("dd 'de' mmmm")+")");
+
 }
+
 $(document).on("ready", function(){
     $("select, input, input:checkbox, input:radio, input:file, textarea").uniform();
     $(".left-nav").on("click", function(){
