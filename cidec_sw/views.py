@@ -62,7 +62,7 @@ def _login(request):
                 request.session['years'] = [__date.year for __date in
                                             ElectricDataTemp.objects.all().
                                             dates('medition_date', 'year')]
-                url = "/main/"
+                url = "/medition_type_menu/"
                 try:
                     ur_get = request.META['HTTP_REFERER']
                 except KeyError:

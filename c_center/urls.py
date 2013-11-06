@@ -1,5 +1,5 @@
 from django.conf.urls import patterns, url
-from django.views.generic.simple import direct_to_template
+from django.views.generic import TemplateView
 
 urlpatterns = patterns('',
                        url(r'^celery/', 'c_center.views.call_celery_delay'),
@@ -279,8 +279,7 @@ urlpatterns = patterns('',
                            'c_center.views.water_consumed_month'),
 
                        url(r'^node/',
-                           'django.views.generic.simple.direct_to_template',
-                           {'template': 'test.html'}),
+                           TemplateView.as_view(template_name="test.html")),
 
                        url(r'^month_analitics/'
                            r'(?P<year>\d+)/(?P<month>\d+)/',
@@ -296,10 +295,7 @@ urlpatterns = patterns('',
                        url(r'^get_dayligth_time/',
                            'c_center.calculations.get_time_saving_type'),
                        (r'^test/$',
-                        direct_to_template,
-                        {'template':
-                             'consumption_centers/graphs/'
-                             'graphics_month_consumption_trend.html'}),
+                        TemplateView.as_view(template_name="graphics_month_consumption_trend.html")),
 
                        url(r'^etiquetas/',
                            'c_center.views.view_tags'),

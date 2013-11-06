@@ -4,8 +4,7 @@ import urllib
 from datetime import date
 
 import variety
-
-from django.views.generic.simple import direct_to_template
+from django.views.generic import RedirectView
 from django.shortcuts import render_to_response, HttpResponse, \
     HttpResponseRedirect, get_object_or_404
 from django.template.context import RequestContext
@@ -22,7 +21,6 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 
 from rbac.models import *
-from rbac.forms import UserForm
 from c_center.models import Cluster, ClusterCompany, CompanyBuilding
 from c_center.c_center_functions import *
 from rbac.rbac_functions import has_permission, get_buildings_context, \
