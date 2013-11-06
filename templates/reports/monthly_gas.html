@@ -23,7 +23,7 @@
 
     function click_month_year()
     {
-        {% if tipo == 'water' %} var url = '/reportes/gas_consumed_month/'; {% else %} var url = '/reportes/water_consumed_month/'; {% endif %}
+        {% if request.session.tipo == 'gas' %} var url = '/reportes/gas_consumed_month/'; {% else %} var url = '/reportes/water_consumed_month/'; {% endif %}
         var y01 = $(".years").val();
         var m01 = $("#months").val();
         if (y01 != '0' && m01 != '0')

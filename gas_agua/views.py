@@ -24,12 +24,14 @@ def gas_medition(request):
     set_default_session_vars(request, b_list)
     empresa = request.session['main_building']
     company = request.session['company']
+    request.session['tipo'] = 'gas'
+    tipo = request.session['tipo']
     template_vars_tags = dict(
                              empresa=empresa,
                              datacontext=datacontext,
                              company=company,
+                             tipo=tipo,
                              operations=Operation.objects.all())
-    template_vars_tags['tipo'] = 'gas'
     template_vars_tags['years'] = request.session['years']
     template_vars = template_vars_tags
     return render_to_response("gas_agua/gas.html", template_vars)
@@ -43,11 +45,13 @@ def water_medition(request):
     set_default_session_vars(request, b_list)
     empresa = request.session['main_building']
     company = request.session['company']
+    request.session['tipo'] = 'water'
+    tipo = request.session['tipo']
     template_vars_tags = dict(
                              empresa=empresa,
                              datacontext=datacontext,
                              company=company,
+                             tipo=tipo,
                              operations=Operation.objects.all())
-    template_vars_tags['tipo'] = 'water'
     template_vars = template_vars_tags
     return render_to_response("gas_agua/agua.html", template_vars)

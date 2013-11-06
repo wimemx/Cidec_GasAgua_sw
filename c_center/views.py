@@ -9069,6 +9069,7 @@ def water_consumed_month(request):
         template_variables['year'] = today.year
     template_variables['rows'] = rows
     template_variables['years'] = request.session['years']
+
     template_context =\
         django.template.context.RequestContext(request, template_variables)
     return render_to_response(
