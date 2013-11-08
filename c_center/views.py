@@ -28,6 +28,7 @@ from django.contrib.auth.decorators import login_required
 
 from django_tables2 import RequestConfig
 
+from decimal import Decimal
 from cidec_sw import settings
 from c_center.calculations import *
 from alarms.models import Alarms, ElectricParameters
@@ -55,7 +56,7 @@ from tareas.tasks import save_historic_delay, \
     daily_report_period, tag_n_daily_report, calculateMonthlyReportCU
 
 from time import mktime
-from gas_agua.models import WaterGasData
+from gas_agua.models import WaterGasData, TankInfo
 
 VIEW = Operation.objects.get(operation_name="Ver")
 CREATE = Operation.objects.get(operation_name="Crear")
@@ -8916,15 +8917,21 @@ def gas_consumed_month(request):
     ie = IndustrialEquipment.objects.get(pk=building.pk)
     if request.GET:
 
-        for r in range(0,6):
+        for r in range(0,5):
             start,end = variety.get_week_start_datetime_end_datetime_tuple(
                 int(request.GET['year01']), int(request.GET['month01']), r+1)
+
             obj = WaterGasData.objects.filter(industrial_equipment=ie,
                                               medition_date__gte=start,
                                               medition_date__lte=end
                                                                  + datetime.timedelta(days=1))\
                 .order_by('medition_date').values('gas_consumed', 'gas_entered', 'medition_date')
-
+            last = WaterGasData.objects.filter(industrial_equipment=ie,medition_date=end).order_by('-medition_date')
+            cap = TankInfo.objects.filter(industrial_equipment=ie)
+            per = 0
+            if cap:
+                if last and float(cap[0].tank_capacity_gas) > 0:
+                    per = float(last[0].tank_gasoccupied) / float(cap[0].tank_capacity_gas)
             obj_count = len(obj)
             entered = 0
             for number in obj:
@@ -8935,7 +8942,7 @@ def gas_consumed_month(request):
                 'week' : "Semana "+str(r+1),
                 'value1': float(obj[obj_count-1]['gas_consumed'] - obj[0]['gas_consumed']),
                 'value2': float(entered),
-                'value3': 0
+                'value3': float(per)
                 }
                 rows.append(data_dictionary_json)
             else:
@@ -8947,17 +8954,23 @@ def gas_consumed_month(request):
                 }
                 rows.append(data_dictionary_json)
         template_variables['month'] = int(request.GET['month01'])
-        template_variables['year'] = int(request.GET['year01'])
+        template_variables['year'] = str(int(request.GET['year01']))
     else:
-        for r in range(0,6):
+        for r in range(0,5):
             today = datetime.datetime.now()
             start,end = variety.get_week_start_datetime_end_datetime_tuple(today.year, today.month, r+1)
+
             obj = WaterGasData.objects.filter(industrial_equipment=ie,
                                               medition_date__gte=start,
                                               medition_date__lte=end
                                                                  + datetime.timedelta(days=1))\
                 .order_by('medition_date').values('gas_consumed', 'gas_entered', 'medition_date')
-
+            last = WaterGasData.objects.filter(industrial_equipment=ie,medition_date=end).order_by('-medition_date')
+            cap = TankInfo.objects.filter(industrial_equipment=ie)
+            per = 0
+            if cap:
+                if last and float(cap[0].tank_capacity_gas) > 0:
+                    per = float(last[0].tank_gasoccupied) / float(cap[0].tank_capacity_gas)
             obj_count = len(obj)
             entered = 0
             for number in obj:
@@ -8968,7 +8981,7 @@ def gas_consumed_month(request):
                 'week' : "Semana "+str(r+1),
                 'value1': float(obj[obj_count-1]['gas_consumed'] - obj[0]['gas_consumed']),
                 'value2': float(entered),
-                'value3': 0
+                'value3': float(per)
                 }
                 rows.append(data_dictionary_json)
             else:
@@ -8980,7 +8993,7 @@ def gas_consumed_month(request):
                 }
                 rows.append(data_dictionary_json)
         template_variables['month'] = today.month
-        template_variables['year'] = today.year
+        template_variables['year'] = str(today.year)
     template_variables['rows'] = rows
     template_variables['years'] = request.session['years']
     template_context =\
@@ -9001,7 +9014,7 @@ def water_consumed_month(request):
     ie = IndustrialEquipment.objects.get(pk=building.pk)
     if request.GET:
 
-        for r in range(0,6):
+        for r in range(0,5):
             start,end = variety.get_week_start_datetime_end_datetime_tuple(
                 int(request.GET['year01']), int(request.GET['month01']), r+1)
             obj = WaterGasData.objects.filter(industrial_equipment=ie,
@@ -9009,7 +9022,12 @@ def water_consumed_month(request):
                                               medition_date__lte=end
                                                                  + datetime.timedelta(days=1))\
                 .order_by('medition_date').values('water_consumed', 'water_entered', 'medition_date')
-
+            last = WaterGasData.objects.filter(industrial_equipment=ie,medition_date=end).order_by('-medition_date')
+            cap = TankInfo.objects.filter(industrial_equipment=ie)
+            per = 0
+            if cap:
+                if last and float(cap[0].tank_capacity_water) > 0:
+                    per = float(last[0].tank_wateroccupied) / float(cap[0].tank_capacity_water)
             obj_count = len(obj)
             entered = 0
             for number in obj:
@@ -9020,7 +9038,7 @@ def water_consumed_month(request):
                 'week' : "Semana "+str(r+1),
                 'value1': float(obj[obj_count-1]['water_consumed'] - obj[0]['water_consumed']),
                 'value2': float(entered),
-                'value3': 0
+                'value3': float(per)
                 }
                 rows.append(data_dictionary_json)
             else:
@@ -9032,9 +9050,9 @@ def water_consumed_month(request):
                 }
                 rows.append(data_dictionary_json)
         template_variables['month'] = int(request.GET['month01'])
-        template_variables['year'] = int(request.GET['year01'])
+        template_variables['year'] = str(int(request.GET['year01']))
     else:
-        for r in range(0,6):
+        for r in range(0,5):
             today = datetime.datetime.now()
             start,end = variety.get_week_start_datetime_end_datetime_tuple(today.year, today.month, r+1)
             obj = WaterGasData.objects.filter(industrial_equipment=ie,
@@ -9042,7 +9060,12 @@ def water_consumed_month(request):
                                               medition_date__lte=end
                                                                  + datetime.timedelta(days=1))\
                 .order_by('medition_date').values('water_consumed', 'water_entered', 'medition_date')
-
+            last = WaterGasData.objects.filter(industrial_equipment=ie,medition_date=end).order_by('-medition_date')
+            cap = TankInfo.objects.filter(industrial_equipment=ie)
+            per = 0
+            if cap:
+                if last and float(cap[0].tank_capacity_water) > 0 :
+                    per = float(last[0].tank_wateroccupied) / float(cap[0].tank_capacity_water)
             obj_count = len(obj)
             entered = 0
             for number in obj:
@@ -9054,7 +9077,7 @@ def water_consumed_month(request):
                 'week' : "Semana "+str(r+1),
                 'value1': float(obj[obj_count-1]['water_consumed'] - obj[0]['water_consumed']),
                 'value2': float(entered),
-                'value3': 0
+                'value3': float(per)
                 }
                 rows.append(data_dictionary_json)
             else:
@@ -9066,7 +9089,7 @@ def water_consumed_month(request):
                 }
                 rows.append(data_dictionary_json)
         template_variables['month'] = today.month
-        template_variables['year'] = today.year
+        template_variables['year'] = str(today.year)
     template_variables['rows'] = rows
     template_variables['years'] = request.session['years']
 

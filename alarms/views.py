@@ -863,7 +863,7 @@ def user_notifications(request):
                     data = defaultdict(list)
 
                     for item2 in notifs_groups:
-                        locale.setlocale(locale.LC_ALL, 'es_ES.UTF-8')
+                        locale.setlocale(locale.LC_ALL, 'es_MX.UTF-8')
                         dict_key = item2.alarm_event.triggered_time.date()\
                             .strftime('%d de %B')
                         data[str(dict_key)].append(item2)
