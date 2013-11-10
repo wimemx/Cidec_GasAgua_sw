@@ -8929,14 +8929,11 @@ def gas_consumed_month(request):
             end_data = end
             aux = 1
             while start < end_data and aux == 1:
-                last = WaterGasData.objects.filter(industrial_equipment=ie,medition_date=end_data).order_by('-medition_date')
+                last = WaterGasData.objects.filter(industrial_equipment=ie,medition_date__gte=end_data,medition_date__lt=end_data+datetime.timedelta(days=1)).order_by('-medition_date')
                 if last:
                     aux = 0
                 if not last:
                     end_data = end_data - datetime.timedelta(days=1)
-            print "-----end_data-----"
-            print end_data
-            print last[0].gas_consumed
             cap = TankInfo.objects.filter(industrial_equipment=ie)
             per = 0
             if cap:
