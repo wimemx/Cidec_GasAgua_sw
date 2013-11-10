@@ -40,6 +40,9 @@ def gas_medition(request):
 def water_medition(request):
     builds = WaterGasData.objects.values('industrial_equipment__building').distinct()
     datacontext, b_list = get_buildings_context_for_gaswater(request.user,builds)
+    if 'main_building' in request.session:
+        if not WaterGasData.objects.filter(industrial_equipment__building=request.session['main_building']):
+            del request.session['main_building']
     if not datacontext:
         request.session['consumer_unit'] = None
     set_default_session_vars(request, b_list)

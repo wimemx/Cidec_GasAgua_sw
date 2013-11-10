@@ -8926,12 +8926,22 @@ def gas_consumed_month(request):
                                               medition_date__lte=end
                                                                  + datetime.timedelta(days=1))\
                 .order_by('medition_date').values('gas_consumed', 'gas_entered', 'medition_date')
-            last = WaterGasData.objects.filter(industrial_equipment=ie,medition_date=end).order_by('-medition_date')
+            end_data = end
+            aux = 1
+            while start < end_data and aux == 1:
+                last = WaterGasData.objects.filter(industrial_equipment=ie,medition_date=end_data).order_by('-medition_date')
+                if last:
+                    aux = 0
+                if not last:
+                    end_data = end_data - datetime.timedelta(days=1)
+            print "-----end_data-----"
+            print end_data
+            print last[0].gas_consumed
             cap = TankInfo.objects.filter(industrial_equipment=ie)
             per = 0
             if cap:
                 if last and float(cap[0].tank_capacity_gas) > 0:
-                    per = float(last[0].tank_gasoccupied) / float(cap[0].tank_capacity_gas)
+                    per = (float(last[0].tank_gasoccupied) / float(cap[0].tank_capacity_gas) * 100)
             obj_count = len(obj)
             entered = 0
             for number in obj:
@@ -8954,7 +8964,7 @@ def gas_consumed_month(request):
                 }
                 rows.append(data_dictionary_json)
         template_variables['month'] = int(request.GET['month01'])
-        template_variables['year'] = str(int(request.GET['year01']))
+        template_variables['year'] = int(request.GET['year01'])
     else:
         for r in range(0,5):
             today = datetime.datetime.now()
@@ -8965,7 +8975,14 @@ def gas_consumed_month(request):
                                               medition_date__lte=end
                                                                  + datetime.timedelta(days=1))\
                 .order_by('medition_date').values('gas_consumed', 'gas_entered', 'medition_date')
-            last = WaterGasData.objects.filter(industrial_equipment=ie,medition_date=end).order_by('-medition_date')
+            end_data = end
+            aux = 1
+            while start < end_data and aux == 1:
+                last = WaterGasData.objects.filter(industrial_equipment=ie,medition_date=end_data).order_by('-medition_date')
+                if last:
+                    aux = 0
+                if not last:
+                    end_data = end_data - datetime.timedelta(days=1)
             cap = TankInfo.objects.filter(industrial_equipment=ie)
             per = 0
             if cap:
@@ -8993,7 +9010,7 @@ def gas_consumed_month(request):
                 }
                 rows.append(data_dictionary_json)
         template_variables['month'] = today.month
-        template_variables['year'] = str(today.year)
+        template_variables['year'] = today.year
     template_variables['rows'] = rows
     template_variables['years'] = request.session['years']
     template_context =\
@@ -9022,7 +9039,12 @@ def water_consumed_month(request):
                                               medition_date__lte=end
                                                                  + datetime.timedelta(days=1))\
                 .order_by('medition_date').values('water_consumed', 'water_entered', 'medition_date')
-            last = WaterGasData.objects.filter(industrial_equipment=ie,medition_date=end).order_by('-medition_date')
+            while start < end_data and aux == 1:
+                last = WaterGasData.objects.filter(industrial_equipment=ie,medition_date=end_data).order_by('-medition_date')
+                if last:
+                    aux = 0
+                if not last:
+                    end_data = end_data - datetime.timedelta(days=1)
             cap = TankInfo.objects.filter(industrial_equipment=ie)
             per = 0
             if cap:
@@ -9050,7 +9072,7 @@ def water_consumed_month(request):
                 }
                 rows.append(data_dictionary_json)
         template_variables['month'] = int(request.GET['month01'])
-        template_variables['year'] = str(int(request.GET['year01']))
+        template_variables['year'] = int(request.GET['year01'])
     else:
         for r in range(0,5):
             today = datetime.datetime.now()
@@ -9060,7 +9082,12 @@ def water_consumed_month(request):
                                               medition_date__lte=end
                                                                  + datetime.timedelta(days=1))\
                 .order_by('medition_date').values('water_consumed', 'water_entered', 'medition_date')
-            last = WaterGasData.objects.filter(industrial_equipment=ie,medition_date=end).order_by('-medition_date')
+            while start < end_data and aux == 1:
+                last = WaterGasData.objects.filter(industrial_equipment=ie,medition_date=end_data).order_by('-medition_date')
+                if last:
+                    aux = 0
+                if not last:
+                    end_data = end_data - datetime.timedelta(days=1)
             cap = TankInfo.objects.filter(industrial_equipment=ie)
             per = 0
             if cap:
@@ -9089,7 +9116,7 @@ def water_consumed_month(request):
                 }
                 rows.append(data_dictionary_json)
         template_variables['month'] = today.month
-        template_variables['year'] = str(today.year)
+        template_variables['year'] = today.year
     template_variables['rows'] = rows
     template_variables['years'] = request.session['years']
 
