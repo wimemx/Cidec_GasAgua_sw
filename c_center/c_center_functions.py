@@ -3429,12 +3429,14 @@ def parse_file(_file):
 
 
 def get_google_timezone(building):
+
     """Calls the google timezone api for the building location
 
     :param building: Building object
     :return: tuple containing the timezone id plus dst offset
     """
     #Se obtienen las coordenadas del edificio
+
     bld_lat = building.building_lat_address
     bld_long = building.building_long_address
 
@@ -3479,7 +3481,6 @@ def get_google_timezone(building):
                         print "Error reading Json"
                         return offline_timezone(building, bld_timezone)
                     return tz_t, int(tzo_t)
-
 
 def offline_timezone(building, bld_timezone):
     #vemos si la fecha está en DST o DCT

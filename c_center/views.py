@@ -8914,7 +8914,7 @@ def gas_consumed_month(request):
     template_variables = {}
     rows = []
     building = request.session['main_building']
-    ie = IndustrialEquipment.objects.get(pk=building.pk)
+    ie = IndustrialEquipment.objects.get(building_id=building.pk)
     if request.GET:
 
         for r in range(0,5):
@@ -8975,7 +8975,7 @@ def gas_consumed_month(request):
             end_data = end
             aux = 1
             while start < end_data and aux == 1:
-                last = WaterGasData.objects.filter(industrial_equipment=ie,medition_date=end_data).order_by('-medition_date')
+                last = WaterGasData.objects.filter(industrial_equipment=ie,medition_date__gte=end_data,medition_date__lt=end_data+datetime.timedelta(days=1)).order_by('-medition_date')
                 if last:
                     aux = 0
                 if not last:
@@ -8984,7 +8984,7 @@ def gas_consumed_month(request):
             per = 0
             if cap:
                 if last and float(cap[0].tank_capacity_gas) > 0:
-                    per = float(last[0].tank_gasoccupied) / float(cap[0].tank_capacity_gas)
+                    per = float(last[0].tank_gasoccupied) / float(cap[0].tank_capacity_gas) * 100
             obj_count = len(obj)
             entered = 0
             for number in obj:
@@ -9025,7 +9025,7 @@ def water_consumed_month(request):
     template_variables = {}
     rows = []
     building = request.session['main_building']
-    ie = IndustrialEquipment.objects.get(pk=building.pk)
+    ie = IndustrialEquipment.objects.get(building_id=building.pk)
     if request.GET:
 
         for r in range(0,5):
@@ -9036,8 +9036,10 @@ def water_consumed_month(request):
                                               medition_date__lte=end
                                                                  + datetime.timedelta(days=1))\
                 .order_by('medition_date').values('water_consumed', 'water_entered', 'medition_date')
+            end_data = end
+            aux = 1
             while start < end_data and aux == 1:
-                last = WaterGasData.objects.filter(industrial_equipment=ie,medition_date=end_data).order_by('-medition_date')
+                last = WaterGasData.objects.filter(industrial_equipment=ie,medition_date__gte=end_data,medition_date__lt=end_data+datetime.timedelta(days=1)).order_by('-medition_date')
                 if last:
                     aux = 0
                 if not last:
@@ -9046,7 +9048,7 @@ def water_consumed_month(request):
             per = 0
             if cap:
                 if last and float(cap[0].tank_capacity_water) > 0:
-                    per = float(last[0].tank_wateroccupied) / float(cap[0].tank_capacity_water)
+                    per = float(last[0].tank_wateroccupied) / float(cap[0].tank_capacity_water) * 100
             obj_count = len(obj)
             entered = 0
             for number in obj:
@@ -9079,8 +9081,10 @@ def water_consumed_month(request):
                                               medition_date__lte=end
                                                                  + datetime.timedelta(days=1))\
                 .order_by('medition_date').values('water_consumed', 'water_entered', 'medition_date')
+            end_data = end
+            aux = 1
             while start < end_data and aux == 1:
-                last = WaterGasData.objects.filter(industrial_equipment=ie,medition_date=end_data).order_by('-medition_date')
+                last = WaterGasData.objects.filter(industrial_equipment=ie,medition_date__gte=end_data,medition_date__lt=end_data+datetime.timedelta(days=1)).order_by('-medition_date')
                 if last:
                     aux = 0
                 if not last:
@@ -9089,7 +9093,7 @@ def water_consumed_month(request):
             per = 0
             if cap:
                 if last and float(cap[0].tank_capacity_water) > 0 :
-                    per = float(last[0].tank_wateroccupied) / float(cap[0].tank_capacity_water)
+                    per = float(last[0].tank_wateroccupied) / float(cap[0].tank_capacity_water) * 100
             obj_count = len(obj)
             entered = 0
             for number in obj:

@@ -245,7 +245,9 @@ def render_gas_consumed(
     template_variables = {}
     rows = []
     building = request.session['main_building']
-    ie = IndustrialEquipment.objects.get(pk=building.pk)
+    print "------building-------"
+    print building.pk
+    ie = IndustrialEquipment.objects.get(building_id=building.pk)
     if request.GET:
         start_date = datetime.datetime.strptime(request.GET['init-date'],
                                                 '%Y-%m-%d')
@@ -426,7 +428,7 @@ def render_water_consumed(
     template_variables = {}
     rows = []
     building = request.session['main_building']
-    ie = IndustrialEquipment.objects.get(pk=building.pk)
+    ie = IndustrialEquipment.objects.get(building_id=building.pk)
     if request.GET:
         start_date = datetime.datetime.strptime(request.GET['init-date'],
                                                 '%Y-%m-%d')
