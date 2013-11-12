@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import re
+import json as simplejson
 from datetime import date
 
 from django.db.models.aggregates import Count
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils import simplejson
+
 
 from rbac.models import PermissionAsigment, UserRole, DataContextPermission, \
     Operation, Object
@@ -100,7 +101,7 @@ def get_all_companies_for_operation(operation, permission, user):
                 object__object_name=permission)
             if p_a:
                 if not dc.company:
-                    comp_clus = CompanyCluster.objects.filter(
+                    comp_clus = ClusterCompany.objects.filter(
                         company__company_status=1,
                         cluster=dc.cluster)
                     for c_c in comp_clus:
@@ -205,7 +206,8 @@ def get_data_context_part(user, part):
                                               part_of_building=part)
     return dc
 
-def get_buildings_context_for_gaswater(user,builds):
+
+def get_buildings_context_for_gaswater(user, builds):
     """Obtains the buildings the user has permission
 
 
@@ -218,13 +220,14 @@ def get_buildings_context_for_gaswater(user,builds):
     for dcontext in datacontext:
         try:
             if dcontext.building:
-                if dcontext.building.building_status == 1 and dcontext.building in builds:
+                if dcontext.building.building_status == 1 and \
+                        dcontext.building in builds:
                     buildings.append(
                         dict(building_pk=dcontext.building.pk,
                              building_name=dcontext.building.building_name))
             elif dcontext.company:
                 building_comp = CompanyBuilding.objects.filter(
-                    company=dcontext.company,building__in=builds
+                    company=dcontext.company, building__in=builds
                 ).exclude(
                     building__building_status=0)
                 for bc in building_comp:
@@ -283,8 +286,6 @@ def get_buildings_context_for_gaswater(user,builds):
     return simplejson.dumps(companies_list), buildings
 
 
-
-
 def get_buildings_context(user):
     """Obtains the buildings the user has permission
 
@@ -295,13 +296,15 @@ def get_buildings_context(user):
     """
     datacontext = DataContextPermission.objects.filter(user_role__user=user)
     buildings = []
-    gw_builds = WaterGasData.objects.values('industrial_equipment__building').distinct()
+    gw_builds = WaterGasData.objects.values(
+        'industrial_equipment__building').distinct()
 
     for dcontext in datacontext:
         try:
             if dcontext.building:
-                ie = {'industrial_equipment__building':dcontext.building.pk}
-                if dcontext.building.building_status == 1 and ie not in gw_builds :
+                ie = {'industrial_equipment__building': dcontext.building.pk}
+                if dcontext.building.building_status == 1 and ie not in \
+                        gw_builds :
                     buildings.append(
                         dict(building_pk=dcontext.building.pk,
                              building_name=dcontext.building.building_name))

@@ -14,10 +14,14 @@ UPDATE = Operation.objects.get(operation_name="Modificar")
 
 @login_required(login_url='/')
 def gas_medition(request):
-    builds = WaterGasData.objects.values('industrial_equipment__building').distinct()
-    datacontext, b_list = get_buildings_context_for_gaswater(request.user,builds)
+    builds = WaterGasData.objects.values(
+        'industrial_equipment__building').distinct()
+    datacontext, b_list = get_buildings_context_for_gaswater(
+        request.user,builds)
     if 'main_building' in request.session:
-        if not WaterGasData.objects.filter(industrial_equipment__building=request.session['main_building']):
+        if not WaterGasData.objects.filter(
+                industrial_equipment__building=request.session['main_building']
+        ):
             del request.session['main_building']
     if not datacontext:
         request.session['consumer_unit'] = None
@@ -27,21 +31,25 @@ def gas_medition(request):
     request.session['tipo'] = 'gas'
     tipo = request.session['tipo']
     template_vars_tags = dict(
-                             empresa=empresa,
-                             datacontext=datacontext,
-                             company=company,
-                             tipo=tipo,
-                             operations=Operation.objects.all())
+        empresa=empresa,
+        datacontext=datacontext,
+        company=company,
+        tipo=tipo,
+        operations=Operation.objects.all())
     template_vars_tags['years'] = request.session['years']
     template_vars = template_vars_tags
     return render_to_response("gas_agua/gas.html", template_vars)
 
 @login_required(login_url='/')
 def water_medition(request):
-    builds = WaterGasData.objects.values('industrial_equipment__building').distinct()
-    datacontext, b_list = get_buildings_context_for_gaswater(request.user,builds)
+    builds = WaterGasData.objects.values(
+        'industrial_equipment__building').distinct()
+    datacontext, b_list = get_buildings_context_for_gaswater(
+        request.user, builds)
     if 'main_building' in request.session:
-        if not WaterGasData.objects.filter(industrial_equipment__building=request.session['main_building']):
+        if not WaterGasData.objects.filter(
+                industrial_equipment__building=request.session['main_building']
+        ):
             del request.session['main_building']
     if not datacontext:
         request.session['consumer_unit'] = None
@@ -51,10 +59,10 @@ def water_medition(request):
     request.session['tipo'] = 'water'
     tipo = request.session['tipo']
     template_vars_tags = dict(
-                             empresa=empresa,
-                             datacontext=datacontext,
-                             company=company,
-                             tipo=tipo,
-                             operations=Operation.objects.all())
+        empresa=empresa,
+        datacontext=datacontext,
+        company=company,
+        tipo=tipo,
+        operations=Operation.objects.all())
     template_vars = template_vars_tags
     return render_to_response("gas_agua/agua.html", template_vars)

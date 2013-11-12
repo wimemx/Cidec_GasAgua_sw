@@ -6,7 +6,7 @@ import os
 
 CELERY_RESULT_BACKEND = "amqp"
 
-BROKER_URL = 'amqp://guest:guest@166.78.139.234:5672//'
+BROKER_URL = 'amqp://guest:guest@localhost:5672//'
 
 CELERY_IMPORTS = ('tareas', 'cidec_sw.tests')
 CELERY_TASK_TIME_LIMIT = 86400
@@ -22,25 +22,16 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-SERVER_URL = "http://auditem.mx"
+SERVER_URL = "http://auditem.wimjaps.com"
 
 DATABASES = {
-    'test': {
-        'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'satest_cidec',                      # Or path to database file if using sqlite3.
-        'USER': 'satest_cidec',                      # Not used with sqlite3.
-        'PASSWORD': '5MnT)HXnm_pT',                  # Not used with sqlite3.
-        'HOST': 'audiwime.wimelabs.com',                      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
-    },
     'default': {
         'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
         'NAME': 'satest_cidec',                      # Or path to database file if using sqlite3.
-        'USER': 'satest_cidec',                      # Not used with sqlite3.
-        'PASSWORD': '5MnT)HXnm_pT',                  # Not used with sqlite3.
-        'HOST': 'auditem.mx',                      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '',                      # Set to empty string for default. Not used with
-        # sqlite3.
+        'USER': 'wime_devel',                      # Not used with sqlite3.
+        'PASSWORD': 'a8d32e08',                  # Not used with sqlite3.
+        'HOST': 'audiwime.wimelabs.com',                      # Set to empty string for localhost. Not used with sqlite3.
+        'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     }
 }
 
@@ -195,26 +186,42 @@ LOGGING = {
             'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler'
         },
-        'file': {
-            'level': 'DEBUG',
+        'file_data_warehouse': {
+            'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': PROJECT_PATH + '/error_log.log',
+            'filename': PROJECT_PATH + '/log_data_warehouse.log',
             'formatter': 'verbose'
         },
+
+        'file_reports': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': PROJECT_PATH + '/log_reports.log',
+            'formatter': 'verbose'
+        },
+
         'console':{
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'formatter': 'simple'
         },
     },
+
     'loggers': {
         'django.request': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
             'propagate': True,
         },
+
         'data_warehouse': {
-            'handlers': ['file', 'console'],
+            'handlers': ['file_data_warehouse', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+
+        'reports': {
+            'handlers': ['file_reports', 'console'],
             'level': 'INFO',
             'propagate': True,
         },

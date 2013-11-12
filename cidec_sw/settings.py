@@ -11,7 +11,7 @@ CELERY_TASK_TIME_LIMIT = 86400
 
 PROJECT_PATH = os.path.abspath(
     os.path.join(os.path.abspath(os.path.dirname(__file__)), os.path.pardir))
-SERVER_URL = "http://auditem.mx"
+SERVER_URL = "http://audiwime.wimelabs.com"
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -87,7 +87,7 @@ MEDIA_URL = '/static/media/'
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-#STATIC_ROOT = ''
+STATIC_ROOT = os.path.join(PROJECT_PATH, 'templates/static/')
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
@@ -98,7 +98,7 @@ STATICFILES_DIRS = (
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    os.path.join(PROJECT_PATH, 'templates/static/'),
+    #os.path.join(PROJECT_PATH, 'templates/static/'),
 )
 
 # List of finder classes that know how to find static files in
@@ -145,7 +145,7 @@ WSGI_APPLICATION = 'cidec_sw.wsgi.application'
 TEMPLATE_DIRS = (os.path.join(PROJECT_PATH, 'templates'))#'/Users/wime/Dev/wime_dev/cidec_sw/templates',)
 
 INSTALLED_APPS = (
-    #'grappelli',
+    'grappelli',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -161,7 +161,7 @@ INSTALLED_APPS = (
     'c_center',
     'rbac',
     'electric_rates',
-    'south',
+    #'south',
     'data_warehouse',
     'data_warehouse_extended',
     'reports',
@@ -170,7 +170,7 @@ INSTALLED_APPS = (
     'plupload',
     'djcelery',
     'tareas',
-    'gas_agua'
+    #'gas_agua'
     #'debug_toolbar'
 )
 
@@ -195,25 +195,20 @@ LOGGING = {
             '()': 'django.utils.log.RequireDebugFalse'
         }
     },
-
     'formatters': {
         'verbose': {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
         },
-
         'simple': {
             'format': '%(levelname)s %(message)s'
         },
-
     },
-
     'handlers': {
         'mail_admins': {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler'
         },
-
         'file_data_warehouse': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
@@ -257,24 +252,5 @@ LOGGING = {
 }
 
 GRAPPELLI_ADMIN_TITLE = 'CIDEC'
-ADMIN_MEDIA_PREFIX = ""
-
 
 OFFLINE_TIMEZONE = False
-
-"""
-SESSION_ENGINE = 'redis_sessions.session'
-SESSION_REDIS_HOST = 'localhost'
-SESSION_REDIS_PORT = 6379
-SESSION_REDIS_DB = 0
-
-CACHES = {
-    'default': {
-        'BACKEND': 'redis_cache.RedisCache',
-        'LOCATION': 'localhost:6379',
-        'OPTIONS': {
-            'DB': 1,
-        },
-    },
-}
-"""
