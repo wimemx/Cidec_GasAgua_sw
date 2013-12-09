@@ -289,22 +289,18 @@ def get_buildings_context_for_gaswater(user, builds):
 def get_buildings_context(user):
     """Obtains the buildings the user has permission
 
-
     :param user: auth.User instance
     :return JSON with the different buildings the active user has permission,
      and a dictionary with the ids and name of buildings
     """
     datacontext = DataContextPermission.objects.filter(user_role__user=user)
     buildings = []
-    gw_builds = WaterGasData.objects.values(
-        'industrial_equipment__building').distinct()
 
     for dcontext in datacontext:
         try:
             if dcontext.building:
                 ie = {'industrial_equipment__building': dcontext.building.pk}
-                if dcontext.building.building_status == 1 and ie not in \
-                        gw_builds :
+                if dcontext.building.building_status == 1:
                     buildings.append(
                         dict(building_pk=dcontext.building.pk,
                              building_name=dcontext.building.building_name))
@@ -315,12 +311,10 @@ def get_buildings_context(user):
                 ).exclude(
                     building__building_status=0)
                 for bc in building_comp:
-                    ie = {'industrial_equipment__building':bc.building.pk}
-                    if ie not in gw_builds:
-                        buildings.append(
-                            dict(building_pk=bc.building.pk,
-                                 building_name=bc.building.building_name))
-                    ie = {}
+                    buildings.append(
+                        dict(building_pk=bc.building.pk,
+                             building_name=bc.building.building_name))
+
             else:
                 clust_comp = ClusterCompany.objects.filter(
                     cluster=dcontext.cluster)
@@ -331,12 +325,10 @@ def get_buildings_context(user):
                         building__building_status=0
                     )
                     for bc in building_comp:
-                        ie = {'industrial_equipment__building':bc.building.pk}
-                        if ie not in gw_builds:
-                            buildings.append(
-                                dict(building_pk=bc.building.pk,
-                                     building_name=bc.building.building_name))
-                        ie = {}
+                        buildings.append(
+                            dict(building_pk=bc.building.pk,
+                                 building_name=bc.building.building_name))
+
         except ObjectDoesNotExist:
             continue
 
